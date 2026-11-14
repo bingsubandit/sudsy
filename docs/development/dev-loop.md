@@ -41,6 +41,13 @@ Each parallel agent works in its own git worktree and sets `CARGO_TARGET_DIR=C:/
 - Snapshots use `insta`. After a decision, delete the losing alternatives; results live in these docs and git history.
 - Docs describe the current state; update the relevant file in the same commit as the change.
 
+## Linux agent host
+Agents can run on a Linux spot machine instead of the local PC: [agent-host](https://github.com/bingsubandit/agent-host) (`ahost up`, sessions through Remote Control from claude.ai, the Claude apps or VS Code Remote-SSH). The host reads `.agent-host.yaml`:
+- `scripts/agent-host/setup.sh` installs the toolchains into the agent's home on the host's persist disk (rustup at `rust-toolchain.toml`'s version with `wasm32-wasip2`, .NET 10, Node 24, `cargo-nextest`, `cargo-sweep`); it runs at `ahost project add` and every boot and is quick when nothing changed.
+- Every session gets its own worktree under `/persist/projects/sudsy/worktrees/` and a slot `/scratch/slots/sudsy/<n>` on the local NVMe, set as `CARGO_TARGET_DIR` in the worktree's `.claude/settings.local.json` (`SUDSY_SLOT_MAX=100GB`); up to 3 sessions at once. `/scratch` is wiped at every boot, so slots start cold; `scripts/agent-host/warm.sh` builds the test binaries in slot 1 after boot at low priority.
+- The host is arm64 (Graviton). `finish.sh` and the bench run in CI as before, so recorded numbers stay x86. `parity_tools.json` has `linux-aarch64` assets for every downloaded tool.
+- The Windows notes below apply to the local PC only; `gate-windows` in CI covers Windows.
+
 ## Windows / Git Bash / WSL
 - Shell is Git Bash (`.vscode/settings.json` sets it); scripts are bash. Some tools mangle paths: use `cygpath` and `MSYS_NO_PATHCONV=1` when calling `wsl`.
 - Instruction-count benchmarks need valgrind, so a local `bench.sh` runs them in WSL (`BENCH_WSL_DISTRO`, default Ubuntu); `bench.sh` converts paths. A VS Code window locks `target/debug` outputs, hence `target/dogfood/`.

@@ -19,7 +19,7 @@ Formatter + linter for C#, JSON and YAML. `docs/` describes how everything works
 - Docs describe current state, not history: update the relevant `docs/` file in the same commit as the change (behavior, options, numbers, roadmap items). No milestone names or "was/used to" prose.
 
 ## Working as an agent
-- Own worktree and build slot (`CARGO_TARGET_DIR`, see `docs/development/dev-loop.md`); write nothing outside them (not `%TEMP%`, not another slot). Don't kill processes you did not start.
+- Own worktree and build slot (`CARGO_TARGET_DIR`, see `docs/development/dev-loop.md`; on the Linux agent host both are set up for each session); write nothing outside them (not `%TEMP%`, not another slot). Don't kill processes you did not start.
 - Testing while you work: `scripts/gate.sh -p <crate>` for every crate you changed (a registration change also touches `cli`), plus `cargo xtask codegen --check` when you changed lang.yaml, grammars or registration. This is where compile, lint and test errors are found and fixed, as often as you like.
 - `scripts/finish.sh` is not a test run. It is the one final check of a finished step that already passes the gate: the gate (Linux and Windows) and the bench as parallel GitHub Actions jobs (`finish.yml`, on a pushed snapshot of the uncommitted tree), on what the change affects (a gate failure cancels the bench). It builds nothing locally and agents' runs do not queue behind each other. Run it once per step, never once per fix, and make no edits while it runs.
   - Passes: commit together with the line bench appended to `bench/history.jsonl`, rebase onto origin/main, fast-forward push.

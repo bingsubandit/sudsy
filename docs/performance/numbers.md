@@ -150,6 +150,8 @@ Method: `scripts/gate.sh` runs locally (Git Bash, slot3, warm: a comment appende
 | Bench noise, same code on both sides | no metric moved 1%; run to run at most 0.05% |
 | `scripts/parity.sh yamllint` (venv install + CLI build reused) | 86 |
 
+Linux agent host (c8gd.2xlarge spot: 8 Graviton4 cores, 16 GiB, local NVMe slot; `.agent-host.yaml`, 2026-11-14; commands as in `scripts/devloop-times.sh`, gate only): `cargo test --workspace --no-run` cold 118 s (what `warm.sh` does after boot); first `gate.sh -p lang-toml` after it 22 s; first `gate.sh --affected` after a `lang-toml` edit 183 s, the next one 54 s (nextest 30, `lang-csharp` 8, doctests 3, worker 4, the rest 1 or less); slot 14 GB; peak memory of one gate 6.1 GiB, hence `max_agents: 3` on 16 GiB. Toolchain setup on a fresh host 41 s.
+
 Slot size: 240-266 GB before pruning the outputs of earlier worktrees, 56-70 GB after; the WSL bench cache 33 GB, 16 GB without its dead directories.
 
 ## Documentation site (`scripts/site.sh scale-test`, [development/site.md](../development/site.md))

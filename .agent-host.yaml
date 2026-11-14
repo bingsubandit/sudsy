@@ -1,0 +1,9 @@
+# Profile for the Linux agent host (github.com/bingsubandit/agent-host): docs/development/dev-loop.md#linux-agent-host
+name: sudsy
+max_agents: 3
+setup: scripts/agent-host/setup.sh
+warm: scripts/agent-host/warm.sh
+worktree_env:
+  CARGO_TARGET_DIR: "{slot}"
+  SUDSY_SLOT_MAX: 100GB
+busy_processes: [cargo, rustc, dotnet, node]
