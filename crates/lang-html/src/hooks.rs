@@ -1,5 +1,6 @@
 //! What the shared key rules ask of HTML: attribute names are case-insensitive, and a Vue
-//! directive (`:a`, `@a`, `#a`) is one name whose first token is the key.
+//! directive (`:a`) is one name whose first token is the key. Event handlers and slots (`@a`, `v-on`,
+//! `#a`, Svelte's `on:` and `use:`) may repeat and are not names.
 
 use core_rules::RuleHooks;
 use core_syntax::SyntaxElement;
@@ -11,7 +12,11 @@ impl RuleHooks for HtmlHooks {
     fn is_name(&self, key: &SyntaxElement, text: &str) -> bool {
         let start = usize::from(key.text_range().start());
         let tag = &text[text[..start].rfind('<').unwrap_or(0)..start];
-        !in_template(tag) && !text[start..].starts_with(['{', '<', '}', '%'])
+        !in_template(tag)
+            && !text[start..].starts_with(['{', '<', '}', '%', '@', '#'])
+            && !text[start..].starts_with("on:")
+            && !text[start..].starts_with("use:")
+            && !text[start..].starts_with("v-on")
     }
 
     fn key_name<'a>(&self, key: &SyntaxElement, text: &'a str) -> Cow<'a, str> {

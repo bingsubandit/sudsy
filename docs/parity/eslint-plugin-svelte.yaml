@@ -1,0 +1,91 @@
+tool: "eslint-plugin-svelte"
+version: "3.24.1"
+languages: ["svelte"]
+sources:
+  - "https://sveltejs.github.io/eslint-plugin-svelte/rules/"
+scope: "eslint-plugin-svelte's rules that read the markup; rules about `<script>` come with the JS semantic layer"
+entries:
+  block-lang: planned
+  button-has-type: planned
+  html-closing-bracket-new-line: formatter | the formatter owns layout
+  html-quotes: rule attr-quotes
+  html-self-closing: planned
+  indent: formatter | the formatter owns layout
+  max-attributes-per-line: formatter | `single_attribute_per_line` and the line width
+  mustache-spacing: formatter | the formatter owns layout
+  no-at-debug-tags: rule no-at-debug-tags
+  no-at-html-tags: rule no-at-html-tags
+  no-dupe-else-if-blocks: deferred | needs a comparison of expressions
+  no-dupe-on-directives: planned
+  no-dupe-style-properties: planned
+  no-dupe-use-directives: planned
+  no-not-function-handler: deferred | needs script analysis (the JS semantic layer)
+  no-object-in-text-mustaches: deferred | needs script analysis (the JS semantic layer)
+  no-shorthand-style-property-overrides: planned
+  no-spaces-around-equal-signs-in-attribute: rule attr-delimiter
+  no-target-blank: planned
+  no-unknown-style-directive-property: planned
+  no-unused-class-name: deferred | needs script analysis (the JS semantic layer)
+  no-useless-mustaches: planned
+  require-each-key: rule require-each-key
+  require-optimized-style-attribute: planned
+  require-store-callbacks-use-set-param: deferred | needs script analysis (the JS semantic layer)
+  shorthand-attribute: planned
+  shorthand-directive: planned
+  sort-attributes: planned
+  spaced-html-comment: planned
+  valid-each-key: deferred | needs a comparison of expressions
+  valid-style-parse: planned
+  html-closing-bracket-spacing: formatter | the formatter owns layout
+  first-attribute-linebreak: formatter | the formatter owns layout
+  no-trailing-spaces: formatter | the formatter owns layout
+  no-at-const-tags: planned
+  no-inline-styles: planned
+  no-nested-style-tag: planned
+  no-raw-special-elements: planned
+  no-restricted-html-elements: planned
+  no-unused-svelte-ignore: planned
+  no-useless-children-snippet: planned
+  prefer-class-directive: planned
+  prefer-style-directive: planned
+  prefer-attribute-interpolation: planned
+  no-extra-reactive-curlies: planned
+  no-add-event-listener: planned
+  no-bind-value-on-checkable-inputs: planned
+  max-lines-per-block: planned
+  consistent-selector-style: planned
+  comment-directive: planned
+  derived-has-same-inputs-outputs: deferred | needs script analysis (the JS semantic layer)
+  experimental-require-slot-types: deferred | needs script analysis (the JS semantic layer)
+  experimental-require-strict-events: deferred | needs script analysis (the JS semantic layer)
+  infinite-reactive-loop: deferred | needs script analysis (the JS semantic layer)
+  no-conflicting-module-names: deferred | needs script analysis (the JS semantic layer)
+  no-dom-manipulating: deferred | needs script analysis (the JS semantic layer)
+  no-export-load-in-svelte-module-in-kit-pages: deferred | needs script analysis (the JS semantic layer)
+  no-ignored-unsubscribe: deferred | needs script analysis (the JS semantic layer)
+  no-immutable-reactive-statements: deferred | needs script analysis (the JS semantic layer)
+  no-inner-declarations: deferred | needs script analysis (the JS semantic layer)
+  no-inspect: deferred | needs script analysis (the JS semantic layer)
+  no-navigation-without-resolve: deferred | needs script analysis (the JS semantic layer)
+  no-reactive-functions: deferred | needs script analysis (the JS semantic layer)
+  no-reactive-literals: deferred | needs script analysis (the JS semantic layer)
+  no-reactive-reassign: deferred | needs script analysis (the JS semantic layer)
+  no-store-async: deferred | needs script analysis (the JS semantic layer)
+  no-svelte-internal: deferred | needs script analysis (the JS semantic layer)
+  no-top-level-browser-globals: deferred | needs script analysis (the JS semantic layer)
+  no-unnecessary-state-wrap: deferred | needs script analysis (the JS semantic layer)
+  no-unused-props: deferred | needs script analysis (the JS semantic layer)
+  prefer-const: deferred | needs script analysis (the JS semantic layer)
+  prefer-derived-over-derived-by: deferred | needs script analysis (the JS semantic layer)
+  prefer-destructured-store-props: deferred | needs script analysis (the JS semantic layer)
+  prefer-svelte-reactivity: deferred | needs script analysis (the JS semantic layer)
+  prefer-writable-derived: deferred | needs script analysis (the JS semantic layer)
+  require-event-dispatcher-types: deferred | needs script analysis (the JS semantic layer)
+  require-event-prefix: deferred | needs script analysis (the JS semantic layer)
+  require-store-reactive-access: deferred | needs script analysis (the JS semantic layer)
+  require-stores-init: deferred | needs script analysis (the JS semantic layer)
+  valid-compile: deferred | needs script analysis (the JS semantic layer)
+  valid-prop-names-in-kit-pages: deferred | needs script analysis (the JS semantic layer)
+  no-dynamic-slot-name: wontfix deprecated upstream
+  no-goto-without-base: wontfix deprecated upstream
+  no-navigation-without-base: wontfix deprecated upstream

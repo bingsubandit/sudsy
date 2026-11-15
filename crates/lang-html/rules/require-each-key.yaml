@@ -2,7 +2,7 @@ id: require-each-key
 message: an `{#each}` block needs a key, `(item.id)`, so that Svelte reuses the elements when the list changes
 description: Svelte's `require-each-key` (eslint-plugin-svelte). Without a key the block updates the elements in place, which keeps stale state in inputs and components and breaks transitions.
 example: '{#each items as item}   {#each items as item (item.id)}'
-severity: off
+severity: warn
 category: correctness
 rule:
   kind: BlockTag

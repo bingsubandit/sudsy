@@ -2,6 +2,6 @@ id: no-at-html-tags
 message: "`{@html}` inserts text as markup; a value from a user is a cross-site scripting hole"
 description: Svelte's `no-at-html-tags` (eslint-plugin-svelte). Escape the text or sanitize it before it is rendered, or turn the rule off for a value you control.
 example: '{@html comment.body}   {comment.body}'
-severity: off
+severity: warn
 category: suspicious
 rule: { kind: Mustache, regex: '^\{@html\b' }
