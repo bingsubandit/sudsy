@@ -150,7 +150,9 @@ Method: `scripts/gate.sh` runs locally (Git Bash, slot3, warm: a comment appende
 | Bench noise, same code on both sides | no metric moved 1%; run to run at most 0.05% |
 | `scripts/parity.sh yamllint` (venv install + CLI build reused) | 86 |
 
-Linux agent host (c8gd.2xlarge spot: 8 Graviton4 cores, 16 GiB, local NVMe slot; `.agent-host.yaml`, 2026-11-14; commands as in `scripts/devloop-times.sh`, gate only): `cargo test --workspace --no-run` cold 118 s (what `warm.sh` does after boot); first `gate.sh -p lang-toml` after it 22 s; first `gate.sh --affected` after a `lang-toml` edit 183 s, the next one 54 s (nextest 30, `lang-csharp` 8, doctests 3, worker 4, the rest 1 or less); slot 14 GB; peak memory of one gate 6.1 GiB, hence `max_agents: 3` on 16 GiB. Toolchain setup on a fresh host 41 s.
+Linux agent host (c8gd.2xlarge spot: 8 Graviton4 cores, 16 GiB, local NVMe slot; `.agent-host.yaml`, 2026-11-14; commands as in `scripts/devloop-times.sh`, gate only): `cargo test --workspace --no-run` cold 118 s (what `warm.sh` does after boot); first `gate.sh -p lang-toml` after it 22 s; first `gate.sh --affected` after a `lang-toml` edit 183 s, the next one 54 s (nextest 30, `lang-csharp` 8, doctests 3, worker 4, the rest 1 or less); slot 14 GB; peak memory of one gate 6.1 GiB. Toolchain setup on a fresh host 41 s.
+
+Agent host types (2026-11-14, agent-host `hostbench.sh`: cold test build, then `gate.sh --rust-only --affected` after a `lang-toml` edit, alone and N at once in N slots; peak = system memory in use): c8gd.2xlarge (8 Graviton4, 16 GiB) 117 s, gate 37 s, 3 at once 103 s (10.3 GiB), 4 run out of memory; m8gd.2xlarge (32 GiB) the same times, 4 at once 133 s (14.6 GiB); c8gd.4xlarge (16 cores) 62 s, 31 s, 3 at once 81 s, 4 at once 102 s; c7gd.2xlarge (Graviton3) 162 s, 50 s, 3 at once 154 s (13.4 GiB). Hence `agent_memory_gib: 4` (3 agents on 16 GiB, 4 on 32 GiB); gates are bound by per-core speed, not memory or core count.
 
 Slot size: 240-266 GB before pruning the outputs of earlier worktrees, 56-70 GB after; the WSL bench cache 33 GB, 16 GB without its dead directories.
 
