@@ -1,0 +1,7 @@
+[sqruff]
+templater = jinja
+dialect = ansi
+
+[sqruff:templater:jinja]
+apply_dbt_builtins = True
+load_macros_from_path = macros

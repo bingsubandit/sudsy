@@ -1,0 +1,143 @@
+rule: LT12
+
+test_pass_empty_file:
+  # An empty file has no content to enforce a trailing newline on and must not
+  # raise an error (nor an exception).
+  # https://github.com/sqlfluff/sqlfluff/issues/4807
+  pass_str: ""
+
+test_pass_single_final_newline:
+  pass_str: "SELECT foo FROM bar\n"
+
+test_fail_no_final_newline:
+  fail_str: "SELECT foo FROM bar"
+  fix_str: "SELECT foo FROM bar\n"
+
+test_fail_multiple_final_newlines:
+  fail_str: "SELECT foo FROM bar\n\n"
+  fix_str: "SELECT foo FROM bar\n"
+
+test_pass_templated_plus_raw_newlines:
+  pass_str: "{{ '\n\n' }}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_consume_whitespace:
+  pass_str: "select * from {{ 'trim_whitespace_table' -}}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_consume_whitespace_nothing:
+  fail_str: "select * from {{ 'trim_whitespace_table' -}}"
+  fix_str: "select * from {{ 'trim_whitespace_table' -}}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_consume_whitespace_whitespace:
+  fail_str: "select * from {{ 'trim_whitespace_table' -}}   "
+  fix_str: "select * from {{ 'trim_whitespace_table' -}}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_consume_whitespace_extra:
+  fail_str: "select * from {{ 'trim_whitespace_table' -}}\n\n\n"
+  fix_str: "select * from {{ 'trim_whitespace_table' -}}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_plus_raw_newlines:
+  ignored: "jinja is not set"
+  fail_str: "{{ '\n\n' }}"
+  fix_str: "{{ '\n\n' }}\n"
+
+test_fail_templated_plus_raw_newlines_extra_newline:
+  ignored: "jinja is not set"
+  fail_str: "{{ '\n\n' }}\n\n"
+  fix_str: "{{ '\n\n' }}\n"
+
+test_pass_templated_macro_newlines:
+  # Tricky because the rendered code ends with two newlines:
+  # - Literal newline inserted by the macro
+  # - Literal newline at the end of the file
+  # The slicing algorithm should treat the first newline as "templated" because
+  # it was inserted when *expanding* the templated macro call.
+  pass_str: |
+    {% macro get_keyed_nulls(columns) %}
+      {{ columns }}
+    {% endmacro %}
+    SELECT {{ get_keyed_nulls("other_id") }}
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_block_tag_final_newline:
+  # The newline before endif belongs to the block, not to the source EOF.
+  pass_str: "{% if true %}\nselect 1 as x\n{% endif %}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_block_tag_missing_final_newline:
+  fail_str: "{% if true %}\nselect 1 as x\n{% endif %}"
+  expect_no_fix: true
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_block_tag_extra_final_newline:
+  fail_str: "{% if true %}\nselect 1 as x\n{% endif %}\n\n"
+  expect_no_fix: true
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_comment_final_newline:
+  pass_str: "select 1 as x\n{# end #}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_comment_extra_final_newline:
+  fail_str: "select 1 as x\n{# end #}\n\n"
+  expect_no_fix: true
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_loop_final_newline:
+  pass_str: "{% for i in [1, 2] %}\nselect 1 as x;\n{% endfor %}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_nested_blocks_final_newline:
+  pass_str: "{% if true %}\n{% if true %}\nselect 1 as x\n{% endif %}\n{% endif %}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_block_tag_consumed_final_newline:
+  pass_str: "{% if true %}\nselect 1 as x\n{% endif -%}\n"
+  configs:
+    core:
+      templater: jinja
+
+test_pass_templated_loop_repeated_newline:
+  pass_str: |
+    {% for i in [1, 2] %}
+    {% endfor %}
+  configs:
+    core:
+      templater: jinja
+
+test_fail_templated_no_newline:
+  ignored: "jinja is not set"
+  # Tricky because there's no newline at the end of the file (following the
+  # templated code).
+  fail_str: "{% if true %}\nSELECT 1 + 1\n{%- endif %}"
+  fix_str: "{% if true %}\nSELECT 1 + 1\n{%- endif %}\n"

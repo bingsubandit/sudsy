@@ -128,3 +128,9 @@ opt-level = 1
 [profile.corpus]
 inherits = "release"
 debug-assertions = true
+
+[profile.release.package.sqruff-lib-dialects]
+opt-level = "z"
+
+[patch.crates-io]
+sqruff-lib = { path = "sqruff-lib-v" }

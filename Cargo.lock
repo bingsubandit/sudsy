@@ -3597,8 +3597,6 @@ dependencies = [
 [[package]]
 name = "sqruff-lib"
 version = "0.44.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc423da810879204e0c96912ea2364373f3b47922c30d505ecea817c02453661"
 dependencies = [
  "common-path",
  "configparser",
