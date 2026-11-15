@@ -127,9 +127,20 @@ fn normalized(t: &SyntaxToken) -> Cow<'_, str> {
             s[1..s.len() - 1].to_string().into()
         }
         k::URL => text::url(s).to_ascii_lowercase().into(),
+        // The value of an attribute selector (`[a=B]`) keeps its case and gets quotes.
+        k::IDENT if after_equals(t) => s.into(),
         k::IDENT | k::HASH | k::AT_KEYWORD => s.to_ascii_lowercase().into(),
         _ => s.into(),
     }
+}
+
+/// Does `=` come right before the token (blanks apart)?
+fn after_equals(t: &SyntaxToken) -> bool {
+    let mut prev = t.prev_token();
+    while let Some(p) = prev.as_ref().filter(|p| value::is_trivia(p.kind())) {
+        prev = p.prev_token();
+    }
+    prev.is_some_and(|p| p.text() == "=")
 }
 
 fn has_comments(node: &SyntaxNode) -> bool {
@@ -210,12 +221,20 @@ impl Pr<'_, '_> {
     /// The comments before a statement, each on its own line; `blank`: a blank line after the
     /// last one stays (not before a `{`).
     fn lead(&self, tok: &SyntaxToken, blank: bool) -> Doc {
+        self.lead_with(tok, blank, false)
+    }
+
+    /// `lead`; `inline`: block comments stay on the line of what follows (the parameters of an
+    /// at-rule, where a comment on its own line would be read back as trailing the name).
+    fn lead_with(&self, tok: &SyntaxToken, blank: bool, inline: bool) -> Doc {
         let mut parts = Vec::new();
         let all = comments::leading_comments(self.cx.grammar, tok);
         for (i, c) in all.iter().enumerate() {
             parts.push(comment_doc(c));
             // Block comments on one line stay on it.
-            if i + 1 < all.len() && c.kind == comments::CommentKind::Block && c.breaks_after == 0 {
+            if c.kind == comments::CommentKind::Block
+                && (inline || i + 1 < all.len() && c.breaks_after == 0)
+            {
                 parts.push(doc::lit(" "));
                 continue;
             }
@@ -230,6 +249,15 @@ impl Pr<'_, '_> {
     /// A prelude, property or value node printed by `print`; kept as written when it holds a
     /// comment inside or `print` gives up.
     fn node_with(&self, node: &SyntaxNode, print: impl FnOnce(&[Item]) -> Option<Doc>) -> Doc {
+        self.node_with_lead(node, false, print)
+    }
+
+    fn node_with_lead(
+        &self,
+        node: &SyntaxNode,
+        inline: bool,
+        print: impl FnOnce(&[Item]) -> Option<Doc>,
+    ) -> Doc {
         let cx = self.cx;
         let body = if unhandled_comments(node, Some(node.text_range())) {
             None
@@ -238,7 +266,7 @@ impl Pr<'_, '_> {
         };
         match (body, cx.first_token(node), cx.last_token(node)) {
             (Some(body), Some(first), Some(last)) => doc::concat(vec![
-                self.lead(&first, true),
+                self.lead_with(&first, true, inline),
                 body,
                 cx.trailing_comments_doc(&last),
             ]),
@@ -333,8 +361,22 @@ impl Pr<'_, '_> {
             } else {
                 doc::text(name.clone())
             },
-            cx.trailing_comments_doc(&kw),
         ];
+        // A line comment after the name ends its line, the parameters start on the next.
+        let kw_comments = comments::trailing_comments(cx.grammar, &kw);
+        let line_after_name = prelude.is_some()
+            && kw_comments
+                .iter()
+                .any(|c| c.kind == comments::CommentKind::Line);
+        if line_after_name {
+            for c in &kw_comments {
+                parts.push(doc::lit(" "));
+                parts.push(comment_doc(c));
+            }
+            parts.push(doc::hardline());
+        } else {
+            parts.push(cx.trailing_comments_doc(&kw));
+        }
         if let Some(p) = &prelude {
             if variable && block.is_some() && pitems.len() == 1 {
                 parts.push(doc::lit(":"));
@@ -349,9 +391,10 @@ impl Pr<'_, '_> {
                     soft_start: false,
                     ..St::value(true)
                 };
+                parts.push(doc::lit(" "));
                 parts.push(self.declaration_value(&pitems[1..], st, ""));
             } else {
-                if !call {
+                if !call && !line_after_name {
                     parts.push(doc::lit(" "));
                 }
                 parts.push(if css && name != "@charset" && !call {
@@ -361,9 +404,9 @@ impl Pr<'_, '_> {
                         ctrl,
                         ..St::params()
                     };
-                    self.node_with(p, |i| Some(self.list(i, st)))
+                    self.node_with_lead(p, true, |i| Some(self.list(i, st)))
                 } else {
-                    self.node_with(p, |i| {
+                    self.node_with_lead(p, true, |i| {
                         if i.iter().any(|t| t.tok(k::LINE_COMMENT).is_some()) {
                             return None;
                         }
@@ -393,7 +436,21 @@ impl Pr<'_, '_> {
                     let lead = cx
                         .first_token(&block)
                         .is_some_and(|o| !comments::leading_comments(cx.grammar, &o).is_empty());
-                    parts.push(if lead { doc::hardline() } else { doc::lit(" ") });
+                    // A line comment in the parameters is written after them, before the `{`.
+                    let line_comment = prelude.as_ref().is_some_and(|p| {
+                        p.descendants_with_tokens()
+                            .filter_map(|e| e.into_token())
+                            .any(|t| {
+                                comments::trailing_comments(cx.grammar, &t)
+                                    .iter()
+                                    .any(|c| c.kind == comments::CommentKind::Line)
+                            })
+                    });
+                    parts.push(if lead || line_comment {
+                        doc::hardline()
+                    } else {
+                        doc::lit(" ")
+                    });
                 }
                 parts.push(self.block(&block)?);
                 // A Less detached ruleset (`@name: { }`) ends with `;`.
@@ -552,11 +609,40 @@ impl Pr<'_, '_> {
                 .rposition(|i| i.tok(k::COMMENT).is_none() && i.tok(k::LINE_COMMENT).is_none())
                 .map_or(vitems.len(), |p| p + 1),
         };
+        // Line comments first in a value (no comma list) stay after the colon, the rest is indented
+        // below them: the layout of a value with its comments after the colon.
+        let comments = vitems[..keep]
+            .iter()
+            .take_while(|i| i.tok(k::LINE_COMMENT).is_some())
+            .count();
+        let value_doc = if comments > 0
+            && comments < keep
+            && colon.is_none()
+            && !vitems[..keep].iter().any(|i| i.tok(k::COMMA).is_some())
+        {
+            let mut lines = Vec::new();
+            for c in &vitems[1..comments] {
+                lines.push(doc::hardline());
+                lines.push(self.value_token(c.token()));
+            }
+            lines.push(doc::hardline());
+            lines.push(self.declaration_value(&vitems[comments..keep], st, ";"));
+            doc::concat(vec![
+                doc::lit(" "),
+                self.value_token(vitems[0].token()),
+                doc::indent(doc::concat(lines)),
+            ])
+        } else {
+            doc::concat(vec![
+                doc::lit(" "),
+                self.declaration_value(&vitems[..keep], st, ";"),
+            ])
+        };
         let mut parts = vec![
             self.lead(&first, true),
             doc::text(name.clone()),
             colon.map_or(doc::lit(":"), doc::text),
-            self.declaration_value(&vitems[..keep], st, ";"),
+            value_doc,
             semi.map_or(Doc::Nil, |semi| self.trail(&semi)),
         ];
         for c in &vitems[keep..] {
@@ -626,12 +712,7 @@ impl Pr<'_, '_> {
         flags.reverse();
         let vitems = &vitems[..n];
         let value = self.list(vitems, st);
-        doc::concat(vec![
-            doc::lit(" "),
-            value,
-            doc::text(flags.concat()),
-            doc::text(end),
-        ])
+        doc::concat(vec![value, doc::text(flags.concat()), doc::text(end)])
     }
 
     /// A stray `;` with comments: they stay around it.

@@ -32,12 +32,14 @@ pub fn split_number(s: &str) -> (String, &str) {
         i = end;
     }
     let mut exp = String::new();
-    if matches!(b.get(i), Some(b'e' | b'E')) {
-        let sign_len = usize::from(matches!(b.get(i + 1), Some(b'+' | b'-')));
-        if b.get(i + 1 + sign_len).is_some_and(u8::is_ascii_digit) {
-            let end = digits(i + 1 + sign_len);
-            let neg = b[i + 1] == b'-';
-            let n = s[i + 1 + sign_len..end].trim_start_matches('0');
+    // `1.e1` is `1e1`.
+    let j = i + usize::from(b.get(i) == Some(&b'.'));
+    if matches!(b.get(j), Some(b'e' | b'E')) {
+        let sign_len = usize::from(matches!(b.get(j + 1), Some(b'+' | b'-')));
+        if b.get(j + 1 + sign_len).is_some_and(u8::is_ascii_digit) {
+            let end = digits(j + 1 + sign_len);
+            let neg = b[j + 1] == b'-';
+            let n = s[j + 1 + sign_len..end].trim_start_matches('0');
             if !n.is_empty() {
                 exp = format!("e{}{n}", if neg { "-" } else { "" });
             }

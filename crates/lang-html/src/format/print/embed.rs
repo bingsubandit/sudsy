@@ -2,7 +2,7 @@
 //! values of `style`, `srcset` and event-handler attributes. The engine formats the code
 //! (`Opts::embed`); this module lays the lines out. Code that does not parse stays as written.
 
-use super::{P, dedent, s, trim_preserve_indentation, unescape_quotes};
+use super::{Embed, P, dedent, s, starts_in_template, trim_preserve_indentation, unescape_quotes};
 use crate::format::model::{Dialect, N};
 use core_format::EmbedMode;
 use core_format::context::verbatim_text;
@@ -56,8 +56,8 @@ fn style_language(n: &N) -> Option<&'static str> {
 /// The lines of `code` one per line, except the lines that start inside a template literal: their
 /// indentation is part of the string and stays.
 fn lines(code: &str) -> Doc {
-    let (mut chunks, mut inside) = (Vec::<String>::new(), false);
-    for line in code.split('\n') {
+    let mut chunks = Vec::<String>::new();
+    for (line, inside) in code.split('\n').zip(starts_in_template(code)) {
         match chunks.last_mut() {
             Some(last) if inside => {
                 last.push('\n');
@@ -65,16 +65,23 @@ fn lines(code: &str) -> Doc {
             }
             _ => chunks.push(line.to_string()),
         }
-        let mut escaped = false;
-        for c in line.chars() {
-            match c {
-                '\\' => escaped = !escaped,
-                '`' if !escaped => inside = !inside,
-                _ => escaped = false,
-            }
-        }
     }
     doc::join(&doc::hardline(), chunks.iter().map(|c| verbatim_text(c)))
+}
+
+/// An event handler: an expression when it parses as one (`f();` is the expression `f()` too), else
+/// statements; statements that format to one expression (`fn => x` gets its parentheses) are one,
+/// so that formatting again gives the same text.
+fn handler(embed: Embed, language: &str, value: &str, width: usize) -> Option<(String, bool)> {
+    let expr = |code: &str| embed(language, EmbedMode::Expression, code, width, true);
+    if let Some(out) = expr(value.trim_end().trim_end_matches(';')) {
+        return Some((out, false));
+    }
+    let out = embed(language, EmbedMode::Program, value, width, true)?;
+    Some(match expr(out.trim_end().trim_end_matches(';')) {
+        Some(one) => (one, false),
+        None => (out, true),
+    })
 }
 
 /// `name="` body `"`: the body stays on the line when it fits, else it is indented on lines of
@@ -169,17 +176,18 @@ impl P<'_> {
             }
             _ => return None,
         };
-        // A handler is an expression when it parses as one, else statements.
-        let first = (mode == EmbedMode::Program)
-            .then(|| {
-                // `f();` is the expression `f()` too.
-                let one = value.trim_end().trim_end_matches(';');
-                embed(language, EmbedMode::Expression, one, width, true)
-            })
-            .flatten();
-        let (mode, out) = match first {
-            Some(out) => (EmbedMode::Expression, out),
-            None => (mode, embed(language, mode, &value, width, true)?),
+        let (out, mode) = if mode == EmbedMode::Program {
+            let (out, statements) = handler(embed, language, &value, width)?;
+            (
+                out,
+                if statements {
+                    mode
+                } else {
+                    EmbedMode::Expression
+                },
+            )
+        } else {
+            (embed(language, mode, &value, width, true)?, mode)
         };
         if out.is_empty() {
             return None;
@@ -233,12 +241,18 @@ impl P<'_> {
                 false,
             )
         });
+        // An expression that is not formatted keeps its lines, with the indentation they share
+        // removed so that formatting again does not indent them further.
+        let kept = || match code.split_once('\n') {
+            Some((first, rest)) => format!("{first}\n{}", dedent(rest)),
+            None => code.to_string(),
+        };
         let borrowed = n.next.is_some_and(|x| self.borrow_prev_close_end(x));
         doc::concat(vec![
             s(self.open_start(id)),
             doc::indent(doc::concat(vec![
                 doc::line(),
-                lines(out.as_deref().unwrap_or(code)),
+                lines(&out.unwrap_or_else(kept)),
             ])),
             if borrowed { s(" ") } else { doc::line() },
             s(self.close_end(id)),
@@ -263,10 +277,7 @@ impl P<'_> {
                 return v_for(value, expr).map(|o| (o, false));
             }
             if lower.starts_with('@') || key == "v-on" {
-                let one = value.trim_end().trim_end_matches(';');
-                return expr(one).map(|o| (o, false)).or_else(|| {
-                    embed(language, EmbedMode::Program, value, width, true).map(|o| (o, true))
-                });
+                return handler(embed, language, value, width);
             }
             expr(value).map(|o| (o, false))
         };
@@ -373,7 +384,9 @@ impl P<'_> {
 
     /// `{#if x}`, `{:else}`...: the condition of `if`, `else if` and `key` is formatted.
     fn branch_tag(&self, id: usize, tag: &str) -> Doc {
-        let inner = tag.trim_start_matches('{').trim_end_matches('}').trim();
+        // One brace each side: a destructuring pattern ends in `}}`.
+        let inner = tag.strip_prefix('{').unwrap_or(tag);
+        let inner = inner.strip_suffix('}').unwrap_or(inner).trim();
         let formatted = ["#if ", ":else if ", "#key "].iter().find_map(|p| {
             let out = self.format_expression(id, inner.strip_prefix(p)?.trim())?;
             Some(doc::concat(vec![s(format!("{{{p}")), lines(&out), s("}")]))
@@ -424,9 +437,8 @@ impl P<'_> {
 
 impl P<'_> {
     /// A root block of a Vue file that is not markup: formatted by its `lang` or `type`, else kept.
-    pub(super) fn custom_block_doc(&self, id: usize) -> Doc {
+    pub(super) fn custom_block_formatted(&self, id: usize) -> Option<Doc> {
         let n = self.n(id);
-        let raw = verbatim_text(&self.t.src[n.start..n.end]);
         let language = match (attr(n, "lang"), attr(n, "type")) {
             (Some("json"), _) | (None, Some("application/json")) => "json",
             (Some("yaml" | "yml"), _) => "yaml",
@@ -434,22 +446,22 @@ impl P<'_> {
             (Some("md" | "markdown"), _) => "markdown",
             (Some("js" | "javascript"), _) => "js",
             (Some("ts" | "typescript"), _) => "ts",
-            _ => return raw,
+            _ => return None,
         };
         let (Some(embed), Some(close), true) = (self.o.embed, n.close_start, n.name != "template")
         else {
-            return raw;
+            return None;
         };
         let code = dedent(trim_preserve_indentation(&self.t.src[n.tag_end..close]));
         match embed(language, EmbedMode::Program, &code, self.o.width, false) {
-            Some(out) if !out.is_empty() => doc::concat(vec![
+            Some(out) if !out.is_empty() => Some(doc::concat(vec![
                 verbatim_text(&self.t.src[n.start..n.tag_end]),
                 doc::hardline(),
                 lines(&out),
                 doc::hardline(),
                 s(format!("</{}>", n.name)),
-            ]),
-            _ => raw,
+            ])),
+            _ => None,
         }
     }
 }

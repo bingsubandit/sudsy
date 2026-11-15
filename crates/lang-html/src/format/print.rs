@@ -67,16 +67,44 @@ fn trim_preserve_indentation(v: &str) -> &str {
     v
 }
 
+/// Per line of `code`: does it start inside a template literal (its indentation is part of the
+/// string)?
+fn starts_in_template(code: &str) -> Vec<bool> {
+    let (mut inside, mut escaped) = (false, false);
+    code.split('\n')
+        .map(|line| {
+            let start = inside;
+            for c in line.chars() {
+                match c {
+                    '\\' => escaped = !escaped,
+                    '`' if !escaped => inside = !inside,
+                    _ => escaped = false,
+                }
+            }
+            start
+        })
+        .collect()
+}
+
+/// `v` without the indentation all its lines share; the lines inside a template literal stay.
 fn dedent(v: &str) -> String {
     let indent = |l: &str| l.chars().take_while(|c| matches!(c, ' ' | '\t')).count();
-    let min = v
-        .lines()
-        .filter(|l| !l.trim().is_empty())
-        .map(indent)
+    let inside = starts_in_template(v);
+    let code = || v.split('\n').zip(&inside).filter(|(_, i)| !**i);
+    let min = code()
+        .filter(|(l, _)| !l.trim().is_empty())
+        .map(|(l, _)| indent(l))
         .min()
         .unwrap_or(0);
     v.split('\n')
-        .map(|l| l.chars().skip(min.min(indent(l))).collect::<String>())
+        .zip(&inside)
+        .map(|(l, i)| {
+            if *i {
+                l.to_string()
+            } else {
+                l.chars().skip(min.min(indent(l))).collect::<String>()
+            }
+        })
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -429,30 +457,37 @@ impl P<'_> {
         }
     }
 
+    /// The node as in the source, but for the markers its neighbors borrow.
+    fn as_written(&self, id: usize) -> Doc {
+        let n = self.n(id);
+        let start = n.start
+            + if n.prev.is_some_and(|p| self.borrow_next_open_start(p)) {
+                self.open_start_marker(id).len()
+            } else {
+                0
+            };
+        let end = n.end
+            - if n.next.is_some_and(|x| self.borrow_prev_close_end(x)) {
+                self.close_end_marker(id).len()
+            } else {
+                0
+            };
+        doc::concat(vec![
+            s(self.open_prefix(id)),
+            verbatim_text(&self.t.src[start..end.max(start)]),
+            s(self.close_suffix(id)),
+        ])
+    }
+
     // Nodes.
     fn print_child(&self, id: usize) -> Doc {
         if self.has_ignore(id) {
-            let n = self.n(id);
-            let start = n.start
-                + if n.prev.is_some_and(|p| self.borrow_next_open_start(p)) {
-                    self.open_start_marker(id).len()
-                } else {
-                    0
-                };
-            let end = n.end
-                - if n.next.is_some_and(|x| self.borrow_prev_close_end(x)) {
-                    self.close_end_marker(id).len()
-                } else {
-                    0
-                };
-            return doc::concat(vec![
-                s(self.open_prefix(id)),
-                verbatim_text(&self.t.src[start..end.max(start)]),
-                s(self.close_suffix(id)),
-            ]);
+            return self.as_written(id);
         }
         if self.custom_block(id) {
-            return self.custom_block_doc(id);
+            return self
+                .custom_block_formatted(id)
+                .unwrap_or_else(|| self.as_written(id));
         }
         match self.n(id).t {
             T::Element => self.element(id),

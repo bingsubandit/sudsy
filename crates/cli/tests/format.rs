@@ -332,3 +332,58 @@ fn missing_dotnet_is_one_clear_error_and_other_languages_continue() {
     assert!(stderr.contains("skipped"), "{stderr}");
     assert_eq!(read(t.path(), "a.json"), CLEAN);
 }
+
+/// Embedded code reaches a fixed point on its own output: template literals keep their lines, an
+/// interpolation that is not formatted is not indented further, an event handler that formats to
+/// one expression loses its `;`.
+#[test]
+fn embedded_html_and_vue_formats_are_fixed_points() {
+    let t = tempfile::tempdir().unwrap();
+    write(
+        t.path(),
+        "a.html",
+        "<script>\n    function f() {\n        return `\n      a\n    `;\n    }\n</script>\n<button onclick=\"a.b(c => d(c))\">x</button>\n",
+    );
+    write(
+        t.path(),
+        "a.vue",
+        "<template>\n<div>x{{\n\nx => {\n    const h = 'w'\n    return h;\n}\n}}</div>\n<b @click=\"[a].b(c => 1)\"></b>\n</template>\n",
+    );
+    assert_eq!(sudsy(t.path(), &[]).status.code(), Some(0));
+    let (html, vue) = (read(t.path(), "a.html"), read(t.path(), "a.vue"));
+    assert!(html.contains("`\n      a\n    `;"), "{html}");
+    assert!(html.contains("onclick=\"a.b((c) => d(c))\""), "{html}");
+    assert!(vue.contains("@click=\"[a].b((c) => 1)\""), "{vue}");
+    assert_eq!(
+        sudsy(t.path(), &["--check"]).status.code(),
+        Some(0),
+        "{html}{vue}"
+    );
+}
+
+/// The safety check accepts what the formatter rewrites in Vue and Svelte: the values of `.prop` and
+/// `slot-scope` attributes, root custom blocks without blanks between them, and a destructuring
+/// pattern in a block tag (`}}`).
+#[test]
+fn vue_and_svelte_rewrites_pass_the_safety_check() {
+    let t = tempfile::tempdir().unwrap();
+    write(
+        t.path(),
+        "a.vue",
+        "<template>\n<b .p=\"  a &&b \" slot-scope=\"  {row  }\"></b>\n</template>\n<docs lang=x></docs><docs lang=x></docs>\n",
+    );
+    write(
+        t.path(),
+        "a.svelte",
+        "{#each a as {  b, c }}\n  {b}\n{/each}\n{#await p then {  d }}\n  {d}\n{/await}\n",
+    );
+    let out = sudsy(t.path(), &[]);
+    assert_eq!(
+        out.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(read(t.path(), "a.vue").contains("</docs>\n<docs"));
+    assert!(read(t.path(), "a.svelte").contains("as { b, c }}"));
+}

@@ -372,6 +372,52 @@ fn rules_values_comments_and_ignore() {
     }
 }
 
+/// Comments after an at-rule's name, in its parameters and after a property's colon print as a
+/// fixed point (the shared checks format the output again).
+#[test]
+fn comments_in_at_rules_and_values_are_stable() {
+    for (file, input, expected) in [
+        (
+            "a.scss",
+            "@at-root // c\n.a {\n}\n",
+            "@at-root // c\n.a {\n}\n",
+        ),
+        (
+            "a.scss",
+            "@import // c\n\"a\",\n  \"b\";\n",
+            "@import // c\n\"a\", \"b\";\n",
+        ),
+        (
+            "a.css",
+            "@import /* a */\n  /* b */ url(a.css);\n",
+            "@import /* a */ /* b */ url(a.css);\n",
+        ),
+        (
+            "a.scss",
+            "@supports (a: b // c\n) {\n}\n",
+            "@supports (a: b) // c\n{\n}\n",
+        ),
+        (
+            "a.scss",
+            "a {\n  b:\n    // c\n    // d\n\n    e(f);\n}\n",
+            "a {\n  b: // c\n    // d\n    e(f);\n}\n",
+        ),
+    ] {
+        assert_eq!(format_with(file, input, &[]), expected, "{input}");
+    }
+}
+
+/// The safety check accepts `1.e1` as the number `1e1` and a quoted attribute value in its case.
+#[test]
+fn exponent_after_a_dot_and_attribute_value_case() {
+    for (input, expected) in [
+        ("a{b:1.e1 1.E+2}\n", "a {\n  b: 1e1 1e2;\n}\n"),
+        ("a[HREF=Keep]{}\n", "a[HREF=\"Keep\"] {\n}\n"),
+    ] {
+        assert_eq!(format_with("a.css", input, &[]), expected, "{input}");
+    }
+}
+
 #[test]
 fn options() {
     let single = [("single_quote", OptionValue::Bool(true))];

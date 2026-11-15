@@ -67,8 +67,9 @@ fn embedded_attribute(value: &core_syntax::SyntaxToken) -> bool {
         let n = n.text().to_ascii_lowercase();
         matches!(n.as_str(), "style" | "srcset" | "allow")
             || (n.len() > 2 && n.starts_with("on"))
-            || n.starts_with([':', '@', '#'])
+            || n.starts_with([':', '@', '#', '.'])
             || n.starts_with("v-")
+            || n == "slot-scope"
     })
 }
 

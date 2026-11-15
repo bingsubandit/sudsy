@@ -342,7 +342,15 @@ impl Lexer<'_> {
                 self.pos += 1;
             }
         }
-        if matches!(self.at(0), b'e' | b'E') {
+        // `1.e1` is the number `1e1`.
+        let dot = usize::from(
+            self.at(0) == b'.'
+                && matches!(self.at(1), b'e' | b'E')
+                && (self.at(2).is_ascii_digit()
+                    || matches!(self.at(2), b'+' | b'-') && self.at(3).is_ascii_digit()),
+        );
+        if matches!(self.at(dot), b'e' | b'E') {
+            self.pos += dot;
             let sign = usize::from(matches!(self.at(1), b'+' | b'-'));
             if self.at(1 + sign).is_ascii_digit() {
                 self.pos += 1 + sign;
