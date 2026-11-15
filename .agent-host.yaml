@@ -8,3 +8,9 @@ worktree_env:
   CARGO_TARGET_DIR: "{slot}"
   SUDSY_SLOT_MAX: 100GB
 busy_processes: [cargo, rustc, dotnet, node]
+metrics:  # command classes `ahost metrics` times per instance type, cold and warm
+  gate: 'scripts/gate\.sh'
+  finish: 'scripts/finish\.sh'
+  bench: 'scripts/bench\.sh'
+  parity: 'scripts/parity\.sh'
+  build: '\bcargo (build|test|nextest|clippy|check)\b'
