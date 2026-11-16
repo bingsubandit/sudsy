@@ -1,7 +1,7 @@
 // Java (up to 25: records, sealed types, switch patterns, text blocks), parsed by rezel-lang-java (a Lezer grammar port) behind crates/lang-java/src/adapter.rs; a node kind is a row named like rezel's node, tokens are rezel's leaves.
 // Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are loose: they name the parts, not every order.
 
-language java 21 "Java"
+language java 23 "Java"
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"

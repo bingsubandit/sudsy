@@ -1,0 +1,135 @@
+tool: "checkstyle"
+version: "google_checks.xml and sun_checks.xml (no differential runner yet: the rules are tested on fixtures under tests/rules/java)"
+languages: ["java"]
+sources:
+  - "https://checkstyle.org/checks.html"
+  - "https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_checks.xml"
+  - "https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/sun_checks.xml"
+scope: "The checks of Checkstyle's two shipped rule sets, google_checks.xml and sun_checks.xml, and the commonly used ones outside them. Bug-catching checks are on by default; style checks are off unless the preset `java/google` turns them on. The layout checks of the Whitespace, Blocks, Indentation and Imports groups are the formatter's job (google-java-format layout, docs/parity/google-java-format.yaml)."
+entries:
+  EmptyCatchBlock: rule empty-catch-block
+  StringLiteralEquality: rule string-literal-equality
+  SimplifyBooleanExpression: rule boolean-literal-comparison | Only a comparison with a boolean literal, not the double negation or the conditional forms.
+  EqualsHashCode: rule equals-hash-code | Only `equals` without `hashCode`, not the reverse.
+  MissingSwitchDefault: rule missing-switch-default
+  EmptyStatement: rule empty-statement | Only the body of an `if` or a loop.
+  UpperEll: rule upper-ell
+  ArrayTypeStyle: rule array-type-style
+  AvoidStarImport: rule avoid-star-import | No allow-list option.
+  NeedBraces: rule need-braces | No option for single-line bodies.
+  ModifierOrder: rule modifier-order | Annotations are not checked against the modifiers.
+  UnusedImports: rule unused-import | Names in Javadoc count as used; no option to turn that off.
+  PackageName: rule naming-convention
+  TypeName: rule naming-convention
+  MethodName: rule naming-convention
+  MemberName: rule naming-convention
+  ConstantName: rule naming-convention | A `static final` field or an interface field; no exceptions list.
+  ParameterName: rule naming-convention
+  CatchParameterName: rule naming-convention
+  LocalVariableName: rule naming-convention | No separate pattern for `for` variables.
+  LineLength: rule max-line-length | No ignore pattern for `package` and `import` lines.
+  NewlineAtEndOfFile: option java.format.final_newline
+  FileTabCharacter: option java.format.indent_style
+  Indentation: formatter
+  EmptyLineSeparator: formatter
+  LeftCurly: formatter
+  RightCurly: formatter
+  EmptyBlock: planned
+  WhitespaceAround: formatter
+  WhitespaceAfter: formatter
+  NoWhitespaceBefore: formatter
+  NoWhitespaceAfter: formatter
+  OperatorWrap: formatter
+  SeparatorWrap: formatter
+  GenericWhitespace: formatter
+  MethodParamPad: formatter
+  ParenPad: formatter
+  EmptyForIteratorPad: formatter
+  TypecastParenPad: formatter
+  OneStatementPerLine: formatter
+  NoLineWrap: formatter
+  CustomImportOrder: formatter | The order is google-java-format's (static first, then ASCII), not configurable.
+  ImportOrder: formatter | The order is google-java-format's (static first, then ASCII), not configurable.
+  RedundantImport: planned
+  IllegalImport: planned
+  MultipleVariableDeclarations: planned
+  OverloadMethodsDeclarationOrder: planned
+  VariableDeclarationUsageDistance: planned
+  AbbreviationAsWordInName: planned
+  LambdaParameterName: planned
+  ClassTypeParameterName: planned
+  MethodTypeParameterName: planned
+  InterfaceTypeParameterName: planned
+  RecordTypeParameterName: planned
+  PatternVariableName: planned
+  RecordComponentName: planned
+  StaticVariableName: planned
+  LocalFinalVariableName: planned
+  AnnotationLocation: planned
+  AnnotationUseStyle: planned
+  MissingOverride: planned
+  MissingDeprecated: planned
+  FallThrough: planned
+  InnerAssignment: planned
+  IllegalCatch: planned
+  IllegalThrows: planned
+  IllegalInstantiation: planned
+  ParameterAssignment: planned
+  ReturnCount: planned
+  NestedIfDepth: planned
+  NestedTryDepth: planned
+  CyclomaticComplexity: planned
+  BooleanExpressionComplexity: planned
+  ExplicitInitialization: planned
+  MagicNumber: planned
+  ParameterNumber: planned
+  MethodLength: planned
+  FileLength: planned
+  RedundantModifier: planned
+  FinalClass: planned
+  HideUtilityClassConstructor: planned
+  InterfaceIsType: planned
+  VisibilityModifier: planned
+  FinalParameters: planned
+  FinalLocalVariable: planned
+  DesignForExtension: planned
+  TodoComment: planned
+  ArrayTrailingComma: planned
+  AvoidNestedBlocks: planned
+  AvoidInlineConditionals: planned
+  CovariantEquals: planned
+  NoFinalizer: planned
+  NoClone: planned
+  OneTopLevelClass: planned
+  OuterTypeFilename: planned
+  PackageDeclaration: planned
+  UnnecessaryParentheses: planned
+  UnnecessarySemicolonAfterOuterTypeDeclaration: planned
+  UnnecessarySemicolonInEnumeration: planned
+  UnnecessarySemicolonInTryWithResources: planned
+  UnusedLocalVariable: planned
+  JavadocMethod: planned
+  JavadocType: planned
+  JavadocVariable: planned
+  JavadocStyle: planned
+  JavadocParagraph: planned
+  JavadocTagContinuationIndentation: planned
+  JavadocPackage: planned
+  SummaryJavadoc: planned
+  SingleLineJavadoc: planned
+  AtclauseOrder: planned
+  NonEmptyAtclauseDescription: planned
+  InvalidJavadocPosition: planned
+  MissingJavadocMethod: planned
+  MissingJavadocType: planned
+  MissingJavadocPackage: planned
+  TrailingComment: wontfix a style a comment can break
+  CommentsIndentation: formatter
+  UncommentedMain: wontfix project policy
+  Translation: wontfix project resource bundles
+  RegexpSingleline: wontfix pattern rules (`plugins.patterns`) do this
+  RegexpMultiline: wontfix pattern rules (`plugins.patterns`) do this
+  RegexpHeader: wontfix a license header check is project policy
+  SuppressWarningsHolder: config suppression comments
+  SuppressionFilter: config suppression comments and overrides
+  SuppressWithNearbyCommentFilter: config suppression comments

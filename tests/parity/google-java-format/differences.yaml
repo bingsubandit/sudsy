@@ -1,5 +1,5 @@
 differences:
-  layout-gaps: gap  about 16% of the real-world files differ in a detail. Imports are not sorted (gjf puts static first, then ASCII order), over-long line comments are not re-wrapped, a method chain inside a ternary or lambda body is indented differently, and comments in unusual places (inside arguments, between modifiers) stay where the source has them
+  layout-gaps: gap  about 16% of the real-world files differ in a detail. Over-long line comments are not re-wrapped, a method chain inside a ternary or lambda body is indented differently, and comments in unusual places (inside arguments, between modifiers) stay where the source has them
 files:
   real-world: layout-gaps
 ratchet:

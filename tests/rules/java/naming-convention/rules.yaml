@@ -1,0 +1,11 @@
+naming-convention:
+  level: warn
+  options:
+    packages: '^[a-z]+(\.[a-z][a-z0-9]*)*$'
+    types: '^[A-Z][a-zA-Z0-9]*$'
+    methods: '^[a-z][a-z0-9]\w*$'
+    members: '^[a-z][a-z0-9][a-zA-Z0-9]*$'
+    constants: '^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'
+    parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
+    catch_parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
+    locals: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'

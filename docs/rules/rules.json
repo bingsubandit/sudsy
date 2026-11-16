@@ -152,6 +152,7 @@
         }
       ],
       "presets": [
+        "java/google",
         "yaml/yamllint"
       ],
       "upstream": [
@@ -6436,7 +6437,8 @@
       "id": "naming-convention",
       "languages": [
         "graphql",
-        "hcl"
+        "hcl",
+        "java"
       ],
       "options": [
         {
@@ -6544,7 +6546,9 @@
           "type": "string"
         }
       ],
-      "presets": [],
+      "presets": [
+        "java/google"
+      ],
       "upstream": []
     },
     {
@@ -7059,6 +7063,397 @@
       "id": "empty-section",
       "languages": [
         "ini"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A declarator or parameter with C-style brackets after the name (Checkstyle ArrayTypeStyle).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  int a[], b;\n  int[] c;\n\n  void f(String s[], String[] t, int... u) {\n    int d[] = new int[1];\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 7,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 10,
+            "length": 10,
+            "line": 5
+          },
+          {
+            "column": 9,
+            "length": 16,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "array-type-style",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "An import with `*` (Checkstyle AvoidStarImport).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import java.util.*;\nimport static java.lang.Math.*;\n\nclass A {}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 1,
+            "length": 19,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 31,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "avoid-star-import",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "warn",
+      "description": "`x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 12,
+            "line": 9
+          },
+          {
+            "column": 25,
+            "length": 13,
+            "line": 9
+          }
+        ]
+      },
+      "fix": null,
+      "id": "boolean-literal-comparison",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 7,
+            "length": 5,
+            "line": 19
+          }
+        ]
+      },
+      "fix": null,
+      "id": "empty-catch-block",
+      "languages": [
+        "java",
+        "powershell"
+      ],
+      "options": [],
+      "presets": [
+        "powershell/psscriptanalyzer"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `;` that is the body of an `if` or a loop, such as `while (x);` (Checkstyle EmptyStatement).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 17,
+            "length": 1,
+            "line": 12
+          }
+        ]
+      },
+      "fix": null,
+      "id": "empty-statement",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "A class body that declares `boolean equals(Object)` and no `hashCode()`: equal objects get different hash codes (Checkstyle EqualsHashCode).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 3,
+            "length": 6,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "equals-hash-code",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `switch` statement with no `default` (Checkstyle MissingSwitchDefault).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 5,
+            "length": 6,
+            "line": 26
+          }
+        ]
+      },
+      "fix": null,
+      "id": "missing-switch-default",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "The modifiers of a declaration are not in the order of the Java Language Specification: `public protected private abstract default static sealed non-sealed final transient volatile synchronized native strictfp` (Checkstyle ModifierOrder). No fix: the check does not rewrite code.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  static public final int A = 1;\n  public static final int B = 1;\n  @Deprecated final private int c = 1;\n  private final @Deprecated int d = 1;\n  synchronized public void f() {}\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 10,
+            "length": 6,
+            "line": 2
+          },
+          {
+            "column": 21,
+            "length": 7,
+            "line": 4
+          },
+          {
+            "column": 16,
+            "length": 6,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "modifier-order",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "An `if`, `else`, `for`, `while` or `do` whose body is a single statement without braces (Checkstyle NeedBraces). `else if` is fine.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(boolean x, int[] xs) {\n    if (x) return;\n    if (x) {\n      g();\n    } else g();\n    if (x) {\n      g();\n    } else if (!x) {\n      g();\n    } else {\n      g();\n    }\n    for (int i = 0; i < 3; i++) g();\n    for (int v : xs) g();\n    while (x) g();\n    do g(); while (x);\n    for (int v : xs) {\n      g();\n    }\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 5,
+            "length": 2,
+            "line": 3
+          },
+          {
+            "column": 5,
+            "length": 2,
+            "line": 4
+          },
+          {
+            "column": 5,
+            "length": 3,
+            "line": 14
+          },
+          {
+            "column": 5,
+            "length": 3,
+            "line": 15
+          },
+          {
+            "column": 5,
+            "length": 5,
+            "line": 16
+          },
+          {
+            "column": 5,
+            "length": 2,
+            "line": 17
+          }
+        ]
+      },
+      "fix": null,
+      "id": "need-braces",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "`==` or `!=` with a string literal as an operand compares references (Checkstyle StringLiteralEquality).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 12,
+            "length": 8,
+            "line": 3
+          },
+          {
+            "column": 24,
+            "length": 19,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "string-literal-equality",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "warn",
+      "description": "An import whose name is not used in the file, not even in a Javadoc comment (Checkstyle UnusedImports). Imports with `*` are not checked. No fix: removing an import can change which class a name means.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import java.util.List;\nimport java.util.Map;\nimport java.util.Set;\nimport java.io.*;\nimport static java.lang.Math.max;\nimport static java.lang.Math.min;\n\n/** Uses {@link Set}. */\nclass A {\n  List<String> xs;\n\n  int f() {\n    return max(1, 2);\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 1,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-import",
+      "languages": [
+        "java",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "python/ruff"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "An integer literal that ends in a lower case `l` (Checkstyle UpperEll).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 16,
+            "length": 3,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "upper-ell",
+      "languages": [
+        "java"
       ],
       "options": [],
       "presets": [],
@@ -10514,39 +10909,6 @@
       },
       "fix": null,
       "id": "approved-verbs",
-      "languages": [
-        "powershell"
-      ],
-      "options": [],
-      "presets": [
-        "powershell/psscriptanalyzer"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A `catch` clause whose block has no statement (a comment does not count).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "function Fetch-Data {\n    param(\n        [string]$Password,\n        [Parameter(Mandatory)][string] $UserPassphrase = 'x',\n        [securestring]$Secret,\n        [string]$Name,\n        [switch]$Force = $true,\n        [switch]$Quiet\n    )\n    try { Get-Item x } catch { }\n    try { Get-Item x } catch {\n        # ignored\n    }\n    try { Get-Item x } catch { Write-Error $_ }\n    try { 1 } catch { try { 2 } catch { throw } }\n}\nfunction Get-Thing { }\nfunction Fetch { }\nfunction global:Make-Thing { }\n$global:count = 1\n$x = $global:count + 1\nSet-Item $env:Path -Value $Global:Foo\n$script:count = 1\n$input = 1\n$true = 0\n$count = 1\n$x -eq $null\n$null -eq $x\nif ($a -ne $null -and $b -ceq $null) { }\n$x -eq $nullable\n$null = 1\n$global:LASTEXITCODE = 1\nforeach ($Event in 1) { }\nfunction Show-It($Error, [string]$Credential) { }\n",
-        "language": "powershell",
-        "spans": [
-          {
-            "column": 24,
-            "length": 9,
-            "line": 10
-          },
-          {
-            "column": 24,
-            "length": 1,
-            "line": 11
-          }
-        ]
-      },
-      "fix": null,
-      "id": "empty-catch-block",
       "languages": [
         "powershell"
       ],
@@ -14038,59 +14400,6 @@
       },
       "fix": null,
       "id": "unused-annotation",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "An import that nothing in its scope reads and that `__all__` does not name (a redundant alias `import a as a` is a re-export).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import os\nimport sys\nimport json as json\nimport a.b\nimport a.c\nfrom m import n, o as p\nfrom . import q\nfrom __future__ import annotations\nfrom k import *\n\nimport re\nimport re\n\n\ndef f():\n    import sys\n    return sys\n\n\nfor os in []:\n    pass\n\n\nclass C:\n    import unused_in_class\n\n\ntry:\n    import t\nexcept ImportError:\n    t = None\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 8,
-            "length": 3,
-            "line": 2
-          },
-          {
-            "column": 8,
-            "length": 3,
-            "line": 5
-          },
-          {
-            "column": 15,
-            "length": 1,
-            "line": 6
-          },
-          {
-            "column": 23,
-            "length": 1,
-            "line": 6
-          },
-          {
-            "column": 15,
-            "length": 1,
-            "line": 7
-          },
-          {
-            "column": 8,
-            "length": 2,
-            "line": 12
-          }
-        ]
-      },
-      "fix": null,
-      "id": "unused-import",
       "languages": [
         "python"
       ],

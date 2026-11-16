@@ -3,6 +3,9 @@
 One line each; none is committed, except the small tasks below.
 
 ## Small tasks
+- Java: generalization step ([architecture/adding-a-language.md](architecture/adding-a-language.md#after-a-language-lands-the-generalization-step)).
+- Java formatter gaps (named in `tests/parity/google-java-format/differences.yaml`, 84.4% identical): re-wrap line comments over the width and write `//x` as `// x`; drop `()` from `@A()` (the safety check compares node kinds, so the token pair needs `#optional`); indent a chain in a ternary condition one level more; AOSP's import groups.
+- Java lint: the `planned` entries of `docs/parity/checkstyle.yaml` (`FallThrough`, `InnerAssignment`, `MultipleVariableDeclarations`, Javadoc checks, `RedundantModifier`, metrics); a differential runner against Checkstyle needs a JVM, so the shared JRE helper of the Kotlin step first.
 - Angular: files other than `*.component.html` (`app.html`) are plain HTML, and `overrides` cannot map a glob to a language; a `languages`-style file association (glob to language and dialect) would let a project choose.
 Committed work too small for a step of its own: what to do and where, one line each. Once the list holds about a step's worth (5 or more related items, or a day of work), the lead hands it to one agent as a single step; the commit that does an item deletes its line. Bugs go to [bugs.md](bugs.md) instead.
 - Pattern rules (`core-patterns`): each rule compiles its regexes at load, about 430 allocations per rule; 35 Vue rules as pattern rules cost vue lint +110% instructions, so they became the Rust `template` family. Share or lazily build the regexes so pattern rules stay the cheap default (measure with the html/vue lint bench).

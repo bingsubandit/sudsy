@@ -1,0 +1,7 @@
+empty-catch-block: warn
+string-literal-equality: warn
+boolean-literal-comparison: warn
+equals-hash-code: warn
+missing-switch-default: warn
+empty-statement: warn
+upper-ell: warn

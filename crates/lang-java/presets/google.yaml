@@ -1,0 +1,26 @@
+# Google's Java style guide as Checkstyle's google_checks.xml reads it (the checks Sudsy has; the
+# rest are in docs/parity/checkstyle.yaml). The layout is google-java-format's, the default.
+java:
+  format:
+    indent_size: 2
+    line_width: 100
+  lint:
+    rules:
+      array-type-style: warn
+      avoid-star-import: warn
+      modifier-order: warn
+      need-braces: warn
+      max-line-length:
+        level: warn
+        options:
+          max: 100
+      naming-convention:
+        level: warn
+        options:
+          packages: '^[a-z]+(\.[a-z][a-z0-9]*)*$'
+          types: '^[A-Z][a-zA-Z0-9]*$'
+          methods: '^[a-z][a-z0-9]\w*$'
+          members: '^[a-z][a-z0-9][a-zA-Z0-9]*$'
+          parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
+          catch_parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
+          locals: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'

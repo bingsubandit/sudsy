@@ -1,0 +1,81 @@
+id: empty-catch-block
+message: 'the catch block is empty: handle the exception or say in a comment why it is ignored'
+description: >-
+  A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock).
+example: 'try { f(); } catch (Exception e) { }'
+severity: warn
+category: suspicious
+rule: { kind: CatchClause, child: { kind: Block, regex: '^\{\s*\}$' } }
+report-on: first-token
+---
+id: string-literal-equality
+message: 'strings are compared with `equals`, not `==` or `!=`'
+description: >-
+  `==` or `!=` with a string literal as an operand compares references (Checkstyle
+  StringLiteralEquality).
+example: 'if (s == "a") {}'
+severity: warn
+category: correctness
+rule:
+  kind: BinaryExpression
+  regex: '^(?:[^|&]*[=!]=\s*"(?:[^"\\]|\\.)*"|"(?:[^"\\]|\\.)*"\s*[=!]=[^|&]*)$'
+---
+id: boolean-literal-comparison
+message: 'comparing with a boolean literal is redundant: use the expression itself or `!`'
+description: >-
+  `x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression).
+example: 'if (done == true) {}'
+severity: warn
+category: cleanup
+rule:
+  kind: BinaryExpression
+  regex: '^(?:[^|&]*[=!]=\s*(?:true|false)|(?:true|false)\s*[=!]=[^|&]*)$'
+---
+id: equals-hash-code
+message: 'the class defines `equals(Object)` but not `hashCode()`'
+description: >-
+  A class body that declares `boolean equals(Object)` and no `hashCode()`: equal objects get
+  different hash codes (Checkstyle EqualsHashCode).
+example: 'class A { public boolean equals(Object o) { return true; } }'
+severity: warn
+category: correctness
+rule:
+  kind: MethodDeclaration
+  regex: '^[^{(]*\bboolean\s+equals\s*\(\s*(final\s+)?(java\.lang\.)?Object\s+\w+\s*\)'
+  parent:
+    kind: ClassBody
+    not: { child: { kind: MethodDeclaration, regex: '^[^{(]*\bint\s+hashCode\s*\(\s*\)' } }
+report-on: first-token
+---
+id: missing-switch-default
+message: 'the switch has no `default` label'
+description: >-
+  A `switch` statement with no `default` (Checkstyle MissingSwitchDefault).
+example: 'switch (x) { case 1: f(); }'
+severity: warn
+category: suspicious
+rule:
+  kind: SwitchStatement
+  not-has: { kind: SwitchLabel, regex: '^default\b' }
+report-on: first-token
+---
+id: empty-statement
+message: 'a lone `;` is an empty statement'
+description: >-
+  A `;` that is the body of an `if` or a loop, such as `while (x);` (Checkstyle EmptyStatement).
+example: 'while (x);'
+severity: warn
+category: suspicious
+rule:
+  any: [{ kind: IfStatement }, { kind: WhileStatement }, { kind: ForStatement }, { kind: EnhancedForStatement }]
+token: { kind: [Semi] }
+---
+id: upper-ell
+message: 'write the long suffix as `L`: `l` looks like `1`'
+description: >-
+  An integer literal that ends in a lower case `l` (Checkstyle UpperEll).
+example: 'long x = 10l;'
+severity: warn
+category: suspicious
+rule: { kind: Program }
+token: { kind: [Number], regex: '^[0-9][0-9a-fA-FxXbB_]*l$', deep: true }

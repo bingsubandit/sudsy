@@ -24,6 +24,16 @@ pub struct JavaFormatter;
 pub(super) type R = Result<Doc, FormatError>;
 
 impl NodeFormatter for JavaFormatter {
+    fn rewrite_source(
+        &self,
+        tree: &SyntaxNode,
+        text: &str,
+        _: &core_syntax::Grammar,
+        _: &core_config::ResolvedOptions,
+    ) -> Option<String> {
+        crate::imports::sort_imports(tree, text)
+    }
+
     fn format_node(
         &self,
         node: &SyntaxNode,

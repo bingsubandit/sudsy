@@ -14,10 +14,17 @@ The layout of google-java-format (Google style) in `crates/lang-java/src/format/
 - Binary operators break before the operator, all of one precedence together; a ternary breaks before `?` and `:`; an assignment or a declarator moves its right side below `=` first.
 - A line comment keeps its line: when it follows an operator, `else`, `->`, `=` or a comma, what comes next starts a new line below it (so the output is a fixed point); after `;`, `)`, `]`, `}` or just before a closing bracket it moves to the end of the line without breaking the group.
 
-Not done (named gaps in `tests/parity/google-java-format/differences.yaml`): sorting imports, re-wrapping long comments, the extra indent of a chain inside a ternary condition. Javadoc, unused imports and long strings are kept as written (the flags of the parity run: `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`).
+Imports are sorted before the layout (`imports.rs`, a source rewrite): static first, then the others, ASCII order, no duplicates, one blank line between the groups; a block with a comment between imports is left as written.
+
+Not done (named gaps in `tests/parity/google-java-format/differences.yaml`): re-wrapping long comments and `//x` to `// x`, dropping `()` from `@A()`, the extra indent of a chain inside a ternary condition. Javadoc, unused imports and long strings are kept as written (the flags of the parity run: `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`).
 
 ## Parity
 `scripts/parity.sh format google-java-format` (google-java-format 2.0.0, its native binary: no JVM needed) formats the corpus of `tests/conformance/fetch-java-corpus.sh` (Guava, Gson, Error Prone, Commons Lang and google-java-format's own sources: 5,337 files) and `tests/parity/google-java-format/` with both tools. aarch64 Linux: identical on 4,503 of 5,337 files (84.4%; Guava, Gson and Error Prone are formatted with it already, Commons Lang is not); 0 files change on a second format; 0 are refused; the ratchet is `real-world` in `differences.yaml`. The corpus run takes about 40 s.
+
+## Lint
+Checkstyle is the reference (catalog: [../parity/checkstyle.yaml](../parity/checkstyle.yaml)). Pattern files in `crates/lang-java/rules/`: `empty-catch-block`, `string-literal-equality`, `boolean-literal-comparison`, `equals-hash-code`, `missing-switch-default`, `empty-statement`, `upper-ell` (warn by default) and `array-type-style`, `avoid-star-import`, `need-braces` (off). Rust rules in `src/rules.rs`: `unused-import` (warn), and `naming-convention` and `modifier-order` (off). `naming-convention` takes a regular expression per kind of name (`packages`, `types`, `methods`, `members`, `constants`, `parameters`, `catch_parameters`, `locals`; empty: not checked). Shared: `max-line-length` and the comment rules. The rest of Checkstyle's checks are `planned` in the catalog.
+
+The preset `java/google` (`extends: [preset:java/google@1]`) sets 2-column indent, width 100 and turns on the style checks of `google_checks.xml` that exist (`array-type-style`, `avoid-star-import`, `modifier-order`, `need-braces`, `max-line-length`, `naming-convention` with Google's patterns). AOSP style is `indent_size: 4`.
 
 ## Options
 <!-- generated:options -->

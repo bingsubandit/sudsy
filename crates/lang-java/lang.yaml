@@ -7,3 +7,4 @@ options:
   - indent_style
   - final_newline: true
   - end_of_line
+presets: [google]

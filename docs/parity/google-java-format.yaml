@@ -9,8 +9,8 @@ scope: "google-java-format's layout and flags. Differences are measured by `scri
 entries:
   indent: option java.format.indent_size
   max-width: option java.format.line_width
-  aosp: option java.format.indent_size | AOSP is an indent_size of 4 (continuation is always two levels); its import order (android, com and other groups) is not produced.
-  sort-imports: planned
+  aosp: option java.format.indent_size | AOSP is an indent_size of 4 (continuation is always two levels); its import grouping (android, com and other groups) is not produced.
+  sort-imports: formatter | Static imports first, then ASCII order, no duplicates, one blank line between the groups; a block with a comment between imports is left as written.
   skip-sorting-imports: planned
   fix-imports-only: wontfix rewrites code outside the layout
   skip-removing-unused-imports: formatter | Unused imports are never removed.

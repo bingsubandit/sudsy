@@ -127,6 +127,10 @@
               "$ref": "#/definitions/rule",
               "description": "`Array<T>`, `ReadonlyArray<T>` and `Readonly<T[]>`; write `T[]` and `readonly T[]`."
             },
+            "array-type-style": {
+              "$ref": "#/definitions/rule",
+              "description": "A declarator or parameter with C-style brackets after the name (Checkstyle ArrayTypeStyle)."
+            },
             "assert-false": {
               "$ref": "#/definitions/rule",
               "description": "An `assert` whose test is the literal `False`."
@@ -384,6 +388,10 @@
               "$ref": "#/definitions/rule",
               "description": "Vue's `attribute-hyphenation` (eslint-plugin-vue). Applies to components (a tag in PascalCase or with a hyphen), not to HTML and SVG elements."
             },
+            "avoid-star-import": {
+              "$ref": "#/definitions/rule",
+              "description": "An import with `*` (Checkstyle AvoidStarImport)."
+            },
             "backslash-separator": {
               "$ref": "#/definitions/rule",
               "description": "`build\\out` is the pattern `buildout`: the backslash escapes `o`. Windows-style separators never match what was meant. Reported for a backslash before a letter, digit, `_` or `-` (`\\.` and `\\#` are ordinary escapes). No fix."
@@ -403,6 +411,10 @@
             "block-no-empty": {
               "$ref": "#/definitions/rule",
               "description": "A rule or at-rule block with nothing in it, comments included."
+            },
+            "boolean-literal-comparison": {
+              "$ref": "#/definitions/rule",
+              "description": "`x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression)."
             },
             "break-outside-loop": {
               "$ref": "#/definitions/rule",
@@ -926,7 +938,7 @@
             },
             "empty-catch-block": {
               "$ref": "#/definitions/rule",
-              "description": "A `catch` clause whose block has no statement (a comment does not count)."
+              "description": "A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock)."
             },
             "empty-heading": {
               "$ref": "#/definitions/rule",
@@ -939,6 +951,10 @@
             "empty-section": {
               "$ref": "#/definitions/rule",
               "description": "A `[section]` header with nothing under it, usually left behind by a removed setting. Comments do not count as settings."
+            },
+            "empty-statement": {
+              "$ref": "#/definitions/rule",
+              "description": "A `;` that is the body of an `if` or a loop, such as `while (x);` (Checkstyle EmptyStatement)."
             },
             "empty-title": {
               "$ref": "#/definitions/rule",
@@ -998,6 +1014,10 @@
             "eqeqeq": {
               "$ref": "#/definitions/rule",
               "description": "Angular's `eqeqeq` (@angular-eslint/template), on bindings, interpolations and block parameters. Only in `.component.html` files."
+            },
+            "equals-hash-code": {
+              "$ref": "#/definitions/rule",
+              "description": "A class body that declares `boolean equals(Object)` and no `hashCode()`: equal objects get different hash codes (Checkstyle EqualsHashCode)."
             },
             "expose-port-range": {
               "$ref": "#/definitions/rule",
@@ -1941,6 +1961,14 @@
               "$ref": "#/definitions/rule",
               "description": "A job without `permissions`, in a workflow without top-level `permissions`: it gets the repository's default token permissions, often write access."
             },
+            "missing-switch-default": {
+              "$ref": "#/definitions/rule",
+              "description": "A `switch` statement with no `default` (Checkstyle MissingSwitchDefault)."
+            },
+            "modifier-order": {
+              "$ref": "#/definitions/rule",
+              "description": "The modifiers of a declaration are not in the order of the Java Language Specification: `public protected private abstract default static sealed non-sealed final transient volatile synchronized native strictfp` (Checkstyle ModifierOrder). No fix: the check does not rewrite code."
+            },
             "module-import-not-at-top-of-file": {
               "$ref": "#/definitions/rule",
               "description": "An import at module level after code (docstrings, `__all__`, blocks, and `sys.path` or `os.environ` setup are not code)."
@@ -2137,6 +2165,10 @@
                   "type": "object"
                 }
               ]
+            },
+            "need-braces": {
+              "$ref": "#/definitions/rule",
+              "description": "An `if`, `else`, `for`, `while` or `do` whose body is a single statement without braces (Checkstyle NeedBraces). `else if` is fine."
             },
             "negate-equal-op": {
               "$ref": "#/definitions/rule",
@@ -4650,6 +4682,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `.format` string with both `{}` and `{0}`."
             },
+            "string-literal-equality": {
+              "$ref": "#/definitions/rule",
+              "description": "`==` or `!=` with a string literal as an operand compares references (Checkstyle StringLiteralEquality)."
+            },
             "suppression-justification": {
               "$ref": "#/definitions/rule",
               "description": "`SuppressMessage` needs a `Justification` that says something: not missing, `null`, empty, blank or `\"<Pending>\"`. Matches the attribute by name. No fix."
@@ -4990,7 +5026,7 @@
             },
             "unused-import": {
               "$ref": "#/definitions/rule",
-              "description": "An import that nothing in its scope reads and that `__all__` does not name (a redundant alias `import a as a` is a re-export)."
+              "description": "An import whose name is not used in the file, not even in a Javadoc comment (Checkstyle UnusedImports). Imports with `*` are not checked. No fix: removing an import can change which class a name means."
             },
             "unused-private-member": {
               "description": "A private field, method, property or event that no file of the project uses (`analysis: deep`). Members with attributes, overrides, interface implementations, `extern` and `partial` methods are left alone, and so are the private                   methods named in `reflection_methods` of a type derived from one of                   `reflection_base_types` (a framework calls them by reflection; the `csharp/unity`                   preset lists Unity's). Overlaps the SDK analyzers IDE0051 (unused private member) and IDE0052 (unread private member).",
@@ -5037,6 +5073,10 @@
             "unused-variable": {
               "$ref": "#/definitions/rule",
               "description": "A local variable or catch variable that is never used (the compiler's CS0168), or is only assigned constants and never read (CS0219). Variables captured by lambdas or local functions count as used. Off by default: the compiler already warns (CS0168, CS0219)."
+            },
+            "upper-ell": {
+              "$ref": "#/definitions/rule",
+              "description": "An integer literal that ends in a lower case `l` (Checkstyle UpperEll)."
             },
             "use-isnan": {
               "$ref": "#/definitions/rule",
@@ -6271,6 +6311,7 @@
           "preset:html/html-validate-recommended",
           "preset:html/html-validate-standard",
           "preset:html/html-validate-standard",
+          "preset:java/google",
           "preset:js/eslint-recommended",
           "preset:js/typescript-eslint-recommended",
           "preset:json/biome",
