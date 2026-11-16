@@ -125,7 +125,7 @@ pub fn rule_presets(providers: &[Box<dyn LanguageProvider>]) -> BTreeMap<String,
         let mut enabled = Vec::new();
         walk(&value, false, &mut enabled);
         for id in enabled {
-            out.entry(id).or_default().push(preset.name.clone());
+            out.entry(id).or_default().push(preset.name.to_string());
         }
     }
     out

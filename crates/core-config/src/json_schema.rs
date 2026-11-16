@@ -34,7 +34,7 @@ fn option_json(def: &OptionDef) -> Value {
         }),
     };
     out["description"] = json!(def.description);
-    out["default"] = value_json(&def.default);
+    out["default"] = value_json(&def.default());
     out
 }
 

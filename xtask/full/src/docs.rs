@@ -223,7 +223,7 @@ fn options_table(schema: &OptionSchema) -> String {
             "| `{}` | {} | `{}` | {} |\n",
             d.name,
             values(&d.kind),
-            show(&d.default),
+            show(&d.default()),
             cell(d.description)
         );
     }
@@ -242,7 +242,7 @@ fn shared_options_table(schemas: &[(&str, &OptionSchema)]) -> String {
     for (name, declared) in by_name.iter().filter(|(_, d)| d.len() > 1) {
         let defaults: Vec<String> = declared
             .iter()
-            .map(|(language, d)| format!("{language} `{}`", show(&d.default)))
+            .map(|(language, d)| format!("{language} `{}`", show(&d.default())))
             .collect();
         let kinds: Vec<String> = declared.iter().map(|(_, d)| values(&d.kind)).collect();
         let kind = if kinds.iter().all(|k| *k == kinds[0]) {

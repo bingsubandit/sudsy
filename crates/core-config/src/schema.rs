@@ -24,16 +24,34 @@ pub enum OptionKind {
 pub struct OptionDef {
     pub name: &'static str,
     pub kind: OptionKind,
-    pub default: OptionValue,
+    /// An enum's default is one of its values, kept as text so that declaring a schema allocates nothing.
+    default: Dflt,
     pub description: &'static str,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+enum Dflt {
+    Bool(bool),
+    Int(i64),
+    Text(&'static str),
+    NoWords,
+}
+
 impl OptionDef {
+    pub fn default(&self) -> OptionValue {
+        match self.default {
+            Dflt::Bool(b) => OptionValue::Bool(b),
+            Dflt::Int(n) => OptionValue::Int(n),
+            Dflt::Text(t) => OptionValue::String(t.into()),
+            Dflt::NoWords => OptionValue::List(Vec::new()),
+        }
+    }
+
     pub fn boolean(name: &'static str, default: bool, description: &'static str) -> Self {
         OptionDef {
             name,
             kind: OptionKind::Bool,
-            default: OptionValue::Bool(default),
+            default: Dflt::Bool(default),
             description,
         }
     }
@@ -50,7 +68,7 @@ impl OptionDef {
                 min: range.0,
                 max: range.1,
             },
-            default: OptionValue::Int(default),
+            default: Dflt::Int(default),
             description,
         }
     }
@@ -60,7 +78,7 @@ impl OptionDef {
         OptionDef {
             name,
             kind: OptionKind::Words,
-            default: OptionValue::List(Vec::new()),
+            default: Dflt::NoWords,
             description,
         }
     }
@@ -70,7 +88,7 @@ impl OptionDef {
         OptionDef {
             name,
             kind: OptionKind::WordSets,
-            default: OptionValue::List(Vec::new()),
+            default: Dflt::NoWords,
             description,
         }
     }
@@ -85,7 +103,7 @@ impl OptionDef {
         OptionDef {
             name,
             kind: OptionKind::Enum(values),
-            default: OptionValue::String(default.into()),
+            default: Dflt::Text(default),
             description,
         }
     }
@@ -111,7 +129,7 @@ impl OptionDef {
             ],
             OptionKind::Int { min, max } => {
                 let default = match self.default {
-                    OptionValue::Int(d) => d,
+                    Dflt::Int(d) => d,
                     _ => *min,
                 };
                 let mut v = vec![*min, default, (*max).min(default.saturating_mul(4))];
@@ -199,7 +217,7 @@ impl OptionSchema {
         ResolvedOptions(
             self.defs
                 .iter()
-                .map(|d| (d.name.to_string(), d.default.clone()))
+                .map(|d| (d.name.to_string(), d.default()))
                 .collect(),
         )
     }

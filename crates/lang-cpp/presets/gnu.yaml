@@ -1,0 +1,9 @@
+# The GNU coding standards as clang-format's GNU style: braces on their own line and indented, return type on its own line, a space before every parenthesis.
+cpp:
+  format:
+    break_after_return_type: all_definitions
+    break_before_binary_operators: all
+    brace_wrapping: [class, struct, union, enum, function, namespace, extern, control, case, else, catch, while]
+    indent_braces: true
+    line_width: 79
+    space_before_parens: always

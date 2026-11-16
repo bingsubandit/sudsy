@@ -26,6 +26,7 @@ One line per upstream rule or option under `entries:`, `<id>: <status>` or `<id>
 | buf | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
 | checkmake | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
 | checkstyle | 126 | 34 | 12 | 74 | 0 | 6 | 0 | 74 |
+| clang-format | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | csharpier | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | 56 | 50 | 3 | 0 | 1 | 2 | 0 | 0 |
 | eslint | 292 | 86 | 16 | 136 | 0 | 32 | 22 | 136 |

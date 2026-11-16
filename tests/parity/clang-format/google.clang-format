@@ -1,0 +1,4 @@
+BasedOnStyle: Google
+SortIncludes: Never
+FixNamespaceComments: false
+ReflowComments: false

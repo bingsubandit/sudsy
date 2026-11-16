@@ -64,7 +64,7 @@ pub fn run(args: InitArgs) -> Result<()> {
     let schemas = schemas(&providers);
     let presets: Vec<(&str, &str)> = schemas
         .iter()
-        .flat_map(|(_, s)| s.presets().iter().map(|p| (p.name.as_str(), p.text)))
+        .flat_map(|(_, s)| s.presets().iter().map(|p| (p.name, p.text)))
         .collect();
     let Some(tool) = args.from else {
         let text = starter(args.presets, &presets)?;

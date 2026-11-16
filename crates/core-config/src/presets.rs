@@ -17,17 +17,14 @@ pub(crate) fn language_of(preset: &str) -> &str {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Preset {
     /// `language/name`, e.g. `csharp/google`.
-    pub name: String,
+    pub name: &'static str,
     /// The text of the config file.
     pub text: &'static str,
 }
 
 impl Preset {
-    pub fn new(name: &str, text: &'static str) -> Self {
+    pub fn new(name: &'static str, text: &'static str) -> Self {
         debug_assert!(name.contains('/') && !name.contains('@'), "{name}");
-        Preset {
-            name: name.to_string(),
-            text,
-        }
+        Preset { name, text }
     }
 }
