@@ -59,6 +59,8 @@ A step is one commit and one finish run. `After` names what must be on main firs
 | L2 | The rest of the kit: operator chains, assignment, conditional, parentheses from a precedence table in the grammar, blocks and statement sequences | the same | as L1; each language's remaining formatter code is listed by construct in its doc | L1 passes |
 | L3 | Kotlin and PHP formatters start on the kit: policy file first, Rust only for a named gap that cannot be a policy value | `lang-kotlin`, `lang-php` | formatter lines per grammar node recorded next to JS and C# | L2 |
 
+Role-driven layouts read parts through `Grammar::slot`, which costs more than a kind match and a positional child. If a kit step's bench is over its format budget, the first lever is the `Grammar::slot` item under Performance levers in [../roadmap.md](../roadmap.md) (field index at grammar load, fixed child position); the step that does it deletes that line. If no step needs it, it stays on the roadmap.
+
 L1 is a test of the design. If the three languages cannot hold their ratchets on policy data alone, stop after L1, record why in this note, and treat the per-language formatter cost as fixed: the response is then a limit on the number of languages, not more abstraction.
 
 ### Scopes and flow

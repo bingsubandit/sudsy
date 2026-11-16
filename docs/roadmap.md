@@ -55,7 +55,7 @@ Committed work too small for a step of its own: what to do and where, one line e
 - Rule-produced layout directives for `#if` branches formatted from other parses (the layout rules run on the file's own parse only); solving `#if` conditions to find symbol sets (`derive_symbol_sets` tries subsets of the condition symbols, at most 16 sets).
 - A rule source that attaches layout directives (pattern `layout:` key, plugin directive output); plugins returning layout documents is deliberately excluded.
 - YAML: re-wrapping long scalars and comments; comments between split properties.
-- Performance levers: green-tree cursor for the formatter instead of rowan red nodes; sharing anchored YAML nodes (`Rc`) for alias-heavy files; first-token index for pattern rules.
+- Performance levers: green-tree cursor for the formatter instead of rowan red nodes; sharing anchored YAML nodes (`Rc`) for alias-heavy files; first-token index for pattern rules; `Grammar::slot` by a field index resolved when the grammar loads, and by the child position where a field's position is fixed, instead of a label comparison and an ordered walk of the children per call (about 420 instructions per call today, [performance/numbers.md](performance/numbers.md)).
 
 ## Extensibility
 - Plugin SDKs for languages other than Rust (the WIT is documented); freezing the plugin API at v1.
