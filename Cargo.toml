@@ -60,6 +60,12 @@ ktrs-syntax = "=0.5.1"
 # rezel-lang-java is 0.0.x (one maintainer): pinned exactly, bumped by hand only (dependabot ignores it).
 rezel-lang-java = "=0.0.0"
 rezel-common = "=0.0.0"
+# mago-syntax (PHP): parser only, weekly releases whose MSRV follows stable: pinned exactly, bumped by hand only (dependabot ignores it).
+mago-syntax = "=1.59.0"
+mago-syntax-core = "=1.59.0"
+mago-allocator = "=1.59.0"
+mago-database = "=1.59.0"
+mago-span = "=1.59.0"
 strum = "0.28"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 # generated:grammars
@@ -97,6 +103,7 @@ lang-json = { path = "crates/lang-json" }
 lang-js = { path = "crates/lang-js" }
 lang-python = { path = "crates/lang-python" }
 lang-java = { path = "crates/lang-java" }
+lang-php = { path = "crates/lang-php" }
 lang-sql = { path = "crates/lang-sql" }
 lang-kotlin = { path = "crates/lang-kotlin" }
 lang-css = { path = "crates/lang-css" }
@@ -140,3 +147,10 @@ opt-level = 1
 [profile.corpus]
 inherits = "release"
 debug-assertions = true
+
+# mago-syntax's reporting and php-version crates need schemars with `preserve_order`, which would
+# reorder every serde_json map of the build (CLI output, schema files): third_party/mago-* are the
+# parts of them that mago-syntax uses, without it.
+[patch.crates-io]
+mago-php-version = { path = "third_party/mago-php-version" }
+mago-reporting = { path = "third_party/mago-reporting" }

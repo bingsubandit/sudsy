@@ -1,0 +1,11 @@
+[package]
+name = "mago-reporting"
+version = "1.59.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "The part of mago-reporting 1.59.0 that mago-syntax uses (its Issue builder), without the reporting dependencies"
+repository = "https://github.com/carthage-software/mago"
+publish = false
+
+[dependencies]
+mago-span = "=1.59.0"

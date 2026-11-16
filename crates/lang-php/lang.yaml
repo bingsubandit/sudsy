@@ -1,0 +1,9 @@
+extensions: [php, phtml, inc]
+formatter: PhpFormatter
+parse: adapter::parse_file
+options:
+  - indent_size: 4
+  - line_width: 120
+  - indent_style
+  - final_newline: true
+  - end_of_line

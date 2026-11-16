@@ -1,0 +1,33 @@
+[package]
+name = "lang-php"
+autotests = false
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish.workspace = true
+build = "../../build/lang-crate.rs"
+
+[dependencies]
+core-config.workspace = true
+core-format.workspace = true
+core-rules.workspace = true
+core-syntax.workspace = true
+provider-api.workspace = true
+mago-allocator.workspace = true
+mago-database.workspace = true
+mago-span.workspace = true
+mago-syntax.workspace = true
+mago-syntax-core.workspace = true
+
+[dev-dependencies]
+insta.workspace = true
+
+[build-dependencies]
+core-syntax.workspace = true
+
+[lints]
+workspace = true
+
+[[test]]
+name = "integration"
+path = "tests/main.rs"

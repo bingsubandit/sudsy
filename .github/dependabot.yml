@@ -6,7 +6,7 @@ updates:
     schedule: { interval: monthly }
     groups: { cargo: { patterns: ["*"] } }
     # oxc and ruff break their ASTs about weekly: bumped by hand (kind table + adapter + conformance run), never automatically.
-    ignore: [{ dependency-name: "oxc_*" }, { dependency-name: "oxc-htmlish-parser" }, { dependency-name: "ruff_*" }, { dependency-name: "sqruff-*" }, { dependency-name: "ktrs-*" }, { dependency-name: "rezel-*" }]
+    ignore: [{ dependency-name: "oxc_*" }, { dependency-name: "oxc-htmlish-parser" }, { dependency-name: "ruff_*" }, { dependency-name: "sqruff-*" }, { dependency-name: "ktrs-*" }, { dependency-name: "rezel-*" }, { dependency-name: "mago-*" }]
   - package-ecosystem: npm
     directory: /editors/vscode
     schedule: { interval: monthly }

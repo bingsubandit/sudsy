@@ -1,0 +1,239 @@
+// PHP (8.0 to 8.5, `.php` and `.phtml`, inline HTML around the tags), parsed by mago-syntax behind crates/lang-php/src/adapter.rs; a node kind is a row named like mago's CST struct, tokens are mago's lexer tokens grouped. mago's enum wrappers (Statement, Expression, Hint, ...) and its one-token nodes (Keyword, identifiers) have no row.
+// Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are loose: they name the parts, not every order.
+
+language php 24 "PHP"
+comments line "//" block "/*" "*/"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+// `//`, `#`, `/* */` and `/** */` comments.
+token Comment #trivia #comment #indentable
+
+// Text outside the PHP tags (HTML, a shebang line).
+token InlineText
+// `<?php`, `<?=` and `<?`; `?>` closes a block.
+token OpenTag
+token CloseTag
+// Reserved words and magic constants (`self`, `__CLASS__`), but not `true`, `false` and `null`.
+token Keyword
+// A name: simple, qualified (`A\B`) or fully qualified (`\A\B`).
+token Identifier
+// `$name`
+token Variable
+// A quoted string without interpolation.
+token String #literal #string
+// The text of an interpolated string or a heredoc between its interpolations.
+token StringPart #literal
+token Number #literal
+token Boolean #literal
+token Null #literal
+// `(int)`, `(string)`, ...
+token Cast
+
+token LBrace "{" #punctuation
+token RBrace "}" #punctuation
+token LParen "(" #punctuation #glue
+token RParen ")" #punctuation #close
+token LBracket "[" #punctuation #glue
+token RBracket "]" #punctuation
+token Semi ";" #punctuation
+token Comma "," #punctuation #separator #glue
+token Colon ":" #punctuation
+token ColonColon "::" #punctuation
+// `->` and `?->`
+token Arrow #punctuation
+token DoubleArrow "=>" #punctuation
+token Question "?" #punctuation
+token Ellipsis "..." #punctuation
+token At "@" #punctuation
+token Dollar "$" #punctuation
+token DollarLBrace "${" #punctuation
+// `#[`
+token AttrOpen "#[" #punctuation
+// `"` and the backtick around an interpolated string.
+token Quote #punctuation
+// `<<<EOT` and its closing label.
+token DocStart #punctuation
+token DocEnd #punctuation
+token Assign "=" #punctuation
+// Every other operator, assignment operators and `.` included.
+token Operator #punctuation
+
+token Eof
+token Unknown #error
+
+node Program = items:#child* Eof
+node ConstantAccess #child = #child*
+node ClassConstantAccess #child = #child*
+node NullSafePropertyAccess #child = #child*
+node PropertyAccess #child = #child*
+node StaticPropertyAccess #child = #child*
+node ArgumentList #child = #child*
+node PartialArgumentList #child = #child*
+node NamedArgument #child = #child*
+node NamedPlaceholderArgument #child = #child*
+node PlaceholderArgument #child = #child*
+node PositionalArgument #child = #child*
+node VariadicPlaceholderArgument #child = #child*
+node Array #child = #child*
+node ArrayAccess #child = #child*
+node ArrayAppend #child = #child*
+node KeyValueArrayElement #child = #child*
+node LegacyArray #child = #child*
+node List #child = #child*
+node MissingArrayElement #child = #child*
+node ValueArrayElement #child = #child*
+node VariadicArrayElement #child = #child*
+node Attribute #child = #child*
+node AttributeList #child = #child*
+node Block #child #stmt = #child*
+node FunctionCall #child = #child*
+node MethodCall #child = #child*
+node NullSafeMethodCall #child = #child*
+node StaticMethodCall #child = #child*
+node FunctionPartialApplication #child = #child*
+node MethodPartialApplication #child = #child*
+node StaticMethodPartialApplication #child = #child*
+node ClassLikeConstant #child = #child*
+node ClassLikeConstantItem #child = #child*
+node EnumCase #child = #child*
+node EnumCaseBackedItem #child = #child*
+node EnumCaseUnitItem #child = #child*
+node Extends #child = #child*
+node Implements #child = #child*
+node ClassLikeMemberExpressionSelector #child = #child*
+node Method #child = #child*
+node MethodAbstractBody #child = #child*
+node HookedProperty #child = #child*
+node PlainProperty #child = #child*
+node PropertyAbstractItem #child = #child*
+node PropertyConcreteItem #child = #child*
+node PropertyHook #child = #child*
+node PropertyHookAbstractBody #child = #child*
+node PropertyHookConcreteExpressionBody #child = #child*
+node PropertyHookList #child = #child*
+node TraitUse #child = #child*
+node TraitUseAbsoluteMethodReference #child = #child*
+node TraitUseAbstractSpecification #child = #child*
+node TraitUseAliasAdaptation #child = #child*
+node TraitUseConcreteSpecification #child = #child*
+node TraitUsePrecedenceAdaptation #child = #child*
+node AnonymousClass #child = #child*
+node Class #child #type-decl = #child*
+node Enum #child #type-decl = #child*
+node EnumBackingTypeHint #child = #child*
+node Interface #child #type-decl = #child*
+node Trait #child #type-decl = #child*
+node Clone #child = #child*
+node Constant #child #stmt = #child*
+node ConstantItem #child = #child*
+node DieConstruct #child = #child*
+node EmptyConstruct #child = #child*
+node EvalConstruct #child = #child*
+node ExitConstruct #child = #child*
+node IncludeConstruct #child = #child*
+node IncludeOnceConstruct #child = #child*
+node IssetConstruct #child = #child*
+node PrintConstruct #child = #child*
+node RequireConstruct #child = #child*
+node RequireOnceConstruct #child = #child*
+node If #child #stmt = #child*
+node IfColonDelimitedBody #child = #child*
+node IfColonDelimitedBodyElseClause #child = #child*
+node IfColonDelimitedBodyElseIfClause #child = #child*
+node IfStatementBody #child = #child*
+node IfStatementBodyElseClause #child = #child*
+node IfStatementBodyElseIfClause #child = #child*
+node Match #child = #child*
+node MatchDefaultArm #child = #child*
+node MatchExpressionArm #child = #child*
+node Switch #child #stmt = #child*
+node SwitchBraceDelimitedBody #child = #child*
+node SwitchColonDelimitedBody #child = #child*
+node SwitchDefaultCase #child = #child*
+node SwitchExpressionCase #child = #child*
+node Declare #child #stmt = #child*
+node DeclareColonDelimitedBody #child = #child*
+node DeclareItem #child = #child*
+node EchoTag #child #stmt = #child*
+node Echo #child #stmt = #child*
+node Binary #child = #child*
+node UnaryPrefix #child = #child*
+node UnaryPostfix #child = #child*
+node Parenthesized #child = #child*
+node ArrowFunction #child = #child*
+node Closure #child = #child*
+node ClosureUseClause #child = #child*
+node ClosureUseClauseVariable #child = #child*
+node Function #child = #child*
+node FunctionLikeParameter #child = #child*
+node FunctionLikeParameterDefaultValue #child = #child*
+node FunctionLikeParameterList #child = #child*
+node FunctionLikeReturnTypeHint #child = #child*
+node Global #child #stmt = #child*
+node Goto #child #stmt = #child*
+node Label #child #stmt = #child*
+node HaltCompiler #child #stmt = #child*
+node Inline #child #stmt = #child*
+node Instantiation #child = #child*
+node Pipe #child = #child*
+node LiteralFloat #child = #child*
+node LiteralInteger #child = #child*
+node LiteralString #child = #child*
+node Namespace #child #stmt = #child*
+node NamespaceImplicitBody #child = #child*
+node Assignment #child = #child*
+node Conditional #child = #child*
+node DoWhile #child #stmt = #child*
+node Foreach #child #stmt = #child*
+node ForeachColonDelimitedBody #child = #child*
+node ForeachKeyValueTarget #child = #child*
+node ForeachValueTarget #child = #child*
+node For #child #stmt = #child*
+node ForColonDelimitedBody #child = #child*
+node While #child #stmt = #child*
+node WhileColonDelimitedBody #child = #child*
+node Break #child #stmt = #child*
+node Continue #child #stmt = #child*
+node Return #child #stmt = #child*
+node Static #child #stmt = #child*
+node StaticAbstractItem #child = #child*
+node StaticConcreteItem #child = #child*
+node Try #child #stmt = #child*
+node TryCatchClause #child = #child*
+node TryFinallyClause #child = #child*
+node MaybeTypedUseItem #child = #child*
+node MixedUseItemList #child = #child*
+node TypedUseItemList #child = #child*
+node TypedUseItemSequence #child = #child*
+node Use #child #stmt = #child*
+node UseItem #child = #child*
+node UseItemAlias #child = #child*
+node UseItemSequence #child = #child*
+node YieldFrom #child = #child*
+node YieldPair #child = #child*
+node YieldValue #child = #child*
+node ExpressionStatement #child #stmt = #child*
+node BracedExpressionStringPart #child = #child*
+node DocumentString #child = #child*
+node InterpolatedString #child = #child*
+node LiteralStringPart #child = #child*
+node ShellExecuteString #child = #child*
+node ClosingTag #child = #child*
+node FullOpeningTag #child = #child*
+node ShortOpeningTag #child = #child*
+node Throw #child #stmt = #child*
+node IntersectionHint #child = #child*
+node NullableHint #child = #child*
+node ParenthesizedHint #child = #child*
+node UnionHint #child = #child*
+node Unset #child #stmt = #child*
+node DirectVariable #child = #child*
+node IndirectVariable #child = #child*
+node NestedVariable #child = #child*

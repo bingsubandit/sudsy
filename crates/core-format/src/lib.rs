@@ -135,7 +135,7 @@ pub fn format_tree(root: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<String, Form
         cx.options.get(core_config::shared::FINAL_NEWLINE),
         Some(core_config::OptionValue::Bool(false))
     );
-    if final_newline && !out.is_empty() && !out.ends_with('\n') {
+    if final_newline && !cx.exact_end(root) && !out.is_empty() && !out.ends_with('\n') {
         out.push('\n');
     }
     let ending = match cx.options.get(core_config::shared::END_OF_LINE) {

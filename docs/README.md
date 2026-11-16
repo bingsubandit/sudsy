@@ -19,6 +19,7 @@ Current state only; history is in git. Update the doc for the area you change in
 | [formatting/js.md](formatting/js.md) | JavaScript, TypeScript, JSX and TSX: oxc parser and its adapter, formatter (statements, declarations, literals), conformance |
 | [formatting/python.md](formatting/python.md) | Python parser (ruff), adapter, formatter after `ruff format`, options, parity, conformance |
 | [formatting/kotlin.md](formatting/kotlin.md) | Kotlin: ktrs-parser and its adapter (CRLF, depth guard, `.kts` scripts), limits, conformance |
+| [formatting/php.md](formatting/php.md) | PHP: mago-syntax parser and its adapter, inline HTML, formatter, options, conformance |
 | [formatting/sql.md](formatting/sql.md) | SQL: sqruff parser and its adapter, dialects, limits, the formatter and its sqlfluff parity, conformance |
 | [formatting/toml.md](formatting/toml.md) | TOML parser (tree-sitter), formatter, options, conformance |
 | [formatting/xml.md](formatting/xml.md) | XML parser (tree-sitter), well-formedness checks, formatter, options, conformance |

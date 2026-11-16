@@ -33,6 +33,7 @@
     "onLanguage:kotlin",
     "onLanguage:makefile",
     "onLanguage:markdown",
+    "onLanguage:php",
     "onLanguage:powershell",
     "onLanguage:protobuf",
     "onLanguage:python",

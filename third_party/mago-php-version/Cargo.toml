@@ -1,0 +1,8 @@
+[package]
+name = "mago-php-version"
+version = "1.59.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "mago-php-version 1.59.0 without its schemars dependency (which turns on serde_json/preserve_order for the whole build)"
+repository = "https://github.com/carthage-software/mago"
+publish = false

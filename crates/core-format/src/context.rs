@@ -126,6 +126,13 @@ pub trait NodeFormatter: Send + Sync {
     fn comment_style(&self, _options: &ResolvedOptions) -> CommentStyle {
         CommentStyle::default()
     }
+
+    /// Whether the end of the file is text the formatter must not change (PHP: inline HTML after
+    /// the last `?>`): the final newline is not added then. The formatter writes that text with
+    /// [`doc::verbatim`], which keeps its trailing blanks.
+    fn exact_end(&self, _root: &SyntaxNode) -> bool {
+        false
+    }
 }
 
 /// Other parses of the text being formatted, under other symbol sets (see
@@ -289,6 +296,10 @@ impl<'a> FormatCtx<'a> {
     }
 
     /// Formatting code for `node` itself, ignoring ignore comments and `Preserve`.
+    pub fn exact_end(&self, root: &SyntaxNode) -> bool {
+        self.formatter.exact_end(root)
+    }
+
     pub fn format_unguarded(&self, node: &SyntaxNode) -> Result<Doc, FormatError> {
         crate::deep(|| match self.formatter.format_node(node, self)? {
             Some(doc) => Ok(doc),
