@@ -170,6 +170,29 @@
         {"dir": "tests/conformance/corpus/shell", "suffixes": [".sh", ".bash"], "prefix": "corpus/", "recursive": true}
       ]
     },
+    "google-java-format": {
+      "catalog": "google-java-format",
+      "install": {
+        "release": "https://github.com/google/google-java-format/releases/download/v{version}/{asset}",
+        "assets": {
+          "windows": "google-java-format_windows-x86-64.exe",
+          "linux-x86_64": "google-java-format_linux-x86-64",
+          "linux-aarch64": "google-java-format_linux-arm64",
+          "darwin-arm64": "google-java-format_darwin-arm64"
+        },
+        "exe": "google-java-format"
+      },
+      "fetch": ["tests/conformance/fetch-java-corpus.sh"],
+      "command": ["{exe}", "--replace", "--skip-javadoc-formatting", "--skip-removing-unused-imports", "--skip-reflowing-long-strings", "{file}"],
+      "input": "in-place",
+      "tool_may_reject": true,
+      "parallel": true,
+      "quiet": true,
+      "fixtures": [
+        {"suffixes": [".java"]},
+        {"dir": "tests/conformance/corpus/java", "suffixes": [".java"], "prefix": "corpus/", "ratchet": "real-world", "recursive": true}
+      ]
+    },
     "invoke-formatter": {
       "catalog": "psscriptanalyzer",
       "install": {"psmodule": "PSScriptAnalyzer"},

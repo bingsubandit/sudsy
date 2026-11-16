@@ -31,6 +31,7 @@ One line per upstream rule or option under `entries:`, `<id>: <status>` or `<id>
 | eslint-plugin-jsonc | 44 | 36 | 6 | 0 | 0 | 2 | 0 | 0 |
 | eslint-plugin-svelte | 84 | 18 | 8 | 17 | 0 | 3 | 38 | 17 |
 | eslint-plugin-vue | 128 | 43 | 16 | 49 | 0 | 3 | 17 | 49 |
+| google-java-format | 14 | 2 | 4 | 2 | 0 | 6 | 0 | 2 |
 | graphql-eslint | 35 | 4 | 6 | 0 | 0 | 0 | 25 | 0 |
 | hadolint | 71 | 38 | 10 | 0 | 0 | 1 | 22 | 0 |
 | html-eslint | 66 | 14 | 11 | 41 | 0 | 0 | 0 | 41 |

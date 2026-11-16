@@ -13,7 +13,7 @@ suppress ignore "sudsy-ignore"
 token Whitespace #trivia #whitespace
 token Newline #trivia #newline
 // `//`, `/* */` and `/** */` comments.
-token Comment #trivia #comment
+token Comment #trivia #comment #indentable
 
 // Reserved and contextual keywords, `this`, `super`, `var`, `void` and `@interface`.
 token Keyword
@@ -31,14 +31,14 @@ token Null #literal
 
 token LBrace "{" #punctuation
 token RBrace "}" #punctuation
-token LParen "(" #punctuation
-token RParen ")" #punctuation
-token LBracket "[" #punctuation
+token LParen "(" #punctuation #glue
+token RParen ")" #punctuation #close
+token LBracket "[" #punctuation #glue
 token RBracket "]" #punctuation
 token Lt "<" #punctuation
 token Gt ">" #punctuation
 token Semi ";" #punctuation
-token Comma "," #punctuation #separator
+token Comma "," #punctuation #separator #glue
 token Dot "." #punctuation
 token Colon ":" #punctuation
 token ColonColon "::" #punctuation

@@ -5,7 +5,6 @@ use provider_api::format_testing::{
 
 /// Formats with every check of the shared helper (round trip, meaning, idempotency, comments).
 #[track_caller]
-#[allow(dead_code)]
 fn fmt(input: &str) -> String {
     assert_formats(lang_java::provider(), "A.java", input)
 }
@@ -85,4 +84,95 @@ class T<X extends Number & Comparable<X>> {
 fn syntax_errors_stay_lossless() {
     let parsed = assert_lossless(&lang_java::provider(), "A.java", "class A { int x = ; \n");
     assert!(!parsed.errors.is_empty());
+}
+
+/// google-java-format's layout: blank lines between members, wrapped parameters, `throws` and
+/// string concatenations, one-line chains, enum constants one per line.
+#[test]
+fn layout_follows_google_java_format() {
+    let input = "package a.b;
+import java.util.List;
+class A<T> extends B implements C {
+  private final int x=1;
+  A(int x){this.x=x;}
+  public <R> R fold(R init,java.util.function.BiFunction<R,? super T,R> f,boolean parallel,int limit) throws Exception{
+    if(x>1)return init; else if(x<0){return null;}
+    String s=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"+init+\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"+limit+\"cccccccccccccccccccccccccccc\";
+    return items.stream().filter(v->v!=null).map(Object::toString).collect(Collectors.toList());
+  }
+}
+enum E { A, B, // two
+  C; }
+";
+    assert_eq!(
+        fmt(input),
+        "package a.b;
+
+import java.util.List;
+
+class A<T> extends B implements C {
+  private final int x = 1;
+
+  A(int x) {
+    this.x = x;
+  }
+
+  public <R> R fold(
+      R init, java.util.function.BiFunction<R, ? super T, R> f, boolean parallel, int limit)
+      throws Exception {
+    if (x > 1) return init;
+    else if (x < 0) {
+      return null;
+    }
+    String s =
+        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"
+            + init
+            + \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"
+            + limit
+            + \"cccccccccccccccccccccccccccc\";
+    return items.stream().filter(v -> v != null).map(Object::toString).collect(Collectors.toList());
+  }
+}
+
+enum E {
+  A,
+  B, // two
+  C;
+}
+"
+    );
+}
+
+/// A line comment keeps its line: after an operator the operand moves below it, after `else`
+/// the `if` does.
+#[test]
+fn line_comments_keep_their_line() {
+    fmt("class A {
+  void f() {
+    int x = a + // first
+        b;
+    if (a) {
+    } else // note
+    if (b) {
+    }
+    foo(
+        1, // one
+        2);
+  }
+}
+");
+}
+
+/// The AOSP style is four columns of indentation (continuations double it).
+#[test]
+fn aosp_is_a_four_column_indent() {
+    let mut subject =
+        provider_api::format_testing::Formatting::new(lang_java::provider(), "A.java");
+    subject
+        .options
+        .push(("indent_size", core_config::OptionValue::Int(4)));
+    assert_eq!(
+        core_format::testing::assert_formats(&subject, "class A { void f() { g(); } }\n"),
+        "class A {\n    void f() {\n        g();\n    }\n}\n"
+    );
 }

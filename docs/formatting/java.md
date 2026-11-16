@@ -6,7 +6,18 @@ rezel-lang-java (Java up to 26: records, sealed types, switch patterns and guard
 Files: `*.java`.
 
 ## Formatting
-Not formatted yet: the file is kept as written.
+The layout of google-java-format (Google style) in `crates/lang-java/src/format/` (`decl.rs` declarations, `stmt.rs` statements, `expr.rs` expressions, `space.rs` token spacing, `mod.rs` the shared helpers). It is one pass over the tree: every list (arguments, parameters, type parameters, binary operands, chain links, array initializers) is a group that fits on a line or breaks as google-java-format breaks it.
+- Indentation is `indent_size` (2); a continuation is two levels, so AOSP style is `indent_size: 4` (no other option is needed). The width is `line_width` (100).
+- Blank lines: the source's blank lines are kept (at most one) between members and statements; one is added around a method, around a type with a body and between the static and the other imports. A class body starts and ends without a blank line, except after a documented first enum constant.
+- A parameter or argument list that does not fit moves below the opening parenthesis (one continuation), then goes one per line; a sole block lambda hugs the call; a `throws` clause moves to its own line when the parameters broke.
+- A method chain of a name and calls fits on one line or breaks before every `.`, except a leading type name or `this` (`prefix_len`); a chain with fewer than two calls breaks as a whole expression.
+- Binary operators break before the operator, all of one precedence together; a ternary breaks before `?` and `:`; an assignment or a declarator moves its right side below `=` first.
+- A line comment keeps its line: when it follows an operator, `else`, `->`, `=` or a comma, what comes next starts a new line below it (so the output is a fixed point); after `;`, `)`, `]`, `}` or just before a closing bracket it moves to the end of the line without breaking the group.
+
+Not done (named gaps in `tests/parity/google-java-format/differences.yaml`): sorting imports, re-wrapping long comments, the extra indent of a chain inside a ternary condition. Javadoc, unused imports and long strings are kept as written (the flags of the parity run: `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`).
+
+## Parity
+`scripts/parity.sh format google-java-format` (google-java-format 2.0.0, its native binary: no JVM needed) formats the corpus of `tests/conformance/fetch-java-corpus.sh` (Guava, Gson, Error Prone, Commons Lang and google-java-format's own sources: 5,337 files) and `tests/parity/google-java-format/` with both tools. aarch64 Linux: identical on 4,503 of 5,337 files (84.4%; Guava, Gson and Error Prone are formatted with it already, Commons Lang is not); 0 files change on a second format; 0 are refused; the ratchet is `real-world` in `differences.yaml`. The corpus run takes about 40 s.
 
 ## Options
 <!-- generated:options -->

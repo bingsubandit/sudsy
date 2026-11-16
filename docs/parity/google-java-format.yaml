@@ -1,0 +1,23 @@
+tool: "google-java-format"
+version: "2.0.0 (GitHub release latest; the native binary `scripts/parity.sh format google-java-format` downloads, no JVM needed)"
+languages: ["java"]
+sources:
+  - "https://github.com/google/google-java-format"
+  - "https://google.github.io/styleguide/javaguide.html"
+  - "tests/parity/google-java-format (differential numbers, docs/development/parity.md)"
+scope: "google-java-format's layout and flags. Differences are measured by `scripts/parity.sh format google-java-format` (defaults plus `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`) on the folder's fixtures and the Java corpus (`tests/conformance/fetch-java-corpus.sh`); the known differences are `tests/parity/google-java-format/differences.yaml`."
+entries:
+  indent: option java.format.indent_size
+  max-width: option java.format.line_width
+  aosp: option java.format.indent_size | AOSP is an indent_size of 4 (continuation is always two levels); its import order (android, com and other groups) is not produced.
+  sort-imports: planned
+  skip-sorting-imports: planned
+  fix-imports-only: wontfix rewrites code outside the layout
+  skip-removing-unused-imports: formatter | Unused imports are never removed.
+  skip-reflowing-long-strings: formatter | Strings are never split.
+  skip-javadoc-formatting: formatter | Javadoc is kept as written.
+  lines: wontfix range formatting is the editor's
+  offsets: wontfix range formatting is the editor's
+  replace: wontfix command-line mode
+  dry-run: wontfix command-line mode
+  set-exit-if-changed: wontfix command-line mode
