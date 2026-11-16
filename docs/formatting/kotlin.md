@@ -35,6 +35,9 @@ Layout is our own code over the lossless tree (`crates/lang-kotlin/src/format/`)
 
 Not done (ktlint does them, they change tokens or wrap lines): the wrapping rules (function signatures, argument and parameter lists, class signatures, chains, long expressions), trailing commas, import ordering and wildcard handling, `string-template-indent`, and the rules that rewrite code. They are gaps against `scripts/parity.sh format ktlint`.
 
+## Rules
+Pattern files (`crates/lang-kotlin/rules/ktlint.yaml`) for the ktlint rules that are about names and structure rather than layout: `no-wildcard-imports` (on), `no-unit-return` (on), `no-empty-class-body`, `package-name`, `class-naming`, `enum-entry-name-case`, `no-empty-file` (off). The shared `max-line-length` and `comment-space` cover two more. The catalog `docs/parity/ktlint.yaml` lists every ktlint rule with its status; the layout rules are the formatter's.
+
 ## Parity
 `scripts/parity.sh format ktlint` (ktlint 1.8.0, `ktlint_official`, see [../development/parity.md](../development/parity.md)) over the 5,776 corpus files it can parse: the ratchet counts the files that match byte for byte (about a quarter: most of the corpus is not ktlint-formatted, and ktlint wraps and rewrites more than the layout above); a second format changes no file and the safety check refuses none. Against ktlint restricted to its whitespace, blank-line and indentation rules the match is 95%.
 

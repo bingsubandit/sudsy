@@ -424,6 +424,10 @@
               "$ref": "#/definitions/rule",
               "description": "`cd`, `pushd` or `popd` whose failure is not handled (`cd dir || exit`). Not reported with `set -e`, for `cd ..` or `cd /`, or for `popd -n`."
             },
+            "class-naming": {
+              "$ref": "#/definitions/rule",
+              "description": "A class, interface or object whose name starts with a lowercase letter or an underscore (ktlint class-naming)."
+            },
             "class-pattern": {
               "description": "A class name that does not match the `pattern` option (a regex; by default kebab-case).",
               "oneOf": [
@@ -959,6 +963,10 @@
             "empty-title": {
               "$ref": "#/definitions/rule",
               "description": "The `<title>` names the page in the browser tab, search results and screen readers; whitespace is not text."
+            },
+            "enum-entry-name-case": {
+              "$ref": "#/definitions/rule",
+              "description": "An enum entry whose name starts with a lowercase letter or an underscore (ktlint enum-entry-name-case)."
             },
             "enum-first-value-zero": {
               "description": "The first value of an enum is not 0 (buf lint ENUM_FIRST_VALUE_ZERO). Proto3 and editions with open enums require it; proto2 files (also those with no `syntax`) are checked only with the `proto2` option.",
@@ -2473,6 +2481,10 @@
               "$ref": "#/definitions/rule",
               "description": "`[]` in a regex literal, which matches nothing."
             },
+            "no-empty-class-body": {
+              "$ref": "#/definitions/rule",
+              "description": "A class or interface with `{ }` and nothing in it (ktlint no-empty-class-body)."
+            },
             "no-empty-comment": {
               "$ref": "#/definitions/rule",
               "description": "A comment has no text. A block comment is reported wherever it is; an empty line comment only when it begins or ends a run of comments, because a bare `//` between two comment lines separates paragraphs."
@@ -2480,6 +2492,10 @@
             "no-empty-delegate-parens": {
               "$ref": "#/definitions/rule",
               "description": "An anonymous method with an empty parameter list: `delegate() { }` is `delegate { }`. Parentheses with a comment in them are left alone. The fix is unsafe: without a parameter list the method also converts to delegate types that have parameters, which can change which overload is chosen."
+            },
+            "no-empty-file": {
+              "$ref": "#/definitions/rule",
+              "description": "A `.kt` file with nothing in it but a package, imports and comments (ktlint no-empty-file)."
             },
             "no-empty-keys": {
               "$ref": "#/definitions/rule",
@@ -2958,6 +2974,10 @@
               "$ref": "#/definitions/rule",
               "description": "An alias names an anchor that is not defined earlier in the same document."
             },
+            "no-unit-return": {
+              "$ref": "#/definitions/rule",
+              "description": "A function with a block body that declares `: Unit` (ktlint no-unit-return)."
+            },
             "no-unknown-elements": {
               "$ref": "#/definitions/rule",
               "description": "An element name that HTML does not define, custom elements (`<my-element>`) included. Everything inside `<svg>` and `<math>` is left alone."
@@ -3029,6 +3049,10 @@
             "no-which": {
               "$ref": "#/definitions/rule",
               "description": "A call of `which`."
+            },
+            "no-wildcard-imports": {
+              "$ref": "#/definitions/rule",
+              "description": "An import that ends in `.*` (ktlint no-wildcard-imports)."
             },
             "no-with": {
               "$ref": "#/definitions/rule",
@@ -3120,6 +3144,10 @@
             "package-lower-snake-case": {
               "$ref": "#/definitions/rule",
               "description": "A package whose components are not lower_snake_case (buf lint PACKAGE_LOWER_SNAKE_CASE)."
+            },
+            "package-name": {
+              "$ref": "#/definitions/rule",
+              "description": "A package whose name has an uppercase letter or an underscore (ktlint package-name)."
             },
             "package-version-suffix": {
               "$ref": "#/definitions/rule",

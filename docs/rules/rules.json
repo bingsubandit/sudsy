@@ -10205,6 +10205,223 @@
       ]
     },
     {
+      "category": "style",
+      "default_level": "off",
+      "description": "A class, interface or object whose name starts with a lowercase letter or an underscore (ktlint class-naming).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class my_class\nclass Good\ninterface other\nobject lower\nobject Fine\nclass `a name`\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 7,
+            "length": 8,
+            "line": 1
+          },
+          {
+            "column": 11,
+            "length": 5,
+            "line": 3
+          },
+          {
+            "column": 8,
+            "length": 5,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "class-naming",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "An enum entry whose name starts with a lowercase letter or an underscore (ktlint enum-entry-name-case).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "enum class E { a, B, C_D, _e, FooBar }\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 16,
+            "length": 1,
+            "line": 1
+          },
+          {
+            "column": 27,
+            "length": 2,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "enum-entry-name-case",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A class or interface with `{ }` and nothing in it (ktlint no-empty-class-body).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {}\nclass B { }\nclass C {\n    val x = 1\n}\ninterface D {}\nval o = object : Any() {}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 9,
+            "length": 2,
+            "line": 1
+          },
+          {
+            "column": 9,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 13,
+            "length": 2,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-empty-class-body",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "off",
+      "description": "A `.kt` file with nothing in it but a package, imports and comments (ktlint no-empty-file).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "package a\n\nimport b.C\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-empty-file",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "warn",
+      "description": "A function with a block body that declares `: Unit` (ktlint no-unit-return).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "fun a(): Unit {}\nfun b(x: Int = 1): Unit { return }\nfun c(): Int { return 1 }\nfun d(): Unit = Unit\nfun Unit.e() {}\nfun f() {\n    fun g(): Unit {}\n}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 1,
+            "length": 3,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 5,
+            "length": 3,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-unit-return",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "warn",
+      "description": "An import that ends in `.*` (ktlint no-wildcard-imports).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import a.b.*\nimport a.b.C\nimport a.b.D as E\n\nval x = 1\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 1,
+            "length": 12,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-wildcard-imports",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A package whose name has an uppercase letter or an underscore (ktlint package-name).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "package a.My_pkg\n\nval x = 1\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 1,
+            "length": 16,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "package-name",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
       "category": "cleanup",
       "default_level": "off",
       "description": "A rule whose recipe has more lines than allowed (checkmake `maxbodylength`). Every physical line counts, a continued command and a tab-indented comment included.",

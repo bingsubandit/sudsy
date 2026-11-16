@@ -38,7 +38,7 @@ One line per upstream rule or option under `entries:`, `<id>: <status>` or `<id>
 | html-eslint | 66 | 14 | 11 | 41 | 0 | 0 | 0 | 41 |
 | html-validate | 90 | 34 | 30 | 19 | 0 | 1 | 6 | 19 |
 | htmlhint | 42 | 10 | 6 | 26 | 0 | 0 | 0 | 26 |
-| ktlint | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| ktlint | 97 | 33 | 7 | 57 | 0 | 0 | 0 | 57 |
 | markdownlint | 53 | 25 | 16 | 0 | 0 | 0 | 12 | 0 |
 | prettier | 59 | 38 | 9 | 2 | 0 | 9 | 1 | 2 |
 | psscriptanalyzer | 75 | 12 | 8 | 0 | 0 | 1 | 54 | 0 |

@@ -1,0 +1,72 @@
+id: no-wildcard-imports
+message: 'import the names you use, not `.*`'
+description: >-
+  An import that ends in `.*` (ktlint no-wildcard-imports).
+example: 'import a.b.*'
+severity: warn
+category: style
+rule: { kind: ImportDirective, regex: '^import\s+[^\s]*\.\*$' }
+---
+id: no-empty-class-body
+message: 'the class body is empty: leave out the braces'
+description: >-
+  A class or interface with `{ }` and nothing in it (ktlint no-empty-class-body).
+example: 'class A {}'
+severity: off
+category: style
+rule: { kind: ClassBody, regex: '^\{\s*\}$', parent: { kind: Class } }
+---
+id: no-unit-return
+message: '`Unit` is the default return type: leave it out'
+description: >-
+  A function with a block body that declares `: Unit` (ktlint no-unit-return).
+example: 'fun f(): Unit {}'
+severity: warn
+category: cleanup
+rule: { kind: Fun, regex: '^[^{]*\)\s*:\s*Unit\s*\{' }
+report-on: first-token
+---
+id: package-name
+message: 'the package name is lowercase and has no underscores'
+description: >-
+  A package whose name has an uppercase letter or an underscore (ktlint package-name).
+example: 'package a.My_pkg'
+severity: off
+category: style
+rule: { kind: PackageDirective, regex: '^package\s+(?:[\w`]+\.)*[\w`]*[A-Z_]' }
+---
+id: class-naming
+message: 'a class name starts with an uppercase letter'
+description: >-
+  A class, interface or object whose name starts with a lowercase letter or an underscore
+  (ktlint class-naming).
+example: 'class my_class'
+severity: off
+category: style
+rule: { any: [{ kind: Class }, { kind: ObjectDeclaration }] }
+token: { kind: [Identifier], regex: '^[a-z_]' }
+---
+id: enum-entry-name-case
+message: 'an enum entry is written in UPPER_SNAKE_CASE or PascalCase'
+description: >-
+  An enum entry whose name starts with a lowercase letter or an underscore (ktlint
+  enum-entry-name-case).
+example: 'enum class E { a, B }'
+severity: off
+category: style
+rule: { kind: EnumEntry }
+token: { kind: [Identifier], regex: '^[a-z_]' }
+---
+id: no-empty-file
+message: 'the file has no declarations'
+description: >-
+  A `.kt` file with nothing in it but a package, imports and comments (ktlint no-empty-file).
+example: 'package a'
+severity: off
+category: cleanup
+rule:
+  kind: KtFile
+  path: '\.kt$'
+  not:
+    has:
+      any: [{ kind: Class }, { kind: Fun }, { kind: Property }, { kind: ObjectDeclaration }, { kind: Typealias }]

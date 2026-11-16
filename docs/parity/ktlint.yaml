@@ -6,4 +6,100 @@ sources:
   - "https://pinterest.github.io/ktlint/1.8.0/rules/code-styles/"
 scope: "ktlint standard rules. Formatting (`ktlint --format`, the ktlint_official code style, our own layout code) is measured by `scripts/parity.sh format ktlint`."
 entries:
-  indent: formatter
+  annotation: planned
+  annotation-spacing: planned
+  argument-list-wrapping: planned
+  backing-property-naming: planned
+  binary-expression-wrapping: planned
+  blank-line-before-declaration: "formatter | Comments between declarations: the blank line goes before a KDoc or the first comment only when no blank follows it."
+  block-comment-initial-star-alignment: formatter
+  chain-method-continuation: planned
+  chain-wrapping: planned
+  class-naming: rule class-naming | Names in backticks are accepted; no test-file exceptions.
+  class-signature: planned
+  colon-spacing: formatter
+  comma-spacing: formatter
+  comment-spacing: rule comment-space | Line comments only.
+  comment-wrapping: planned
+  condition-wrapping: planned
+  context-receiver-list-wrapping: planned
+  context-receiver-wrapping: planned
+  curly-spacing: formatter
+  discouraged-comment-location: planned
+  dot-spacing: formatter
+  double-colon-spacing: formatter
+  enum-entry-name-case: rule enum-entry-name-case
+  enum-wrapping: planned
+  expression-operand-wrapping: planned
+  filename: planned
+  final-newline: option kotlin.format.final_newline
+  fun-keyword-spacing: planned
+  function-expression-body: planned
+  function-literal: planned
+  function-naming: planned | exceptions (`@Composable`, factory functions, tests) need annotations and types
+  function-return-type-spacing: formatter
+  function-signature: planned
+  function-start-of-body-spacing: formatter
+  function-type-modifier-spacing: planned
+  function-type-reference-spacing: planned
+  if-else-bracing: planned
+  if-else-wrapping: planned
+  import-ordering: planned
+  indent: formatter | Continuation lines after the wrapping rules below are not forced; the closing quote of a raw string is not re-indented.
+  kdoc: planned
+  kdoc-wrapping: planned
+  keyword-spacing: formatter
+  max-line-length: rule max-line-length | ktlint_official allows 140 columns (the `max` option defaults to 120); no exemption for package, import and raw-string lines.
+  mixed-condition-operators: planned
+  modifier-list-spacing: formatter
+  modifier-order: planned | a Rust rule over the modifier list
+  multiline-expression-wrapping: planned
+  multiline-if-else: planned
+  multiline-loop: planned
+  no-blank-line-before-rbrace: formatter
+  no-blank-line-in-list: planned
+  no-blank-lines-in-chained-method-calls: planned
+  no-consecutive-blank-lines: formatter
+  no-consecutive-comments: planned
+  no-empty-class-body: rule no-empty-class-body | Comments inside the braces do not count as content.
+  no-empty-file: rule no-empty-file
+  no-empty-first-line-in-class-body: formatter
+  no-empty-first-line-in-method-block: formatter
+  no-line-break-after-else: planned
+  no-line-break-before-assignment: planned
+  no-multi-spaces: formatter
+  no-semi: planned | only a `;` that ends a line; the pattern matcher does not see line ends
+  no-single-line-block-comment: planned
+  no-trailing-spaces: formatter
+  no-unit-return: rule no-unit-return
+  no-unused-imports: planned | needs a scan of the names the file uses (a Rust rule)
+  no-wildcard-imports: rule no-wildcard-imports
+  nullable-type-spacing: formatter
+  op-spacing: formatter
+  package-name: rule package-name
+  parameter-list-spacing: planned
+  parameter-list-wrapping: planned
+  parameter-wrapping: planned
+  paren-spacing: formatter
+  property-naming: planned | constants and backing properties need modifiers and a scan of the class
+  property-wrapping: planned
+  range-spacing: formatter
+  spacing-around-angle-brackets: formatter
+  spacing-between-declarations-with-annotations: planned
+  spacing-between-declarations-with-comments: planned
+  spacing-between-function-name-and-opening-parenthesis: formatter
+  square-brackets-spacing: formatter
+  statement-wrapping: planned
+  string-template: planned | needs the character after `${x}` (a Rust rule)
+  string-template-indent: planned
+  then-spacing: formatter
+  trailing-comma-on-call-site: planned
+  trailing-comma-on-declaration-site: planned
+  try-catch-finally-spacing: formatter | Only the blank before `else`, `catch` and `finally`.
+  type-argument-comment: planned
+  type-argument-list-spacing: formatter
+  type-parameter-comment: planned
+  type-parameter-list-spacing: formatter
+  unary-op-spacing: formatter
+  value-argument-comment: planned
+  value-parameter-comment: planned

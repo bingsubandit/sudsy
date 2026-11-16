@@ -18,7 +18,7 @@ Current state only; history is in git. Update the doc for the area you change in
 | [formatting/github-actions.md](formatting/github-actions.md) | GitHub Actions workflows and `action.yml`: selection by path, embedded `run:` scripts, rules after actionlint |
 | [formatting/js.md](formatting/js.md) | JavaScript, TypeScript, JSX and TSX: oxc parser and its adapter, formatter (statements, declarations, literals), conformance |
 | [formatting/python.md](formatting/python.md) | Python parser (ruff), adapter, formatter after `ruff format`, options, parity, conformance |
-| [formatting/kotlin.md](formatting/kotlin.md) | Kotlin: ktrs-parser and its adapter (CRLF, depth guard, `.kts` scripts), limits, conformance |
+| [formatting/kotlin.md](formatting/kotlin.md) | Kotlin: ktrs-parser and its adapter (CRLF, depth guard, `.kts` scripts), limits, the ktlint-style layout, rules, conformance, parity |
 | [formatting/sql.md](formatting/sql.md) | SQL: sqruff parser and its adapter, dialects, limits, the formatter and its sqlfluff parity, conformance |
 | [formatting/toml.md](formatting/toml.md) | TOML parser (tree-sitter), formatter, options, conformance |
 | [formatting/xml.md](formatting/xml.md) | XML parser (tree-sitter), well-formedness checks, formatter, options, conformance |

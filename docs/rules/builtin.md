@@ -253,6 +253,13 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `triple-slash-reference` | js | style | off | none | A `/// <reference path="x" />` before the first statement, and a `/// <reference types="x" />` for a module the file imports. Equivalent: typescript-eslint triple-slash-reference (partial). |
 | `use-isnan` | js | suspicious | error | none | A comparison with `NaN`, or `NaN` as the discriminant or a case test of a `switch`; use `Number.isNaN`. Equivalent: eslint use-isnan (partial). |
 | `valid-typeof` | js | suspicious | error | none | `typeof x` compared with a string that is not a type name, or with `undefined`. Equivalent: eslint valid-typeof (partial). |
+| `class-naming` | kotlin | style | off | none | A class, interface or object whose name starts with a lowercase letter or an underscore (ktlint class-naming). |
+| `enum-entry-name-case` | kotlin | style | off | none | An enum entry whose name starts with a lowercase letter or an underscore (ktlint enum-entry-name-case). |
+| `no-empty-class-body` | kotlin | style | off | none | A class or interface with `{ }` and nothing in it (ktlint no-empty-class-body). |
+| `no-empty-file` | kotlin | cleanup | off | none | A `.kt` file with nothing in it but a package, imports and comments (ktlint no-empty-file). |
+| `no-unit-return` | kotlin | cleanup | warn | none | A function with a block body that declares `: Unit` (ktlint no-unit-return). |
+| `no-wildcard-imports` | kotlin | style | warn | none | An import that ends in `.*` (ktlint no-wildcard-imports). |
+| `package-name` | kotlin | style | off | none | A package whose name has an uppercase letter or an underscore (ktlint package-name). |
 | `max-body-length` | makefile | cleanup | off | none | A rule whose recipe has more lines than allowed (checkmake `maxbodylength`). Every physical line counts, a continued command and a tab-indented comment included. Options: `max` (default `5`): The most lines a recipe may have. |
 | `min-phony` | makefile | suspicious | off | none | A target that must exist and be declared `.PHONY` (checkmake `minphony`). Reported on the `.PHONY` line, or the last rule's when there is none. Options: `required` (default `["all", "clean", "test"]`): The targets every Makefile must declare `.PHONY`. |
 | `phony-declared` | makefile | suspicious | off | none | A target with no recipe that is not declared `.PHONY` (checkmake `phonydeclared`); targets that start with a `.` are special and skipped. |
