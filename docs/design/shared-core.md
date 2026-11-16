@@ -43,7 +43,7 @@ A step is one commit and one finish run. `After` names what must be on main firs
 | G1 | A nesting limit and a panic catch around each file's parse, format and lint, in the shared engine and `provider_api::adapter::replay`: a file that fails is one diagnostic and the run goes on | `provider-api`, `core-incremental`, `cli`, `lsp` | 20,000 nested brackets in every language's syntax give exit 2 and the other files' results; a test per provider through the shared test helper | |
 | G2 | Parity and corpus runs as a scheduled CI job that fails on a ratchet | `.github/workflows`, `scripts/parity.sh` | every `differences.yaml` ratchet and every ignored conformance test runs nightly without a person | |
 | G3 | Parser crates may be imported only by `adapter.rs`: a check with the files of section 1 as its starting list, which may only shrink | `xtask`, `clippy.toml` | the gate fails on a new import outside an adapter | |
-| G4 | The safety check runs in release builds when `format` or `fix` writes a file (decision D4), or the README stops promising it | `provider-api/src/format.rs`, `README.md` | measured cost per language in `numbers.md` | |
+| G4 | The README says where the safety check runs: debug builds, tests and the corpus profile; release builds do not run it (decision 4) | `README.md` | the README agrees with `docs/formatting/engine.md` | |
 
 ### Roles
 | # | Step | Where | Done when | After |
@@ -55,7 +55,7 @@ A step is one commit and one finish run. `After` names what must be on main firs
 ### Layout
 | # | Step | Where | Done when | After |
 |---|---|---|---|---|
-| L1 | Pilot: member chains and call arguments move from `lang-js` into `core-format` as role-driven layouts with a policy struct; `lang-csharp` and `lang-java` are ported onto them | `core-format`, `lang-js`, `lang-csharp`, `lang-java` | all three parity ratchets within the bound of D1; more lines deleted from the three crates than added to `core-format`; bench within budget | R2 |
+| L1 | Pilot: member chains and call arguments move from `lang-js` into `core-format` as role-driven layouts with a policy struct; `lang-csharp` and `lang-java` are ported onto them | `core-format`, `lang-js`, `lang-csharp`, `lang-java` | all three parity ratchets within 2 points of their counts before the port (decision 1); more lines deleted from the three crates than added to `core-format`; bench within budget | R2 |
 | L2 | The rest of the kit: operator chains, assignment, conditional, parentheses from a precedence table in the grammar, blocks and statement sequences | the same | as L1; each language's remaining formatter code is listed by construct in its doc | L1 passes |
 | L3 | Kotlin and PHP formatters start on the kit: policy file first, Rust only for a named gap that cannot be a policy value | `lang-kotlin`, `lang-php` | formatter lines per grammar node recorded next to JS and C# | L2 |
 
@@ -64,8 +64,8 @@ L1 is a test of the design. If the three languages cannot hold their ratchets on
 ### Scopes and flow
 | # | Step | Where | Done when | After |
 |---|---|---|---|---|
-| S1 | The scope model and binder in `core-semantics`, with JS's binding table and resolution data; the shared rule family with ESLint's ids as rows | `core-semantics`, `core-rules`, `lang-js` | `scripts/parity.sh eslint` and `typescript-eslint` unchanged within D2; `oxc_semantic` and the second parse are gone; `js.lint` within budget | R2 |
-| S2 | Python on the same model (ruff ids as rows); the kept AST and `analysis/model.rs` go | `lang-python` | `scripts/parity.sh ruff` within D2 | S1, R3 |
+| S1 | The scope model and binder in `core-semantics`, with JS's binding table and resolution data; the shared rule family with ESLint's ids as rows; a parity mode that compares findings by rule and reported name | `core-semantics`, `core-rules`, `lang-js`, `scripts/parity_lint.py` | on the `eslint` and `typescript-eslint` parity corpora no problem the reference tool reports is missed (decision 2: compared by rule and reported name per file, not by position); `oxc_semantic` and the second parse are gone; `js.lint` within budget | R2 |
+| S2 | Python on the same model (ruff ids as rows); the kept AST and `analysis/model.rs` go | `lang-python` | the same measure on the `ruff` parity corpus | S1, R3 |
 | S3 | A flow-graph builder from statement roles; JS `no-unreachable` on `core-flow` | `core-flow`, `lang-js` | `rules/flow.rs` deleted, same findings | R2 |
 | S4 | Java, Kotlin and PHP get the scope rules from tables alone | `lang-*` | lines per language recorded | S1, R3 |
 
@@ -82,21 +82,18 @@ Kept as they are: oxc, ruff, Roslyn, mago; tree-sitter for Bash, Markdown and Po
 ### Measures
 | # | Step | Where | Done when | After |
 |---|---|---|---|---|
-| M1 | `scripts/cost.sh` reports, per language, hand-written lines by kind (formatter, rules, other) per grammar node, and the shared share of the workspace; the table in `adding-a-language.md` shows them for every language | `scripts`, docs | a CI check fails when the shared share falls or a language passes its budget (D3) without a line in the commit message | |
+| M1 | `scripts/cost.sh` reports, per language, hand-written lines by kind (formatter, rules, other) per grammar node, and the shared share of the workspace; the table in `adding-a-language.md` shows them for every language | `scripts`, docs | a CI check fails when the shared share falls or a language passes its budget (decision 3) without a line in the commit message | |
 | M2 | Speed against ruff, Biome and oxlint as a script beside `speed-json-yaml.sh`, numbers in `numbers.md` | `tests/conformance`, docs | the table of section 1 can be re-run | |
 | M3 | Parity catalogs list every upstream rule (ruff's lists 93 of its rules), so the coverage counts mean the same for every tool | `docs/parity` | counts regenerated | |
 
 `adding-a-language.md` changes with L3 and S4: a language starts as a grammar with roles and a policy file, its formatter is the kit, and Rust is written per named gap.
 
-## 4. Decisions for the user
-| # | Question | Recommendation |
-|---|---|---|
-| D1 | How far may a parity ratchet fall while a language is ported onto the kit, and where must it end? | 2 points during a port; back to the count before the port, or 90% of real-world files, before the next language starts |
-| D2 | Must scope rules agree with ESLint and ruff at every position, or may listed differences stay as `choice`? | named `choice` entries are allowed; the binder gets no per-tool switch |
-| D3 | The budget of a new brace language before a review | 3,000 hand-written lines to "usable" |
-| D4 | The safety check in release builds | on when a file is written, off for `--check` |
-| D5 | Languages whose toolchain ships the formatter (Go, Rust, Dart, Zig, Swift, Elixir) | lint only; no formatter |
-| D6 | New languages while L1 runs | parsers and step 1 go on, with roles from the start; formatter steps wait for L1's result |
+## 4. Decisions
+1. **A parity ratchet may fall by 2 points while its language is ported onto the kit.** Before the next language starts it is back at its count before the port, or at 90% of the real-world files.
+2. **Rules replace the reference tools; they do not mirror them.** What counts is that a team that switches loses no check: every problem ESLint, ruff or another reference tool reports on the corpus is reported by the mapped Sudsy rule. Position, message and the choice among several equally valid reports may differ, and such a difference is a named `choice`, not a gap. The binder therefore has no per-tool switch.
+3. **A new brace language has a budget of 3,000 hand-written lines to "usable"**; passing it needs a review.
+4. **Release builds do not run the safety check.** It stays in debug builds, tests and the `corpus` profile.
+5. **New languages go on while L1 runs**: parser comparison and step 1, with roles from the start. Formatter steps wait for L1's result.
 
 ## 5. What this gives up
 - The last points of parity. A quirk of a reference tool that cannot be named as a style option stays a difference, or becomes per-language code, which is the cost this plan removes.
