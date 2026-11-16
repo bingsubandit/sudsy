@@ -215,13 +215,17 @@ fn header_node(cx: &FormatCtx<'_>, parent: &SyntaxNode, n: &SyntaxNode) -> R {
                         .is_some_and(|q| q.kind() == k::RARROW)
         }) =>
         {
-            // The parameters split before the annotation does.
-            let d = expr::expr(cx, n)?;
+            // The parameters split before the annotation does; without parameters the
+            // annotation is parenthesized when it does not fit.
             let params = parent
                 .children()
                 .find(|c| c.kind() == k::PARAMETERS)
                 .is_some_and(|p| kids(cx, &p).len() > 2);
-            Ok(if params { flatten(d) } else { d })
+            if params {
+                Ok(flatten(expr::expr(cx, n)?))
+            } else {
+                paren::maybe_parenthesize(cx, n)
+            }
         }
         _ => {
             let target = parent.kind() == k::STMT_FOR
