@@ -5,7 +5,7 @@ use core_syntax::{SyntaxKind, print};
 use lang_cpp::generated::kind;
 use lang_cpp::{Dialect, provider};
 use provider_api::format_testing::{
-    assert_file_names, assert_parses, bench_input_files, check_corpus,
+    assert_file_names, assert_formats, assert_parses, bench_input_files, check_corpus,
 };
 use provider_api::{LanguageProvider, SourceFile};
 
@@ -64,6 +64,62 @@ typedef struct { int a; } t_t;
 fn probes_parse_and_print_back() {
     assert_parses(&provider(Dialect::Cpp), "a.cc", CPP);
     assert_parses(&provider(Dialect::C), "a.c", C);
+}
+
+/// The formatter's own cases: spacing, wrapping, braces, blank lines, comments, directives.
+const FORMAT: &str = r##"#include <a>
+#define X(a)   \
+  (a+1)
+namespace n{
+int x=1;
+
+
+class C:public B{
+public:
+  C():a(1),b(2){}
+ int f(int*p,int&q)const{return p?*p:q;}
+private:
+  int a,b;
+};
+enum E{A,B};
+}
+static int   very_long_function_name(int first_argument, int second_argument, int third_argument) {
+  for(int i=0;i<10;++i){ if(i%2) continue; else break; }
+  switch(x){case 1: y(); break; default: return;}
+  while(x);
+  auto l=[&](int a){return a+1;};
+  call(a,b, c); // trailing
+  /* block */
+  return a?b:c;
+}
+"##;
+
+#[test]
+fn formats() {
+    let out = assert_formats(provider(Dialect::Cpp), "a.cc", FORMAT);
+    assert!(
+        out.contains(
+            "namespace n {\nint x = 1;\n\nclass C : public B {\npublic:\n  C() : a(1), b(2) {}\n"
+        ),
+        "{out}"
+    );
+    assert!(out.contains("enum E { A, B };\n}"), "{out}");
+    assert!(out.contains("  while (x)\n    ;\n"), "{out}");
+    assert!(
+        out.contains("  switch (x) {\n  case 1:\n    y();\n    break;\n"),
+        "{out}"
+    );
+    assert_formats(provider(Dialect::C), "a.c", C);
+}
+
+#[test]
+fn formats_probes_and_bench_inputs() {
+    assert_formats(provider(Dialect::Cpp), "a.cc", CPP);
+    for (folder, dialect, file) in [("c", Dialect::C, "a.c"), ("cpp", Dialect::Cpp, "a.cc")] {
+        for (_, text) in bench_input_files(folder) {
+            assert_formats(provider(dialect), file, &text);
+        }
+    }
 }
 
 #[test]
@@ -279,4 +335,13 @@ fn structure_stats() {
             bytes as f64 / 1e6 / secs
         );
     }
+}
+
+/// Format check (round trip, meaning, idempotency) on the whole corpus.
+#[test]
+#[ignore = "needs the corpus: tests/conformance/fetch-cpp-corpus.sh"]
+fn conformance_format() {
+    let exts = ["cc", "cpp", "cxx", "hpp", "hh", "hxx", "ipp"];
+    check_corpus(provider(Dialect::Cpp), "a.cc", "cpp", &exts);
+    check_corpus(provider(Dialect::C), "a.c", "cpp", &["c", "h"]);
 }
