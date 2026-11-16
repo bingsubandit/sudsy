@@ -31,11 +31,22 @@ pub struct Spec {
     /// The direct parent / a direct child holds the rule (`inside`/`has` look at every level).
     pub parent: Option<Box<Spec>>,
     pub child: Option<Box<Spec>>,
+    /// Some direct child token (an operator, a literal) has one of these kinds and matches `regex`.
+    #[serde(rename = "child-token")]
+    pub child_token: Option<TokenSpec>,
     /// The bool option of this name is true.
     pub option: Option<String>,
     pub all: Option<Vec<Spec>>,
     pub any: Option<Vec<Spec>>,
     pub not: Option<Box<Spec>>,
+}
+
+/// `child-token:` of a rule: tokens are not nodes, so `kind` cannot name them.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TokenSpec {
+    pub kind: Vec<String>,
+    pub regex: Option<String>,
 }
 
 /// What an expression is evaluated against.
@@ -75,6 +86,7 @@ pub enum Expr {
     Has(Box<Expr>),
     Parent(Box<Expr>),
     Child(Box<Expr>),
+    ChildToken(Vec<SyntaxKind>, Option<Re>),
     Option(String),
     All(Vec<Expr>),
     Any(Vec<Expr>),
@@ -134,6 +146,24 @@ impl Expr {
         if let Some(s) = &spec.child {
             all.push(Expr::Child(Box::new(sub(s)?)));
         }
+        if let Some(t) = &spec.child_token {
+            let g = parser.grammar();
+            let kinds = t
+                .kind
+                .iter()
+                .map(|n| {
+                    g.kind_by_name(n)
+                        .filter(|k| k.is_token())
+                        .ok_or_else(|| format!("`{n}` is not a token kind of the language"))
+                })
+                .collect::<Result<_, _>>()?;
+            let re = t
+                .regex
+                .as_ref()
+                .map(|r| Re::new(r).map_err(|e| format!("regex `{r}`: {e}")))
+                .transpose()?;
+            all.push(Expr::ChildToken(kinds, re));
+        }
         if let Some(name) = &spec.option {
             let bool_option = |o: &&OptionDecl| o.name == name && matches!(o.default, Opt::Bool(_));
             if !options.iter().any(|o| bool_option(&o)) {
@@ -153,7 +183,7 @@ impl Expr {
         match all.len() {
             0 => Err(
                 "a rule needs at least one of pattern, kind, regex, path, nth, inside, not-inside, \
-                      has, not-has, parent, child, option, all, any, not"
+                      has, not-has, parent, child, child-token, option, all, any, not"
                     .into(),
             ),
             1 => Ok(all.remove(0)),
@@ -201,6 +231,13 @@ impl Expr {
                 .children()
                 .any(|c| cx.spend() && e.matches(&c, cx).is_some())
                 .then(Captures::new),
+            Expr::ChildToken(kinds, re) => node
+                .children_with_tokens()
+                .filter_map(|e| e.into_token())
+                .any(|t| {
+                    kinds.contains(&t.kind()) && re.as_ref().is_none_or(|r| r.is_match(t.text()))
+                })
+                .then(Captures::new),
             Expr::Option(name) => cx.options.bool(name).then(Captures::new),
             Expr::All(list) => {
                 let mut captures = Captures::new();
@@ -224,9 +261,12 @@ impl Expr {
             Expr::Inside(_) | Expr::Has(_) => true,
             Expr::All(list) | Expr::Any(list) => list.iter().any(Expr::superlinear),
             Expr::Not(e) | Expr::Parent(e) | Expr::Child(e) => e.superlinear(),
-            Expr::Kind(_) | Expr::Regex(..) | Expr::Path(_) | Expr::Nth(_) | Expr::Option(_) => {
-                false
-            }
+            Expr::Kind(_)
+            | Expr::ChildToken(..)
+            | Expr::Regex(..)
+            | Expr::Path(_)
+            | Expr::Nth(_)
+            | Expr::Option(_) => false,
         }
     }
 
@@ -268,6 +308,7 @@ impl Expr {
             | Expr::Option(_)
             | Expr::Has(_)
             | Expr::Child(_)
+            | Expr::ChildToken(..)
             | Expr::Not(_) => {}
         }
     }

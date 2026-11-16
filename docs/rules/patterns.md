@@ -103,6 +103,7 @@ rule:
   kind: MessageType
   parent: { kind: Rpc, regex: '^rpc\s+(?<RPC>\w+)' }
 ```
+- `child-token: { kind: [Operator], regex: '^[=!]=$' }`: some direct child token has one of the listed token kinds and, with `regex`, that text (`kind` cannot name tokens). Two tests of it go in `all`.
 - `parent` (the direct parent holds the rule) and `child` (some direct child does) are the one-level forms of `inside` and `has`, which look at every level. `option: NAME` holds when that `bool` option is true. Write a negation with `not`:
 
 ```yaml

@@ -18,7 +18,9 @@ severity: warn
 category: correctness
 rule:
   kind: BinaryExpression
-  regex: '^(?:[^|&]*[=!]=\s*"(?:[^"\\]|\\.)*"|"(?:[^"\\]|\\.)*"\s*[=!]=[^|&]*)$'
+  all:
+    - child-token: { kind: [Operator], regex: '^[=!]=$' }
+    - child-token: { kind: [String] }
 ---
 id: boolean-literal-comparison
 message: 'comparing with a boolean literal is redundant: use the expression itself or `!`'
@@ -29,7 +31,9 @@ severity: warn
 category: cleanup
 rule:
   kind: BinaryExpression
-  regex: '^(?:[^|&]*[=!]=\s*(?:true|false)|(?:true|false)\s*[=!]=[^|&]*)$'
+  all:
+    - child-token: { kind: [Operator], regex: '^[=!]=$' }
+    - child-token: { kind: [Boolean] }
 ---
 id: equals-hash-code
 message: 'the class defines `equals(Object)` but not `hashCode()`'

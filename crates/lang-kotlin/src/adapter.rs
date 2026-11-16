@@ -13,10 +13,10 @@
 //! parse error). A file the parser is not run on is one `Unknown` token and one error.
 
 use crate::generated::kind as k;
-use core_syntax::{SyntaxKind, SyntaxNode, TreeBuilder, grammars};
+use core_syntax::{SyntaxKind, grammars};
 use ktrs_parser::FileKind;
 use ktrs_syntax::SyntaxKind as P;
-use provider_api::adapter::{KindNames, Kinds, Node, Tok, replay};
+use provider_api::adapter::{KindNames, Kinds, Node, Tok, replay, whole_file};
 use provider_api::{ParseError, ParseResult, SourceFile};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -50,10 +50,10 @@ pub fn parse_file(file: &SourceFile) -> ParseResult {
 
 pub fn parse(src: &str, kind: FileKind) -> ParseResult {
     if src.len() > MAX_BYTES {
-        return whole_file(src, format!("file over {} MB", MAX_BYTES >> 20));
+        return whole_file(src, KINDS, format!("file over {} MB", MAX_BYTES >> 20));
     }
     if let Some(why) = guard(src) {
-        return whole_file(src, why.into());
+        return whole_file(src, KINDS, why);
     }
     // ktrs wants `\n`: `crs` holds the offsets (in the normalized text) of the removed `\r`.
     let (text, crs) = normalize(src);
@@ -66,7 +66,7 @@ pub fn parse(src: &str, kind: FileKind) -> ParseResult {
             .map(|h| h.join())
     });
     let Ok(Ok(Ok((tokens, nodes, mut errors)))) = walked else {
-        return whole_file(src, "the Kotlin parser failed on this file".into());
+        return whole_file(src, KINDS, "the Kotlin parser failed on this file");
     };
     let mut result = replay(src, KINDS, &tokens, &nodes, comments, |t, _| t);
     errors.append(&mut result.errors);
@@ -273,19 +273,4 @@ fn pascal(kind: P) -> String {
     (format!("{kind:?}").split('_'))
         .map(|w| w[..1].to_string() + &w[1..].to_lowercase())
         .collect()
-}
-
-/// The file as one `Unknown` token, with the reason.
-fn whole_file(src: &str, message: String) -> ParseResult {
-    let mut builder = TreeBuilder::new();
-    builder.start_node(KINDS.root);
-    if !src.is_empty() {
-        builder.token(KINDS.unknown, src);
-    }
-    builder.token(KINDS.eof, "");
-    builder.finish_node();
-    ParseResult {
-        tree: SyntaxNode::new_root(builder.finish()),
-        errors: vec![ParseError::syntax(0, src.len() as u32, message)],
-    }
 }
