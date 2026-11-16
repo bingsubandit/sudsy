@@ -5437,6 +5437,111 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "access_modifier_offset": {
+              "default": -2,
+              "description": "Columns `public:`, `private:` and `protected:` are indented relative to the members of their class.",
+              "maximum": 16,
+              "minimum": -16,
+              "type": "integer"
+            },
+            "align_after_open_bracket": {
+              "default": "align",
+              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+              "enum": [
+                "align",
+                "dont_align",
+                "always_break"
+              ],
+              "type": "string"
+            },
+            "align_escaped_newlines": {
+              "default": "right",
+              "description": "The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line.",
+              "enum": [
+                "right",
+                "left",
+                "dont_align"
+              ],
+              "type": "string"
+            },
+            "align_trailing_comments": {
+              "default": true,
+              "description": "Align the trailing comments of consecutive lines.",
+              "type": "boolean"
+            },
+            "bin_pack_arguments": {
+              "default": true,
+              "description": "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line).",
+              "type": "boolean"
+            },
+            "bin_pack_parameters": {
+              "default": true,
+              "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
+              "type": "boolean"
+            },
+            "brace_wrapping": {
+              "default": [],
+              "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "break_after_return_type": {
+              "default": "none",
+              "description": "The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`).",
+              "enum": [
+                "none",
+                "top_level",
+                "all",
+                "top_level_definitions",
+                "all_definitions"
+              ],
+              "type": "string"
+            },
+            "break_before_binary_operators": {
+              "default": "none",
+              "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
+              "enum": [
+                "none",
+                "non_assignment",
+                "all"
+              ],
+              "type": "string"
+            },
+            "break_constructor_initializers": {
+              "default": "before_colon",
+              "description": "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`).",
+              "enum": [
+                "before_colon",
+                "before_comma"
+              ],
+              "type": "string"
+            },
+            "break_template_declarations": {
+              "default": "multiline",
+              "description": "`template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never.",
+              "enum": [
+                "yes",
+                "multiline",
+                "no"
+              ],
+              "type": "string"
+            },
+            "constructor_initializer_indent": {
+              "default": 4,
+              "description": "Columns a constructor initializer list is indented more than its constructor.",
+              "maximum": 16,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "continuation_indent": {
+              "default": 4,
+              "description": "Columns a wrapped line is indented more than the line it continues, where it is not aligned to a bracket.",
+              "maximum": 16,
+              "minimum": 0,
+              "type": "integer"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -5450,6 +5555,16 @@
             "final_newline": {
               "default": true,
               "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_braces": {
+              "default": false,
+              "description": "Indent a brace that is on its own line together with the block it opens.",
+              "type": "boolean"
+            },
+            "indent_case_labels": {
+              "default": false,
+              "description": "Indent `case` labels one level inside their `switch`.",
               "type": "boolean"
             },
             "indent_size": {
@@ -5474,6 +5589,109 @@
               "maximum": 1000,
               "minimum": 20,
               "type": "integer"
+            },
+            "max_blank_lines": {
+              "default": 1,
+              "description": "Largest number of blank lines kept between statements and comments.",
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "namespace_indentation": {
+              "default": "none",
+              "description": "Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`.",
+              "enum": [
+                "none",
+                "inner",
+                "all"
+              ],
+              "type": "string"
+            },
+            "penalty_return_type": {
+              "default": 60,
+              "description": "What a return type on a line of its own costs the layout; the higher, the longer the parameter list may wrap before the return type moves.",
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "pointer_alignment": {
+              "default": "right",
+              "description": "Where the `*` and `&` of a pointer or reference declarator go: next to the name (`right`), next to the type (`left`) or between them (`middle`).",
+              "enum": [
+                "right",
+                "left",
+                "middle"
+              ],
+              "type": "string"
+            },
+            "short_case_labels": {
+              "default": false,
+              "description": "A `case` label and its simple statement are kept on one line when they fit.",
+              "type": "boolean"
+            },
+            "short_enums": {
+              "default": true,
+              "description": "An enum whose body fits stays on one line.",
+              "type": "boolean"
+            },
+            "short_functions": {
+              "default": "all",
+              "description": "Function bodies kept on the line of the signature when they fit: `none`, `empty` (`{}` only), `inline` (functions defined in a class, and empty ones) or `all`.",
+              "enum": [
+                "none",
+                "empty",
+                "inline",
+                "all"
+              ],
+              "type": "string"
+            },
+            "short_ifs": {
+              "default": "never",
+              "description": "An `if` with a simple statement is kept on one line when it fits: `never`, without an `else`, or with or without.",
+              "enum": [
+                "never",
+                "without_else",
+                "all"
+              ],
+              "type": "string"
+            },
+            "short_lambdas": {
+              "default": "all",
+              "description": "Lambda bodies kept on the line of the lambda when they fit: `none`, `empty`, `inline` (a lambda that is an argument) or `all`.",
+              "enum": [
+                "none",
+                "empty",
+                "inline",
+                "all"
+              ],
+              "type": "string"
+            },
+            "short_loops": {
+              "default": false,
+              "description": "A `for`, `while` or range-for with a simple statement is kept on one line when it fits.",
+              "type": "boolean"
+            },
+            "space_before_parens": {
+              "default": "control_statements",
+              "description": "A blank before the parenthesis of `if`, `for`, `while`, `switch` and `catch` (`control_statements`), before every parenthesis (`always`) or never.",
+              "enum": [
+                "never",
+                "control_statements",
+                "always"
+              ],
+              "type": "string"
+            },
+            "spaces_before_trailing_comments": {
+              "default": 1,
+              "description": "Blanks between the code of a line and its `//` comment.",
+              "maximum": 16,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "wrap_lines": {
+              "default": true,
+              "description": "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change).",
+              "type": "boolean"
             }
           },
           "type": "object"
@@ -5511,6 +5729,111 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "access_modifier_offset": {
+              "default": -2,
+              "description": "Columns `public:`, `private:` and `protected:` are indented relative to the members of their class.",
+              "maximum": 16,
+              "minimum": -16,
+              "type": "integer"
+            },
+            "align_after_open_bracket": {
+              "default": "align",
+              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+              "enum": [
+                "align",
+                "dont_align",
+                "always_break"
+              ],
+              "type": "string"
+            },
+            "align_escaped_newlines": {
+              "default": "right",
+              "description": "The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line.",
+              "enum": [
+                "right",
+                "left",
+                "dont_align"
+              ],
+              "type": "string"
+            },
+            "align_trailing_comments": {
+              "default": true,
+              "description": "Align the trailing comments of consecutive lines.",
+              "type": "boolean"
+            },
+            "bin_pack_arguments": {
+              "default": true,
+              "description": "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line).",
+              "type": "boolean"
+            },
+            "bin_pack_parameters": {
+              "default": true,
+              "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
+              "type": "boolean"
+            },
+            "brace_wrapping": {
+              "default": [],
+              "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "break_after_return_type": {
+              "default": "none",
+              "description": "The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`).",
+              "enum": [
+                "none",
+                "top_level",
+                "all",
+                "top_level_definitions",
+                "all_definitions"
+              ],
+              "type": "string"
+            },
+            "break_before_binary_operators": {
+              "default": "none",
+              "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
+              "enum": [
+                "none",
+                "non_assignment",
+                "all"
+              ],
+              "type": "string"
+            },
+            "break_constructor_initializers": {
+              "default": "before_colon",
+              "description": "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`).",
+              "enum": [
+                "before_colon",
+                "before_comma"
+              ],
+              "type": "string"
+            },
+            "break_template_declarations": {
+              "default": "multiline",
+              "description": "`template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never.",
+              "enum": [
+                "yes",
+                "multiline",
+                "no"
+              ],
+              "type": "string"
+            },
+            "constructor_initializer_indent": {
+              "default": 4,
+              "description": "Columns a constructor initializer list is indented more than its constructor.",
+              "maximum": 16,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "continuation_indent": {
+              "default": 4,
+              "description": "Columns a wrapped line is indented more than the line it continues, where it is not aligned to a bracket.",
+              "maximum": 16,
+              "minimum": 0,
+              "type": "integer"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -5524,6 +5847,16 @@
             "final_newline": {
               "default": true,
               "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_braces": {
+              "default": false,
+              "description": "Indent a brace that is on its own line together with the block it opens.",
+              "type": "boolean"
+            },
+            "indent_case_labels": {
+              "default": false,
+              "description": "Indent `case` labels one level inside their `switch`.",
               "type": "boolean"
             },
             "indent_size": {
@@ -5548,6 +5881,109 @@
               "maximum": 1000,
               "minimum": 20,
               "type": "integer"
+            },
+            "max_blank_lines": {
+              "default": 1,
+              "description": "Largest number of blank lines kept between statements and comments.",
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "namespace_indentation": {
+              "default": "none",
+              "description": "Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`.",
+              "enum": [
+                "none",
+                "inner",
+                "all"
+              ],
+              "type": "string"
+            },
+            "penalty_return_type": {
+              "default": 60,
+              "description": "What a return type on a line of its own costs the layout; the higher, the longer the parameter list may wrap before the return type moves.",
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "pointer_alignment": {
+              "default": "right",
+              "description": "Where the `*` and `&` of a pointer or reference declarator go: next to the name (`right`), next to the type (`left`) or between them (`middle`).",
+              "enum": [
+                "right",
+                "left",
+                "middle"
+              ],
+              "type": "string"
+            },
+            "short_case_labels": {
+              "default": false,
+              "description": "A `case` label and its simple statement are kept on one line when they fit.",
+              "type": "boolean"
+            },
+            "short_enums": {
+              "default": true,
+              "description": "An enum whose body fits stays on one line.",
+              "type": "boolean"
+            },
+            "short_functions": {
+              "default": "all",
+              "description": "Function bodies kept on the line of the signature when they fit: `none`, `empty` (`{}` only), `inline` (functions defined in a class, and empty ones) or `all`.",
+              "enum": [
+                "none",
+                "empty",
+                "inline",
+                "all"
+              ],
+              "type": "string"
+            },
+            "short_ifs": {
+              "default": "never",
+              "description": "An `if` with a simple statement is kept on one line when it fits: `never`, without an `else`, or with or without.",
+              "enum": [
+                "never",
+                "without_else",
+                "all"
+              ],
+              "type": "string"
+            },
+            "short_lambdas": {
+              "default": "all",
+              "description": "Lambda bodies kept on the line of the lambda when they fit: `none`, `empty`, `inline` (a lambda that is an argument) or `all`.",
+              "enum": [
+                "none",
+                "empty",
+                "inline",
+                "all"
+              ],
+              "type": "string"
+            },
+            "short_loops": {
+              "default": false,
+              "description": "A `for`, `while` or range-for with a simple statement is kept on one line when it fits.",
+              "type": "boolean"
+            },
+            "space_before_parens": {
+              "default": "control_statements",
+              "description": "A blank before the parenthesis of `if`, `for`, `while`, `switch` and `catch` (`control_statements`), before every parenthesis (`always`) or never.",
+              "enum": [
+                "never",
+                "control_statements",
+                "always"
+              ],
+              "type": "string"
+            },
+            "spaces_before_trailing_comments": {
+              "default": 1,
+              "description": "Blanks between the code of a line and its `//` comment.",
+              "maximum": 16,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "wrap_lines": {
+              "default": true,
+              "description": "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change).",
+              "type": "boolean"
             }
           },
           "type": "object"
@@ -6238,6 +6674,18 @@
       "description": "Presets (`preset:<language>/<name>`) or config files, applied in order.",
       "items": {
         "examples": [
+          "preset:cpp/chromium",
+          "preset:cpp/chromium",
+          "preset:cpp/gnu",
+          "preset:cpp/gnu",
+          "preset:cpp/google",
+          "preset:cpp/google",
+          "preset:cpp/microsoft",
+          "preset:cpp/microsoft",
+          "preset:cpp/mozilla",
+          "preset:cpp/mozilla",
+          "preset:cpp/webkit",
+          "preset:cpp/webkit",
           "preset:csharp/csharpier-compat",
           "preset:csharp/dotnet-runtime",
           "preset:csharp/google",
@@ -7553,6 +8001,111 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "access_modifier_offset": {
+                    "default": -2,
+                    "description": "Columns `public:`, `private:` and `protected:` are indented relative to the members of their class.",
+                    "maximum": 16,
+                    "minimum": -16,
+                    "type": "integer"
+                  },
+                  "align_after_open_bracket": {
+                    "default": "align",
+                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+                    "enum": [
+                      "align",
+                      "dont_align",
+                      "always_break"
+                    ],
+                    "type": "string"
+                  },
+                  "align_escaped_newlines": {
+                    "default": "right",
+                    "description": "The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line.",
+                    "enum": [
+                      "right",
+                      "left",
+                      "dont_align"
+                    ],
+                    "type": "string"
+                  },
+                  "align_trailing_comments": {
+                    "default": true,
+                    "description": "Align the trailing comments of consecutive lines.",
+                    "type": "boolean"
+                  },
+                  "bin_pack_arguments": {
+                    "default": true,
+                    "description": "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line).",
+                    "type": "boolean"
+                  },
+                  "bin_pack_parameters": {
+                    "default": true,
+                    "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
+                    "type": "boolean"
+                  },
+                  "brace_wrapping": {
+                    "default": [],
+                    "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "break_after_return_type": {
+                    "default": "none",
+                    "description": "The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`).",
+                    "enum": [
+                      "none",
+                      "top_level",
+                      "all",
+                      "top_level_definitions",
+                      "all_definitions"
+                    ],
+                    "type": "string"
+                  },
+                  "break_before_binary_operators": {
+                    "default": "none",
+                    "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
+                    "enum": [
+                      "none",
+                      "non_assignment",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "break_constructor_initializers": {
+                    "default": "before_colon",
+                    "description": "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`).",
+                    "enum": [
+                      "before_colon",
+                      "before_comma"
+                    ],
+                    "type": "string"
+                  },
+                  "break_template_declarations": {
+                    "default": "multiline",
+                    "description": "`template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never.",
+                    "enum": [
+                      "yes",
+                      "multiline",
+                      "no"
+                    ],
+                    "type": "string"
+                  },
+                  "constructor_initializer_indent": {
+                    "default": 4,
+                    "description": "Columns a constructor initializer list is indented more than its constructor.",
+                    "maximum": 16,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "continuation_indent": {
+                    "default": 4,
+                    "description": "Columns a wrapped line is indented more than the line it continues, where it is not aligned to a bracket.",
+                    "maximum": 16,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -7566,6 +8119,16 @@
                   "final_newline": {
                     "default": true,
                     "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_braces": {
+                    "default": false,
+                    "description": "Indent a brace that is on its own line together with the block it opens.",
+                    "type": "boolean"
+                  },
+                  "indent_case_labels": {
+                    "default": false,
+                    "description": "Indent `case` labels one level inside their `switch`.",
                     "type": "boolean"
                   },
                   "indent_size": {
@@ -7590,6 +8153,109 @@
                     "maximum": 1000,
                     "minimum": 20,
                     "type": "integer"
+                  },
+                  "max_blank_lines": {
+                    "default": 1,
+                    "description": "Largest number of blank lines kept between statements and comments.",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "namespace_indentation": {
+                    "default": "none",
+                    "description": "Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`.",
+                    "enum": [
+                      "none",
+                      "inner",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "penalty_return_type": {
+                    "default": 60,
+                    "description": "What a return type on a line of its own costs the layout; the higher, the longer the parameter list may wrap before the return type moves.",
+                    "maximum": 1000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "pointer_alignment": {
+                    "default": "right",
+                    "description": "Where the `*` and `&` of a pointer or reference declarator go: next to the name (`right`), next to the type (`left`) or between them (`middle`).",
+                    "enum": [
+                      "right",
+                      "left",
+                      "middle"
+                    ],
+                    "type": "string"
+                  },
+                  "short_case_labels": {
+                    "default": false,
+                    "description": "A `case` label and its simple statement are kept on one line when they fit.",
+                    "type": "boolean"
+                  },
+                  "short_enums": {
+                    "default": true,
+                    "description": "An enum whose body fits stays on one line.",
+                    "type": "boolean"
+                  },
+                  "short_functions": {
+                    "default": "all",
+                    "description": "Function bodies kept on the line of the signature when they fit: `none`, `empty` (`{}` only), `inline` (functions defined in a class, and empty ones) or `all`.",
+                    "enum": [
+                      "none",
+                      "empty",
+                      "inline",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "short_ifs": {
+                    "default": "never",
+                    "description": "An `if` with a simple statement is kept on one line when it fits: `never`, without an `else`, or with or without.",
+                    "enum": [
+                      "never",
+                      "without_else",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "short_lambdas": {
+                    "default": "all",
+                    "description": "Lambda bodies kept on the line of the lambda when they fit: `none`, `empty`, `inline` (a lambda that is an argument) or `all`.",
+                    "enum": [
+                      "none",
+                      "empty",
+                      "inline",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "short_loops": {
+                    "default": false,
+                    "description": "A `for`, `while` or range-for with a simple statement is kept on one line when it fits.",
+                    "type": "boolean"
+                  },
+                  "space_before_parens": {
+                    "default": "control_statements",
+                    "description": "A blank before the parenthesis of `if`, `for`, `while`, `switch` and `catch` (`control_statements`), before every parenthesis (`always`) or never.",
+                    "enum": [
+                      "never",
+                      "control_statements",
+                      "always"
+                    ],
+                    "type": "string"
+                  },
+                  "spaces_before_trailing_comments": {
+                    "default": 1,
+                    "description": "Blanks between the code of a line and its `//` comment.",
+                    "maximum": 16,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "wrap_lines": {
+                    "default": true,
+                    "description": "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change).",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"
@@ -7627,6 +8293,111 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "access_modifier_offset": {
+                    "default": -2,
+                    "description": "Columns `public:`, `private:` and `protected:` are indented relative to the members of their class.",
+                    "maximum": 16,
+                    "minimum": -16,
+                    "type": "integer"
+                  },
+                  "align_after_open_bracket": {
+                    "default": "align",
+                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+                    "enum": [
+                      "align",
+                      "dont_align",
+                      "always_break"
+                    ],
+                    "type": "string"
+                  },
+                  "align_escaped_newlines": {
+                    "default": "right",
+                    "description": "The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line.",
+                    "enum": [
+                      "right",
+                      "left",
+                      "dont_align"
+                    ],
+                    "type": "string"
+                  },
+                  "align_trailing_comments": {
+                    "default": true,
+                    "description": "Align the trailing comments of consecutive lines.",
+                    "type": "boolean"
+                  },
+                  "bin_pack_arguments": {
+                    "default": true,
+                    "description": "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line).",
+                    "type": "boolean"
+                  },
+                  "bin_pack_parameters": {
+                    "default": true,
+                    "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
+                    "type": "boolean"
+                  },
+                  "brace_wrapping": {
+                    "default": [],
+                    "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "break_after_return_type": {
+                    "default": "none",
+                    "description": "The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`).",
+                    "enum": [
+                      "none",
+                      "top_level",
+                      "all",
+                      "top_level_definitions",
+                      "all_definitions"
+                    ],
+                    "type": "string"
+                  },
+                  "break_before_binary_operators": {
+                    "default": "none",
+                    "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
+                    "enum": [
+                      "none",
+                      "non_assignment",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "break_constructor_initializers": {
+                    "default": "before_colon",
+                    "description": "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`).",
+                    "enum": [
+                      "before_colon",
+                      "before_comma"
+                    ],
+                    "type": "string"
+                  },
+                  "break_template_declarations": {
+                    "default": "multiline",
+                    "description": "`template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never.",
+                    "enum": [
+                      "yes",
+                      "multiline",
+                      "no"
+                    ],
+                    "type": "string"
+                  },
+                  "constructor_initializer_indent": {
+                    "default": 4,
+                    "description": "Columns a constructor initializer list is indented more than its constructor.",
+                    "maximum": 16,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "continuation_indent": {
+                    "default": 4,
+                    "description": "Columns a wrapped line is indented more than the line it continues, where it is not aligned to a bracket.",
+                    "maximum": 16,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -7640,6 +8411,16 @@
                   "final_newline": {
                     "default": true,
                     "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_braces": {
+                    "default": false,
+                    "description": "Indent a brace that is on its own line together with the block it opens.",
+                    "type": "boolean"
+                  },
+                  "indent_case_labels": {
+                    "default": false,
+                    "description": "Indent `case` labels one level inside their `switch`.",
                     "type": "boolean"
                   },
                   "indent_size": {
@@ -7664,6 +8445,109 @@
                     "maximum": 1000,
                     "minimum": 20,
                     "type": "integer"
+                  },
+                  "max_blank_lines": {
+                    "default": 1,
+                    "description": "Largest number of blank lines kept between statements and comments.",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "namespace_indentation": {
+                    "default": "none",
+                    "description": "Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`.",
+                    "enum": [
+                      "none",
+                      "inner",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "penalty_return_type": {
+                    "default": 60,
+                    "description": "What a return type on a line of its own costs the layout; the higher, the longer the parameter list may wrap before the return type moves.",
+                    "maximum": 1000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "pointer_alignment": {
+                    "default": "right",
+                    "description": "Where the `*` and `&` of a pointer or reference declarator go: next to the name (`right`), next to the type (`left`) or between them (`middle`).",
+                    "enum": [
+                      "right",
+                      "left",
+                      "middle"
+                    ],
+                    "type": "string"
+                  },
+                  "short_case_labels": {
+                    "default": false,
+                    "description": "A `case` label and its simple statement are kept on one line when they fit.",
+                    "type": "boolean"
+                  },
+                  "short_enums": {
+                    "default": true,
+                    "description": "An enum whose body fits stays on one line.",
+                    "type": "boolean"
+                  },
+                  "short_functions": {
+                    "default": "all",
+                    "description": "Function bodies kept on the line of the signature when they fit: `none`, `empty` (`{}` only), `inline` (functions defined in a class, and empty ones) or `all`.",
+                    "enum": [
+                      "none",
+                      "empty",
+                      "inline",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "short_ifs": {
+                    "default": "never",
+                    "description": "An `if` with a simple statement is kept on one line when it fits: `never`, without an `else`, or with or without.",
+                    "enum": [
+                      "never",
+                      "without_else",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "short_lambdas": {
+                    "default": "all",
+                    "description": "Lambda bodies kept on the line of the lambda when they fit: `none`, `empty`, `inline` (a lambda that is an argument) or `all`.",
+                    "enum": [
+                      "none",
+                      "empty",
+                      "inline",
+                      "all"
+                    ],
+                    "type": "string"
+                  },
+                  "short_loops": {
+                    "default": false,
+                    "description": "A `for`, `while` or range-for with a simple statement is kept on one line when it fits.",
+                    "type": "boolean"
+                  },
+                  "space_before_parens": {
+                    "default": "control_statements",
+                    "description": "A blank before the parenthesis of `if`, `for`, `while`, `switch` and `catch` (`control_statements`), before every parenthesis (`always`) or never.",
+                    "enum": [
+                      "never",
+                      "control_statements",
+                      "always"
+                    ],
+                    "type": "string"
+                  },
+                  "spaces_before_trailing_comments": {
+                    "default": 1,
+                    "description": "Blanks between the code of a line and its `//` comment.",
+                    "maximum": 16,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "wrap_lines": {
+                    "default": true,
+                    "description": "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change).",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"

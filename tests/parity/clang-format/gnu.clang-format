@@ -1,0 +1,4 @@
+BasedOnStyle: GNU
+SortIncludes: Never
+FixNamespaceComments: false
+ReflowComments: false

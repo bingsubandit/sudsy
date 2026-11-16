@@ -24,6 +24,7 @@ One line per upstream rule or option under `entries:`, `<id>: <status>` or `<id>
 | biome | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | buf | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
 | checkmake | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
+| clang-format | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | csharpier | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | 56 | 50 | 3 | 0 | 1 | 2 | 0 | 0 |
 | eslint | 292 | 86 | 16 | 136 | 0 | 32 | 22 | 136 |
