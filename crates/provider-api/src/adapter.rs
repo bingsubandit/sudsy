@@ -139,6 +139,21 @@ impl<'a> Attach<'a> {
     }
 }
 
+/// A file the parser gave up on: one `Unknown` token under the root, with the reason as the error.
+pub fn whole_file(src: &str, kinds: Kinds, message: impl Into<String>) -> ParseResult {
+    let mut builder = TreeBuilder::new();
+    builder.start_node(kinds.root);
+    if !src.is_empty() {
+        builder.token(kinds.unknown, src);
+    }
+    builder.token(kinds.eof, "");
+    builder.finish_node();
+    ParseResult {
+        tree: SyntaxNode::new_root(builder.finish()),
+        errors: vec![ParseError::syntax(0, src.len() as u32, message)],
+    }
+}
+
 /// Builds the tree and the errors of the text the tokens do not cover. `scan(rest, pos)` reads
 /// the language's own trivia (comments, line continuations) at the start of `rest`, which is the
 /// text from `pos` to the next token; whitespace and line breaks are recognized here. `retag` may

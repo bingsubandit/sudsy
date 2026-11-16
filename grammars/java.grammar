@@ -1,0 +1,204 @@
+// Java (up to 25: records, sealed types, switch patterns, text blocks), parsed by rezel-lang-java (a Lezer grammar port) behind crates/lang-java/src/adapter.rs; a node kind is a row named like rezel's node, tokens are rezel's leaves.
+// Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are loose: they name the parts, not every order.
+
+language java 21 "Java"
+comments line "//" block "/*" "*/"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+// `//`, `/* */` and `/** */` comments.
+token Comment #trivia #comment
+
+// Reserved and contextual keywords, `this`, `super`, `var`, `void` and `@interface`.
+token Keyword
+// `int`, `boolean`, ...
+token PrimitiveType
+// A name (a declaration's too).
+token Identifier
+// A string or a text block: one token.
+token String #literal #string
+token Char #literal
+// Integer and floating-point literals of every base.
+token Number #literal
+token Boolean #literal
+token Null #literal
+
+token LBrace "{" #punctuation
+token RBrace "}" #punctuation
+token LParen "(" #punctuation
+token RParen ")" #punctuation
+token LBracket "[" #punctuation
+token RBracket "]" #punctuation
+token Lt "<" #punctuation
+token Gt ">" #punctuation
+token Semi ";" #punctuation
+token Comma "," #punctuation #separator
+token Dot "." #punctuation
+token Colon ":" #punctuation
+token ColonColon "::" #punctuation
+token Arrow "->" #punctuation
+token At "@" #punctuation
+token Ellipsis "..." #punctuation
+token Question "?" #punctuation
+token Assign "=" #punctuation
+// Every other operator, assignment operators included.
+token Operator #punctuation
+
+token Eof
+token Unknown #error
+
+node Program = items:#child* Eof
+node AnnotatedType #child = #child*
+node Annotation #child = #child*
+node AnnotationArgumentList #child = #child*
+node AnnotationTypeBody #child = #child*
+node AnnotationTypeDeclaration #child #type-decl = #child*
+node AnnotationTypeDeclarationCore #child = #child*
+node AnnotationTypeElementDeclaration #child #type-decl = #child*
+node ArgumentList #child = #child*
+node ArrayAccess #child = #child*
+node ArrayCreationExpression #child #expr = #child*
+node ArrayCreationType #child = #child*
+node ArrayInitializer #child #expr = #child*
+node ArrayType #child = #child*
+node AssertStatement #child #stmt = #child*
+node AssignmentExpression #child #expr = #child*
+node BinaryExpression #child #expr = #child*
+node Block #child #stmt = #child*
+node BreakStatement #child #stmt = #child*
+node CastExpression #child #expr = #child*
+node CatchAlternativeType #child = #child*
+node CatchClause #child = #child*
+node CatchFormalParameter #child = #child*
+node CatchType #child = #child*
+node ClassBody #child = #child*
+node ClassDeclaration #child #type-decl = #child*
+node ClassDeclarationCore #child = #child*
+node ClassLiteral #child #expr = #child*
+node CompactConstructorDeclaration #child = #child*
+node CompilationUnit #child = #child*
+node ConstantDeclaration #child = #child*
+node ConstructorBody #child = #child*
+node ConstructorDeclaration #child = #child*
+node ContinueStatement #child #stmt = #child*
+node CreatedClassType #child = #child*
+node DefaultValue #child = #child*
+node DimExpr #child = #child*
+node Dimension #child = #child*
+node DoStatement #child #stmt = #child*
+node ElementValueArrayInitializer #child = #child*
+node ElementValuePair #child = #child*
+node EnhancedForStatement #child #stmt = #child*
+node EnumBody #child = #child*
+node EnumBodyDeclarations #child = #child*
+node EnumConstant #child = #child*
+node EnumDeclaration #child #type-decl = #child*
+node EnumDeclarationCore #child = #child*
+node ExceptionType #child = #child*
+node ExplicitConstructorInvocation #child = #child*
+node ExpressionStatement #child #stmt = #child*
+node ExtendsInterfaces #child = #child*
+node FieldAccess #child = #child*
+node FieldDeclaration #child = #child*
+node FinallyClause #child = #child*
+node ForCondition #child = #child*
+node ForInitializer #child = #child*
+node ForSpec #child = #child*
+node ForStatement #child #stmt = #child*
+node ForUpdate #child = #child*
+node FormalParameter #child = #child*
+node FormalParameters #child = #child*
+node GenericType #child = #child*
+node Guard #child = #child*
+node IfStatement #child #stmt = #child*
+node ImportDeclaration #child = #child*
+node InferredLocalType #child = #child*
+node InferredParameters #child = #child*
+node InstanceofExpression #child #expr = #child*
+node InstanceofPattern #child = #child*
+node InterfaceBody #child = #child*
+node InterfaceDeclaration #child #type-decl = #child*
+node InterfaceDeclarationCore #child = #child*
+node InterfaceTypeList #child = #child*
+node Label #child = #child*
+node LabeledStatement #child #stmt = #child*
+node LambdaExpression #child #expr = #child*
+node LambdaFormalParameters #child = #child*
+node LocalTypeDeclaration #child #stmt = #child*
+node LocalTypeModifiers #child = #child*
+node LocalVariableDeclaration #child #stmt = #child*
+node LocalVariableDeclarationCore #child = #child*
+node MarkerAnnotation #child = #child*
+node MethodDeclaration #child = #child*
+node MethodInvocation #child = #child*
+node MethodName #child = #child*
+node MethodReference #child #expr = #child*
+node MethodReferenceName #child = #child*
+node Modifiers #child = #child*
+node ModuleBody #child = #child*
+node ModuleDeclaration #child = #child*
+node ModuleDirective #child = #child*
+node ObjectCreationExpression #child #expr = #child*
+node PackageDeclaration #child = #child*
+node ParenthesizedExpression #child #expr = #child*
+node PatternNode #child = #child*
+node PatternVariable #child = #child*
+node Permits #child = #child*
+node QualifiedSuperExpression #child #expr = #child*
+node ReceiverParameter #child = #child*
+node RecordBody #child = #child*
+node RecordComponent #child = #child*
+node RecordDeclaration #child #type-decl = #child*
+node RecordDeclarationCore #child = #child*
+node RecordHeader #child = #child*
+node Resource #child = #child*
+node ResourceSpecification #child = #child*
+node ReturnStatement #child #stmt = #child*
+node ScopedIdentifier #child = #child*
+node ScopedTypeName #child = #child*
+node SpreadParameter #child = #child*
+node StatementExpression #child #expr = #child*
+node StaticInitializer #child = #child*
+node SuperExpression #child #expr = #child*
+node SuperInterfaces #child = #child*
+node Superclass #child = #child*
+node SwitchBlockStatementGroup #child = #child*
+node SwitchBlockStatementGroupBody #child = #child*
+node SwitchCaseElement #child = #child*
+node SwitchCaseLabelRest #child = #child*
+node SwitchExpression #child #expr = #child*
+node SwitchExpressionBlock #child = #child*
+node SwitchExpressionRule #child = #child*
+node SwitchGroupStatements #child = #child*
+node SwitchLabel #child = #child*
+node SwitchStatement #child #stmt = #child*
+node SwitchStatementBlock #child = #child*
+node SwitchStatementRule #child = #child*
+node SynchronizedStatement #child #stmt = #child*
+node TernaryExpression #child #expr = #child*
+node ThisExpression #child #expr = #child*
+node ThrowStatement #child #stmt = #child*
+node Throws #child = #child*
+node TopLevelDeclaration #child = #child*
+node TryStatement #child #stmt = #child*
+node TryWithResourcesStatement #child #stmt = #child*
+node TypeArguments #child = #child*
+node TypeBound #child = #child*
+node TypeName #child = #child*
+node TypeOrStaticImportDeclaration #child = #child*
+node TypeParameter #child = #child*
+node TypeParameters #child = #child*
+node UnaryExpression #child #expr = #child*
+node UnitBeforeFirstMethod #child = #child*
+node UnnamedCompilationUnit #child = #child*
+node UpdateExpression #child #expr = #child*
+node VariableDeclarator #child = #child*
+node WhileStatement #child #stmt = #child*
+node Wildcard #child = #child*
+node YieldStatement #child #stmt = #child*

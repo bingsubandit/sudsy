@@ -12,8 +12,8 @@
 //! `catch_unwind`: a panic is a parse error and the file is one `Unknown` token, left unchanged.
 
 use crate::generated::kind as k;
-use core_syntax::{Grammar, SyntaxKind, SyntaxNode, TreeBuilder, grammars};
-use provider_api::adapter::{Kinds, Node, Tok, replay};
+use core_syntax::{Grammar, SyntaxKind, grammars};
+use provider_api::adapter::{Kinds, Node, Tok, replay, whole_file};
 use provider_api::{ParseError, ParseResult, SourceFile};
 use sqruff_lib_core::dialects::Dialect;
 use sqruff_lib_core::dialects::init::DialectKind;
@@ -28,6 +28,14 @@ use strum::IntoEnumIterator;
 
 /// The most bytes of one file; sqruff parses 0.3 to 1 MB/s and holds about 650 bytes per input byte at its peak: this bounds one parse to 2 s and 350 MB.
 pub const MAX_BYTES: usize = 512 << 10;
+
+const KINDS: Kinds = Kinds {
+    root: k::FILE,
+    eof: k::EOF,
+    unknown: k::UNKNOWN,
+    whitespace: k::WHITESPACE,
+    newline: k::NEWLINE,
+};
 
 /// The dialects compiled in, as `dialect` option values.
 pub const DIALECTS: [&str; 4] = ["ansi", "postgres", "mysql", "tsql"];
@@ -65,22 +73,7 @@ pub fn parse(src: &str, dialect: &str) -> ParseResult {
     };
     match leaves {
         Ok(flat) => build(src, flat),
-        Err(message) => whole_file(src, message),
-    }
-}
-
-/// The file as one `Unknown` token, with the reason.
-fn whole_file(src: &str, message: String) -> ParseResult {
-    let mut builder = TreeBuilder::new();
-    builder.start_node(k::FILE);
-    if !src.is_empty() {
-        builder.token(k::UNKNOWN, src);
-    }
-    builder.token(k::EOF, "");
-    builder.finish_node();
-    ParseResult {
-        tree: SyntaxNode::new_root(builder.finish()),
-        errors: vec![ParseError::syntax(0, src.len() as u32, message)],
+        Err(message) => whole_file(src, KINDS, message),
     }
 }
 
@@ -372,14 +365,7 @@ fn build(src: &str, flat: Flat) -> ParseResult {
         let l = leaves[at..].iter().find(|l| !meta(l))?;
         (l.start as usize == pos && trivia(l)).then_some((l.kind, (l.end - l.start) as usize))
     };
-    let kinds = Kinds {
-        root: k::FILE,
-        eof: k::EOF,
-        unknown: k::UNKNOWN,
-        whitespace: k::WHITESPACE,
-        newline: k::NEWLINE,
-    };
-    let mut result = replay(src, kinds, &tokens, &spans, lexed, |t, _| t);
+    let mut result = replay(src, KINDS, &tokens, &spans, lexed, |t, _| t);
     result.errors = errors;
     result
 }

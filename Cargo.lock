@@ -1822,6 +1822,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-java"
+version = "0.1.0-rc.1"
+dependencies = [
+ "core-config",
+ "core-format",
+ "core-rules",
+ "core-syntax",
+ "insta",
+ "provider-api",
+ "rezel-common",
+ "rezel-lang-java",
+]
+
+[[package]]
 name = "lang-js"
 version = "0.1.0-rc.1"
 dependencies = [
@@ -2049,6 +2063,7 @@ dependencies = [
  "lang-hcl",
  "lang-html",
  "lang-ini",
+ "lang-java",
  "lang-js",
  "lang-json",
  "lang-kotlin",
@@ -3149,6 +3164,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
+name = "rezel-common"
+version = "0.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50c1d714e12e369e4931db0e912831c4d30232b2a33c9df097bfec415681e5bc"
+dependencies = [
+ "text-size",
+]
+
+[[package]]
+name = "rezel-lang-java"
+version = "0.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90b2765c429b0859de610ad1dc11cce3a7aab9d05ab491321b330f2e8da9f413"
+dependencies = [
+ "rezel-common",
+ "rezel-lr",
+ "unicode-ident",
+ "zerocopy",
+]
+
+[[package]]
+name = "rezel-lr"
+version = "0.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efa6b391da95d283ba078216663b124b45143761cf78d687edb9604fee36934d"
+dependencies = [
+ "rezel-common",
+ "zerocopy",
+]
+
+[[package]]
 name = "rmp"
 version = "0.8.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4104,9 +4150,9 @@ checksum = "0825d2e09dcae814a4273c1e1435979d414ede25b2ee235b1545da6682483765"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.27"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
+checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "unicode-normalization"

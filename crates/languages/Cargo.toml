@@ -16,6 +16,7 @@ lang-csharp.workspace = true
 lang-js.workspace = true
 lang-python.workspace = true
 lang-json.workspace = true
+lang-java.workspace = true
 lang-sql.workspace = true
 lang-kotlin.workspace = true
 lang-css.workspace = true

@@ -28,6 +28,7 @@
     "onLanguage:hcl",
     "onLanguage:html",
     "onLanguage:ini",
+    "onLanguage:java",
     "onLanguage:js",
     "onLanguage:kotlin",
     "onLanguage:makefile",

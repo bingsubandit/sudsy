@@ -1,0 +1,9 @@
+extensions: [java]
+formatter: JavaFormatter
+parse: adapter::parse_file
+options:
+  - indent_size: 2
+  - line_width: 100
+  - indent_style
+  - final_newline: true
+  - end_of_line

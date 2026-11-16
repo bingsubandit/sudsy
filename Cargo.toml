@@ -57,6 +57,9 @@ sqruff-lib-dialects = { version = "=0.44.0", default-features = false, features 
 # ktrs (Kotlin): 0.x, pinned exactly, bumped by hand only (dependabot ignores it). Only the parser crates are used.
 ktrs-parser = "=0.5.1"
 ktrs-syntax = "=0.5.1"
+# rezel-lang-java is 0.0.x (one maintainer): pinned exactly, bumped by hand only (dependabot ignores it).
+rezel-lang-java = "=0.0.0"
+rezel-common = "=0.0.0"
 strum = "0.28"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 # generated:grammars
@@ -93,6 +96,7 @@ lang-csharp = { path = "crates/lang-csharp" }
 lang-json = { path = "crates/lang-json" }
 lang-js = { path = "crates/lang-js" }
 lang-python = { path = "crates/lang-python" }
+lang-java = { path = "crates/lang-java" }
 lang-sql = { path = "crates/lang-sql" }
 lang-kotlin = { path = "crates/lang-kotlin" }
 lang-css = { path = "crates/lang-css" }

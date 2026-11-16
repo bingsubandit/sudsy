@@ -1,0 +1,88 @@
+use provider_api::format_testing::{
+    assert_file_names, assert_formats, assert_lossless, assert_parses, bench_input_files,
+    check_corpus,
+};
+
+/// Formats with every check of the shared helper (round trip, meaning, idempotency, comments).
+#[track_caller]
+#[allow(dead_code)]
+fn fmt(input: &str) -> String {
+    assert_formats(lang_java::provider(), "A.java", input)
+}
+
+/// Every `.java` file of the pinned corpus (`tests/conformance/fetch-java-corpus.sh`) parses,
+/// formats with the same tokens (the safety check) and idempotently.
+///
+/// `cargo test --profile corpus -p lang-java --test integration -- --ignored --nocapture conformance`
+#[test]
+#[ignore]
+fn conformance() {
+    let (_, unparsed) = check_corpus(lang_java::provider(), "A.java", "java", &["java"]);
+    // rezel 0.0.0 fails to lex a text block with an escaped `\"""` and to parse a chain of
+    // about 300 method calls (docs/bugs.md).
+    let known = ["FormatterTest.java", "WellKnownMutability.java"];
+    let unknown: Vec<_> = unparsed
+        .iter()
+        .filter(|u| !known.iter().any(|k| u.contains(k)))
+        .collect();
+    assert!(
+        unknown.is_empty(),
+        "valid files with syntax errors: {unknown:#?}"
+    );
+    assert_eq!(unparsed.len(), known.len(), "a known failure parses now");
+}
+
+#[test]
+fn file_names() {
+    assert_file_names(
+        &lang_java::provider(),
+        &["A.java", "src/main/java/a/B.java"],
+        &["A.class", "A.javascript", "pom.xml"],
+    );
+}
+
+#[test]
+fn bench_inputs_parse() {
+    for (name, text) in bench_input_files("java") {
+        assert_parses(&lang_java::provider(), &name, &text);
+    }
+}
+
+/// Modern syntax: records, sealed types, switch patterns and guards, text blocks, modules.
+#[test]
+fn java_21_syntax_parses() {
+    let p = lang_java::provider();
+    assert_parses(
+        &p,
+        "A.java",
+        r#"package a.b;
+import static java.util.Map.*;
+public sealed interface Shape permits Circle, Square {}
+record Circle(double r) implements Shape { Circle { if (r < 0) throw new IllegalArgumentException(); } }
+final class Square implements Shape { int s; }
+class T<X extends Number & Comparable<X>> {
+  @SuppressWarnings({"a", "b"}) <Y> Y f(Object o, int... xs) throws Exception {
+    var t = """
+        text \{o}
+        """;
+    return switch (o) {
+      case Circle(double r) when r > 1 -> (Y) (Object) r;
+      case String s -> null;
+      default -> { yield null; }
+    };
+  }
+}
+"#,
+    );
+    assert_parses(
+        &p,
+        "module-info.java",
+        "open module a.b { requires transitive c; exports d to e, f; }\n",
+    );
+}
+
+#[test]
+fn syntax_errors_stay_lossless() {
+    let parsed = assert_lossless(&lang_java::provider(), "A.java", "class A { int x = ; \n");
+    assert!(!parsed.errors.is_empty());
+}
