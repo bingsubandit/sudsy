@@ -3,9 +3,7 @@
 //! kept pair is printed as written, an unneeded pair is left out, and a node that needs a pair the
 //! source lacks gets one around its printed document.
 
-use super::ast::{
-    is_binaryish, is_member, operator_text, outer, parent, starts_with, token_comments, un,
-};
+use super::ast::{is_binaryish, is_member, operator_text, outer, parent, starts_with, un};
 use super::binary::{is_bitwise, precedence, should_flatten};
 use super::util::{kids, shape_error, token_of};
 use crate::generated::kind as k;
@@ -69,7 +67,7 @@ fn commented_pair(cx: &FormatCtx<'_>, open: &SyntaxToken, close: &SyntaxToken) -
     cast || comments::trailing_comments(cx.grammar, open)
         .iter()
         .any(|c| c.kind != comments::CommentKind::Line)
-        || token_comments(cx, close)
+        || !comments::leading_comments(cx.grammar, close).is_empty()
 }
 
 /// Is `close` the `)` of a pair that is left out of the output (`format` above)?

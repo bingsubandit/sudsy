@@ -268,7 +268,7 @@ fn array(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     if items.is_empty() {
         return Ok(empty_with_comments(cx, &open, &close));
     }
-    let concise = node.kind() == k::ARRAY_EXPRESSION && super::call::is_concise_array(node);
+    let concise = node.kind() == k::ARRAY_EXPRESSION && super::call::is_concise_array(cx, node);
     let id = new_group_id();
     let comma = if items.last().is_some_and(|i| i.node.is_none()) {
         lit(",")

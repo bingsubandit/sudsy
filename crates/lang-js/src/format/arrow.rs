@@ -107,6 +107,22 @@ fn signature(cx: &FormatCtx<'_>, node: &SyntaxNode, flags: u32) -> R {
     Ok(concat(parts))
 }
 
+/// The arrow that is the body `body`, when the chain goes on in it: any pairs of parentheses
+/// around it are left out of the output and carry no comments.
+pub(crate) fn arrow_body(cx: &FormatCtx<'_>, body: &SyntaxNode) -> Option<SyntaxNode> {
+    let mut n = body.clone();
+    while n.kind() == k::PARENTHESIZED_EXPRESSION {
+        let mut parens = n.children_with_tokens().filter_map(|e| e.into_token());
+        let open = parens.find(|t| t.kind() == k::L_PAREN)?;
+        let close = parens.find(|t| t.kind() == k::R_PAREN)?;
+        if super::ast::token_comments(cx, &open) || !super::parens::is_dropped_close(cx, &close) {
+            return None;
+        }
+        n = n.children().next()?;
+    }
+    (n.kind() == k::ARROW_FUNCTION_EXPRESSION).then_some(n)
+}
+
 fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
     let expand_last = flags & Flags::EXPAND_LAST != 0;
     let outer_node = outer(node);
@@ -118,7 +134,27 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
     let mut sigs = Vec::new();
     let mut break_chain = false;
     let mut cur = node.clone();
-    let (tail, body_doc) = loop {
+    // The comments in front of a sequence body go in front of its parentheses.
+    // Own-line comments after the `=>` are comments in front of the body, too.
+    let (tail, body_doc, after_arrow, held) = loop {
+        let arrow_tok = cur
+            .children_with_tokens()
+            .filter_map(|e| e.into_token())
+            .find(|t| t.kind() == k::ARROW);
+        let mut after_arrow = arrow_tok.as_ref().map_or_else(Vec::new, |t| {
+            core_format::comments::trailing_comments(cx.grammar, t)
+        });
+        let own_line = after_arrow.iter().any(|c| {
+            c.kind != core_format::comments::CommentKind::Block
+                || c.breaks_after > 0
+                || c.text().contains('\n')
+        });
+        let arrow_tok = arrow_tok.filter(|_| own_line);
+        if let Some(t) = &arrow_tok {
+            cx.hold_trailing(t);
+        } else {
+            after_arrow.clear();
+        }
         sigs.push(signature(cx, &cur, flags)?);
         let params_not_plain = cur
             .children()
@@ -141,10 +177,21 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
         let body = cur
             .last_child()
             .ok_or_else(|| shape_error("arrow without body"))?;
-        if !expand_last && un(&body).kind() == k::ARROW_FUNCTION_EXPRESSION && body == un(&body) {
-            cur = body;
+        if let Some(next) = (!expand_last).then(|| arrow_body(cx, &body)).flatten() {
+            if let Some(t) = &arrow_tok {
+                let sig = sigs.pop().ok_or_else(|| shape_error("arrow"))?;
+                sigs.push(concat(vec![sig, cx.held_trailing(t)]));
+            }
+            cur = next;
         } else {
-            break (cur.clone(), cx.format(&body)?);
+            let held = cx.first_token(&body).filter(|t| {
+                un(&body).kind() == k::SEQUENCE_EXPRESSION
+                    && !core_format::comments::leading_comments(cx.grammar, t).is_empty()
+            });
+            if let Some(t) = &held {
+                cx.hold_leading(t);
+            }
+            break (cur.clone(), cx.format(&body)?, after_arrow, held);
         }
     };
     let body = tail
@@ -154,6 +201,7 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
     let is_chain = sigs.len() > 1;
     let comments = has_comment(cx, &body);
     let same_line = !super::ast::has_leading_comment(cx, &body)
+        && after_arrow.is_empty()
         && (matches!(
             body_u.kind(),
             k::ARRAY_EXPRESSION
@@ -172,7 +220,31 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
     } else {
         Doc::Nil
     };
-    let body_part = if body_u.kind() == k::SEQUENCE_EXPRESSION {
+    let body_part = if held.is_some() || !after_arrow.is_empty() {
+        let sequence = body_u.kind() == k::SEQUENCE_EXPRESSION;
+        concat(vec![
+            indent(concat(vec![
+                line(),
+                core_format::context::leading_comments_doc(&after_arrow),
+                held.as_ref().map_or(Doc::Nil, |t| cx.held_leading(t)),
+                if sequence {
+                    group(concat(vec![
+                        lit("("),
+                        indent(concat(vec![softline(), body_doc])),
+                        softline(),
+                        lit(")"),
+                    ]))
+                } else {
+                    body_doc
+                },
+            ])),
+            if soft_line {
+                concat(vec![trailing_comma, softline()])
+            } else {
+                Doc::Nil
+            },
+        ])
+    } else if body_u.kind() == k::SEQUENCE_EXPRESSION {
         concat(vec![
             lit(" ("),
             indent(concat(vec![softline(), body_doc])),

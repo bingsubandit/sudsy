@@ -56,23 +56,37 @@ fn before_semicolon(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<core_syntax
     if matches!(node.kind(), k::FOR_STATEMENT | k::TS_TYPE_ALIAS_DECLARATION) {
         return None;
     }
-    if !comments::ends_with_token(cx.grammar, node, k::SEMICOLON) {
+    let written = comments::ends_with_token(cx.grammar, node, k::SEMICOLON);
+    let mut t = if written {
+        let mut last = node.last_child_or_token();
+        let semi = loop {
+            let e = last?;
+            match e {
+                core_syntax::SyntaxElement::Token(t) if t.kind() == k::SEMICOLON => break t,
+                _ if cx.grammar.is_trivia(e.kind()) => last = e.prev_sibling_or_token(),
+                _ => return None,
+            }
+        };
+        semi.prev_token()
+    } else if node.kind() == k::EXPRESSION_STATEMENT {
+        // (the `;` is written by the formatter)
+        node.last_token()
+    } else {
         return None;
-    }
-    let mut last = node.last_child_or_token();
-    let semi = loop {
-        let e = last?;
-        match e {
-            core_syntax::SyntaxElement::Token(t) if t.kind() == k::SEMICOLON => break t,
-            _ if cx.grammar.is_trivia(e.kind()) => last = e.prev_sibling_or_token(),
-            _ => return None,
-        }
     };
-    let mut t = semi.prev_token();
     while let Some(x) = t {
         if cx.grammar.is_trivia(x.kind()) {
             t = x.prev_token();
-        } else if node.kind() == k::EXPRESSION_STATEMENT && parens::is_dropped_close(cx, &x) {
+        } else if node.kind() == k::EXPRESSION_STATEMENT
+            && parens::is_dropped_close(cx, &x)
+            && !comments::has_trailing_comment(cx.grammar, &x)
+            // (a `;` the formatter writes: the parentheses an arrow body leaves out; others, like
+            // the argument of `void`, come back around the argument)
+            && (written
+                || x.parent()
+                    .and_then(|p| p.parent())
+                    .is_some_and(|p| p.kind() == k::ARROW_FUNCTION_EXPRESSION))
+        {
             // `(a = c /* c */);` is `a = c;` and the comment after it.
             t = x.prev_token();
         } else {

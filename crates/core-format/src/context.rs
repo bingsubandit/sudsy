@@ -608,10 +608,11 @@ pub fn leading_comments_doc(cs: &[Comment]) -> Doc {
         return Doc::Nil;
     }
     let mut parts = Vec::new();
-    for c in cs {
+    for (i, c) in cs.iter().enumerate() {
         // A comment that was on its own line starts one, wherever the formatter put the code
-        // before it.
-        if c.kind != CommentKind::Block || c.breaks_after > 0 {
+        // before it (a later one is on the line of the comment before it, or that comment ended
+        // the line already).
+        if i == 0 && (c.kind != CommentKind::Block || c.breaks_after > 0) {
             parts.push(doc::newline_if_needed());
         }
         parts.push(comment_doc(c));

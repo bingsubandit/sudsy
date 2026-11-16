@@ -180,7 +180,7 @@ fn choose_layout(
         } else if right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
             && right_u
                 .last_child()
-                .is_some_and(|b| b.kind() == k::ARROW_FUNCTION_EXPRESSION)
+                .is_some_and(|b| super::arrow::arrow_body(cx, &b).is_some())
         {
             Layout::ChainTailArrowChain
         } else {
@@ -285,7 +285,7 @@ fn should_never_break_after_operator(
         k::ARROW_FUNCTION_EXPRESSION
             if right
                 .last_child()
-                .is_some_and(|b| b.kind() == k::ARROW_FUNCTION_EXPRESSION) =>
+                .is_some_and(|b| super::arrow::arrow_body(cx, &b).is_some()) =>
         {
             return true;
         }
