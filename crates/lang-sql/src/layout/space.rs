@@ -20,7 +20,13 @@ type Wish = (Sp, bool);
 const SINGLE: Wish = (Sp::Single, false);
 const TOUCH: Wish = (Sp::Touch, false);
 const INLINE: Wish = (Sp::Touch, true);
+const JOIN: Wish = (Sp::Single, true);
 const ANY: Wish = (Sp::Any, false);
+
+/// Is `parent` a common table expression? Its brackets stay on the line of the name and `AS`.
+fn cte_bracket(seq: &Seq, parent: u32) -> bool {
+    parent != NONE && seq.nodes[parent as usize].kind == k::COMMON_TABLE_EXPRESSION
+}
 
 /// What the block `i` asks for before and after.
 fn wishes(seq: &Seq, i: usize) -> (Wish, Wish) {
@@ -38,6 +44,7 @@ fn wishes(seq: &Seq, i: usize) -> (Wish, Wish) {
                 | k::ARRAY_ACCESSOR
                 | k::SEMI_STRUCTURED_EXPRESSION => INLINE,
                 k::ALIAS_COLUMN_LIST => TOUCH,
+                k::BRACKETED if cte_bracket(seq, node.parent) => JOIN,
                 _ => before,
             };
         }
@@ -50,6 +57,8 @@ fn wishes(seq: &Seq, i: usize) -> (Wish, Wish) {
         k::L_PAREN | k::L_SQUARE => after = TOUCH,
         k::CAST_OP => (before, after) = (TOUCH, INLINE),
         k::SIGN => after = INLINE,
+        k::OPERATOR if seq.blocks[i].text == "@" => (before, after) = (TOUCH, TOUCH),
+        k::OPERATOR if seq.blocks[i].node == 0 => before = TOUCH,
         k::LINE_COMMENT | k::BLOCK_COMMENT => (before, after) = (ANY, ANY),
         _ => {}
     }
@@ -72,6 +81,59 @@ fn fuses(prev: &str, next: &str, prev_is_sign: bool) -> bool {
         || (prev_is_sign && b.is_some_and(|c| "+-*/<>=~!@#%^&|`?".contains(c)))
 }
 
+/// The bracket at block `i` after a function name or an object reference: does it touch the name
+/// (`Some(true)`), or keep a space (`Some(false)`: a procedure's parameters)? Object references
+/// are function names in `DROP FUNCTION`, `CREATE FUNCTION` and `DROP AGGREGATE`.
+fn name_bracket(seq: &Seq, i: usize) -> Option<bool> {
+    let prev = &seq.nodes[seq.blocks[i - 1].node as usize];
+    if prev.last != i as u32 - 1 || !matches!(prev.kind, k::FUNCTION_NAME | k::OBJECT_REFERENCE) {
+        return None;
+    }
+    let mut n = prev.parent;
+    while n != NONE && seq.nodes[n as usize].kind != k::STATEMENT {
+        n = seq.nodes[n as usize].parent;
+    }
+    let first = if n == NONE {
+        0
+    } else {
+        seq.nodes[n as usize].first as usize
+    };
+    let head = |w: &str| {
+        seq.blocks[first..(first + 4).min(seq.blocks.len())]
+            .iter()
+            .any(|b| b.text.eq_ignore_ascii_case(w))
+    };
+    if (head("procedure") || head("proc")) && head("create") {
+        Some(false)
+    } else if prev.kind == k::FUNCTION_NAME
+        || head("function")
+        || head("aggregate")
+        || head("procedure")
+    {
+        Some(true)
+    } else {
+        None
+    }
+}
+
+/// Is block `i` a `~` in front of its operand (not the binary `~` of a regex match)?
+fn is_prefix_tilde(seq: &Seq, i: usize) -> bool {
+    let b = &seq.blocks[i];
+    b.kind == k::OPERATOR
+        && b.text == "~"
+        && (i == 0
+            || !matches!(
+                seq.blocks[i - 1].kind,
+                k::IDENTIFIER
+                    | k::QUOTED_IDENTIFIER
+                    | k::NUMBER
+                    | k::STRING
+                    | k::R_PAREN
+                    | k::R_SQUARE
+                    | k::WORD_LITERAL
+            ))
+}
+
 /// Sets the gap of every point that sits inside a line; returns whether anything changed.
 pub fn respace(seq: &mut Seq) -> bool {
     (1..seq.blocks.len()).fold(false, |changed, i| respace_point(seq, i, false) | changed)
@@ -81,11 +143,35 @@ pub fn respace(seq: &mut Seq) -> bool {
 pub fn respace_point(seq: &mut Seq, i: usize, strip: bool) -> bool {
     let (before, after) = (wishes(seq, i).0, wishes(seq, i - 1).1);
     let (mut pre, mut post) = (after, before);
-    // A function name touches the bracket after it, also where the parser has no function contents.
-    let name_end = seq.nodes[seq.blocks[i - 1].node as usize].kind == k::FUNCTION_NAME
-        && seq.nodes[seq.blocks[i - 1].node as usize].last == i as u32 - 1;
-    if name_end && seq.blocks[i].kind == k::L_PAREN {
-        post = INLINE;
+    if seq.blocks[i].kind == k::L_PAREN {
+        match name_bracket(seq, i) {
+            Some(true) => post = INLINE,
+            Some(false) => post = SINGLE,
+            None => {}
+        }
+    }
+    if seq.blocks[i].kind == k::L_SQUARE
+        && matches!(
+            seq.blocks[i - 1].kind,
+            k::KEYWORD
+                | k::IDENTIFIER
+                | k::TYPE_IDENTIFIER
+                | k::QUOTED_IDENTIFIER
+                | k::R_SQUARE
+                | k::R_PAREN
+        )
+    {
+        post = TOUCH;
+    }
+    if seq.blocks[i - 1].text.eq_ignore_ascii_case("delimiter") {
+        (pre, post) = (SINGLE, SINGLE);
+    }
+    if is_prefix_tilde(seq, i - 1) {
+        if seq.blocks[i].text == "~" {
+            (pre, post) = (ANY, ANY);
+        } else {
+            pre = TOUCH;
+        }
     }
     let mut strip = strip || pre.1 || post.1;
     let common = seq.common_node(i - 1, i);
@@ -113,8 +199,12 @@ pub fn respace_point(seq: &mut Seq, i: usize, strip: bool) -> bool {
         );
     let strip = strip && !fuse;
     // The characters of one operator (`+=`, `||`) the parser lexed apart stay together.
-    let op = |kind| kind == k::OPERATOR || kind == k::BINARY_OPERATOR;
-    let joined = op(seq.blocks[i - 1].kind) && op(seq.blocks[i].kind);
+    let op = |j: usize| {
+        let b = &seq.blocks[j];
+        (b.kind == k::OPERATOR || b.kind == k::BINARY_OPERATOR)
+            && !b.text.chars().any(|c| c.is_alphanumeric() || c == '_')
+    };
+    let joined = op(i - 1) && op(i);
     let p = &mut seq.points[i];
     if joined && p.newlines == 0 && p.ws.is_empty() {
         return false;

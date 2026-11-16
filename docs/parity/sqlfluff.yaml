@@ -20,13 +20,14 @@ entries:
   LT13: formatter
   LT14: formatter
   LT15: formatter
+  LT05: option sql.format.line_width
   LT12: option sql.format.final_newline
   indentation.indent_unit: option sql.format.indent_style
   indentation.tab_space_size: option sql.format.indent_size
   core.dialect: option sql.format.dialect
 deferred:
-  - gap: "Not written yet: comma position, line-length wrapping, capitalisation."
-    ids: [LT04, LT05, CP01, CP02, CP03, CP04, CP05, core.max_line_length]
+  - gap: "Not written yet: comma position, capitalisation."
+    ids: [LT04, CP01, CP02, CP03, CP04, CP05, core.max_line_length]
   - gap: "Not exposed as an option until a preset needs it."
     ids: [indentation.indented_joins, indentation.indented_ctes, indentation.indented_using_on, indentation.indented_on_contents, indentation.indented_then, indentation.indented_then_contents, indentation.implicit_indents, indentation.skip_indentation_in, indentation.ignore_comment_lines, indentation.trailing_comments, layout.type, rules.capitalisation.ignore_words, rules.capitalisation.extended_capitalisation_policy]
   - gap: "Templated SQL (Jinja, dbt) is not rendered: a file with template tags does not parse and is refused."

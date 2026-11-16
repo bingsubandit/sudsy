@@ -2,10 +2,12 @@
 //! rules (LT01 to LT15) with its defaults: the rules run in turn until the file stops changing,
 //! as `sqlfluff fix` does, and the result is printed line by line.
 
+mod blocks;
 mod breaks;
 mod indent;
 mod seq;
 mod space;
+mod wrap;
 
 use core_config::{OptionValue, ResolvedOptions, shared};
 use core_format::{Doc, doc};
@@ -34,12 +36,16 @@ fn signature(seq: &Seq) -> Vec<(u32, String)> {
 
 pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -> Doc {
     let mut seq = Seq::build(root, grammar);
+    if matches!(options.get("dialect"), Some(OptionValue::String(d)) if d == "mysql") {
+        blocks::add_indents(&mut seq);
+    }
     let unit = unit(options);
+    let tab = unit.chars().count().max(1);
     let width = match options.get(shared::LINE_WIDTH) {
         Some(OptionValue::Int(n)) => *n as usize,
         _ => 80,
     };
-    for _ in 0..10 {
+    for _ in 0..40 {
         let before = signature(&seq);
         space::respace(&mut seq);
         indent::reindent(&mut seq, &unit);
@@ -48,7 +54,8 @@ pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -
         breaks::select_targets(&mut seq, width);
         breaks::keywords(&mut seq);
         breaks::blank_lines(&mut seq);
-        if signature(&seq) == before {
+        let wrapped = wrap::long_lines(&mut seq, width, tab);
+        if !wrapped && signature(&seq) == before {
             break;
         }
     }

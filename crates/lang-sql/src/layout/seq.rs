@@ -19,6 +19,8 @@ pub struct Point {
     pub ws: Cow<'static, str>,
     /// +1 per `Indent`, -1 per `Dedent`, in order.
     pub metas: Vec<i8>,
+    /// An implicit indent is among the metas.
+    pub implicit: bool,
 }
 
 impl Point {
@@ -102,6 +104,7 @@ impl Seq {
                         point.ws = Cow::Borrowed("");
                     } else if kind == k::INDENT || kind == k::IMPLICIT_INDENT {
                         point.metas.push(1);
+                        point.implicit |= kind == k::IMPLICIT_INDENT;
                     } else if kind == k::DEDENT {
                         point.metas.push(-1);
                     } else {
