@@ -415,9 +415,8 @@ fn resolve(
                 },
                 RawTarget::Tag(t) => match tag_class.get(t.as_str()) {
                     Some(Some(_)) => Target::Tag(t.clone()),
-                    Some(None) => {
-                        return err(r.line, format!("tag #{t} is used on both nodes and tokens"));
-                    }
+                    // A union of nodes and tokens: found by `Grammar::slot`, no typed accessor.
+                    Some(None) => Target::Tag(t.clone()),
                     None => return err(r.line, format!("no kind carries tag #{t}")),
                 },
             };
@@ -557,6 +556,12 @@ node Long =
     }
 
     #[test]
+    fn a_tag_of_nodes_and_tokens_is_a_union_item() {
+        let g = "language x 1\ntoken T #a\nnode N #a = u:#a*";
+        assert!(Grammar::parse(g).is_ok());
+    }
+
+    #[test]
     fn rejects_bad_grammars() {
         let cases = [
             ("node A", "missing `language`"),
@@ -565,10 +570,6 @@ node Long =
             ("language x 1\nnode A = b:#nope", "no kind carries"),
             ("language x 1\ntoken T = A", "tokens have no body"),
             ("language x 0", "language id"),
-            (
-                "language x 1\ntoken T #a\nnode N #a = x:#a",
-                "both nodes and tokens",
-            ),
             ("language x 1\ntoken T\nnode N = a:T a:T", "duplicate label"),
             ("language x 1\nnode N = \"s\"", "expected a body item"),
             ("  node N", "continuation"),

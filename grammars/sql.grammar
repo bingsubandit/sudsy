@@ -3,6 +3,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language sql 27 "SQL"
+roles
 comments line "--" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -22,7 +23,7 @@ token LSquare "[" #punctuation
 token RSquare "]" #punctuation #close
 token Comma "," #punctuation #separator #glue
 token Semicolon ";" #punctuation #separator
-token Dot "." #punctuation
+token Dot "." #punctuation #name-part
 token CastOp "::" #punctuation
 token Colon ":" #punctuation
 // The `:` of an array slice, the `:` in front of a psql variable.
@@ -31,20 +32,20 @@ token Prefix #punctuation
 // A sign in front of a number or an expression.
 token Sign #punctuation
 // Every other symbol: `=`, `<>`, `||`, `*`, `@`, ...
-token Operator #punctuation
+token Operator #punctuation #name-part
 // `+`, `-`, `*`, `/`, `||` between operands.
 token BinaryOperator #punctuation
 token Keyword #restyle
 // `AND`, `OR`.
 token BinaryKeyword #restyle
-token Identifier #restyle
+token Identifier #restyle #name-part
 token FunctionIdentifier #restyle
 token TypeIdentifier #restyle
 // `TRUE`, `FALSE`, `NULL`.
 token WordLiteral #restyle
 // A word the parser left untyped.
-token Word
-token QuotedIdentifier
+token Word #name-part
+token QuotedIdentifier #name-part
 token String #literal #string
 token Number #literal
 
@@ -59,47 +60,50 @@ token Eof
 // Text the lexer or the parser could not classify.
 token Unknown #error
 
-node File = Eof
-node Statement
-node SelectStatement
-node SetExpression
-node WithCompoundStatement
-node CommonTableExpression
-node SelectClause
-node SelectClauseElement
-node FromClause
-node FromExpression
-node FromExpressionElement
-node TableExpression
-node JoinClause
-node JoinOnCondition
-node WhereClause
-node GroupbyClause
-node HavingClause
-node OrderbyClause
-node LimitClause
-node WindowSpecification
-node OverClause
-node Expression
-node Function
-node FunctionName
-node Bracketed
-node ObjectReference
-node FunctionContents
-node SetOperator
-node SelectClauseModifier
-node ComparisonOperator
-node ArrayAccessor
-node AliasColumnList
-node BracketedArguments
-node SemiStructuredExpression
-node AliasExpression
-node CaseExpression
-node WhenClause
-node ElseClause
-node InsertStatement
-node UpdateStatement
-node DeleteStatement
-node CreateTableStatement
-node ColumnDefinition
-node Values
+node File #scope
+node Statement #opaque
+node SelectStatement #scope
+node SetExpression #opaque
+node WithCompoundStatement #scope
+node CommonTableExpression #opaque
+node SelectClause #opaque
+node SelectClauseElement #opaque
+node FromClause #opaque
+node FromExpression #opaque
+node FromExpressionElement #opaque
+node TableExpression #opaque
+node JoinClause #opaque
+node JoinOnCondition #opaque
+node WhereClause #opaque
+node GroupbyClause #opaque
+node HavingClause #opaque
+node OrderbyClause #opaque
+node LimitClause #opaque
+node WindowSpecification #opaque
+node OverClause #opaque
+node Expression #opaque
+node Function #call =
+    callee:FunctionName arguments:FunctionContents OverClause? Keyword* Bracketed? OverClause?
+node FunctionName #opaque
+node Bracketed #opaque
+node ObjectReference #reference =
+    ObjectReference? name:#name-part* FunctionContents?
+node FunctionContents #opaque
+node SetOperator #opaque
+node SelectClauseModifier #opaque
+node ComparisonOperator #opaque
+node ArrayAccessor #opaque
+node AliasColumnList #opaque
+node BracketedArguments #opaque
+node SemiStructuredExpression #opaque
+node AliasExpression #declaration =
+    Keyword? name:#name-part* Bracketed? AliasColumnList?
+node CaseExpression #opaque
+node WhenClause #opaque
+node ElseClause #opaque
+node InsertStatement #opaque
+node UpdateStatement #opaque
+node DeleteStatement #opaque
+node CreateTableStatement #opaque
+node ColumnDefinition #opaque
+node Values #opaque

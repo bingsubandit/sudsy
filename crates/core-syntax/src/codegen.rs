@@ -130,6 +130,14 @@ impl<'g> Names<'g> {
         }
     }
 
+    /// Does the target take both nodes and tokens (a union, read through `Grammar::slot`)?
+    fn is_mixed(&self, t: &Target) -> bool {
+        let Target::Tag(tag) = t else { return false };
+        let mut kinds = self.g.kinds_with_tag(tag);
+        let first = kinds.next().map(|d| d.kind.is_token());
+        kinds.any(|d| Some(d.kind.is_token()) != first)
+    }
+
     /// Rust expression for the sorted slice of kinds a target accepts: a single kind, or the
     /// shared list of its tag.
     fn kinds_expr(&self, t: &Target) -> String {
@@ -185,6 +193,9 @@ fn accessors(n: &Names, def: &KindDef) -> Result<String, CodegenError> {
     let mut methods = BTreeSet::new();
     for (index, item) in def.body.iter().enumerate() {
         let Some(label) = &item.label else { continue };
+        if n.is_mixed(&item.target) {
+            continue;
+        }
         check_ident("label", label)?;
         let m = method_name(label);
         if !methods.insert(m.clone()) || m == "syntax" || m == "cast" {
@@ -297,6 +308,7 @@ pub fn rust_module(g: &Grammar, grammar_path: &str) -> Result<String, CodegenErr
             if let Target::Tag(t) = &i.target
                 && i.label.is_some()
                 && !n.is_token_target(&i.target)
+                && !n.is_mixed(&i.target)
             {
                 tags.insert(t.clone());
             }
