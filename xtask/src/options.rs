@@ -23,7 +23,10 @@ const SHARED_NAMES: [&str; 8] = [
 fn lit(v: &Value) -> String {
     match v {
         Value::String(s) => format!("{s:?}"),
-        Value::Array(items) => format!("&[{}]", items.iter().map(lit).collect::<Vec<_>>().join(", ")),
+        Value::Array(items) => format!(
+            "&[{}]",
+            items.iter().map(lit).collect::<Vec<_>>().join(", ")
+        ),
         other => other.to_string(),
     }
 }
