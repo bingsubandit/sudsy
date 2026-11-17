@@ -7,6 +7,12 @@ use crate::generated::kind as k;
 impl P<'_> {
     /// A T-SQL statement of its own syntax; false when `statement_body` should go on.
     pub fn tsql_statement(&mut self) -> bool {
+        if self.is_t(0, T::Word) && self.is_t(1, T::Colon) && !self.is_t(2, T::Colon) {
+            // A label.
+            self.bump_as(k::IDENTIFIER);
+            self.bump();
+            return true;
+        }
         match self.text(0).to_ascii_lowercase().as_str() {
             "declare" if self.is_t(0, T::Word) => self.declare(),
             "set" => self.set_stmt(),

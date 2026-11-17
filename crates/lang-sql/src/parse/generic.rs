@@ -227,7 +227,7 @@ impl P<'_> {
             return;
         }
         // A query inside a statement (`CREATE VIEW v AS SELECT ...`) parses as one.
-        if word && !dotted && !w.grant && (up == "SELECT" || (up == "WITH" && (self.is(1, "recursive") || (self.is_t(1, T::Word) && self.is(2, "as") && (self.is_t(3, T::LParen) || self.is(3, "materialized") || self.is(3, "not")))))) {
+        if word && !dotted && !w.grant && (up == "SELECT" || (up == "WITH" && (self.is(1, "recursive") || self.cte_ahead()))) {
             self.query();
             *w = Walk::default();
             return;
@@ -325,6 +325,32 @@ impl P<'_> {
 
     fn prev_text_is(&self, word: &str) -> bool {
         self.pos.checked_sub(1).and_then(|i| self.code.get(i)).is_some_and(|&c| self.src[self.lex[c as usize].start as usize..self.lex[c as usize].end as usize].eq_ignore_ascii_case(word))
+    }
+
+    /// `WITH name AS (`, `WITH name (cols) AS (`: a common table expression, not a `WITH` option.
+    fn cte_ahead(&self) -> bool {
+        if !self.is_t(1, T::Word) {
+            return false;
+        }
+        let mut n = 2;
+        if self.is_t(2, T::LParen) {
+            let mut depth = 0;
+            while let Some(t) = self.t(n) {
+                match t {
+                    T::LParen => depth += 1,
+                    T::RParen => {
+                        depth -= 1;
+                        if depth == 0 {
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+                n += 1;
+            }
+            n += 1;
+        }
+        self.is(n, "as") && (self.is_t(n + 1, T::LParen) || self.is(n + 1, "materialized") || self.is(n + 1, "not"))
     }
 
     fn at_type_word(&self) -> bool {

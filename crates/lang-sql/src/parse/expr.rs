@@ -242,6 +242,17 @@ impl P<'_> {
                 c.lone = false;
                 return true;
             }
+            "NEXT" if self.is(1, "value") && self.is(2, "for") => {
+                self.bump_as(k::KEYWORD);
+                self.bump_as(k::KEYWORD);
+                self.bump_as(k::KEYWORD);
+                self.obj_ref();
+                if self.at("over") {
+                    self.over_clause();
+                }
+                c.lone = false;
+                return true;
+            }
             "DEFAULT" if !self.is_t(1, T::Dot) => {
                 self.bump_as(k::KEYWORD);
                 return true;
