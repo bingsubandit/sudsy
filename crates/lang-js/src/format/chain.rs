@@ -1,5 +1,5 @@
 //! Member expressions and member chains (`a.b().c().d()`): the chain is core-format's `call_chain`
-//! in the `prettier` style (Prettier's `printMemberChain`); this module keeps what only
+//! in the `grouped` style; this module keeps what only
 //! JavaScript knows: parentheses, comments, the argument list and `[expr]`.
 
 use super::ast::{Call, is_member, parent, token_comments, un};

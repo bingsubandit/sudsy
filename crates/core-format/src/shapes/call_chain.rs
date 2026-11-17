@@ -19,15 +19,15 @@ pub const BREAK_ON_BLOCK: &str = "member_chain_break_on_block";
 pub const SHORT_HEAD: &str = "member_chain_short_head";
 pub const INDENT: &str = "member_chain_indent";
 pub const STYLE: &str = "member_chain_style";
-/// The label of the document of a chain printed in the `prettier` style.
+/// The label of the document of a chain printed in the `grouped` style.
 pub const CHAIN_LABEL: &str = "member-chain";
 
-/// The two algorithms of reference tools: `dotted` (C#, Java) groups the
-/// links at the dots; `prettier` (JS) cuts them into a first group and call groups.
+/// The two algorithms of reference tools: `fluent` (C#, Java) groups the
+/// links at the dots; `grouped` (JS) cuts them into a first group and call groups.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Style {
-    Dotted,
-    Prettier,
+    Fluent,
+    Grouped,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -77,10 +77,10 @@ impl ChainPolicy {
             _ => default,
         };
         Self {
-            style: if text(STYLE) == "prettier" {
-                Style::Prettier
+            style: if text(STYLE) == "grouped" {
+                Style::Grouped
             } else {
-                Style::Dotted
+                Style::Fluent
             },
             min_calls: int(MIN_CALLS, 1),
             keep_accesses: match text(KEEP_ACCESSES) {
@@ -124,12 +124,12 @@ pub trait ChainHooks {
     fn through(&self, _paren: &SyntaxNode) -> bool {
         false
     }
-    /// Is this argument of a call simple (`prettier` style: a chain of more than two calls with a
+    /// Is this argument of a call simple (`grouped` style: a chain of more than two calls with a
     /// complex argument breaks)?
     fn simple_argument(&self, _arg: &SyntaxNode) -> bool {
         true
     }
-    /// Is the chain a whole statement (`prettier` style: a short head name stays only then)?
+    /// Is the chain a whole statement (`grouped` style: a short head name stays only then)?
     fn statement(&self, _chain: &SyntaxNode) -> bool {
         true
     }
@@ -158,7 +158,7 @@ struct Link {
 struct Walk<'a> {
     cx: &'a FormatCtx<'a>,
     hooks: &'a dyn ChainHooks,
-    /// A call whose callee is no link is the head (`prettier`), else its callee is.
+    /// A call whose callee is no link is the head (`grouped`), else its callee is.
     call_heads: bool,
     links: RefCell<Vec<Link>>,
     /// The `(` of parentheses the chain looked through: their comments go in front of the head.
@@ -394,7 +394,7 @@ pub fn member_chain(
     let w = Walk {
         cx,
         hooks,
-        call_heads: policy.style == Style::Prettier,
+        call_heads: policy.style == Style::Grouped,
         links: RefCell::new(Vec::new()),
         dropped: RefCell::new(Vec::new()),
     };
@@ -419,7 +419,7 @@ pub fn member_chain(
     let break_all = directives.has(&Directive::BreakAll);
     let force = has_line_comment(cx, &links) || break_all;
     let keep_together = directives.has(&Directive::KeepTogether);
-    if policy.style == Style::Prettier {
+    if policy.style == Style::Grouped {
         lead.push(w.element(&head, false)?);
         let head_doc = doc::concat(lead);
         // (a `new` at the head is no call)
