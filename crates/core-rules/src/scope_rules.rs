@@ -8,8 +8,8 @@ use crate::checks::FileCache;
 use crate::diagnostic::Category;
 use crate::rule::{Level, Rule, RuleContext, RuleMeta};
 use crate::tree::significant_range;
-use core_semantics::scopes::{Flags, Model, Row, Table, bind};
-use core_syntax::Grammar;
+use core_semantics::scopes::{Access, Flags, Model, Row, ScopeId, Table, bind};
+use core_syntax::{Grammar, SyntaxKind, SyntaxNode};
 use std::collections::HashSet;
 use std::rc::Rc;
 use std::sync::OnceLock;
@@ -24,6 +24,12 @@ pub struct ScopeLang {
     docs: &'static str,
     conventions: &'static [&'static str],
     globals: &'static [&'static str],
+    labels: &'static [&'static str],
+    methods: &'static [&'static str],
+    blocks: &'static [&'static str],
+    skip_unused: Option<fn(&SyntaxNode, SyntaxKind, &str) -> bool>,
+    interpolated: &'static str,
+    unused_prefix: &'static str,
     table: OnceLock<Table>,
 }
 
@@ -39,6 +45,12 @@ impl ScopeLang {
             docs: "",
             conventions: &[],
             globals: &[],
+            labels: &[],
+            methods: &[],
+            blocks: &[],
+            skip_unused: None,
+            interpolated: "",
+            unused_prefix: "",
             table: OnceLock::new(),
         }
     }
@@ -73,11 +85,46 @@ impl ScopeLang {
         self
     }
 
+    /// Name tokens of these kinds are written with a trailing `:` (`key:`).
+    pub const fn labels(mut self, kinds: &'static [&'static str]) -> Self {
+        self.labels = kinds;
+        self
+    }
+
+    /// The node kinds of methods and of blocks, whose parameters `unused-method-argument` and
+    /// `unused-block-argument` check; `skip` answers for a method or block node whether its
+    /// parameters are left alone (an empty body, a body that raises, a bare `super`).
+    pub const fn arguments(
+        mut self,
+        methods: &'static [&'static str],
+        blocks: &'static [&'static str],
+        skip: fn(&SyntaxNode, SyntaxKind, &str) -> bool,
+    ) -> Self {
+        self.methods = methods;
+        self.blocks = blocks;
+        self.skip_unused = Some(skip);
+        self
+    }
+
+    /// Locals whose name starts with this are meant to be unused: `unused-local-variable` leaves them.
+    pub const fn unused_prefix(mut self, prefix: &'static str) -> Self {
+        self.unused_prefix = prefix;
+        self
+    }
+
+    /// Tokens of this kind hold code the tree has no nodes for (a heredoc body with `#{x}`):
+    /// the names in their `#{...}` are reads.
+    pub const fn interpolated(mut self, token: &'static str) -> Self {
+        self.interpolated = token;
+        self
+    }
+
     fn table(&self, grammar: &Grammar) -> &Table {
         self.table.get_or_init(|| {
             Table::new(grammar, self.rows, self.hosts, self.name_tokens)
                 .bare_names(self.bare)
                 .dynamic_names(self.dynamic)
+                .label_names(self.labels, grammar)
         })
     }
 }
@@ -90,7 +137,11 @@ thread_local! {
 fn model(lang: &ScopeLang, file: &FileContext<'_>) -> Rc<Model> {
     CACHE.with(|c| {
         c.get(file, || {
-            bind(file.root, file.grammar, lang.table(file.grammar))
+            let mut model = bind(file.root, file.grammar, lang.table(file.grammar));
+            if !lang.interpolated.is_empty() {
+                interpolation_reads(&mut model, file, lang.interpolated);
+            }
+            model
         })
     })
 }
@@ -101,6 +152,9 @@ enum Check {
     UnusedLocal,
     ParameterAssignment,
     UndefinedVariable,
+    UnusedMethodArgument,
+    UnusedBlockArgument,
+    UnderscorePrefixed,
 }
 
 /// One scope rule of a language.
@@ -151,6 +205,30 @@ impl ScopeRule {
         }
     }
 
+    /// A method parameter that is never read.
+    pub const fn unused_method_argument(lang: &'static ScopeLang) -> ScopeRule {
+        ScopeRule {
+            check: Check::UnusedMethodArgument,
+            lang,
+        }
+    }
+
+    /// A block parameter that is never read.
+    pub const fn unused_block_argument(lang: &'static ScopeLang) -> ScopeRule {
+        ScopeRule {
+            check: Check::UnusedBlockArgument,
+            lang,
+        }
+    }
+
+    /// A variable named with a leading `_` (meant to be unused) that is read.
+    pub const fn underscore_prefixed(lang: &'static ScopeLang) -> ScopeRule {
+        ScopeRule {
+            check: Check::UnderscorePrefixed,
+            lang,
+        }
+    }
+
     /// A variable read in a function that nothing in it ever assigns.
     pub const fn undefined_variable(lang: &'static ScopeLang) -> ScopeRule {
         ScopeRule {
@@ -186,7 +264,7 @@ impl Rule for ScopeRule {
                 Cleanup,
                 Warn,
                 "A local variable that is never read: it is declared, and perhaps assigned, and \
-                 that is all (Checkstyle UnusedLocalVariable). No fix.",
+                 that is all (Checkstyle UnusedLocalVariable, RuboCop Lint/UselessAssignment). No fix.",
                 "int count = 0;   // never read"
             ),
             Check::ParameterAssignment => meta!(
@@ -206,6 +284,31 @@ impl Rule for ScopeRule {
                  since the call can take it by reference; a function that uses `extract`, \
                  `parse_str`, `include` or `$$name` is not checked.",
                 "function f() { return $total; }   // $total is not defined"
+            ),
+            Check::UnusedMethodArgument => meta!(
+                "unused-method-argument",
+                Cleanup,
+                Warn,
+                "A method parameter that the method never reads (RuboCop Lint/UnusedMethodArgument). \
+                 Names that start with `_`, empty methods and methods that only raise \
+                 NotImplementedError are left alone. No fix.",
+                "def f(a, b)\n  a\nend   # b is not used"
+            ),
+            Check::UnusedBlockArgument => meta!(
+                "unused-block-argument",
+                Cleanup,
+                Warn,
+                "A block parameter that the block never reads (RuboCop Lint/UnusedBlockArgument). \
+                 Names that start with `_` and empty blocks are left alone. No fix.",
+                "items.each { |a, b| puts a }   # b is not used"
+            ),
+            Check::UnderscorePrefixed => meta!(
+                "underscore-prefixed-variable-used",
+                Style,
+                Warn,
+                "A variable whose name starts with `_`, which says it is unused, is read \
+                 (RuboCop Lint/UnderscorePrefixedVariableName). No fix.",
+                "def f(_a)\n  _a\nend"
             ),
         }
     }
@@ -252,6 +355,8 @@ impl Rule for ScopeRule {
                     if !s.flags.contains(Flags::LET)
                         || s.flags.intersects(skip)
                         || &*s.name == "_"
+                        || (!lang.unused_prefix.is_empty()
+                            && s.name.starts_with(lang.unused_prefix))
                         || m.refs_of(id).any(|r| r.is_read())
                         || dynamic(s.scope)
                     {
@@ -276,6 +381,47 @@ impl Rule for ScopeRule {
                     }
                 }
             }
+            Check::UnusedMethodArgument | Check::UnusedBlockArgument => {
+                let kinds = match self.check {
+                    Check::UnusedMethodArgument => lang.methods,
+                    _ => lang.blocks,
+                };
+                for id in m.symbol_ids() {
+                    let s = m.symbol(id);
+                    if !s.flags.contains(Flags::PARAMETER)
+                        || s.name.starts_with('_')
+                        || m.refs_of(id).any(|r| r.is_read())
+                        || dynamic(s.scope)
+                    {
+                        continue;
+                    }
+                    let scope = &m.scope(s.scope).node;
+                    if !kinds.contains(&file.grammar.name(scope.kind())) {
+                        continue;
+                    }
+                    for d in &s.decls {
+                        if lang
+                            .skip_unused
+                            .is_some_and(|skip| skip(scope, d.node_kind, &s.name))
+                        {
+                            continue;
+                        }
+                        ctx.report(d.name, format!("the parameter `{}` is never read", s.name));
+                    }
+                }
+            }
+            Check::UnderscorePrefixed => {
+                for id in m.symbol_ids() {
+                    let s = m.symbol(id);
+                    if s.name.starts_with('_')
+                        && s.flags.contains(Flags::VALUE)
+                        && m.refs_of(id).any(|r| r.is_read())
+                        && let Some(d) = s.decls.first()
+                    {
+                        ctx.report(d.name, format!("`{}` is read but named as unused", s.name));
+                    }
+                }
+            }
             Check::UndefinedVariable => {
                 for r in m.unresolved() {
                     let top = m.scope(m.var_scope(r.scope)).parent.is_none();
@@ -288,6 +434,86 @@ impl Rule for ScopeRule {
                         continue;
                     }
                     ctx.report(r.range, format!("the variable `{}` is not defined", r.name));
+                }
+            }
+        }
+    }
+}
+
+/// The names written in the `#{...}` of the tokens of kind `token` are reads in the scope the
+/// token is in.
+fn interpolation_reads(model: &mut Model, file: &FileContext<'_>, token: &str) {
+    let Some(kind) = file.grammar.kind_by_name(token) else {
+        return;
+    };
+    let mut last = None;
+    for t in file.text.match_indices("#{").filter_map(|(at, _)| {
+        file.root
+            .token_at_offset(core_syntax::TextSize::new(at as u32))
+            .right_biased()
+            .filter(|t| t.kind() == kind)
+    }) {
+        let at = t.text_range().start();
+        if last.replace(at) == Some(at) {
+            continue;
+        }
+        let Some(parent) = t.parent() else { continue };
+        // The body comes after the line of its opener, which is where the names are in scope:
+        // the scopes that touch that line see the reads.
+        let end = usize::from(at).saturating_sub(1);
+        let line = file.text[..end].rfind('\n').map_or(0, |i| i + 1);
+        let scopes: Vec<ScopeId> = (0..model.scopes.len())
+            .filter(|i| {
+                let r = model.scopes[*i].node.text_range();
+                usize::from(r.start()) < end && usize::from(r.end()) > line
+            })
+            .map(|i| ScopeId(i as u32))
+            .collect();
+        let text = t.text();
+        let mut depth = 0usize;
+        let mut word = None::<usize>;
+        let mut words = Vec::new();
+        for (i, c) in text.char_indices().chain([(text.len(), ' ')]) {
+            if depth == 0 {
+                if text[i..].starts_with("#{") {
+                    depth = 1;
+                }
+                continue;
+            }
+            match c {
+                '{' => depth += 1,
+                '}' => depth -= 1,
+                _ => {}
+            }
+            let part = c.is_alphanumeric() || c == '_';
+            match (word, part) {
+                (None, true) => word = Some(i),
+                (Some(start), false) => {
+                    let before = &text[..start];
+                    let member = before.ends_with('.') && !before.ends_with("..");
+                    if !member && !before.ends_with([':', '@', '$', '&']) {
+                        words.push((start, i));
+                    }
+                    word = None;
+                }
+                _ => {}
+            }
+        }
+        for (start, end) in words {
+            let name = &text[start..end];
+            if name.starts_with(|c: char| c.is_lowercase() || c == '_') {
+                let range = core_syntax::TextRange::at(
+                    at + core_syntax::TextSize::new(start as u32),
+                    core_syntax::TextSize::new((end - start) as u32),
+                );
+                for scope in &scopes {
+                    model.add_reference(
+                        name,
+                        range,
+                        (parent.text_range(), parent.kind()),
+                        Access::READ,
+                        *scope,
+                    );
                 }
             }
         }

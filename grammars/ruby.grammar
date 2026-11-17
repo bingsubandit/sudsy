@@ -92,30 +92,30 @@ node CaseMatch #expression #opaque
 node Case #expression #switch = Keyword subject:#expression? cases:When* Else? Keyword?
 node Class #expression #declaration #type-declaration #scope =
     Keyword name:#expression Operator? superclass:#expression? members:#body? Keyword?
-node ClassVariableAndWrite #expression #assignment =
+node ClassVariableAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node ClassVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ClassVariableOrWrite #expression #assignment =
+node ClassVariableOrWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node ClassVariableRead #expression #reference =
     name:Variable
 node ClassVariableTarget #expression #opaque
 node ClassVariableWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ConstantAndWrite #expression #assignment =
+node ConstantAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node ConstantOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ConstantOrWrite #expression #assignment =
+node ConstantOrWrite #expression #opaque =
     left:#target operator:#operator right:#expression
-node ConstantPathAndWrite #expression #assignment =
+node ConstantPathAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node ConstantPath #expression #member-access #target =
     object:#expression? ColonColon member:Constant
 node ConstantPathOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ConstantPathOrWrite #expression #assignment =
+node ConstantPathOrWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node ConstantPathTarget #expression #member-access #target =
     object:#expression? ColonColon member:Constant
@@ -144,11 +144,11 @@ node For #expression #opaque
 node ForwardingArguments #expression #opaque
 node ForwardingParameter #opaque
 node ForwardingSuper #expression #opaque
-node GlobalVariableAndWrite #expression #assignment =
+node GlobalVariableAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node GlobalVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node GlobalVariableOrWrite #expression #assignment =
+node GlobalVariableOrWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node GlobalVariableRead #expression #reference =
     name:Variable
@@ -167,11 +167,11 @@ node IndexAndWrite #expression #opaque
 node IndexOperatorWrite #expression #opaque
 node IndexOrWrite #expression #opaque
 node IndexTarget #expression #opaque
-node InstanceVariableAndWrite #expression #assignment =
+node InstanceVariableAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node InstanceVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node InstanceVariableOrWrite #expression #assignment =
+node InstanceVariableOrWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node InstanceVariableRead #expression #reference =
     name:Variable
@@ -190,11 +190,11 @@ node KeywordHash #expression #opaque
 node KeywordRestParameter #declaration
 node Lambda #expression #function #scope =
     Operator parameters:#block-params? #bopen body:#body? #bclose
-node LocalVariableAndWrite #expression #assignment =
+node LocalVariableAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node LocalVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node LocalVariableOrWrite #expression #assignment =
+node LocalVariableOrWrite #expression #opaque =
     left:#target operator:#operator right:#expression
 node LocalVariableRead #expression #reference =
     name:#member-name

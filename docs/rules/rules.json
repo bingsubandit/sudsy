@@ -7446,7 +7446,7 @@
     {
       "category": "cleanup",
       "default_level": "warn",
-      "description": "A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable). No fix.",
+      "description": "A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable, RuboCop Lint/UselessAssignment). No fix.",
       "example": {
         "config": null,
         "fixed": null,
@@ -7478,7 +7478,8 @@
       "fix": null,
       "id": "unused-local-variable",
       "languages": [
-        "java"
+        "java",
+        "ruby"
       ],
       "options": [],
       "presets": [],
@@ -15071,6 +15072,805 @@
       "presets": [
         "python/ruff-extra"
       ],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A call without parentheses whose last argument is a call with a braces block (`expect { x }.to change { y }`, RuboCop Lint/AmbiguousBlockAssociation); also a `do` block that binds to the outer call while a block method such as `map` ends its arguments (`puts items.map do ... end`).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 22,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ambiguous-block-association",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`x == x`, `a && a` and other comparison, logical and bitwise operators whose two sides are the same code (RuboCop Lint/BinaryOperatorWithIdenticalOperands).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 6,
+            "line": 14
+          },
+          {
+            "column": 1,
+            "length": 6,
+            "line": 15
+          }
+        ]
+      },
+      "fix": null,
+      "id": "binary-operator-with-identical-operands",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "The symbol `:true` or `:false`, which is probably meant to be the boolean (RuboCop Lint/BooleanSymbol).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 5,
+            "length": 5,
+            "line": 1
+          },
+          {
+            "column": 7,
+            "length": 5,
+            "line": 28
+          }
+        ]
+      },
+      "fix": null,
+      "id": "boolean-symbol",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A constant, class or module defined directly in a block (RuboCop Lint/ConstantDefinitionInBlock); `enums` blocks (Sorbet) are allowed.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 12,
+            "length": 5,
+            "line": 28
+          }
+        ]
+      },
+      "fix": null,
+      "id": "constant-definition-in-block",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `when` with no statements and no comment (RuboCop Lint/EmptyWhen).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 6,
+            "line": 16
+          }
+        ]
+      },
+      "fix": null,
+      "id": "empty-when",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`==`, `!=`, `eql?` or `equal?` with a float on one side (a literal, `to_f`, arithmetic on a float), and a float in a `when` (RuboCop Lint/FloatComparison); comparing with 0 or `nil` is fine.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 8,
+            "line": 10
+          }
+        ]
+      },
+      "fix": null,
+      "id": "float-comparison",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A hash looked up with `x.object_id` as the key (`h[x.object_id]`, `key?`, `fetch`) (RuboCop Lint/HashCompareByIdentity).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 14,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "hash-compare-by-identity",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "`private` or `protected` before `def self.name`, which it does not affect (RuboCop Lint/IneffectiveAccessModifier); `private_class_method :name` in the class makes the method private on purpose.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 3,
+            "length": 3,
+            "line": 13
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ineffective-access-modifier",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A class that inherits `Exception` directly (`class A < Exception`, `Class.new(Exception)`) (RuboCop Lint/InheritException).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 11,
+            "length": 9,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "inherit-exception",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A single-quoted string that holds `#{...}`, which would interpolate in double quotes (RuboCop Lint/InterpolationCheck).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 5,
+            "length": 8,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "interpolation-check",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A number, symbol, `true`, `false`, `nil` or string literal as the whole content of a `#{...}` (RuboCop Lint/LiteralInInterpolation).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 6,
+            "length": 1,
+            "line": 4
+          },
+          {
+            "column": 16,
+            "length": 4,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "literal-in-interpolation",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`initialize` of a class with a parent other than Object, and the lifecycle callbacks `inherited` and `method_added`, that do not call `super` (RuboCop Lint/MissingSuper).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 3,
+            "length": 1,
+            "line": 25
+          }
+        ]
+      },
+      "fix": null,
+      "id": "missing-super",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A regexp literal that has both `(?<name>...)` and plain `(...)` groups (RuboCop Lint/MixedRegexpCaptureTypes).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 12,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "mixed-regexp-capture-types",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A space between a method name and the `(` of its only argument (`puts (1 + 2) * 3`) (RuboCop Lint/ParenthesesAsGroupedExpression).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 5,
+            "length": 3,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "parentheses-as-grouped-expression",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `begin ... end while cond` or `until` loop, which behaves unlike the other loops (RuboCop Lint/Loop).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 5,
+            "length": 5,
+            "line": 14
+          }
+        ]
+      },
+      "fix": null,
+      "id": "post-condition-loop",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "Raising `Exception` itself (`raise Exception`, `raise Exception.new`), which a plain `rescue` does not catch (RuboCop Lint/RaiseException).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 7,
+            "length": 9,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "raise-exception",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`to_s` on the last expression of a `#{...}` and on an argument of `puts`, `print` or `warn` (RuboCop Lint/RedundantStringCoercion).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 11,
+            "length": 4,
+            "line": 12
+          },
+          {
+            "column": 8,
+            "length": 4,
+            "line": 13
+          }
+        ]
+      },
+      "fix": null,
+      "id": "redundant-string-coercion",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `rescue` that names `Exception` (RuboCop Lint/RescueException).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 16,
+            "line": 21
+          }
+        ]
+      },
+      "fix": null,
+      "id": "rescue-exception",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`return value` in `initialize` or a setter method, whose result is ignored (RuboCop Lint/ReturnInVoidContext).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 5,
+            "length": 6,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "return-in-void-context",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`a = a`, `@a ||= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 7
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "self-assignment",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `Struct.new` member that has the name of a method of `Struct` (`:hash`, `:size`, `:count`) (RuboCop Lint/StructNewOverride).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 12,
+            "length": 5,
+            "line": 11
+          }
+        ]
+      },
+      "fix": null,
+      "id": "struct-new-override",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 16,
+            "line": 21
+          },
+          {
+            "column": 1,
+            "length": 6,
+            "line": 25
+          }
+        ]
+      },
+      "fix": null,
+      "id": "suppressed-exception",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "warn",
+      "description": "A variable whose name starts with `_`, which says it is unused, is read (RuboCop Lint/UnderscorePrefixedVariableName). No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "def a(x, y)\n  z = 1\n  _w = y\n  puts _w\n  x\nend\n[1].each { |i| i }\n[1].each { |i| 1 }\ndef b(*)\n  [1].map { |_v| 1 }\nend\ndef c(p)\n  1\nend\ndef d(&blk)\n  yield\nend\nx, _y = [1, 2]\nputs x\nputs \"#{x}\"\nif (z ||= 1)\nend\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 3,
+            "length": 2,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "underscore-prefixed-variable-used",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `# rubocop:disable Department/Cop` comment whose department RuboCop does not have (an extension such as Rails or RSpec that the project does not load) (RuboCop Lint/CopDirectiveSyntax).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 25,
+            "line": 27
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unknown-cop-name",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "warn",
+      "description": "A block parameter that the block never reads (RuboCop Lint/UnusedBlockArgument). Names that start with `_` and empty blocks are left alone. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "def a(x, y)\n  z = 1\n  _w = y\n  puts _w\n  x\nend\n[1].each { |i| i }\n[1].each { |i| 1 }\ndef b(*)\n  [1].map { |_v| 1 }\nend\ndef c(p)\n  1\nend\ndef d(&blk)\n  yield\nend\nx, _y = [1, 2]\nputs x\nputs \"#{x}\"\nif (z ||= 1)\nend\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 13,
+            "length": 1,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-block-argument",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "warn",
+      "description": "A method parameter that the method never reads (RuboCop Lint/UnusedMethodArgument). Names that start with `_`, empty methods and methods that only raise NotImplementedError are left alone. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "def a(x, y)\n  z = 1\n  _w = y\n  puts _w\n  x\nend\n[1].each { |i| i }\n[1].each { |i| 1 }\ndef b(*)\n  [1].map { |_v| 1 }\nend\ndef c(p)\n  1\nend\ndef d(&blk)\n  yield\nend\nx, _y = [1, 2]\nputs x\nputs \"#{x}\"\nif (z ||= 1)\nend\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 7,
+            "length": 1,
+            "line": 12
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-method-argument",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A bare `private`, `protected`, `public` or `module_function` that repeats the visibility already in force, or is followed by no method definition (RuboCop Lint/UselessAccessModifier).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 3,
+            "length": 7,
+            "line": 14
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 16
+          },
+          {
+            "column": 3,
+            "length": 7,
+            "line": 22
+          }
+        ]
+      },
+      "fix": null,
+      "id": "useless-access-modifier",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A method whose whole body is a bare `super` (RuboCop Lint/UselessMethodDefinition).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A < Exception; end\nclass B < StandardError\n  def initialize(msg)\n    super(msg)\n  end\n  def foo=(_v)\n    return 1\n  end\n  def bar(a, b = 1)\n    super\n  end\n  private\n  def self.baz; end\n  private\n  def qux; end\n  public\nend\nclass C\n  def run\n    super\n  end\n  private\nend\nclass D < B\n  def initialize\n  end\nend\n[1].each { X = 1 }\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 3,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 3,
+            "length": 1,
+            "line": 19
+          }
+        ]
+      },
+      "fix": null,
+      "id": "useless-method-definition",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "`0.times` and `1.times` with a block (RuboCop Lint/UselessTimes).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "puts [1].map { |x| x }\nraise Exception, \"m\"\nraise StandardError\nfoo (1)\nfoo (a ? b : c)\nfoo(1)\nh[x.object_id]\nh.key?(x.id)\n1.times { f }\n2.times { f }\nStruct.new(:hash, :name)\nputs \"#{x.to_s} #{y}\"\nputs x.to_s, y\nx == x\na && a\na == b\n",
+        "language": "ruby",
+        "spans": [
+          {
+            "column": 1,
+            "length": 13,
+            "line": 9
+          }
+        ]
+      },
+      "fix": null,
+      "id": "useless-times",
+      "languages": [
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
       "upstream": []
     },
     {

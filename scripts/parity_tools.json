@@ -302,6 +302,7 @@
     "ruff": {"catalog": "ruff", "install": "ruff", "fetch": ["tests/conformance/fetch-python-corpus.sh"]},
     "yamllint": {"catalog": "yamllint", "install": {"pip": "yamllint"}},
     "eslint": {"catalog": "eslint", "install": {"npm": "eslint"}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
+    "rubocop": {"catalog": "rubocop", "install": {"gem": "rubocop", "ruby": "3.4.6"}, "fetch": ["tests/conformance/fetch-ruby-corpus.sh"]},
     "typescript-eslint": {"catalog": "typescript-eslint", "install": {"npm": "typescript-eslint", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
     "eslint-plugin-vue": {"catalog": "eslint-plugin-vue", "install": {"npm": "eslint-plugin-vue", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
     "eslint-plugin-svelte": {"catalog": "eslint-plugin-svelte", "install": {"npm": "eslint-plugin-svelte", "with": ["eslint@9.39.5", "svelte@5.57.3", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},

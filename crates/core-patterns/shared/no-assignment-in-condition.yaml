@@ -12,6 +12,9 @@ rule:
   role: [conditional, loop]
   fields:
     condition:
-      all:
-        - { role: assignment }
-        - not: { fields: { operator: { regex: '^:=$' } } }
+      any:
+        - all:
+            - { role: assignment }
+            - not: { fields: { operator: { regex: '^:=$' } } }
+        # `a && b = c`: the assignment is the right operand of a logical operator
+        - { role: binary, operator: logical, fields: { right: { role: assignment } } }

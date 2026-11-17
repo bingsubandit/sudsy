@@ -173,6 +173,20 @@ impl Binder<'_> {
         frame
     }
 
+    /// Whether `name` is declared in the current scope or in one that it sees.
+    fn seen(&self, name: &str) -> bool {
+        for s in self.scopes.iter().rev() {
+            let scope = self.model.scope(*s);
+            if self.model.own(*s, name).is_some() {
+                return true;
+            }
+            if scope.closed {
+                return false;
+            }
+        }
+        false
+    }
+
     fn current(&self) -> ScopeId {
         self.scopes.last().copied().unwrap_or(ScopeId(0))
     }
@@ -188,10 +202,17 @@ impl Binder<'_> {
         }
         let name = if trim {
             text.trim_matches(['"', '\''])
+        } else if self.table.has_labels() && self.table.is_label(kind) {
+            text.strip_suffix(':').unwrap_or(text)
         } else {
             text
         };
-        let range = TextRange::at(at, TextSize::of(text));
+        let len = if !trim && self.table.has_labels() && self.table.is_label(kind) {
+            name
+        } else {
+            text
+        };
+        let range = TextRange::at(at, TextSize::of(len));
         Some((self.intern(name), range))
     }
 
@@ -365,6 +386,7 @@ impl Binder<'_> {
             Place::Parent if own_scope => outer.unwrap_or(ScopeId(0)),
             Place::Parent => current,
             Place::Var => self.model.var_scope(current),
+            Place::Unseen => current,
             Place::Enclosing(kind) => self
                 .scopes
                 .iter()
@@ -511,6 +533,7 @@ impl Binder<'_> {
         };
         if access.contains(Access::WRITE)
             && let Some((flags, place)) = implicit
+            && (place != Place::Unseen || !self.seen(&name))
         {
             let place = if access.contains(Access::HOIST) {
                 Place::Var
@@ -546,6 +569,8 @@ impl Binder<'_> {
             return;
         }
         let table = self.table;
+        let labels = table.has_labels();
+        let implicit = row.and_then(|r| r.implicit);
         let green = node.green();
         let base = node.text_range().start();
         let is_name = |c: &NodeOrToken<&GreenNodeData, &GreenTokenData>| match c {
@@ -593,10 +618,21 @@ impl Binder<'_> {
                 Sel::WithToken(text) => text_at(text).is_some(),
                 Sel::Field(_) | Sel::Kind(_) | Sel::ExceptLast => false,
             });
+            // A label is written `key:`: the name is `key`.
+            let (text, range) = match if labels {
+                t.text().strip_suffix(':')
+            } else {
+                None
+            } {
+                Some(name) if table.is_label(SyntaxKind(t.kind().0)) => {
+                    (name, TextRange::at(range.start(), TextSize::of(name)))
+                }
+                _ => (t.text(), range),
+            };
             let access = match hit.map(|(_, f)| *f) {
                 Some(Flow::Skip) => continue,
                 Some(Flow::Declare) => {
-                    let name = self.intern(t.text());
+                    let name = self.intern(text);
                     self.declare(name, range, node);
                     continue;
                 }
@@ -604,8 +640,8 @@ impl Binder<'_> {
                 None => state,
             };
             if self.inert == 0 {
-                let name = self.intern(t.text());
-                self.push_ref(node, name, range, access, None);
+                let name = self.intern(text);
+                self.push_ref(node, name, range, access, implicit);
             }
         }
     }

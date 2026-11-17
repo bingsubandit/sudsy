@@ -568,6 +568,11 @@ def coverage(tool, sudsy, version, prefix, exe):
     for rule, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:15]:
         print(f"  {rule}: {c} of {n} covered" + ("" if rule in mapping else " (no Sudsy rule)"))
     print(f"{tool} {version}: {hit} of {total} findings of {len(per)} rules in {len(names) - len(fatal)} files covered = {round(1000 * hit / total) / 10 if total else 100.0}%" + (f"; the template rules: {share}%" if tool in PLUGINS else ""))
+    return ratchet(tool, folder, share)
+
+
+def ratchet(tool, folder, share):
+    """Fails when `share` is below `coverage:` of the tool's differences.yaml; says when to raise it."""
     floor = (yaml.safe_load((folder / "differences.yaml").read_text(encoding="utf-8")) or {}).get("coverage")
     if floor is None or share < floor:
         print(f"COVERAGE below the ratchet: {share}% < {floor}%" if floor is not None else f"no `coverage:` ratchet in tests/parity/{tool}/differences.yaml: set it to {share}")
@@ -577,12 +582,54 @@ def coverage(tool, sudsy, version, prefix, exe):
     return 0
 
 
+def rubocop_coverage(sudsy, version, prefix):
+    """The share of RuboCop's findings (default config, Lint department, Ruby 3.4) on the Ruby corpus
+    (tests/conformance/fetch-ruby-corpus.sh) that the mapped Sudsy rule reports on the same line of the same file."""
+    mapping = rule_map("rubocop")
+    folder = ROOT / "tests/parity/rubocop"
+    work = prefix / "coverage"
+    shutil.rmtree(work, ignore_errors=True)
+    shutil.copytree(ROOT / "tests/conformance/corpus/ruby", work)  # the tree, not flat names: a cop's Include and Exclude patterns read the path
+    shutil.copy(folder / "sudsy.yaml", work / "sudsy.yaml")
+    (work / ".rubocop.yml").write_text("AllCops:\n  TargetRubyVersion: 3.4\n  NewCops: disable\n  SuggestExtensions: false\n", encoding="utf-8")
+    run = subprocess.run([str(prefix / "bin/rubocop"), "--only", "Lint", "-f", "json", "--cache-root", str(prefix / "cache"), "-P", "."],
+                         cwd=work, capture_output=True, text=True, encoding="utf-8", check=False)
+    try:
+        report = json.loads(run.stdout)
+    except json.JSONDecodeError:
+        sys.exit(f"rubocop produced no report:\n{run.stdout[:500]}\n{run.stderr[-2000:]}")
+    found = [(os.path.normpath(f["path"]), o["cop_name"], o["location"]["start_line"]) for f in report["files"] for o in f["offenses"]]
+    out =subprocess.run([sudsy, "lint", "--format", "json", "."], cwd=work, capture_output=True, text=True, encoding="utf-8", check=False).stdout
+    ours = {(os.path.normpath(d["path"]), d["rule"], d["range"]["start"]["line"]) for d in json.loads(out)["diagnostics"]}
+    per = {}  # cop -> [findings, covered]
+    for file, cop, line in found:
+        row = per.setdefault(cop, [0, 0])
+        row[0] += 1
+        row[1] += (file, mapping.get(cop), line) in ours
+    total, hit = sum(r[0] for r in per.values()), sum(r[1] for r in per.values())
+    share = round(1000 * hit / total) / 10 if total else 100.0
+    for cop, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:25]:
+        print(f"  {cop}: {c} of {n} covered" + ("" if cop in mapping else " (no Sudsy rule)"))
+    wanted = {(f, mapping[c], l) for f, c, l in found if c in mapping}
+    extra = {}  # Sudsy rule -> its findings on lines where RuboCop reports the mapped cop nowhere
+    for f, r, l in ours:
+        if r in set(mapping.values()) and (f, r, l) not in wanted:
+            extra[r] = extra.get(r, 0) + 1
+    print("only Sudsy (RuboCop reports the mapped cop nowhere on the line): " + (", ".join(f"{r} {n}" for r, n in sorted(extra.items(), key=lambda kv: -kv[1])[:12]) or "none"))
+    print(f"rubocop {version}: {hit} of {total} findings of {len(per)} cops in {len(report['files'])} files covered = {share}%")
+    return ratchet("rubocop", folder, share)
+
+
 def main():
     tool, sudsy, target = sys.argv[1:4]
     config = parity_format.tools()["lint"][tool]
     version, prefix = parity_format.prepare(config, Path(target).resolve() / "parity")
     if "--coverage" in sys.argv:
+        if tool == "rubocop":
+            return rubocop_coverage(sudsy, version, prefix)
         return coverage(tool, sudsy, version, prefix, None)
+    if tool == "rubocop":
+        sys.exit("rubocop: coverage only (scripts/parity.sh coverage rubocop)")
     if tool == "stylecop":
         return stylecop(sudsy, version)
     if tool == "psscriptanalyzer":

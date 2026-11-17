@@ -195,7 +195,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `parameter-assignment` | java | style | off | none | A parameter is assigned a new value (Checkstyle ParameterAssignment). No fix. |
 | `string-literal-equality` | java | correctness | warn | none | `==` or `!=` with a string literal as an operand compares references (Checkstyle StringLiteralEquality). |
 | `unused-import` | java, kotlin, python | cleanup | warn | none | An import whose name the file does not use (Checkstyle UnusedImports, ktlint no-unused-imports). Imports with `*` are not checked, and a name in a doc comment counts as a use where the language has doc comments. No fix: removing an import can change which declaration a name means. |
-| `unused-local-variable` | java | cleanup | warn | none | A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable). No fix. |
+| `unused-local-variable` | java, ruby | cleanup | warn | none | A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable, RuboCop Lint/UselessAssignment). No fix. |
 | `upper-ell` | java | suspicious | warn | none | An integer literal that ends in a lower case `l` (Checkstyle UpperEll). |
 | `adjacent-overload-signatures` | js | style | off | none | Overloads of one function or method (or call and construct signatures) with other members between them. Equivalent: typescript-eslint adjacent-overload-signatures. |
 | `array-type` | js | style | off | none | `Array<T>`, `ReadonlyArray<T>` and `Readonly<T[]>`; write `T[]` and `readonly T[]`. Equivalent: typescript-eslint array-type (partial). |
@@ -404,6 +404,35 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `useless-semicolon` | python | style | off | none | A `;` at the end of a line. |
 | `yield-outside-function` | python | correctness | warn | none | A `yield`, `yield from` or `await` outside a function. |
 | `zip-without-explicit-strict` | python | suspicious | off | none | A call of `zip` with several arguments (or a starred one) and no `strict` keyword, for Python 3.10 and later. |
+| `ambiguous-block-association` | ruby | suspicious | warn | none | A call without parentheses whose last argument is a call with a braces block (`expect { x }.to change { y }`, RuboCop Lint/AmbiguousBlockAssociation); also a `do` block that binds to the outer call while a block method such as `map` ends its arguments (`puts items.map do ... end`). |
+| `binary-operator-with-identical-operands` | ruby | suspicious | warn | none | `x == x`, `a && a` and other comparison, logical and bitwise operators whose two sides are the same code (RuboCop Lint/BinaryOperatorWithIdenticalOperands). |
+| `boolean-symbol` | ruby | suspicious | warn | none | The symbol `:true` or `:false`, which is probably meant to be the boolean (RuboCop Lint/BooleanSymbol). |
+| `constant-definition-in-block` | ruby | suspicious | warn | none | A constant, class or module defined directly in a block (RuboCop Lint/ConstantDefinitionInBlock); `enums` blocks (Sorbet) are allowed. |
+| `empty-when` | ruby | suspicious | warn | none | A `when` with no statements and no comment (RuboCop Lint/EmptyWhen). |
+| `float-comparison` | ruby | suspicious | warn | none | `==`, `!=`, `eql?` or `equal?` with a float on one side (a literal, `to_f`, arithmetic on a float), and a float in a `when` (RuboCop Lint/FloatComparison); comparing with 0 or `nil` is fine. |
+| `hash-compare-by-identity` | ruby | suspicious | warn | none | A hash looked up with `x.object_id` as the key (`h[x.object_id]`, `key?`, `fetch`) (RuboCop Lint/HashCompareByIdentity). |
+| `ineffective-access-modifier` | ruby | correctness | warn | none | `private` or `protected` before `def self.name`, which it does not affect (RuboCop Lint/IneffectiveAccessModifier); `private_class_method :name` in the class makes the method private on purpose. |
+| `inherit-exception` | ruby | suspicious | warn | none | A class that inherits `Exception` directly (`class A < Exception`, `Class.new(Exception)`) (RuboCop Lint/InheritException). |
+| `interpolation-check` | ruby | suspicious | warn | none | A single-quoted string that holds `#{...}`, which would interpolate in double quotes (RuboCop Lint/InterpolationCheck). |
+| `literal-in-interpolation` | ruby | suspicious | warn | none | A number, symbol, `true`, `false`, `nil` or string literal as the whole content of a `#{...}` (RuboCop Lint/LiteralInInterpolation). |
+| `missing-super` | ruby | suspicious | warn | none | `initialize` of a class with a parent other than Object, and the lifecycle callbacks `inherited` and `method_added`, that do not call `super` (RuboCop Lint/MissingSuper). |
+| `mixed-regexp-capture-types` | ruby | suspicious | warn | none | A regexp literal that has both `(?<name>...)` and plain `(...)` groups (RuboCop Lint/MixedRegexpCaptureTypes). |
+| `parentheses-as-grouped-expression` | ruby | suspicious | warn | none | A space between a method name and the `(` of its only argument (`puts (1 + 2) * 3`) (RuboCop Lint/ParenthesesAsGroupedExpression). |
+| `post-condition-loop` | ruby | suspicious | warn | none | A `begin ... end while cond` or `until` loop, which behaves unlike the other loops (RuboCop Lint/Loop). |
+| `raise-exception` | ruby | suspicious | warn | none | Raising `Exception` itself (`raise Exception`, `raise Exception.new`), which a plain `rescue` does not catch (RuboCop Lint/RaiseException). |
+| `redundant-string-coercion` | ruby | suspicious | warn | none | `to_s` on the last expression of a `#{...}` and on an argument of `puts`, `print` or `warn` (RuboCop Lint/RedundantStringCoercion). |
+| `rescue-exception` | ruby | suspicious | warn | none | A `rescue` that names `Exception` (RuboCop Lint/RescueException). |
+| `return-in-void-context` | ruby | suspicious | warn | none | `return value` in `initialize` or a setter method, whose result is ignored (RuboCop Lint/ReturnInVoidContext). |
+| `self-assignment` | ruby | suspicious | warn | none | `a = a`, `@a \|\|= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment). |
+| `struct-new-override` | ruby | suspicious | warn | none | A `Struct.new` member that has the name of a method of `Struct` (`:hash`, `:size`, `:count`) (RuboCop Lint/StructNewOverride). |
+| `suppressed-exception` | ruby | suspicious | warn | none | A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException). |
+| `underscore-prefixed-variable-used` | ruby | style | warn | none | A variable whose name starts with `_`, which says it is unused, is read (RuboCop Lint/UnderscorePrefixedVariableName). No fix. |
+| `unknown-cop-name` | ruby | suspicious | warn | none | A `# rubocop:disable Department/Cop` comment whose department RuboCop does not have (an extension such as Rails or RSpec that the project does not load) (RuboCop Lint/CopDirectiveSyntax). |
+| `unused-block-argument` | ruby | cleanup | warn | none | A block parameter that the block never reads (RuboCop Lint/UnusedBlockArgument). Names that start with `_` and empty blocks are left alone. No fix. |
+| `unused-method-argument` | ruby | cleanup | warn | none | A method parameter that the method never reads (RuboCop Lint/UnusedMethodArgument). Names that start with `_`, empty methods and methods that only raise NotImplementedError are left alone. No fix. |
+| `useless-access-modifier` | ruby | suspicious | warn | none | A bare `private`, `protected`, `public` or `module_function` that repeats the visibility already in force, or is followed by no method definition (RuboCop Lint/UselessAccessModifier). |
+| `useless-method-definition` | ruby | suspicious | warn | none | A method whose whole body is a bare `super` (RuboCop Lint/UselessMethodDefinition). |
+| `useless-times` | ruby | suspicious | warn | none | `0.times` and `1.times` with a block (RuboCop Lint/UselessTimes). |
 | `and-or-is-not-if-else` | shell | suspicious | off | none | A list `a && b \|\| c` of three commands, unless `c` is `echo`, `printf`, `true`, `:`, `return` or `exit`. |
 | `cd-without-exit` | shell | suspicious | warn | none | `cd`, `pushd` or `popd` whose failure is not handled (`cd dir \|\| exit`). Not reported with `set -e`, for `cd ..` or `cd /`, or for `popd -n`. |
 | `declare-and-assign-separately` | shell | suspicious | off | none | `export`, `local`, `declare`, `readonly` or `typeset` with a command substitution as the value reports the status of the declaration, not of the command. |

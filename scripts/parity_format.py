@@ -74,6 +74,31 @@ def install(spec, catalog, version, prefix):
                 for script in prefix.glob("*.data/scripts/*"):
                     shutil.move(script, prefix / "bin" / script.name)
                     (prefix / "bin" / script.name).chmod(0o755)
+    elif "gem" in spec:  # a Ruby gem: Ruby from PATH, else the portable build of ruby/ruby-builder (Linux); `prefix/bin/<gem>` runs it
+        exe = prefix / "bin" / spec["gem"]
+        if not exe.exists():
+            ruby = shutil.which("ruby")
+            env = ""
+            if ruby is None:
+                if not sys.platform.startswith("linux"):
+                    sys.exit("parity: no ruby on PATH (a portable build is fetched on Linux only)")
+                ruby_root = prefix / "ruby"
+                if not (ruby_root / "bin" / "ruby").exists():
+                    arch = "-arm64" if platform.machine().lower() in ("aarch64", "arm64") else ""
+                    url = f"https://github.com/ruby/ruby-builder/releases/download/toolcache/ruby-{spec['ruby']}-ubuntu-24.04{arch}.tar.gz"
+                    shutil.rmtree(prefix / "unpack", ignore_errors=True)
+                    (prefix / "unpack").mkdir(parents=True)
+                    run(["bash", "-c", f"curl -fsSL '{url}' | tar xz -C '{prefix / 'unpack'}'"], ROOT)
+                    next((prefix / "unpack").iterdir()).rename(ruby_root)  # one folder (`arm64`, `x64`), built for another prefix
+                lib = next((ruby_root / "lib/ruby").glob("3.*"))  # its paths are baked in: point Ruby at its own
+                dirs = ":".join(str(d) for d in (lib, *lib.glob("*-linux"), ruby_root / "lib/ruby/site_ruby" / lib.name))
+                env = f'export LD_LIBRARY_PATH="{ruby_root}/lib" RUBYLIB="{dirs}" GEM_PATH="{ruby_root}/lib/ruby/gems/{lib.name}:{prefix}/gems"\n'
+                ruby = str(ruby_root / "bin" / "ruby")
+            gems = prefix / "gems"
+            run(["bash", "-c", f'{env}export GEM_HOME="{gems}"; "{ruby}" "{Path(ruby).parent}/gem" install --no-document {spec["gem"]} -v {version}'], ROOT)
+            exe.parent.mkdir(parents=True, exist_ok=True)
+            exe.write_text(f'#!/bin/sh\n{env}export GEM_HOME="{gems}"\nexec "{ruby}" "{gems}/bin/{spec["gem"]}" "$@"\n')
+            exe.chmod(0o755)
     elif "dotnet-tool" in spec:
         if not executable(prefix, spec["exe"]).exists():
             run(["dotnet", "tool", "install", spec["dotnet-tool"], "--version", version, "--tool-path", prefix], ROOT)

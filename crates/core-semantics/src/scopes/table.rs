@@ -17,6 +17,9 @@ pub enum Place {
     Var,
     /// The nearest enclosing scope whose node has this kind (`infer U` goes to its conditional type).
     Enclosing(&'static str),
+    /// The innermost scope, unless the name is already declared in it or in a scope it sees: a
+    /// write then assigns that variable (Ruby: a block assigns a variable of its method).
+    Unseen,
 }
 
 /// The child nodes of a node a [`Flow`] applies to.
@@ -196,6 +199,7 @@ pub struct Table {
     scopes: Vec<bool>,
     hosts: Vec<bool>,
     name_tokens: Vec<SyntaxKind>,
+    labels: Vec<SyntaxKind>,
     operators: Vec<bool>,
     params: Vec<bool>,
     bare: bool,
@@ -229,6 +233,7 @@ impl Table {
             scopes: vec![false; size(false)],
             hosts: vec![false; size(false)],
             name_tokens: name_tokens.iter().map(|n| kind(n)).collect(),
+            labels: Vec::new(),
             operators: vec![false; size(true)],
             params: vec![false; size(false)],
             bare: false,
@@ -263,6 +268,24 @@ impl Table {
     pub fn dynamic_names(mut self, names: &'static [&'static str]) -> Table {
         self.dynamic = names;
         self
+    }
+
+    /// Name tokens of these kinds are written with a trailing `:` that is no part of the name
+    /// (Ruby `key:`).
+    pub fn label_names(mut self, kinds: &[&str], grammar: &Grammar) -> Table {
+        self.labels = kinds
+            .iter()
+            .map(|k| grammar.kind_by_name(k).expect("scope table: label kind"))
+            .collect();
+        self
+    }
+
+    pub(crate) fn has_labels(&self) -> bool {
+        !self.labels.is_empty()
+    }
+
+    pub(crate) fn is_label(&self, kind: SyntaxKind) -> bool {
+        self.labels.contains(&kind)
     }
 
     pub(crate) fn is_bare(&self) -> bool {

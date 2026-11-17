@@ -27,6 +27,10 @@
               "$ref": "#/definitions/rule",
               "description": "Overloads of one function or method (or call and construct signatures) with other members between them."
             },
+            "ambiguous-block-association": {
+              "$ref": "#/definitions/rule",
+              "description": "A call without parentheses whose last argument is a call with a braces block (`expect { x }.to change { y }`, RuboCop Lint/AmbiguousBlockAssociation); also a `do` block that binds to the outer call while a block method such as `map` ends its arguments (`puts items.map do ... end`)."
+            },
             "ambiguous-booleans": {
               "description": "A plain `yes`, `no`, `on`, `off`, `True`, `TRUE`, `False` or `FALSE` (in the usual casings): a boolean to YAML 1.1 parsers and a string to YAML 1.2 parsers. Lowercase `true` and `false` are fine.",
               "oneOf": [
@@ -412,6 +416,10 @@
               "$ref": "#/definitions/rule",
               "description": "An `except` clause without an exception type, unless its body has a bare `raise` of its own."
             },
+            "binary-operator-with-identical-operands": {
+              "$ref": "#/definitions/rule",
+              "description": "`x == x`, `a && a` and other comparison, logical and bitwise operators whose two sides are the same code (RuboCop Lint/BinaryOperatorWithIdenticalOperands)."
+            },
             "block-no-empty": {
               "$ref": "#/definitions/rule",
               "description": "A rule or at-rule block with nothing in it, comments included."
@@ -419,6 +427,10 @@
             "boolean-literal-comparison": {
               "$ref": "#/definitions/rule",
               "description": "`x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression)."
+            },
+            "boolean-symbol": {
+              "$ref": "#/definitions/rule",
+              "description": "The symbol `:true` or `:false`, which is probably meant to be the boolean (RuboCop Lint/BooleanSymbol)."
             },
             "break-outside-loop": {
               "$ref": "#/definitions/rule",
@@ -533,6 +545,10 @@
             "consistent-type-imports": {
               "$ref": "#/definitions/rule",
               "description": "An import of a TypeScript file whose names are only used as types is written `import type`, and a type is not imported with `import(\"a\")`. Names that are not used at all are left alone; the separate `import type` fix style is the only one."
+            },
+            "constant-definition-in-block": {
+              "$ref": "#/definitions/rule",
+              "description": "A constant, class or module defined directly in a block (RuboCop Lint/ConstantDefinitionInBlock); `enums` blocks (Sorbet) are allowed."
             },
             "constant-on-right": {
               "$ref": "#/definitions/rule",
@@ -968,6 +984,10 @@
               "$ref": "#/definitions/rule",
               "description": "The `<title>` names the page in the browser tab, search results and screen readers; whitespace is not text."
             },
+            "empty-when": {
+              "$ref": "#/definitions/rule",
+              "description": "A `when` with no statements and no comment (RuboCop Lint/EmptyWhen)."
+            },
             "enum-entry-name-case": {
               "$ref": "#/definitions/rule",
               "description": "An enum entry whose name starts with a lowercase letter or an underscore (ktlint enum-entry-name-case)."
@@ -1062,6 +1082,10 @@
             "find-xargs-print0": {
               "$ref": "#/definitions/rule",
               "description": "A pipeline from `find` into `xargs` without `-print0`/`-0`."
+            },
+            "float-comparison": {
+              "$ref": "#/definitions/rule",
+              "description": "`==`, `!=`, `eql?` or `equal?` with a float on one side (a literal, `to_f`, arithmetic on a float), and a float in a `when` (RuboCop Lint/FloatComparison); comparing with 0 or `nil` is fine."
             },
             "float-style": {
               "description": "Restricts how plain floats are written. Every option is off until set: `.5` without a leading digit, `1e3` scientific notation, `.nan` and `.inf`. Quoted and tagged scalars are not checked. The fix for `.5` is `0.5`.",
@@ -1271,6 +1295,10 @@
               "$ref": "#/definitions/rule",
               "description": "A pipeline from `grep` into `wc -l`."
             },
+            "hash-compare-by-identity": {
+              "$ref": "#/definitions/rule",
+              "description": "A hash looked up with `x.object_id` as the key (`h[x.object_id]`, `key?`, `fetch`) (RuboCop Lint/HashCompareByIdentity)."
+            },
             "heading-increment": {
               "$ref": "#/definitions/rule",
               "description": "A heading is more than one level deeper than the heading before it (an `h4` right after an `h2`). Going back up by any number of levels is fine (markdownlint MD001)."
@@ -1350,6 +1378,14 @@
               "$ref": "#/definitions/rule",
               "description": "A membership test, `for` or comprehension over `.keys()` with no arguments."
             },
+            "ineffective-access-modifier": {
+              "$ref": "#/definitions/rule",
+              "description": "`private` or `protected` before `def self.name`, which it does not affect (RuboCop Lint/IneffectiveAccessModifier); `private_class_method :name` in the class makes the method private on purpose."
+            },
+            "inherit-exception": {
+              "$ref": "#/definitions/rule",
+              "description": "A class that inherits `Exception` directly (`class A < Exception`, `Class.new(Exception)`) (RuboCop Lint/InheritException)."
+            },
             "inheritdoc-on-inheriting-member": {
               "$ref": "#/definitions/rule",
               "description": "`<inheritdoc />` without `cref` on a type without a base list, or on a member that neither overrides nor implements anything (a constructor whose signature matches a base constructor is fine). No fix."
@@ -1361,6 +1397,10 @@
             "input-missing-label": {
               "$ref": "#/definitions/rule",
               "description": "An `<input>` (not hidden or a button), `<select>` or `<textarea>` that no `<label>` names: it is not inside one, no `<label for>` points at its `id`, and it has no `aria-label` or `aria-labelledby`."
+            },
+            "interpolation-check": {
+              "$ref": "#/definitions/rule",
+              "description": "A single-quoted string that holds `#{...}`, which would interpolate in double quotes (RuboCop Lint/InterpolationCheck)."
             },
             "invalid-escape-sequence": {
               "$ref": "#/definitions/rule",
@@ -1594,6 +1634,10 @@
             "length-zero-no-unit": {
               "$ref": "#/definitions/rule",
               "description": "A zero length written with a unit (`0px`); other dimensions (`0s`, `0deg`) are left alone, and so is what is inside a function."
+            },
+            "literal-in-interpolation": {
+              "$ref": "#/definitions/rule",
+              "description": "A number, symbol, `true`, `false`, `nil` or string literal as the whole content of a `#{...}` (RuboCop Lint/LiteralInInterpolation)."
             },
             "long-title": {
               "$ref": "#/definitions/rule",
@@ -1977,9 +2021,17 @@
               "$ref": "#/definitions/rule",
               "description": "A job without `permissions`, in a workflow without top-level `permissions`: it gets the repository's default token permissions, often write access."
             },
+            "missing-super": {
+              "$ref": "#/definitions/rule",
+              "description": "`initialize` of a class with a parent other than Object, and the lifecycle callbacks `inherited` and `method_added`, that do not call `super` (RuboCop Lint/MissingSuper)."
+            },
             "missing-switch-default": {
               "$ref": "#/definitions/rule",
               "description": "A `switch` statement with no `default` (Checkstyle MissingSwitchDefault)."
+            },
+            "mixed-regexp-capture-types": {
+              "$ref": "#/definitions/rule",
+              "description": "A regexp literal that has both `(?<name>...)` and plain `(...)` groups (RuboCop Lint/MixedRegexpCaptureTypes)."
             },
             "modifier-order": {
               "$ref": "#/definitions/rule",
@@ -3221,6 +3273,10 @@
               "$ref": "#/definitions/rule",
               "description": "A parameter is assigned a new value (Checkstyle ParameterAssignment). No fix."
             },
+            "parentheses-as-grouped-expression": {
+              "$ref": "#/definitions/rule",
+              "description": "A space between a method name and the `(` of its only argument (`puts (1 + 2) * 3`) (RuboCop Lint/ParenthesesAsGroupedExpression)."
+            },
             "percent-format-expected-mapping": {
               "$ref": "#/definitions/rule",
               "description": "A `%` format with `%(name)s` placeholders applied to a tuple, list or set."
@@ -3268,6 +3324,10 @@
             "possible-null-dereference": {
               "$ref": "#/definitions/rule",
               "description": "A member or element access on an expression the compiler's nullable analysis says may be null. Only code under `#nullable enable` is checked. Off by default: the compiler reports the same thing as CS8602."
+            },
+            "post-condition-loop": {
+              "$ref": "#/definitions/rule",
+              "description": "A `begin ... end while cond` or `until` loop, which behaves unlike the other loops (RuboCop Lint/Loop)."
             },
             "pprint": {
               "$ref": "#/definitions/rule",
@@ -3588,6 +3648,10 @@
                 }
               ]
             },
+            "raise-exception": {
+              "$ref": "#/definitions/rule",
+              "description": "Raising `Exception` itself (`raise Exception`, `raise Exception.new`), which a plain `rescue` does not catch (RuboCop Lint/RaiseException)."
+            },
             "raise-not-implemented": {
               "$ref": "#/definitions/rule",
               "description": "A `raise` of `NotImplemented`."
@@ -3607,6 +3671,10 @@
             "redundant-pattern": {
               "$ref": "#/definitions/rule",
               "description": "A name pattern such as `foo` already matches files and directories called `foo` at every level, so a later `foo/` or `/foo` adds nothing (no `!` pattern in between)."
+            },
+            "redundant-string-coercion": {
+              "$ref": "#/definitions/rule",
+              "description": "`to_s` on the last expression of a `#{...}` and on an argument of `puts`, `print` or `warn` (RuboCop Lint/RedundantStringCoercion)."
             },
             "redundant-tuple-in-exception-handler": {
               "$ref": "#/definitions/rule",
@@ -3643,6 +3711,14 @@
             "required-version": {
               "$ref": "#/definitions/rule",
               "description": "A `terraform` block with no `required_version` argument (tflint terraform_required_version, in the file that has the block: the rule does not know the other files of the module)."
+            },
+            "rescue-exception": {
+              "$ref": "#/definitions/rule",
+              "description": "A `rescue` that names `Exception` (RuboCop Lint/RescueException)."
+            },
+            "return-in-void-context": {
+              "$ref": "#/definitions/rule",
+              "description": "`return value` in `initialize` or a setter method, whose result is ignored (RuboCop Lint/ReturnInVoidContext)."
             },
             "return-outside-function": {
               "$ref": "#/definitions/rule",
@@ -4551,6 +4627,10 @@
               "$ref": "#/definitions/rule",
               "description": "An alias that repeats the name it is given to, `a AS a` (sqlfluff AL09)."
             },
+            "self-assignment": {
+              "$ref": "#/definitions/rule",
+              "description": "`a = a`, `@a ||= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment)."
+            },
             "separate-attributes": {
               "$ref": "#/definitions/rule",
               "description": "One attribute per attribute list: `[A, B]` becomes `[A]` and `[B]`. Lists on parameters and type parameters are left alone. The fix is not offered when the list has a comment in it."
@@ -4794,6 +4874,14 @@
               "$ref": "#/definitions/rule",
               "description": "`==` or `!=` with a string literal as an operand compares references (Checkstyle StringLiteralEquality)."
             },
+            "struct-new-override": {
+              "$ref": "#/definitions/rule",
+              "description": "A `Struct.new` member that has the name of a method of `Struct` (`:hash`, `:size`, `:count`) (RuboCop Lint/StructNewOverride)."
+            },
+            "suppressed-exception": {
+              "$ref": "#/definitions/rule",
+              "description": "A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException)."
+            },
             "suppression-justification": {
               "$ref": "#/definitions/rule",
               "description": "`SuppressMessage` needs a `Justification` that says something: not missing, `null`, empty, blank or `\"<Pending>\"`. Matches the attribute by name. No fix."
@@ -4877,6 +4965,10 @@
             "undefined-variable": {
               "$ref": "#/definitions/rule",
               "description": "A variable is read in a function that never assigns it, takes it as a parameter, imports it with `use` or declares it with `global` or `static` (PHPStan level 0, always undefined variables). A variable passed to a call counts as assigned, since the call can take it by reference; a function that uses `extract`, `parse_str`, `include` or `$$name` is not checked."
+            },
+            "underscore-prefixed-variable-used": {
+              "$ref": "#/definitions/rule",
+              "description": "A variable whose name starts with `_`, which says it is unused, is read (RuboCop Lint/UnderscorePrefixedVariableName). No fix."
             },
             "unicode-literal": {
               "$ref": "#/definitions/rule",
@@ -5034,6 +5126,10 @@
                 }
               ]
             },
+            "unknown-cop-name": {
+              "$ref": "#/definitions/rule",
+              "description": "A `# rubocop:disable Department/Cop` comment whose department RuboCop does not have (an extension such as Rails or RSpec that the project does not load) (RuboCop Lint/CopDirectiveSyntax)."
+            },
             "unknown-needs": {
               "$ref": "#/definitions/rule",
               "description": "`needs` names a job that the workflow does not define."
@@ -5128,6 +5224,10 @@
               "$ref": "#/definitions/rule",
               "description": "A value is stored in a local variable and no path reads it before it is overwritten or the variable goes out of scope (a dead store). Variables that are captured or whose address is taken are not checked; a variable that is never read at all is reported by `unused-variable` instead. Overlaps the SDK analyzer IDE0059 (unnecessary assignment)."
             },
+            "unused-block-argument": {
+              "$ref": "#/definitions/rule",
+              "description": "A block parameter that the block never reads (RuboCop Lint/UnusedBlockArgument). Names that start with `_` and empty blocks are left alone. No fix."
+            },
             "unused-cte": {
               "$ref": "#/definitions/rule",
               "description": "A common table expression that nothing in the `WITH` statement refers to (sqlfluff ST03)."
@@ -5142,7 +5242,11 @@
             },
             "unused-local-variable": {
               "$ref": "#/definitions/rule",
-              "description": "A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable). No fix."
+              "description": "A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable, RuboCop Lint/UselessAssignment). No fix."
+            },
+            "unused-method-argument": {
+              "$ref": "#/definitions/rule",
+              "description": "A method parameter that the method never reads (RuboCop Lint/UnusedMethodArgument). Names that start with `_`, empty methods and methods that only raise NotImplementedError are left alone. No fix."
             },
             "unused-private-member": {
               "description": "A private field, method, property or event that no file of the project uses (`analysis: deep`). Members with attributes, overrides, interface implementations, `extern` and `partial` methods are left alone, and so are the private                   methods named in `reflection_methods` of a type derived from one of                   `reflection_base_types` (a framework calls them by reflection; the `csharp/unity`                   preset lists Unity's). Overlaps the SDK analyzers IDE0051 (unused private member) and IDE0052 (unread private member).",
@@ -5218,6 +5322,10 @@
               "$ref": "#/definitions/rule",
               "description": "A RUN that calls cd."
             },
+            "useless-access-modifier": {
+              "$ref": "#/definitions/rule",
+              "description": "A bare `private`, `protected`, `public` or `module_function` that repeats the visibility already in force, or is followed by no method definition (RuboCop Lint/UselessAccessModifier)."
+            },
             "useless-cat": {
               "$ref": "#/definitions/rule",
               "description": "A pipeline that starts with `cat file`."
@@ -5226,6 +5334,10 @@
               "$ref": "#/definitions/rule",
               "description": "An `echo` whose only argument is a command substitution."
             },
+            "useless-method-definition": {
+              "$ref": "#/definitions/rule",
+              "description": "A method whose whole body is a bare `super` (RuboCop Lint/UselessMethodDefinition)."
+            },
             "useless-object-inheritance": {
               "$ref": "#/definitions/rule",
               "description": "A class with the builtin `object` as a base."
@@ -5233,6 +5345,10 @@
             "useless-semicolon": {
               "$ref": "#/definitions/rule",
               "description": "A `;` at the end of a line."
+            },
+            "useless-times": {
+              "$ref": "#/definitions/rule",
+              "description": "`0.times` and `1.times` with a block (RuboCop Lint/UselessTimes)."
             },
             "using-order": {
               "description": "`using` directives of a file or namespace are out of order: System first (`system_first`), names in alphabetical order (`compare`), and with the options `static_position` and `alias_position` set to `after`, `using static` directives after the plain ones and aliases after those, each group sorted. `global using` and `using unsafe` stay where they are, and a list restarts at a directive that has a preprocessor directive in front of it (the fix leaves such lists alone). Comments on lines of their own stay where they are; a comment after a directive moves with it. Overlaps the SDK analyzers' `dotnet_sort_system_directives_first` .editorconfig key.",

@@ -1,0 +1,1 @@
+coverage: 96.2  # share of the default-set findings of RuboCop (Lint) on the Ruby corpus that Sudsy also reports on the same line (scripts/parity.sh coverage rubocop)

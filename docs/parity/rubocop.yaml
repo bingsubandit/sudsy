@@ -1,0 +1,168 @@
+tool: "rubocop"
+version: "1.92.3"
+languages: ["ruby"]
+sources:
+  - "https://rubygems.org/gems/rubocop/versions/1.92.3"
+  - "https://docs.rubocop.org/rubocop/1.92/cops_lint.html"
+scope: "The Lint department (bug-catching cops); the Style, Layout, Naming, Metrics and Security departments and the extensions (rubocop-rails, -rspec, -performance) are not catalogued. Cops that are disabled by default or pending are `deferred`"
+entries:
+  Lint/Syntax: rule syntax-error
+  Lint/AmbiguousAssignment: deferred | disabled or pending by default in RuboCop
+  Lint/AmbiguousBlockAssociation: rule ambiguous-block-association
+  Lint/AmbiguousOperator: planned
+  Lint/AmbiguousOperatorPrecedence: deferred | disabled or pending by default in RuboCop
+  Lint/AmbiguousRange: deferred | disabled or pending by default in RuboCop
+  Lint/AmbiguousRegexpLiteral: planned
+  Lint/ArgumentMismatch: deferred | disabled or pending by default in RuboCop
+  Lint/ArrayLiteralInRegexp: deferred | disabled or pending by default in RuboCop
+  Lint/AssignmentInCondition: rule no-assignment-in-condition | `a && b = c` over several lines is reported at the first line of the condition, RuboCop reports the assignment line
+  Lint/BigDecimalNew: planned
+  Lint/BinaryOperatorWithIdenticalOperands: rule binary-operator-with-identical-operands
+  Lint/BooleanSymbol: rule boolean-symbol | `# rubocop:disable` comments are not read
+  Lint/CircularArgumentReference: planned
+  Lint/ConstantDefinitionInBlock: rule constant-definition-in-block
+  Lint/ConstantOverwrittenInRescue: deferred | disabled or pending by default in RuboCop
+  Lint/ConstantReassignment: deferred | disabled or pending by default in RuboCop
+  Lint/ConstantResolution: deferred | disabled or pending by default in RuboCop
+  Lint/CopDirectiveSyntax: rule unknown-cop-name | only the unknown department of a cop name; not the other malformed directives or an unknown cop of a known department
+  Lint/DataDefineOverride: deferred | disabled or pending by default in RuboCop
+  Lint/Debugger: planned
+  Lint/DeprecatedClassMethods: planned
+  Lint/DeprecatedConstants: deferred | disabled or pending by default in RuboCop
+  Lint/DeprecatedOpenSSLConstant: planned
+  Lint/DeprecatedReference: deferred | disabled or pending by default in RuboCop
+  Lint/DisjunctiveAssignmentInConstructor: planned
+  Lint/DuplicateBranch: deferred | disabled or pending by default in RuboCop
+  Lint/DuplicateCaseCondition: planned
+  Lint/DuplicateElsifCondition: planned
+  Lint/DuplicateHashKey: planned
+  Lint/DuplicateMagicComment: deferred | disabled or pending by default in RuboCop
+  Lint/DuplicateMatchPattern: deferred | disabled or pending by default in RuboCop
+  Lint/DuplicateMethods: planned
+  Lint/DuplicateRegexpCharacterClassElement: deferred | disabled or pending by default in RuboCop
+  Lint/DuplicateRequire: planned
+  Lint/DuplicateRescueException: planned
+  Lint/DuplicateSetElement: deferred | disabled or pending by default in RuboCop
+  Lint/EachWithObjectArgument: planned
+  Lint/ElseLayout: planned
+  Lint/EmptyBlock: deferred | disabled or pending by default in RuboCop
+  Lint/EmptyClass: deferred | disabled or pending by default in RuboCop
+  Lint/EmptyConditionalBody: planned
+  Lint/EmptyEnsure: planned
+  Lint/EmptyExpression: planned
+  Lint/EmptyFile: planned
+  Lint/EmptyInPattern: deferred | disabled or pending by default in RuboCop
+  Lint/EmptyInterpolation: planned
+  Lint/EmptyWhen: rule empty-when
+  Lint/EnsureReturn: planned
+  Lint/ErbNewArguments: planned
+  Lint/FlipFlop: planned
+  Lint/FloatComparison: rule float-comparison
+  Lint/FloatOutOfRange: planned
+  Lint/FormatParameterMismatch: planned
+  Lint/HashCompareByIdentity: rule hash-compare-by-identity
+  Lint/HashNewWithKeywordArgumentsAsDefault: deferred | disabled or pending by default in RuboCop
+  Lint/HeredocMethodCallPosition: deferred | disabled or pending by default in RuboCop
+  Lint/IdentityComparison: planned
+  Lint/ImplicitStringConcatenation: planned
+  Lint/IncompatibleIoSelectWithFiberScheduler: deferred | disabled or pending by default in RuboCop
+  Lint/IneffectiveAccessModifier: rule ineffective-access-modifier
+  Lint/InheritException: rule inherit-exception
+  Lint/InterpolationCheck: rule interpolation-check
+  Lint/ItWithoutArgumentsInBlock: deferred | disabled or pending by default in RuboCop
+  Lint/LambdaWithoutLiteralBlock: deferred | disabled or pending by default in RuboCop
+  Lint/LiteralAsCondition: planned
+  Lint/LiteralAssignmentInCondition: deferred | disabled or pending by default in RuboCop
+  Lint/LiteralInInterpolation: rule literal-in-interpolation
+  Lint/Loop: rule post-condition-loop
+  Lint/MisplacedMagicComment: deferred | disabled or pending by default in RuboCop
+  Lint/MissingCopEnableDirective: planned
+  Lint/MissingSuper: rule missing-super
+  Lint/MixedCaseRange: deferred | disabled or pending by default in RuboCop
+  Lint/MixedRegexpCaptureTypes: rule mixed-regexp-capture-types
+  Lint/MultipleComparison: planned
+  Lint/NameTypo: deferred | disabled or pending by default in RuboCop
+  Lint/NestedMethodDefinition: planned
+  Lint/NestedPercentLiteral: planned
+  Lint/NextWithoutAccumulator: planned
+  Lint/NoReturnInBeginEndBlocks: deferred | disabled or pending by default in RuboCop
+  Lint/NonAtomicFileOperation: deferred | disabled or pending by default in RuboCop
+  Lint/NonDeterministicRequireOrder: planned
+  Lint/NonLocalExitFromIterator: planned
+  Lint/NumberConversion: deferred | disabled or pending by default in RuboCop
+  Lint/NumberedParameterAssignment: deferred | disabled or pending by default in RuboCop
+  Lint/NumericOperationWithConstantResult: deferred | disabled or pending by default in RuboCop
+  Lint/OrAssignmentToConstant: deferred | disabled or pending by default in RuboCop
+  Lint/OrderedMagicComments: planned
+  Lint/OutOfRangeRegexpRef: planned
+  Lint/ParenthesesAsGroupedExpression: rule parentheses-as-grouped-expression
+  Lint/PercentStringArray: planned
+  Lint/PercentSymbolArray: planned
+  Lint/RaiseException: rule raise-exception
+  Lint/RandOne: planned
+  Lint/RedundantCopDisableDirective: planned
+  Lint/RedundantCopEnableDirective: planned
+  Lint/RedundantDirGlobSort: deferred | disabled or pending by default in RuboCop
+  Lint/RedundantRegexpQuantifiers: deferred | disabled or pending by default in RuboCop
+  Lint/RedundantRequireStatement: planned
+  Lint/RedundantSafeNavigation: planned
+  Lint/RedundantSplatExpansion: planned
+  Lint/RedundantStringCoercion: rule redundant-string-coercion
+  Lint/RedundantTypeConversion: deferred | disabled or pending by default in RuboCop
+  Lint/RedundantWithIndex: planned
+  Lint/RedundantWithObject: planned
+  Lint/RefinementImportMethods: deferred | disabled or pending by default in RuboCop
+  Lint/RegexpAsCondition: planned
+  Lint/RequireParentheses: planned
+  Lint/RequireRangeParentheses: deferred | disabled or pending by default in RuboCop
+  Lint/RequireRelativeSelfPath: deferred | disabled or pending by default in RuboCop
+  Lint/RescueException: rule rescue-exception
+  Lint/RescueType: planned
+  Lint/ReturnInVoidContext: rule return-in-void-context
+  Lint/SafeNavigationChain: planned
+  Lint/SafeNavigationConsistency: planned
+  Lint/SafeNavigationWithEmpty: planned
+  Lint/ScriptPermission: planned
+  Lint/SelfAssignment: rule self-assignment | not multiple assignment (`a, b = a, b`)
+  Lint/SendWithMixinArgument: planned
+  Lint/ShadowedArgument: planned
+  Lint/ShadowedException: planned
+  Lint/ShadowingOuterLocalVariable: deferred | disabled or pending by default in RuboCop
+  Lint/SharedMutableDefault: deferred | disabled or pending by default in RuboCop
+  Lint/StructNewOverride: rule struct-new-override
+  Lint/SuperArgumentMismatch: deferred | disabled or pending by default in RuboCop
+  Lint/SuppressedException: rule suppressed-exception
+  Lint/SuppressedExceptionInNumberConversion: deferred | disabled or pending by default in RuboCop
+  Lint/SymbolConversion: deferred | disabled or pending by default in RuboCop
+  Lint/ToEnumArguments: deferred | disabled or pending by default in RuboCop
+  Lint/ToJSON: planned
+  Lint/TopLevelReturnWithArgument: planned
+  Lint/TrailingCommaInAttributeDeclaration: planned
+  Lint/TripleQuotes: deferred | disabled or pending by default in RuboCop
+  Lint/UnderscorePrefixedVariableName: rule underscore-prefixed-variable-used
+  Lint/UnescapedBracketInRegexp: deferred | disabled or pending by default in RuboCop
+  Lint/UnexpectedBlockArity: deferred | disabled or pending by default in RuboCop
+  Lint/UnifiedInteger: planned
+  Lint/UnmodifiedReduceAccumulator: deferred | disabled or pending by default in RuboCop
+  Lint/UnreachableCode: planned
+  Lint/UnreachableLoop: planned
+  Lint/UnreachablePatternBranch: deferred | disabled or pending by default in RuboCop
+  Lint/UnusedBlockArgument: rule unused-block-argument
+  Lint/UnusedMethodArgument: rule unused-method-argument
+  Lint/UnusedPrivateMethod: deferred | disabled or pending by default in RuboCop
+  Lint/UriEscapeUnescape: planned
+  Lint/UriRegexp: planned
+  Lint/UselessAccessModifier: rule useless-access-modifier
+  Lint/UselessAssignment: rule unused-local-variable | not an assignment that is overwritten before any read
+  Lint/UselessConstantScoping: deferred | disabled or pending by default in RuboCop
+  Lint/UselessDefaultValueArgument: deferred | disabled or pending by default in RuboCop
+  Lint/UselessDefined: deferred | disabled or pending by default in RuboCop
+  Lint/UselessElseWithoutRescue: planned
+  Lint/UselessMethodDefinition: rule useless-method-definition
+  Lint/UselessNumericOperation: deferred | disabled or pending by default in RuboCop
+  Lint/UselessOr: deferred | disabled or pending by default in RuboCop
+  Lint/UselessRescue: deferred | disabled or pending by default in RuboCop
+  Lint/UselessRuby2Keywords: deferred | disabled or pending by default in RuboCop
+  Lint/UselessSetterCall: planned
+  Lint/UselessTimes: rule useless-times
+  Lint/Void: planned

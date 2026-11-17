@@ -11,4 +11,4 @@ Goal: formatter and linter for `.rb`, `.rake`, `.gemspec`, `.ru` files (Ruby 3.3
 | Step | Builds |
 |---|---|
 | 2 | Formatter: RuboCop Layout style on the role-driven kit (after L1), parity runner against `rubocop` / `stree`, style options |
-| 3 | Lint: RuboCop Lint cops as pattern rules and families on the roles |
+| 3 | Lint: RuboCop Lint cops as pattern rules and families on the roles (in: 95.6% of RuboCop's default Lint findings, [../formatting/ruby.md](../formatting/ruby.md#lint)) |

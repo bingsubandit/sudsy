@@ -46,6 +46,7 @@ SOURCES = {
     "roslynator": {"raw": "https://raw.githubusercontent.com/dotnet/roslynator/v{version}/src/Analyzers.xml", "re": r"<Id>(RCS\d+)</Id>"},
     "tflint": {"raw": "https://raw.githubusercontent.com/terraform-linters/tflint-ruleset-terraform/v{version}/docs/rules/README.md", "re": r"\b(terraform_[a-z_]+)\b"},
     "hadolint": {"raw": "https://raw.githubusercontent.com/hadolint/hadolint/v{version}/README.md", "re": r"\b(DL\d{4})\b"},
+    "rubocop": {"raw": "https://raw.githubusercontent.com/rubocop/rubocop/v{version}/config/default.yml", "re": r"(?m)^(Lint/\w+):"},
     "ruff": {"wheel": "ruff", "ruff": True},
     "yamllint": {"wheel": "yamllint", "files": r"^yamllint/rules/([a-z][a-z_]*)\.py$"},
     "sqlfluff": {"wheel": "sqlfluff", "files": r"^sqlfluff/rules/.*\.py$", "content": r"class Rule_([A-Z]{2}\d{2})\b"},

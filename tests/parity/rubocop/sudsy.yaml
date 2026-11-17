@@ -1,0 +1,3 @@
+# The Sudsy side of the comparison with RuboCop (default config, Lint department): the Ruby defaults.
+lint:
+  rules: {}

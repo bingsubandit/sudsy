@@ -32,11 +32,14 @@ One rule family on the binder of `core_semantics::scopes` for the languages that
 | `parameter-assignment` | off | | | Checkstyle ParameterAssignment |
 | `undefined-variable` | | | on | PHPStan level 0 |
 
+Ruby (RuboCop Lint, [../formatting/ruby.md](../formatting/ruby.md#lint)) uses `unused-local-variable` for Lint/UselessAssignment and adds `unused-method-argument`, `unused-block-argument` (a parameter that nothing reads, in the scope kinds `ScopeLang::arguments` names, minus what its skip predicate allows) and `underscore-prefixed-variable-used` (an `_x` that is read).
+
 Row options a language chooses (language neutral; each is a field of `Row`, `Declares`, `Sel`, `Flow` or `ScopeLang`):
 - Names as tokens (`Row::tokens`, `ScopeLang::bare`): the own name tokens of a node declare (`Flow::Declare`), are not uses (`Flow::Skip`) or assign (`Flow::Assigns`: `=` writes, `+=` and `++` read and write, other operators pass the state on); selected by `Sel::First`, `Last`, `LastBefore(text)`, `All`, `BeforeOp`. With `bare`, a name token no row mentions is a use: Java has no node for a name, and reading too much only hides a finding.
 - `Declares::name_last` and `skip_token` (an import declares the last name of its path or alias, none for `*`), `Declares::parent_flags` (a declaration whose flags depend on its parent), `Row::inert` (names under an import path are no uses).
 - Scopes that do not see their surroundings (`Row::closed`: a PHP function), implicit declaration by a write (`Row::implicit`: Python names, PHP variables), `Flow::Capture` (a closure's `use (&$x)` declares in the closure and writes outside), `Sel::Kind` (children of one node kind).
 - A scope the table cannot decide (`Row::dynamic` kinds such as PHP `include` and `$$x`, `ScopeLang::dynamic` names such as `extract`) is marked, and `undefined-variable` leaves it alone.
+- `Place::Unseen` (a write declares only when no earlier name of the file was seen: Ruby `a = a`), `ScopeLang::labels` (token kinds of `key:` whose name is the shorthand `f(key:)` read), `ScopeLang::interpolated` (token kind whose `#{...}` words are reads: a heredoc body, which the tree holds as one token).
 - `ScopeLang::docs` (comment prefix whose words use imports), `conventions` (imported functions called without being named), `globals` (names defined everywhere).
 
 ## Behavior summaries (`BehaviorSummaries`)
