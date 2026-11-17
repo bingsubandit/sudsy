@@ -679,7 +679,6 @@ fn prettier(
     let args_of = |c: &SyntaxNode| {
         cx.grammar
             .slots(c, "arguments")
-            .into_iter()
             .filter_map(|a| a.into_node())
             .collect::<Vec<_>>()
     };
