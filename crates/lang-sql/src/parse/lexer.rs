@@ -261,7 +261,7 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
             return (T::Var, j);
         }
     }
-    if (c == b'@' && matches!(d, Dialect::Tsql | Dialect::Mysql)) || (c == b'#' && d == Dialect::Mysql) {
+    if (c == b'@' && matches!(d, Dialect::Tsql | Dialect::Mysql)) || (c == b'#' && matches!(d, Dialect::Tsql | Dialect::Mysql)) {
         let mut j = i + 1;
         if b.get(j) == Some(&c) {
             j += 1;

@@ -233,6 +233,7 @@ impl<'a> P<'a> {
         match self.t(0) {
             Some(T::Quoted) => true,
             Some(T::Word) => !self.reserved(0),
+            Some(T::Var) => self.text(0).starts_with('#'),
             _ => false,
         }
     }
@@ -253,6 +254,10 @@ impl<'a> P<'a> {
     pub fn eat_name(&mut self) -> bool {
         let hit = self.at_name();
         if hit {
+            if self.is_t(0, T::Var) {
+                self.bump(); // `#temp`
+                return true;
+            }
             let kind = if self.is_t(0, T::Quoted) {
                 k::QUOTED_IDENTIFIER
             } else {

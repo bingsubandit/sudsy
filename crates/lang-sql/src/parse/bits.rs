@@ -29,6 +29,7 @@ impl P<'_> {
     pub fn starts_name(&self, n: usize) -> bool {
         match self.t(n) {
             Some(T::Quoted) => true,
+            Some(T::Var) => self.text(n).starts_with('#'),
             Some(T::Word) => !self.reserved(n) || self.is_t(n + 1, T::Dot) || self.is_t(n + 1, T::LParen),
             Some(T::Op) => self.is_op(n, "*"),
             _ => false,
