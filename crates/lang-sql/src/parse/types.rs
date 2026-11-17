@@ -63,7 +63,7 @@ impl P<'_> {
     }
 
     fn reserved_not_type(&self, n: usize) -> bool {
-        self.is_t(n, T::Word) && self.reserved(n) && !self.at_any(&["DOUBLE", "CHARACTER", "CHAR", "NATIONAL", "INTERVAL", "BINARY", "BIT", "TIME", "TIMESTAMP", "DATE", "FLOAT", "INT", "INTEGER", "TEXT"])
+        self.is_t(n, T::Word) && self.reserved(n) && !is_type_word(self.text(n))
     }
 
     /// `(10)`, `(10, 2)`, `(max)`: the arguments of a type.

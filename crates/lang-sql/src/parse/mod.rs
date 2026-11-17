@@ -13,7 +13,9 @@ mod dialect;
 mod expr;
 mod generic;
 mod lexer;
+mod mysql;
 mod stmt;
+mod tsql;
 pub(crate) mod tree;
 mod types;
 
@@ -73,7 +75,7 @@ pub(crate) const MAX_DEPTH: u32 = 200;
 
 impl<'a> P<'a> {
     fn new(src: &'a str, d: Dialect) -> P<'a> {
-        let lexed = lex(src, d);
+        let (lexed, open) = lex(src, d);
         let code: Vec<u32> = (0..lexed.len() as u32)
             .filter(|&i| !lexed[i as usize].kind.is_trivia())
             .collect();
@@ -81,7 +83,7 @@ impl<'a> P<'a> {
             .iter()
             .map(|&i| default_kind(lexed[i as usize].kind))
             .collect();
-        P {
+        let mut p = P {
             src,
             d,
             lex: lexed,
@@ -93,7 +95,13 @@ impl<'a> P<'a> {
             group: 0,
             errors: Vec::new(),
             depth: 0,
+        };
+        for i in open {
+            let l = p.lex[i as usize];
+            let what = if l.kind == T::BlockComment { "unterminated comment" } else { "unterminated string or name" };
+            p.errors.push(ParseError::syntax(l.start, l.end - l.start, what.to_string()));
         }
+        p
     }
 
     // ---- tokens

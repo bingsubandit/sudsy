@@ -52,7 +52,7 @@ pub static HAND: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::
 
 /// A file of the provider: the dialect is the `dialect` option.
 pub fn parse_file(file: &SourceFile) -> ParseResult {
-    if HAND.load(std::sync::atomic::Ordering::Relaxed) {
+    if HAND.load(std::sync::atomic::Ordering::Relaxed) || std::env::var_os("SUDSY_SQL_HAND").is_some() {
         return crate::parse::parse(&file.text, file.language_version.as_deref().unwrap_or("ansi"));
     }
     parse(

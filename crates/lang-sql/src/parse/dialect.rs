@@ -1,6 +1,6 @@
 //! Dialect modes of the one parser: keyword tables and the few syntax switches.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -26,9 +26,16 @@ impl Dialect {
         sets().reserved[self as usize].contains(upper) || CLAUSE_WORDS.contains(&upper)
     }
 
-    /// Any keyword of any dialect: what a word that no rule claims is taken for.
+    /// A date part (`DAY`, `HOUR`): a keyword in the first argument of the date functions.
+    pub fn is_unit(self, word: &str) -> bool {
+        let mut buf = [0u8; 40];
+        sets().units.contains(upper(word, &mut buf))
+    }
+
+    /// A keyword of this dialect: what a word that no rule claims is taken for.
     pub fn is_keyword(self, upper: &str) -> bool {
-        sets().all.contains(upper) || self.is_reserved(upper)
+        let letter = ['a', 'p', 'm', 't'][self as usize];
+        sets().all.get(upper).is_some_and(|d| d.contains(letter) || d.contains('a')) || self.is_reserved(upper)
     }
 }
 
@@ -46,7 +53,9 @@ const CLAUSE_WORDS: &[&str] = &[
 
 struct Sets {
     reserved: [HashSet<&'static str>; 4],
-    all: HashSet<&'static str>,
+    /// Keywords by dialect: the letters `a`, `p`, `m`, `t` of the dialects that have the word.
+    all: HashMap<&'static str, &'static str>,
+    units: HashSet<&'static str>,
 }
 
 fn words(text: &'static str) -> HashSet<&'static str> {
@@ -62,7 +71,8 @@ fn sets() -> &'static Sets {
             words(include_str!("data/mysql.reserved.txt")),
             words(include_str!("data/tsql.reserved.txt")),
         ],
-        all: words(include_str!("data/keywords.txt")),
+        all: include_str!("data/keywords.txt").lines().filter_map(|l| l.split_once(' ')).collect(),
+        units: words(include_str!("data/units.txt")),
     })
 }
 

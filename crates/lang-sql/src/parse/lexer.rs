@@ -47,6 +47,7 @@ impl T {
     }
 }
 
+const OPS4: &[&str] = &["!~~*"];
 const OPS3: &[&str] = &[
     "->>", "#>>", "<=>", "!~*", "~~*", "<->", "<#>", "&&&", "|>>", "<<|", "&<|", "|&>", "!~~", "<<=",
     ">>=", "||/", "|/ ",
@@ -69,13 +70,37 @@ fn is_word_char(c: char, d: Dialect) -> bool {
         || (matches!(c, '#' | '@') && d == Dialect::Tsql)
 }
 
-/// Lexes `src`; the tokens cover it without gaps.
-pub fn lex(src: &str, d: Dialect) -> Vec<Lex> {
+/// Lexes `src`; the tokens cover it without gaps. The second result lists the tokens left open
+/// at the end of the file (strings, quoted names, comments).
+pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
     let b = src.as_bytes();
     let mut out = Vec::with_capacity(src.len() / 4 + 8);
+    let mut open = Vec::new();
     let mut i = 0;
+    // mysql `DELIMITER ~`: the delimiter token ends statements, `DELIMITER ;` restores `;`.
+    let mut delim: Option<&str> = None;
+    let mut declared = usize::MAX;
     while i < b.len() {
-        let (kind, end) = token(src, i, d);
+        let mut left_open = false;
+        let (kind, end) = match delim {
+            _ if i == declared => (T::Op, i + src[i..].find(char::is_whitespace).unwrap_or(src.len() - i)),
+            Some(x) if src[i..].starts_with(x) => (T::Semi, i + x.len()),
+            _ => token(src, i, d, &mut left_open),
+        };
+        if d == Dialect::Mysql && kind == T::Word && src[i..end].eq_ignore_ascii_case("delimiter") {
+            let rest = &src[end..];
+            let skip = rest.len() - rest.trim_start_matches([' ', '\t']).len();
+            let word = rest[skip..].split_whitespace().next().unwrap_or("");
+            if !word.is_empty() && !rest[..skip].contains('\n') {
+                delim = (word != ";").then_some(word);
+                if delim.is_some() {
+                    declared = end + skip;
+                }
+            }
+        }
+        if left_open {
+            open.push(out.len() as u32);
+        }
         debug_assert!(end > i);
         out.push(Lex {
             kind,
@@ -84,7 +109,7 @@ pub fn lex(src: &str, d: Dialect) -> Vec<Lex> {
         });
         i = end;
     }
-    out
+    (out, open)
 }
 
 fn find(b: &[u8], from: usize, byte: u8) -> Option<usize> {
@@ -97,7 +122,7 @@ fn line_end(b: &[u8], from: usize) -> usize {
 
 /// The end of a quoted run opened at `i`: `close` ends it, a doubled `close` (and a backslash when
 /// `escape`) stays inside. Unterminated: the rest of the file.
-fn quoted(b: &[u8], i: usize, close: u8, escape: bool) -> usize {
+fn quoted(b: &[u8], i: usize, close: u8, escape: bool, open: &mut bool) -> usize {
     let mut j = i + 1;
     while j < b.len() {
         let c = b[j];
@@ -110,10 +135,11 @@ fn quoted(b: &[u8], i: usize, close: u8, escape: bool) -> usize {
         }
         j += if escape && c == b'\\' { 2 } else { 1 };
     }
+    *open = true;
     b.len()
 }
 
-fn token(src: &str, i: usize, d: Dialect) -> (T, usize) {
+fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
     let b = src.as_bytes();
     let c = b[i];
     let next = b.get(i + 1).copied();
@@ -133,17 +159,17 @@ fn token(src: &str, i: usize, d: Dialect) -> (T, usize) {
         b'#' if matches!(d, Dialect::Mysql | Dialect::Ansi) => {
             return (T::LineComment, line_end_cr(b, i));
         }
-        b'/' if next == Some(b'*') => return (T::BlockComment, block_comment(b, i, d)),
+        b'/' if next == Some(b'*') => return (T::BlockComment, block_comment(b, i, d, open)),
         b'\\' if d == Dialect::Postgres => return (T::LineComment, line_end_cr(b, i)),
-        b'\'' => return (T::Str, quoted(b, i, b'\'', d == Dialect::Mysql || d == Dialect::Ansi)),
+        b'\'' => return (T::Str, quoted(b, i, b'\'', d == Dialect::Mysql || d == Dialect::Ansi, open)),
         b'"' => {
             let esc = matches!(d, Dialect::Mysql | Dialect::Ansi);
-            let end = quoted(b, i, b'"', esc);
+            let end = quoted(b, i, b'"', esc, open);
             return (if d == Dialect::Mysql { T::Str } else { T::Quoted }, end);
         }
-        b'`' => return (T::Quoted, find(b, i + 1, b'`').map_or(b.len(), |p| p + 1)),
+        b'`' => return (T::Quoted, find(b, i + 1, b'`').map_or_else(|| { *open = true; b.len() }, |p| p + 1)),
         b'[' if d == Dialect::Tsql => {
-            let end = find(b, i + 1, b']').map_or(b.len(), |p| p + 1);
+            let end = find(b, i + 1, b']').map_or_else(|| { *open = true; b.len() }, |p| p + 1);
             return (T::Quoted, end);
         }
         b'(' => return (T::LParen, i + 1),
@@ -161,10 +187,10 @@ fn token(src: &str, i: usize, d: Dialect) -> (T, usize) {
         _ => {}
     }
     if c.is_ascii_digit() || (c == b'.' && next.is_some_and(|n| n.is_ascii_digit())) {
-        return number(src, i, d);
+        return number(src, i, d, open);
     }
     if c == b'$' {
-        if let Some(end) = dollar_string(src, i, d) {
+        if let Some(end) = dollar_string(src, i, d, open) {
             return (T::Str, end);
         }
         if d == Dialect::Postgres && next.is_some_and(|n| n.is_ascii_digit()) {
@@ -190,12 +216,12 @@ fn token(src: &str, i: usize, d: Dialect) -> (T, usize) {
     }
     let ch = src[i..].chars().next().unwrap_or(' ');
     if is_word_start(ch) || (ch.is_ascii_digit()) {
-        return word(src, i, ch, d);
+        return word(src, i, ch, d, open);
     }
     if d == Dialect::Tsql && matches!(ch, '#' | '@' | '$') {
-        return word(src, i, ch, d);
+        return word(src, i, ch, d, open);
     }
-    for (ops, n) in [(OPS3, 3), (OPS2, 2)] {
+    for (ops, n) in [(OPS4, 4), (OPS3, 3), (OPS2, 2)] {
         if let Some(s) = src.get(i..i + n) {
             if ops.contains(&s) && op_allowed(s, d) {
                 return (T::Op, i + n);
@@ -213,7 +239,7 @@ fn op_allowed(op: &str, d: Dialect) -> bool {
     match op {
         "&&" | "||" | "!!" | "->" | "->>" | "#>" | "#>>" | "@>" | "<@" | "?|" | "?&" | "<->" | "<#>"
         | "<=>" | "@@" | "~=" | "#-" | "&&&" | "|>>" | "<<|" | "&<|" | "|&>" | "!~~" | "||/"
-        | "~~*" | "!~*" => d != Dialect::Tsql || op == "||",
+        | "~~*" | "!~*" | "!~~*" => d != Dialect::Tsql || op == "||",
         ".." => false,
         _ => true,
     }
@@ -224,7 +250,7 @@ fn line_end_cr(b: &[u8], from: usize) -> usize {
     if e > from && b[e - 1] == b'\r' { e - 1 } else { e }
 }
 
-fn block_comment(b: &[u8], i: usize, d: Dialect) -> usize {
+fn block_comment(b: &[u8], i: usize, d: Dialect, open: &mut bool) -> usize {
     let nested = matches!(d, Dialect::Postgres | Dialect::Tsql);
     let (mut j, mut depth) = (i + 2, 1);
     while j < b.len() {
@@ -241,11 +267,12 @@ fn block_comment(b: &[u8], i: usize, d: Dialect) -> usize {
             j += 1;
         }
     }
+    *open = true;
     b.len()
 }
 
 /// `$tag$ ... $tag$` (the tag may be empty); `None` when `i` does not open one.
-fn dollar_string(src: &str, i: usize, d: Dialect) -> Option<usize> {
+fn dollar_string(src: &str, i: usize, d: Dialect, open: &mut bool) -> Option<usize> {
     if d == Dialect::Tsql {
         return None;
     }
@@ -258,10 +285,10 @@ fn dollar_string(src: &str, i: usize, d: Dialect) -> Option<usize> {
         return None;
     }
     let tag = &src[i..=j];
-    Some(src[j + 1..].find(tag).map_or(b.len(), |p| j + 1 + p + tag.len()))
+    Some(src[j + 1..].find(tag).map_or_else(|| { *open = true; b.len() }, |p| j + 1 + p + tag.len()))
 }
 
-fn number(src: &str, i: usize, d: Dialect) -> (T, usize) {
+fn number(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
     let b = src.as_bytes();
     let digits = |mut j: usize| {
         while j < b.len() && (b[j].is_ascii_digit() || (b[j] == b'_' && d == Dialect::Postgres)) {
@@ -291,17 +318,17 @@ fn number(src: &str, i: usize, d: Dialect) -> (T, usize) {
     }
     // A word that starts with digits (`1abc`) is one word.
     if src[j..].chars().next().is_some_and(is_word_start) {
-        return word(src, i, ' ', d);
+        return word(src, i, ' ', d, open);
     }
     (T::Number, j)
 }
 
-fn word(src: &str, i: usize, first: char, d: Dialect) -> (T, usize) {
+fn word(src: &str, i: usize, first: char, d: Dialect, open: &mut bool) -> (T, usize) {
     let b = src.as_bytes();
     // Prefixed strings: `N'..'`, `E'..'`, `X'..'`, `B'..'`, `U&'..'`.
     if b.get(i + 1) == Some(&b'\'') && matches!(b[i], b'n' | b'N' | b'e' | b'E' | b'x' | b'X' | b'b' | b'B') {
         let escape = matches!(b[i], b'e' | b'E') || d == Dialect::Mysql;
-        return (T::Str, quoted(b, i + 1, b'\'', escape));
+        return (T::Str, quoted(b, i + 1, b'\'', escape, open));
     }
     if d == Dialect::Postgres
         && matches!(b[i], b'u' | b'U')
@@ -309,7 +336,7 @@ fn word(src: &str, i: usize, first: char, d: Dialect) -> (T, usize) {
         && matches!(b.get(i + 2), Some(b'\'' | b'"'))
     {
         let q = b[i + 2];
-        return (if q == b'"' { T::Quoted } else { T::Str }, quoted(b, i + 2, q, false));
+        return (if q == b'"' { T::Quoted } else { T::Str }, quoted(b, i + 2, q, false, open));
     }
     let mut j = i + first.len_utf8().max(1);
     if first == ' ' {

@@ -124,6 +124,10 @@ impl P<'_> {
     }
 
     fn select_clause(&mut self) {
+        const MYSQL_MODIFIERS: &[&str] = &[
+            "high_priority", "straight_join", "sql_small_result", "sql_big_result", "sql_buffer_result", "sql_no_cache",
+            "sql_cache", "sql_calc_found_rows",
+        ];
         let m = self.mark();
         self.bump_as(k::KEYWORD);
         // Modifiers.
@@ -152,6 +156,11 @@ impl P<'_> {
             }
             self.close(k::SELECT_CLAUSE_MODIFIER, mm);
         }
+        while self.d == Dialect::Mysql && self.at_any(MYSQL_MODIFIERS) {
+            let mm = self.mark();
+            self.bump_as(k::KEYWORD);
+            self.close(k::SELECT_CLAUSE_MODIFIER, mm);
+        }
         self.indent();
         self.list(|p| p.select_element());
         self.dedent();
@@ -160,6 +169,14 @@ impl P<'_> {
 
     fn select_element(&mut self) -> bool {
         let m = self.mark();
+        if self.d == Dialect::Tsql && (self.is_t(0, T::Var) || self.at_name()) && self.is_op(1, "=") {
+            // `@v = expr`, `alias = expr`
+            self.bump();
+            self.bump();
+            self.expression();
+            self.close(k::SELECT_CLAUSE_ELEMENT, m);
+            return true;
+        }
         if self.at_op("*") {
             let r = self.mark();
             self.bump();
@@ -181,6 +198,20 @@ impl P<'_> {
 
     pub fn from_expression(&mut self) -> bool {
         let m = self.mark();
+        if self.is_t(0, T::LParen) && !self.at_query_start() {
+            // A bracketed join: `(a JOIN b ON ...)`.
+            self.bracketed(|p| {
+                p.from_element();
+                while p.at_join() {
+                    p.join();
+                }
+            });
+            while self.at_join() {
+                self.join();
+            }
+            self.close(k::FROM_EXPRESSION, m);
+            return true;
+        }
         let cp = self.cp();
         self.implicit();
         if !self.from_element() {
@@ -242,7 +273,7 @@ impl P<'_> {
                 let o = self.mark();
                 self.bump_as(k::KEYWORD);
                 self.implicit();
-                self.expression();
+                self.bracketed_expression();
                 self.dedent();
                 self.close(k::JOIN_ON_CONDITION, o);
                 self.dedent();
@@ -275,6 +306,10 @@ impl P<'_> {
         } else if self.at("lateral") {
             self.bump_as(k::KEYWORD);
             return self.from_element_rest(m, t);
+        } else if self.at("dual") {
+            let o = self.mark();
+            self.bump_as(k::IDENTIFIER);
+            self.close(k::OBJECT_REFERENCE, o);
         } else if self.starts_name(0) {
             if self.name_call_ahead() {
                 self.expression_call();
@@ -343,7 +378,7 @@ impl P<'_> {
         let m = self.mark();
         self.bump_as(k::KEYWORD);
         self.implicit();
-        self.expression();
+        self.bracketed_expression();
         self.dedent();
         self.close(k::WHERE_CLAUSE, m);
     }
@@ -369,7 +404,7 @@ impl P<'_> {
             let m = self.mark();
             self.bump_as(k::KEYWORD);
             self.implicit();
-            self.expression();
+            self.bracketed_expression();
             self.dedent();
             self.close(k::HAVING_CLAUSE, m);
         }

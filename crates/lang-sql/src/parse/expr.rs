@@ -16,14 +16,20 @@ pub(super) struct Chain {
 const NOT_OPERAND: &[&str] = &[
     "FROM", "WHERE", "AND", "OR", "ON", "USING", "THEN", "WHEN", "ELSE", "END", "IN", "IS", "AS",
     "BETWEEN", "LIKE", "GROUP", "ORDER", "HAVING", "LIMIT", "UNION", "INTERSECT", "EXCEPT", "SET",
-    "VALUES", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "CROSS", "NATURAL", "OUTER", "WINDOW",
+    "VALUES", "JOIN", "INNER", "FULL", "CROSS", "NATURAL", "OUTER", "WINDOW",
     "OFFSET", "FETCH", "FOR", "INTO", "RETURNING", "OVER", "ASC", "DESC", "WITH", "SELECT",
 ];
 
-const BARE_FUNCTIONS: &[&str] = &[
+pub(super) const BARE_FUNCTIONS: &[&str] = &[
     "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER", "CURRENT_ROLE",
     "CURRENT_SCHEMA", "CURRENT_CATALOG", "LOCALTIME", "LOCALTIMESTAMP", "SESSION_USER",
     "SYSTEM_USER", "USER", "NOW",
+];
+
+/// Functions whose first argument is a date part.
+const DATE_FUNCTIONS: &[&str] = &[
+    "DATEADD", "DATEDIFF", "DATEDIFF_BIG", "DATEPART", "DATENAME", "DATE_PART", "DATE_TRUNC", "DATETRUNC", "EXTRACT",
+    "TIMESTAMPADD", "TIMESTAMPDIFF", "DATE_ADD", "DATE_SUB", "TIMESTAMP_ADD", "TIMESTAMP_SUB", "DATE_DIFF",
 ];
 
 const COMPARE: &[&str] = &["=", "<", ">", "<=", ">=", "<>", "!=", "!<", "!>", "<=>"];
@@ -121,6 +127,10 @@ impl P<'_> {
                 c.lone = false;
                 true
             }
+            Some(T::LSquare) if self.d == super::Dialect::Postgres => {
+                self.array_accessor();
+                true
+            }
             Some(T::Quoted) => self.name_or_call(c),
             Some(T::Word) => self.word_operand(c),
             _ => false,
@@ -133,9 +143,69 @@ impl P<'_> {
             if p.at_query_start() {
                 p.query();
             } else {
-                p.list(|p| p.expression());
+                p.tuple();
             }
         });
+    }
+
+    /// The items of a bracket: one expression, or a list whose items drop the node when plain.
+    fn tuple(&mut self) {
+        let m = self.mark();
+        let c = self.chain(false);
+        if c.terms == 0 {
+            return;
+        }
+        let tuple = self.is_t(0, T::Comma);
+        if !tuple || !c.lone {
+            self.close(k::EXPRESSION, m);
+        }
+        while self.is_t(0, T::Comma) {
+            self.bump();
+            if !self.element() {
+                break;
+            }
+        }
+    }
+
+    /// An expression, or one bracket that holds all of it: `ON (a = b)`, `WHERE (x)`.
+    pub fn bracketed_expression(&mut self) -> bool {
+        if self.is_t(0, T::LParen) && !self.at_query_start() && self.paren_ends_expr() {
+            self.bracketed(|p| {
+                p.expression();
+            });
+            return true;
+        }
+        self.expression()
+    }
+
+    /// Does the bracket at the cursor end the expression it starts?
+    fn paren_ends_expr(&self) -> bool {
+        let mut depth = 0usize;
+        let mut n = 0;
+        while let Some(t) = self.t(n) {
+            match t {
+                T::LParen | T::LSquare => depth += 1,
+                T::RParen | T::RSquare => {
+                    depth -= 1;
+                    if depth == 0 {
+                        n += 1;
+                        break;
+                    }
+                }
+                _ => {}
+            }
+            n += 1;
+        }
+        match self.t(n) {
+            None | Some(T::Semi | T::RParen | T::Comma) => true,
+            Some(T::Word) => !(self.at_op_word(n)),
+            _ => false,
+        }
+    }
+
+    /// Is the word `n` ahead one that continues an expression?
+    fn at_op_word(&self, n: usize) -> bool {
+        ["and", "or", "is", "not", "in", "like", "between", "ilike", "collate", "overlaps", "at"].iter().any(|w| self.is(n, w))
     }
 
     pub fn at_query_start(&self) -> bool {
@@ -160,6 +230,18 @@ impl P<'_> {
                 self.bump_as(k::WORD_LITERAL);
                 return true;
             }
+            "EXISTS" if self.is_t(1, T::LParen) => {
+                self.bump_as(k::KEYWORD);
+                self.bracketed(|p| {
+                    if p.at_query_start() {
+                        p.query();
+                    } else {
+                        p.expression();
+                    }
+                });
+                c.lone = false;
+                return true;
+            }
             "CASE" => {
                 self.case_expr();
                 c.lone = false;
@@ -174,7 +256,7 @@ impl P<'_> {
                 return true;
             }
             "DATE" | "TIME" | "TIMESTAMP" | "DATETIME" | "TIMESTAMPTZ" if self.is_t(1, T::Str) => {
-                self.bump_as(k::TYPE_IDENTIFIER);
+                self.bump_as(k::KEYWORD);
                 self.bump();
                 return true;
             }
@@ -238,16 +320,18 @@ impl P<'_> {
         if self.pos - nm > 1 {
             self.kinds[self.pos - 1] = k::WORD;
         }
+        let name = self.src[self.lex[self.code[self.pos - 1] as usize].start as usize..self.lex[self.code[self.pos - 1] as usize].end as usize].to_ascii_uppercase();
+        let dates = DATE_FUNCTIONS.contains(&name.as_str());
         self.close(k::FUNCTION_NAME, nm);
-        self.function_contents();
+        self.function_contents(dates);
         self.function_tail();
         self.close(k::FUNCTION, m);
         true
     }
 
-    pub fn function_contents(&mut self) {
+    pub fn function_contents(&mut self, dates: bool) {
         let m = self.mark();
-        self.bracketed(|p| p.args());
+        self.bracketed(|p| p.args(dates));
         self.close(k::FUNCTION_CONTENTS, m);
     }
 
@@ -330,7 +414,7 @@ impl P<'_> {
     }
 
     /// Arguments of a call: `*`, expressions, and the keywords between them.
-    fn args(&mut self) {
+    fn args(&mut self, dates: bool) {
         if self.at_op("*") && matches!(self.t(1), Some(T::RParen | T::Comma)) {
             self.bump();
             return;
@@ -340,7 +424,9 @@ impl P<'_> {
                 self.bump_as(k::KEYWORD);
             }
             let before = self.pos;
-            if self.at_query_start() && self.at_any(&["select", "with"]) {
+            if dates && self.is_t(0, T::Word) && self.d.is_unit(self.text(0)) && matches!(self.t(1), Some(T::Comma | T::RParen) | Some(T::Word)) {
+                self.bump_as(k::KEYWORD);
+            } else if self.at_query_start() && self.at_any(&["select", "with"]) {
                 let m = self.mark();
                 self.query();
                 self.close(k::EXPRESSION, m);

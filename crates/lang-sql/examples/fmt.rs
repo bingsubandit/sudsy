@@ -42,19 +42,41 @@ fn main() {
         file.language_version = Some(dialect.clone());
         format_file(&provider, &file, &options, &DirectiveTable::default()).ok()
     };
+    let (mut old_ref, mut new_ref) = (0, 0);
     let (mut total, mut old_fmt, mut same, mut new_refused, mut shown) = (0, 0, 0, 0, 0);
     let mut diffs = Vec::new();
     for p in paths {
         let Ok(text) = std::fs::read_to_string(&p) else { continue };
         total += 1;
-        let Some(old) = run(&text, false) else { continue };
+        let reference = std::fs::read_to_string(format!("/scratch/slots/sudsy/3/ref/sqlfluff/{dialect}__{}", p.file_name().unwrap().to_str().unwrap())).ok();
+        let new_out = run(&text, true);
+        let old_out = run(&text, false);
+        if reference.is_some() && reference == old_out {
+            old_ref += 1;
+        }
+        if reference.is_some() && reference == new_out {
+            new_ref += 1;
+        }
+        let Some(old) = old_out else { continue };
         old_fmt += 1;
-        match run(&text, true) {
-            None => new_refused += 1,
+        match new_out {
+            None => {
+                new_refused += 1;
+                if verbose > shown && reference.as_deref() == Some(old.as_str()) {
+                    shown += 1;
+                    let r = lang_sql::parse_hand(&text, &dialect);
+                    if let Some(e) = r.errors.first() {
+                        let st = (e.start as usize).min(text.len());
+                        let ctx_start = text[..st].rfind('\n').map_or(0, |i| i + 1);
+                        let line_end = text[st..].find('\n').map_or(text.len(), |i| st + i);
+                        println!("REFUSED {}: {} | {}", p.file_name().unwrap().to_str().unwrap(), e.message, &text[ctx_start..line_end.min(ctx_start + 160)]);
+                    }
+                }
+            }
             Some(new) if new == old => same += 1,
             Some(new) => {
                 diffs.push(p.display().to_string());
-                if shown < verbose {
+                if shown < verbose && reference.as_deref() == Some(old.as_str()) {
                     shown += 1;
                     let (ol, nl): (Vec<_>, Vec<_>) = (old.lines().collect(), new.lines().collect());
                     let at = ol.iter().zip(nl.iter()).position(|(x, y)| x != y).unwrap_or(ol.len().min(nl.len()));
@@ -63,5 +85,6 @@ fn main() {
             }
         }
     }
+    println!("{dialect}: ref_identical old={old_ref} new={new_ref}");
     println!("{dialect}: files={total} old_formats={old_fmt} same_output={same} new_refused={new_refused} differ={}", diffs.len());
 }

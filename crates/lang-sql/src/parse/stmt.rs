@@ -5,7 +5,7 @@ use super::{Dialect, P};
 use crate::generated::kind as k;
 
 /// Words that start a statement in T-SQL, where statements need no terminator.
-const TSQL_STARTS: &[&str] = &[
+pub(super) const TSQL_STARTS: &[&str] = &[
     "select", "insert", "update", "delete", "merge", "with", "declare", "set", "if", "while", "begin", "end", "exec",
     "execute", "print", "return", "create", "alter", "drop", "truncate", "use", "go", "break", "continue", "goto",
     "throw", "raiserror", "open", "close", "fetch", "deallocate", "commit", "rollback", "save", "grant", "revoke",
@@ -20,6 +20,16 @@ pub(super) fn file(p: &mut P) {
             continue;
         }
         let before = p.pos;
+        if p.d == Dialect::Mysql && p.at("delimiter") {
+            // `DELIMITER ~`: the new delimiter stands outside the statement.
+            let m = p.mark();
+            p.bump_as(k::KEYWORD);
+            p.close(k::STATEMENT, m);
+            if p.is_t(0, T::Op) {
+                p.bump();
+            }
+            continue;
+        }
         statement(p);
         if p.pos == before {
             // Nothing took the token: it is an error of its own.
@@ -50,18 +60,48 @@ fn end_statement(p: &mut P) {
     if p.d == Dialect::Tsql && p.at_any(TSQL_STARTS) {
         return;
     }
-    p.skip_statement();
+    // What is left is taken as the rest of the statement, by the place of its words.
+    p.generic();
 }
 
 impl P<'_> {
     /// A statement that is not a query: dispatches on its first words.
     pub fn statement_body(&mut self) {
+        if self.d == Dialect::Tsql && self.tsql_statement() {
+            return;
+        }
         match self.text(0).to_ascii_lowercase().as_str() {
             "insert" | "replace" if self.is_t(0, T::Word) => self.insert(),
             "update" => self.update(),
             "delete" => self.delete(),
+            "if" if self.d == Dialect::Mysql => self.if_block(),
+            "set" if self.d == Dialect::Mysql && self.is_assignment() => self.set_assign(),
+            _ if self.is_t(0, T::Word) && !self.keyword_like(0) && !self.is_t(1, T::Colon) => self.skip_statement(),
             _ => self.generic(),
         }
+    }
+
+    /// `SET a = 1`, `SET @a := 1`, `SET new.c = 1` (not `SET NAMES x`, `SET GLOBAL x = 1`).
+    fn is_assignment(&self) -> bool {
+        matches!(self.t(1), Some(T::Word | T::Var)) && (self.is_op(2, "=") || self.is_op(2, ":=") || self.is_t(2, T::Dot))
+    }
+
+    fn set_assign(&mut self) {
+        self.bump_as(k::KEYWORD);
+        self.list(|p| {
+            if p.is_t(0, T::Var) {
+                p.bump();
+            } else if p.is_t(1, T::Dot) {
+                p.obj_ref();
+            } else {
+                p.bump_as(k::WORD);
+            }
+            if !p.is_t(0, T::Op) {
+                return false;
+            }
+            p.element_op();
+            p.expression()
+        });
     }
 
     fn insert(&mut self) {
@@ -159,10 +199,13 @@ impl P<'_> {
         self.bump_as(k::KEYWORD);
         self.indent();
         self.eat_any(&["only", "low_priority", "ignore"]);
-        self.obj_ref();
-        if !self.at("set") {
-            self.alias();
-        }
+        self.list(|p| {
+            let ok = p.obj_ref();
+            if !p.at("set") {
+                p.alias();
+            }
+            ok
+        });
         self.dedent();
         if self.at("set") {
             self.set_clause();
