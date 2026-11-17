@@ -158,11 +158,30 @@ fn is_empty(node: &SyntaxNode, g: &Grammar) -> bool {
         })
 }
 
-fn words(e: &SyntaxElement, g: &Grammar) -> Vec<String> {
-    crate::matcher::tokens(e, g)
-        .iter()
-        .map(|t| t.text().to_string())
-        .collect()
+/// The tokens of an element that are not trivia, read lazily.
+fn words<'a>(
+    e: &SyntaxElement,
+    g: &'a Grammar,
+) -> impl Iterator<Item = core_syntax::SyntaxToken> + use<'a> {
+    let all: Box<dyn Iterator<Item = SyntaxElement>> = match e {
+        SyntaxElement::Token(t) => Box::new(std::iter::once(SyntaxElement::Token(t.clone()))),
+        SyntaxElement::Node(n) => Box::new(n.descendants_with_tokens()),
+    };
+    all.filter_map(|e| e.into_token())
+        .filter(|t| !g.is_trivia(t.kind()) && !t.text().is_empty())
+}
+
+/// Do both elements hold the same tokens (and at least one)? Stops at the first difference.
+fn same_words(a: &SyntaxElement, b: &SyntaxElement, g: &Grammar) -> bool {
+    let (mut a, mut b) = (words(a, g), words(b, g));
+    let mut any = false;
+    loop {
+        match (a.next(), b.next()) {
+            (None, None) => return any,
+            (Some(x), Some(y)) if x.text() == y.text() => any = true,
+            _ => return false,
+        }
+    }
 }
 
 impl Expr {
@@ -185,13 +204,13 @@ impl Expr {
             all.push(Expr::Kind(kind));
         }
         if let Some(text) = &spec.regex {
-            let re = Re::new(text).map_err(|e| format!("regex `{text}`: {e}"))?;
+            let re = Re::lazy(text).map_err(|e| format!("regex `{text}`: {e}"))?;
             let groups = re.groups();
             all.push(Expr::Regex(re, groups));
         }
         if let Some(text) = &spec.path {
             all.push(Expr::Path(
-                Re::new(text).map_err(|e| format!("path regex `{text}`: {e}"))?,
+                Re::lazy(text).map_err(|e| format!("path regex `{text}`: {e}"))?,
             ));
         }
         if let Some(n) = spec.nth {
@@ -335,11 +354,11 @@ impl Expr {
             Expr::Not(e) => e.matches(node, cx).is_none().then(Captures::new),
             Expr::Role(_, kinds) => kinds.contains(&node.kind()).then(Captures::new),
             Expr::Operator(kinds) => {
-                let text = match cx.grammar.slot(node, "operator")? {
-                    SyntaxElement::Token(t) => t.text().to_string(),
-                    SyntaxElement::Node(n) => n.first_token()?.text().to_string(),
+                let token = match cx.grammar.slot(node, "operator")? {
+                    SyntaxElement::Token(t) => t,
+                    SyntaxElement::Node(n) => n.first_token()?,
                 };
-                let kind = cx.grammar.operator_kind(&text)?;
+                let kind = cx.grammar.operator_kind(token.text())?;
                 kinds.iter().any(|k| k == kind).then(Captures::new)
             }
             Expr::Fields(list) => {
@@ -350,9 +369,9 @@ impl Expr {
                 Some(Captures::new())
             }
             Expr::Same(a, b) => {
-                let a = words(&cx.grammar.slot(node, a)?, cx.grammar);
-                let b = words(&cx.grammar.slot(node, b)?, cx.grammar);
-                (!a.is_empty() && a == b).then(Captures::new)
+                let a = cx.grammar.slot(node, a)?;
+                let b = cx.grammar.slot(node, b)?;
+                same_words(&a, &b, cx.grammar).then(Captures::new)
             }
             Expr::Empty => is_empty(node, cx.grammar).then(Captures::new),
             Expr::Inner(e) => e.matches(&unwrap(node, cx.grammar), cx),
