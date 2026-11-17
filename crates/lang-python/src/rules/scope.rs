@@ -4,17 +4,108 @@
 //! variables nothing read.
 
 use super::Check;
-use super::binding::{Binding, Kind, Live, branch, is_dummy, live};
+use super::binding::{Binding, Bindings, Kind, Live, branch, is_dummy, live};
 use crate::generated::kind as k;
 use crate::imports::Form;
 use crate::names::is_builtin;
 use crate::semantic::{Cx, model};
 use core_rules::RuleContext;
+use core_rules::checks::FileCache;
 use core_semantics::scopes::{Flags, ScopeId, SymbolId};
 use core_syntax::{SyntaxNode, TextRange, TextSize};
+use std::cell::OnceCell;
 use std::collections::{HashMap, HashSet};
 
 pub(super) type Hit = (TextRange, String);
+
+/// What the scope rules find in a file, worked out once for all of them from the model.
+#[derive(Default)]
+struct Findings {
+    unused_import: Vec<Hit>,
+    redefined: Vec<Hit>,
+    loop_var: Vec<Hit>,
+    undefined: Vec<Hit>,
+    star_usage: Vec<Hit>,
+    undefined_export: Vec<Hit>,
+    undefined_local: Vec<Hit>,
+    unused_variable: Vec<Hit>,
+    unused_annotation: Vec<Hit>,
+    import_star: Vec<Hit>,
+    nested_star: Vec<Hit>,
+}
+
+thread_local! {
+    static FINDINGS: FileCache<Findings> = const { FileCache::new() };
+}
+
+/// The live declarations of the symbols, each worked out when first asked for.
+struct Lives<'a> {
+    cx: &'a Cx,
+    bs: &'a Bindings<'a>,
+    v: Vec<OnceCell<Vec<Live<'a>>>>,
+}
+
+impl<'a> Lives<'a> {
+    fn get(&self, id: SymbolId) -> &[Live<'a>] {
+        self.v[id.0 as usize].get_or_init(|| live(self.cx, self.bs, id))
+    }
+}
+
+fn sorted(mut hits: Vec<Hit>) -> Vec<Hit> {
+    hits.sort_by_key(|(r, _)| r.start());
+    hits.dedup();
+    hits
+}
+
+fn findings(cx: &Cx) -> Findings {
+    let bs = Bindings::new(cx);
+    let lv = Lives {
+        cx,
+        bs: &bs,
+        v: cx.s.symbol_ids().map(|_| OnceCell::new()).collect(),
+    };
+    let exported = exports(cx);
+    let (undefined, mut star_usage) = unresolved(cx, &lv);
+    let stars = cx.s.own(ScopeId(0), "*").is_some();
+    for (name, range) in &exported {
+        if stars && cx.s.own(ScopeId(0), name).is_none() {
+            star_usage.push((*range, name.clone()));
+        }
+    }
+    let undefined_export = if cx.init || stars {
+        Vec::new()
+    } else {
+        (exported.iter())
+            .filter(|(name, _)| cx.s.own(ScopeId(0), name).is_none())
+            .map(|(name, range)| (*range, name.clone()))
+            .collect()
+    };
+    let (redefined, loop_var) = redefinitions(cx, &lv);
+    let (import_star, nested_star) = star_imports(cx);
+    Findings {
+        unused_import: sorted(unused_imports(cx, &lv, &exported)),
+        redefined: sorted(redefined),
+        loop_var: sorted(loop_var),
+        undefined: sorted(undefined),
+        star_usage: sorted(star_usage),
+        undefined_export: sorted(undefined_export),
+        undefined_local: sorted(undefined_locals(cx, &lv)),
+        unused_variable: sorted(unused_locals(cx, &lv, false)),
+        unused_annotation: sorted(unused_locals(cx, &lv, true)),
+        import_star: sorted(import_star),
+        nested_star: sorted(nested_star),
+    }
+}
+
+/// Reports what `pick` takes from the findings of the file (nothing for a file with syntax
+/// errors), in source order.
+fn report(c: &Check, ctx: &mut RuleContext<'_>, pick: fn(&Findings) -> &[Hit]) {
+    let Some(cx) = model(ctx.file) else { return };
+    let found = FINDINGS.with(|cache| cache.get(ctx.file, || findings(&cx)));
+    for (range, name) in pick(&found) {
+        c.hit(ctx, *range, name);
+    }
+}
 
 /// Runs `f` on the file's model (nothing for a file with syntax errors) and reports what it
 /// returns, in source order.
@@ -93,46 +184,47 @@ fn uses_locals(cx: &Cx) -> HashSet<ScopeId> {
 }
 
 /// F401: an import that nothing reads.
-pub(super) fn unused_import(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        let exported: HashSet<String> = exports(cx).into_iter().map(|(n, _)| n).collect();
-        let mut hits = Vec::new();
-        for (i, scope) in cx.s.scopes.iter().enumerate() {
-            let id = ScopeId(i as u32);
-            if scope.node.kind() == k::STMT_CLASS_DEF {
+fn unused_imports(cx: &Cx, lv: &Lives<'_>, exports: &[(String, TextRange)]) -> Vec<Hit> {
+    let exported: HashSet<&str> = exports.iter().map(|(n, _)| n.as_str()).collect();
+    let mut hits = Vec::new();
+    for (i, scope) in cx.s.scopes.iter().enumerate() {
+        let id = ScopeId(i as u32);
+        if scope.node.kind() == k::STMT_CLASS_DEF {
+            continue;
+        }
+        for sym in scope_symbols(cx, id) {
+            if !cx.s.symbol(sym).flags.contains(Flags::IMPORT) || &*cx.s.symbol(sym).name == "*" {
                 continue;
             }
-            for sym in scope_symbols(cx, id) {
-                if !cx.s.symbol(sym).flags.contains(Flags::IMPORT) || &*cx.s.symbol(sym).name == "*"
-                {
-                    continue;
-                }
-                let live = live(cx, sym);
-                let Some(last) = live.last() else { continue };
-                let Some(import) = &last.b.import else {
-                    continue;
-                };
-                let name = &cx.s.symbol(sym).name;
-                if last.used
-                    || import.explicit
-                    || import.form == Form::Future
-                    || (i == 0 && exported.contains(&**name))
-                    || (import.form == Form::Submodule && alias_used(cx, id, &import.target))
-                {
-                    continue;
-                }
-                hits.push((last.b.range, import.label.clone()));
+            let Some(last) = lv.get(sym).last() else {
+                continue;
+            };
+            let Some(import) = &last.b.import else {
+                continue;
+            };
+            let name = &cx.s.symbol(sym).name;
+            if last.used
+                || import.explicit
+                || import.form == Form::Future
+                || (i == 0 && exported.contains(&**name))
+                || (import.form == Form::Submodule && alias_used(cx, lv, id, &import.target))
+            {
+                continue;
             }
+            hits.push((last.b.range, import.label.clone()));
         }
-        hits
-    });
+    }
+    hits
+}
+
+pub(super) fn unused_import(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    report(c, ctx, |f| &f.unused_import);
 }
 
 /// `import a.b` next to a used `import a as x`: reading `x` reaches `a.b` too.
-fn alias_used(cx: &Cx, scope: ScopeId, target: &str) -> bool {
+fn alias_used(cx: &Cx, lv: &Lives<'_>, scope: ScopeId, target: &str) -> bool {
     scope_symbols(cx, scope).any(|sym| {
-        let l = live(cx, sym);
-        l.last().is_some_and(|l| {
+        lv.get(sym).last().is_some_and(|l| {
             l.used
                 && l.b.kind == Kind::Import(Form::Import)
                 && l.b.import.as_ref().is_some_and(|i| i.target == target)
@@ -173,7 +265,7 @@ fn is_overload(cx: &Cx, l: &Live<'_>) -> bool {
 
 /// F811 and F402: a definition replaced, or covered by a name of a function, before anything
 /// read it; an import replaced by a loop variable.
-fn redefinitions(cx: &Cx) -> Vec<(&'static str, TextRange, String)> {
+fn redefinitions(cx: &Cx, lv: &Lives<'_>) -> (Vec<Hit>, Vec<Hit>) {
     let mut hits = Vec::new();
     for id in cx.s.symbol_ids() {
         let sym = cx.s.symbol(id);
@@ -181,7 +273,7 @@ fn redefinitions(cx: &Cx) -> Vec<(&'static str, TextRange, String)> {
             continue;
         }
         if sym.decls.len() > 1 {
-            let l = live(cx, id);
+            let l = lv.get(id);
             for pair in l.windows(2) {
                 let (old, new) = (&pair[0], &pair[1]);
                 if old.b.branch != new.b.branch {
@@ -204,19 +296,26 @@ fn redefinitions(cx: &Cx) -> Vec<(&'static str, TextRange, String)> {
                 {
                     continue;
                 }
-                if redefines(&new.b, &old.b) && (!is_dummy(&sym.name) || was_import) {
+                if redefines(new.b, old.b) && (!is_dummy(&sym.name) || was_import) {
                     hits.push(("redefined", new.b.range, sym.name.to_string()));
                 }
             }
         }
-        shadow(cx, id, &mut hits);
+        shadow(cx, lv, id, &mut hits);
     }
-    hits
+    let (loops, redefined): (Vec<_>, Vec<_>) = hits.into_iter().partition(|h| h.0 == "loop");
+    let strip = |v: Vec<(&str, TextRange, String)>| v.into_iter().map(|h| (h.1, h.2)).collect();
+    (strip(redefined), strip(loops))
 }
 
 /// A first binding in a function's scope (or a comprehension's) of a name an import of an
 /// enclosing scope has: reported when nothing read the import.
-fn shadow(cx: &Cx, id: SymbolId, hits: &mut Vec<(&'static str, TextRange, String)>) {
+fn shadow(
+    cx: &Cx,
+    lv: &Lives<'_>,
+    id: SymbolId,
+    hits: &mut Vec<(&'static str, TextRange, String)>,
+) {
     let sym = cx.s.symbol(id);
     let scope = cx.s.scope(sym.scope);
     if scope.node.kind() == k::STMT_CLASS_DEF
@@ -231,7 +330,7 @@ fn shadow(cx: &Cx, id: SymbolId, hits: &mut Vec<(&'static str, TextRange, String
     if first.from != sym.scope || first.flags.contains(Flags::TYPE_PARAMETER) {
         return;
     }
-    let by = super::binding::binding(cx, first);
+    let by = &lv.bs.get(id)[0];
     if matches!(
         by.kind,
         Kind::Annotation | Kind::Global | Kind::Import(Form::Future)
@@ -247,37 +346,26 @@ fn shadow(cx: &Cx, id: SymbolId, hits: &mut Vec<(&'static str, TextRange, String
     if !cx.s.symbol(outer).flags.contains(Flags::IMPORT) {
         return;
     }
-    let l = live(cx, outer);
-    let Some(old) = l.last() else { return };
+    let Some(old) = lv.get(outer).last() else {
+        return;
+    };
     if !old.b.kind.is_import() || old.b.branch.is_some() || old.b.kind == Kind::Import(Form::Future)
     {
         return;
     }
     if by.kind == Kind::LoopVar {
         hits.push(("loop", first.name, sym.name.to_string()));
-    } else if !old.used && redefines(&by, &old.b) {
+    } else if !old.used && redefines(by, old.b) {
         hits.push(("redefined", first.name, sym.name.to_string()));
     }
 }
 
 pub(super) fn redefined_while_unused(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        redefinitions(cx)
-            .into_iter()
-            .filter(|h| h.0 == "redefined")
-            .map(|h| (h.1, h.2))
-            .collect()
-    });
+    report(c, ctx, |f| &f.redefined);
 }
 
 pub(super) fn import_shadowed_by_loop_var(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        redefinitions(cx)
-            .into_iter()
-            .filter(|h| h.0 == "loop")
-            .map(|h| (h.1, h.2))
-            .collect()
-    });
+    report(c, ctx, |f| &f.loop_var);
 }
 
 /// Is the name read where a `try` that handles `NameError` is running its body?
@@ -318,7 +406,7 @@ fn name_error_handled(cx: &Cx, at: &SyntaxNode) -> bool {
 
 /// Where the first binding of a symbol takes effect; `None` when `global` or `nonlocal` binds the
 /// name for the whole scope.
-fn first_effect(cx: &Cx, id: SymbolId) -> Option<TextSize> {
+fn first_effect(cx: &Cx, lv: &Lives<'_>, id: SymbolId) -> Option<TextSize> {
     let sym = cx.s.symbol(id);
     if sym
         .decls
@@ -327,12 +415,12 @@ fn first_effect(cx: &Cx, id: SymbolId) -> Option<TextSize> {
     {
         return None;
     }
-    Some(super::binding::binding(cx, sym.decls.first()?).effect)
+    Some(lv.bs.get(id).first()?.effect)
 }
 
 /// The reads of names that nothing binds: undefined names, and the names a star import may bring.
 /// A read that runs before the first binding of its name in the scope finds the name outside.
-fn unresolved(cx: &Cx) -> (Vec<Hit>, Vec<Hit>) {
+fn unresolved(cx: &Cx, lv: &Lives<'_>) -> (Vec<Hit>, Vec<Hit>) {
     let (mut undefined, mut starred) = (Vec::new(), Vec::new());
     let mut firsts: HashMap<SymbolId, Option<TextSize>> = HashMap::new();
     for r in cx.s.refs.iter().filter(|r| r.is_read()) {
@@ -357,7 +445,7 @@ fn unresolved(cx: &Cx) -> (Vec<Hit>, Vec<Hit>) {
         }
         let before = match (r.symbol, sym) {
             (Some(id), Some(s)) if !r.is_type() && !cx.deferred(r.scope, s.scope) => {
-                let first = *firsts.entry(id).or_insert_with(|| first_effect(cx, id));
+                let first = *firsts.entry(id).or_insert_with(|| first_effect(cx, lv, id));
                 first.is_some_and(|e| r.range.start() < e)
                     && !cx
                         .s
@@ -389,20 +477,11 @@ fn unresolved(cx: &Cx) -> (Vec<Hit>, Vec<Hit>) {
 }
 
 pub(super) fn undefined_name(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| unresolved(cx).0);
+    report(c, ctx, |f| &f.undefined);
 }
 
 pub(super) fn star_usage(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        let mut hits = unresolved(cx).1;
-        let stars = cx.s.own(ScopeId(0), "*").is_some();
-        for (name, range) in exports(cx) {
-            if cx.s.own(ScopeId(0), &name).is_none() && stars {
-                hits.push((range, name));
-            }
-        }
-        hits
-    });
+    report(c, ctx, |f| &f.star_usage);
 }
 
 pub(super) fn forward_annotation_syntax_error(
@@ -414,32 +493,27 @@ pub(super) fn forward_annotation_syntax_error(
 }
 
 pub(super) fn undefined_export(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        if cx.init || cx.s.own(ScopeId(0), "*").is_some() {
-            return Vec::new();
-        }
-        exports(cx)
-            .into_iter()
-            .filter(|(name, _)| cx.s.own(ScopeId(0), name).is_none())
-            .map(|(name, range)| (range, name))
-            .collect()
-    });
+    report(c, ctx, |f| &f.undefined_export);
 }
 
 /// F823: a name read in a function before the function assigns it, while an enclosing scope
 /// binds it too.
 pub(super) fn undefined_local(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
+    report(c, ctx, |f| &f.undefined_local);
+}
+
+fn undefined_locals(cx: &Cx, lv: &Lives<'_>) -> Vec<Hit> {
+    {
         let mut hits = Vec::new();
         for id in cx.s.symbol_ids() {
             let sym = cx.s.symbol(id);
             if cx.s.scope(sym.scope).node.kind() != k::STMT_FUNCTION_DEF {
                 continue;
             }
-            let Some(first) = sym.decls.first().filter(|d| d.from == sym.scope) else {
+            if sym.decls.first().is_none_or(|d| d.from != sym.scope) {
                 continue;
-            };
-            let b = super::binding::binding(cx, first);
+            }
+            let b = &lv.bs.get(id)[0];
             if matches!(
                 b.kind,
                 Kind::Annotation
@@ -465,12 +539,12 @@ pub(super) fn undefined_local(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'
             }
         }
         hits
-    });
+    }
 }
 
 /// F841 and F842: a local variable assigned or annotated and never read, and a name an `except`
 /// clause binds and its body never reads.
-fn unused_locals(cx: &Cx, annotation: bool) -> Vec<Hit> {
+fn unused_locals(cx: &Cx, lv: &Lives<'_>, annotation: bool) -> Vec<Hit> {
     let locals = uses_locals(cx);
     let mut hits = Vec::new();
     for id in cx.s.symbol_ids() {
@@ -494,8 +568,9 @@ fn unused_locals(cx: &Cx, annotation: bool) -> Vec<Hit> {
         if !cx.is_function(sym.scope) || locals.contains(&sym.scope) || unused_ok(&sym.name) {
             continue;
         }
-        let l = live(cx, id);
-        let Some(last) = l.last() else { continue };
+        let Some(last) = lv.get(id).last() else {
+            continue;
+        };
         let kind_ok = if annotation {
             last.b.kind == Kind::Annotation
         } else {
@@ -512,16 +587,16 @@ fn unused_locals(cx: &Cx, annotation: bool) -> Vec<Hit> {
 }
 
 pub(super) fn unused_variable(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| unused_locals(cx, false));
+    report(c, ctx, |f| &f.unused_variable);
 }
 
 pub(super) fn unused_annotation(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| unused_locals(cx, true));
+    report(c, ctx, |f| &f.unused_annotation);
 }
 
 /// F403 and F406: `from m import *`, and the ones that are not at module level.
-fn star_imports(cx: &Cx) -> Vec<(TextRange, String, bool)> {
-    let mut out = Vec::new();
+fn star_imports(cx: &Cx) -> (Vec<Hit>, Vec<Hit>) {
+    let (mut all, mut nested) = (Vec::new(), Vec::new());
     for id in cx.s.scope(ScopeId(0)).symbols.iter().chain(
         cx.s.scopes
             .iter()
@@ -549,33 +624,22 @@ fn star_imports(cx: &Cx) -> Vec<(TextRange, String, bool)> {
                     _ => 0,
                 })
                 .sum();
-            out.push((
-                cx.range(&stmt),
-                format!("{}{module}", ".".repeat(level)),
-                sym.scope != ScopeId(0),
-            ));
+            let hit = (cx.range(&stmt), format!("{}{module}", ".".repeat(level)));
+            if sym.scope != ScopeId(0) {
+                nested.push(hit.clone());
+            }
+            all.push(hit);
         }
     }
-    out
+    (all, nested)
 }
 
 pub(super) fn import_star(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        star_imports(cx)
-            .into_iter()
-            .map(|(r, n, _)| (r, n))
-            .collect()
-    });
+    report(c, ctx, |f| &f.import_star);
 }
 
 pub(super) fn nested_import_star(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| {
-        star_imports(cx)
-            .into_iter()
-            .filter(|h| h.2)
-            .map(|(r, n, _)| (r, n))
-            .collect()
-    });
+    report(c, ctx, |f| &f.nested_star);
 }
 
 #[allow(dead_code)]

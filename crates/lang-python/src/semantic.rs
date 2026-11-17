@@ -194,11 +194,22 @@ fn first_generator(n: &SyntaxNode) -> bool {
 
 /// The last name of a dotted expression: `Optional` for `typing.Optional`.
 pub fn last_name(n: &SyntaxNode) -> Option<String> {
-    n.descendants_with_tokens()
-        .filter_map(|e| e.into_token())
-        .filter(|t| t.kind() == k::NAME)
-        .last()
-        .map(|t| t.text().to_owned())
+    last_name_token(n).map(|t| t.text().to_owned())
+}
+
+fn last_name_token(n: &SyntaxNode) -> Option<core_syntax::SyntaxToken> {
+    let start = n.text_range().start();
+    let mut t = n.last_token();
+    while let Some(tok) = t {
+        if tok.kind() == k::NAME {
+            return Some(tok);
+        }
+        if tok.text_range().start() <= start {
+            return None;
+        }
+        t = tok.prev_token();
+    }
+    None
 }
 
 /// Typing generics and builtin collections: a string in their subscript is a type.
@@ -263,16 +274,16 @@ const GENERICS: &[&str] = &[
 
 fn is_generic(n: &SyntaxNode) -> bool {
     n.first_child()
-        .and_then(|o| last_name(&o))
-        .is_some_and(|name| GENERICS.contains(&name.as_str()))
+        .and_then(|o| last_name_token(&o))
+        .is_some_and(|name| GENERICS.contains(&name.text()))
 }
 
 /// The arguments of `cast(...)`: the first one is a type.
 fn is_cast(n: &SyntaxNode) -> bool {
     n.parent()
         .and_then(|call| call.first_child())
-        .and_then(|callee| last_name(&callee))
-        .is_some_and(|name| name == "cast")
+        .and_then(|callee| last_name_token(&callee))
+        .is_some_and(|name| name.text() == "cast")
 }
 
 fn table() -> &'static Table {
@@ -296,7 +307,7 @@ pub struct Cx {
 }
 
 thread_local! {
-    static CACHE: FileCache<Cx> = const { FileCache::new() };
+    static CACHE: FileCache<Option<Rc<Cx>>> = const { FileCache::new() };
     /// The file parsed last on this thread had syntax errors: its text's length and hash, and
     /// the target version's minor number.
     static NOTE: RefCell<Option<Note>> = const { RefCell::new(None) };
@@ -340,30 +351,34 @@ fn noted(text: &str) -> Option<(bool, u32)> {
 /// The model of the file, built once and shared by the rules that run on it; `None` for a file
 /// with syntax errors (the parser's diagnostic stands).
 pub fn model(file: &FileContext<'_>) -> Option<Rc<Cx>> {
-    let (errors, minor) = noted(file.text).unwrap_or((false, 14));
-    let fatal = file
-        .root
-        .first_token()
-        .is_some_and(|t| t.kind() == k::UNKNOWN);
-    if errors || fatal {
-        return None;
-    }
-    Some(CACHE.with(|cache| {
-        cache.get(file, || {
-            let name = file.path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            let mut cx = Cx {
-                s: bind(file.root, file.grammar, table()),
-                root: file.root.clone(),
-                g: grammars::PYTHON.get(),
-                init: name == "__init__.py",
-                minor,
-                forward_errors: Vec::new(),
-                by_ref: OnceCell::new(),
-            };
-            cx.forward_references();
-            cx
-        })
-    }))
+    // Every rule asks: the answer (also "none") is cached, so the text is hashed once per file.
+    CACHE.with(|cache| {
+        cache
+            .get(file, || {
+                let (errors, minor) = noted(file.text).unwrap_or((false, 14));
+                let fatal = file
+                    .root
+                    .first_token()
+                    .is_some_and(|t| t.kind() == k::UNKNOWN);
+                if errors || fatal {
+                    return None;
+                }
+                let name = file.path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let mut cx = Cx {
+                    s: bind(file.root, file.grammar, table()),
+                    root: file.root.clone(),
+                    g: grammars::PYTHON.get(),
+                    init: name == "__init__.py",
+                    minor,
+                    forward_errors: Vec::new(),
+                    by_ref: OnceCell::new(),
+                };
+                cx.forward_references();
+                Some(Rc::new(cx))
+            })
+            .as_ref()
+            .clone()
+    })
 }
 
 impl Cx {

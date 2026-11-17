@@ -7,6 +7,7 @@ use crate::imports::{self, Form, Import};
 use crate::semantic::Cx;
 use core_semantics::scopes::{Decl, Flags, SymbolId};
 use core_syntax::{SyntaxNode, TextRange, TextSize};
+use std::cell::OnceCell;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Kind {
@@ -172,10 +173,34 @@ pub fn binding(cx: &Cx, d: &Decl) -> Binding {
     b
 }
 
+/// The bindings of the declarations of the symbols, each worked out when first asked for.
+pub struct Bindings<'a> {
+    cx: &'a Cx,
+    v: Vec<OnceCell<Vec<Binding>>>,
+}
+
+impl<'a> Bindings<'a> {
+    pub fn new(cx: &'a Cx) -> Self {
+        Bindings {
+            cx,
+            v: cx.s.symbol_ids().map(|_| OnceCell::new()).collect(),
+        }
+    }
+
+    /// One for each declaration of the symbol, in order.
+    pub fn get(&self, id: SymbolId) -> &[Binding] {
+        self.v[id.0 as usize].get_or_init(|| {
+            (self.cx.s.symbol(id).decls.iter())
+                .map(|d| binding(self.cx, d))
+                .collect()
+        })
+    }
+}
+
 /// A declaration that takes effect, with what it is and whether anything read it.
 pub struct Live<'a> {
     pub decl: &'a Decl,
-    pub b: Binding,
+    pub b: &'a Binding,
     /// Read, or made by a statement of another scope (`global`), or inherited from the binding it
     /// replaces: a rebinding inherits what read the old one.
     pub used: bool,
@@ -183,11 +208,10 @@ pub struct Live<'a> {
 
 /// The declarations of a symbol that take effect, in source order: an annotation without a value
 /// does not replace a binding.
-pub fn live(cx: &Cx, id: SymbolId) -> Vec<Live<'_>> {
+pub fn live<'a>(cx: &'a Cx, bs: &'a Bindings<'_>, id: SymbolId) -> Vec<Live<'a>> {
     let sym = cx.s.symbol(id);
-    let mut out: Vec<Live<'_>> = Vec::with_capacity(sym.decls.len());
-    for d in &sym.decls {
-        let b = binding(cx, d);
+    let mut out: Vec<Live<'a>> = Vec::with_capacity(sym.decls.len());
+    for (d, b) in sym.decls.iter().zip(bs.get(id)) {
         if b.kind == Kind::Annotation && !out.is_empty() {
             continue;
         }

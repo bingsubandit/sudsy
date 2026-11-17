@@ -7,7 +7,7 @@ use super::{
 };
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, TextRange, TextSize};
 use rowan::{GreenNodeData, GreenTokenData, NodeOrToken, WalkEvent};
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 use std::rc::Rc;
 
 /// What a node inherits from its parent about the references it holds: the access they have,
@@ -55,7 +55,7 @@ pub fn bind(root: &SyntaxNode, grammar: &Grammar, table: &Table) -> Model {
         ctxs: Vec::new(),
         params: Vec::new(),
         arena: Vec::new(),
-        names: HashSet::new(),
+        names: HashSet::default(),
     };
     let mut frames: Vec<Frame> = Vec::new();
     for event in root.preorder() {

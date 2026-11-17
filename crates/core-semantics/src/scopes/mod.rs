@@ -12,7 +12,7 @@ pub use build::bind;
 pub use table::{Declares, Flow, Place, Redirect, Row, Sel, Table};
 
 use core_syntax::{SyntaxKind, SyntaxNode, TextRange};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::rc::Rc;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -348,13 +348,13 @@ impl Scope {
             var,
             symbols: Vec::new(),
             hidden,
-            names: HashMap::new(),
+            names: HashMap::default(),
             redirects: None,
         }
     }
 
     pub(crate) fn redirects_mut(&mut self) -> &mut HashMap<Rc<str>, ScopeId> {
-        self.redirects.get_or_insert_with(HashMap::new)
+        self.redirects.get_or_insert_with(HashMap::default)
     }
 
     pub(crate) fn names_mut(&mut self) -> &mut HashMap<Rc<str>, SymbolId> {
