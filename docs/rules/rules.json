@@ -184,45 +184,6 @@
       ]
     },
     {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "Two arms of one `switch` (or `match`, `when`, `case`) have the same test; the second arm can never run. ESLint `no-duplicate-case`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "switch (a) { case 1: break; case 1: break; case \"x\": break; case 'x': break; case b + 1: break; case b+1: break; default: }\nif (a) {} else if (b) {} else if (a) {}\nif (a || b) {} else if (a) {} else if (b && c) {}\nif (a && b) {} else if (a) {} else if (b && a) {}\nif (a) { if (a) {} } else if (c) {} else { if (c) {} }\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 29,
-            "length": 14,
-            "line": 1
-          },
-          {
-            "column": 97,
-            "length": 16,
-            "line": 1
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-duplicate-case",
-      "languages": [
-        "all"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-duplicate-case",
-          "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
       "category": "correctness",
       "default_level": "error",
       "description": "A mapping has the same key twice (after decoding escapes and quotes); parsers disagree on which value wins.",
@@ -23246,6 +23207,51 @@
           "id": "SA1626",
           "partial": false,
           "tool": "StyleCop"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "Two arms of one `switch` (or `match`, `when`, `case`) have the same test; the second arm can never run. ESLint `no-duplicate-case`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) { case 1: break; case 1: break; case \"x\": break; case 'x': break; case b + 1: break; case b+1: break; default: }\nif (a) {} else if (b) {} else if (a) {}\nif (a || b) {} else if (a) {} else if (b && c) {}\nif (a && b) {} else if (a) {} else if (b && a) {}\nif (a) { if (a) {} } else if (c) {} else { if (c) {} }\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 29,
+            "length": 14,
+            "line": 1
+          },
+          {
+            "column": 97,
+            "length": 16,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-duplicate-case",
+      "languages": [
+        "csharp",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby",
+        "sql"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-duplicate-case",
+          "partial": false,
+          "tool": "eslint"
         }
       ]
     },

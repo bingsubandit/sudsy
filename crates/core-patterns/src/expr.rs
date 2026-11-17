@@ -204,13 +204,13 @@ impl Expr {
             all.push(Expr::Kind(kind));
         }
         if let Some(text) = &spec.regex {
-            let re = Re::lazy(text).map_err(|e| format!("regex `{text}`: {e}"))?;
+            let re = Re::new(text).map_err(|e| format!("regex `{text}`: {e}"))?;
             let groups = re.groups();
             all.push(Expr::Regex(re, groups));
         }
         if let Some(text) = &spec.path {
             all.push(Expr::Path(
-                Re::lazy(text).map_err(|e| format!("path regex `{text}`: {e}"))?,
+                Re::new(text).map_err(|e| format!("path regex `{text}`: {e}"))?,
             ));
         }
         if let Some(n) = spec.nth {

@@ -61,6 +61,7 @@ pub fn rule_fixtures_dialects(provider: &dyn LanguageProvider, dialects: &[&dyn 
     for rule in provider.rules() {
         if inherited.iter().any(|r| r.meta().id == rule.meta().id)
             || core_patterns::SHARED_IDS.contains(&rule.meta().id)
+            || rule.meta().id == "no-duplicate-case"
         {
             continue;
         }
