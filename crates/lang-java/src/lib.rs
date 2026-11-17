@@ -6,6 +6,7 @@ mod imports;
 mod lexer;
 mod parser;
 mod rules;
+mod scope;
 
 pub use format::{JavaFormatter, option_schema};
 pub use parser::parse;

@@ -9,3 +9,4 @@ naming-convention:
     parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
     catch_parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
     locals: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
+unused-local-variable: off
