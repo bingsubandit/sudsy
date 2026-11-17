@@ -113,7 +113,15 @@ const ROWS: &[Row] = &[
     names("TSInterfaceDeclaration", T.union(Flags::INTERFACE), Place::Parent),
     names("TSTypeAliasDeclaration", T.union(Flags::TYPE_ALIAS), Place::Parent),
     names("TSNamespaceDeclaration", V.union(T).union(Flags::NAMESPACE), Place::Scope),
-    names("TSTypeParameter", T.union(Flags::TYPE_PARAMETER), Place::Scope),
+    Row {
+        kind: "TSTypeParameter",
+        declares: Some(Declares {
+            flags: T.union(Flags::TYPE_PARAMETER),
+            parent_places: &[("TSInferType", Place::Enclosing("TSConditionalType"))],
+            ..Declares::NONE
+        }),
+        ..Row::NONE
+    },
     names("TSMappedType", T.union(Flags::TYPE_PARAMETER), Place::Scope),
     names("ImportSpecifier", IMPORTED, Place::Scope),
     names("ImportDefaultSpecifier", IMPORTED, Place::Scope),
@@ -147,6 +155,12 @@ const ROWS: &[Row] = &[
     flows("TSClassImplements", &[(Sel::First, Flow::Type)]),
     flows("TSInterfaceHeritage", &[(Sel::First, Flow::Type)]),
     flows("TSTypeQuery", &[(Sel::All, Flow::Query)]),
+    flows("TSConditionalType", &[(Sel::AfterText(":"), Flow::Outside)]),
+    flows("ExportNamedDeclaration", &[(Sel::WithToken("type"), Flow::Type)]),
+    flows(
+        "ExportSpecifier",
+        &[(Sel::WithToken("type"), Flow::Type), (Sel::First, Flow::ThroughType)],
+    ),
     flows("TSQualifiedName", &[(Sel::First, Flow::ThroughType)]),
     flows("StaticMemberExpression", &[(Sel::First, Flow::ThroughType)]),
 ];

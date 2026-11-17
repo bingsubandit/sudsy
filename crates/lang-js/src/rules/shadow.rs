@@ -129,7 +129,8 @@ pub(super) fn shadow(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
                     && m.scope(scope).parent == Some(outer_sym.scope)
             };
             let hoisted = outer_decl.flags.contains(Flags::FUNCTION)
-                && !outer_decl.flags.contains(Flags::EXPRESSION_NAME);
+                && !outer_decl.flags.contains(Flags::EXPRESSION_NAME)
+                && cx.slot(&outer_decl.node, "body").is_some();
             let in_tdz = inner.name.end() < outer_decl.name.start() && !hoisted;
             let ts_skip = cx.ts && {
                 let signature = matches!(inner.node.kind(), k::FORMAL_PARAMETER | k::FORMAL_PARAMETER_REST)

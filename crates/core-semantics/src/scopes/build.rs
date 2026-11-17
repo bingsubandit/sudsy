@@ -14,10 +14,13 @@ type State = Access;
 
 struct Frame {
     /// The state of each child node, when the row says anything about them.
-    flows: Vec<Option<State>>,
+    flows: Vec<Option<(State, bool)>>,
     next: usize,
     scope: bool,
     decl: bool,
+    params: bool,
+    /// The scope this node is outside of, put back when it is left.
+    hidden: Option<ScopeId>,
 }
 
 struct Ctx {
@@ -32,6 +35,7 @@ struct Binder<'a> {
     model: Model,
     scopes: Vec<ScopeId>,
     ctxs: Vec<Ctx>,
+    params: Vec<ScopeId>,
 }
 
 /// The model of the tree under `root`.
@@ -42,20 +46,21 @@ pub fn bind(root: &SyntaxNode, grammar: &Grammar, table: &Table) -> Model {
         model: Model::default(),
         scopes: Vec::new(),
         ctxs: Vec::new(),
+        params: Vec::new(),
     };
     let mut frames: Vec<Frame> = Vec::new();
     for event in root.preorder() {
         match event {
             WalkEvent::Enter(node) => {
-                let state = match frames.last_mut() {
+                let (state, outside) = match frames.last_mut() {
                     Some(parent) => {
                         let i = parent.next;
                         parent.next += 1;
                         parent.flows.get(i).copied().flatten().unwrap_or_default()
                     }
-                    None => State::default(),
+                    None => Default::default(),
                 };
-                let frame = b.enter(&node, state);
+                let frame = b.enter(&node, state, outside);
                 frames.push(frame);
             }
             WalkEvent::Leave(_) => {
@@ -66,6 +71,10 @@ pub fn bind(root: &SyntaxNode, grammar: &Grammar, table: &Table) -> Model {
                     if frame.scope {
                         b.scopes.pop();
                     }
+                    if frame.params {
+                        b.params.pop();
+                    }
+                    b.scopes.extend(frame.hidden);
                 }
             }
         }
@@ -75,7 +84,7 @@ pub fn bind(root: &SyntaxNode, grammar: &Grammar, table: &Table) -> Model {
 }
 
 impl Binder<'_> {
-    fn enter(&mut self, node: &SyntaxNode, state: State) -> Frame {
+    fn enter(&mut self, node: &SyntaxNode, state: State, outside: bool) -> Frame {
         let kind = node.kind();
         let row = self.table.row(kind);
         let mut frame = Frame {
@@ -83,8 +92,14 @@ impl Binder<'_> {
             next: 0,
             scope: false,
             decl: false,
+            params: false,
+            hidden: if outside { self.scopes.pop() } else { None },
         };
         let outer = self.scopes.last().copied();
+        if self.table.is_params(kind) {
+            self.params.push(outer.unwrap_or(ScopeId(0)));
+            frame.params = true;
+        }
         if self.table.is_scope(kind) {
             let id = ScopeId(self.model.scopes.len() as u32);
             let var = row.is_some_and(|r| r.var_scope);
@@ -124,6 +139,14 @@ impl Binder<'_> {
 
     fn declares(&mut self, node: &SyntaxNode, d: &Declares, own_scope: bool, outer: Option<ScopeId>) {
         let (mut flags, mut place) = (d.flags, d.place);
+        if let Some(parent) = node.parent()
+            && let Some((_, p)) = d
+                .parent_places
+                .iter()
+                .find(|(k, _)| *k == self.grammar.name(parent.kind()))
+        {
+            place = *p;
+        }
         if let Some((extra, p)) = d.expression
             && !node.parent().is_some_and(|p| self.table.is_host(p.kind()))
         {
@@ -149,6 +172,13 @@ impl Binder<'_> {
             Place::Parent if own_scope => outer.unwrap_or(ScopeId(0)),
             Place::Parent => current,
             Place::Var => self.model.var_scope(current),
+            Place::Enclosing(kind) => self
+                .scopes
+                .iter()
+                .rev()
+                .copied()
+                .find(|s| self.grammar.name(self.model.scope(*s).node.kind()) == kind)
+                .unwrap_or(current),
         };
         self.ctxs.push(Ctx {
             flags,
@@ -218,12 +248,13 @@ impl Binder<'_> {
             range: t.text_range(),
             access,
             scope: self.current(),
+            in_params: self.params.clone(),
             symbol: None,
         });
     }
 
     /// The state of each child node of `node`.
-    fn flows(&self, node: &SyntaxNode, row: &Row, state: State) -> Vec<Option<State>> {
+    fn flows(&self, node: &SyntaxNode, row: &Row, state: State) -> Vec<Option<(State, bool)>> {
         let fields: Vec<Option<TextRange>> = row
             .children
             .iter()
@@ -244,12 +275,13 @@ impl Binder<'_> {
                 Sel::First => index == 0,
                 Sel::Field(_) => fields[*i] == Some(child.text_range()),
                 Sel::BeforeOp => op_start.is_none_or(|o| start < o),
+                Sel::WithToken(text) => tokens.iter().any(|t| t.text() == *text),
                 Sel::AfterText(text) => tokens
                     .iter()
                     .find(|t| t.text() == *text)
                     .is_some_and(|t| t.text_range().end() <= start),
             });
-            out.push(hit.map(|(_, (_, flow))| match flow {
+            out.push(hit.map(|(_, (_, flow))| (match flow {
                 Flow::Write => Access::WRITE,
                 Flow::ReadWrite => Access::READ.union(Access::WRITE),
                 Flow::Assign(plain) if op_text == Some(*plain) => Access::WRITE,
@@ -258,22 +290,14 @@ impl Binder<'_> {
                 Flow::Query => Access::READ.union(Access::TYPE),
                 Flow::Through => state,
                 Flow::ThroughType if state.contains(Access::TYPE) => state,
-                Flow::ThroughType => Access::NONE,
-            }));
+                Flow::ThroughType | Flow::Outside => Access::NONE,
+            }, matches!(flow, Flow::Outside))));
         }
         out
     }
 
     fn resolve(&mut self) {
-        let found: Vec<Option<SymbolId>> = self
-            .model
-            .refs
-            .iter()
-            .map(|r| {
-                let value = r.access.contains(Access::READ) || r.access.contains(Access::WRITE);
-                self.model.lookup(r.scope, &r.name, !value)
-            })
-            .collect();
+        let found: Vec<Option<SymbolId>> = self.model.refs.iter().map(|r| self.model.find(r)).collect();
         for (i, symbol) in found.into_iter().enumerate() {
             self.model.refs[i].symbol = symbol;
             if let Some(s) = symbol {

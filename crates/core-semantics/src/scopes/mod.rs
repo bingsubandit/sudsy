@@ -136,6 +136,8 @@ pub struct Reference {
     pub range: TextRange,
     pub access: Access,
     pub scope: ScopeId,
+    /// The scopes whose parameter lists the reference is in: it sees only their parameters.
+    pub in_params: Vec<ScopeId>,
     pub symbol: Option<SymbolId>,
 }
 
@@ -201,6 +203,19 @@ impl Model {
         self.ancestors(from)
             .filter_map(|s| self.own(s, name))
             .find(|s| self.symbol(*s).flags.intersects(want))
+    }
+
+    /// The symbol the reference finds: as [`Model::lookup`], except that a reference in a
+    /// parameter list does not see what the body of that function declares.
+    pub fn find(&self, r: &Reference) -> Option<SymbolId> {
+        let ty = !(r.is_read() || r.is_write());
+        let want = if ty { Flags::TYPE } else { Flags::VALUE };
+        let params = Flags::PARAMETER | Flags::TYPE_PARAMETER | Flags::EXPRESSION_NAME;
+        self.ancestors(r.scope).find_map(|s| {
+            let id = self.own(s, &r.name)?;
+            let f = self.symbol(id).flags;
+            (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params))).then_some(id)
+        })
     }
 
     /// The references no scope resolves.
