@@ -84,7 +84,7 @@ fn a_plugin_rule_reports_fixes_and_obeys_levels_options_and_suppressions() {
 fn a_body_rule_reads_the_flow_graph_through_the_plugin_boundary() {
     let ext = extensions();
     let csharp = lang_csharp::provider(&lang_csharp::testing::built_worker());
-    let text = "class A {\n void Few(int a) { if (a > 1) { } }\n void Many(int a) { if (a > 1) { } if (a > 2) { } if (a > 3) { } }\n}\n";
+    let text = "class A {\n void Few(int a) { if (a > 1) { F(); } }\n void Many(int a) { if (a > 1) { F(); } if (a > 2) { F(); } if (a > 3) { F(); } }\n}\n";
     let found = lint_with(
         &csharp,
         &ext,

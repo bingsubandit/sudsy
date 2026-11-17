@@ -1,0 +1,7 @@
+no-self-compare: warn
+no-constant-condition: warn
+no-constant-comparison: warn
+no-assignment-in-condition: warn
+no-empty-block: warn
+no-duplicate-case: warn
+no-duplicate-keys: warn

@@ -1,4 +1,4 @@
-no-dupe-keys: warn
+no-duplicate-keys: warn
 no-dupe-class-members: warn
 no-duplicate-case: warn
 no-dupe-else-if: warn

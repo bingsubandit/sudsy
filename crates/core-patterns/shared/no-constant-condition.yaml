@@ -1,0 +1,18 @@
+id: no-constant-condition
+message: the condition is a constant
+description: >-
+  The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint
+  no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and
+  `while (1)` are the usual endless loop and are left alone.
+example: 'if (true) { run(); }'
+severity: warn
+category: suspicious
+report-on: field condition
+rule:
+  role: [conditional, loop]
+  fields:
+    condition: { inner: { role: literal } }
+  not:
+    all:
+      - { role: loop }
+      - fields: { condition: { inner: { regex: '^(?:true|True|TRUE|1)$' } } }

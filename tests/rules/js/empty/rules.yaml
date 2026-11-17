@@ -1,4 +1,4 @@
-no-empty: warn
+no-empty-block: warn
 no-useless-catch: warn
 no-empty-pattern: warn
 no-sparse-arrays: warn

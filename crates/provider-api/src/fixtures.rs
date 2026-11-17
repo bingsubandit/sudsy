@@ -59,7 +59,9 @@ pub fn rule_fixtures_dialects(provider: &dyn LanguageProvider, dialects: &[&dyn 
     assert!(count > 0, "no rule fixtures under {}", root.display());
     let inherited = provider.base_rules();
     for rule in provider.rules() {
-        if inherited.iter().any(|r| r.meta().id == rule.meta().id) {
+        if inherited.iter().any(|r| r.meta().id == rule.meta().id)
+            || core_patterns::SHARED_IDS.contains(&rule.meta().id)
+        {
             continue;
         }
         let id = rule.meta().id;

@@ -25,7 +25,9 @@ let w = 0; w = w + 1; let v; v = () => v;
 //         ^ no-unused-vars
 //                           ^ no-unused-vars
 try {} catch (err) {}
+//  ^^ no-empty-block
 //            ^^^ no-unused-vars
+//                 ^^ no-empty-block
 class Cls { static self = Cls; }
 //    ^^^ no-unused-vars
 const o = { set s(value) {} };
