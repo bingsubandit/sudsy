@@ -246,7 +246,18 @@ impl Grammar {
     /// operand and a prefix one before it are two items of the field `operator`).
     /// Found with the routine the generated accessors use, so it agrees with them.
     pub fn slot(&self, node: &SyntaxNode, label: &str) -> Option<SyntaxElement> {
-        self.slots(node, label)?.next()
+        let def = self.def(node.kind())?;
+        let body = GrammarBody {
+            grammar: self,
+            kinds: self.bodies.get(node.kind().index() as usize)?,
+            body: &def.body,
+        };
+        crate::ast::assign(node, body)
+            .find(|(i, _)| {
+                let item = &def.body[*i];
+                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+            })
+            .map(|(_, e)| e)
     }
 
     /// Every child of `node` in the items labelled `label` or filling the role field `label`, in
