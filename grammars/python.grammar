@@ -3,6 +3,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language python 20 "Python"
+roles
 comments line "#"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -25,52 +26,52 @@ token Lpar "(" #punctuation #glue #optional
 token Rpar ")" #punctuation #close #optional
 token Lsqb "[" #punctuation #glue
 token Rsqb "]" #punctuation #close
-token Colon ":" #punctuation #glue
+token Colon ":" #punctuation #glue #part
 token Comma "," #punctuation #separator #glue
 token Semi ";" #punctuation #separator
-token Plus "+" #punctuation
-token Minus "-" #punctuation
-token Star "*" #punctuation
-token Slash "/" #punctuation
-token Vbar "|" #punctuation
-token Amper "&" #punctuation
-token Less "<" #punctuation
-token Greater ">" #punctuation
-token Equal "=" #punctuation
-token Dot "." #punctuation
-token Percent "%" #punctuation
+token Plus "+" #punctuation #operator #part
+token Minus "-" #punctuation #operator #part
+token Star "*" #punctuation #operator
+token Slash "/" #punctuation #operator
+token Vbar "|" #punctuation #operator #part
+token Amper "&" #punctuation #operator #part
+token Less "<" #punctuation #operator #part
+token Greater ">" #punctuation #operator #part
+token Equal "=" #punctuation #operator #part
+token Dot "." #punctuation #dots
+token Percent "%" #punctuation #operator #part
 token Lbrace "{" #punctuation
 token Rbrace "}" #punctuation
-token EqEqual "==" #punctuation
-token NotEqual "!=" #punctuation
-token LessEqual "<=" #punctuation
-token GreaterEqual ">=" #punctuation
-token Tilde "~" #punctuation
-token CircumFlex "^" #punctuation
-token LeftShift "<<" #punctuation
-token RightShift ">>" #punctuation
-token DoubleStar "**" #punctuation
-token DoubleStarEqual "**=" #punctuation
-token PlusEqual "+=" #punctuation
-token MinusEqual "-=" #punctuation
-token StarEqual "*=" #punctuation
-token SlashEqual "/=" #punctuation
-token PercentEqual "%=" #punctuation
-token AmperEqual "&=" #punctuation
-token VbarEqual "|=" #punctuation
-token CircumflexEqual "^=" #punctuation
-token LeftShiftEqual "<<=" #punctuation
-token RightShiftEqual ">>=" #punctuation
-token DoubleSlash "//" #punctuation
-token DoubleSlashEqual "//=" #punctuation
-token ColonEqual ":=" #punctuation
-token At "@" #punctuation
-token AtEqual "@=" #punctuation
+token EqEqual "==" #punctuation #operator #part
+token NotEqual "!=" #punctuation #operator #part
+token LessEqual "<=" #punctuation #operator #part
+token GreaterEqual ">=" #punctuation #operator #part
+token Tilde "~" #punctuation #operator #part
+token CircumFlex "^" #punctuation #operator #part
+token LeftShift "<<" #punctuation #operator #part
+token RightShift ">>" #punctuation #operator #part
+token DoubleStar "**" #punctuation #operator #part
+token DoubleStarEqual "**=" #punctuation #operator #part
+token PlusEqual "+=" #punctuation #operator #part
+token MinusEqual "-=" #punctuation #operator #part
+token StarEqual "*=" #punctuation #operator #part
+token SlashEqual "/=" #punctuation #operator #part
+token PercentEqual "%=" #punctuation #operator #part
+token AmperEqual "&=" #punctuation #operator #part
+token VbarEqual "|=" #punctuation #operator #part
+token CircumflexEqual "^=" #punctuation #operator #part
+token LeftShiftEqual "<<=" #punctuation #operator #part
+token RightShiftEqual ">>=" #punctuation #operator #part
+token DoubleSlash "//" #punctuation #operator #part
+token DoubleSlashEqual "//=" #punctuation #operator #part
+token ColonEqual ":=" #punctuation #operator #part
+token At "@" #punctuation #operator #part
+token AtEqual "@=" #punctuation #operator #part
 token Rarrow "->" #punctuation
-token Ellipsis "..." #punctuation
+token Ellipsis "..." #punctuation #constant #dots
 
 // Reserved words; `Case`, `Lazy`, `Match` and `Type` are soft keywords and also appear as names.
-token And "and" #keyword
+token And "and" #keyword #operator #part
 token As "as" #keyword
 token Assert "assert" #keyword
 token Async "async" #keyword
@@ -83,24 +84,24 @@ token Del "del" #keyword
 token Elif "elif" #keyword
 token Else "else" #keyword
 token Except "except" #keyword
-token False "False" #keyword
+token False "False" #keyword #constant
 token Finally "finally" #keyword
 token For "for" #keyword
 token From "from" #keyword
 token Global "global" #keyword
 token If "if" #keyword
 token Import "import" #keyword
-token In "in" #keyword
-token Is "is" #keyword
+token In "in" #keyword #operator #part
+token Is "is" #keyword #operator #part
 token Lambda "lambda" #keyword
-token None "None" #keyword
+token None "None" #keyword #constant
 token Nonlocal "nonlocal" #keyword
-token Not "not" #keyword
-token Or "or" #keyword
+token Not "not" #keyword #operator #part
+token Or "or" #keyword #operator #part
 token Pass "pass" #keyword
 token Raise "raise" #keyword
 token Return "return" #keyword
-token True "True" #keyword
+token True "True" #keyword #constant
 token Try "try" #keyword
 token While "while" #keyword
 token With "with" #keyword
@@ -111,10 +112,10 @@ token Match "match" #keyword
 token Type "type" #keyword
 
 token Name
-token Int #literal #restyle
-token Float #literal #restyle
-token Complex #literal #restyle
-token String #literal #string #restyle
+token Int #restyle #number
+token Float #restyle #number
+token Complex #restyle #number
+token String #string #restyle
 // An f-string's or t-string's start (prefix and opening quote), end (closing quote) and the literal text between its replacement fields.
 token FStringStart #string #restyle
 token FStringMiddle #string #restyle
@@ -128,95 +129,128 @@ token EndOfFile
 // Text the lexer could not classify.
 token Unknown #error
 
-node ModModule = EndOfFile
-node Parenthesized #transparent
-node StmtFunctionDef
-node StmtClassDef
-node StmtReturn
-node StmtDelete
-node StmtTypeAlias
-node StmtAssign
-node StmtAugAssign
-node StmtAnnAssign
-node StmtFor
-node StmtWhile
-node StmtIf
-node StmtWith
-node StmtMatch
-node StmtRaise
-node StmtTry
-node StmtAssert
-node StmtImport
-node StmtImportFrom
-node StmtGlobal
-node StmtNonlocal
-node StmtExpr
-node StmtPass
-node StmtBreak
-node StmtContinue
-node ExprBoolOp
-node ExprNamed
-node ExprBinOp
-node ExprUnaryOp
-node ExprLambda
-node ExprIf
-node ExprDict
-node ExprSet
-node ExprListComp
-node ExprSetComp
-node ExprDictComp
-node ExprGenerator
-node ExprAwait
-node ExprYield
-node ExprYieldFrom
-node ExprCompare
-node ExprCall
-node ExprFString #restyle
-node ExprTString #restyle
-node ExprStringLiteral #restyle
-node ExprBytesLiteral #restyle
-node ExprNumberLiteral
-node ExprBooleanLiteral
-node ExprNoneLiteral
-node ExprEllipsisLiteral
-node ExprAttribute
-node ExprSubscript
-node ExprStarred
-node ExprName
-node ExprList
-node ExprTuple
-node ExprSlice
-node ExceptHandlerExceptHandler
-node InterpolatedElement
-node InterpolatedStringLiteralElement
-node PatternMatchValue
-node PatternMatchSingleton
-node PatternMatchSequence
-node PatternMatchMapping
-node PatternMatchClass
-node PatternMatchStar
-node PatternMatchAs
-node PatternMatchOr
-node TypeParamTypeVar
-node TypeParamTypeVarTuple
-node TypeParamParamSpec
-node InterpolatedStringFormatSpec
-node PatternArguments
-node PatternKeyword
-node Comprehension
-node Arguments
-node Parameters
-node Parameter
-node ParameterWithDefault
-node Keyword
-node Alias
-node WithItem
-node MatchCase
-node Decorator
-node ElifElseClause
-node TypeParams
-node FString
-node TString
-node StringLiteral
-node BytesLiteral
-node Identifier
+node ModModule #scope = body:#statement* EndOfFile
+node Parenthesized #expression #part #opaque #transparent
+node StmtFunctionDef #statement #declaration #function #scope =
+    Decorator* Async? Def name:Identifier TypeParams? parameters:Parameters Rarrow? returns:#expression? Colon body:#statement*
+node StmtClassDef #statement #declaration #type-declaration #scope =
+    Decorator* Class name:Identifier TypeParams? Arguments? Colon members:#statement*
+node StmtReturn #statement #opaque
+node StmtDelete #statement #opaque
+node StmtTypeAlias #statement #declaration =
+    Type name:ExprName TypeParams? Equal value:#expression
+node StmtAssign #statement #assignment =
+    left:#expression operator:Equal right:#expression #part*
+node StmtAugAssign #statement #assignment =
+    left:#expression operator:#operator right:#expression
+node StmtAnnAssign #statement #assignment =
+    left:#expression Colon annotation:#expression operator:Equal? right:#expression?
+node StmtFor #statement #opaque
+node StmtWhile #statement #opaque
+node StmtIf #statement #opaque
+node StmtWith #statement #opaque
+node StmtMatch #statement #opaque
+node StmtRaise #statement #opaque
+node StmtTry #statement #opaque
+node StmtAssert #statement #opaque
+node StmtImport #statement #import =
+    Import path=names:Alias*
+node StmtImportFrom #statement #import =
+    From #dots* module:Identifier? Import path=names:Alias*
+node StmtGlobal #statement #opaque
+node StmtNonlocal #statement #opaque
+node StmtExpr #statement #opaque
+node StmtPass #statement #opaque
+node StmtBreak #statement #opaque
+node StmtContinue #statement #opaque
+node ExprBoolOp #expression #part #binary =
+    left:#expression operator:#operator right:#expression #part*
+node ExprNamed #expression #part #assignment =
+    left:#expression operator:ColonEqual right:#expression
+node ExprBinOp #expression #part #binary =
+    left:#expression operator:#operator right:#expression
+node ExprUnaryOp #expression #part #unary =
+    operator:#operator operand:#expression
+node ExprLambda #expression #part #function #scope =
+    Lambda parameters:Parameters? Colon expression_body:#expression
+node ExprIf #expression #part #conditional =
+    body=then:#expression If condition:#expression Else orelse=else:#expression
+node ExprDict #expression #part #opaque
+node ExprSet #expression #part #opaque
+node ExprListComp #expression #part #scope
+node ExprSetComp #expression #part #scope
+node ExprDictComp #expression #part #scope
+node ExprGenerator #expression #part #scope
+node ExprAwait #expression #part #unary =
+    operator:Await operand:#expression
+node ExprYield #expression #part #opaque
+node ExprYieldFrom #expression #part #opaque
+node ExprCompare #expression #part #binary =
+    left:#expression operator:#operator* right:#expression #part*
+node ExprCall #expression #part #call =
+    callee:#expression arguments:Arguments
+node ExprFString #expression #part #restyle #literal =
+    value:#string-part*
+node ExprTString #expression #part #restyle #literal =
+    value:TString*
+node ExprStringLiteral #expression #part #restyle #literal =
+    value:StringLiteral*
+node ExprBytesLiteral #expression #part #restyle #literal =
+    value:BytesLiteral*
+node ExprNumberLiteral #expression #part #literal =
+    value:#number
+node ExprBooleanLiteral #expression #part #literal =
+    value:#constant
+node ExprNoneLiteral #expression #part #literal =
+    value:None
+node ExprEllipsisLiteral #expression #part #literal =
+    value:Ellipsis
+node ExprAttribute #expression #part #member-access =
+    object:#expression Dot member:Identifier
+node ExprSubscript #expression #part #index =
+    object:#expression Lsqb arguments:#expression Rsqb
+node ExprStarred #expression #part #opaque
+node ExprName #expression #part #reference =
+    name:Name
+node ExprList #expression #part #opaque
+node ExprTuple #expression #part #opaque
+node ExprSlice #expression #part #opaque
+node ExceptHandlerExceptHandler #opaque
+node InterpolatedElement #opaque
+node InterpolatedStringLiteralElement #opaque
+node PatternMatchValue #pattern #opaque
+node PatternMatchSingleton #pattern #opaque
+node PatternMatchSequence #pattern #opaque
+node PatternMatchMapping #pattern #opaque
+node PatternMatchClass #pattern #opaque
+node PatternMatchStar #pattern #opaque
+node PatternMatchAs #pattern #opaque
+node PatternMatchOr #pattern #opaque
+node TypeParamTypeVar #declaration =
+    name:Identifier Colon? bound:#expression? Equal? default:#expression?
+node TypeParamTypeVarTuple #declaration =
+    Star name:Identifier Equal? default:#expression?
+node TypeParamParamSpec #declaration =
+    DoubleStar name:Identifier Equal? default:#expression?
+node InterpolatedStringFormatSpec #opaque
+node PatternArguments #opaque
+node PatternKeyword #opaque
+node Comprehension #opaque
+node Arguments #opaque
+node Parameters #parameter-list =
+    parameters:#parameter* Slash? #parameter* Star? #parameter*
+node Parameter #declaration #parameter =
+    Star? DoubleStar? name:Identifier Colon? annotation:#expression?
+node ParameterWithDefault #parameter #opaque
+node Keyword #opaque
+node Alias #opaque
+node WithItem #opaque
+node MatchCase #opaque
+node Decorator #opaque
+node ElifElseClause #opaque
+node TypeParams #opaque
+node FString #string-part #opaque
+node TString #opaque
+node StringLiteral #string-part #opaque
+node BytesLiteral #opaque
+node Identifier #opaque

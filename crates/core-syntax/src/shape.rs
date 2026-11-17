@@ -1,7 +1,7 @@
 //! Checks a tree against the bodies of its grammar: every child of a node must land in a slot of
-//! the node's body ([`crate::ast::assign`], the routine the generated accessors use), and every
-//! required item must be present. Conformance suites run it over real files, which is what keeps
-//! a grammar's bodies honest.
+//! the node's body ([`crate::ast::assign`], the routine the generated accessors use; separators and
+//! `#optional` tokens excepted), and every required item must be present. Conformance suites run
+//! it over real files, which is what keeps a grammar's bodies honest.
 
 use crate::ast::{Pattern, Slot, assign};
 use crate::grammar::{Cardinality, Grammar};
@@ -18,7 +18,8 @@ impl<'g> ShapeChecker<'g> {
     }
 
     /// The first node whose children do not fit its body, described. Nodes that contain an `ERROR`
-    /// child are skipped: recovery trees need not fit.
+    /// child or have no body are skipped: recovery trees need not fit, and a kind without a body
+    /// describes nothing.
     pub fn check(&self, root: &SyntaxNode) -> Result<(), String> {
         for node in root.descendants() {
             self.check_node(&node)?;
@@ -33,6 +34,10 @@ impl<'g> ShapeChecker<'g> {
         ) else {
             return Ok(());
         };
+        // A kind with no body describes nothing (an opaque node, a scope with no fields).
+        if def.body.is_empty() {
+            return Ok(());
+        }
         let skip = self.grammar.skipped_kinds();
         if node.children().any(|c| c.kind() == SyntaxKind::ERROR) {
             return Ok(());
@@ -99,7 +104,10 @@ impl<'g> ShapeChecker<'g> {
     }
 
     fn is_separator(&self, child: &SyntaxElement) -> bool {
-        self.grammar.has_tag(child.kind(), "separator")
+        // Separators and `#optional` tokens (zero-width layout markers, redundant parentheses)
+        // fit no item and need none.
+        let g = self.grammar;
+        g.has_tag(child.kind(), "separator") || g.has_tag(child.kind(), "optional")
     }
 }
 
@@ -120,6 +128,7 @@ node Call #item = name:Word args:Args? Semi
 node Args = items:#item* tail:Number?
 node Leaf #item = value:Word
 node Pair = left:Word right:Word?
+node Bare
 "#;
 
     fn check(build: impl Fn(&mut TreeBuilder, &Grammar)) -> Result<(), String> {
@@ -191,6 +200,16 @@ node Pair = left:Word right:Word?
         })
         .unwrap_err();
         assert!(e.contains("Call"), "{e}");
+    }
+
+    #[test]
+    fn a_node_without_a_body_is_not_checked() {
+        check(|b, g| {
+            b.start_node(kind(g, "Bare"));
+            b.token(kind(g, "Number"), "1");
+            b.finish_node();
+        })
+        .unwrap();
     }
 
     #[test]

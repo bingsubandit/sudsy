@@ -3,6 +3,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language kotlin 22 "Kotlin"
+roles
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -68,9 +69,9 @@ token Comma "," #punctuation #separator
 // Hard and soft keywords and modifiers (`fun`, `val`, `in`, `!is`, `as?`, `data`, ...).
 token Keyword #keyword
 token Identifier
-token Integer #literal #restyle
-token Float #literal #restyle
-token Character #literal
+token Integer #restyle
+token Float #restyle
+token Character
 // A string is `StringTemplate`: its quotes, text parts, escapes and `$` / `${` entries.
 token OpenQuote #string
 token ClosingQuote #string
@@ -86,123 +87,154 @@ token EndOfFile
 // Text the parser could not classify.
 token Unknown #error
 
-node KtFile
-node Class
-node Fun
-node Property
-node DestructuringDeclaration
-node DestructuringDeclarationEntry
-node ObjectDeclaration
-node Typealias
-node CompanionBlock
-node EnumEntry
-node ClassInitializer
-node ScriptInitializer
-node SecondaryConstructor
-node PrimaryConstructor
-node ContextReceiver
-node ContextParameterList
-node TypeParameterList
-node TypeParameter
-node SuperTypeList
-node DelegatedSuperTypeEntry
-node SuperTypeCallEntry
-node SuperTypeEntry
-node PropertyDelegate
-node ConstructorCallee
-node ValueParameterList
-node ValueParameter
-node ClassBody
-node ImportList
-node FileAnnotationList
-node ImportDirective
-node ImportAlias
-node ModifierList
-node Annotation
-node AnnotationEntry
-node AnnotationTarget
-node TypeArgumentList
-node ValueArgumentList
-node ValueArgument
-node ContractEffectList
-node ContractEffect
-node LambdaArgument
-node ValueArgumentName
-node TypeReference
-node UserType
-node DynamicType
-node FunctionType
-node FunctionTypeReceiver
-node NullableType
-node IntersectionType
-node TypeProjection
-node PropertyAccessor
-node BackingField
-node InitializerList
-node TypeConstraintList
-node TypeConstraint
-node ConstructorDelegationCall
-node ConstructorDelegationReference
-node Null
-node BooleanConstant
-node FloatConstant
-node CharacterConstant
-node IntegerConstant
-node StringTemplate
-node LongStringTemplateEntry
-node ShortStringTemplateEntry
-node LiteralStringTemplateEntry
-node EscapeStringTemplateEntry
-node StringInterpolationPrefix
-node Parenthesized
-node Return
-node Throw
-node Continue
-node Break
-node If
-node Condition
-node Then
-node Else
-node Try
-node Catch
-node Finally
-node For
-node While
-node DoWhile
-node LoopRange
-node Body
-node Block
-node LambdaExpression
-node FunctionLiteral
-node AnnotatedExpression
-node ReferenceExpression
-node EnumEntrySuperclassReferenceExpression
-node OperationReference
-node Label
-node LabelQualifier
-node ThisExpression
-node SuperExpression
-node BinaryExpression
-node BinaryWithType
-node IsExpression
-node PrefixExpression
-node PostfixExpression
-node LabeledExpression
-node CallExpression
-node ArrayAccessExpression
-node Indices
-node DotQualifiedExpression
-node CallableReferenceExpression
-node ClassLiteralExpression
-node SafeAccessExpression
-node ObjectLiteral
-node When
-node WhenEntry
-node WhenEntryGuard
-node WhenConditionInRange
-node WhenConditionIsPattern
-node WhenConditionExpression
-node CollectionLiteralExpression
-node PackageDirective
-node Script
-node ErrorElement
+node KtFile #scope
+node Class #expression #item #declaration #type-declaration #scope =
+    ModifierList? Keyword* name:Identifier? TypeParameterList? PrimaryConstructor? Colon? SuperTypeList? Keyword? TypeConstraintList? members:ClassBody?
+node Fun #expression #item #declaration #function #scope =
+    ModifierList? Keyword TypeParameterList? TypeReference? Dot? TypeParameterList? name:Identifier? TypeParameterList? parameters:ValueParameterList Colon? TypeReference? Keyword? TypeConstraintList? Keyword? ContractEffectList? Keyword? TypeConstraintList? body:Block? Eq? expression_body:#expression?
+node Property #item #declaration =
+    ModifierList? Keyword TypeParameterList? TypeReference? Dot? name:Identifier? Colon? TypeReference? Keyword? TypeConstraintList? Eq? #expression? PropertyDelegate? BackingField? PropertyAccessor*
+node DestructuringDeclaration #item #opaque
+node DestructuringDeclarationEntry #opaque
+node ObjectDeclaration #item #declaration #type-declaration #scope =
+    ModifierList? Keyword* name:Identifier? TypeParameterList? PrimaryConstructor? Colon? SuperTypeList? members:ClassBody?
+node Typealias #item #declaration =
+    ModifierList? Keyword name:Identifier TypeParameterList? Eq TypeReference
+node CompanionBlock #item #opaque
+node EnumEntry #item #opaque
+node ClassInitializer #item #opaque
+node ScriptInitializer #item #opaque
+node SecondaryConstructor #item #function #scope =
+    ModifierList? Keyword parameters:ValueParameterList Colon? ConstructorDelegationCall? ConstructorDelegationReference? body:Block?
+node PrimaryConstructor #opaque
+node ContextReceiver #opaque
+node ContextParameterList #opaque
+node TypeParameterList #opaque
+node TypeParameter #declaration =
+    ModifierList? name:Identifier Colon? TypeReference?
+node SuperTypeList #opaque
+node DelegatedSuperTypeEntry #opaque
+node SuperTypeCallEntry #opaque
+node SuperTypeEntry #opaque
+node PropertyDelegate #opaque
+node ConstructorCallee #opaque
+node ValueParameterList #parameter-list =
+    Lpar? parameters:ValueParameter* Rpar?
+node ValueParameter #declaration =
+    ModifierList? Keyword? name:Identifier? DestructuringDeclaration? Colon? TypeReference? Eq? #expression?
+node ClassBody #block =
+    Lbrace items:#item* Rbrace
+node ImportList #opaque
+node FileAnnotationList #opaque
+node ImportDirective #import =
+    Keyword path:#expression Dot? Mul? ImportAlias?
+node ImportAlias #opaque
+node ModifierList #opaque
+node Annotation #opaque
+node AnnotationEntry #opaque
+node AnnotationTarget #opaque
+node TypeArgumentList #opaque
+node ValueArgumentList #opaque
+node ValueArgument #opaque
+node ContractEffectList #opaque
+node ContractEffect #opaque
+node LambdaArgument #opaque
+node ValueArgumentName #opaque
+node TypeReference #opaque
+node UserType #opaque
+node DynamicType #opaque
+node FunctionType #opaque
+node FunctionTypeReceiver #opaque
+node NullableType #opaque
+node IntersectionType #opaque
+node TypeProjection #opaque
+node PropertyAccessor #function #scope =
+    ModifierList? Keyword parameters:ValueParameterList? Colon? TypeReference? Keyword? ContractEffectList? body:Block? Eq? expression_body:#expression?
+node BackingField #opaque
+node InitializerList #opaque
+node TypeConstraintList #opaque
+node TypeConstraint #opaque
+node ConstructorDelegationCall #item #opaque
+node ConstructorDelegationReference #item #opaque
+node Null #expression #item #literal =
+    value:Keyword
+node BooleanConstant #expression #item #literal =
+    value:Keyword
+node FloatConstant #expression #item #literal =
+    value:Float
+node CharacterConstant #expression #item #literal =
+    value:Character
+node IntegerConstant #expression #item #literal =
+    value:Integer
+node StringTemplate #expression #item #literal =
+    StringInterpolationPrefix? OpenQuote value:#template-entry* ClosingQuote
+node LongStringTemplateEntry #template-entry #opaque
+node ShortStringTemplateEntry #template-entry #opaque
+node LiteralStringTemplateEntry #template-entry #opaque
+node EscapeStringTemplateEntry #template-entry #opaque
+node StringInterpolationPrefix #opaque
+node Parenthesized #expression #item #opaque
+node Return #expression #item #opaque
+node Throw #expression #item #opaque
+node Continue #expression #item #opaque
+node Break #expression #item #opaque
+node If #expression #item #conditional =
+    Keyword Lpar condition:Condition Rpar then:Then Keyword? orelse=else:Else?
+node Condition #opaque
+node Then #opaque
+node Else #opaque
+node Try #expression #item #opaque
+node Catch #opaque
+node Finally #opaque
+node For #expression #item #opaque
+node While #expression #item #opaque
+node DoWhile #expression #item #opaque
+node LoopRange #opaque
+node Body #item #opaque
+node Block #block =
+    Lbrace? items:#item* Rbrace?
+node LambdaExpression #expression #item #opaque
+node FunctionLiteral #function #scope =
+    Lbrace parameters:ValueParameterList? Arrow? body:Block? Rbrace
+node AnnotatedExpression #expression #item #opaque
+node ReferenceExpression #expression #item #reference =
+    name:Identifier? Keyword?
+node EnumEntrySuperclassReferenceExpression #opaque
+node OperationReference #opaque
+node Label #opaque
+node LabelQualifier #opaque
+node ThisExpression #expression #item #opaque
+node SuperExpression #expression #item #opaque
+node BinaryExpression #expression #item #binary =
+    left:#expression operator:OperationReference right:#expression
+node BinaryWithType #expression #item #binary =
+    left:#expression operator:OperationReference right:TypeReference
+node IsExpression #expression #item #binary =
+    left:#expression operator:OperationReference right:TypeReference
+node PrefixExpression #expression #item #unary =
+    operator:OperationReference operand:#expression
+node PostfixExpression #expression #item #unary =
+    operand:#expression operator:OperationReference
+node LabeledExpression #expression #item #opaque
+node CallExpression #expression #item #call =
+    callee:#expression TypeArgumentList? arguments:ValueArgumentList? LambdaArgument*
+node ArrayAccessExpression #expression #item #index =
+    object:#expression arguments:Indices
+node Indices #opaque
+node DotQualifiedExpression #expression #item #member-access =
+    object:#expression Dot member:#expression
+node CallableReferenceExpression #expression #item #opaque
+node ClassLiteralExpression #expression #item #opaque
+node SafeAccessExpression #expression #item #member-access =
+    object:#expression SafeAccess member:#expression
+node ObjectLiteral #expression #item #opaque
+node When #expression #item #opaque
+node WhenEntry #opaque
+node WhenEntryGuard #opaque
+node WhenConditionInRange #opaque
+node WhenConditionIsPattern #opaque
+node WhenConditionExpression #opaque
+node CollectionLiteralExpression #expression #item #opaque
+node PackageDirective #opaque
+node Script #scope
+node ErrorElement #opaque

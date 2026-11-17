@@ -1,7 +1,8 @@
 // PHP (8.0 to 8.5, `.php` and `.phtml`, inline HTML around the tags), parsed by mago-syntax behind crates/lang-php/src/adapter.rs; a node kind is a row named like mago's CST struct, tokens are mago's lexer tokens grouped. mago's enum wrappers (Statement, Expression, Hint, ...) and its one-token nodes (Keyword, identifiers) have no row.
-// Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are loose: they name the parts, not every order.
+// Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are written for the kinds that have a role; `#opaque` kinds have none.
 
 language php 24 "PHP"
+roles
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -21,9 +22,9 @@ token InlineText
 token OpenTag
 token CloseTag
 // Reserved words and magic constants (`self`, `__CLASS__`), but not `true`, `false` and `null`.
-token Keyword
+token Keyword #expression #operator #member-name #operand-hint
 // A name: simple, qualified (`A\B`) or fully qualified (`\A\B`).
-token Identifier
+token Identifier #expression #member-name #operand-hint
 // `$name`
 token Variable
 // A quoted string without interpolation.
@@ -31,10 +32,10 @@ token String #literal #string
 // The text of an interpolated string or a heredoc between its interpolations.
 token StringPart #literal
 token Number #literal
-token Boolean #literal
-token Null #literal
+token Boolean #literal #expression #member-name
+token Null #literal #expression #member-name
 // `(int)`, `(string)`, ...
-token Cast
+token Cast #operator
 
 token LBrace "{" #punctuation
 token RBrace "}" #punctuation
@@ -42,16 +43,16 @@ token LParen "(" #punctuation #glue
 token RParen ")" #punctuation #close
 token LBracket "[" #punctuation #glue
 token RBracket "]" #punctuation
-token Semi ";" #punctuation
+token Semi ";" #punctuation #stmt
 token Comma "," #punctuation #separator #glue
 token Colon ":" #punctuation
 token ColonColon "::" #punctuation
 // `->` and `?->`
 token Arrow #punctuation
 token DoubleArrow "=>" #punctuation
-token Question "?" #punctuation
-token Ellipsis "..." #punctuation
-token At "@" #punctuation
+token Question "?" #punctuation #operand-hint
+token Ellipsis "..." #punctuation #operand-hint
+token At "@" #punctuation #operator
 token Dollar "$" #punctuation
 token DollarLBrace "${" #punctuation
 // `#[`
@@ -61,179 +62,210 @@ token Quote #punctuation
 // `<<<EOT` and its closing label.
 token DocStart #punctuation
 token DocEnd #punctuation
-token Assign "=" #punctuation
+token Assign "=" #punctuation #operator
 // Every other operator, assignment operators and `.` included.
-token Operator #punctuation
+token Operator #punctuation #operator #operand-hint
 
 token Eof
 token Unknown #error
 
-node Program = items:#child* Eof
-node ConstantAccess #child = #child*
-node ClassConstantAccess #child = #child*
-node NullSafePropertyAccess #child = #child*
-node PropertyAccess #child = #child*
-node StaticPropertyAccess #child = #child*
-node ArgumentList #child = #child*
-node PartialArgumentList #child = #child*
-node NamedArgument #child = #child*
-node NamedPlaceholderArgument #child = #child*
-node PlaceholderArgument #child = #child*
-node PositionalArgument #child = #child*
-node VariadicPlaceholderArgument #child = #child*
-node Array #child = #child*
-node ArrayAccess #child = #child*
-node ArrayAppend #child = #child*
-node KeyValueArrayElement #child = #child*
-node LegacyArray #child = #child*
-node List #child = #child*
-node MissingArrayElement #child = #child*
-node ValueArrayElement #child = #child*
-node VariadicArrayElement #child = #child*
-node Attribute #child = #child*
-node AttributeList #child = #child*
-node Block #child #stmt = #child*
-node FunctionCall #child = #child*
-node MethodCall #child = #child*
-node NullSafeMethodCall #child = #child*
-node StaticMethodCall #child = #child*
-node FunctionPartialApplication #child = #child*
-node MethodPartialApplication #child = #child*
-node StaticMethodPartialApplication #child = #child*
-node ClassLikeConstant #child = #child*
-node ClassLikeConstantItem #child = #child*
-node EnumCase #child = #child*
-node EnumCaseBackedItem #child = #child*
-node EnumCaseUnitItem #child = #child*
-node Extends #child = #child*
-node Implements #child = #child*
-node ClassLikeMemberExpressionSelector #child = #child*
-node Method #child = #child*
-node MethodAbstractBody #child = #child*
-node HookedProperty #child = #child*
-node PlainProperty #child = #child*
-node PropertyAbstractItem #child = #child*
-node PropertyConcreteItem #child = #child*
-node PropertyHook #child = #child*
-node PropertyHookAbstractBody #child = #child*
-node PropertyHookConcreteExpressionBody #child = #child*
-node PropertyHookList #child = #child*
-node TraitUse #child = #child*
-node TraitUseAbsoluteMethodReference #child = #child*
-node TraitUseAbstractSpecification #child = #child*
-node TraitUseAliasAdaptation #child = #child*
-node TraitUseConcreteSpecification #child = #child*
-node TraitUsePrecedenceAdaptation #child = #child*
-node AnonymousClass #child = #child*
-node Class #child #type-decl = #child*
-node Enum #child #type-decl = #child*
-node EnumBackingTypeHint #child = #child*
-node Interface #child #type-decl = #child*
-node Trait #child #type-decl = #child*
-node Clone #child = #child*
-node Constant #child #stmt = #child*
-node ConstantItem #child = #child*
-node DieConstruct #child = #child*
-node EmptyConstruct #child = #child*
-node EvalConstruct #child = #child*
-node ExitConstruct #child = #child*
-node IncludeConstruct #child = #child*
-node IncludeOnceConstruct #child = #child*
-node IssetConstruct #child = #child*
-node PrintConstruct #child = #child*
-node RequireConstruct #child = #child*
-node RequireOnceConstruct #child = #child*
-node If #child #stmt = #child*
-node IfColonDelimitedBody #child = #child*
-node IfColonDelimitedBodyElseClause #child = #child*
-node IfColonDelimitedBodyElseIfClause #child = #child*
-node IfStatementBody #child = #child*
-node IfStatementBodyElseClause #child = #child*
-node IfStatementBodyElseIfClause #child = #child*
-node Match #child = #child*
-node MatchDefaultArm #child = #child*
-node MatchExpressionArm #child = #child*
-node Switch #child #stmt = #child*
-node SwitchBraceDelimitedBody #child = #child*
-node SwitchColonDelimitedBody #child = #child*
-node SwitchDefaultCase #child = #child*
-node SwitchExpressionCase #child = #child*
-node Declare #child #stmt = #child*
-node DeclareColonDelimitedBody #child = #child*
-node DeclareItem #child = #child*
-node EchoTag #child #stmt = #child*
-node Echo #child #stmt = #child*
-node Binary #child = #child*
-node UnaryPrefix #child = #child*
-node UnaryPostfix #child = #child*
-node Parenthesized #child = #child*
-node ArrowFunction #child = #child*
-node Closure #child = #child*
-node ClosureUseClause #child = #child*
-node ClosureUseClauseVariable #child = #child*
-node Function #child = #child*
-node FunctionLikeParameter #child = #child*
-node FunctionLikeParameterDefaultValue #child = #child*
-node FunctionLikeParameterList #child = #child*
-node FunctionLikeReturnTypeHint #child = #child*
-node Global #child #stmt = #child*
-node Goto #child #stmt = #child*
-node Label #child #stmt = #child*
-node HaltCompiler #child #stmt = #child*
-node Inline #child #stmt = #child*
-node Instantiation #child = #child*
-node Pipe #child = #child*
-node LiteralFloat #child = #child*
-node LiteralInteger #child = #child*
-node LiteralString #child = #child*
-node Namespace #child #stmt = #child*
-node NamespaceImplicitBody #child = #child*
-node Assignment #child = #child*
-node Conditional #child = #child*
-node DoWhile #child #stmt = #child*
-node Foreach #child #stmt = #child*
-node ForeachColonDelimitedBody #child = #child*
-node ForeachKeyValueTarget #child = #child*
-node ForeachValueTarget #child = #child*
-node For #child #stmt = #child*
-node ForColonDelimitedBody #child = #child*
-node While #child #stmt = #child*
-node WhileColonDelimitedBody #child = #child*
-node Break #child #stmt = #child*
-node Continue #child #stmt = #child*
-node Return #child #stmt = #child*
-node Static #child #stmt = #child*
-node StaticAbstractItem #child = #child*
-node StaticConcreteItem #child = #child*
-node Try #child #stmt = #child*
-node TryCatchClause #child = #child*
-node TryFinallyClause #child = #child*
-node MaybeTypedUseItem #child = #child*
-node MixedUseItemList #child = #child*
-node TypedUseItemList #child = #child*
-node TypedUseItemSequence #child = #child*
-node Use #child #stmt = #child*
-node UseItem #child = #child*
-node UseItemAlias #child = #child*
-node UseItemSequence #child = #child*
-node YieldFrom #child = #child*
-node YieldPair #child = #child*
-node YieldValue #child = #child*
-node ExpressionStatement #child #stmt = #child*
-node BracedExpressionStringPart #child = #child*
-node DocumentString #child = #child*
-node InterpolatedString #child = #child*
-node LiteralStringPart #child = #child*
-node ShellExecuteString #child = #child*
-node ClosingTag #child = #child*
-node FullOpeningTag #child = #child*
-node ShortOpeningTag #child = #child*
-node Throw #child #stmt = #child*
-node IntersectionHint #child = #child*
-node NullableHint #child = #child*
-node ParenthesizedHint #child = #child*
-node UnionHint #child = #child*
-node Unset #child #stmt = #child*
-node DirectVariable #child = #child*
-node IndirectVariable #child = #child*
-node NestedVariable #child = #child*
+node Program #scope
+node ConstantAccess #expression #reference =
+    name:Identifier
+node ClassConstantAccess #expression #member-access =
+    Keyword? object:#expression? ColonColon member:#member-name
+node NullSafePropertyAccess #expression #member-access =
+    object:#expression Arrow member:#member-name
+node PropertyAccess #expression #member-access =
+    object:#expression Arrow member:#member-name
+node StaticPropertyAccess #expression #member-access =
+    Keyword? object:#expression? ColonColon member:#member-name
+node ArgumentList #opaque
+node PartialArgumentList #opaque
+node NamedArgument #opaque
+node NamedPlaceholderArgument #opaque
+node PlaceholderArgument #opaque
+node PositionalArgument #opaque
+node VariadicPlaceholderArgument #opaque
+node Array #expression #opaque
+node ArrayAccess #expression #index =
+    object:#expression LBracket arguments:#expression RBracket
+node ArrayAppend #expression #opaque
+node KeyValueArrayElement #opaque
+node LegacyArray #expression #opaque
+node List #expression #opaque
+node MissingArrayElement #opaque
+node ValueArrayElement #opaque
+node VariadicArrayElement #opaque
+node Attribute #opaque
+node AttributeList #opaque
+node Block #stmt #block =
+    LBrace items:#stmt* RBrace
+node FunctionCall #expression #call =
+    callee:#expression arguments:ArgumentList
+node MethodCall #expression #call #member-access =
+    object:#expression Arrow callee=member:#member-name arguments:ArgumentList
+node NullSafeMethodCall #expression #call #member-access =
+    object:#expression Arrow callee=member:#member-name arguments:ArgumentList
+node StaticMethodCall #expression #call #member-access =
+    Keyword? object:#expression? ColonColon callee=member:#member-name arguments:ArgumentList
+node FunctionPartialApplication #expression #opaque
+node MethodPartialApplication #expression #opaque
+node StaticMethodPartialApplication #expression #opaque
+node ClassLikeConstant #member #opaque
+node ClassLikeConstantItem #opaque
+node EnumCase #member #opaque
+node EnumCaseBackedItem #opaque
+node EnumCaseUnitItem #opaque
+node Extends #opaque
+node Implements #opaque
+node ClassLikeMemberExpressionSelector #member-name #opaque
+node Method #member #declaration #function #scope =
+    AttributeList* Keyword* Operator? name:#member-name? parameters:FunctionLikeParameterList FunctionLikeReturnTypeHint? body:Block? MethodAbstractBody?
+node MethodAbstractBody #opaque
+node HookedProperty #member #opaque
+node PlainProperty #member #opaque
+node PropertyAbstractItem #opaque
+node PropertyConcreteItem #opaque
+node PropertyHook #opaque
+node PropertyHookAbstractBody #opaque
+node PropertyHookConcreteExpressionBody #opaque
+node PropertyHookList #opaque
+node TraitUse #member #opaque
+node TraitUseAbsoluteMethodReference #opaque
+node TraitUseAbstractSpecification #opaque
+node TraitUseAliasAdaptation #opaque
+node TraitUseConcreteSpecification #opaque
+node TraitUsePrecedenceAdaptation #opaque
+node AnonymousClass #expression #type-declaration #scope =
+    AttributeList* Keyword* ArgumentList? PartialArgumentList? Extends? Implements? LBrace members:#member* RBrace
+node Class #stmt #declaration #type-declaration #scope =
+    AttributeList* Keyword* name:Identifier? EnumBackingTypeHint? Extends? Implements? LBrace members:#member* RBrace
+node Enum #stmt #declaration #type-declaration #scope =
+    AttributeList* Keyword* name:Identifier? EnumBackingTypeHint? Extends? Implements? LBrace members:#member* RBrace
+node EnumBackingTypeHint #opaque
+node Interface #stmt #declaration #type-declaration #scope =
+    AttributeList* Keyword* name:Identifier? EnumBackingTypeHint? Extends? Implements? LBrace members:#member* RBrace
+node Trait #stmt #declaration #type-declaration #scope =
+    AttributeList* Keyword* name:Identifier? EnumBackingTypeHint? Extends? Implements? LBrace members:#member* RBrace
+node Clone #expression #opaque
+node Constant #stmt #opaque
+node ConstantItem #opaque
+node DieConstruct #expression #opaque
+node EmptyConstruct #expression #opaque
+node EvalConstruct #expression #opaque
+node ExitConstruct #expression #opaque
+node IncludeConstruct #expression #opaque
+node IncludeOnceConstruct #expression #opaque
+node IssetConstruct #expression #opaque
+node PrintConstruct #expression #opaque
+node RequireConstruct #expression #opaque
+node RequireOnceConstruct #expression #opaque
+node If #stmt #opaque
+node IfColonDelimitedBody #opaque
+node IfColonDelimitedBodyElseClause #opaque
+node IfColonDelimitedBodyElseIfClause #opaque
+node IfStatementBody #opaque
+node IfStatementBodyElseClause #opaque
+node IfStatementBodyElseIfClause #opaque
+node Match #expression #opaque
+node MatchDefaultArm #opaque
+node MatchExpressionArm #opaque
+node Switch #stmt #opaque
+node SwitchBraceDelimitedBody #opaque
+node SwitchColonDelimitedBody #opaque
+node SwitchDefaultCase #opaque
+node SwitchExpressionCase #opaque
+node Declare #stmt #opaque
+node DeclareColonDelimitedBody #opaque
+node DeclareItem #opaque
+node EchoTag #stmt #opaque
+node Echo #stmt #opaque
+node Binary #expression #binary =
+    left:#expression operator:#operator right:#expression
+node UnaryPrefix #expression #unary =
+    operator:#operator operand:#expression
+node UnaryPostfix #expression #unary =
+    operand:#expression operator:#operator
+node Parenthesized #expression #opaque
+node ArrowFunction #expression #function #scope =
+    AttributeList* Keyword* Operator? parameters:FunctionLikeParameterList FunctionLikeReturnTypeHint? DoubleArrow expression_body:#expression
+node Closure #expression #function #scope =
+    AttributeList* Keyword* Operator? parameters:FunctionLikeParameterList ClosureUseClause? FunctionLikeReturnTypeHint? body:Block
+node ClosureUseClause #opaque
+node ClosureUseClauseVariable #opaque
+node Function #stmt #declaration #function #scope =
+    AttributeList* Keyword* Operator? name:#member-name? parameters:FunctionLikeParameterList FunctionLikeReturnTypeHint? body:Block
+node FunctionLikeParameter #declaration =
+    AttributeList* #operand-hint* name:DirectVariable FunctionLikeParameterDefaultValue? PropertyHookList?
+node FunctionLikeParameterDefaultValue #opaque
+node FunctionLikeParameterList #parameter-list =
+    LParen parameters:FunctionLikeParameter* RParen
+node FunctionLikeReturnTypeHint #opaque
+node Global #stmt #opaque
+node Goto #stmt #opaque
+node Label #stmt #opaque
+node HaltCompiler #stmt #opaque
+node Inline #stmt #opaque
+node Instantiation #expression #opaque
+node Pipe #expression #opaque
+node LiteralFloat #expression #literal =
+    value:Number
+node LiteralInteger #expression #literal =
+    value:Number
+node LiteralString #expression #literal =
+    value:String
+node Namespace #stmt #opaque
+node NamespaceImplicitBody #opaque
+node Assignment #expression #assignment =
+    left:#expression operator:#operator right:#expression
+node Conditional #expression #conditional =
+    condition:#expression Question body=then:#expression? Colon orelse=else:#expression
+node DoWhile #stmt #opaque
+node Foreach #stmt #opaque
+node ForeachColonDelimitedBody #opaque
+node ForeachKeyValueTarget #opaque
+node ForeachValueTarget #opaque
+node For #stmt #opaque
+node ForColonDelimitedBody #opaque
+node While #stmt #opaque
+node WhileColonDelimitedBody #opaque
+node Break #stmt #opaque
+node Continue #stmt #opaque
+node Return #stmt #opaque
+node Static #stmt #opaque
+node StaticAbstractItem #opaque
+node StaticConcreteItem #opaque
+node Try #stmt #opaque
+node TryCatchClause #opaque
+node TryFinallyClause #opaque
+node MaybeTypedUseItem #opaque
+node MixedUseItemList #opaque
+node TypedUseItemList #opaque
+node TypedUseItemSequence #opaque
+node Use #stmt #opaque
+node UseItem #opaque
+node UseItemAlias #opaque
+node UseItemSequence #opaque
+node YieldFrom #expression #opaque
+node YieldPair #expression #opaque
+node YieldValue #expression #opaque
+node ExpressionStatement #stmt #opaque
+node BracedExpressionStringPart #opaque
+node DocumentString #expression #opaque
+node InterpolatedString #expression #opaque
+node LiteralStringPart #opaque
+node ShellExecuteString #expression #opaque
+node ClosingTag #stmt #opaque
+node FullOpeningTag #stmt #opaque
+node ShortOpeningTag #stmt #opaque
+node Throw #stmt #expression #opaque
+node IntersectionHint #operand-hint #opaque
+node NullableHint #operand-hint #opaque
+node ParenthesizedHint #operand-hint #opaque
+node UnionHint #operand-hint #opaque
+node Unset #stmt #opaque
+node DirectVariable #expression #member-name #reference =
+    LiteralStringPart? StringPart? name:Variable
+node IndirectVariable #expression #member-name #opaque
+node NestedVariable #expression #opaque

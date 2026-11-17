@@ -17,6 +17,15 @@ Trailing trivia: after a token up to and including the end of its line. Leading:
 - Bodies match children in order (`core_syntax::ast::assign`); `ShapeChecker` verifies every child lands in a slot. Generated accessors use the same routine, and so does `Grammar::slot(node, label)`, the generic accessor for a labelled item (shared rules read an entry's `key` and `value` with it; bodies are resolved to kind lists once when the grammar loads).
 - Tags for shared rules: `#mapping` marks a container of key/value entries (the entries are `#key-value` nodes whose key is the item labelled `key`: JSON `Object`; YAML `BlockMapping`, `FlowMapping`), `#sequence` a list of values (JSON `Array`; YAML `BlockSequence`, `FlowSequence`), `#sections` a file container of sections whose first child, a `#section` header node, has the name token in its `name` slot (INI, EditorConfig `Document`, `Section`). A rule subscribes by tag (`Rule::tags`) and runs for every kind carrying it, in every language that tags its grammar. `Grammar::nodes_with_tag` answers from a table built at load.
 - Roles: a node kind says what it is for cross-language code (layout kits, scope binder, shared rules) with a role tag from the vocabulary below, or `#opaque` when none fits. A kind may carry several roles (a method is a `#declaration` and a `#function`). A role names the fields shared code reads with `Grammar::slot(node, field)`; `field?` is optional, and a required field must be declared in the body, as the item's label or as an alias `label=field:Type` (C# `when_true=then:#expression`; the generated accessor keeps `label`). A grammar opts in with a `roles` line; then `cargo xtask codegen` refuses a node kind with neither a role nor `#opaque` (or with both), and a role whose required fields the body lacks. Tokens are exempt. The table is `core_syntax::roles::ROLES`; adapter-backed grammars (oxc, ruff, ...) opt in the same way and their adapter fills the nodes as the body says.
+- Bodies of a grammar that opted in are checked by `ShapeChecker` in every parse test and conformance run (`provider_api::format_testing`): each child of a node lands in an item, separators and `#optional` tokens aside. A kind with no body is not checked, so an `#opaque` kind needs none; a body is written for the kinds that have a role. A tag may hold nodes and tokens (a union such as `#expression` in PHP, where `null` is a bare token): such an item is read with `Grammar::slot`, no typed accessor is generated. A role tag is a node tag, so a token tag of the same name is renamed (`#literal` on Python and Kotlin number tokens became `#number`). Flat operator chains (Python `and`/comparison/chained assignment) put the first operator and operands in the role fields and the rest in an unlabeled `#part*` item. `#conditional` is the ternary or if-expression form; if statements are `#opaque` (C#, Python, PHP), as is `new` (C#, PHP).
+
+| Grammar | Node kinds | With a role | `#opaque` |
+|---|---|---|---|
+| C# | 321 | 107 | 214 |
+| Python | 92 | 38 | 54 |
+| Kotlin | 120 | 33 | 87 |
+| PHP | 169 | 32 | 137 |
+| SQL | 44 | 6 | 38 |
 
 <!-- generated:roles -->
 | Role | Fields | Meaning |

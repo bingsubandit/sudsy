@@ -6,6 +6,7 @@ use crate::provider::{LanguageProvider, ParseResult, SourceFile};
 use core_config::OptionValue;
 use core_format::DirectiveTable;
 use core_format::testing::{Subject, check};
+use core_syntax::shape::ShapeChecker;
 use core_syntax::{Grammar, SyntaxNode, print, trivia};
 use std::path::{Path, PathBuf};
 
@@ -38,7 +39,10 @@ impl Subject for Formatting {
             .map_err(|e| e.to_string())?;
         match r.errors.first() {
             Some(e) => Err(format!("{} (byte {})", e.message, e.start)),
-            None => Ok(r.tree),
+            None => {
+                check_shape(self.grammar(), &r, self.file);
+                Ok(r.tree)
+            }
         }
     }
 
@@ -182,7 +186,19 @@ pub fn assert_lossless(provider: &dyn LanguageProvider, name: &str, text: &str) 
     let grammar = provider.grammar();
     trivia::check_attachment(&parsed.tree, |k| grammar.is_trivia(k))
         .unwrap_or_else(|e| panic!("{name}: {e}"));
+    check_shape(grammar, &parsed, name);
     parsed
+}
+
+/// A grammar that opted into roles (`roles`) has bodies that describe every child: the tree fits
+/// them (nothing to check for the others, whose bodies are partial).
+#[track_caller]
+fn check_shape(grammar: &Grammar, parsed: &ParseResult, name: &str) {
+    if grammar.requires_roles && parsed.errors.is_empty() {
+        ShapeChecker::new(grammar)
+            .check(&parsed.tree)
+            .unwrap_or_else(|e| panic!("{name}: {e}"));
+    }
 }
 
 /// [`assert_lossless`] on a file that must parse: no errors, no `#error` token, and every token

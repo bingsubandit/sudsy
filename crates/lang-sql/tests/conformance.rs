@@ -1,11 +1,12 @@
 //! The SQL corpus (sqlfluff's dialect fixtures and PostgreSQL's regression inputs, pinned in
-//! tests/conformance/fetch-sql-corpus.sh): every file prints back byte for byte and satisfies the
-//! trivia attachment rule in its dialect; the files with parse errors, the parser's panics and
-//! the speed are printed per dialect.
+//! tests/conformance/fetch-sql-corpus.sh): every file prints back byte for byte, satisfies the
+//! trivia attachment rule in its dialect and fits the bodies of the grammar; the files with parse
+//! errors, the parser's panics and the speed are printed per dialect.
 //!
 //! Run: `bash tests/conformance/fetch-sql-corpus.sh &&
 //! cargo test --profile corpus -p lang-sql --test integration -- --ignored --nocapture conformance::`
 
+use core_syntax::shape::ShapeChecker;
 use core_syntax::{print, trivia};
 use provider_api::LanguageProvider;
 use std::path::{Path, PathBuf};
@@ -38,6 +39,11 @@ fn run(label: &str, dialect: &str, dir: PathBuf) {
             .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
         count += 1;
         bytes += text.len();
+        if parsed.errors.is_empty() {
+            ShapeChecker::new(&grammar)
+                .check(&parsed.tree)
+                .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+        }
         if let Some(e) = parsed.errors.first() {
             errors += 1;
             panics += usize::from(e.message.contains("failed on this file"));
