@@ -1,17 +1,13 @@
 //! Expressions that lay out as a chain: binary operators, member accesses and calls, assignments
 //! and the conditional operator.
 
-use super::options::{
-    chain_break_on_block, fluid_assignments, indent_nested_binary, keep_accesses_with_call,
-};
+use super::options::{fluid_assignments, indent_nested_binary};
 use super::seq::{R, paren_group, seq_of, sig};
 use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
-use core_format::shapes::{
-    self, MemberChain, ends_in_line_comment, gap_after_operator, member_chain as member_chain_shape,
-};
-use core_format::{Directive, FormatCtx, FormatError};
+use core_format::shapes::{self, ChainPolicy, ends_in_line_comment, gap_after_operator};
+use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 fn shape(msg: &str) -> FormatError {
@@ -325,204 +321,8 @@ fn coalesce_chain(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 // ------------------------------------------------------------------- member
 
-enum Link {
-    Dot(SyntaxToken, SyntaxNode),
-    Call(SyntaxNode),
-    Index(SyntaxNode),
-    Bang(SyntaxToken),
-    Question(SyntaxToken),
-    /// What follows `?` when it is not a chain: `a?.b = c`.
-    Tail(SyntaxNode),
-}
-
-/// Collects the links of the chain `node` ends with, in source order, and returns the head: the
-/// expression the chain starts from (`None` when the chain starts with `.x` or `[i]` after a `?`).
-fn walk(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-    links: &mut Vec<Link>,
-) -> Result<Option<SyntaxNode>, FormatError> {
-    core_format::deep(|| walk_in(cx, node, links))
-}
-
-fn walk_in(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-    links: &mut Vec<Link>,
-) -> Result<Option<SyntaxNode>, FormatError> {
-    let els = sig(cx, node);
-    let inner = |cx: &FormatCtx<'_>, n: &SyntaxNode, links: &mut Vec<Link>| {
-        if tags::has(cx.grammar, n.kind(), Tag::MemberChain) {
-            walk(cx, n, links)
-        } else {
-            Ok(Some(n.clone()))
-        }
-    };
-    match (node.kind(), els.as_slice()) {
-        (k::INVOCATION_EXPRESSION, [SyntaxElement::Node(e), SyntaxElement::Node(a)]) => {
-            let head = inner(cx, e, links)?;
-            links.push(Link::Call(a.clone()));
-            Ok(head)
-        }
-        (k::ELEMENT_ACCESS_EXPRESSION, [SyntaxElement::Node(e), SyntaxElement::Node(a)]) => {
-            let head = inner(cx, e, links)?;
-            links.push(Link::Index(a.clone()));
-            Ok(head)
-        }
-        (
-            k::SIMPLE_MEMBER_ACCESS_EXPRESSION,
-            [
-                SyntaxElement::Node(e),
-                SyntaxElement::Token(op),
-                SyntaxElement::Node(name),
-            ],
-        ) => {
-            let head = inner(cx, e, links)?;
-            links.push(Link::Dot(op.clone(), name.clone()));
-            Ok(head)
-        }
-        (
-            k::SUPPRESS_NULLABLE_WARNING_EXPRESSION,
-            [SyntaxElement::Node(e), SyntaxElement::Token(op)],
-        ) => {
-            let head = inner(cx, e, links)?;
-            links.push(Link::Bang(op.clone()));
-            Ok(head)
-        }
-        (
-            k::CONDITIONAL_ACCESS_EXPRESSION,
-            [
-                SyntaxElement::Node(e),
-                SyntaxElement::Token(q),
-                SyntaxElement::Node(w),
-            ],
-        ) => {
-            let head = inner(cx, e, links)?;
-            links.push(Link::Question(q.clone()));
-            if tags::has(cx.grammar, w.kind(), Tag::MemberChain) {
-                walk(cx, w, links)?;
-            } else {
-                links.push(Link::Tail(w.clone()));
-            }
-            Ok(head)
-        }
-        (k::MEMBER_BINDING_EXPRESSION, [SyntaxElement::Token(dot), SyntaxElement::Node(name)]) => {
-            links.push(Link::Dot(dot.clone(), name.clone()));
-            Ok(None)
-        }
-        (k::ELEMENT_BINDING_EXPRESSION, [SyntaxElement::Node(a)]) => {
-            links.push(Link::Index(a.clone()));
-            Ok(None)
-        }
-        _ => Err(shape("member chain: unexpected children")),
-    }
-}
-
-fn link_doc(cx: &FormatCtx<'_>, link: &Link) -> R {
-    Ok(match link {
-        Link::Dot(op, name) => doc::concat(vec![cx.token(op), cx.format(name)?]),
-        Link::Call(a) | Link::Index(a) | Link::Tail(a) => cx.format(a)?,
-        Link::Bang(t) | Link::Question(t) => cx.token(t),
-    })
-}
-
-/// Does a line comment sit between the parts of the chain? Then every call goes on its own
-/// line, or two comments would end up on one line. One that ends the chain does not count: the
-/// caller prints it after what follows the chain (a list separator).
-fn has_line_comment(cx: &FormatCtx<'_>, links: &[Link]) -> bool {
-    let g = cx.grammar;
-    let is_line =
-        |c: &core_format::comments::Comment| c.kind != core_format::comments::CommentKind::Block;
-    let line = |t: &SyntaxToken, end: bool| {
-        let trailing = core_format::comments::trailing_comments(g, t);
-        (!end && trailing.iter().any(is_line))
-            || core_format::comments::leading_comments(g, t)
-                .iter()
-                .any(is_line)
-    };
-    let last = links.len().saturating_sub(1);
-    links.iter().enumerate().any(|(i, l)| match l {
-        Link::Dot(op, name) => {
-            line(op, false) || cx.last_token(name).is_some_and(|t| line(&t, i == last))
-        }
-        Link::Call(a) | Link::Index(a) | Link::Tail(a) => {
-            cx.last_token(a).is_some_and(|t| line(&t, i == last))
-        }
-        Link::Bang(t) | Link::Question(t) => line(t, i == last),
-    })
-}
-
-/// Is the head short enough, or a name that reads as a type, to stay on the first line with
-/// the first call (`this.Foo()`, `Task.Run()`, `x.Foo()`)? A capitalized head that is itself
-/// called (`Create().Foo()`) is a call, not a type name.
-fn merges_first_group(cx: &FormatCtx<'_>, head: &SyntaxNode, called: bool) -> bool {
-    match head.kind() {
-        k::THIS_EXPRESSION | k::BASE_EXPRESSION | k::PREDEFINED_TYPE => true,
-        k::IDENTIFIER_NAME => {
-            let text = head.text().to_string();
-            let text = text.trim();
-            (!called && text.chars().next().is_some_and(char::is_uppercase))
-                || text.chars().count() <= cx.options.int("indent_size") as usize
-        }
-        _ => false,
-    }
-}
-
-/// `a.B().C().D()`: on one line if it fits, else the head and then one `.Call()` per line. Chains
-/// with fewer calls than `member_chain_min_calls` are never broken at the dots. The directives
-/// `BreakAll` and `KeepTogether` on `node` override the width and that minimum.
+/// `a.B().C().D()`: the shared member chain (`core_format::shapes::call_chain`) under the
+/// `member_chain_*` options.
 pub fn member_chain(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let mut links = Vec::new();
-    let Some(head) = walk(cx, node, &mut links)? else {
-        // `.name` or `[i]` after a `?`: the part of the chain that follows the head.
-        let docs = links
-            .iter()
-            .map(|l| link_doc(cx, l))
-            .collect::<Result<Vec<_>, _>>()?;
-        return Ok(doc::concat(docs));
-    };
-    let calls = links.iter().filter(|l| matches!(l, Link::Call(_))).count();
-
-    // Split into the part that stays with the head and the groups that start at a dot.
-    let mut prefix: Vec<Doc> = Vec::new();
-    let mut groups: Vec<Vec<Doc>> = Vec::new();
-    for (i, link) in links.iter().enumerate() {
-        let starts = match link {
-            // `member_chain_keep_accesses`: the accesses before a call stay with it: `.A.B()`.
-            Link::Dot(..) if keep_accesses_with_call(cx.options) => {
-                !(i > 0 && matches!(links[i - 1], Link::Question(_) | Link::Dot(..)))
-            }
-            Link::Dot(..) => !(i > 0 && matches!(links[i - 1], Link::Question(_))),
-            Link::Question(_) => matches!(links.get(i + 1), Some(Link::Dot(..))),
-            _ => false,
-        };
-        let d = link_doc(cx, link)?;
-        if starts {
-            groups.push(vec![d]);
-        } else if let Some(g) = groups.last_mut() {
-            g.push(d);
-        } else {
-            prefix.push(d);
-        }
-    }
-    let mut head_parts = vec![cx.format(&head)?];
-    head_parts.extend(prefix);
-    // `BreakAll` / `KeepTogether` on the chain's outermost node: always / never at the dots.
-    let directives = cx.directives_of(node);
-    let min_calls = if directives.has(&Directive::KeepTogether) {
-        usize::MAX
-    } else {
-        cx.options.int(super::options::MEMBER_CHAIN_MIN_CALLS) as usize
-    };
-    if merges_first_group(cx, &head, head_parts.len() > 1) && !groups.is_empty() {
-        head_parts.extend(groups.remove(0));
-    }
-    Ok(member_chain_shape(MemberChain {
-        head: head_parts,
-        groups,
-        calls,
-        min_calls,
-        force_break: has_line_comment(cx, &links) || directives.has(&Directive::BreakAll),
-        break_on_inner_break: chain_break_on_block(cx.options),
-    }))
+    shapes::call_chain(cx, node, &ChainPolicy::of(cx.options), &shapes::NoHooks)
 }

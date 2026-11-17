@@ -110,6 +110,10 @@ pub struct Grammar {
     node_flags: Vec<u16>,
     /// Per node kind (indexed like `nodes`) and body item: the sorted kinds the item accepts.
     bodies: Vec<Vec<Vec<SyntaxKind>>>,
+    /// Per node kind: each label (and role field name) with its body item and, when every item up
+    /// to it is a single required child, the item's position among the non-trivia children.
+    /// Built on the first [`Grammar::slot`], not at load.
+    field_index: std::sync::OnceLock<Vec<Vec<FieldAt>>>,
     /// Trivia and `ERROR`, sorted: invisible to bodies.
     skip: Vec<SyntaxKind>,
     /// Node kinds per tag, in id order.
@@ -143,6 +147,15 @@ fn hot_flags(defs: &[KindDef]) -> Vec<u16> {
                 .fold(0u16, |acc, (i, _)| acc | 1 << i)
         })
         .collect()
+}
+
+/// Where a labelled body item is (see [`Grammar::slot`]).
+#[derive(Clone, Debug)]
+struct FieldAt {
+    name: String,
+    item: usize,
+    /// The child position when each item before it and it are `One`.
+    fixed: Option<usize>,
 }
 
 /// One node kind's body as [`crate::ast::assign`] sees it.
@@ -237,15 +250,98 @@ impl Grammar {
     /// The child of `node` in a body item labelled `label` or filling the role field `label` (the
     /// first, for a repeated item or several items of one field: a postfix `operator` after the
     /// operand and a prefix one before it are two items of the field `operator`).
-    /// Found with the routine the generated accessors use, so it agrees with them.
+    /// Found with the routine the generated accessors use, so it agrees with them; an item that
+    /// follows only single required items is read at its fixed child position.
     pub fn slot(&self, node: &SyntaxNode, label: &str) -> Option<SyntaxElement> {
-        let def = self.def(node.kind())?;
+        let at = self.field_at(node.kind(), label)?;
+        if let Some(p) = at.fixed {
+            let mut cur = node.first_child_or_token_by_kind(&|k| !self.is_skipped(k));
+            for _ in 0..p {
+                let mut n = cur?.to_next_sibling_or_token();
+                while n.as_ref().is_some_and(|x| self.is_skipped(x.kind())) {
+                    n = n?.to_next_sibling_or_token();
+                }
+                cur = n;
+            }
+            if let Some(e) = cur.filter(|e| self.accepts(node.kind(), at.item, e.kind())) {
+                return Some(e);
+            }
+        }
+        self.slot_slow(node.kind(), node.children_with_tokens(), label)
+    }
+
+    /// [`Grammar::slot`] on the non-trivia children of `node` already collected (`children`):
+    /// no second walk of the tree.
+    pub fn slot_in(
+        &self,
+        kind: SyntaxKind,
+        children: &[SyntaxElement],
+        label: &str,
+    ) -> Option<SyntaxElement> {
+        let at = self.field_at(kind, label)?;
+        if let Some(p) = at.fixed {
+            let e = children.get(p)?;
+            if e.kind() != SyntaxKind::ERROR && self.accepts(kind, at.item, e.kind()) {
+                return Some(e.clone());
+            }
+        }
+        self.slot_slow(kind, children.iter().cloned(), label)
+    }
+
+    fn field_at(&self, kind: SyntaxKind, label: &str) -> Option<&FieldAt> {
+        self.field_index
+            .get_or_init(|| {
+                self.nodes
+                    .iter()
+                    .map(|d| {
+                        let mut list = Vec::new();
+                        let mut all_one = true;
+                        for (i, item) in d.body.iter().enumerate() {
+                            all_one &= item.cardinality == Cardinality::One;
+                            let fixed = all_one.then_some(i);
+                            for name in [item.label.as_deref(), item.field.as_deref()]
+                                .into_iter()
+                                .flatten()
+                            {
+                                list.push(FieldAt {
+                                    name: name.to_string(),
+                                    item: i,
+                                    fixed,
+                                });
+                            }
+                        }
+                        list
+                    })
+                    .collect()
+            })
+            .get(kind.index() as usize)?
+            .iter()
+            .find(|f| f.name == label)
+    }
+
+    fn accepts(&self, kind: SyntaxKind, item: usize, child: SyntaxKind) -> bool {
+        self.bodies[kind.index() as usize][item]
+            .binary_search(&child)
+            .is_ok()
+    }
+
+    fn is_skipped(&self, kind: SyntaxKind) -> bool {
+        kind == SyntaxKind::ERROR || self.is_trivia(kind)
+    }
+
+    fn slot_slow(
+        &self,
+        kind: SyntaxKind,
+        children: impl Iterator<Item = SyntaxElement>,
+        label: &str,
+    ) -> Option<SyntaxElement> {
+        let def = self.def(kind)?;
         let body = GrammarBody {
             grammar: self,
-            kinds: self.bodies.get(node.kind().index() as usize)?,
+            kinds: self.bodies.get(kind.index() as usize)?,
             body: &def.body,
         };
-        crate::ast::assign(node, body)
+        crate::ast::assign_of(children, body)
             .find(|(i, _)| {
                 let item = &def.body[*i];
                 item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
@@ -260,6 +356,29 @@ impl Grammar {
             Some(kind) => Some(kind),
             None => crate::roles::common_operator_kind(text),
         }
+    }
+
+    /// Every child of `node` in the items labelled `label` (or filling the role field `label`), in
+    /// source order: the arguments of a call whose parentheses are children of the call.
+    pub fn slots(&self, node: &SyntaxNode, label: &str) -> Vec<SyntaxElement> {
+        let Some(def) = self.def(node.kind()) else {
+            return Vec::new();
+        };
+        let Some(kinds) = self.bodies.get(node.kind().index() as usize) else {
+            return Vec::new();
+        };
+        let body = GrammarBody {
+            grammar: self,
+            kinds,
+            body: &def.body,
+        };
+        crate::ast::assign(node, body)
+            .filter(|(i, _)| {
+                let item = &def.body[*i];
+                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+            })
+            .map(|(_, e)| e)
+            .collect()
     }
 
     /// What is wrong with the roles of a grammar that declared `roles`: a node kind with no role

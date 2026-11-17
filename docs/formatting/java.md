@@ -14,7 +14,7 @@ The layout of google-java-format (Google style) in `crates/lang-java/src/format/
 - Indentation is `indent_size` (2); a continuation is two levels, so AOSP style is `indent_size: 4` (no other option is needed). The width is `line_width` (100).
 - Blank lines: the source's blank lines are kept (at most one) between members and statements; one is added around a method, around a type with a body and between the static and the other imports. A class body starts and ends without a blank line, except after a documented first enum constant.
 - A parameter or argument list that does not fit moves below the opening parenthesis (one continuation), then goes one per line; a sole block lambda hugs the call; a `throws` clause moves to its own line when the parameters broke.
-- A method chain of a name and calls fits on one line or breaks before every `.`, except a leading type name or `this` (`prefix_len`); a chain with fewer than two calls breaks as a whole expression.
+- A method chain is core-format's `call_chain` in the `fluent` style (options `member_chain_*` below): it fits on one line or breaks before every `.` with a continuation indent; a leading type name, `this` or a short name and the calls in `member_chain_head_calls` stay on the first line; a chain with fewer than two calls breaks as a whole expression.
 - Binary operators break before the operator, all of one precedence together; a ternary breaks before `?` and `:`; an assignment or a declarator moves its right side below `=` first.
 - A line comment keeps its line: when it follows an operator, `else`, `->`, `=` or a comma, what comes next starts a new line below it (so the output is a fixed point); after `;`, `)`, `]`, `}` or just before a closing bracket it moves to the end of the line without breaking the group.
 
@@ -39,4 +39,10 @@ The preset `java/google` (`extends: [preset:java/google@1]`) sets 2-column inden
 | `indent_style` | `space`, `tab` | `space` | Indent with spaces or tabs. |
 | `final_newline` | bool | `true` | End the file with a newline. |
 | `end_of_line` | `auto`, `lf`, `crlf` | `auto` | Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first line break. |
+| `member_chain_min_calls` | int 1-1000 | `2` | A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style). |
+| `member_chain_keep_accesses` | `never`, `head`, `always` | `head` | In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name). |
+| `member_chain_break_on_block` | `never`, `inner`, `any` | `any` | Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one. |
+| `member_chain_head_calls` | list of words | `[stream]` | Calls that stay on the line of the head of a broken member chain when they are among its first two groups (`list.stream()`). |
+| `member_chain_short_head` | int 0-100 | `4` | A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do. |
+| `member_chain_indent` | int 1-4 | `2` | Levels of indentation of the lines of a broken member chain. |
 <!-- /generated -->

@@ -59,6 +59,11 @@ pub struct MemberChain {
     /// Break at the dots when a group other than the last has a forced break inside it (a call
     /// with a block lambda).
     pub break_on_inner_break: bool,
+    /// The forced break may also be in the head or the last group (a chain that breaks as a whole
+    /// when anything in it breaks).
+    pub inner_break_anywhere: bool,
+    /// Levels of indentation of the broken groups.
+    pub indent: usize,
 }
 
 /// `head.A().B().C()` on one line if it fits, else the head and then one group per line,
@@ -71,6 +76,8 @@ pub fn member_chain(chain: MemberChain) -> Doc {
         min_calls,
         force_break,
         break_on_inner_break,
+        inner_break_anywhere,
+        indent,
     } = chain;
     // A short chain is never broken at the dots, unless a call in the middle has a block lambda.
     let short = calls < min_calls && !force_break;
@@ -87,9 +94,13 @@ pub fn member_chain(chain: MemberChain) -> Doc {
         .map(|g| doc::shared(doc::concat(g)))
         .collect();
     let inner_break = break_on_inner_break
-        && groups
-            .split_last()
-            .is_some_and(|(_, init)| init.iter().any(|g| g.clone().propagate_breaks()));
+        && if inner_break_anywhere && groups.len() >= 2 {
+            head.clone().propagate_breaks() || groups.iter().any(|g| g.clone().propagate_breaks())
+        } else {
+            groups
+                .split_last()
+                .is_some_and(|(_, init)| init.iter().any(|g| g.clone().propagate_breaks()))
+        };
     if short && !inner_break {
         let mut parts = vec![head];
         parts.extend(groups);
@@ -106,7 +117,11 @@ pub fn member_chain(chain: MemberChain) -> Doc {
         tail.push(doc::hardline());
         tail.push(g);
     }
-    let broken = doc::concat(vec![head, doc::indent(doc::concat(tail))]);
+    let mut tail = doc::concat(tail);
+    for _ in 0..indent {
+        tail = doc::indent(tail);
+    }
+    let broken = doc::concat(vec![head, tail]);
     match flat {
         Some(flat) => doc::conditional_group(vec![flat, broken]),
         None => broken,

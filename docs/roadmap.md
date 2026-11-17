@@ -3,6 +3,7 @@
 One line each; none is committed, except the small tasks below.
 
 ## Small tasks
+- Java member chains: 101 files fewer than before the kit (4402 of 5337); closing them needs `this`-head, head-call counting and chain-in-cast policy values. Call arguments (hug rules) wait for the object, array and template roles of R4; the `member_chain_*` option declarations repeat in three `lang.yaml` files and want one shared declaration.
 - Java: generalization step ([architecture/adding-a-language.md](architecture/adding-a-language.md#after-a-language-lands-the-generalization-step)).
 - Java formatter gaps (named in `tests/parity/google-java-format/differences.yaml`, 84.4% identical): re-wrap line comments over the width and write `//x` as `// x`; drop `()` from `@A()` (the safety check compares node kinds, so the token pair needs `#optional`); indent a chain in a ternary condition one level more; AOSP's import groups.
 - Kotlin: generalization step ([architecture/adding-a-language.md](architecture/adding-a-language.md#after-a-language-lands-the-generalization-step)); the `intellij_idea` and `android_studio` code styles as options; `.kts` and Gradle Kotlin DSL checks.
@@ -57,7 +58,7 @@ Committed work too small for a step of its own: what to do and where, one line e
 - Rule-produced layout directives for `#if` branches formatted from other parses (the layout rules run on the file's own parse only); solving `#if` conditions to find symbol sets (`derive_symbol_sets` tries subsets of the condition symbols, at most 16 sets).
 - A rule source that attaches layout directives (pattern `layout:` key, plugin directive output); plugins returning layout documents is deliberately excluded.
 - YAML: re-wrapping long scalars and comments; comments between split properties.
-- Performance levers: green-tree cursor for the formatter instead of rowan red nodes; sharing anchored YAML nodes (`Rc`) for alias-heavy files; first-token index for pattern rules; `Grammar::slot` by a field index resolved when the grammar loads, and by the child position where a field's position is fixed, instead of a label comparison and an ordered walk of the children per call (about 420 instructions per call today, [performance/numbers.md](performance/numbers.md)).
+- Performance levers: green-tree cursor for the formatter instead of rowan red nodes; sharing anchored YAML nodes (`Rc`) for alias-heavy files; first-token index for pattern rules.
 
 ## Extensibility
 - Plugin SDKs for languages other than Rust (the WIT is documented); freezing the plugin API at v1.

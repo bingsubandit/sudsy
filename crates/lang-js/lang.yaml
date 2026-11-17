@@ -23,6 +23,10 @@ options:
       values: ["all", "es5", "none"]
       default: "all"
       doc: "Trailing comma of a list that breaks over several lines: `all` after every list including function parameters and call arguments, `es5` after objects, arrays, destructuring and import/export lists only, `none` never."
+  - member_chain_style: ["grouped"]
+  - member_chain_min_calls: [3]
+  - member_chain_short_head: [2]
+  - member_chain_indent: [1]
   - bracket_spacing: true
   - arrow_parens:
       values: ["always", "avoid"]

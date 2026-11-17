@@ -23,6 +23,10 @@ const SHARED_NAMES: [&str; 8] = [
 fn lit(v: &Value) -> String {
     match v {
         Value::String(s) => format!("{s:?}"),
+        Value::Array(items) => format!(
+            "&[{}]",
+            items.iter().map(lit).collect::<Vec<_>>().join(", ")
+        ),
         other => other.to_string(),
     }
 }
@@ -65,7 +69,12 @@ fn def(entry: &Value) -> Result<(String, String)> {
                     lit(&r[1])
                 )
             } else if m.get("kind").and_then(Value::as_str) == Some("words") {
-                format!("OptionDef::words({name:?}, {doc})")
+                let words = m
+                    .get("default")
+                    .and_then(Value::as_array)
+                    .map(|a| a.iter().map(lit).collect::<Vec<_>>().join(", "))
+                    .unwrap_or_default();
+                format!("OptionDef::words({name:?}, &[{words}], {doc})")
             } else if m.get("kind").and_then(Value::as_str) == Some("word-sets") {
                 format!("OptionDef::word_sets({name:?}, {doc})")
             } else {

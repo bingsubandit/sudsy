@@ -544,7 +544,10 @@ snap!(
 snap!(
     chain_with_block_lambda_in_the_middle,
     "class C { void M() { var h = Create().Configure(w => { w.Use(); }).Build(); var k = Task.Run(() => 1).Wait(); } }",
-    [("member_chain_break_on_block", OptionValue::Bool(true))]
+    [(
+        "member_chain_break_on_block",
+        OptionValue::String("inner".into())
+    )]
 );
 snap!(
     for_header_with_prefix_increment,

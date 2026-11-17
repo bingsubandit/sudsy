@@ -256,7 +256,7 @@ node TSSatisfiesExpression #expression #opaque
 node TSTypeAssertion #expression #opaque
 node TSImportEqualsDeclaration #statement #opaque
 node TSExternalModuleReference #opaque
-node TSNonNullExpression #expression #opaque
+node TSNonNullExpression #expression #unary = operand:#expression operator:#operator
 node Decorator #statement #opaque
 node TSExportAssignment #statement #opaque
 node TSNamespaceExportDeclaration #statement #opaque

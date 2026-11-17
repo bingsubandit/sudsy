@@ -1,6 +1,7 @@
 //! Expressions: operator chains, method chains, lambdas, assignments and initializers.
 
 use super::*;
+use core_format::shapes::{self, ChainPolicy};
 
 pub(super) fn rule(
     cx: &FormatCtx<'_>,
@@ -235,123 +236,19 @@ fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(doc::group(doc::concat(out)))
 }
 
-/// One link of a method chain: `.name(args)` or `.field`.
-struct Link {
-    els: Vec<SyntaxElement>,
-    call: bool,
-}
-
-fn links(cx: &FormatCtx<'_>, node: &SyntaxNode, out: &mut Vec<Link>) -> Vec<SyntaxElement> {
-    let els = flat(cx, node);
-    let mut base = Vec::new();
-    let mut cur: Vec<SyntaxElement> = Vec::new();
-    let mut seen_dot = false;
-    for e in els {
-        if is_tok(&e, ".") && !seen_dot {
-            seen_dot = true;
-            cur.push(e);
-            continue;
-        }
-        if !seen_dot {
-            match &e {
-                SyntaxElement::Node(n)
-                    if matches!(n.kind(), k::METHOD_INVOCATION | k::FIELD_ACCESS) =>
-                {
-                    base = links(cx, n, out);
-                }
-                _ => base.push(e),
-            }
-        } else {
-            cur.push(e);
-        }
-    }
-    if seen_dot {
-        let call = cur.iter().any(|e| e.kind() == k::ARGUMENT_LIST);
-        out.push(Link { els: cur, call });
-    }
-    base
-}
-
+/// `a.b().c()`: the shared member chain (`core_format::shapes::call_chain`) under the
+/// `member_chain_*` options; the arguments in front of the first break go one level deeper.
 fn chain(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let mut out = Vec::new();
-    let base = links(cx, node, &mut out);
-    let simple = matches!(base.as_slice(), [SyntaxElement::Token(_)])
-        || matches!(base.as_slice(), [SyntaxElement::Node(n)] if matches!(n.kind(), k::TYPE_NAME | k::THIS_EXPRESSION | k::SUPER_EXPRESSION));
-    let call_base = !simple
-        && base.last().is_some_and(|e| match e.as_node() {
-            Some(n) if n.kind() == k::OBJECT_CREATION_EXPRESSION => {
-                !n.children().any(|c| c.kind() == k::CLASS_BODY)
-            }
-            _ => true,
-        });
-    let calls = out.iter().filter(|l| l.call).count() + usize::from(call_base);
-    if calls < 2 {
-        let mut all = base;
-        for l in out {
-            all.extend(l.els);
+    struct Hooks<'a, 'b>(&'a FormatCtx<'b>);
+    impl shapes::ChainHooks for Hooks<'_, '_> {
+        fn element(&self, e: &SyntaxElement, in_head: bool) -> Option<R> {
+            Some(match e.as_node() {
+                Some(n) if in_head && n.kind() == k::ARGUMENT_LIST => {
+                    decl::paren_list_extra(self.0, n)
+                }
+                _ => el(self.0, e),
+            })
         }
-        return seq(cx, &all);
     }
-    let keep = prefix_len(&base, &out);
-    let mut head = base;
-    for l in &out[..keep] {
-        head.extend(l.els.iter().cloned());
-    }
-    let mut parts = vec![seq_with(cx, &head, |e| match e.as_node() {
-        Some(n) if e.kind() == k::ARGUMENT_LIST => decl::paren_list_extra(cx, n),
-        _ => el(cx, e),
-    })?];
-    let mut rest = Vec::new();
-    for l in &out[keep..] {
-        rest.push(doc::softline());
-        rest.push(seq(cx, &l.els)?);
-    }
-    parts.push(cont(doc::concat(rest)));
-    Ok(doc::group(doc::concat(parts)))
-}
-
-/// The name of a link (`.name(...)`, `.name`).
-fn link_name(l: &Link) -> String {
-    l.els
-        .iter()
-        .find(|e| matches!(e.kind(), k::METHOD_NAME | k::IDENTIFIER))
-        .map(|e| match e {
-            SyntaxElement::Node(n) => n.text().to_string(),
-            SyntaxElement::Token(t) => t.text().to_string(),
-        })
-        .unwrap_or_default()
-}
-
-/// How many links stay on the line of the base: a type name (`Foo.bar()`, `a.b.Foo.bar()`) and
-/// `this.field` keep the names in front of the first call and that call, `x.stream()` keeps the
-/// `stream()`.
-fn prefix_len(base: &[SyntaxElement], out: &[Link]) -> usize {
-    let upper = |s: &str| s.chars().next().is_some_and(char::is_uppercase);
-    let first_call = out.iter().position(|l| l.call).unwrap_or(out.len());
-    let name = match base {
-        [SyntaxElement::Token(t)] => t.text().to_string(),
-        [SyntaxElement::Node(n)] if matches!(n.kind(), k::TYPE_NAME | k::THIS_EXPRESSION) => {
-            n.text().to_string()
-        }
-        _ => String::new(),
-    };
-    let mut keep = 0;
-    if name.is_empty() {
-        return out
-            .iter()
-            .take(2)
-            .position(|l| link_name(l) == "stream")
-            .map_or(0, |i| i + 1);
-    }
-    if name == "this" {
-        keep = first_call.min(1);
-    } else if upper(&name) || name.len() <= 4 {
-        keep = (first_call + 1).min(out.len());
-    } else if let Some(i) = out[..first_call].iter().position(|l| upper(&link_name(l))) {
-        keep = (first_call + 1).min(out.len()).max(i + 1);
-    }
-    if let Some(i) = out.iter().take(2).position(|l| link_name(l) == "stream") {
-        keep = keep.max(i + 1);
-    }
-    keep
+    shapes::call_chain(cx, node, &ChainPolicy::of(cx.options), &Hooks(cx))
 }

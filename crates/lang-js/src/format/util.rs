@@ -332,20 +332,7 @@ pub(crate) fn reattach_asi(cx: &FormatCtx<'_>, token: Option<SyntaxToken>) -> Do
 
 /// Does printing `d` contain a forced line break (a hard line, a broken group)?
 pub(crate) fn will_break(d: &Doc) -> bool {
-    match d {
-        Doc::HardLine | Doc::BreakParent | Doc::LineStart(_) | Doc::NewlineIfNeeded => true,
-        Doc::Outdent(..) => true,
-        Doc::Shared(s) => s.forced,
-        Doc::Concat(parts) | Doc::Fill(parts) => parts.iter().any(will_break),
-        Doc::Group(g) => g.broken || will_break(&g.contents),
-        Doc::Indent(x)
-        | Doc::Align(_, x)
-        | Doc::Label(_, x)
-        | Doc::IndentIfBreak(_, x)
-        | Doc::LineSuffix(x) => will_break(x),
-        Doc::IfBreak { broken, flat, .. } => will_break(broken) || will_break(flat),
-        _ => false,
-    }
+    d.will_break()
 }
 
 /// `d` on one line: lines become spaces or nothing, groups never break (hard lines stay).

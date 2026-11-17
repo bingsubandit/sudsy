@@ -15,10 +15,11 @@ options:
       values: ["preserve", "never", "multiline"]
       default: "preserve"
       doc: "Trailing comma after the last element of initializers, collection expressions, enums and switch expressions: `preserve` keeps what the source has; `never` removes it; `multiline` adds one when the list is on several lines and removes it otherwise."
-  - member_chain_min_calls:
-      range: [1, 1000]
-      default: 3
-      doc: "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line."
+  - member_chain_min_calls: [3]
+  - member_chain_keep_accesses: ["never"]
+  - member_chain_break_on_block: ["never"]
+  - member_chain_short_head: [4]
+  - member_chain_indent: [1]
   - preprocessor_symbols:
       kind: "words"
       doc: "Conditional compilation symbols (`DEBUG`, `NET8_0`) defined when parsing, which decide the active branch of `#if`. Branches that are inactive under these symbols stay as they are unless `preprocessor_symbol_sets` or `derive_symbol_sets` format them."
@@ -63,12 +64,6 @@ options:
   - indent_nested_binary:
       default: false
       doc: "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`)."
-  - member_chain_keep_accesses:
-      default: false
-      doc: "In a broken member chain a property access stays on the line of the call after it (`.A.B()` is one group) instead of starting a line of its own."
-  - member_chain_break_on_block:
-      default: false
-      doc: "Break a member chain one call per line when a call other than the last has an argument with a block body (a lambda), even if the chain would fit."
   - wrapped_brace_line:
       values: ["creation", "all", "none"]
       default: "creation"

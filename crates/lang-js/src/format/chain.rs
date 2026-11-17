@@ -1,17 +1,16 @@
-//! Member expressions and member chains (`a.b().c().d()`): the chain is cut into groups, printed
-//! on one line when it fits and has few calls, one group per line otherwise (Prettier's
-//! `printMemberChain`).
+//! Member expressions and member chains (`a.b().c().d()`): the chain is core-format's `call_chain`
+//! in the `grouped` style; this module keeps what only
+//! JavaScript knows: parentheses, comments, the argument list and `[expr]`.
 
-use super::ast::{Call, is_literal, is_member, name_of, parent, token_comments, un};
-use super::call::{arguments, is_simple_call_argument, tab_width};
+use super::ast::{Call, is_member, parent, token_comments, un};
+use super::call::arguments;
 use super::parens::{Need, needs_parens};
-use super::util::{R, kids, shape_error, token_of, will_break};
+use super::util::{R, kids, shape_error};
 use crate::generated::kind as k;
-use core_format::doc::{
-    Doc, break_parent, concat, conditional_group, group, hardline, indent, label, lit, softline,
-};
+use core_format::doc::{Doc, concat, group, hardline, indent, softline};
+use core_format::shapes::{self, ChainHooks, ChainPolicy};
 use core_format::{FormatCtx, FormatError, comments};
-use core_syntax::{SyntaxElement, SyntaxNode};
+use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
     match node.kind() {
@@ -100,52 +99,69 @@ fn member(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     ]))
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
-enum Link {
-    Base,
-    Call,
-    /// A member access; `true` for `[0]` or `["a"]` with a literal.
-    Member(bool),
-    NonNull,
+/// What JavaScript prints and judges in a chain.
+struct Hooks<'a> {
+    cx: &'a FormatCtx<'a>,
+    /// The first token of the chain (a comment in front of it belongs to the whole chain).
+    start: Option<SyntaxToken>,
 }
 
-struct Part {
-    node: SyntaxNode,
-    link: Link,
-    doc: Doc,
-    commented: bool,
+impl ChainHooks for Hooks<'_> {
+    fn link(&self, node: &SyntaxNode, last: bool) -> Option<Result<(Doc, bool), FormatError>> {
+        let cx = self.cx;
+        match node.kind() {
+            k::CALL_EXPRESSION => Some(call_link(cx, node, last)),
+            k::COMPUTED_MEMBER_EXPRESSION => Some(lookup(node, cx).map(|d| {
+                let commented = kids(cx, node)
+                    .iter()
+                    .any(|e| e.as_token().is_some_and(|t| token_comments(cx, t)));
+                (d, commented)
+            })),
+            _ => None,
+        }
+    }
+
+    /// Parentheses that are not needed are not part of the chain's text.
+    fn through(&self, paren: &SyntaxNode) -> bool {
+        let inner = un(paren);
+        (inner.kind() == k::CALL_EXPRESSION || is_member(inner.kind()))
+            && needs_parens(self.cx, &inner) == Need::No
+            && !paren_commented(self.cx, paren, &self.start)
+    }
+
+    fn simple_argument(&self, arg: &SyntaxNode) -> bool {
+        super::call::is_simple_call_argument(self.cx, arg, 0)
+    }
+
+    fn statement(&self, chain: &SyntaxNode) -> bool {
+        parent(chain).is_some_and(|p| p.kind() == k::EXPRESSION_STATEMENT)
+    }
 }
 
-fn is_factory(name: &str) -> bool {
-    name.starts_with(|c: char| c.is_ascii_uppercase())
-        || (!name.is_empty() && name.chars().all(|c| c == '$' || c == '_'))
-}
-
-/// `a.b().c()` printed as a chain: the call `call_node` is the last link.
-pub(crate) fn member_chain(cx: &FormatCtx<'_>, call_node: &SyntaxNode, call: &Call) -> R {
-    let mut parts: Vec<Part> = Vec::new();
-    let call_doc = |n: &SyntaxNode, c: &Call| -> Result<(Doc, bool), FormatError> {
-        let mut v = Vec::new();
-        if let Some(o) = &c.optional {
-            v.push(cx.token(o));
-        }
-        if let Some(t) = &c.type_args {
-            v.push(cx.format(t)?);
-        }
-        // A comment after the `)` of a link goes after the link, not inside its arguments.
-        let held = c
-            .close
-            .as_ref()
-            .filter(|t| n != call_node && comments::has_trailing_comment(cx.grammar, t));
-        if let Some(t) = held {
-            cx.hold_trailing(t);
-        }
-        v.push(arguments(cx, n, c)?);
-        if let Some(t) = held {
-            v.push(cx.held_trailing(t));
-        }
-        // A blank line after a call in the source stays.
-        let blank = cx
+/// `?.`, type arguments and arguments of a call link; a comment after the `)` of a link goes after
+/// the link, and a blank line after it stays.
+fn call_link(cx: &FormatCtx<'_>, n: &SyntaxNode, last: bool) -> Result<(Doc, bool), FormatError> {
+    let c = Call::of(cx, n).ok_or_else(|| shape_error("call"))?;
+    let mut v = Vec::new();
+    if let Some(o) = &c.optional {
+        v.push(cx.token(o));
+    }
+    if let Some(t) = &c.type_args {
+        v.push(cx.format(t)?);
+    }
+    let held = c
+        .close
+        .as_ref()
+        .filter(|t| !last && comments::has_trailing_comment(cx.grammar, t));
+    if let Some(t) = held {
+        cx.hold_trailing(t);
+    }
+    v.push(arguments(cx, n, &c)?);
+    if let Some(t) = held {
+        v.push(cx.held_trailing(t));
+    }
+    let blank = !last
+        && cx
             .last_token(n)
             .and_then(|l| l.next_token())
             .map(|mut t| {
@@ -160,99 +176,18 @@ pub(crate) fn member_chain(cx: &FormatCtx<'_>, call_node: &SyntaxNode, call: &Ca
             .is_some_and(|t| {
                 t.kind() == k::DOT && comments::blank_lines_before(cx.grammar, &t) > 0
             });
-        let blank = blank && n != call_node;
-        if blank {
-            v.push(hardline());
-        }
-        // A blank line or a comment after a link expands the chain.
-        Ok((concat(v), blank || held.is_some()))
-    };
-    let (doc, blank) = call_doc(call_node, call)?;
-    parts.push(Part {
-        node: call_node.clone(),
-        link: Link::Call,
-        doc,
-        commented: blank,
-    });
-    let start = cx.first_token(call_node);
-    // The comments in front of the parentheses that go (the chain's own start).
-    let mut dropped_leads = Vec::new();
-    let mut cur_raw = call.callee.clone();
-    loop {
-        let mut cur = un(&cur_raw);
-        // Parentheses that are not needed are not part of the chain's text.
-        if cur_raw != cur && !(matches!(cur.kind(), k::CALL_EXPRESSION) || is_member(cur.kind()))
-            || (cur_raw != cur
-                && (needs_parens(cx, &cur) != Need::No || paren_commented(cx, &cur_raw, &start)))
-        {
-            cur = cur_raw.clone();
-        }
-        let mut p = cur_raw.clone();
-        while p != cur {
-            if let Some(open) = p.first_token() {
-                dropped_leads.push(cx.leading_comments_doc(&open));
-            }
-            match p.first_child() {
-                Some(c) => p = c,
-                None => break,
-            }
-        }
-        match cur.kind() {
-            k::CALL_EXPRESSION => {
-                let Some(c) = Call::of(cx, &cur) else { break };
-                let callee_kind = un(&c.callee).kind();
-                if !(is_member(callee_kind) || callee_kind == k::CALL_EXPRESSION) {
-                    break;
-                }
-                let (doc, blank) = call_doc(&cur, &c)?;
-                parts.push(Part {
-                    node: cur.clone(),
-                    link: Link::Call,
-                    doc,
-                    commented: blank,
-                });
-                cur_raw = c.callee;
-            }
-            kind if is_member(kind) => {
-                let Some(object) = cur.first_child() else {
-                    break;
-                };
-                let literal = kind == k::COMPUTED_MEMBER_EXPRESSION
-                    && cur.last_child().is_some_and(|p| is_literal(un(&p).kind()));
-                let commented = kids(cx, &cur)
-                    .iter()
-                    .any(|e| token_of(e).is_some_and(|t| token_comments(cx, t)));
-                parts.push(Part {
-                    node: cur.clone(),
-                    link: Link::Member(literal),
-                    doc: lookup(&cur, cx)?,
-                    commented,
-                });
-                cur_raw = object;
-            }
-            k::TS_NON_NULL_EXPRESSION => {
-                let Some(inner) = cur.first_child() else {
-                    break;
-                };
-                let bang = kids(cx, &cur)
-                    .iter()
-                    .rev()
-                    .find_map(|e| token_of(e).map(|t| cx.token(t)))
-                    .unwrap_or_else(|| lit("!"));
-                parts.push(Part {
-                    node: cur.clone(),
-                    link: Link::NonNull,
-                    doc: bang,
-                    commented: false,
-                });
-                cur_raw = inner;
-            }
-            _ => break,
-        }
+    if blank {
+        v.push(hardline());
     }
+    Ok((concat(v), blank || held.is_some()))
+}
+
+/// `a.b().c()` printed as a chain: the call `call_node` is the last link.
+pub(crate) fn member_chain(cx: &FormatCtx<'_>, call_node: &SyntaxNode) -> R {
+    let start = cx.first_token(call_node);
     // Comments on lines of their own in front of the chain go before it: their line breaks must not
     // break the chain's group.
-    let lead = start.filter(|t| {
+    let lead = start.clone().filter(|t| {
         !cx.is_held_leading(t)
             && comments::leading_comments(cx.grammar, t)
                 .iter()
@@ -261,19 +196,12 @@ pub(crate) fn member_chain(cx: &FormatCtx<'_>, call_node: &SyntaxNode, call: &Ca
     if let Some(t) = &lead {
         cx.hold_leading(t);
     }
-    dropped_leads.push(cx.format(&cur_raw)?);
-    // (a comment after the call that starts the chain, `f() // c` then `.g()`, is the call's, as
-    // Prettier's `printedNodes[1]`)
-    let base_commented =
-        un(&cur_raw).kind() == k::CALL_EXPRESSION && super::ast::has_trailing_comment(cx, &cur_raw);
-    parts.push(Part {
-        doc: concat(dropped_leads),
-        node: un(&cur_raw),
-        link: Link::Base,
-        commented: base_commented,
-    });
-    parts.reverse();
-    let chain = print_chain(cx, call_node, parts);
+    let chain = shapes::call_chain(
+        cx,
+        call_node,
+        &ChainPolicy::of(cx.options),
+        &Hooks { cx, start },
+    )?;
     Ok(match &lead {
         Some(t) => concat(vec![cx.held_leading(t), chain]),
         None => chain,
@@ -281,11 +209,7 @@ pub(crate) fn member_chain(cx: &FormatCtx<'_>, call_node: &SyntaxNode, call: &Ca
 }
 
 /// A comment in front of the chain's first token belongs to the whole chain, not to the parentheses.
-fn paren_commented(
-    cx: &FormatCtx<'_>,
-    n: &SyntaxNode,
-    start: &Option<core_syntax::SyntaxToken>,
-) -> bool {
+fn paren_commented(cx: &FormatCtx<'_>, n: &SyntaxNode, start: &Option<SyntaxToken>) -> bool {
     let mut cur = n.clone();
     while cur.kind() == k::PARENTHESIZED_EXPRESSION {
         if cur
@@ -309,156 +233,7 @@ fn paren_commented(
     false
 }
 
-fn print_chain(cx: &FormatCtx<'_>, call_node: &SyntaxNode, parts: Vec<Part>) -> Doc {
-    let n = parts.len();
-    let is_memberish = |i: usize| matches!(parts[i].link, Link::Member(_));
-    let mut groups: Vec<Vec<usize>> = Vec::new();
-    let mut cur = vec![0];
-    let mut i = 1;
-    while i < n
-        && matches!(
-            parts[i].link,
-            Link::NonNull | Link::Call | Link::Member(true)
-        )
-    {
-        cur.push(i);
-        i += 1;
-    }
-    if parts[0].node.kind() != k::CALL_EXPRESSION && parts[0].node.kind() != k::IMPORT_EXPRESSION {
-        while i + 1 < n && is_memberish(i) && is_memberish(i + 1) {
-            cur.push(i);
-            i += 1;
-        }
-    }
-    groups.push(std::mem::take(&mut cur));
-    let mut seen_call = false;
-    while i < n {
-        if seen_call && is_memberish(i) {
-            if parts[i].link == Link::Member(true) && !parts[i].commented {
-                cur.push(i);
-                i += 1;
-                continue;
-            }
-            groups.push(std::mem::take(&mut cur));
-            seen_call = false;
-        }
-        if parts[i].link == Link::Call {
-            seen_call = true;
-        }
-        cur.push(i);
-        i += 1;
-    }
-    if !cur.is_empty() {
-        groups.push(cur);
-    }
-
-    let tab = tab_width(cx);
-    let in_statement = parent(call_node).is_some_and(|p| p.kind() == k::EXPRESSION_STATEMENT);
-    let should_not_wrap = || {
-        let has_computed = groups
-            .get(1)
-            .and_then(|g| g.first())
-            .is_some_and(|&i| parts[i].link == Link::Member(true));
-        if groups[0].len() == 1 {
-            let first = &parts[groups[0][0]].node;
-            return first.kind() == k::THIS_EXPRESSION
-                || (first.kind() == k::IDENTIFIER_REFERENCE
-                    && name_of(cx, first).is_some_and(|name| {
-                        is_factory(&name)
-                            || (in_statement && name.chars().count() <= tab)
-                            || has_computed
-                    }));
-        }
-        let last = &parts[*groups[0].last().unwrap_or(&0)];
-        matches!(last.link, Link::Member(_))
-            && last.node.kind() == k::STATIC_MEMBER_EXPRESSION
-            && last
-                .node
-                .last_child()
-                .and_then(|p| name_of(cx, &p))
-                .is_some_and(|name| is_factory(&name) || has_computed)
-    };
-    let should_merge = groups.len() >= 2 && !groups[1].is_empty() && should_not_wrap();
-
-    let print_group = |g: &Vec<usize>| concat(g.iter().map(|&i| parts[i].doc.clone()).collect());
-    let printed: Vec<Doc> = groups.iter().map(print_group).collect();
-    let one_line = concat(printed.clone());
-    let cutoff = if should_merge { 3 } else { 2 };
-    let flat: Vec<usize> = groups.iter().flatten().copied().collect();
-    let node_has_comment = flat[..flat.len().saturating_sub(1)]
-        .iter()
-        .any(|&i| parts[i].commented)
-        || groups
-            .get(cutoff)
-            .and_then(|g| g.first())
-            .is_some_and(|&i| parts[i].commented);
-    if groups.len() <= cutoff
-        && !node_has_comment
-        && !printed[cutoff.min(printed.len())..].iter().any(will_break)
-    {
-        return group(one_line);
-    }
-    let rest_from = if should_merge { 2 } else { 1 };
-    let expanded = concat(vec![
-        printed[0].clone(),
-        if should_merge {
-            printed[1].clone()
-        } else {
-            Doc::Nil
-        },
-        if groups.len() > rest_from {
-            indent(concat(vec![
-                hardline(),
-                core_format::doc::join(&hardline(), printed[rest_from..].iter().cloned()),
-            ]))
-        } else {
-            Doc::Nil
-        },
-    ]);
-    // A call at the head (`request(app).get()`) counts as one.
-    let calls: Vec<&Part> = parts
-        .iter()
-        .filter(|p| p.link == Link::Call || p.node.kind() == k::CALL_EXPRESSION)
-        .collect();
-    let complex_args = calls.len() > 2
-        && calls.iter().any(|p| {
-            Call::of(cx, &p.node)
-                .is_some_and(|c| !c.args.iter().all(|a| is_simple_call_argument(cx, &a.0, 0)))
-        });
-    let last_group_breaks_and_calls_have_functions = || {
-        let last = &parts[*flat.last().unwrap_or(&0)];
-        last.link == Link::Call
-            && will_break(printed.last().unwrap_or(&Doc::Nil))
-            && calls[..calls.len() - 1].iter().any(|p| {
-                Call::of(cx, &p.node).is_some_and(|c| {
-                    c.args
-                        .iter()
-                        .any(|a| super::ast::is_function(un(&a.0).kind()))
-                })
-            })
-    };
-    if node_has_comment {
-        return group(expanded);
-    }
-    let result = if complex_args
-        || printed[..printed.len() - 1].iter().any(will_break)
-        || last_group_breaks_and_calls_have_functions()
-    {
-        group(expanded)
-    } else {
-        concat(vec![
-            if will_break(&one_line) {
-                break_parent()
-            } else {
-                Doc::Nil
-            },
-            conditional_group(vec![one_line, expanded]),
-        ])
-    };
-    label("member-chain", result)
-}
-
 /// Does the call print as a chain that may break (more than a short `a.b.c()` access)?
 pub(crate) fn is_chain_label(doc: &Doc) -> bool {
-    doc.label_of() == Some("member-chain")
+    doc.label_of() == Some(shapes::CHAIN_LABEL)
 }
