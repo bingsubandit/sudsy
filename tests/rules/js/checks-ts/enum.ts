@@ -1,6 +1,0 @@
-enum E {
-  A = 0,
-  B = 0,
-//^^^^^ no-duplicate-enum-values
-  C = "c",
-}

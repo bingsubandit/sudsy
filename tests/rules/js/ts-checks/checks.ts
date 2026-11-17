@@ -1,5 +1,6 @@
 a?.b!;
 ^^^^^ no-non-null-asserted-optional-chain
+^^^^^^ no-unused-expressions
 (a?.b)!;
 ^^^^^^^ no-non-null-asserted-optional-chain
 ^^^^^^^^ no-unused-expressions
