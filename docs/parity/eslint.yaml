@@ -222,7 +222,7 @@ entries:
   padded-blocks: formatter
   padding-line-between-statements: wontfix deprecated formatting rule with no formatter equivalent
   prefer-arrow-callback: planned
-  prefer-const: rule prefer-const | the options keep their defaults (`destructuring: any`, `ignoreReadBeforeAssign: false`)
+  prefer-const: "rule prefer-const | the options keep their defaults (`destructuring: any`, `ignoreReadBeforeAssign: false`)"
   prefer-destructuring: planned
   prefer-exponentiation-operator: planned
   prefer-named-capture-group: planned
