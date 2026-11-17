@@ -37,6 +37,7 @@
     "onLanguage:powershell",
     "onLanguage:protobuf",
     "onLanguage:python",
+    "onLanguage:ruby",
     "onLanguage:shell",
     "onLanguage:sql",
     "onLanguage:toml",

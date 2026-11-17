@@ -1,0 +1,11 @@
+extensions: [rb, rake, gemspec, ru]
+file-names: [Gemfile, Rakefile]
+formatter: RubyFormatter
+parse: adapter::parse_file
+deps: [ruby-prism-sys]
+options:
+  - indent_size: 2
+  - line_width: 120
+  - indent_style
+  - final_newline: true
+  - end_of_line

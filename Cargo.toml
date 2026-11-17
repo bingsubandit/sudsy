@@ -65,6 +65,8 @@ mago-syntax-core = "=1.59.0"
 mago-allocator = "=1.59.0"
 mago-database = "=1.59.0"
 mago-span = "=1.59.0"
+# ruby-prism-sys (Ruby): the Prism parser (C, vendored), parsing only; its lex and visit callbacks are declared by hand in the adapter (the Rust crate ruby-prism is not used). Pinned exactly, bumped by hand only (dependabot ignores it).
+ruby-prism-sys = "=2.1.0"
 strum = "0.28"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 # generated:grammars
@@ -99,6 +101,7 @@ lang-js = { path = "crates/lang-js" }
 lang-python = { path = "crates/lang-python" }
 lang-java = { path = "crates/lang-java" }
 lang-php = { path = "crates/lang-php" }
+lang-ruby = { path = "crates/lang-ruby" }
 lang-sql = { path = "crates/lang-sql" }
 lang-kotlin = { path = "crates/lang-kotlin" }
 lang-css = { path = "crates/lang-css" }

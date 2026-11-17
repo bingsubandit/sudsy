@@ -31,6 +31,7 @@ const NESTED: &[(&str, &str, &str, &str, &str)] = &[
     ("powershell", "a.ps1", "$x = ", "(", ")"),
     ("protobuf", "a.proto", "message A ", "{", "}"),
     ("python", "a.py", "x = ", "(", ")"),
+    ("ruby", "a.rb", "x = ", "(", ")"),
     ("shell", "a.sh", "x=", "$(", ")"),
     ("sql", "a.sql", "select ", "(", ")"),
     ("toml", "a.toml", "a = ", "[", "]"),

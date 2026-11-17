@@ -18,6 +18,7 @@ lang-python.workspace = true
 lang-json.workspace = true
 lang-java.workspace = true
 lang-php.workspace = true
+lang-ruby.workspace = true
 lang-sql.workspace = true
 lang-kotlin.workspace = true
 lang-css.workspace = true

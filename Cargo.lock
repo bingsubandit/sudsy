@@ -2033,6 +2033,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-ruby"
+version = "0.1.0-rc.1"
+dependencies = [
+ "core-config",
+ "core-format",
+ "core-rules",
+ "core-syntax",
+ "insta",
+ "provider-api",
+ "ruby-prism-sys",
+ "stacker",
+]
+
+[[package]]
 name = "lang-shell"
 version = "0.1.0-rc.1"
 dependencies = [
@@ -2141,6 +2155,7 @@ dependencies = [
  "lang-powershell",
  "lang-protobuf",
  "lang-python",
+ "lang-ruby",
  "lang-shell",
  "lang-sql",
  "lang-toml",
@@ -3421,6 +3436,16 @@ dependencies = [
  "hashbrown 0.14.5",
  "rustc-hash 1.1.0",
  "text-size",
+]
+
+[[package]]
+name = "ruby-prism-sys"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3e6b1801eb164c6b2c6c6cd42e55bf61d73f973719f675370769ce0295ba7f1"
+dependencies = [
+ "cc",
+ "shlex",
 ]
 
 [[package]]

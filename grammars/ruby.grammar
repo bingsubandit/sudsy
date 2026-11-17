@@ -1,0 +1,301 @@
+// Ruby (.rb .rake .gemspec .ru, Gemfile, Rakefile), parsed by Prism (ruby-prism 2.1.0) behind crates/lang-ruby/src/adapter.rs. Node kinds are Prism's node types, named as Prism names them; tokens are Prism's lexer tokens grouped (every keyword is `Keyword`, every operator without a token of its own `Operator`).
+// A heredoc's node covers its opener (`<<~EOS`); the body and the closing label are one `HeredocBody` token after the line of the opener (outside the nodes of the line), so the code inside the `#{}` of a heredoc is not in the tree. Text after `__END__` is one `Data` token.
+// Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are written for the kinds that have a role; `#opaque` kinds have none.
+
+language ruby 25 "Ruby"
+roles
+comments line "#"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+// `# ...` and `=begin` ... `=end`.
+token Comment #trivia #comment
+// The body and closing label of a heredoc, from the line after its opener; a child of whatever node is open there.
+token HeredocBody #optional
+
+// Every keyword, `nil`, `true`, `false` and `self` included.
+token Keyword #operator #word
+token Identifier #word
+token Constant #word
+// `@a`, `@@a`, `$a`, `$1`, `$&`
+token Variable #word
+// `a:` in a hash or a keyword argument
+token Label #word
+token Number #number
+// The text of a string, symbol, regexp or command, and `?a`.
+token StringContent #word
+// `"`, `'`, `:`, `:"`, `%w[`, `/`, `` ` `` and their closers.
+token StringDelim
+token HeredocStart
+// `#{` (and `#` before `@a`) and the `}` that ends it.
+token InterpOpen
+token InterpClose
+
+token LParen "(" #punctuation
+token RParen ")" #punctuation
+token LBracket "[" #punctuation
+token RBracket "]" #punctuation
+token LBrace "{" #punctuation
+token RBrace "}" #punctuation
+token Comma "," #punctuation #separator
+token Semi ";" #punctuation #separator
+// `.` and `&.`
+token Dot #punctuation #accessor
+token ColonColon "::" #punctuation #accessor
+token Colon ":" #punctuation
+token Arrow "->" #punctuation
+token DoubleArrow "=>" #punctuation
+token Assign "=" #punctuation #operator
+token Question "?" #punctuation
+token Pipe "|" #punctuation #operator #word
+// Every other operator, `+=`, `..` and method-name operators (`[]=`, `<=>`) included.
+token Operator #operator #word
+// What follows `__END__`.
+token Data
+
+token Eof
+token Unknown #error
+
+
+node AliasGlobalVariableNode #expression #opaque
+node AliasMethodNode #expression #opaque
+node AlternationPatternNode #expression #pattern #opaque
+node AndNode #expression #binary =
+    left:#expression operator:#operator right:#expression
+node ArgumentsNode #opaque
+node ArrayNode #expression #literal =
+    StringDelim? LBracket? value:#expression* RBracket? StringDelim?
+node ArrayPatternNode #expression #pattern #opaque
+node AssocNode #entry #opaque
+node AssocSplatNode #entry #opaque
+node BackReferenceReadNode #expression #reference =
+    name:#word
+node BeginNode #expression #body #opaque
+node BlockArgumentNode #block-arg #opaque
+node BlockLocalVariableNode #opaque
+node BlockNode #block-arg #function #scope =
+    Keyword? LBrace? parameters:#parameters? body:#body? RBrace? Keyword?
+node BlockParameterNode #parameter #declaration =
+    Operator name:Identifier?
+node BlockParametersNode #parameters #parameter-list =
+    LParen? Pipe? parameters:ParametersNode? BlockLocalVariableNode* RParen? Pipe?
+node BreakNode #expression #opaque
+node CallAndWriteNode #expression #opaque
+node CallNode #expression #call #member-access =
+    #operator? LParen? object:#expression? #accessor? callee=member:#word? LParen? LBracket? Assign? arguments:ArgumentsNode? BlockArgumentNode? RParen? RBracket? block:BlockNode?
+node CallOperatorWriteNode #expression #opaque
+node CallOrWriteNode #expression #opaque
+node CallTargetNode #expression #target #opaque
+node CapturePatternNode #expression #pattern #opaque
+node CaseMatchNode #expression #opaque
+node CaseNode #expression #opaque
+node ClassNode #expression #declaration #type-declaration #scope =
+    Keyword name:#expression Operator? superclass:#expression? members:#body? Keyword
+node ClassVariableAndWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node ClassVariableOperatorWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node ClassVariableOrWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node ClassVariableReadNode #expression #reference =
+    name:#word
+node ClassVariableTargetNode #expression #target #opaque
+node ClassVariableWriteNode #expression #assignment =
+    left:#word operator:Assign right:#expression
+node ConstantAndWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node ConstantOperatorWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node ConstantOrWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node ConstantPathAndWriteNode #expression #assignment =
+    left:#expression operator:#operator right:#expression
+node ConstantPathNode #expression #member-access =
+    object:#expression? ColonColon member:Constant
+node ConstantPathOperatorWriteNode #expression #assignment =
+    left:#expression operator:#operator right:#expression
+node ConstantPathOrWriteNode #expression #assignment =
+    left:#expression operator:#operator right:#expression
+node ConstantPathTargetNode #expression #target #member-access =
+    object:#expression? ColonColon member:Constant
+node ConstantPathWriteNode #expression #assignment =
+    left:#expression operator:Assign right:#expression
+node ConstantReadNode #expression #reference =
+    name:#word
+node ConstantTargetNode #expression #target #opaque
+node ConstantWriteNode #expression #assignment =
+    left:#word operator:Assign right:#expression
+node DefNode #expression #declaration #function #scope =
+    Keyword receiver:#expression? #accessor? name:#word LParen? parameters:ParametersNode? RParen? Assign? body:#body? Keyword?
+node DefinedNode #expression #unary =
+    operator:Keyword LParen? operand:#expression RParen?
+node ElseNode #opaque
+node EmbeddedStatementsNode #expression #opaque
+node EmbeddedVariableNode #expression #opaque
+node EnsureNode #opaque
+node ErrorRecoveryNode #opaque
+node FalseNode #expression #literal =
+    value:Keyword
+node FindPatternNode #expression #pattern #opaque
+node FlipFlopNode #expression #binary =
+    left:#expression? operator:#operator right:#expression?
+node FloatNode #expression #literal =
+    Operator? value:Number
+node ForNode #expression #opaque
+node ForwardingArgumentsNode #expression #opaque
+node ForwardingParameterNode #parameter #opaque
+node ForwardingSuperNode #expression #call =
+    callee:Keyword arguments:ArgumentsNode? block:BlockNode?
+node GlobalVariableAndWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node GlobalVariableOperatorWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node GlobalVariableOrWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node GlobalVariableReadNode #expression #reference =
+    name:#word
+node GlobalVariableTargetNode #expression #target #opaque
+node GlobalVariableWriteNode #expression #assignment =
+    left:#word operator:Assign right:#expression
+node HashNode #expression #literal =
+    LBrace value:#entry* RBrace
+node HashPatternNode #expression #pattern #opaque
+node IfNode #expression #opaque
+node ImaginaryNode #expression #literal =
+    value:#expression
+node ImplicitRestNode #expression #target #parameter #opaque
+node InNode #opaque
+node IndexAndWriteNode #expression #opaque
+node IndexOperatorWriteNode #expression #opaque
+node IndexOrWriteNode #expression #opaque
+node IndexTargetNode #expression #target #opaque
+node InstanceVariableAndWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node InstanceVariableOperatorWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node InstanceVariableOrWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node InstanceVariableReadNode #expression #reference =
+    name:#word
+node InstanceVariableTargetNode #expression #target #opaque
+node InstanceVariableWriteNode #expression #assignment =
+    left:#word operator:Assign right:#expression
+node IntegerNode #expression #literal =
+    Operator? value:Number
+node InterpolatedMatchLastLineNode #expression #literal =
+    HeredocStart? StringDelim? value:#expression* StringDelim?
+node InterpolatedRegularExpressionNode #expression #literal =
+    HeredocStart? StringDelim? value:#expression* StringDelim?
+node InterpolatedStringNode #expression #literal =
+    HeredocStart? StringDelim? value:#expression* StringDelim?
+node InterpolatedSymbolNode #expression #literal =
+    HeredocStart? StringDelim? value:#expression* StringDelim?
+node InterpolatedXStringNode #expression #literal =
+    HeredocStart? StringDelim? value:#expression* StringDelim?
+node ItLocalVariableReadNode #expression #reference =
+    name:#word
+node ItParametersNode #parameters #opaque
+node KeywordHashNode #expression #literal =
+    value:#entry*
+node KeywordRestParameterNode #parameter #declaration =
+    Operator name:Identifier?
+node LambdaNode #expression #function #scope =
+    Arrow parameters:BlockParametersNode? Keyword? LBrace? body:#body? RBrace? Keyword?
+node LocalVariableAndWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node LocalVariableOperatorWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node LocalVariableOrWriteNode #expression #assignment =
+    left:#word operator:#operator right:#expression
+node LocalVariableReadNode #expression #reference =
+    name:#word
+node LocalVariableTargetNode #expression #target #opaque
+node LocalVariableWriteNode #expression #assignment =
+    left:#word operator:Assign right:#expression
+node MatchLastLineNode #expression #literal =
+    StringDelim? value:#word* StringDelim?
+node MatchPredicateNode #expression #opaque
+node MatchRequiredNode #expression #opaque
+node MatchWriteNode #expression #opaque
+node ModuleNode #expression #declaration #type-declaration #scope =
+    Keyword name:#expression members:#body? Keyword
+node MultiTargetNode #expression #target #parameter #opaque
+node MultiWriteNode #expression #assignment =
+    LParen? left:#expression* RParen? operator:Assign right:#expression
+node NextNode #expression #opaque
+node NilNode #expression #literal =
+    value:Keyword
+node NoBlockParameterNode #parameter #opaque
+node NoKeywordsParameterNode #parameter #opaque
+node NumberedParametersNode #parameters #opaque
+node NumberedReferenceReadNode #expression #reference =
+    name:#word
+node OptionalKeywordParameterNode #parameter #declaration =
+    name:Label value:#expression
+node OptionalParameterNode #parameter #declaration =
+    name:Identifier Assign value:#expression
+node OrNode #expression #binary =
+    left:#expression operator:#operator right:#expression
+node ParametersNode #parameter-list =
+    parameters:#parameter*
+node ParenthesesNode #expression #opaque
+node PinnedExpressionNode #expression #pattern #opaque
+node PinnedVariableNode #expression #pattern #opaque
+node PostExecutionNode #expression #opaque
+node PreExecutionNode #expression #opaque
+node ProgramNode #scope =
+    statements:StatementsNode? Keyword? Data? Eof
+node RangeNode #expression #binary =
+    left:#expression? operator:#operator right:#expression?
+node RationalNode #expression #literal =
+    Operator? value:Number
+node RedoNode #expression #opaque
+node RegularExpressionNode #expression #literal =
+    StringDelim? value:#word* StringDelim?
+node RequiredKeywordParameterNode #parameter #declaration =
+    name:Label
+node RequiredParameterNode #parameter #declaration =
+    name:Identifier
+node RescueModifierNode #expression #opaque
+node RescueNode #opaque
+node RestParameterNode #parameter #declaration =
+    Operator name:Identifier?
+node RetryNode #expression #opaque
+node ReturnNode #expression #opaque
+node SelfNode #expression #reference =
+    name:Keyword
+node ShareableConstantNode #expression #opaque
+node SingletonClassNode #expression #type-declaration #scope =
+    Keyword Operator expression:#expression members:#body? Keyword
+node SourceEncodingNode #expression #literal =
+    value:Keyword
+node SourceFileNode #expression #literal =
+    value:Keyword
+node SourceLineNode #expression #literal =
+    value:Keyword
+node SplatNode #expression #opaque
+node StatementsNode #body #block =
+    items:#expression*
+node StringNode #expression #literal =
+    HeredocStart? StringDelim? value:StringContent* StringDelim?
+node SuperNode #expression #call =
+    callee:Keyword LParen? arguments:ArgumentsNode? BlockArgumentNode? RParen? block:BlockNode?
+node SymbolNode #expression #literal =
+    StringDelim? value:#word* StringDelim?
+node TrueNode #expression #literal =
+    value:Keyword
+node UndefNode #expression #opaque
+node UnlessNode #expression #opaque
+node UntilNode #expression #opaque
+node WhenNode #opaque
+node WhileNode #expression #opaque
+node XStringNode #expression #literal =
+    StringDelim? value:#word* StringDelim?
+node YieldNode #expression #call =
+    callee:Keyword LParen? arguments:ArgumentsNode? RParen?

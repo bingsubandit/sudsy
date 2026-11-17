@@ -46,6 +46,7 @@ pub fn providers() -> Vec<Box<dyn LanguageProvider>> {
         Box::new(lang_powershell::provider()),
         Box::new(lang_protobuf::provider()),
         Box::new(lang_python::provider()),
+        Box::new(lang_ruby::provider()),
         Box::new(lang_shell::provider()),
         Box::new(lang_sql::provider()),
         Box::new(lang_toml::provider()),
