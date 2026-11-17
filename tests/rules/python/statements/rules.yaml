@@ -4,8 +4,7 @@ yield-outside-function: warn
 default-except-not-last: warn
 invalid-print-syntax: warn
 forward-annotation-syntax-error: warn
-multi-value-repeated-key-literal: warn
-multi-value-repeated-key-variable: warn
+no-duplicate-keys: warn
 late-future-import: warn
 module-import-not-at-top-of-file: warn
 multiple-statements-on-one-line-colon: warn

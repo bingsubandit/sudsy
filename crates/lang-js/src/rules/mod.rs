@@ -30,41 +30,20 @@ const FAMILY: Family = Family {
 };
 
 pub(super) use core_rules::checks::{Entry, NodeCheck as Check};
+pub(crate) use dupes::key_name;
 
 const CHECKS: &[Entry] = &[
-    ("dupe-keys", &[k::OBJECT_EXPRESSION], dupes::dupe_keys),
     (
         "dupe-class-members",
         &[k::CLASS_BODY],
         dupes::dupe_class_members,
     ),
-    (
-        "duplicate-case",
-        &[k::SWITCH_STATEMENT],
-        dupes::duplicate_case,
-    ),
     ("dupe-else-if", &[k::IF_STATEMENT], dupes::dupe_else_if),
-    (
-        "empty",
-        &[k::BLOCK_STATEMENT, k::SWITCH_STATEMENT],
-        misc::empty,
-    ),
     ("useless-catch", &[k::TRY_STATEMENT], misc::useless_catch),
     (
         "self-assign",
         &[k::ASSIGNMENT_EXPRESSION],
         misc::self_assign,
-    ),
-    (
-        "cond-assign",
-        &[
-            k::IF_STATEMENT,
-            k::WHILE_STATEMENT,
-            k::DO_WHILE_STATEMENT,
-            k::FOR_STATEMENT,
-            k::CONDITIONAL_EXPRESSION,
-        ],
-        misc::cond_assign,
     ),
     (
         "use-isnan",

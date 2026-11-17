@@ -121,6 +121,11 @@ impl LazyRules {
         };
         self.all.get_or_init(|| {
             let mut rules = self.own.to_vec();
+            // A language with `#switch` and `#case` nodes gets `no-duplicate-case`; the others never list it.
+            let g = files.parser.grammar();
+            if !g.nodes_with_tag("switch").is_empty() && !g.nodes_with_tag("case").is_empty() {
+                rules.push(&core_rules::cases::NoDuplicateCase);
+            }
             for source in files.sources {
                 let loaded = core_patterns::load_lazy(
                     source,

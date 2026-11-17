@@ -287,16 +287,6 @@ const CHECKS: &[Entry] = &[
         format::invalid_escape,
     ),
     (
-        "multi-value-repeated-key-literal",
-        &[k::EXPR_DICT],
-        format::dict_keys,
-    ),
-    (
-        "multi-value-repeated-key-variable",
-        &[k::EXPR_DICT],
-        format::dict_keys,
-    ),
-    (
         "invalid-syntax",
         &[k::PARAMETERS, k::ARGUMENTS, k::STMT_NONLOCAL, k::EXPR_AWAIT],
         stmts::invalid_syntax,

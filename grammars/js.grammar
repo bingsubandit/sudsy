@@ -81,7 +81,7 @@ node LabelIdentifier #opaque
 node ThisExpression #expression #opaque
 node ArrayExpression #expression #opaque
 node Elision #opaque
-node ObjectExpression #expression #opaque
+node ObjectExpression #expression #opaque #mapping
 node ObjectProperty #key-value = Keyword? Identifier? Operator? LBracket? key:#expression RBracket? Colon? value:#expression?
 node TemplateLiteral #expression #opaque
 node TaggedTemplateExpression #expression #opaque
