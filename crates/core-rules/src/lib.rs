@@ -9,6 +9,7 @@
 //! * [`layout`]: layout directives that rules attach for the formatter.
 //! * `suppress`: `sudsy-disable-next-line`, `-disable-line`, `-disable`/`-enable`, `-disable-file`.
 
+pub mod bug;
 pub mod checks;
 pub mod comments;
 pub mod configure;

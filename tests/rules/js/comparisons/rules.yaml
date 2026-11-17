@@ -5,3 +5,5 @@ no-compare-neg-zero: warn
 no-self-assign: warn
 no-cond-assign: warn
 no-extra-boolean-cast: warn
+no-self-compare: warn
+no-constant-condition: warn

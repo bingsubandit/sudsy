@@ -14,3 +14,5 @@ if (!a in b) {} if (!a instanceof B) {} if ((!a) in b) {} if (!(a in b)) {}
 if (x === -0) {} if (-0 < x) {} if (x === +0) {} if (x + -0 === y) {}
 //  ^^^^^^^^ no-compare-neg-zero
 //                   ^^^^^^ no-compare-neg-zero
+if (a === a || a.b < a.b || a == b) {}
+if (0) {} while (true) {} var t = "x" ? 1 : 2;

@@ -10,41 +10,6 @@ fn first_and_last(n: &SyntaxNode) -> Option<(SyntaxNode, SyntaxNode)> {
     Some((n.children().next()?, n.children().last()?))
 }
 
-/// An empty block, or a `switch` with no case.
-pub(super) fn empty(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if n.kind() == k::SWITCH_STATEMENT {
-        if !n.children().any(|s| s.kind() == k::SWITCH_CASE) {
-            let brace = n.children_with_tokens().find(|e| e.kind() == k::L_BRACE);
-            c.hit(
-                ctx,
-                brace.map_or_else(|| span(ctx, n), |b| b.text_range()),
-                "switch",
-            );
-        }
-        return;
-    }
-    let commented = n.children_with_tokens().any(|e| {
-        e.as_token()
-            .is_some_and(|t| matches!(t.kind(), k::LINE_COMMENT | k::BLOCK_COMMENT))
-    });
-    // Only comments between the braces count, not one after the block.
-    let inside = commented && {
-        let end = n
-            .children_with_tokens()
-            .find(|e| e.kind() == k::R_BRACE)
-            .map(|e| e.text_range().start());
-        n.children_with_tokens()
-            .filter(|e| {
-                e.as_token()
-                    .is_some_and(|t| matches!(t.kind(), k::LINE_COMMENT | k::BLOCK_COMMENT))
-            })
-            .any(|e| end.is_none_or(|end| e.text_range().start() < end))
-    };
-    if n.children().next().is_none() && !inside {
-        c.hit(ctx, span(ctx, n), "block");
-    }
-}
-
 /// `catch (e) { throw e; }`
 pub(super) fn useless_catch(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let g = ctx.file.grammar;
@@ -195,23 +160,6 @@ pub(super) fn self_assign(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) 
     pairs(&left, &right, g, ctx.file.text, &mut found);
     for value in found {
         c.hit(ctx, span(ctx, &value), &code_text(&value, g));
-    }
-}
-
-/// An assignment as the condition, unless it is in its own parentheses.
-pub(super) fn cond_assign(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    // ESLint wants the parentheses of an `if` or `while` doubled; of a `?:`, a pair is not enough.
-    let Some(test) = test_of(n) else {
-        return;
-    };
-    let test =
-        if n.kind() == k::CONDITIONAL_EXPRESSION && test.kind() == k::PARENTHESIZED_EXPRESSION {
-            test.children().next().unwrap_or(test)
-        } else {
-            test
-        };
-    if test.kind() == k::ASSIGNMENT_EXPRESSION {
-        c.hit(ctx, span(ctx, &test), "");
     }
 }
 

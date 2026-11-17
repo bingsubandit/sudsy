@@ -1,32 +1,20 @@
 id: none-comparison
+family: bug
+params: { check: compare-literal, values: None, operators: "== !=" }
 message: compare to None with `is` or `is not`, not `==` or `!=`
 description: A comparison of a value to `None` with `==` or `!=`.
 example: 'x == None'
 severity: warn
 category: suspicious
-rule:
-  any:
-    - { pattern: '$A == None' }
-    - { pattern: '$A != None' }
-    - { pattern: 'None == $A' }
-    - { pattern: 'None != $A' }
 ---
 id: true-false-comparison
+family: bug
+params: { check: compare-literal, values: True False, operators: "== !=" }
 message: test the truth of the value instead of comparing it to True or False
 description: A comparison of a value to `True` or `False` with `==` or `!=`.
 example: 'x == True'
 severity: off
 category: style
-rule:
-  any:
-    - { pattern: '$A == True' }
-    - { pattern: '$A != True' }
-    - { pattern: '$A == False' }
-    - { pattern: '$A != False' }
-    - { pattern: 'True == $A' }
-    - { pattern: 'True != $A' }
-    - { pattern: 'False == $A' }
-    - { pattern: 'False != $A' }
 ---
 id: not-in-test
 message: use `not in`, not `not ... in`
@@ -49,3 +37,12 @@ rule:
   any:
     - { pattern: 'not $A is $B' }
     - { pattern: 'not ($A is $B)' }
+---
+id: comparison-with-itself
+family: bug
+params: { check: self-compare }
+message: the value is compared with itself
+description: A comparison whose two sides are the same code (Ruff PLR0124).
+example: 'x == x'
+severity: off
+category: suspicious

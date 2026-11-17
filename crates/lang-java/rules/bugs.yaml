@@ -1,12 +1,12 @@
 id: empty-catch-block
+family: bug
+params: { check: empty-catch }
 message: 'the catch block is empty: handle the exception or say in a comment why it is ignored'
 description: >-
   A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock).
 example: 'try { f(); } catch (Exception e) { }'
 severity: warn
 category: suspicious
-rule: { kind: CatchClause, child: { kind: Block, regex: '^\{\s*\}$' } }
-report-on: first-token
 ---
 id: string-literal-equality
 message: 'strings are compared with `equals`, not `==` or `!=`'
@@ -21,15 +21,14 @@ rule:
   regex: '^(?:[^|&]*[=!]=\s*"(?:[^"\\]|\\.)*"|"(?:[^"\\]|\\.)*"\s*[=!]=[^|&]*)$'
 ---
 id: boolean-literal-comparison
+family: bug
+params: { check: compare-literal, values: true false, operators: "== !=" }
 message: 'comparing with a boolean literal is redundant: use the expression itself or `!`'
 description: >-
   `x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression).
 example: 'if (done == true) {}'
 severity: warn
 category: cleanup
-rule:
-  kind: BinaryExpression
-  regex: '^(?:[^|&]*[=!]=\s*(?:true|false)|(?:true|false)\s*[=!]=[^|&]*)$'
 ---
 id: equals-hash-code
 message: 'the class defines `equals(Object)` but not `hashCode()`'

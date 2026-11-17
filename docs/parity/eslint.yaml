@@ -94,7 +94,7 @@ entries:
   no-console: planned
   no-const-assign: rule no-const-assign
   no-constant-binary-expression: planned
-  no-constant-condition: planned
+  no-constant-condition: rule no-constant-condition
   no-constructor-return: planned
   no-continue: planned
   no-control-regex: planned
@@ -172,7 +172,7 @@ entries:
   no-return-await: wontfix deprecated upstream
   no-script-url: planned
   no-self-assign: rule no-self-assign | the `props` option is always on; only identifiers and static member chains are compared
-  no-self-compare: planned
+  no-self-compare: rule no-self-compare
   no-sequences: planned
   no-setter-return: planned
   no-shadow: "rule no-shadow | the options keep their defaults (`builtinGlobals` off, `hoist` functions, `allow` empty, `ignoreOnInitialization` off)"

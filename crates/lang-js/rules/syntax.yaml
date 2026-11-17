@@ -91,14 +91,12 @@ rule:
     - { pattern: '!$A instanceof $B' }
 ---
 id: no-compare-neg-zero
+family: bug
+params: { check: compare-literal, values: "-0", operators: "< > <= >= == != === !==" }
 message: "Do not compare against -0."
 description: "`x === -0` is true for `0` too; use `Object.is(x, -0)`."
 example: "if (x === -0) {}   # reported"
 category: suspicious
-rule:
-  kind: BinaryExpression
-  child: { pattern: '-0' }
-  regex: '^(-0\s*([<>]=?|[!=]==?)|(?s:.*)([<>]=?|[!=]==?)\s*-0$)'
 ---
 id: no-prototype-builtins
 message: "Do not access Object.prototype method directly from an object."

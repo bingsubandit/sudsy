@@ -1,8 +1,8 @@
 id: no-dupe-keys
-family: check
-params: { check: dupe-keys }
+family: bug
+params: { check: duplicate-keys }
 message: "Duplicate key '{name}'."
-description: A key that appears twice in one object literal (a getter and a setter may share one).
+description: A key that appears twice in one object literal; accessors, and computed keys that are not literals, are not compared.
 example: "var o = { a: 1, a: 2 };   # the second a is reported"
 category: suspicious
 ---
@@ -16,8 +16,8 @@ severity: error
 category: suspicious
 ---
 id: no-duplicate-case
-family: check
-params: { check: duplicate-case }
+family: bug
+params: { check: duplicate-cases }
 message: "Duplicate case label."
 description: Two `case` clauses of one `switch` with the same test.
 example: "switch (a) { case 1: break; case 1: break; }   # the second case is reported"
@@ -32,10 +32,10 @@ example: "if (a) {} else if (a) {}   # the second a is reported"
 category: suspicious
 ---
 id: no-empty
-family: check
-params: { check: empty }
+family: bug
+params: { check: empty-block }
 message: "Empty {name} statement."
-description: A block with no statement and no comment, or a `switch` with no case.
+description: A block with no statement and no comment under an `if`, loop, `try` or `catch`, or a `switch` with no case.
 example: "if (a) {}   # reported"
 severity: off
 category: suspicious
@@ -58,7 +58,7 @@ example: "a = a;   # reported"
 category: suspicious
 ---
 id: no-cond-assign
-family: check
+family: bug
 params: { check: cond-assign }
 message: "Expected a conditional expression and instead saw an assignment."
 description: An assignment as the condition of `if`, `while`, `do`, `for` or `?:` that is not in parentheses of its own.
@@ -239,3 +239,21 @@ description: "Overloads of one function or method (or call and construct signatu
 example: "interface I { a(): void; b(): void; a(x: number): void }   # the last a is reported"
 severity: off
 category: style
+---
+id: no-self-compare
+family: bug
+params: { check: self-compare }
+message: "Comparing to itself is potentially pointless."
+description: "A comparison whose two sides are the same code (`a === a`, `x.y < x.y`)."
+example: "if (a === a) {}   # reported"
+severity: off
+category: suspicious
+---
+id: no-constant-condition
+family: bug
+params: { check: constant-condition }
+message: "Unexpected constant condition."
+description: "A literal as the condition of `if`, `?:` or a loop (`while (true)` and `while (1)` are allowed)."
+example: "if (0) {}   # reported"
+severity: off
+category: suspicious

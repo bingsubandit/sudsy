@@ -517,7 +517,7 @@ entries:
   PLE2514: planned
   PLE2515: planned
   PLE4703: deferred | preview rule
-  PLR0124: planned
+  PLR0124: rule comparison-with-itself
   PLR0133: planned
   PLR0202: deferred | preview rule
   PLR0203: deferred | preview rule

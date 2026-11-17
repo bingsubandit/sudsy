@@ -7,10 +7,13 @@ use core_syntax::{SyntaxKind, SyntaxNode, TextRange};
 
 pub static RULES: &[&dyn Rule] = &[];
 
-pub static FAMILIES: &[Family] = &[Family {
-    name: "check",
-    build,
-}];
+pub static FAMILIES: &[Family] = &[
+    Family {
+        name: "check",
+        build,
+    },
+    core_rules::bug::FAMILY,
+];
 
 /// A rule that reports the findings of one check of `analysis` (`params: { check: <name> }`);
 /// `{name}` in the message is the name the finding carries.
