@@ -92,7 +92,12 @@ pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
             Some(x) if src[i..].starts_with(x) => (T::Semi, i + x.len()),
             _ => token(src, i, d, &mut left_open),
         };
-        if d == Dialect::Mysql && kind == T::Word && src[i..end].eq_ignore_ascii_case("delimiter") {
+        // A word ends where the custom delimiter starts (`t$$$` with delimiter `$$$`).
+        let end = match (delim, kind) {
+            (Some(x), T::Word) => src[i + 1..end].find(x).map_or(end, |p| i + 1 + p),
+            _ => end,
+        };
+        if d == Dialect::Mysql && kind == T::Word && stmt_start == out.len() && src[i..end].eq_ignore_ascii_case("delimiter") {
             let rest = &src[end..end + rest_line_end(&src[end..])];
             let skip = rest.len() - rest.trim_start_matches([' ', '\t']).len();
             let word = rest[skip..].split_whitespace().next().unwrap_or("");
@@ -377,7 +382,7 @@ fn number(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
         }
     }
     // A word that starts with digits (`1abc`) is one word.
-    if src[j..].chars().next().is_some_and(is_word_start) {
+    if b[i] != b'.' && src[j..].chars().next().is_some_and(is_word_start) {
         return word(src, i, ' ', d, open);
     }
     (T::Number, j)
