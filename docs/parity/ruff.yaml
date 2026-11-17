@@ -517,8 +517,8 @@ entries:
   PLE2514: planned
   PLE2515: planned
   PLE4703: deferred | preview rule
-  PLR0124: planned
-  PLR0133: planned
+  PLR0124: rule no-self-compare
+  PLR0133: rule no-constant-comparison
   PLR0202: deferred | preview rule
   PLR0203: deferred | preview rule
   PLR0206: planned

@@ -55,6 +55,13 @@ constraints:
   CALL: { in-option: banned }
 ```
 
+## Roles
+A rule written on roles (the tags of `core_syntax::roles`, see [../architecture/syntax-tree.md](../architecture/syntax-tree.md)) runs on every grammar that has them; a rule whose `role` no node of the language has is not loaded. `crates/core-patterns/shared/*.yaml` are such rules (`no-self-compare`, `no-constant-condition`, `no-constant-comparison`, `no-assignment-in-condition`, `no-empty-block`), included in the pattern files of every grammar that declares `roles`; the ids of ESLint, ruff, Checkstyle and PHPCS are rows of the parity catalogs.
+- `role: <name or list>`: the node has one of these roles (starts the rule like `kind`).
+- `operator: <kind or list>`: the node's `operator` field is an operator of that kind (`equality`, `comparison`, ... `Grammar::operator_kind`).
+- `fields: { <field>: <rule> }`: each role field holds the rule; a token field matches by `regex`, `role` and the combinators. A field is captured under its name (`report-on: $condition`). A node with the tag `parens` (Java `if`) has the parentheses of its fields looked through once.
+- `same: [a, b]`: the two fields have the same tokens. `empty: true`: no node and no comment before the closing bracket. `inner: <rule>`: the node looked through parentheses and wrappers holds the rule.
+
 ## Tokens
 `rule` matches nodes; `token:` makes a rule report children instead: each own child of the matched node (a direct child, token or node) that has one of the listed kinds and satisfies `regex` / `not-regex` (on its text) is a diagnostic at that child, with the rule's `message`. `needs: "chars"` skips a node whose text has none of the characters (cheaper than a `regex` on the node). `skip-first: <kind>` leaves out the first own child of that kind (a command's name). `token` needs a `message` and goes without `layout`; `report-on`, `fix`, `fix-on` work per reported child (default span and fix target: the child). A hit captures `$0` (the child) and the named groups of `regex` (`(?<NAME>...)` is `$NAME`), usable in `message`, `fix`, `report-on` and `fix-on`. `deep: true` reads every descendant of the matched node instead of its own children (a rule on `Document` that looks at every comment). A `regex` / `not-regex` here and in `constraints` may hold `${NAME}`, a capture of the rule (written escaped; see Templates), and is built for each match.
 

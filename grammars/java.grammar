@@ -92,7 +92,7 @@ node CreatedClassType #child #opaque = #child*
 node DefaultValue #child #opaque = #child*
 node DimExpr #child #opaque = #child*
 node Dimension #child #opaque = #child*
-node DoStatement #child #statement #loop = Keyword body:#statement Keyword condition:ParenthesizedExpression Semi?
+node DoStatement #child #statement #loop #parens = Keyword body:#statement Keyword condition:ParenthesizedExpression Semi?
 node ElementValueArrayInitializer #child #opaque = #child*
 node ElementValuePair #child #opaque = #child*
 node EnhancedForStatement #child #statement #scope #loop = Keyword ForSpec body:#statement
@@ -117,7 +117,7 @@ node FormalParameter #child #parameter #opaque = #child*
 node FormalParameters #child #parameter-list = LParen parameters:#parameter* RParen
 node GenericType #child #type #opaque = #child*
 node Guard #child #opaque = #child*
-node IfStatement #child #statement #conditional = Keyword condition:ParenthesizedExpression then:#statement Keyword? else:#statement?
+node IfStatement #child #statement #conditional #parens = Keyword condition:ParenthesizedExpression then:#statement Keyword? else:#statement?
 node ImportDeclaration #child #opaque = #child*
 node InferredLocalType #child #opaque = #child*
 node InferredParameters #child #parameter-list = LParen? parameters:Identifier* RParen?
@@ -200,6 +200,6 @@ node UnitBeforeFirstMethod #child #opaque = #child*
 node UnnamedCompilationUnit #child #opaque = #child*
 node UpdateExpression #child #expression #unary = prefix=operator:#operator? operand:#expression? operand_token=operand:#operand? postfix=operator:#operator?
 node VariableDeclarator #child #declaration = name:Identifier Dimension* Assign? init:#expression? init_token=init:#operand?
-node WhileStatement #child #statement #loop = Keyword condition:ParenthesizedExpression body:#statement
+node WhileStatement #child #statement #loop #parens = Keyword condition:ParenthesizedExpression body:#statement
 node Wildcard #child #type #opaque = #child*
 node YieldStatement #child #statement #opaque = #child*

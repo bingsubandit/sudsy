@@ -254,7 +254,7 @@ fn rules_lists_and_explains() {
         "ambiguous-booleans",
         "document-start",
         "max-line-length",
-        "no-empty-catch",
+        "no-empty-block",
         "async-suffix",
         "using-order",
     ] {

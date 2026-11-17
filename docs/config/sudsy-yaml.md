@@ -15,7 +15,7 @@ csharp:                      # also json:, yaml:, toml:
   format: { line_width: 120, brace_newline: all, preprocessor_symbols: [DEBUG] }
   lint:
     rules:
-      no-empty-catch: error
+      no-empty-block: error
       team/no-direct-datetime: { level: error, options: { allowed_in: ["**/SystemClock.cs"] } }
   semantics: { does_not_return: ["MyApp.Log.Fatal"], pure: ["MyApp.Money.Add"] }
 overrides:
@@ -63,5 +63,5 @@ What lints by default is each rule's own default level (`sudsy rules` and the De
 | PowerShell | Security and bug rules (plain-text passwords, `Invoke-Expression`, WMI cmdlets, misleading backtick, `$null` on the right). Off: aliases, verbs, `Write-Host`, globals, empty catch |
 | GitHub Actions | actionlint's errors and `script-injection`. |
 | GraphQL, HCL, Makefile, XML, INI, EditorConfig, gitignore | Invalid documents or deprecated syntax (`unique-*-name`, `deprecated-interpolation`, `timestamp-expanded`, `no-duplicate-include`, unknown or invalid EditorConfig properties, ignored `.gitignore` patterns). Off: naming, anonymous operations, empty sections, duplicate or redundant patterns |
-| C# | `no-empty-catch`, and at `analysis: deep` `unused-private-member`. Off: `async-suffix` (naming), documentation and layout rules, `unreachable-code`, `unused-variable` (the compiler reports them) |
+| C# | `no-empty-block`, and at `analysis: deep` `unused-private-member`. Off: `async-suffix` (naming), documentation and layout rules, `unreachable-code`, `unused-variable` (the compiler reports them) |
 | Protobuf | `enum-first-value-zero` (proto3 and editions; proto2 only with its `proto2` option). Off: buf's style rules, see `preset:protobuf/buf-standard` |

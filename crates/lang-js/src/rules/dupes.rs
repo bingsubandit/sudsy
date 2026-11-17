@@ -3,12 +3,11 @@
 use super::{Check, code_text, has_own, operator, span, test_of, un};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
-use core_rules::unique::Repeats;
 use core_syntax::{SyntaxKind, SyntaxNode, TextRange};
 use std::collections::HashMap;
 
 /// The statically known name of a property key node, as ESLint's `getStaticPropertyName`.
-pub(super) fn key_name(key: &SyntaxNode, text: &str) -> Option<String> {
+pub(crate) fn key_name(key: &SyntaxNode, text: &str) -> Option<String> {
     let range = key.text_range();
     let raw = text[usize::from(range.start())..usize::from(range.end())].trim();
     match key.kind() {
@@ -82,10 +81,6 @@ fn members(
     }
 }
 
-pub(super) fn dupe_keys(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    members(c, n, ctx, &[k::OBJECT_PROPERTY], false);
-}
-
 pub(super) fn dupe_class_members(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     members(
         c,
@@ -94,27 +89,6 @@ pub(super) fn dupe_class_members(c: &Check, n: &SyntaxNode, ctx: &mut RuleContex
         &[k::METHOD_DEFINITION, k::PROPERTY_DEFINITION],
         true,
     );
-}
-
-pub(super) fn duplicate_case(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let g = ctx.file.grammar;
-    let mut seen = Repeats::default();
-    for case in n.children().filter(|s| s.kind() == k::SWITCH_CASE) {
-        if has_own(&case, g, "default") {
-            continue;
-        }
-        let Some(test) = case.children().next() else {
-            continue;
-        };
-        let range = span(ctx, &case);
-        seen.check(
-            ctx,
-            code_text(&test, g),
-            range,
-            || c.message.clone(),
-            "first case",
-        );
-    }
 }
 
 /// The operands of `node` joined by `op` (`||` or `&&`), parentheses looked through.

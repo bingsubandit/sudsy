@@ -12,7 +12,8 @@
 //!   that input alone (options, other rules). A folder of several rules lists them in `rules.yaml`.
 //!
 //! Guards, reported with the failures: every rule of the provider is named by a folder that has
-//! an input or by an annotation (a rule cannot be silently untested); no two inputs are the same
+//! an input or by an annotation (a rule cannot be silently untested; the shared role rules of
+//! `core-patterns/shared` are exempt, their fixtures are per language where the grammar has the case); no two inputs are the same
 //! text with the same rules; no input is longer than [`MAX_LINES`].
 //!
 //! `SUDSY_BLESS=1` rewrites the annotations and the `.fixed`/`.unsafe` files from what the rules
@@ -58,8 +59,13 @@ pub fn rule_fixtures_dialects(provider: &dyn LanguageProvider, dialects: &[&dyn 
     let root = fixture_root(provider.language());
     assert!(count > 0, "no rule fixtures under {}", root.display());
     let inherited = provider.base_rules();
+    let shared = shared_ids();
     for rule in provider.rules() {
-        if inherited.iter().any(|r| r.meta().id == rule.meta().id) {
+        // A shared rule is one definition; a language whose grammar cannot produce one of its
+        // cases (no assignment in a condition) has nothing to show for it.
+        if inherited.iter().any(|r| r.meta().id == rule.meta().id)
+            || shared.contains(&rule.meta().id.to_string())
+        {
             continue;
         }
         let id = rule.meta().id;
@@ -171,6 +177,15 @@ pub fn examples(provider: &dyn LanguageProvider) -> Vec<Example> {
         }
     }
     out
+}
+
+/// The ids of the shared role rules (`crates/core-patterns/shared/<id>.yaml`).
+fn shared_ids() -> Vec<String> {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../core-patterns/shared");
+    sorted(&dir)
+        .iter()
+        .filter_map(|p| Some(p.file_stem()?.to_string_lossy().into_owned()))
+        .collect()
 }
 
 fn fixture_root(language: &str) -> PathBuf {

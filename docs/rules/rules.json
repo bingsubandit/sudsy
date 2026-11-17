@@ -184,6 +184,45 @@
       ]
     },
     {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "Two arms of one `switch` (or `match`, `when`, `case`) have the same test; the second arm can never run. ESLint `no-duplicate-case`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) { case 1: break; case 1: break; case \"x\": break; case 'x': break; case b + 1: break; case b+1: break; default: }\nif (a) {} else if (b) {} else if (a) {}\nif (a || b) {} else if (a) {} else if (b && c) {}\nif (a && b) {} else if (a) {} else if (b && a) {}\nif (a) { if (a) {} } else if (c) {} else { if (c) {} }\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 29,
+            "length": 14,
+            "line": 1
+          },
+          {
+            "column": 97,
+            "length": 16,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-duplicate-case",
+      "languages": [
+        "all"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-duplicate-case",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
       "category": "correctness",
       "default_level": "error",
       "description": "A mapping has the same key twice (after decoding escapes and quotes); parsers disagree on which value wins.",
@@ -7908,60 +7947,6 @@
     },
     {
       "category": "suspicious",
-      "default_level": "off",
-      "description": "An assignment as the condition of `if`, `while`, `do`, `for` or `?:` that is not in parentheses of its own.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 5,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 38,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 61,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 76,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 10,
-            "length": 5,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-cond-assign",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-cond-assign",
-          "partial": true,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
       "default_level": "error",
       "description": "A `const` variable that is assigned to again (the initializer is not).",
       "example": {
@@ -8181,163 +8166,6 @@
         {
           "id": "no-dupe-else-if",
           "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A key that appears twice in one object literal (a getter and a setter may share one).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "var o = { a: 1, a: 2, \"b\": 1, b: 2, 1: 1, 1.0: 2, [c]: 1, [c]: 2, [\"d\"]: 1, d: 2 };\nvar p = { get g() { return 1; }, set g(v) {}, h: 1, get h() { return 1; }, ...s, ...s };\nvar q = { a, a, m() {}, m() {} };\nclass A { a() {} a() {} static b() {} b() {} get c() { return 1; } set c(v) {} d = 1; d = 2; [\"e\"]() {} e() {} }\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 17,
-            "length": 1,
-            "line": 1
-          },
-          {
-            "column": 31,
-            "length": 1,
-            "line": 1
-          },
-          {
-            "column": 43,
-            "length": 3,
-            "line": 1
-          },
-          {
-            "column": 77,
-            "length": 1,
-            "line": 1
-          },
-          {
-            "column": 57,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 14,
-            "length": 1,
-            "line": 3
-          },
-          {
-            "column": 25,
-            "length": 1,
-            "line": 3
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-dupe-keys",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-dupe-keys",
-          "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "Two `case` clauses of one `switch` with the same test.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "switch (a) { case 1: break; case 1: break; case \"x\": break; case 'x': break; case b + 1: break; case b+1: break; default: }\nif (a) {} else if (b) {} else if (a) {}\nif (a || b) {} else if (a) {} else if (b && c) {}\nif (a && b) {} else if (a) {} else if (b && a) {}\nif (a) { if (a) {} } else if (c) {} else { if (c) {} }\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 29,
-            "length": 14,
-            "line": 1
-          },
-          {
-            "column": 97,
-            "length": 16,
-            "line": 1
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-duplicate-case",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-duplicate-case",
-          "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A block with no statement and no comment, or a `switch` with no case.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "if (a) {} else { /* kept */ }\ntry { f(); } catch (e) {} finally {}\ntry { f(); } catch (e) { throw e; }\ntry { f(); } catch (e) { throw e; } finally { g(); }\ntry { f(); } catch (e) { throw g; }\nswitch (a) {}\nfunction f() {}\nvar g = () => {};\nfor (;;) {}\nclass K { static {} }\nvar {} = o, [] = p, [,] = q, { a: {} } = r;\n({} = o);\nvar x = [1, , 2, ,], y = [[], [,]];\nvar r = /a[]/, s = /[]]/, t = /[^]/, u = /\\[]/, v = /[\\]]/, w = new RegExp(\"[]\");\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 8,
-            "length": 2,
-            "line": 1
-          },
-          {
-            "column": 24,
-            "length": 2,
-            "line": 2
-          },
-          {
-            "column": 35,
-            "length": 2,
-            "line": 2
-          },
-          {
-            "column": 12,
-            "length": 1,
-            "line": 6
-          },
-          {
-            "column": 10,
-            "length": 2,
-            "line": 9
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-empty",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-empty",
-          "partial": true,
           "tool": "eslint"
         }
       ]
@@ -22630,6 +22458,25 @@
       ]
     },
     {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "The condition of an `if`, ternary or loop is an assignment not wrapped in parentheses of its own (ESLint no-cond-assign, PHPCS Generic.CodeAnalysis.AssignmentInCondition). Python's `:=` is the idiom and is left alone.",
+      "fix": null,
+      "id": "no-assignment-in-condition",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
       "category": "style",
       "default_level": "off",
       "description": "A comment between the head of an `if`, `else`, `while`, `do`, `for`, `foreach`, `lock`, `try`, `catch`, `finally`, `switch`, `checked` or `unchecked` and its `{`. Put it inside the block or above the statement.",
@@ -22662,6 +22509,44 @@
           "tool": "StyleCop"
         }
       ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression).",
+      "fix": null,
+      "id": "no-constant-comparison",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and `while (1)` are the usual endless loop and are left alone.",
+      "fix": null,
+      "id": "no-constant-condition",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
     },
     {
       "category": "style",
@@ -22960,6 +22845,24 @@
     {
       "category": "suspicious",
       "default_level": "warn",
+      "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch` or `finally`; an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).",
+      "fix": null,
+      "id": "no-empty-block",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
       "description": "A catch block with no statements and no comment swallows the exception silently.",
       "example": {
         "config": null,
@@ -23193,6 +23096,25 @@
           "tool": "StyleCop"
         }
       ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "An equality or comparison whose two sides are the same tokens, without a call: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too.",
+      "fix": null,
+      "id": "no-self-compare",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
     },
     {
       "category": "style",

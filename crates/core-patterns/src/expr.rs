@@ -6,10 +6,28 @@ use crate::matcher::{Capture, Captures, Pattern, SnippetParser};
 use crate::metavar::Meta;
 use core_rules::tree::TraversalCache;
 use core_rules::{Opt, OptionDecl, Re, RuleOptions};
-use core_syntax::{Grammar, SyntaxKind, SyntaxNode};
+use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
 use serde::Deserialize;
 use std::cell::Cell;
+use std::collections::BTreeMap;
 use std::path::Path;
+
+/// One name or a list of them.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Names {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl Names {
+    pub fn list(&self) -> Vec<String> {
+        match self {
+            Names::One(n) => vec![n.clone()],
+            Names::Many(l) => l.clone(),
+        }
+    }
+}
 
 /// The rule as written in the file.
 #[derive(Debug, Default, Deserialize)]
@@ -36,6 +54,21 @@ pub struct Spec {
     pub all: Option<Vec<Spec>>,
     pub any: Option<Vec<Spec>>,
     pub not: Option<Box<Spec>>,
+    /// The node has one of these roles (tags of `core_syntax::roles`); a rule written on roles runs
+    /// on every grammar that has them.
+    pub role: Option<Names>,
+    /// The `operator` field of the node is an operator of one of these kinds
+    /// (`Grammar::operator_kind`: `equality`, `comparison`, ...).
+    pub operator: Option<Names>,
+    /// Each named role field of the node holds this rule (an element: a token matches by
+    /// `regex`, `role`, `any`, `all`, `not`).
+    pub fields: Option<BTreeMap<String, Spec>>,
+    /// The two named fields have the same tokens.
+    pub same: Option<Vec<String>>,
+    /// The node holds no node and no comment before its closing bracket.
+    pub empty: Option<bool>,
+    /// The node, looked through parentheses and single-child wrappers, holds this rule.
+    pub inner: Option<Box<Spec>>,
 }
 
 /// What an expression is evaluated against.
@@ -79,6 +112,78 @@ pub enum Expr {
     All(Vec<Expr>),
     Any(Vec<Expr>),
     Not(Box<Expr>),
+    Role(Vec<String>, Vec<SyntaxKind>),
+    Operator(Vec<String>),
+    Fields(Vec<(String, Expr)>),
+    Same(String, String),
+    Empty,
+    Inner(Box<Expr>),
+}
+
+/// The element under parentheses and wrappers that hold nothing else (a Kotlin `Condition`), at
+/// most `layers` deep; a node of parentheses around one token gives the token (Java `(true)`).
+fn unwrap(e: &SyntaxElement, g: &Grammar, layers: usize) -> SyntaxElement {
+    let mut cur = e.clone();
+    for _ in 0..layers {
+        let SyntaxElement::Node(n) = &cur else {
+            break;
+        };
+        let plain =
+            |t: &core_syntax::SyntaxToken| g.is_trivia(t.kind()) || matches!(t.text(), "(" | ")");
+        let mut kids = n.children();
+        let next = match (kids.next(), kids.next()) {
+            (Some(only), None)
+                if n.children_with_tokens()
+                    .filter_map(|e| e.into_token())
+                    .all(|t| plain(&t)) =>
+            {
+                SyntaxElement::Node(only)
+            }
+            (None, _)
+                if n.children_with_tokens()
+                    .filter_map(|e| e.into_token())
+                    .any(|t| t.text() == "(") =>
+            {
+                let mut rest = n
+                    .children_with_tokens()
+                    .filter_map(|e| e.into_token())
+                    .filter(|t| !plain(t));
+                match (rest.next(), rest.next()) {
+                    (Some(t), None) => SyntaxElement::Token(t),
+                    _ => break,
+                }
+            }
+            _ => break,
+        };
+        cur = next;
+    }
+    cur
+}
+
+/// No node inside and no comment before the last token (a closing bracket).
+fn is_empty(node: &SyntaxNode, g: &Grammar) -> bool {
+    if node.children().any(|c| !g.has_tag(c.kind(), "trivia")) {
+        return false;
+    }
+    let end = node
+        .children_with_tokens()
+        .filter_map(|e| e.into_token())
+        .filter(|t| !g.is_trivia(t.kind()))
+        .last()
+        .map(|t| t.text_range().start());
+    !node
+        .children_with_tokens()
+        .filter_map(|e| e.into_token())
+        .any(|t| {
+            g.has_tag(t.kind(), "comment") && end.is_none_or(|end| t.text_range().start() < end)
+        })
+}
+
+fn words(e: &SyntaxElement, g: &Grammar) -> Vec<String> {
+    crate::matcher::tokens(e, g)
+        .iter()
+        .map(|t| t.text().to_string())
+        .collect()
 }
 
 impl Expr {
@@ -150,10 +255,46 @@ impl Expr {
         if let Some(s) = &spec.not {
             all.push(Expr::Not(Box::new(sub(s)?)));
         }
+        if let Some(names) = &spec.role {
+            let names = names.list();
+            let mut kinds = Vec::new();
+            for n in &names {
+                if core_syntax::roles::role(n).is_none() {
+                    return Err(format!("`{n}` is not a role"));
+                }
+                kinds.extend_from_slice(parser.grammar().nodes_with_tag(n));
+            }
+            kinds.sort();
+            kinds.dedup();
+            all.push(Expr::Role(names, kinds));
+        }
+        if let Some(names) = &spec.operator {
+            all.push(Expr::Operator(names.list()));
+        }
+        if let Some(fields) = &spec.fields {
+            let list = fields
+                .iter()
+                .map(|(k, s)| Ok((k.clone(), sub(s)?)))
+                .collect::<Result<_, String>>()?;
+            all.push(Expr::Fields(list));
+        }
+        if let Some(pair) = &spec.same {
+            let [a, b] = pair.as_slice() else {
+                return Err("`same` names two fields".into());
+            };
+            all.push(Expr::Same(a.clone(), b.clone()));
+        }
+        if spec.empty == Some(true) {
+            all.push(Expr::Empty);
+        }
+        if let Some(s) = &spec.inner {
+            all.push(Expr::Inner(Box::new(sub(s)?)));
+        }
         match all.len() {
             0 => Err(
                 "a rule needs at least one of pattern, kind, regex, path, nth, inside, not-inside, \
-                      has, not-has, parent, child, option, all, any, not"
+                      has, not-has, parent, child, option, all, any, not, role, operator, fields, \
+                      same, empty, inner"
                     .into(),
             ),
             1 => Ok(all.remove(0)),
@@ -213,6 +354,67 @@ impl Expr {
             }
             Expr::Any(list) => list.iter().find_map(|e| e.matches(node, cx)),
             Expr::Not(e) => e.matches(node, cx).is_none().then(Captures::new),
+            Expr::Role(_, kinds) => kinds.contains(&node.kind()).then(Captures::new),
+            Expr::Operator(kinds) => {
+                let text = match cx.grammar.slot(node, "operator")? {
+                    SyntaxElement::Token(t) => t.text().to_string(),
+                    SyntaxElement::Node(n) => n.first_token()?.text().to_string(),
+                };
+                let kind = cx.grammar.operator_kind(&text)?;
+                kinds.iter().any(|k| k == kind).then(Captures::new)
+            }
+            Expr::Fields(list) => {
+                let mut found = Captures::new();
+                for (label, e) in list {
+                    let mut slot = cx.grammar.slot(node, label)?;
+                    // Java's `if (c)`: the parentheses belong to the statement.
+                    if cx.grammar.has_tag(node.kind(), "parens") {
+                        slot = unwrap(&slot, cx.grammar, 1);
+                    }
+                    e.matches_element(&slot, cx)?;
+                    let range = match &slot {
+                        SyntaxElement::Node(n) => {
+                            core_rules::tree::significant_range(n, cx.grammar)
+                        }
+                        SyntaxElement::Token(t) => t.text_range(),
+                    };
+                    found.insert(label.clone(), Capture::of_range(range));
+                }
+                Some(found)
+            }
+            Expr::Same(a, b) => {
+                let a = words(&cx.grammar.slot(node, a)?, cx.grammar);
+                let b = words(&cx.grammar.slot(node, b)?, cx.grammar);
+                (!a.is_empty() && a == b).then(Captures::new)
+            }
+            Expr::Empty => is_empty(node, cx.grammar).then(Captures::new),
+            Expr::Inner(e) => e.matches_element(
+                &unwrap(&SyntaxElement::Node(node.clone()), cx.grammar, usize::MAX),
+                cx,
+            ),
+        }
+    }
+
+    /// Like [`Expr::matches`] for a child that may be a token: a token satisfies `regex` (its
+    /// text), `role` (a token tagged with it) and the combinators, nothing else.
+    pub fn matches_element(&self, e: &SyntaxElement, cx: &Ctx<'_>) -> Option<Captures> {
+        let SyntaxElement::Token(t) = e else {
+            return self.matches(e.as_node()?, cx);
+        };
+        match self {
+            Expr::Regex(re, _) => re.is_match(t.text()).then(Captures::new),
+            Expr::Role(names, _) => names
+                .iter()
+                .any(|n| cx.grammar.has_tag(t.kind(), n))
+                .then(Captures::new),
+            Expr::All(list) => list.iter().try_fold(Captures::new(), |mut c, x| {
+                c.extend(x.matches_element(e, cx)?);
+                Some(c)
+            }),
+            Expr::Any(list) => list.iter().find_map(|x| x.matches_element(e, cx)),
+            Expr::Not(x) => x.matches_element(e, cx).is_none().then(Captures::new),
+            Expr::Inner(x) => x.matches_element(&unwrap(e, cx.grammar, usize::MAX), cx),
+            _ => None,
         }
     }
 
@@ -223,10 +425,17 @@ impl Expr {
             Expr::Pattern(p) => p.metas().iter().any(|m| m.multi),
             Expr::Inside(_) | Expr::Has(_) => true,
             Expr::All(list) | Expr::Any(list) => list.iter().any(Expr::superlinear),
-            Expr::Not(e) | Expr::Parent(e) | Expr::Child(e) => e.superlinear(),
-            Expr::Kind(_) | Expr::Regex(..) | Expr::Path(_) | Expr::Nth(_) | Expr::Option(_) => {
-                false
-            }
+            Expr::Not(e) | Expr::Parent(e) | Expr::Child(e) | Expr::Inner(e) => e.superlinear(),
+            Expr::Fields(list) => list.iter().any(|(_, e)| e.superlinear()),
+            Expr::Kind(_)
+            | Expr::Regex(..)
+            | Expr::Path(_)
+            | Expr::Nth(_)
+            | Expr::Option(_)
+            | Expr::Role(..)
+            | Expr::Operator(_)
+            | Expr::Same(..)
+            | Expr::Empty => false,
         }
     }
 
@@ -236,6 +445,7 @@ impl Expr {
         match self {
             Expr::Pattern(p) => Some(vec![p.kind()]),
             Expr::Kind(k) => Some(vec![*k]),
+            Expr::Role(_, kinds) => Some(kinds.clone()),
             Expr::All(list) => list.iter().find_map(Expr::kinds),
             Expr::Any(list) => {
                 let mut kinds = Vec::new();
@@ -262,13 +472,24 @@ impl Expr {
             }
             Expr::All(list) | Expr::Any(list) => list.iter().for_each(|e| e.metas(out)),
             Expr::Inside(e) | Expr::Parent(e) => e.metas(out),
+            // A field is captured under its label (`report-on: $condition`).
+            Expr::Fields(list) => out.extend(list.iter().map(|(name, _)| Meta {
+                multi: false,
+                name: name.clone(),
+                transform: None,
+            })),
             Expr::Kind(_)
             | Expr::Path(_)
             | Expr::Nth(_)
             | Expr::Option(_)
             | Expr::Has(_)
             | Expr::Child(_)
-            | Expr::Not(_) => {}
+            | Expr::Not(_)
+            | Expr::Role(..)
+            | Expr::Operator(_)
+            | Expr::Same(..)
+            | Expr::Empty
+            | Expr::Inner(_) => {}
         }
     }
 }

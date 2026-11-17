@@ -61,7 +61,7 @@ csharp:
   format: { line_width: 120 }
   lint:
     rules:
-      no-empty-catch: error
+      no-empty-block: error
 overrides:
   - files: ["tests/**"]
     csharp: { lint: { rules: { async-suffix: "off" } } }

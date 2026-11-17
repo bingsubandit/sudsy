@@ -806,6 +806,16 @@ pub fn load_lazy(
 ) -> Result<Vec<Box<dyn Rule>>, PatternError> {
     read_specs(source)?
         .into_iter()
+        // A rule written on roles that no node of the language has is not part of the language.
+        .filter(|spec| {
+            let roles = spec.rule.as_ref().and_then(|r| r.role.as_ref());
+            let grammar = parser.grammar();
+            roles.is_none_or(|r| {
+                r.list()
+                    .iter()
+                    .any(|n| !grammar.nodes_with_tag(n).is_empty())
+            })
+        })
         .map(|mut spec| {
             let id = spec.id.clone();
             let err = |e: String| PatternError(format!("rule `{id}`: {e}"));

@@ -54,9 +54,20 @@ pub struct Capture {
     normalized: Option<String>,
 }
 
+impl Capture {
+    /// A capture of a span, for a field of a node.
+    pub(crate) fn of_range(range: TextRange) -> Self {
+        Capture {
+            range,
+            kind: None,
+            normalized: None,
+        }
+    }
+}
+
 pub type Captures = BTreeMap<String, Capture>;
 
-fn tokens(e: &SyntaxElement, g: &Grammar) -> Vec<core_syntax::SyntaxToken> {
+pub(crate) fn tokens(e: &SyntaxElement, g: &Grammar) -> Vec<core_syntax::SyntaxToken> {
     let keep = |t: &core_syntax::SyntaxToken| !g.is_trivia(t.kind()) && !t.text().is_empty();
     match e {
         SyntaxElement::Token(t) => Some(t.clone()).into_iter().filter(keep).collect(),

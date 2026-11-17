@@ -131,7 +131,7 @@ pub struct Related {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Diagnostic {
-    /// `no-empty-catch`, or `plugin/rule`; [`SYNTAX_ERROR`] for a file that does not parse.
+    /// `no-empty-block`, or `plugin/rule`; [`SYNTAX_ERROR`] for a file that does not parse.
     pub rule: String,
     pub category: Category,
     pub severity: Severity,

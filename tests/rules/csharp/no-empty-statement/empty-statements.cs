@@ -4,6 +4,7 @@ class A { void F(bool x, int y) {
  if (x); else { }
 //     ^ no-empty-statement
  while (x) /* c */ { }
+//                 ^^^ no-empty-block
  switch (y) { case 1: ; break; default: ; }
 //                    ^ no-empty-statement
 //                                      ^ no-empty-statement

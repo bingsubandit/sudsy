@@ -2,6 +2,7 @@
 //! the language's [`RuleHooks`](crate::hooks::RuleHooks): `no-duplicate-keys`, `no-empty-keys` and
 //! `key-name-casing`.
 
+use crate::hooks::Accessor;
 use crate::options::{Check, Opt, OptionDecl};
 use crate::rule;
 use crate::rule::RuleContext;
@@ -64,15 +65,38 @@ rule! {
         // Ranges are found only for the keys that are reported (finding one reads the tree), so
         // the first occurrence is kept as its index and looked up again on a duplicate.
         let mut seen = Seen::default();
-        for (index, (_, key)) in entries(node, grammar).enumerate() {
+        let accessors = hooks.has_accessors();
+        // name -> (kinds seen: 1 plain, 2 getter, 4 setter; index of the first), with accessors only
+        let mut kinds: HashMap<Cow<'_, str>, (u8, usize)> = HashMap::new();
+        let first_range = |first: usize, key: &SyntaxElement| {
+            entries(node, grammar)
+                .nth(first)
+                .map_or_else(|| key_range(key, grammar), |(_, k)| key_range(&k, grammar))
+        };
+        for (index, (entry, key)) in entries(node, grammar).enumerate() {
             let name = hooks.key_name(&key, text);
             if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
                 continue;
             }
-            if let Some((first, name)) = seen.first(name, index) {
-                let first = entries(node, grammar)
-                    .nth(first)
-                    .map_or_else(|| key_range(&key, grammar), |(_, k)| key_range(&k, grammar));
+            let repeat = if accessors {
+                let kind = match hooks.accessor(&entry) {
+                    None => 1,
+                    Some(Accessor::Get) => 2,
+                    Some(Accessor::Set) => 4,
+                };
+                let slot = kinds.entry(name.clone()).or_insert((0, index));
+                let clash = if kind == 1 {
+                    slot.0 != 0
+                } else {
+                    slot.0 & (kind | 1) != 0
+                };
+                slot.0 |= kind;
+                clash.then_some((slot.1, name))
+            } else {
+                seen.first(name, index)
+            };
+            if let Some((first, name)) = repeat {
+                let first = first_range(first, &key);
                 ctx.report(key_range(&key, grammar), format!("duplicate key `{name}`"))
                     .related(first, "first defined here");
             }
