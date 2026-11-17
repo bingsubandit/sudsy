@@ -100,7 +100,7 @@ impl P<'_> {
                 T::LParen => {
                     let columns = w.after_name && w.create_table && depth == 0;
                     let params = w.after_name && w.function_name;
-                    self.generic_bracket(depth, columns, params);
+                    self.generic_bracket(depth, columns, params, w.create_table || w.table_stmt);
                     w.options |= columns;
                     w.expect_name = false;
                     w.after_name = false;
@@ -141,11 +141,11 @@ impl P<'_> {
     /// The bracket at the cursor, if any, with generic contents.
     pub fn generic_bracket_run(&mut self) {
         if self.is_t(0, T::LParen) {
-            self.generic_bracket(0, false, false);
+            self.generic_bracket(0, false, false, false);
         }
     }
 
-    fn generic_bracket(&mut self, depth: usize, columns: bool, params: bool) {
+    fn generic_bracket(&mut self, depth: usize, columns: bool, params: bool, table: bool) {
         if depth as u32 >= super::MAX_DEPTH {
             self.bump();
             return;
@@ -158,6 +158,7 @@ impl P<'_> {
                     item_start: columns || params,
                     columns,
                     params,
+                    table_stmt: table,
                     ..Walk::default()
                 };
                 p.generic_run(depth + 1, w);
@@ -286,7 +287,7 @@ impl P<'_> {
             return;
         }
         // An item of a bracketed list that is a bare word: a name (`(no)`, `(name)`).
-        let bare_item = word && depth > 0 && (w.create_table || w.table_stmt) && !w.columns && !w.params && !self.reserved(0) && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen));
+        let bare_item = word && depth > 0 && w.table_stmt && !w.columns && !w.params && !self.reserved(0) && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen));
         let name_here = bare_item || w.expect_name && !self.reserved(0) && !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) && !NEVER_NAMES.contains(&up.as_str());
         let calls = (w.expr || (depth > 0 && !w.columns && !w.params)) && !self.reserved(0) || super::expr::BARE_FUNCTIONS.contains(&up.as_str());
         if (word || quoted) && calls && (self.is_t(1, T::LParen) || (w.expr && self.name_then_paren())) && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN") {
@@ -311,6 +312,7 @@ impl P<'_> {
             return;
         }
         let kind = if self.keyword_like(0) || self.reserved(0) { k::KEYWORD } else { k::IDENTIFIER };
+        let after_character = self.prev_text_is("character");
         self.bump_as(kind);
         if kind == k::KEYWORD {
             if matches!(up.as_str(), "FUNCTION" | "PROCEDURE" | "PROC" | "AGGREGATE" | "ROUTINE") {
@@ -318,7 +320,7 @@ impl P<'_> {
             } else if !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) {
                 w.function_name = false;
             }
-            if INTRODUCERS.contains(&up.as_str()) || (up == "SET" && self.prev_text_is("character")) {
+            if INTRODUCERS.contains(&up.as_str()) || (up == "SET" && after_character) {
                 w.expect_name = true;
             } else if !MODIFIERS.contains(&up.as_str()) {
                 w.expect_name = false;

@@ -395,6 +395,15 @@ impl P<'_> {
 
     /// What can follow a table and its alias: `TABLESAMPLE`, hints, `WITH (NOLOCK)`.
     fn table_suffix(&mut self) {
+        // MySQL: `PARTITION (p0)`, `FORCE INDEX (i)`.
+        while self.d == Dialect::Mysql && ((self.at("partition") && self.is_t(1, T::LParen)) || (self.at_any(&["force", "use", "ignore"]) && self.at_any_at(1, &["index", "key"]))) {
+            while self.is_t(0, T::Word) {
+                self.bump_as(k::KEYWORD);
+            }
+            self.bracketed(|p| {
+                p.list(|p| p.obj_ref());
+            });
+        }
         if self.at("tablesample") {
             self.bump_as(k::KEYWORD);
             self.eat_any(&["bernoulli", "system"]);

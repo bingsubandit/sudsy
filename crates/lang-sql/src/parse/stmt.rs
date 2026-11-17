@@ -104,6 +104,10 @@ impl P<'_> {
                 return false;
             }
             p.element_op();
+            if p.at_any(&["on", "off"]) {
+                p.bump_as(k::KEYWORD);
+                return true;
+            }
             p.expression()
         });
     }
@@ -172,6 +176,8 @@ impl P<'_> {
                 self.set_clause();
             } else if self.at("where") {
                 self.where_clause();
+            } else if self.at_any(&["order", "limit"]) {
+                self.tail_clauses();
             } else {
                 break;
             }
@@ -230,6 +236,10 @@ impl P<'_> {
 
     fn delete(&mut self) {
         self.bump_as(k::KEYWORD);
+        // MySQL: `DELETE a, b FROM a JOIN b ...`.
+        if self.d == Dialect::Mysql && !self.at_any(&["from", "low_priority", "quick", "ignore"]) {
+            self.list(|p| p.obj_ref());
+        }
         if self.at("from") {
             let m = self.mark();
             self.bump_as(k::KEYWORD);
