@@ -32,6 +32,8 @@ pub enum T {
     Op,
     /// A character no token starts with.
     Unknown,
+    /// The rows after `COPY .. FROM STDIN;`, up to the `\\.` line (PostgreSQL).
+    Data,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -80,9 +82,11 @@ pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
     // mysql `DELIMITER ~`: the delimiter token ends statements, `DELIMITER ;` restores `;`.
     let mut delim: Option<&str> = None;
     let mut declared = usize::MAX;
+    let (mut stmt_start, mut data_at, mut data_end) = (0usize, usize::MAX, 0usize);
     while i < b.len() {
         let mut left_open = false;
         let (kind, end) = match delim {
+            _ if i == data_at => (T::Data, data_end),
             _ if i == declared => (T::Op, i + src[i..].find(char::is_whitespace).unwrap_or(src.len() - i)),
             Some(x) if src[i..].starts_with(x) => (T::Semi, i + x.len()),
             _ => token(src, i, d, &mut left_open),
@@ -108,8 +112,51 @@ pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
             end: end as u32,
         });
         i = end;
+        if kind == T::Semi {
+            if d == Dialect::Postgres && is_copy_stdin(src, &out[stmt_start..]) {
+                (data_at, data_end) = copy_data(src, i);
+            }
+            stmt_start = out.len();
+        }
     }
     (out, open)
+}
+
+/// Is the statement (its tokens, ending in `;`) a `COPY .. FROM STDIN`?
+fn is_copy_stdin(src: &str, toks: &[Lex]) -> bool {
+    let mut words = toks.iter().filter(|t| t.kind == T::Word).map(|t| &src[t.start as usize..t.end as usize]);
+    words.next().is_some_and(|w| w.eq_ignore_ascii_case("copy")) && {
+        let rest: Vec<&str> = words.collect();
+        rest.windows(2).any(|p| p[0].eq_ignore_ascii_case("from") && p[1].eq_ignore_ascii_case("stdin"))
+    }
+}
+
+/// The data rows from the line after `from`: start and end, the end before the `\\.` line's newline.
+fn copy_data(src: &str, from: usize) -> (usize, usize) {
+    let Some(nl) = src[from..].find('\n') else { return (usize::MAX, 0) };
+    let start = from + nl + 1;
+    let mut pos = start;
+    while pos < src.len() {
+        let end = src[pos..].find('\n').map_or(src.len(), |n| pos + n);
+        if src[pos..end].trim_end() == "\\." {
+            return (start, end);
+        }
+        pos = end + 1;
+    }
+    (start, src.len())
+}
+
+/// A psql meta-command runs to the end of its line, or past it while a `(` is open.
+fn meta_command_end(b: &[u8], i: usize) -> usize {
+    let mut end = line_end_cr(b, i);
+    let depth = |from: usize, to: usize| b[from..to].iter().fold(0i32, |d, &c| d + i32::from(c == b'(') - i32::from(c == b')'));
+    let mut open = depth(i, end);
+    while open > 0 && end < b.len() {
+        let next = line_end_cr(b, end + 1);
+        open += depth(end, next);
+        end = next;
+    }
+    end
 }
 
 fn rest_line_end(s: &str) -> usize {
@@ -164,7 +211,7 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
             return (T::LineComment, line_end_cr(b, i));
         }
         b'/' if next == Some(b'*') => return (T::BlockComment, block_comment(b, i, d, open)),
-        b'\\' if d == Dialect::Postgres => return (T::LineComment, line_end_cr(b, i)),
+        b'\\' if d == Dialect::Postgres => return (T::LineComment, meta_command_end(b, i)),
         b'\'' => return (T::Str, quoted(b, i, b'\'', d == Dialect::Mysql || d == Dialect::Ansi, open)),
         b'"' => {
             let esc = matches!(d, Dialect::Mysql | Dialect::Ansi);

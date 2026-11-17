@@ -440,6 +440,7 @@ fn default_kind(kind: T) -> SyntaxKind {
         T::Cast => k::CAST_OP,
         T::Colon => k::COLON,
         T::Unknown => k::UNKNOWN,
+        T::Data => k::WORD,
         _ => k::OPERATOR,
     }
 }

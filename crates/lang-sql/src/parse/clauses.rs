@@ -47,6 +47,22 @@ impl P<'_> {
         if self.is_t(0, T::LParen) {
             self.bracketed(|p| p.query());
         }
+        // `SEARCH DEPTH FIRST BY id SET col`, `CYCLE id SET c USING path`.
+        while self.at_any(&["search", "cycle"]) {
+            self.bump_as(k::KEYWORD);
+            let mut list = false;
+            while self.is_t(0, T::Word) && !self.at_any(&["search", "cycle", "select", "insert", "update", "delete"]) {
+                if self.at_any(&["depth", "breadth", "first", "by", "set", "using", "default", "to"]) {
+                    list = self.at("by") || self.at("cycle");
+                    self.bump_as(k::KEYWORD);
+                } else {
+                    self.bump_as(k::IDENTIFIER);
+                }
+                if list && self.is_t(0, T::Comma) && self.is_t(1, T::Word) && (self.is(2, "set") || self.is_t(2, T::Comma)) {
+                    self.bump();
+                }
+            }
+        }
         self.close(k::COMMON_TABLE_EXPRESSION, m);
         true
     }

@@ -214,7 +214,7 @@ impl P<'_> {
             return;
         }
         // A query inside a statement (`CREATE VIEW v AS SELECT ...`) parses as one.
-        if word && !dotted && !w.grant && (up == "SELECT" || (up == "WITH" && (self.is(1, "recursive") || (self.is_t(1, T::Word) && self.is(2, "as"))))) {
+        if word && !dotted && !w.grant && (up == "SELECT" || (up == "WITH" && (self.is(1, "recursive") || (self.is_t(1, T::Word) && self.is(2, "as") && (self.is_t(3, T::LParen) || self.is(3, "materialized") || self.is(3, "not")))))) {
             self.query();
             *w = Walk::default();
             return;

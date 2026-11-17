@@ -219,7 +219,7 @@ impl P<'_> {
         while self.is_t(n, T::LParen) {
             n += 1;
         }
-        self.is(n, "select") || self.is(n, "with")
+        self.is(n, "select") || self.is(n, "with") || self.is(n, "values")
     }
 
     fn word_operand(&mut self, c: &mut Chain) -> bool {
@@ -240,6 +240,10 @@ impl P<'_> {
                     }
                 });
                 c.lone = false;
+                return true;
+            }
+            "DEFAULT" if !self.is_t(1, T::Dot) => {
+                self.bump_as(k::KEYWORD);
                 return true;
             }
             "CASE" => {
@@ -460,6 +464,15 @@ impl P<'_> {
                 if !self.expression() {
                     break;
                 }
+            } else if self.at("value") || self.is_t(0, T::Colon) {
+                if self.is_t(0, T::Colon) {
+                    self.bump();
+                } else {
+                    self.bump_as(k::KEYWORD);
+                }
+                if !self.expression() {
+                    break;
+                }
             } else if self.at_any(&["asc", "desc", "nulls", "first", "last", "both", "leading", "trailing"]) {
                 self.bump_as(k::KEYWORD);
             } else {
@@ -568,7 +581,18 @@ impl P<'_> {
                     self.bump_as(k::WORD_LITERAL);
                     return self.after_is();
                 }
-                self.eat_any(&["unknown", "document", "normalized"]);
+                self.eat_any(&["unknown", "document"]);
+                if self.eat("json") {
+                    self.eat_any(&["value", "array", "object", "scalar"]);
+                    if self.at_any(&["with", "without"]) && self.is(1, "unique") {
+                        self.bump_as(k::KEYWORD);
+                        self.bump_as(k::KEYWORD);
+                        self.eat("keys");
+                    }
+                } else {
+                    self.eat_any(&["nfc", "nfd", "nfkc", "nfkd"]);
+                    self.eat("normalized");
+                }
                 return self.after_is();
             }
             "NOT" if self.is(1, "in") || self.is(1, "like") || self.is(1, "between") || self.is(1, "ilike") || self.is(1, "similar") || self.is(1, "rlike") || self.is(1, "regexp") || self.is(1, "glob") => {
@@ -599,8 +623,9 @@ impl P<'_> {
                     self.eat("of");
                 }
             }
-            "SIMILAR" if self.is(1, "to") => {
-                self.eat_seq(&["similar", "to"]);
+            "SIMILAR" if self.is(1, "to") || self.is_t(1, T::Str) => {
+                self.bump_as(k::KEYWORD);
+                self.eat("to");
             }
             "ISNULL" | "NOTNULL" => self.bump_as(k::KEYWORD),
             "DIV" | "MOD" | "XOR" if self.d == super::Dialect::Mysql => self.bump_as(k::BINARY_OPERATOR),

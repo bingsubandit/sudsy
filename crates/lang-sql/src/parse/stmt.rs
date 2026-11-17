@@ -20,6 +20,10 @@ pub(super) fn file(p: &mut P) {
             continue;
         }
         let before = p.pos;
+        if p.is_t(0, T::Data) {
+            p.bump_as(k::WORD);
+            continue;
+        }
         if p.d == Dialect::Mysql && p.at("delimiter") {
             // `DELIMITER ~`: the new delimiter stands outside the statement.
             let m = p.mark();

@@ -37,6 +37,9 @@ impl P<'_> {
             }
         }
         self.type_args();
+        if self.at("array") {
+            self.bump_as(k::TYPE_IDENTIFIER);
+        }
         // `timestamp (3) with time zone`, `time without time zone`.
         if matches!(head.as_str(), "TIMESTAMP" | "TIME" | "TIMESTAMPTZ")
             && self.at_any(&["WITH", "WITHOUT"])
@@ -77,7 +80,11 @@ impl P<'_> {
                 if p.is_t(0, T::Number) || p.is_t(0, T::Str) {
                     p.bump();
                     true
-                } else if p.is_t(0, T::Word) && !p.is_t(1, T::LParen) {
+                } else if p.is_t(0, T::Word) && p.is_t(1, T::LParen) {
+                    p.bump_as(k::TYPE_IDENTIFIER);
+                    p.generic_bracket_run();
+                    true
+                } else if p.is_t(0, T::Word) {
                     let kind = if p.keyword_like(0) { k::KEYWORD } else { k::IDENTIFIER };
                     p.bump_as(kind);
                     true
