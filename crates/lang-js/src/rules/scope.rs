@@ -2,14 +2,12 @@
 //! `crate::semantic`, built on the first of them that runs on a file. Positions follow ESLint's
 //! reports, so the parity runners compare them as they are.
 
-use super::Check;
+use super::{Check, code_text};
+use crate::generated::kind as k;
 use crate::semantic::{Cx, model};
 use core_rules::RuleContext;
-use core_syntax::{SyntaxNode, TextRange};
-use oxc_ast::AstKind;
-use oxc_ast::ast::{ClassElement, Expression};
-use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{GetSpan, Span};
+use core_semantics::scopes::{Decl, Flags, Reference, Symbol};
+use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange, TextSize};
 
 /// The ES2026 globals of ESLint's default configuration.
 const BUILTINS: &[&str] = &[
@@ -90,85 +88,65 @@ const BUILTINS: &[&str] = &[
 /// What a `commonjs` file (`.cjs`) adds.
 const COMMONJS: &[&str] = &["exports", "global", "module", "require"];
 
-pub(super) fn range(sp: Span) -> TextRange {
-    TextRange::new(sp.start.into(), sp.end.into())
-}
+
+pub(super) type Hit = (TextRange, String);
 
 /// Runs `f` on the file's model (nothing for a file that does not parse) and reports what it
 /// returns, in source order.
-pub(super) fn run(ctx: &mut RuleContext<'_>, f: impl FnOnce(&Cx<'_, '_>) -> Vec<(Span, String)>) {
-    let Some(m) = model(ctx.file) else { return };
-    let mut hits = m.with(f);
-    hits.sort_by_key(|(sp, _)| sp.start);
+pub(super) fn run(ctx: &mut RuleContext<'_>, f: impl FnOnce(&Cx) -> Vec<Hit>) {
+    let Some(cx) = model(ctx.file) else { return };
+    let mut hits = f(&cx);
+    hits.sort_by_key(|(r, _)| r.start());
     hits.dedup();
-    for (sp, message) in hits {
-        ctx.report(range(sp), message);
+    for (range, message) in hits {
+        ctx.report(range, message);
     }
 }
 
-pub(super) fn is_function(k: AstKind<'_>) -> bool {
+pub(super) fn is_function(n: &SyntaxNode) -> bool {
+    matches!(n.kind(), k::FUNCTION | k::ARROW_FUNCTION_EXPRESSION)
+}
+
+fn is_jsx_ref(n: &SyntaxNode) -> bool {
     matches!(
-        k,
-        AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+        n.kind(),
+        k::JSX_OPENING_ELEMENT | k::JSX_CLOSING_ELEMENT | k::JSX_MEMBER_EXPRESSION
     )
 }
 
-pub(super) fn contains(outer: Span, inner: Span) -> bool {
-    outer.start <= inner.start && inner.end <= outer.end
-}
-
-fn is_jsx_ref(k: AstKind<'_>) -> bool {
-    matches!(
-        k,
-        AstKind::JSXOpeningElement(_)
-            | AstKind::JSXClosingElement(_)
-            | AstKind::JSXMemberExpression(_)
-    )
-}
-
-/// The nearest function scope (or the top one) that holds `scope`'s variables.
-pub(super) fn var_scope(cx: &Cx<'_, '_>, mut scope: ScopeId) -> ScopeId {
-    let sc = cx.s.scoping();
-    while !sc.scope_flags(scope).intersects(ScopeFlags::Var) {
-        match sc.scope_parent_id(scope) {
-            Some(p) => scope = p,
-            None => break,
-        }
-    }
-    scope
+/// The reference whose name starts at `start` (references are in source order).
+pub(super) fn ref_at(cx: &Cx, start: TextSize) -> Option<&Reference> {
+    let refs = &cx.s.refs;
+    let i = refs
+        .binary_search_by_key(&start, |r| r.range.start())
+        .ok()?;
+    refs.get(i)
 }
 
 /// The execution context a node runs in: its function, the program, or the initializer of an
 /// instance field. Static initializers and static blocks run as part of the class's context.
-fn exec_ctx(cx: &Cx<'_, '_>, from: NodeId, inclusive: bool, at: Span) -> NodeId {
-    let nodes = cx.s.nodes();
-    let own = inclusive.then_some(from);
-    for id in own.into_iter().chain(nodes.ancestor_ids(from)) {
-        match cx.kind(id) {
-            k if is_function(k) => return id,
-            AstKind::PropertyDefinition(p)
-                if !p.r#static && p.value.as_ref().is_some_and(|v| contains(v.span(), at)) =>
+fn exec_ctx(cx: &Cx, from: &SyntaxNode, inclusive: bool, at: TextRange) -> SyntaxNode {
+    for n in from.ancestors().skip(usize::from(!inclusive)) {
+        match n.kind() {
+            k::FUNCTION | k::ARROW_FUNCTION_EXPRESSION | k::PROGRAM => return n,
+            k::PROPERTY_DEFINITION
+                if !cx.has_own(&n, "static")
+                    && cx
+                        .slot(&n, "value")
+                        .is_some_and(|v| v.text_range().contains_range(at)) =>
             {
-                return id;
+                return n;
             }
-            AstKind::AccessorProperty(p)
-                if !p.r#static && p.value.as_ref().is_some_and(|v| contains(v.span(), at)) =>
-            {
-                return id;
-            }
-            AstKind::Program(_) => return id,
             _ => {}
         }
     }
-    from
+    from.clone()
 }
 
 /// Is `r` evaluated in an execution context other than the one that declares the symbol?
-fn separate_context(cx: &Cx<'_, '_>, r: &oxc_semantic::Reference, sid: SymbolId) -> bool {
-    let sc = cx.s.scoping();
-    let at = cx.span(r.node_id());
-    let declared = exec_ctx(cx, sc.get_node_id(sc.symbol_scope_id(sid)), true, at);
-    exec_ctx(cx, r.node_id(), false, at) != declared
+fn separate_context(cx: &Cx, r: &Reference, sym: &Symbol) -> bool {
+    let declared = exec_ctx(cx, &cx.s.scope(sym.scope).node, true, r.range);
+    exec_ctx(cx, &r.node, false, r.range) != declared
 }
 
 /// `no-undef`: a name no scope declares and the globals do not list.
@@ -180,63 +158,50 @@ pub(super) fn undef(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
         .map(String::from)
         .collect();
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
         let mut hits = Vec::new();
-        for (name, ids) in sc.root_unresolved_references() {
-            let name = name.as_str();
+        for r in cx.s.unresolved() {
+            let name = &*r.name;
             if BUILTINS.contains(&name)
                 || (cx.commonjs && COMMONJS.contains(&name))
                 || extra.iter().any(|g| g == name)
             {
                 continue;
             }
-            for &rid in ids {
-                let r = sc.get_reference(rid);
-                let parent = cx.parent(r.node_id());
-                let flags = r.flags();
-                let typeof_operand = matches!(
-                    parent,
-                    AstKind::UnaryExpression(u) if u.operator.is_typeof()
-                );
-                // `arguments` is bound by the nearest ordinary function.
-                let arguments = name == "arguments"
-                    && (cx.commonjs
-                        || sc.scope_ancestors(r.scope_id()).any(|s| {
-                            let f = sc.scope_flags(s);
-                            f.is_function() && !f.is_arrow()
-                        }));
-                if flags.is_type() || is_jsx_ref(parent) || typeof_operand || arguments {
-                    continue;
-                }
-                let span = cx.s.reference_span(r);
-                hits.push((span, c.message.replace("{name}", name)));
+            let parent = r.node.parent();
+            let typeof_operand = parent
+                .as_ref()
+                .is_some_and(|p| p.kind() == k::UNARY_EXPRESSION && cx.has_own(p, "typeof"));
+            // `arguments` is bound by the nearest ordinary function.
+            let arguments = name == "arguments"
+                && (cx.commonjs
+                    || cx
+                        .s
+                        .ancestors(r.scope)
+                        .any(|s| cx.s.scope(s).node.kind() == k::FUNCTION));
+            if r.is_type()
+                || parent.as_ref().is_some_and(is_jsx_ref)
+                || typeof_operand
+                || arguments
+            {
+                continue;
             }
+            hits.push((r.range, c.message.replace("{name}", name)));
         }
         hits
     });
 }
 
-/// How a symbol was first declared.
-fn first_decl_kind<'a>(cx: &Cx<'_, 'a>, sid: SymbolId) -> AstKind<'a> {
-    cx.kind(cx.s.scoping().symbol_declaration(sid))
-}
-
 /// The write references of the symbols `want` selects, reported at the identifier.
-fn writes(
-    c: &Check,
-    ctx: &mut RuleContext<'_>,
-    want: impl Fn(&Cx<'_, '_>, SymbolId, SymbolFlags) -> bool,
-) {
+fn writes(c: &Check, ctx: &mut RuleContext<'_>, want: impl Fn(&Cx, &Symbol) -> bool) {
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
         let mut hits = Vec::new();
-        for sid in sc.symbol_ids() {
-            if !want(cx, sid, sc.symbol_flags(sid)) {
+        for id in cx.s.symbol_ids() {
+            let sym = cx.s.symbol(id);
+            if !want(cx, sym) {
                 continue;
             }
-            for r in sc.get_resolved_references(sid).filter(|r| r.is_write()) {
-                let name = sc.symbol_name(sid);
-                hits.push((cx.s.reference_span(r), c.message.replace("{name}", name)));
+            for r in cx.s.refs_of(id).filter(|r| r.is_write()) {
+                hits.push((r.range, c.message.replace("{name}", &sym.name)));
             }
         }
         hits
@@ -245,60 +210,61 @@ fn writes(
 
 /// `no-const-assign`
 pub(super) fn const_assign(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    writes(c, ctx, |_, _, f| f.contains(SymbolFlags::ConstVariable));
+    writes(c, ctx, |_, s| s.flags.contains(Flags::CONST));
 }
 
 /// `no-class-assign`
 pub(super) fn class_assign(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    writes(c, ctx, |cx, sid, _| {
-        matches!(first_decl_kind(cx, sid), AstKind::Class(_))
-    });
+    writes(c, ctx, |_, s| s.decls[0].node.kind() == k::CLASS);
 }
 
 /// `no-func-assign`
 pub(super) fn func_assign(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    writes(c, ctx, |cx, sid, _| {
-        matches!(first_decl_kind(cx, sid), AstKind::Function(_))
-    });
+    writes(c, ctx, |_, s| s.decls[0].node.kind() == k::FUNCTION);
 }
 
 /// The start of the assignment, update, `delete`, call or `for` loop an identifier is part of.
-fn write_node_start(cx: &Cx<'_, '_>, id: NodeId, fallback: Span) -> u32 {
-    (cx.s.nodes().ancestor_ids(id))
-        .map(|a| cx.kind(a))
-        .find(|k| {
+fn write_node_start(cx: &Cx, id: &SyntaxNode, fallback: TextSize) -> TextSize {
+    (id.ancestors().skip(1))
+        .find(|a| {
             matches!(
-                k,
-                AstKind::AssignmentExpression(_)
-                    | AstKind::UpdateExpression(_)
-                    | AstKind::UnaryExpression(_)
-                    | AstKind::CallExpression(_)
-                    | AstKind::ForInStatement(_)
-                    | AstKind::ForOfStatement(_)
+                a.kind(),
+                k::ASSIGNMENT_EXPRESSION
+                    | k::UPDATE_EXPRESSION
+                    | k::UNARY_EXPRESSION
+                    | k::CALL_EXPRESSION
+                    | k::FOR_IN_STATEMENT
+                    | k::FOR_OF_STATEMENT
             )
         })
-        .map_or(fallback.start, |k| k.span().start)
+        .map_or(fallback, |a| cx.range(&a).start())
 }
 
 /// Is `id` (a read of a namespace import) the object of a member that is written to, or the first
 /// argument of `Object.assign` and the like?
-fn member_written(cx: &Cx<'_, '_>, id: NodeId, span: Span) -> bool {
-    let parent_id = cx.s.nodes().parent_id(id);
-    match cx.kind(parent_id) {
-        AstKind::StaticMemberExpression(m) if m.object.span() == span => {}
-        AstKind::ComputedMemberExpression(m) if m.object.span() == span => {}
-        AstKind::CallExpression(call) => {
-            let first = call.arguments.first().is_some_and(|a| a.span() == span);
-            let Some(member) = call.callee.as_member_expression() else {
+fn member_written(cx: &Cx, id: &SyntaxNode) -> bool {
+    let Some(parent) = id.parent() else {
+        return false;
+    };
+    match parent.kind() {
+        k::STATIC_MEMBER_EXPRESSION | k::COMPUTED_MEMBER_EXPRESSION
+            if cx.slot(&parent, "object").as_ref() == Some(id) => {}
+        k::CALL_EXPRESSION => {
+            let first = cx.slot(&parent, "arguments").as_ref() == Some(id);
+            let Some(callee) = cx.slot(&parent, "callee") else {
                 return false;
             };
-            let (Expression::Identifier(obj), Some(prop)) = (
-                member.object().get_inner_expression(),
-                member.static_property_name(),
-            ) else {
+            if callee.kind() != k::STATIC_MEMBER_EXPRESSION {
+                return false;
+            }
+            let (Some(object), Some(member)) = (cx.slot(&callee, "object"), cx.slot(&callee, "member"))
+            else {
                 return false;
             };
-            let methods: &[&str] = match obj.name.as_str() {
+            if object.kind() != k::IDENTIFIER_REFERENCE {
+                return false;
+            }
+            let methods: &[&str] = match code_text(&object, cx.g).as_str() {
                 "Object" => &[
                     "assign",
                     "defineProperty",
@@ -309,24 +275,25 @@ fn member_written(cx: &Cx<'_, '_>, id: NodeId, span: Span) -> bool {
                 "Reflect" => &["defineProperty", "deleteProperty", "set", "setPrototypeOf"],
                 _ => return false,
             };
-            let prop = prop.as_str().unwrap_or_default();
-            return first && methods.contains(&prop) && cx.s.is_reference_to_global_variable(obj);
+            let global = ref_at(cx, cx.range(&object).start()).is_some_and(|r| r.symbol.is_none());
+            return first && methods.contains(&code_text(&member, cx.g).as_str()) && global;
         }
         _ => return false,
     }
-    let member = cx.span(parent_id);
-    let grand = cx.s.nodes().parent_id(parent_id);
-    match cx.kind(grand) {
-        AstKind::AssignmentExpression(a) => a.left.span() == member,
-        AstKind::UpdateExpression(_) => true,
-        AstKind::UnaryExpression(u) => u.operator.is_delete(),
-        AstKind::ForInStatement(f) => f.left.span() == member,
-        AstKind::ForOfStatement(f) => f.left.span() == member,
-        AstKind::ArrayAssignmentTarget(_)
-        | AstKind::ObjectAssignmentTarget(_)
-        | AstKind::AssignmentTargetRest(_)
-        | AstKind::AssignmentTargetWithDefault(_)
-        | AstKind::AssignmentTargetPropertyProperty(_) => true,
+    let Some(grand) = parent.parent() else {
+        return false;
+    };
+    match grand.kind() {
+        k::ASSIGNMENT_EXPRESSION | k::FOR_IN_STATEMENT | k::FOR_OF_STATEMENT => {
+            cx.slot(&grand, "left").as_ref() == Some(&parent)
+        }
+        k::UPDATE_EXPRESSION => true,
+        k::UNARY_EXPRESSION => cx.has_own(&grand, "delete"),
+        k::ARRAY_ASSIGNMENT_TARGET
+        | k::OBJECT_ASSIGNMENT_TARGET
+        | k::ASSIGNMENT_TARGET_REST
+        | k::ASSIGNMENT_TARGET_WITH_DEFAULT
+        | k::ASSIGNMENT_TARGET_PROPERTY_PROPERTY => true,
         _ => false,
     }
 }
@@ -334,32 +301,24 @@ fn member_written(cx: &Cx<'_, '_>, id: NodeId, span: Span) -> bool {
 /// `no-import-assign`
 pub(super) fn import_assign(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
         let mut hits = Vec::new();
-        for sid in sc.symbol_ids() {
-            if !sc
-                .symbol_flags(sid)
-                .intersects(SymbolFlags::Import | SymbolFlags::TypeImport)
-            {
+        for id in cx.s.symbol_ids() {
+            let sym = cx.s.symbol(id);
+            if !sym.flags.contains(Flags::IMPORT) {
                 continue;
             }
             // An imported type next to a local value of its name: the writes are the value's.
-            if cx.ts && cx.decls(sid).iter().any(|(_, n)| !is_import(cx.kind(*n))) {
+            if cx.ts && sym.decls.iter().any(|d| !d.flags.contains(Flags::IMPORT)) {
                 continue;
             }
-            let name = sc.symbol_name(sid);
-            let namespace = matches!(
-                first_decl_kind(cx, sid),
-                AstKind::ImportNamespaceSpecifier(_)
-            );
-            for r in sc.get_resolved_references(sid) {
-                let span = cx.s.reference_span(r);
-                let start = write_node_start(cx, r.node_id(), span);
-                let at = Span::new(start, start + 1);
+            let namespace = sym.decls[0].node.kind() == k::IMPORT_NAMESPACE_SPECIFIER;
+            for r in cx.s.refs_of(id) {
+                let start = write_node_start(cx, &r.node, r.range.start());
+                let at = TextRange::at(start, 1.into());
                 if r.is_write() {
-                    hits.push((at, c.message.replace("{name}", name)));
-                } else if namespace && member_written(cx, r.node_id(), span) {
-                    hits.push((at, format!("The members of '{name}' are read-only.")));
+                    hits.push((at, c.message.replace("{name}", &sym.name)));
+                } else if namespace && member_written(cx, &r.node) {
+                    hits.push((at, format!("The members of '{}' are read-only.", sym.name)));
                 }
             }
         }
@@ -370,73 +329,54 @@ pub(super) fn import_assign(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_
 /// `no-redeclare`
 pub(super) fn redeclare(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
         let mut hits = Vec::new();
-        for sid in sc.symbol_ids() {
-            let node = cx.kind(sc.get_node_id(sc.symbol_scope_id(sid)));
+        for id in cx.s.symbol_ids() {
+            let sym = cx.s.symbol(id);
+            let node = &cx.s.scope(sym.scope).node;
             let visited = matches!(
-                node,
-                AstKind::Program(_)
-                    | AstKind::Function(_)
-                    | AstKind::ArrowFunctionExpression(_)
-                    | AstKind::BlockStatement(_)
-                    | AstKind::ForStatement(_)
-                    | AstKind::ForInStatement(_)
-                    | AstKind::ForOfStatement(_)
-                    | AstKind::SwitchStatement(_)
-            ) || (!cx.ts && matches!(node, AstKind::StaticBlock(_)));
+                node.kind(),
+                k::PROGRAM
+                    | k::FUNCTION
+                    | k::ARROW_FUNCTION_EXPRESSION
+                    | k::BLOCK_STATEMENT
+                    | k::FOR_STATEMENT
+                    | k::FOR_IN_STATEMENT
+                    | k::FOR_OF_STATEMENT
+                    | k::SWITCH_STATEMENT
+            ) || (!cx.ts && node.kind() == k::STATIC_BLOCK);
             if !visited {
                 continue;
             }
-            let mut decls = cx.decls(sid);
-            // A `var` in a `catch` block is a variable of the function, not the parameter.
-            decls.retain(|(_, n)| !matches!(cx.kind(*n), AstKind::CatchParameter(_)));
-            if decls.len() < 2 {
-                continue;
-            }
-            let mut groups = vec![decls];
+            let mut decls: Vec<&Decl> = (sym.decls.iter())
+                .filter(|d| !d.flags.contains(Flags::EXPRESSION_NAME))
+                .collect();
             if cx.ts {
                 // An overload signature is not a declaration of its own.
-                groups[0].retain(
-                    |(_, n)| !matches!(cx.kind(*n), AstKind::Function(f) if f.body.is_none()),
-                );
-                groups = groups
-                    .into_iter()
-                    .filter(|g| g.len() > 1)
-                    .map(|g| merged(cx, g))
-                    .collect();
+                decls.retain(|d| !(d.node.kind() == k::FUNCTION && cx.slot(&d.node, "body").is_none()));
+                if decls.len() > 1 {
+                    decls = merged(decls);
+                }
             }
-            let name = sc.symbol_name(sid);
-            for (sp, _) in groups.into_iter().flat_map(|g| g.into_iter().skip(1)) {
-                hits.push((sp, c.message.replace("{name}", name)));
+            for d in decls.into_iter().skip(1) {
+                hits.push((d.name, c.message.replace("{name}", &sym.name)));
             }
         }
         hits
     });
 }
 
-fn is_import(k: AstKind<'_>) -> bool {
-    matches!(
-        k,
-        AstKind::ImportSpecifier(_)
-            | AstKind::ImportDefaultSpecifier(_)
-            | AstKind::ImportNamespaceSpecifier(_)
-    )
-}
-
 /// The declarations TypeScript's declaration merging leaves reported. Interfaces merge with
 /// each other, namespaces with each other, and a namespace or interface with a class, a function
 /// or an enum; of those, one class, function or enum stands and several are redeclarations.
-fn merged(cx: &Cx<'_, '_>, decls: Vec<(Span, NodeId)>) -> Vec<(Span, NodeId)> {
-    let tags: Vec<char> = (decls.iter())
-        .map(|(_, n)| match cx.kind(*n) {
-            AstKind::TSInterfaceDeclaration(_) => 'i',
-            AstKind::TSNamespaceDeclaration(_)
-            | AstKind::TSExternalModuleDeclaration(_)
-            | AstKind::TSGlobalDeclaration(_) => 'm',
-            AstKind::Class(_) => 'c',
-            AstKind::Function(_) => 'f',
-            AstKind::TSEnumDeclaration(_) => 'e',
+fn merged(decls: Vec<&Decl>) -> Vec<&Decl> {
+    let tags: Vec<char> = decls
+        .iter()
+        .map(|d| match d.flags {
+            f if f.contains(Flags::INTERFACE) => 'i',
+            f if f.contains(Flags::NAMESPACE) => 'm',
+            f if f.contains(Flags::CLASS) => 'c',
+            f if f.contains(Flags::FUNCTION) => 'f',
+            f if f.contains(Flags::ENUM) => 'e',
             _ => '-',
         })
         .collect();
@@ -446,7 +386,7 @@ fn merged(cx: &Cx<'_, '_>, decls: Vec<(Span, NodeId)>) -> Vec<(Span, NodeId)> {
     }
     for (allowed, main) in [("cim", 'c'), ("fm", 'f'), ("em", 'e')] {
         if all(allowed) {
-            let mains: Vec<_> = (decls.iter().zip(&tags))
+            let mains: Vec<&Decl> = (decls.iter().zip(&tags))
                 .filter(|(_, t)| **t == main)
                 .map(|(d, _)| *d)
                 .collect();
@@ -456,64 +396,68 @@ fn merged(cx: &Cx<'_, '_>, decls: Vec<(Span, NodeId)>) -> Vec<(Span, NodeId)> {
     decls
 }
 
-fn in_static_initializer(body: &[ClassElement<'_>], at: u32) -> bool {
-    body.iter().any(|m| match m {
-        ClassElement::StaticBlock(b) => b.span.start <= at && at <= b.span.end,
-        ClassElement::PropertyDefinition(p) => {
-            p.r#static
-                && p.value
-                    .as_ref()
-                    .is_some_and(|v| v.span().start <= at && at <= v.span().end)
+fn in_static_initializer(cx: &Cx, body: &SyntaxNode, at: TextSize) -> bool {
+    body.children().any(|m| {
+        let inside = |r: TextRange| r.start() <= at && at <= r.end();
+        match m.kind() {
+            k::STATIC_BLOCK => inside(m.text_range()),
+            k::PROPERTY_DEFINITION => {
+                cx.has_own(&m, "static")
+                    && cx.slot(&m, "value").is_some_and(|v| inside(v.text_range()))
+            }
+            _ => false,
         }
-        _ => false,
     })
 }
 
+/// The initializer of a parameter (`a = 1`): the node after its `=`.
+pub(super) fn param_init(param: &SyntaxNode) -> Option<SyntaxNode> {
+    let eq = param.tokens().find(|t| t.text() == "=")?;
+    param
+        .children()
+        .find(|c| c.text_range().start() >= eq.text_range().end())
+}
+
 /// Is the reference evaluated while its variable is being initialized (`var a = a`)?
-fn evaluated_during_init(
-    cx: &Cx<'_, '_>,
-    r: &oxc_semantic::Reference,
-    sid: SymbolId,
-    first: (Span, NodeId),
-) -> bool {
-    if separate_context(cx, r, sid) {
+fn evaluated_during_init(cx: &Cx, r: &Reference, sym: &Symbol, first: &Decl) -> bool {
+    if separate_context(cx, r, sym) {
         return false;
     }
-    let loc = cx.s.reference_span(r).end;
-    let inside = |s: Span| s.start <= loc && loc <= s.end;
-    if let AstKind::Class(class) = cx.kind(first.1) {
-        return inside(class.span) && !in_static_initializer(&class.body.body, loc);
+    let loc = r.range.end();
+    let inside = |range: TextRange| range.start() <= loc && loc <= range.end();
+    if first.node.kind() == k::CLASS {
+        return inside(cx.range(&first.node))
+            && !cx
+                .slot(&first.node, "members")
+                .is_some_and(|b| in_static_initializer(cx, &b, loc));
     }
-    let Some(b) = cx.binding(first.0.start) else {
-        return false;
-    };
-    let nodes = cx.s.nodes();
-    for id in nodes.ancestor_ids(b) {
-        match cx.kind(id) {
-            AstKind::VariableDeclarator(d) => {
-                if d.init.as_ref().is_some_and(|e| inside(e.span())) {
+    for a in first.binding.ancestors().skip(1) {
+        match a.kind() {
+            k::VARIABLE_DECLARATOR => {
+                if cx.slot(&a, "init").is_some_and(|e| inside(e.text_range())) {
                     return true;
                 }
-                let stmt = nodes.parent_id(nodes.parent_id(id));
-                return match cx.kind(stmt) {
-                    AstKind::ForInStatement(f) => inside(f.right.span()),
-                    AstKind::ForOfStatement(f) => inside(f.right.span()),
+                let stmt = a.parent().and_then(|d| d.parent());
+                return match stmt {
+                    Some(s) if matches!(s.kind(), k::FOR_IN_STATEMENT | k::FOR_OF_STATEMENT) => {
+                        cx.slot(&s, "right").is_some_and(|e| inside(e.text_range()))
+                    }
                     _ => false,
                 };
             }
-            AstKind::AssignmentPattern(p) if inside(p.right.span()) => return true,
-            AstKind::FormalParameter(p)
-                if p.initializer.as_ref().is_some_and(|e| inside(e.span())) =>
-            {
+            k::ASSIGNMENT_PATTERN if a.children().last().is_some_and(|e| inside(e.text_range())) => {
                 return true;
             }
-            AstKind::Function(_)
-            | AstKind::ArrowFunctionExpression(_)
-            | AstKind::Class(_)
-            | AstKind::CatchClause(_)
-            | AstKind::ImportDeclaration(_)
-            | AstKind::ExportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_) => return false,
+            k::FORMAL_PARAMETER if param_init(&a).is_some_and(|e| inside(e.text_range())) => {
+                return true;
+            }
+            k::FUNCTION
+            | k::ARROW_FUNCTION_EXPRESSION
+            | k::CLASS
+            | k::CATCH_CLAUSE
+            | k::IMPORT_DECLARATION
+            | k::EXPORT_DECLARATION
+            | k::EXPORT_NAMED_DECLARATION => return false,
             _ => {}
         }
     }
@@ -523,25 +467,27 @@ fn evaluated_during_init(
 /// `no-use-before-define`
 pub(super) fn use_before_define(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
         let mut hits = Vec::new();
-        for sid in sc.symbol_ids() {
-            let decls = cx.decls(sid);
-            let first = decls[0];
-            let class_decorators: Vec<Span> = match cx.kind(first.1) {
-                AstKind::Class(cl) => cl.decorators.iter().map(|d| d.span).collect(),
-                _ => Vec::new(),
+        for id in cx.s.symbol_ids() {
+            let sym = cx.s.symbol(id);
+            let first = &sym.decls[0];
+            let class_decorators: Vec<TextRange> = if first.node.kind() == k::CLASS {
+                (first.node.children())
+                    .filter(|d| d.kind() == k::DECORATOR)
+                    .map(|d| d.text_range())
+                    .collect()
+            } else {
+                Vec::new()
             };
-            for r in sc.get_resolved_references(sid) {
-                let span = cx.s.reference_span(r);
+            for r in cx.s.refs_of(id) {
                 if r.is_type()
-                    || (!cx.ts && is_jsx_ref(cx.parent(r.node_id())))
-                    || class_decorators.iter().any(|d| contains(*d, span))
+                    || (!cx.ts && r.node.parent().as_ref().is_some_and(is_jsx_ref))
+                    || class_decorators.iter().any(|d| d.contains_range(r.range))
                 {
                     continue;
                 }
-                if span.end < first.0.end || evaluated_during_init(cx, r, sid, first) {
-                    hits.push((span, c.message.replace("{name}", sc.symbol_name(sid))));
+                if r.range.end() < first.name.end() || evaluated_during_init(cx, r, sym, first) {
+                    hits.push((r.range, c.message.replace("{name}", &sym.name)));
                 }
             }
         }

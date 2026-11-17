@@ -11,13 +11,12 @@ build = "../../build/lang-crate.rs"
 core-config.workspace = true
 core-format.workspace = true
 core-rules.workspace = true
+core-semantics.workspace = true
 core-syntax.workspace = true
 oxc_allocator.workspace = true
 oxc_ast.workspace = true
 oxc_ast_visit.workspace = true
 oxc_parser.workspace = true
-oxc_semantic.workspace = true
-self_cell.workspace = true
 oxc_span.workspace = true
 provider-api.workspace = true
 
