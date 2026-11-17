@@ -50,10 +50,9 @@ A step is one commit and one finish run. `After` names what must be on main firs
 | R2 | Roles and field bodies for `js.grammar` and `java.grammar`; no formatter or rule change | `grammars/`, adapters only if a field needs a wrapped token | `ShapeChecker` passes on the whole corpus; parity counts unchanged | R1 |
 | R3 | The same for Python, Kotlin, PHP, SQL | `grammars/` | as R2 | R1 |
 
-R1 is in: the vocabulary is `core_syntax::roles::ROLES` (table in [../architecture/syntax-tree.md](../architecture/syntax-tree.md)); C# opts in with `roles`. Open for R2/R3 and L1:
+R1 and R2 are in: the vocabulary is `core_syntax::roles::ROLES` (table in [../architecture/syntax-tree.md](../architecture/syntax-tree.md)); C#, JS and Java opt in with `roles`. R2 decided the open questions there (roles only where the body declares every field as items: `if` is opaque, `new` is `#call`, a field may be several items). Left for R3, L1 and S1:
 - Roles are tags, so a role name is also a tag name in grammars that already used it (`#block`, `#declaration`, `#assignment`, `#literal` on C# tokens); role checks look at nodes only. A language whose old tag means something else under the same name has to rename the old tag.
-- Fields are body items (label or `label=field` alias), found by `Grammar::slot`. In an adapter-backed grammar the adapter builds the tree, so a field exists only if the adapter emits that child as a node or token of its own: oxc and ruff parts that have no tokens (an implicit `this`, a synthesized operator) have no slot. R2 should list them per grammar and either wrap them in the adapter or make the field optional.
-- A role can need several body items for one field (`function`: a lambda's block body and its expression body are two fields, `body` and `expression_body`). Roles that need a union of items (`if` statement as `conditional`, `new` as `call`) are not in C#; decide in R2 whether JS's `IfStatement` is `conditional` or `#opaque`.
+- Java has no node for an identifier or a literal, so `#reference` and `#literal` have no Java kind; S1 and S4 decide whether the adapter wraps them. JS names that are keywords (`as const`, `yield`) are `IdentifierReference`s with a `Keyword` token.
 - `Grammar::slot` scans the body for the label on each call; L1 reads fields on hot paths, so its first step is the field index of the roadmap's performance item (field name to body position at load).
 - Roles say nothing about precedence or operator text; L2's precedence table is a separate grammar declaration.
 

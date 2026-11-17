@@ -421,10 +421,11 @@ fn resolve(
                     None => return err(r.line, format!("no kind carries tag #{t}")),
                 },
             };
-            for l in it.label.iter().chain(&it.field) {
-                if !labels.insert(l.clone()) {
-                    return err(r.line, format!("duplicate label `{l}`"));
-                }
+            // Accessor names are unique; several items may fill one role field.
+            if let Some(l) = &it.label
+                && !labels.insert(l.clone())
+            {
+                return err(r.line, format!("duplicate label `{l}`"));
             }
             body.push(Item {
                 label: it.label.clone(),

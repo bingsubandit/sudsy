@@ -20,10 +20,14 @@ impl<'g> ShapeChecker<'g> {
     /// The first node whose children do not fit its body, described. Nodes that contain an `ERROR`
     /// child are skipped: recovery trees need not fit.
     pub fn check(&self, root: &SyntaxNode) -> Result<(), String> {
-        for node in root.descendants() {
-            self.check_node(&node)?;
-        }
-        Ok(())
+        self.violations(root).next().map_or(Ok(()), Err)
+    }
+
+    /// Every node whose children do not fit its body, described. `#opaque` nodes declare no shape
+    /// and are skipped.
+    pub fn violations<'a>(&'a self, root: &SyntaxNode) -> impl Iterator<Item = String> + 'a {
+        root.descendants()
+            .filter_map(move |node| self.check_node(&node).err())
     }
 
     fn check_node(&self, node: &SyntaxNode) -> Result<(), String> {
@@ -33,6 +37,9 @@ impl<'g> ShapeChecker<'g> {
         ) else {
             return Ok(());
         };
+        if def.has_tag(crate::roles::OPAQUE) {
+            return Ok(());
+        }
         let skip = self.grammar.skipped_kinds();
         if node.children().any(|c| c.kind() == SyntaxKind::ERROR) {
             return Ok(());

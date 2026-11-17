@@ -214,22 +214,22 @@ impl Grammar {
         self.tag_nodes.get(tag).map_or(&[], Vec::as_slice)
     }
 
-    /// The child of `node` in the body item labelled `label` or filling the role field `label`
-    /// (the first, for a repeated item).
+    /// The child of `node` in a body item labelled `label` or filling the role field `label` (the
+    /// first, for a repeated item or several items of one field: a postfix `operator` after the
+    /// operand and a prefix one before it are two items of the field `operator`).
     /// Found with the routine the generated accessors use, so it agrees with them.
     pub fn slot(&self, node: &SyntaxNode, label: &str) -> Option<SyntaxElement> {
         let def = self.def(node.kind())?;
-        let index = def
-            .body
-            .iter()
-            .position(|i| i.label.as_deref() == Some(label) || i.field.as_deref() == Some(label))?;
         let body = GrammarBody {
             grammar: self,
             kinds: self.bodies.get(node.kind().index() as usize)?,
             body: &def.body,
         };
         crate::ast::assign(node, body)
-            .find(|(i, _)| *i == index)
+            .find(|(i, _)| {
+                let item = &def.body[*i];
+                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+            })
             .map(|(_, e)| e)
     }
 
