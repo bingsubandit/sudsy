@@ -212,7 +212,12 @@ impl P<'_> {
         let word = !quoted;
         // A value of a setting (`SET x = on, off`) and the key before `=`.
         if word && !dotted && !w.columns && !w.params && !w.options && (w.value || self.is_op(1, "=")) {
-            self.bump_as(k::WORD);
+            let kind = match (self.d == super::Dialect::Tsql, w.value) {
+                (false, _) => k::WORD,
+                (true, true) => k::WORD,
+                (true, false) => k::WORD,
+            };
+            self.bump_as(kind);
             return;
         }
         // `ENGINE = InnoDB` after the columns of a table.

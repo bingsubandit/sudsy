@@ -338,6 +338,7 @@ impl P<'_> {
         let name = self.src[self.lex[self.code[self.pos - 1] as usize].start as usize..self.lex[self.code[self.pos - 1] as usize].end as usize].to_ascii_uppercase();
         let dates = DATE_FUNCTIONS.contains(&name.as_str());
         self.close(k::FUNCTION_NAME, nm);
+        self.type_first = self.d == super::Dialect::Tsql && matches!(name.as_str(), "CONVERT" | "TRY_CONVERT");
         self.function_contents(dates);
         self.function_tail();
         self.close(k::FUNCTION, m);
@@ -445,7 +446,9 @@ impl P<'_> {
                 self.bump_as(k::KEYWORD);
             }
             let before = self.pos;
-            if dates && self.is_t(0, T::Word) && self.d.is_unit(self.text(0)) && matches!(self.t(1), Some(T::Comma | T::RParen) | Some(T::Word)) {
+            if std::mem::take(&mut self.type_first) && self.type_name() {
+                // the type of `CONVERT`
+            } else if dates && self.is_t(0, T::Word) && self.d.is_unit(self.text(0)) && matches!(self.t(1), Some(T::Comma | T::RParen) | Some(T::Word)) {
                 self.bump_as(k::KEYWORD);
             } else if self.at_query_start() && self.at_any(&["select", "with"]) {
                 let m = self.mark();

@@ -68,6 +68,8 @@ pub(crate) struct P<'a> {
     errors: Vec<ParseError>,
     /// Nesting of brackets and expressions being parsed.
     pub depth: u32,
+    /// The first argument of the call about to open is a type (`CONVERT(int, x)`).
+    pub type_first: bool,
 }
 
 /// The deepest nesting parsed structurally; deeper text is taken as a flat run of tokens.
@@ -95,6 +97,7 @@ impl<'a> P<'a> {
             group: 0,
             errors: Vec::new(),
             depth: 0,
+            type_first: false,
         };
         for i in open {
             let l = p.lex[i as usize];
