@@ -140,6 +140,9 @@ impl P<'_> {
         self.select_clause();
         if self.at("into") && !self.is_t(1, T::LParen) {
             self.bump_as(k::KEYWORD);
+            while self.d == Dialect::Postgres && self.at_any(&["temp", "temporary", "unlogged", "table"]) {
+                self.bump_as(k::KEYWORD);
+            }
             self.obj_ref();
         }
         if self.at("from") {
@@ -378,8 +381,12 @@ impl P<'_> {
         if self.pos == m {
             return false;
         }
+        if self.d == Dialect::Postgres && self.at("with") && self.is(1, "ordinality") {
+            self.bump_as(k::KEYWORD);
+            self.bump_as(k::KEYWORD);
+        }
         self.close(k::TABLE_EXPRESSION, t);
-        self.alias();
+        self.alias_in(true);
         self.table_suffix();
         self.close(k::FROM_EXPRESSION_ELEMENT, m);
         true
@@ -444,6 +451,14 @@ impl P<'_> {
     }
 
     pub fn where_clause(&mut self) {
+        if self.is(1, "current") && self.is(2, "of") {
+            // `WHERE CURRENT OF cursor`: no clause.
+            for _ in 0..3 {
+                self.bump_as(k::KEYWORD);
+            }
+            self.obj_ref();
+            return;
+        }
         let m = self.mark();
         self.bump_as(k::KEYWORD);
         self.implicit();

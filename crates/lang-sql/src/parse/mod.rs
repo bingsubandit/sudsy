@@ -74,6 +74,8 @@ pub(crate) struct P<'a> {
     /// The first argument of the call about to open is a type (`CONVERT(int, x)`).
     pub type_first: bool,
     /// The statement table's row of the statement walked generically.
+    /// The statement walked generically is a `CREATE INDEX`.
+    pub index: bool,
     pub row: Option<&'static std::collections::HashSet<&'static str>>,
 }
 
@@ -104,6 +106,7 @@ impl<'a> P<'a> {
             depth: 0,
             type_first: false,
             row: None,
+            index: false,
         };
         for i in open {
             let l = p.lex[i as usize];

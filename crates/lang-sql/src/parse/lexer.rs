@@ -217,7 +217,11 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
             return (T::LineComment, line_end_cr(b, i));
         }
         b'/' if next == Some(b'*') => return (T::BlockComment, block_comment(b, i, d, open)),
-        b'\\' if d == Dialect::Postgres => return (T::LineComment, meta_command_end(b, i)),
+        b'\\' if d == Dialect::Postgres => {
+            // A meta command at the start of a line is a comment; after code (`\gset`) it is one operator.
+            let at_line_start = b[..i].iter().rev().find(|&&c| c != b' ' && c != b'\t').is_none_or(|&c| c == b'\n' || c == b'\r');
+            return (if at_line_start { T::LineComment } else { T::Op }, meta_command_end(b, i));
+        }
         b'\'' => return (T::Str, quoted(b, i, b'\'', d == Dialect::Mysql || d == Dialect::Ansi, open)),
         b'"' => {
             let esc = matches!(d, Dialect::Mysql | Dialect::Ansi);

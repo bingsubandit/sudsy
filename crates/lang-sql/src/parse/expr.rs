@@ -291,8 +291,9 @@ impl P<'_> {
                 return true;
             }
             "TIMESTAMP" | "TIME" if self.at_any_at(1, &["with", "without"]) && self.is(2, "time") && self.is(3, "zone") && self.is_t(4, T::Str) => {
+                let kind = if self.d == super::Dialect::Postgres { k::TYPE_IDENTIFIER } else { k::KEYWORD };
                 for _ in 0..4 {
-                    self.bump_as(k::KEYWORD);
+                    self.bump_as(kind);
                 }
                 self.bump();
                 return true;
@@ -301,6 +302,12 @@ impl P<'_> {
                 self.bump_as(k::KEYWORD);
                 self.bump_as(k::KEYWORD);
                 self.obj_ref();
+                return true;
+            }
+            _ if self.d == super::Dialect::Postgres && self.is_t(1, T::Str) && !self.reserved(0) => {
+                // `box '(0,0)'`: a typed literal.
+                self.bump_as(k::TYPE_IDENTIFIER);
+                self.bump();
                 return true;
             }
             "DATE" | "TIME" | "TIMESTAMP" | "DATETIME" | "TIMESTAMPTZ" if self.is_t(1, T::Str) => {

@@ -79,6 +79,19 @@ impl P<'_> {
             "update" => self.update(),
             "delete" => self.delete(),
             "merge" => self.merge(),
+            "listen" | "unlisten" | "notify" if self.d == Dialect::Postgres => {
+                self.bump_as(k::KEYWORD);
+                self.eat_name();
+                if self.eat_t(T::Comma) {
+                    self.bump();
+                }
+            }
+            "show" if self.d == Dialect::Postgres => {
+                self.bump_as(k::KEYWORD);
+                while self.is_t(0, T::Word) {
+                    self.bump_as(k::WORD);
+                }
+            }
             "if" if self.d == Dialect::Mysql => self.if_block(),
             "set" if self.d == Dialect::Mysql && self.is_assignment() => self.set_assign(),
             _ if self.is_t(0, T::Word) && !self.keyword_like(0) && !self.is_t(1, T::Colon) => self.skip_statement(),

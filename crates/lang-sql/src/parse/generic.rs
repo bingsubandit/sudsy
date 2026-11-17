@@ -17,11 +17,11 @@ const INTRODUCERS: &[&str] = &[
     "STATISTICS", "TRANSFORM", "EVENT", "SYNONYM", "ASSEMBLY", "CATALOG", "LOGIN", "PLAN", "WORKLOAD", "RESOURCE",
     "ENDPOINT", "ROUTE", "CERTIFICATE", "AGGREGATE", "FUNCTION", "PROCEDURE", "ROUTINE", "EXECUTE", "USE",
     "DESCRIBE", "DESC", "EXISTS", "ONLY", "INHERITS", "METHOD", "NAMES", "CHARSET", "COLLATE", "ROUTINES", "FUNCTIONS",
-    "TYPES", "ATTRIBUTE", "OF",
+    "TYPES", "ATTRIBUTE", "OF", "RENAME",
 ];
 
 /// Words that are never a name, whatever precedes them.
-const NEVER_NAMES: &[&str] = &["DELETE", "UPDATE", "INSERT", "SELECT", "ALL", "CASCADE", "RESTRICT", "NO", "SET", "NULL", "BY", "OF", "ACCESS", "CURRENT", "NONE", "DEPENDS", "OWNED", "COMMIT"];
+const NEVER_NAMES: &[&str] = &["DELETE", "UPDATE", "INSERT", "SELECT", "ALL", "CASCADE", "RESTRICT", "NO", "SET", "NULL", "BY", "OF", "ACCESS", "CURRENT", "NONE", "DEPENDS", "OWNED", "COMMIT", "DROP", "ADD", "ALTER", "MAPPING"];
 
 /// Words that sit between an introducer and the name it introduces.
 const MODIFIERS: &[&str] = &[
@@ -66,6 +66,10 @@ struct Walk {
     options: bool,
     /// The statement is a `CREATE`.
     create: bool,
+    /// `CREATE STATISTICS`.
+    statistics: bool,
+    /// `CREATE [MATERIALIZED] VIEW`.
+    view: bool,
     /// `ALTER AGGREGATE ..`: the name after `RENAME TO` is a function name.
     aggregate: bool,
     /// The statement is a `CREATE`/`ALTER POLICY`: its roles are names.
@@ -89,6 +93,7 @@ impl P<'_> {
         }
         let second = if self.is_t(1, T::Word) { self.text(1).to_string() } else { String::new() };
         let row = self.d.statement_row(self.text(0), &second);
+        self.index = self.at("create") && (1..3).any(|i| self.is(i, "index"));
         self.row = row.filter(|r| r.iter().any(|e| !e.starts_with('@')));
         let role_kind = row.and_then(|r| r.iter().find_map(|e| e.strip_prefix("@role="))).map(|c| match c {
             "w" => k::WORD,
@@ -98,7 +103,7 @@ impl P<'_> {
         let grant = self.at_any(&["grant", "revoke", "deny"]) || (self.at("alter") && self.is(2, "privileges"));
         let create_table = self.at("create") && (1..6).any(|i| self.is(i, "table"));
         let table_stmt = self.at_any(&["create", "alter"]) && (1..4).any(|i| self.is(i, "table"));
-        self.generic_run(0, Walk { create_table, table_stmt, grant, create: self.at("create"), role_kind, prepare: self.at("prepare"), policy: (1..3).any(|i| self.is(i, "policy")), ..Walk::default() });
+        self.generic_run(0, Walk { create_table, table_stmt, grant, create: self.at("create"), statistics: self.at("create") && self.is(1, "statistics"), view: self.at("create") && (1..4).any(|i| self.is(i, "view")), role_kind, prepare: self.at("prepare"), policy: (1..3).any(|i| self.is(i, "policy")), ..Walk::default() });
     }
 
     /// `DECLARE CONTINUE HANDLER`, `DECLARE c CURSOR`, `DECLARE x CONDITION`: not a variable.
@@ -243,10 +248,56 @@ impl P<'_> {
         let quoted = self.is_t(0, T::Quoted);
         let dotted = self.is_t(1, T::Dot) || self.prev_is_dot();
         let word = !quoted;
+        // `CREATE POLICY .. USING (expr)`, `CREATE TABLE .. AS EXECUTE f()`, `CREATE STATISTICS .. ON expr, ..`.
+        if word && !dotted && matches!(up.as_str(), "USING" | "CHECK") && w.policy && self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            self.bracketed(|p| {
+                p.expression();
+            });
+            return;
+        }
+        if word && !dotted && up == "EXECUTE" && w.create_table && self.name_call_ahead_from(1) {
+            self.bump_as(k::KEYWORD);
+            self.chain(false);
+            return;
+        }
+        if word && !dotted && up == "ON" && w.statistics {
+            self.bump_as(k::KEYWORD);
+            self.list(|p| p.element());
+            return;
+        }
+        if word && !dotted && up == "ENUM" && self.prev_text_is("as") && self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            return;
+        }
+        // `CREATE FUNCTION add(..)`: the name before the bracket is a function name, reserved or not.
+        if word && !dotted && self.is_t(1, T::LParen) && (["function", "procedure", "method", "routine"].iter().any(|x| self.prev_text_is(x)) || (w.function_name && self.prev_kind() == Some(T::Comma))) {
+            self.generic_name(true);
+            w.expect_name = false;
+            w.after_name = true;
+            w.function_name = true;
+            return;
+        }
+        // `USING hash`: the index method is a name; `(key)`: so is a bare column.
+        if word && !dotted && self.index && self.d == super::Dialect::Postgres && (self.prev_text_is("using") || (depth > 0 && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen)))) {
+            self.bump_as(k::IDENTIFIER);
+            return;
+        }
+        // An operator class after an index column: a name, not a call.
+        if word && !dotted && self.index && depth > 0 && self.is_t(1, T::LParen) && self.prev_kind() == Some(T::Word) && !self.prev_text_is("using") {
+            self.bump_as(k::IDENTIFIER);
+            return;
+        }
+        // `CREATE VIEW v WITH (opt = value)`: names and values are identifiers.
+        if word && !dotted && (up == "WITH" && (w.view || w.create_table) || up == "SET" && w.table_stmt) && self.d == super::Dialect::Postgres && self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            self.options_bracket(false);
+            return;
+        }
         // T-SQL `WITH (...)`, `OPTION (...)`: an option list.
         if word && self.d == super::Dialect::Tsql && matches!(up.as_str(), "WITH" | "OPTION") && self.is_t(1, T::LParen) && !w.columns && !w.params {
             self.bump_as(k::KEYWORD);
-            self.options_bracket();
+            self.options_bracket(true);
             *w = Walk { create_table: w.create_table, table_stmt: w.table_stmt, ..Walk::default() };
             return;
         }
@@ -262,7 +313,7 @@ impl P<'_> {
             return;
         }
         // A value of a setting (`SET x = on, off`) and the key before `=`.
-        if word && !dotted && !w.columns && !w.params && !w.options && self.row.is_none() && (w.value || self.is_op(1, "=")) {
+        if word && !dotted && !w.columns && !w.params && !w.options && self.row.is_none() && (w.value || self.is_op(1, "=") || (self.d == super::Dialect::Postgres && self.prev_text_is("set") && self.is(1, "to"))) {
             let kind = match self.d {
                 super::Dialect::Tsql if self.keyword_like(0) => k::KEYWORD,
                 super::Dialect::Tsql => k::IDENTIFIER,
@@ -289,9 +340,10 @@ impl P<'_> {
             return;
         }
         // The first word of a definition is its name; a parameter that is only a type is a type.
-        if w.item_start && !(word && CONSTRAINT_STARTS.contains(&up.as_str()) && !w.params) {
+        let constraint = word && !w.params && CONSTRAINT_STARTS.contains(&up.as_str()) && (self.d == super::Dialect::Mysql || !matches!(up.as_str(), "KEY" | "FULLTEXT" | "SPATIAL"));
+        if w.item_start && !constraint {
             w.item_start = false;
-            if w.params && word && super::types::is_type_word(&up) && !self.is_t(1, T::Word) {
+            if w.params && word && (super::types::is_type_word(&up) || (self.d == super::Dialect::Postgres && matches!(self.t(1), Some(T::Comma | T::RParen)))) && !self.is_t(1, T::Word) {
                 self.type_name();
                 return;
             }
@@ -320,7 +372,9 @@ impl P<'_> {
             self.type_name();
             return;
         }
-        if word && !dotted && w.after_name && super::types::is_type_word(&up) && (w.columns || w.params || depth > 0 || w.attribute) {
+        // The word after a column's name is its type, known or not.
+        let column_type = self.d == super::Dialect::Postgres && w.columns && !w.options && !self.reserved(0) && !constraint && !matches!(up.as_str(), "GENERATED" | "COLLATE" | "REFERENCES" | "DEFAULT" | "NOT" | "NULL" | "AS" | "COMMENT" | "CHARACTER" | "CHARSET");
+        if word && !dotted && w.after_name && (super::types::is_type_word(&up) || column_type) && (w.columns || w.params || depth > 0 || w.attribute) {
             self.type_name();
             w.after_name = false;
             return;
@@ -333,7 +387,9 @@ impl P<'_> {
                 && (matches!(self.prev_kind(), Some(T::Comma)) || ["to", "by", "for", "schema"].iter().any(|x| self.prev_text_is(x)));
             let kind = match (role, up.as_str()) {
                 (false, _) => k::FUNCTION_IDENTIFIER,
-                (true, "CURRENT_USER" | "SESSION_USER") if w.policy => k::IDENTIFIER,
+                (true, "CURRENT_USER" | "SESSION_USER") if (w.policy || w.grant) && !matches!(self.prev_kind(), Some(T::Comma)) => k::IDENTIFIER,
+                // A role reference refuses the reserved words, which then match the keyword alternative.
+                (true, _) if w.role_kind == Some(k::IDENTIFIER) && self.reserved(0) => k::KEYWORD,
                 _ => w.role_kind.unwrap_or(k::KEYWORD),
             };
             self.bump_as(kind);
@@ -419,7 +475,7 @@ impl P<'_> {
             w.function_name |= rename_to;
             w.after_name = false;
             w.expr = EXPR_AFTER.contains(&up.as_str()) || (up == "AS" && w.columns);
-            if matches!(up.as_str(), "RETURNS" | "AS") && self.at_type_word() {
+            if (matches!(up.as_str(), "AS" | "RETURNS") && self.at_type_word()) || (up == "RETURNS" && self.d == super::Dialect::Postgres && self.is_t(0, T::Word) && !self.reserved(0) && !self.at_any(&["setof", "trigger"])) {
                 self.type_name();
             }
             if (w.columns || w.create_table || w.table_stmt) && !w.options && up == "DEFAULT" && self.expr_ahead() {
@@ -485,5 +541,16 @@ impl P<'_> {
 
     fn prev_is_dot(&self) -> bool {
         self.pos > 0 && self.code.get(self.pos - 1).is_some_and(|&c| self.lex[c as usize].kind == T::Dot)
+    }
+}
+
+impl P<'_> {
+    /// Does a (dotted) name followed by a bracket start `n` tokens ahead?
+    fn name_call_ahead_from(&self, n: usize) -> bool {
+        let mut n = n;
+        while self.starts_name(n) && self.is_t(n + 1, T::Dot) {
+            n += 2;
+        }
+        self.starts_name(n) && self.is_t(n + 1, T::LParen)
     }
 }

@@ -38,6 +38,11 @@ impl P<'_> {
 
     /// An `AS`-alias or a bare alias of an element of a list or a table.
     pub fn alias(&mut self) -> bool {
+        self.alias_in(false)
+    }
+
+    /// `AS t (a, b)`: with `columns`, a bracketed list of column names may follow the alias.
+    pub fn alias_in(&mut self, columns: bool) -> bool {
         let m = self.mark();
         let has_as = self.at("as");
         if !has_as && !(self.at_name() && !self.at_any(&["window", "limit"])) {
@@ -51,10 +56,29 @@ impl P<'_> {
             self.eat("as");
         }
         self.alias_name();
-        // `AS t (a, b)`: the column aliases.
+        if columns && self.is_t(0, T::LParen) && self.names_bracket_ahead() {
+            self.bracketed(|p| {
+                p.list(|p| p.eat_name());
+            });
+        }
         self.dedent();
         self.close(k::ALIAS_EXPRESSION, m);
         true
+    }
+
+    /// Is the bracket at the cursor a plain list of names?
+    fn names_bracket_ahead(&self) -> bool {
+        let mut n = 1;
+        loop {
+            if !self.starts_name(n) || self.is_op(n, "*") || self.is_t(n + 1, T::Dot) || self.is_t(n + 1, T::LParen) {
+                return false;
+            }
+            match self.t(n + 1) {
+                Some(T::Comma) => n += 2,
+                Some(T::RParen) => return true,
+                _ => return false,
+            }
+        }
     }
 
     fn starts_alias_name(&self, n: usize) -> bool {
