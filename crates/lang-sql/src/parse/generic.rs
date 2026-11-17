@@ -118,6 +118,7 @@ impl P<'_> {
             }
             match t {
                 T::Semi => break,
+                T::Word if depth == 0 && self.d == super::Dialect::Tsql && self.at("end") && !self.expr_pending() => break,
                 T::RParen | T::RSquare if depth > 0 => break,
                 T::RParen => {
                     self.error(self.pos, "unmatched )");
@@ -307,11 +308,15 @@ impl P<'_> {
             return;
         }
         // `ON ASYMMETRIC KEY::name`: the two words before `::` are the class.
-        if word && self.d == super::Dialect::Tsql && self.is_t(1, T::Word) && self.is_t(2, T::Cast) {
-            self.bump_as(k::KEYWORD);
-            self.bump_as(k::KEYWORD);
-            w.expect_name = false;
-            return;
+        if word && self.d == super::Dialect::Tsql && self.is_t(1, T::Word) {
+            let n = (2..4).find(|&n| !self.is_t(n, T::Word));
+            if let Some(n) = n.filter(|&n| self.is_t(n, T::Cast)) {
+                for _ in 0..n {
+                    self.bump_as(k::KEYWORD);
+                }
+                w.expect_name = false;
+                return;
+            }
         }
         // T-SQL `OBJECT::name`: the class before `::` is a keyword.
         if word && self.d == super::Dialect::Tsql && self.is_t(1, T::Cast) {
@@ -549,6 +554,23 @@ impl P<'_> {
             Some(T::Word) => !self.reserved(0) || self.at_any(&["null", "true", "false", "current_timestamp", "current_date", "case"]),
             _ => false,
         }
+    }
+
+    /// Is a `CASE` open in the statement (its `END` is not the end of a block)?
+    fn expr_pending(&self) -> bool {
+        let mut i = self.pos;
+        let mut open = 0i32;
+        while i > 0 {
+            i -= 1;
+            let l = self.lex[self.code[i] as usize];
+            match l.kind {
+                T::Semi => break,
+                T::Word if self.src[l.start as usize..l.end as usize].eq_ignore_ascii_case("end") => open -= 1,
+                T::Word if self.src[l.start as usize..l.end as usize].eq_ignore_ascii_case("case") => open += 1,
+                _ => {}
+            }
+        }
+        open > 0
     }
 
     fn prev_is_dot(&self) -> bool {

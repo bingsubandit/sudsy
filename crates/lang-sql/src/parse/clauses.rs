@@ -361,6 +361,12 @@ impl P<'_> {
                     p.from_expression();
                 }
             });
+        } else if self.d == Dialect::Tsql && self.at_any(&["openquery", "openrowset", "openxml", "openjson", "containstable", "freetexttable", "semanticsimilaritytable"]) && self.is_t(1, T::LParen) {
+            // A rowset function: a keyword, then a bracket of arguments.
+            self.bump_as(k::KEYWORD);
+            self.bracketed(|p| {
+                p.list(|p| p.rowset_argument());
+            });
         } else if self.at("dual") {
             let o = self.mark();
             self.bump_as(k::IDENTIFIER);
@@ -390,6 +396,19 @@ impl P<'_> {
         self.table_suffix();
         self.close(k::FROM_EXPRESSION_ELEMENT, m);
         true
+    }
+
+    /// An argument of a rowset function: expressions, with the option words as keywords.
+    fn rowset_argument(&mut self) -> bool {
+        let start = self.pos;
+        while !self.eof() && !self.is_t(0, T::Comma) && !self.is_t(0, T::RParen) {
+            if self.is_t(0, T::Word) && self.keyword_like(0) && !self.is_t(1, T::LParen) && !self.is_t(1, T::Dot) && !self.is_t(0, T::Quoted) {
+                self.bump_as(k::KEYWORD);
+            } else if !self.element() {
+                self.bump();
+            }
+        }
+        self.pos > start
     }
 
     fn name_call_ahead(&self) -> bool {

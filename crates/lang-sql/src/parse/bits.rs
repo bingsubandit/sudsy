@@ -13,8 +13,11 @@ impl P<'_> {
         if !self.eat_name() {
             return false;
         }
-        while self.is_t(0, T::Dot) && self.starts_name(1) {
+        while self.is_t(0, T::Dot) && (self.starts_name(1) || (self.d == super::Dialect::Tsql && self.is_t(1, T::Dot) && self.starts_name(2))) {
             self.bump();
+            if self.is_t(0, T::Dot) {
+                self.bump(); // `master..table`
+            }
             if self.is_op(0, "*") {
                 self.bump();
                 break;
@@ -45,7 +48,7 @@ impl P<'_> {
     pub fn alias_in(&mut self, columns: bool) -> bool {
         let m = self.mark();
         let has_as = self.at("as");
-        if !has_as && !(self.at_name() && !self.at_any(&["window", "limit"])) {
+        if !has_as && !(self.at_name() && !self.at_any(&["window", "limit"]) && !(self.d == super::Dialect::Tsql && self.is_t(1, T::Colon))) {
             return false;
         }
         if has_as && !(self.starts_alias_name(1)) {

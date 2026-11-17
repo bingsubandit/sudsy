@@ -273,6 +273,14 @@ impl P<'_> {
                 c.lone = false;
                 return true;
             }
+            "IDENTITY" if self.d == super::Dialect::Tsql && self.is_t(1, T::LParen) => {
+                self.bump_as(k::KEYWORD);
+                self.bracketed(|p| {
+                    p.list(|p| p.type_name() || p.element());
+                });
+                c.lone = false;
+                return true;
+            }
             "DEFAULT" if !self.is_t(1, T::Dot) => {
                 self.bump_as(k::KEYWORD);
                 return true;

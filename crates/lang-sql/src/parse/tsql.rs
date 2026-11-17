@@ -105,9 +105,21 @@ impl P<'_> {
         self.bump();
         if self.is_t(0, T::Op) {
             // `+=`, `=`: an assignment.
+            let m = self.mark();
             self.bump();
+            self.close(k::COMPARISON_OPERATOR, m);
         }
-        self.expression();
+        if self.at("cursor") {
+            // `SET @c = CURSOR SCROLL DYNAMIC FOR select`.
+            while self.is_t(0, T::Word) && !self.at("for") {
+                self.bump_as(k::KEYWORD);
+            }
+            if self.eat("for") && self.at_query_start() {
+                self.query();
+            }
+        } else {
+            self.expression();
+        }
         self.dedent();
     }
 

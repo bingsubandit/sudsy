@@ -302,11 +302,25 @@ impl P<'_> {
         if self.d == Dialect::Mysql && !self.at_any(&["from", "low_priority", "quick", "ignore"]) {
             self.list(|p| p.obj_ref());
         }
-        if self.at("from") {
+        if self.d == Dialect::Tsql && self.at("top") {
+            self.bump_as(k::KEYWORD);
+            self.bracketed(|p| {
+                p.expression();
+            });
+            self.eat("percent");
+        }
+        if self.d == Dialect::Tsql && self.starts_name(0) && !self.at("from") {
+            // `DELETE t FROM t JOIN ..`: the target, then its source.
+            self.obj_ref();
+        }
+        while self.at("from") {
             let m = self.mark();
             self.bump_as(k::KEYWORD);
             self.list(|p| p.from_expression());
             self.close(k::FROM_CLAUSE, m);
+            if self.d != Dialect::Tsql {
+                break;
+            }
         }
         if self.at("using") {
             self.bump_as(k::KEYWORD);
