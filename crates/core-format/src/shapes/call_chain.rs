@@ -228,13 +228,8 @@ impl<'a> Walk<'a> {
     fn walk_in(&self, node: &SyntaxNode) -> Option<SyntaxElement> {
         let g = self.cx.grammar;
         let call = self.tag(node, "call");
-        let fields = g.fields(node);
-        let field = |name: &str| {
-            fields
-                .iter()
-                .find(|(n, _)| *n == name)
-                .map(|(_, e)| e.clone())
-        };
+        let all = self.significant(node);
+        let field = |name: &str| g.slot_in(node.kind(), &all, name);
         let receiver = match field("object") {
             Some(o) => Some(o),
             None if call => field("callee"),
@@ -250,7 +245,7 @@ impl<'a> Walk<'a> {
                 return Some(SyntaxElement::Node(node.clone()));
             }
         }
-        let mut elems = self.significant(node);
+        let mut elems = all.clone();
         elems.retain(|e| Some(e) != receiver.as_ref());
         // A member whose name is itself a chain (`a?.b.c()`: the `?` and then the chain) continues it.
         let nested = match field("member") {
