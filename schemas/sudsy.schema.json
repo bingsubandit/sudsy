@@ -5968,14 +5968,14 @@
             },
             "member_chain_min_calls": {
               "default": 3,
-              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
+              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
               "maximum": 1000,
               "minimum": 1,
               "type": "integer"
             },
             "member_chain_short_head": {
               "default": 4,
-              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.Foo()`); a capitalized name, `this`, `base` and a keyword type always do.",
+              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
               "maximum": 100,
               "minimum": 0,
               "type": "integer"
@@ -7028,14 +7028,14 @@
             },
             "member_chain_min_calls": {
               "default": 2,
-              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
+              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
               "maximum": 1000,
               "minimum": 1,
               "type": "integer"
             },
             "member_chain_short_head": {
               "default": 4,
-              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `super` and a keyword type always do.",
+              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
               "maximum": 100,
               "minimum": 0,
               "type": "integer"
@@ -7147,24 +7147,24 @@
             },
             "member_chain_min_calls": {
               "default": 3,
-              "description": "With `member_chain_style: dotted`, a chain with at least this many calls is broken one call per line when it does not fit on a line.",
+              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
               "maximum": 1000,
               "minimum": 1,
               "type": "integer"
             },
             "member_chain_short_head": {
               "default": 2,
-              "description": "A name of at most this many characters at the head of a broken member chain statement stays on the line of the first call (`z.object({`); a capitalized name, `this` and a name of `$` and `_` always do.",
+              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
               "maximum": 100,
               "minimum": 0,
               "type": "integer"
             },
             "member_chain_style": {
-              "default": "prettier",
-              "description": "Layout of a chain of member accesses and calls that does not fit: `prettier` keeps the head, its calls and indexes in the first group, a call group per line after it (a chain of up to two groups stays on one line); `dotted` breaks before every dot once there are `member_chain_min_calls` calls.",
+              "default": "grouped",
+              "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line).",
               "enum": [
-                "prettier",
-                "dotted"
+                "fluent",
+                "grouped"
               ],
               "type": "string"
             },
@@ -8267,14 +8267,14 @@
                   },
                   "member_chain_min_calls": {
                     "default": 3,
-                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
+                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
                     "maximum": 1000,
                     "minimum": 1,
                     "type": "integer"
                   },
                   "member_chain_short_head": {
                     "default": 4,
-                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.Foo()`); a capitalized name, `this`, `base` and a keyword type always do.",
+                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
                     "maximum": 100,
                     "minimum": 0,
                     "type": "integer"
@@ -9279,14 +9279,14 @@
                   },
                   "member_chain_min_calls": {
                     "default": 2,
-                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
+                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
                     "maximum": 1000,
                     "minimum": 1,
                     "type": "integer"
                   },
                   "member_chain_short_head": {
                     "default": 4,
-                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `super` and a keyword type always do.",
+                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
                     "maximum": 100,
                     "minimum": 0,
                     "type": "integer"
@@ -9398,24 +9398,24 @@
                   },
                   "member_chain_min_calls": {
                     "default": 3,
-                    "description": "With `member_chain_style: dotted`, a chain with at least this many calls is broken one call per line when it does not fit on a line.",
+                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
                     "maximum": 1000,
                     "minimum": 1,
                     "type": "integer"
                   },
                   "member_chain_short_head": {
                     "default": 2,
-                    "description": "A name of at most this many characters at the head of a broken member chain statement stays on the line of the first call (`z.object({`); a capitalized name, `this` and a name of `$` and `_` always do.",
+                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
                     "maximum": 100,
                     "minimum": 0,
                     "type": "integer"
                   },
                   "member_chain_style": {
-                    "default": "prettier",
-                    "description": "Layout of a chain of member accesses and calls that does not fit: `prettier` keeps the head, its calls and indexes in the first group, a call group per line after it (a chain of up to two groups stays on one line); `dotted` breaks before every dot once there are `member_chain_min_calls` calls.",
+                    "default": "grouped",
+                    "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line).",
                     "enum": [
-                      "prettier",
-                      "dotted"
+                      "fluent",
+                      "grouped"
                     ],
                     "type": "string"
                   },
