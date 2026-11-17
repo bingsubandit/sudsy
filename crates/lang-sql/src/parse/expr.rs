@@ -34,6 +34,8 @@ const DATE_FUNCTIONS: &[&str] = &[
 
 const COMPARE: &[&str] = &["=", "<", ">", "<=", ">=", "<>", "!=", "!<", "!>", "<=>"];
 const ARITH: &[&str] = &["+", "-", "*", "/", "%"];
+/// Postgres operators the layout treats as arithmetic.
+const PG_BINARY: &[&str] = &["^", "->", "->>", "#>", "#>>", "@>", "<@", "<->", "?|", "?&", "@@", "@?"];
 
 impl P<'_> {
     /// An expression in its own node. False when none starts here.
@@ -607,7 +609,7 @@ impl P<'_> {
                     let m = self.mark();
                     self.bump();
                     self.close(k::COMPARISON_OPERATOR, m);
-                } else if ARITH.contains(&text) {
+                } else if ARITH.contains(&text) || (self.d == super::Dialect::Postgres && PG_BINARY.contains(&text)) {
                     self.bump_as(k::BINARY_OPERATOR);
                 } else if (text == "?" && self.d != super::Dialect::Postgres) || text == "$" || text == "\\" {
                     return false;

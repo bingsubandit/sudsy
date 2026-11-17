@@ -78,6 +78,7 @@ impl P<'_> {
             "insert" | "replace" if self.is_t(0, T::Word) => self.insert(),
             "update" => self.update(),
             "delete" => self.delete(),
+            "merge" => self.merge(),
             "if" if self.d == Dialect::Mysql => self.if_block(),
             "set" if self.d == Dialect::Mysql && self.is_assignment() => self.set_assign(),
             _ if self.is_t(0, T::Word) && !self.keyword_like(0) && !self.is_t(1, T::Colon) => self.skip_statement(),
@@ -151,10 +152,11 @@ impl P<'_> {
     }
 
     /// `ON CONFLICT ...`, `RETURNING ...`: what can follow a DML statement.
-    fn dml_tail(&mut self) {
+    pub(super) fn dml_tail(&mut self) {
         while !self.eof() && !self.is_t(0, T::Semi) {
             if self.at("returning") {
                 self.bump_as(k::KEYWORD);
+                self.indent();
                 self.list(|p| {
                     if p.at_op("*") {
                         p.bump();
@@ -164,6 +166,9 @@ impl P<'_> {
                     p.alias();
                     ok
                 });
+                self.dedent();
+            } else if self.at("on") && self.is(1, "conflict") {
+                self.on_conflict();
             } else if self.at("on") {
                 self.bump_as(k::KEYWORD);
                 while !self.eof() && !self.is_t(0, T::Semi) && !self.at_any(&["set", "returning"]) {
@@ -190,9 +195,48 @@ impl P<'_> {
         }
     }
 
-    fn set_clause(&mut self) {
+    /// `ON CONFLICT [(cols) [WHERE ..] | ON CONSTRAINT name] DO NOTHING | DO UPDATE SET ..`.
+    fn on_conflict(&mut self) {
+        self.bump_as(k::KEYWORD);
+        self.bump_as(k::KEYWORD);
+        if self.is_t(0, T::LParen) {
+            self.bracketed(|p| {
+                p.list(|p| p.element());
+            });
+            if self.at("where") {
+                self.where_clause();
+            }
+        } else if self.at("on") {
+            self.bump_as(k::KEYWORD);
+            self.bump_as(k::KEYWORD);
+            self.obj_ref();
+        }
+        if !self.eat("do") {
+            return;
+        }
+        if self.eat("nothing") {
+            return;
+        }
+        if self.eat("update") {
+            self.indent();
+            if self.at("set") {
+                self.bump_as(k::KEYWORD);
+                self.implicit();
+                self.assignments();
+                self.dedent();
+            }
+            self.dedent();
+        }
+    }
+
+    pub(super) fn set_clause(&mut self) {
         self.bump_as(k::KEYWORD);
         self.indent();
+        self.assignments();
+        self.dedent();
+    }
+
+    fn assignments(&mut self) {
         self.list(|p| {
             if p.is_t(0, T::LParen) {
                 p.bracketed(|p| {
@@ -206,7 +250,6 @@ impl P<'_> {
             }
             p.element()
         });
-        self.dedent();
     }
 
     /// The `=` of an assignment.

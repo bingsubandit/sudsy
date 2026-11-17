@@ -13,7 +13,9 @@ mod dialect;
 mod expr;
 mod generic;
 mod lexer;
+mod merge;
 mod mysql;
+mod postgres;
 mod stmt;
 mod tsql;
 pub(crate) mod tree;
@@ -70,6 +72,8 @@ pub(crate) struct P<'a> {
     pub depth: u32,
     /// The first argument of the call about to open is a type (`CONVERT(int, x)`).
     pub type_first: bool,
+    /// The statement table's row of the statement walked generically.
+    pub row: Option<&'static std::collections::HashSet<&'static str>>,
 }
 
 /// The deepest nesting parsed structurally; deeper text is taken as a flat run of tokens.
@@ -98,6 +102,7 @@ impl<'a> P<'a> {
             errors: Vec::new(),
             depth: 0,
             type_first: false,
+            row: None,
         };
         for i in open {
             let l = p.lex[i as usize];

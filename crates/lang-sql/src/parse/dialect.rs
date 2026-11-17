@@ -32,6 +32,16 @@ impl Dialect {
         sets().units.contains(upper(word, &mut buf))
     }
 
+    /// The statement table's row of a statement that starts `first second`: the words that are
+    /// keywords in it (`W>`: the word after `W` is an identifier). The two-word row, else the one-word row.
+    pub fn statement_row(self, first: &str, second: &str) -> Option<&'static HashSet<&'static str>> {
+        let name = ["ansi", "postgres", "mysql", "tsql"][self as usize];
+        let (mut a, mut b) = ([0u8; 40], [0u8; 40]);
+        let (f, s) = (upper(first, &mut a), upper(second, &mut b));
+        let rows = &sets().rows;
+        rows.get(format!("{name}|{f} {s}").as_str()).or_else(|| rows.get(format!("{name}|{f}").as_str()))
+    }
+
     /// A keyword of this dialect: what a word that no rule claims is taken for.
     pub fn is_keyword(self, upper: &str) -> bool {
         let letter = ['a', 'p', 'm', 't'][self as usize];
@@ -56,6 +66,8 @@ struct Sets {
     /// Keywords by dialect: the letters `a`, `p`, `m`, `t` of the dialects that have the word.
     all: HashMap<&'static str, &'static str>,
     units: HashSet<&'static str>,
+    /// `dialect|FIRST SECOND` (or `dialect|FIRST`) -> the keywords of that statement.
+    rows: HashMap<&'static str, HashSet<&'static str>>,
 }
 
 fn words(text: &'static str) -> HashSet<&'static str> {
@@ -73,6 +85,13 @@ fn sets() -> &'static Sets {
         ],
         all: include_str!("data/keywords.txt").lines().filter_map(|l| l.split_once(' ')).collect(),
         units: words(include_str!("data/units.txt")),
+        rows: include_str!("data/statements.txt")
+            .lines()
+            .filter_map(|l| {
+                let (key, list) = l.rsplit_once('|')?;
+                Some((key, list.split(' ').collect()))
+            })
+            .collect(),
     })
 }
 

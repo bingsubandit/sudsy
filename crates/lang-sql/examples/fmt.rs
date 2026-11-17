@@ -20,7 +20,9 @@ fn files(path: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
 
 fn main() {
     let a: Vec<String> = std::env::args().collect();
-    let dialect = a[1].clone();
+    let regress = a[1] == "regress";
+    let dialect = if regress { "postgres".to_string() } else { a[1].clone() };
+    let prefix = if regress { "regress-" } else { "" };
     let mut verbose = 0;
     let mut paths = Vec::new();
     let mut i = 2;
@@ -42,19 +44,21 @@ fn main() {
         file.language_version = Some(dialect.clone());
         format_file(&provider, &file, &options, &DirectiveTable::default()).ok()
     };
+    let rejected: std::collections::HashSet<String> = std::fs::read_to_string("/scratch/slots/sudsy/3/rejected.txt").unwrap_or_default().lines().map(String::from).collect();
     let (mut old_ref, mut new_ref) = (0, 0);
     let (mut total, mut old_fmt, mut same, mut new_refused, mut shown) = (0, 0, 0, 0, 0);
     let mut diffs = Vec::new();
     for p in paths {
         let Ok(text) = std::fs::read_to_string(&p) else { continue };
         total += 1;
-        let reference = std::fs::read_to_string(format!("/scratch/slots/sudsy/3/ref/sqlfluff/{dialect}__{}", p.file_name().unwrap().to_str().unwrap())).ok();
+        let reference = std::fs::read_to_string(format!("/scratch/slots/sudsy/3/ref/sqlfluff/{dialect}__{prefix}{}", p.file_name().unwrap().to_str().unwrap())).ok();
+        let rej = rejected.contains(&format!("{dialect}/{prefix}{}", p.file_name().unwrap().to_str().unwrap()));
         let new_out = run(&text, true);
         let old_out = run(&text, false);
-        if reference.is_some() && reference == old_out {
+        if !rej && reference.is_some() && reference == old_out {
             old_ref += 1;
         }
-        if reference.is_some() && reference == new_out {
+        if !rej && reference.is_some() && reference == new_out {
             new_ref += 1;
         }
         let Some(old) = old_out else { continue };

@@ -63,6 +63,14 @@ struct Walk {
     grant: bool,
     /// After the columns of a `CREATE TABLE`: `ENGINE = x` style options.
     options: bool,
+    /// The statement is a `CREATE`.
+    create: bool,
+    /// `ALTER AGGREGATE ..`: the name after `RENAME TO` is a function name.
+    aggregate: bool,
+    /// The statement is a `CREATE`/`ALTER POLICY`: its roles are names.
+    policy: bool,
+    /// The statement is a `PREPARE`: the bracket after its name lists types.
+    prepare: bool,
 }
 
 impl P<'_> {
@@ -74,10 +82,12 @@ impl P<'_> {
             self.generic_run(0, w);
             return;
         }
+        let second = if self.is_t(1, T::Word) { self.text(1).to_string() } else { String::new() };
+        self.row = self.d.statement_row(self.text(0), &second);
         let grant = self.at_any(&["grant", "revoke", "deny"]);
         let create_table = self.at("create") && (1..6).any(|i| self.is(i, "table"));
         let table_stmt = self.at_any(&["create", "alter"]) && (1..4).any(|i| self.is(i, "table"));
-        self.generic_run(0, Walk { create_table, table_stmt, grant, ..Walk::default() });
+        self.generic_run(0, Walk { create_table, table_stmt, grant, create: self.at("create"), prepare: self.at("prepare"), policy: (1..3).any(|i| self.is(i, "policy")), ..Walk::default() });
     }
 
     /// `DECLARE CONTINUE HANDLER`, `DECLARE c CURSOR`, `DECLARE x CONDITION`: not a variable.
@@ -99,7 +109,7 @@ impl P<'_> {
                 }
                 T::LParen => {
                     let columns = w.after_name && w.create_table && depth == 0;
-                    let params = w.after_name && w.function_name;
+                    let params = w.after_name && (w.function_name || w.prepare);
                     self.generic_bracket(depth, columns, params, w.create_table || w.table_stmt);
                     w.options |= columns;
                     w.expect_name = false;
@@ -167,7 +177,7 @@ impl P<'_> {
     }
 
     /// A name (dotted): an object reference. The last part is a function name when `function`.
-    fn generic_name(&mut self, function: bool) {
+    pub(super) fn generic_name(&mut self, function: bool) {
         let m = self.mark();
         let node = if function { k::FUNCTION_NAME } else { k::OBJECT_REFERENCE };
         loop {
@@ -212,12 +222,12 @@ impl P<'_> {
         let dotted = self.is_t(1, T::Dot) || self.prev_is_dot();
         let word = !quoted;
         // `PREPARE p AS UPDATE ...`: a statement of its own.
-        if word && !dotted && matches!(up.as_str(), "UPDATE" | "DELETE" | "INSERT") && self.prev_text_is("as") {
+        if word && !dotted && matches!(up.as_str(), "UPDATE" | "DELETE" | "INSERT" | "MERGE") && self.prev_text_is("as") {
             self.statement_body();
             return;
         }
         // A value of a setting (`SET x = on, off`) and the key before `=`.
-        if word && !dotted && !w.columns && !w.params && !w.options && (w.value || self.is_op(1, "=")) {
+        if word && !dotted && !w.columns && !w.params && !w.options && self.row.is_none() && (w.value || self.is_op(1, "=")) {
             let kind = match (self.d == super::Dialect::Tsql, w.value) {
                 (false, _) => k::WORD,
                 (true, true) => k::WORD,
@@ -282,13 +292,23 @@ impl P<'_> {
         }
         let bare_function = word && super::expr::BARE_FUNCTIONS.contains(&up.as_str()) && !self.is_t(1, T::LParen);
         if bare_function {
-            self.bump_as(k::FUNCTION_IDENTIFIER);
+            // A role or schema in a list of names (`TO current_user, public`) is a keyword.
+            let role = !w.expr
+                && matches!(up.as_str(), "CURRENT_USER" | "SESSION_USER" | "CURRENT_ROLE" | "USER" | "CURRENT_SCHEMA")
+                && (matches!(self.prev_kind(), Some(T::Comma)) || ["to", "by", "for", "schema"].iter().any(|x| self.prev_text_is(x)));
+            let kind = match (role, up.as_str()) {
+                (false, _) => k::FUNCTION_IDENTIFIER,
+                (true, "CURRENT_USER" | "SESSION_USER") if w.policy => k::IDENTIFIER,
+                _ => k::KEYWORD,
+            };
+            self.bump_as(kind);
             *w = Walk { create_table: w.create_table, table_stmt: w.table_stmt, grant: w.grant, ..Walk::default() };
             return;
         }
         // An item of a bracketed list that is a bare word: a name (`(no)`, `(name)`).
         let bare_item = word && depth > 0 && w.table_stmt && !w.columns && !w.params && !self.reserved(0) && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen));
-        let name_here = bare_item || w.expect_name && !self.reserved(0) && !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) && !NEVER_NAMES.contains(&up.as_str());
+        let in_row = self.row.is_some_and(|r| r.contains(up.as_str()));
+        let name_here = bare_item || w.expect_name && !in_row && !self.reserved(0) && !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) && !NEVER_NAMES.contains(&up.as_str());
         let calls = (w.expr || (depth > 0 && !w.columns && !w.params)) && !self.reserved(0) || super::expr::BARE_FUNCTIONS.contains(&up.as_str());
         if (word || quoted) && calls && (self.is_t(1, T::LParen) || (w.expr && self.name_then_paren())) && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN") {
             self.chain(false);
@@ -311,12 +331,34 @@ impl P<'_> {
             });
             return;
         }
-        let kind = if self.keyword_like(0) || self.reserved(0) { k::KEYWORD } else { k::IDENTIFIER };
+        let kind = match self.row {
+            Some(row) if word => {
+                if self.prev_word().is_some_and(|p| row.contains(format!("{p}>").as_str())) {
+                    k::IDENTIFIER
+                } else if row.contains(up.as_str()) || INTRODUCERS.contains(&up.as_str()) || MODIFIERS.contains(&up.as_str()) || matches!(self.prev_kind(), None | Some(T::Semi | T::Data)) {
+                    k::KEYWORD
+                } else if matches!(up.as_str(), "TRUE" | "FALSE") {
+                    k::WORD_LITERAL
+                } else {
+                    k::IDENTIFIER
+                }
+            }
+            _ if self.keyword_like(0) || self.reserved(0) => k::KEYWORD,
+            _ => k::IDENTIFIER,
+        };
         let after_character = self.prev_text_is("character");
+        let rename_to = up == "TO" && w.aggregate && self.prev_text_is("rename");
         self.bump_as(kind);
         if kind == k::KEYWORD {
             if matches!(up.as_str(), "FUNCTION" | "PROCEDURE" | "PROC" | "AGGREGATE" | "ROUTINE") {
                 w.function_name = true;
+                if up == "AGGREGATE" && self.d == super::Dialect::Postgres && self.starts_name(0) {
+                    self.aggregate_signature(w.create);
+                    w.expect_name = false;
+                    w.after_name = false;
+                    w.aggregate = true;
+                    return;
+                }
             } else if !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) {
                 w.function_name = false;
             }
@@ -326,6 +368,7 @@ impl P<'_> {
                 w.expect_name = false;
                 w.name_list = false;
             }
+            w.function_name |= rename_to;
             w.after_name = false;
             w.expr = EXPR_AFTER.contains(&up.as_str()) || (up == "AS" && w.columns);
             if matches!(up.as_str(), "RETURNS" | "AS") && self.at_type_word() {
@@ -338,6 +381,13 @@ impl P<'_> {
             w.expect_name = false;
             w.after_name = true;
         }
+    }
+
+    /// The word before the cursor, uppercased.
+    fn prev_word(&self) -> Option<String> {
+        let c = *self.code.get(self.pos.checked_sub(1)?)?;
+        let l = self.lex[c as usize];
+        (l.kind == T::Word).then(|| self.src[l.start as usize..l.end as usize].to_ascii_uppercase())
     }
 
     fn prev_text_is(&self, word: &str) -> bool {
