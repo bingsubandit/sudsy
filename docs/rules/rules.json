@@ -8022,6 +8022,45 @@
     {
       "category": "suspicious",
       "default_level": "warn",
+      "description": "A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\\x00`, `\\u0000` or `\\u{0}`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) {\n  case 1:\n    b();\n  case 2:\n    c();\n    break;\n  case 3:\n  case 4:\n    d();\n    // falls through\n  default:\n    e();\n}\nvar x = y\n[1].map(z)\nvar w = y\n(z)\nvar v = t\n`a`\nvar r1 = /\\x00/, r2 = /[̀a]/, r3 = RegExp(\"\\t\"), r4 = /[á]/, r5 = /\\n[a-z]/;\nconst mark = \"\\\\u0301\";\nvar r6 = new RegExp(\"[a\" + mark + \"]\");\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 10,
+            "length": 6,
+            "line": 20
+          },
+          {
+            "column": 36,
+            "length": 12,
+            "line": 20
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-control-regex",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-control-regex",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
       "description": "A `debugger` statement.",
       "example": {
         "config": null,
@@ -8285,6 +8324,50 @@
           "id": "no-duplicate-case",
           "partial": false,
           "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Two members of one enum initialized with the same string or number.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a?.b!;\n(a?.b)!;\na?.b!.c;\nfunction f<T extends unknown, U extends string, V extends any = 1>() {}\nenum E { A = 0, B = 0, C = 0x1, D = 1, F = \"x\", G = \"x\", H = 2 }\nlet g: Function;\nlet h: String | number;\nclass K implements Function {}\ninterface Number {}\nlet i: Number;\na!;\na as any;\nb!();\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 17,
+            "length": 5,
+            "line": 5
+          },
+          {
+            "column": 33,
+            "length": 5,
+            "line": 5
+          },
+          {
+            "column": 49,
+            "length": 7,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-duplicate-enum-values",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-duplicate-enum-values",
+          "partial": false,
+          "tool": "typescript-eslint"
         }
       ]
     },
@@ -8634,6 +8717,40 @@
     {
       "category": "suspicious",
       "default_level": "warn",
+      "description": "A `case` with statements that can reach the next `case` or `default`, or an empty one followed by a blank line, without a comment that says `falls through` before the next one (or at the end of its block).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) {\n  case 1:\n    b();\n  case 2:\n    c();\n    break;\n  case 3:\n  case 4:\n    d();\n    // falls through\n  default:\n    e();\n}\nvar x = y\n[1].map(z)\nvar w = y\n(z)\nvar v = t\n`a`\nvar r1 = /\\x00/, r2 = /[̀a]/, r3 = RegExp(\"\\t\"), r4 = /[á]/, r5 = /\\n[a-z]/;\nconst mark = \"\\\\u0301\";\nvar r6 = new RegExp(\"[a\" + mark + \"]\");\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 3,
+            "length": 1,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-fallthrough",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-fallthrough",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
       "description": "A function declared by name that is assigned to.",
       "example": {
         "config": null,
@@ -8871,6 +8988,45 @@
     },
     {
       "category": "suspicious",
+      "default_level": "warn",
+      "description": "A character class of a regex (a literal or the constant string given to `RegExp`; names of variables written once are followed) in which a combining mark follows another character. The surrogate pair, emoji modifier, flag and joined-sequence checks are not made.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) {\n  case 1:\n    b();\n  case 2:\n    c();\n    break;\n  case 3:\n  case 4:\n    d();\n    // falls through\n  default:\n    e();\n}\nvar x = y\n[1].map(z)\nvar w = y\n(z)\nvar v = t\n`a`\nvar r1 = /\\x00/, r2 = /[̀a]/, r3 = RegExp(\"\\t\"), r4 = /[á]/, r5 = /\\n[a-z]/;\nconst mark = \"\\\\u0301\";\nvar r6 = new RegExp(\"[a\" + mark + \"]\");\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 55,
+            "length": 6,
+            "line": 20
+          },
+          {
+            "column": 10,
+            "length": 29,
+            "line": 22
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-misleading-character-class",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-misleading-character-class",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
       "default_level": "error",
       "description": "A class method `new(): C` that returns the class, an interface `new (): I` that returns the interface, and an interface method `constructor()`.",
       "example": {
@@ -8948,6 +9104,50 @@
         {
           "id": "no-namespace",
           "partial": true,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A non-null assertion on the end of an optional chain (`a?.b!`, `(a?.b)!`).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a?.b!;\n(a?.b)!;\na?.b!.c;\nfunction f<T extends unknown, U extends string, V extends any = 1>() {}\nenum E { A = 0, B = 0, C = 0x1, D = 1, F = \"x\", G = \"x\", H = 2 }\nlet g: Function;\nlet h: String | number;\nclass K implements Function {}\ninterface Number {}\nlet i: Number;\na!;\na as any;\nb!();\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 7,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 5,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-non-null-asserted-optional-chain",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-non-null-asserted-optional-chain",
+          "partial": false,
           "tool": "typescript-eslint"
         }
       ]
@@ -9591,6 +9791,89 @@
     {
       "category": "suspicious",
       "default_level": "warn",
+      "description": "`[`, `(` or a template at the start of a line right after an expression, which continues it (`a\\n[b]` is a property access, not two statements).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) {\n  case 1:\n    b();\n  case 2:\n    c();\n    break;\n  case 3:\n  case 4:\n    d();\n    // falls through\n  default:\n    e();\n}\nvar x = y\n[1].map(z)\nvar w = y\n(z)\nvar v = t\n`a`\nvar r1 = /\\x00/, r2 = /[̀a]/, r3 = RegExp(\"\\t\"), r4 = /[á]/, r5 = /\\n[a-z]/;\nconst mark = \"\\\\u0301\";\nvar r6 = new RegExp(\"[a\" + mark + \"]\");\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 10,
+            "length": 1,
+            "line": 14
+          },
+          {
+            "column": 10,
+            "length": 1,
+            "line": 16
+          },
+          {
+            "column": 10,
+            "length": 1,
+            "line": 18
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-unexpected-multiline",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-unexpected-multiline",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A type parameter constrained to `any` or `unknown`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a?.b!;\n(a?.b)!;\na?.b!.c;\nfunction f<T extends unknown, U extends string, V extends any = 1>() {}\nenum E { A = 0, B = 0, C = 0x1, D = 1, F = \"x\", G = \"x\", H = 2 }\nlet g: Function;\nlet h: String | number;\nclass K implements Function {}\ninterface Number {}\nlet i: Number;\na!;\na as any;\nb!();\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 12,
+            "length": 17,
+            "line": 4
+          },
+          {
+            "column": 49,
+            "length": 17,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-unnecessary-type-constraint",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-unnecessary-type-constraint",
+          "partial": false,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
       "description": "A statement after `return`, `throw`, `break`, `continue`, an `if`/`else` or `try` that always jumps, or a loop that never ends. Function declarations and `var` without a value are not reported.",
       "example": {
         "config": null,
@@ -9718,6 +10001,45 @@
     },
     {
       "category": "suspicious",
+      "default_level": "off",
+      "description": "The global type `Function` as a type name, `extends` or `implements` target.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a?.b!;\n(a?.b)!;\na?.b!.c;\nfunction f<T extends unknown, U extends string, V extends any = 1>() {}\nenum E { A = 0, B = 0, C = 0x1, D = 1, F = \"x\", G = \"x\", H = 2 }\nlet g: Function;\nlet h: String | number;\nclass K implements Function {}\ninterface Number {}\nlet i: Number;\na!;\na as any;\nb!();\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 8,
+            "length": 8,
+            "line": 6
+          },
+          {
+            "column": 20,
+            "length": 8,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-unsafe-function-type",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-unsafe-function-type",
+          "partial": false,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
       "default_level": "error",
       "description": "`!a in b` and `!a instanceof B` negate `a`, not the test.",
       "example": {
@@ -9752,6 +10074,56 @@
           "id": "no-unsafe-negation",
           "partial": true,
           "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "var a = 1;\nlet b = 1;\nlet c = 1;\nc = 2;\nlet d;\nd = 1;\nlet e, f;\n[e, f] = g();\nfor (let h of i) {}\nfor (let j = 0; j < 3; ) {}\nfunction k() {\n  let l;\n  l = m();\n  return arguments[0] + arguments.length;\n}\nn.apply(undefined, o);\np.q.apply(p, o);\nn.apply(null, [1]);\nr + 1;\ns.t;\nu();\nvoid 0;\n\"use strict\";\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 6,
+            "line": 19
+          },
+          {
+            "column": 1,
+            "length": 4,
+            "line": 20
+          },
+          {
+            "column": 1,
+            "length": 13,
+            "line": 23
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-unused-expressions",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended",
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-unused-expressions",
+          "partial": false,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-unused-expressions",
+          "partial": false,
+          "tool": "typescript-eslint"
         }
       ]
     },
@@ -9936,6 +10308,40 @@
       ]
     },
     {
+      "category": "style",
+      "default_level": "off",
+      "description": "A `var` declaration.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "var a = 1;\nlet b = 1;\nlet c = 1;\nc = 2;\nlet d;\nd = 1;\nlet e, f;\n[e, f] = g();\nfor (let h of i) {}\nfor (let j = 0; j < 3; ) {}\nfunction k() {\n  let l;\n  l = m();\n  return arguments[0] + arguments.length;\n}\nn.apply(undefined, o);\np.q.apply(p, o);\nn.apply(null, [1]);\nr + 1;\ns.t;\nu();\nvoid 0;\n\"use strict\";\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 10,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-var",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-var",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
       "category": "suspicious",
       "default_level": "error",
       "description": "A `with` statement.",
@@ -9966,6 +10372,40 @@
           "id": "no-with",
           "partial": false,
           "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "The global types `BigInt`, `Boolean`, `Number`, `Object`, `String` and `Symbol` as type names.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a?.b!;\n(a?.b)!;\na?.b!.c;\nfunction f<T extends unknown, U extends string, V extends any = 1>() {}\nenum E { A = 0, B = 0, C = 0x1, D = 1, F = \"x\", G = \"x\", H = 2 }\nlet g: Function;\nlet h: String | number;\nclass K implements Function {}\ninterface Number {}\nlet i: Number;\na!;\na as any;\nb!();\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 8,
+            "length": 6,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-wrapper-object-types",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-wrapper-object-types",
+          "partial": false,
+          "tool": "typescript-eslint"
         }
       ]
     },
@@ -10020,6 +10460,138 @@
           "id": "prefer-as-const",
           "partial": false,
           "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A `let` variable that is written once, in the scope that declares it, where the write could be its declaration (an initializer, a `for-in` / `for-of` head, or an assignment statement of the same block). A destructuring assignment to members, parameters or outer names is left alone, as is the `let` of a `for (;;)` head.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "var a = 1;\nlet b = 1;\nlet c = 1;\nc = 2;\nlet d;\nd = 1;\nlet e, f;\n[e, f] = g();\nfor (let h of i) {}\nfor (let j = 0; j < 3; ) {}\nfunction k() {\n  let l;\n  l = m();\n  return arguments[0] + arguments.length;\n}\nn.apply(undefined, o);\np.q.apply(p, o);\nn.apply(null, [1]);\nr + 1;\ns.t;\nu();\nvoid 0;\n\"use strict\";\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 5,
+            "length": 1,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 1,
+            "line": 6
+          },
+          {
+            "column": 2,
+            "length": 1,
+            "line": 8
+          },
+          {
+            "column": 5,
+            "length": 1,
+            "line": 8
+          },
+          {
+            "column": 10,
+            "length": 1,
+            "line": 9
+          },
+          {
+            "column": 3,
+            "length": 1,
+            "line": 13
+          }
+        ]
+      },
+      "fix": null,
+      "id": "prefer-const",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "prefer-const",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "`arguments` in an ordinary function, except as the object of `arguments.name`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "var a = 1;\nlet b = 1;\nlet c = 1;\nc = 2;\nlet d;\nd = 1;\nlet e, f;\n[e, f] = g();\nfor (let h of i) {}\nfor (let j = 0; j < 3; ) {}\nfunction k() {\n  let l;\n  l = m();\n  return arguments[0] + arguments.length;\n}\nn.apply(undefined, o);\np.q.apply(p, o);\nn.apply(null, [1]);\nr + 1;\ns.t;\nu();\nvoid 0;\n\"use strict\";\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 10,
+            "length": 9,
+            "line": 14
+          }
+        ]
+      },
+      "fix": null,
+      "id": "prefer-rest-params",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "prefer-rest-params",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "`f.apply(undefined, args)` and `o.m.apply(o, args)` with an `args` that is not an array literal.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "var a = 1;\nlet b = 1;\nlet c = 1;\nc = 2;\nlet d;\nd = 1;\nlet e, f;\n[e, f] = g();\nfor (let h of i) {}\nfor (let j = 0; j < 3; ) {}\nfunction k() {\n  let l;\n  l = m();\n  return arguments[0] + arguments.length;\n}\nn.apply(undefined, o);\np.q.apply(p, o);\nn.apply(null, [1]);\nr + 1;\ns.t;\nu();\nvoid 0;\n\"use strict\";\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 21,
+            "line": 16
+          },
+          {
+            "column": 1,
+            "length": 15,
+            "line": 17
+          }
+        ]
+      },
+      "fix": null,
+      "id": "prefer-spread",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "prefer-spread",
+          "partial": false,
+          "tool": "eslint"
         }
       ]
     },

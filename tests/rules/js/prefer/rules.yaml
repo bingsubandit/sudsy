@@ -1,0 +1,5 @@
+no-var: warn
+prefer-const: warn
+prefer-rest-params: warn
+prefer-spread: warn
+no-unused-expressions: warn

@@ -2274,6 +2274,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `const` variable that is assigned to again (the initializer is not)."
             },
+            "no-control-regex": {
+              "$ref": "#/definitions/rule",
+              "description": "A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\\x00`, `\\u0000` or `\\u{0}`."
+            },
             "no-copy-whole-stage": {
               "$ref": "#/definitions/rule",
               "description": "A `COPY --from` with `/` as a source and as the target."
@@ -2397,6 +2401,10 @@
             "no-duplicate-doc-text": {
               "$ref": "#/definitions/rule",
               "description": "Two elements of one documentation comment with the same text (a copied and pasted `<param>`, for example). Empty elements and \"The parameter is not used.\" are ignored. No fix."
+            },
+            "no-duplicate-enum-values": {
+              "$ref": "#/definitions/rule",
+              "description": "Two members of one enum initialized with the same string or number."
             },
             "no-duplicate-heading": {
               "$ref": "#/definitions/rule",
@@ -2574,6 +2582,10 @@
               "$ref": "#/definitions/rule",
               "description": "`a!!`, and `a!` right before `?.` (`a!?.b`, `a!?.()`)."
             },
+            "no-fallthrough": {
+              "$ref": "#/definitions/rule",
+              "description": "A `case` with statements that can reach the next `case` or `default`, or an empty one followed by a blank line, without a comment that says `falls through` before the next one (or at the end of its block)."
+            },
             "no-floating-package-version": {
               "$ref": "#/definitions/rule",
               "description": "A `PackageReference` (or `PackageVersion`) whose `Version` contains `*` restores a different package as new versions appear. Reported on the attribute; no fix, because the version to pin is a decision."
@@ -2728,6 +2740,10 @@
               "$ref": "#/definitions/rule",
               "description": "A backtick that is followed by blanks before the end of the line, so it does not continue the line."
             },
+            "no-misleading-character-class": {
+              "$ref": "#/definitions/rule",
+              "description": "A character class of a regex (a literal or the constant string given to `RegExp`; names of variables written once are followed) in which a combining mark follows another character. The surrogate pair, emoji modifier, flag and joined-sequence checks are not made."
+            },
             "no-missing-references": {
               "$ref": "#/definitions/rule",
               "description": "An attribute that refers to an `id` (`for`, `aria-labelledby`, `list`, `headers`, `form`, ...) names an id that no element of the document has."
@@ -2759,6 +2775,10 @@
             "no-nested-style-tag": {
               "$ref": "#/definitions/rule",
               "description": "Svelte's `no-nested-style-tag` (eslint-plugin-svelte). Only the top-level `<style>` is compiled as CSS."
+            },
+            "no-non-null-asserted-optional-chain": {
+              "$ref": "#/definitions/rule",
+              "description": "A non-null assertion on the end of an optional chain (`a?.b!`, `(a?.b)!`)."
             },
             "no-non-null-assertion": {
               "$ref": "#/definitions/rule",
@@ -2974,6 +2994,10 @@
               "$ref": "#/definitions/rule",
               "description": "An alias names an anchor that is not defined earlier in the same document."
             },
+            "no-unexpected-multiline": {
+              "$ref": "#/definitions/rule",
+              "description": "`[`, `(` or a template at the start of a line right after an expression, which continues it (`a\\n[b]` is a property access, not two statements)."
+            },
             "no-unit-return": {
               "$ref": "#/definitions/rule",
               "description": "A function with a block body that declares `: Unit` (ktlint no-unit-return)."
@@ -2981,6 +3005,10 @@
             "no-unknown-elements": {
               "$ref": "#/definitions/rule",
               "description": "An element name that HTML does not define, custom elements (`<my-element>`) included. Everything inside `<svg>` and `<math>` is left alone."
+            },
+            "no-unnecessary-type-constraint": {
+              "$ref": "#/definitions/rule",
+              "description": "A type parameter constrained to `any` or `unknown`."
             },
             "no-unneeded-base-prefix": {
               "$ref": "#/definitions/rule",
@@ -2994,6 +3022,10 @@
               "$ref": "#/definitions/rule",
               "description": "`return`, `throw`, and a `break` or `continue` that leaves the block, in a `finally` block: they override the `try`'s own outcome."
             },
+            "no-unsafe-function-type": {
+              "$ref": "#/definitions/rule",
+              "description": "The global type `Function` as a type name, `extends` or `implements` target."
+            },
             "no-unsafe-negation": {
               "$ref": "#/definitions/rule",
               "description": "`!a in b` and `!a instanceof B` negate `a`, not the test."
@@ -3001,6 +3033,10 @@
             "no-unused-anchors": {
               "$ref": "#/definitions/rule",
               "description": "An anchor that no alias refers to. The fix removes the anchor, which changes nothing about the data."
+            },
+            "no-unused-expressions": {
+              "$ref": "#/definitions/rule",
+              "description": "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them."
             },
             "no-unused-vars": {
               "$ref": "#/definitions/rule",
@@ -3042,6 +3078,10 @@
               "$ref": "#/definitions/rule",
               "description": "Vue's `no-v-text` (eslint-plugin-vue)."
             },
+            "no-var": {
+              "$ref": "#/definitions/rule",
+              "description": "A `var` declaration."
+            },
             "no-void-end-tag": {
               "$ref": "#/definitions/rule",
               "description": "A void element (`<br>`, `<img>`, ...) has no content and no end tag; the browser ignores `</br>`."
@@ -3061,6 +3101,10 @@
             "no-wmi-cmdlets": {
               "$ref": "#/definitions/rule",
               "description": "A call of `Get-WmiObject`, `Invoke-WmiMethod`, `Register-WmiEvent`, `Remove-WmiObject` or `Set-WmiInstance`."
+            },
+            "no-wrapper-object-types": {
+              "$ref": "#/definitions/rule",
+              "description": "The global types `BigInt`, `Boolean`, `Number`, `Object`, `String` and `Symbol` as type names."
             },
             "no-write-host": {
               "$ref": "#/definitions/rule",
@@ -3217,9 +3261,21 @@
               "$ref": "#/definitions/rule",
               "description": "A call of `IFNULL` or `NVL` (sqlfluff CV02)."
             },
+            "prefer-const": {
+              "$ref": "#/definitions/rule",
+              "description": "A `let` variable that is written once, in the scope that declares it, where the write could be its declaration (an initializer, a `for-in` / `for-of` head, or an assignment statement of the same block). A destructuring assignment to members, parameters or outer names is left alone, as is the `let` of a `for (;;)` head."
+            },
             "prefer-native-element": {
               "$ref": "#/definitions/rule",
               "description": "A `role` that a native element already has (`main`, `navigation`, `button`, `list`, ...) on an element that is not that one needs scripting and styling the native element comes with."
+            },
+            "prefer-rest-params": {
+              "$ref": "#/definitions/rule",
+              "description": "`arguments` in an ordinary function, except as the object of `arguments.name`."
+            },
+            "prefer-spread": {
+              "$ref": "#/definitions/rule",
+              "description": "`f.apply(undefined, args)` and `o.m.apply(o, args)` with an `args` that is not an array literal."
             },
             "prefer-tbody": {
               "$ref": "#/definitions/rule",

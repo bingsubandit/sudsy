@@ -1,0 +1,4 @@
+no-fallthrough: warn
+no-unexpected-multiline: warn
+no-control-regex: warn
+no-misleading-character-class: warn

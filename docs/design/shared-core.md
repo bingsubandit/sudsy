@@ -81,6 +81,8 @@ L1 is a test of the design. If the three languages cannot hold their ratchets on
 | S3 | A flow-graph builder from statement roles; JS `no-unreachable` on `core-flow` | `core-flow`, `lang-js` | `rules/flow.rs` deleted, same findings | R2 |
 | S4 | Java, Kotlin and PHP get the scope rules from tables alone | `lang-*` | lines per language recorded | S1, R3 |
 
+S1 is in: `core_semantics::scopes` (the table-driven binder and model) holds nothing JS-specific, JS's rows and hosts are `lang-js/src/semantic.rs`, and `eslint` and `typescript-eslint` coverage is 100% (`scripts/parity.sh coverage`). What stays in `lang-js` rule code is what only ESLint or typescript-eslint do: declaration merging, typescript-eslint's unused-variable handling, `no-shadow`'s TypeScript cases.
+
 ### Parsers
 | # | Step | Where | Done when | After |
 |---|---|---|---|---|

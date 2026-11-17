@@ -296,3 +296,37 @@ pub fn model(file: &FileContext<'_>) -> Option<Rc<Cx>> {
         .is_some_and(|t| t.kind() == k::UNKNOWN);
     (!fatal).then_some(cx)
 }
+
+/// `cargo test --release -p lang-js --lib -- --ignored model_cost --nocapture`: what binding costs
+/// on the files of `bench/inputs/js` (best of 50 per file), next to the parse of the same files.
+#[cfg(test)]
+mod cost {
+    use super::*;
+    use std::time::Instant;
+
+    #[test]
+    #[ignore = "prints timings"]
+    fn model_cost() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../bench/inputs/js");
+        let (mut bytes, mut parse, mut bound) = (0, 0.0, 0.0);
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            let text = std::fs::read_to_string(&path).unwrap();
+            let st = source_type(&path.to_string_lossy());
+            let (mut p, mut b) = (f64::MAX, f64::MAX);
+            for _ in 0..50 {
+                let start = Instant::now();
+                let tree = crate::adapter::parse(&text, st).tree;
+                let parsed = Instant::now();
+                let model = bind(&tree, grammars::JS.get(), table());
+                p = p.min((parsed - start).as_secs_f64());
+                b = b.min(parsed.elapsed().as_secs_f64());
+                drop(model);
+            }
+            bytes += text.len();
+            parse += p;
+            bound += b;
+        }
+        println!("{bytes} bytes: parse {:.2} ms, bind {:.2} ms", parse * 1e3, bound * 1e3);
+    }
+}
