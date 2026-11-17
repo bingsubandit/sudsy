@@ -107,7 +107,8 @@ pub struct Grammar {
     token_flags: Vec<u16>,
     node_flags: Vec<u16>,
     /// Per node kind (indexed like `nodes`) and body item: the sorted kinds the item accepts.
-    bodies: Vec<Vec<Vec<SyntaxKind>>>,
+    /// Per node kind, see [`Grammar::body_of`].
+    bodies: Vec<std::sync::OnceLock<Vec<Vec<SyntaxKind>>>>,
     /// Trivia and `ERROR`, sorted: invisible to bodies.
     skip: Vec<SyntaxKind>,
     /// Node kinds per tag, in id order.
@@ -167,22 +168,26 @@ impl crate::ast::Body for GrammarBody<'_> {
 }
 
 impl Grammar {
-    /// Fills the tables derived from the kinds: resolved bodies, the skipped kinds and the nodes
-    /// per tag.
-    fn resolve(&mut self) {
-        let kinds_of = |target: &Target| -> Vec<SyntaxKind> {
-            let mut kinds: Vec<SyntaxKind> = match target {
-                Target::Kind(k) => vec![*k],
-                Target::Tag(t) => self.kinds_with_tag(t).map(|d| d.kind).collect(),
+    /// The kinds each body item of node kind `index` accepts, built on its first use: nothing
+    /// reads bodies while formatting, so a run pays only for the kinds it asks about.
+    fn body_of(&self, index: usize) -> Option<&[Vec<SyntaxKind>]> {
+        let def = self.nodes.get(index)?;
+        let cell = self.bodies.get(index)?;
+        Some(cell.get_or_init(|| {
+            let kinds_of = |target: &Target| -> Vec<SyntaxKind> {
+                let mut kinds: Vec<SyntaxKind> = match target {
+                    Target::Kind(k) => vec![*k],
+                    Target::Tag(t) => self.kinds_with_tag(t).map(|d| d.kind).collect(),
+                };
+                kinds.sort();
+                kinds
             };
-            kinds.sort();
-            kinds
-        };
-        let bodies = self
-            .nodes
-            .iter()
-            .map(|d| d.body.iter().map(|i| kinds_of(&i.target)).collect())
-            .collect();
+            def.body.iter().map(|i| kinds_of(&i.target)).collect()
+        }))
+    }
+
+    /// Fills the tables derived from the kinds: the skipped kinds and the nodes per tag.
+    fn resolve(&mut self) {
         let mut skip: Vec<SyntaxKind> = std::iter::once(SyntaxKind::ERROR)
             .chain(self.kinds_with_tag("trivia").map(|d| d.kind))
             .collect();
@@ -193,7 +198,6 @@ impl Grammar {
                 tag_nodes.entry(tag.clone()).or_default().push(d.kind);
             }
         }
-        self.bodies = bodies;
         self.skip = skip;
         self.tag_nodes = tag_nodes;
     }
@@ -201,7 +205,7 @@ impl Grammar {
     /// For each body item of a node kind, the sorted kinds it accepts.
     pub fn body_kinds(&self, node: SyntaxKind) -> Option<&[Vec<SyntaxKind>]> {
         self.def(node)?;
-        self.bodies.get(node.index() as usize).map(Vec::as_slice)
+        self.body_of(node.index() as usize)
     }
 
     /// Trivia kinds and `ERROR`, sorted: they take no part in matching bodies.
@@ -214,22 +218,22 @@ impl Grammar {
         self.tag_nodes.get(tag).map_or(&[], Vec::as_slice)
     }
 
-    /// The child of `node` in the body item labelled `label` or filling the role field `label`
-    /// (the first, for a repeated item).
+    /// The child of `node` in a body item labelled `label` or filling the role field `label` (the
+    /// first, for a repeated item or several items of one field: a postfix `operator` after the
+    /// operand and a prefix one before it are two items of the field `operator`).
     /// Found with the routine the generated accessors use, so it agrees with them.
     pub fn slot(&self, node: &SyntaxNode, label: &str) -> Option<SyntaxElement> {
         let def = self.def(node.kind())?;
-        let index = def
-            .body
-            .iter()
-            .position(|i| i.label.as_deref() == Some(label) || i.field.as_deref() == Some(label))?;
         let body = GrammarBody {
             grammar: self,
-            kinds: self.bodies.get(node.kind().index() as usize)?,
+            kinds: self.body_of(node.kind().index() as usize)?,
             body: &def.body,
         };
         crate::ast::assign(node, body)
-            .find(|(i, _)| *i == index)
+            .find(|(i, _)| {
+                let item = &def.body[*i];
+                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+            })
             .map(|(_, e)| e)
     }
 

@@ -21,10 +21,14 @@ impl<'g> ShapeChecker<'g> {
     /// child or have no body are skipped: recovery trees need not fit, and a kind without a body
     /// describes nothing.
     pub fn check(&self, root: &SyntaxNode) -> Result<(), String> {
-        for node in root.descendants() {
-            self.check_node(&node)?;
-        }
-        Ok(())
+        self.violations(root).next().map_or(Ok(()), Err)
+    }
+
+    /// Every node whose children do not fit its body, described. `#opaque` nodes declare no shape
+    /// and are skipped.
+    pub fn violations<'a>(&'a self, root: &SyntaxNode) -> impl Iterator<Item = String> + 'a {
+        root.descendants()
+            .filter_map(move |node| self.check_node(&node).err())
     }
 
     fn check_node(&self, node: &SyntaxNode) -> Result<(), String> {
@@ -35,7 +39,7 @@ impl<'g> ShapeChecker<'g> {
             return Ok(());
         };
         // A kind with no body describes nothing (an opaque node, a scope with no fields).
-        if def.body.is_empty() {
+        if def.has_tag(crate::roles::OPAQUE) || def.body.is_empty() {
             return Ok(());
         }
         let skip = self.grammar.skipped_kinds();

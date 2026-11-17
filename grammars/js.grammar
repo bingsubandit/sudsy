@@ -3,6 +3,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language js 17 "JavaScript/TypeScript"
+roles
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -25,8 +26,8 @@ token LBrace "{" #punctuation
 token RBrace "}" #punctuation
 token LBracket "[" #punctuation #glue
 token RBracket "]" #punctuation #close
-token LAngle "<" #punctuation
-token RAngle ">" #punctuation
+token LAngle "<" #punctuation #operator
+token RAngle ">" #punctuation #operator
 token Comma "," #punctuation #separator #glue
 token Semicolon ";" #punctuation #separator
 token Colon ":" #punctuation #glue
@@ -39,10 +40,10 @@ token At "@" #punctuation
 // `|` inside a union type: its bars come and go with the layout, so the safety check ignores them (a bitwise `|` is an `Operator`).
 token Pipe "|" #punctuation #separator
 // Every other operator: `+`, `===`, `=`, `??=`, `/`, `!`, ...
-token Operator #punctuation #glue
+token Operator #punctuation #glue #operator
 // Reserved words and `true`, `false`, `null`; contextual words (`of`, `type`, `async`, ...) are identifiers.
-token Keyword
-token Identifier
+token Keyword #operator #identifier
+token Identifier #identifier
 // `#name`
 token PrivateName
 token String #literal #string #restyle
@@ -58,195 +59,208 @@ token Eof
 // Text the lexer could not classify.
 token Unknown #error
 
-node Program = Eof
-node IdentifierName
-node IdentifierReference
-node BindingIdentifier
-node LabelIdentifier
-node ThisExpression
-node ArrayExpression
-node Elision
-node ObjectExpression
-node ObjectProperty
-node TemplateLiteral
-node TaggedTemplateExpression
-node TemplateElement
-node ComputedMemberExpression
-node StaticMemberExpression
-node PrivateFieldExpression
-node CallExpression
-node NewExpression
-node ImportMeta
-node NewTarget
-node SpreadElement
-node UpdateExpression
-node UnaryExpression
-node BinaryExpression
-node PrivateInExpression
-node LogicalExpression
-node ConditionalExpression
-node AssignmentExpression
-node ArrayAssignmentTarget
-node ObjectAssignmentTarget
-node AssignmentTargetRest
-node AssignmentTargetWithDefault
-node AssignmentTargetPropertyIdentifier
-node AssignmentTargetPropertyProperty
-node SequenceExpression
-node Super
-node AwaitExpression
-node ChainExpression
-node ParenthesizedExpression #transparent
-node Directive
-node BlockStatement
-node VariableDeclaration
-node VariableDeclarator
-node EmptyStatement
-node ExpressionStatement
-node IfStatement
-node DoWhileStatement
-node WhileStatement
-node ForStatement
-node ForInStatement
-node ForOfStatement
-node ContinueStatement
-node BreakStatement
-node ReturnStatement
-node WithStatement
-node SwitchStatement
-node SwitchCase
-node LabeledStatement
-node ThrowStatement
-node TryStatement
-node CatchClause
-node CatchParameter
-node DebuggerStatement
-node AssignmentPattern
-node ObjectPattern
-node BindingProperty
-node ArrayPattern
-node BindingRestElement
-node Function
-node FormalParameters
-node FormalParameter
-node FormalParameterRest
-node FunctionBody
-node ArrowFunctionExpression
-node YieldExpression
-node Class
-node ClassBody
-node MethodDefinition
-node PropertyDefinition
-node PrivateIdentifier
-node StaticBlock
-node AccessorProperty
-node ImportExpression
-node ImportDeclaration
-node ImportSpecifier
-node ImportDefaultSpecifier
-node ImportNamespaceSpecifier
-node WithClause
-node ImportAttribute
-node ExportDeclaration
-node ExportNamedDeclaration
-node ExportFromDeclaration
-node ExportDefaultDeclaration
-node ExportAllDeclaration
-node ExportSpecifier
-node V8IntrinsicExpression
-node BooleanLiteral
-node NullLiteral
-node NumericLiteral
-node StringLiteral
-node BigIntLiteral
-node RegExpLiteral
-node JSXElement
-node JSXOpeningElement
-node JSXClosingElement
-node JSXFragment
-node JSXOpeningFragment
-node JSXClosingFragment
-node JSXNamespacedName
-node JSXMemberExpression
-node JSXExpressionContainer
-node JSXEmptyExpression
-node JSXAttribute
-node JSXSpreadAttribute
-node JSXIdentifier
-node JSXSpreadChild
+node Program #scope #block = items:#statement* Eof
+node IdentifierName #expression #opaque
+node IdentifierReference #expression #reference = name:#identifier? IdentifierName?
+node BindingIdentifier #pattern #declaration = name:#identifier
+node LabelIdentifier #opaque
+node ThisExpression #expression #opaque
+node ArrayExpression #expression #opaque
+node Elision #opaque
+node ObjectExpression #expression #opaque
+node ObjectProperty #opaque
+node TemplateLiteral #expression #opaque
+node TaggedTemplateExpression #expression #opaque
+node TemplateElement #opaque
+node ComputedMemberExpression #expression #index = object:#expression QuestionDot? LBracket arguments:#expression RBracket
+node StaticMemberExpression #expression #member-access = object:#expression Dot? QuestionDot? member:IdentifierName
+node PrivateFieldExpression #expression #member-access = object:#expression Dot? QuestionDot? member:PrivateIdentifier
+node CallExpression #expression #call =
+    callee:#expression QuestionDot? type_arguments:TSTypeParameterInstantiation? LParen arguments:#expression* RParen
+node NewExpression #expression #call =
+    Keyword callee:#expression type_arguments:TSTypeParameterInstantiation? LParen? arguments:#expression* RParen?
+node ImportMeta #expression #opaque
+node NewTarget #expression #opaque
+node SpreadElement #expression #opaque
+node UpdateExpression #expression #unary =
+    prefix=operator:#operator? LParen* operand:#expression RParen* postfix=operator:#operator?
+node UnaryExpression #expression #unary = operator:#operator operand:#expression
+node BinaryExpression #expression #binary = left:#expression operator:#operator right:#expression
+node PrivateInExpression #expression #opaque
+node LogicalExpression #expression #binary = left:#expression operator:#operator right:#expression
+node ConditionalExpression #expression #conditional = condition:#expression Question then:#expression Colon else:#expression
+node AssignmentExpression #expression #assignment = LParen* left:#expression RParen* operator:#operator right:#expression
+node ArrayAssignmentTarget #expression #opaque
+node ObjectAssignmentTarget #expression #opaque
+node AssignmentTargetRest #opaque
+node AssignmentTargetWithDefault #opaque
+node AssignmentTargetPropertyIdentifier #opaque
+node AssignmentTargetPropertyProperty #opaque
+node SequenceExpression #expression #opaque
+node Super #expression #opaque
+node AwaitExpression #expression #unary = operator:Keyword operand:#expression
+node ChainExpression #expression #opaque
+node ParenthesizedExpression #expression #opaque #transparent
+node Directive #statement #opaque
+node BlockStatement #statement #block #scope = LBrace items:#statement* RBrace
+node VariableDeclaration #statement #declaration = Identifier* Keyword? Identifier* declarators:VariableDeclarator*
+node VariableDeclarator #declaration = name:#pattern Operator? type:TSTypeAnnotation? Operator? init:#expression?
+node EmptyStatement #statement #opaque
+node ExpressionStatement #statement #opaque
+node IfStatement #statement #opaque
+node DoWhileStatement #statement #opaque
+node WhileStatement #statement #opaque
+node ForStatement #statement #scope =
+    Keyword LParen declaration:VariableDeclaration? init:#expression? Semicolon test:#expression? Semicolon update:#expression? RParen body:#statement
+node ForInStatement #statement #scope =
+    Keyword Keyword? LParen LParen* declaration:VariableDeclaration? left:#expression? RParen* Keyword? Identifier? right:#expression RParen body:#statement
+node ForOfStatement #statement #scope =
+    Keyword Keyword? LParen LParen* declaration:VariableDeclaration? left:#expression? RParen* Keyword? Identifier? right:#expression RParen body:#statement
+node ContinueStatement #statement #opaque
+node BreakStatement #statement #opaque
+node ReturnStatement #statement #opaque
+node WithStatement #statement #opaque
+node SwitchStatement #statement #scope = Keyword LParen discriminant:#expression RParen LBrace cases:SwitchCase* RBrace
+node SwitchCase #opaque
+node LabeledStatement #statement #opaque
+node ThrowStatement #statement #opaque
+node TryStatement #statement #opaque
+node CatchClause #scope = Keyword LParen? parameter:CatchParameter? RParen? body:BlockStatement
+node CatchParameter #opaque
+node DebuggerStatement #statement #opaque
+node AssignmentPattern #pattern #opaque
+node ObjectPattern #pattern #opaque
+node BindingProperty #opaque
+node ArrayPattern #pattern #opaque
+node BindingRestElement #pattern #opaque
+node Function #expression #statement #function #declaration #scope =
+    Identifier* Keyword? Operator? name:BindingIdentifier? type_parameters:TSTypeParameterDeclaration? parameters:FormalParameters return_type:TSTypeAnnotation? body:FunctionBody?
+node FormalParameters #parameter-list = LParen? parameters:#parameter* RParen?
+node FormalParameter #parameter #opaque
+node FormalParameterRest #parameter #opaque
+node FunctionBody #block = LBrace items:#statement* RBrace
+node ArrowFunctionExpression #expression #function #scope =
+    Identifier? type_parameters:TSTypeParameterDeclaration? parameters:FormalParameters return_type:TSTypeAnnotation? Arrow body:FunctionBody? expression_body:#expression?
+node YieldExpression #expression #opaque
+node Class #expression #statement #type-declaration #declaration #scope =
+    Decorator* Identifier* Keyword name:BindingIdentifier? type_parameters:TSTypeParameterDeclaration? Keyword? superclass:#expression? super_type_arguments:TSTypeParameterInstantiation? Identifier? implements:TSClassImplements* members:ClassBody
+node ClassBody #block = LBrace items:#member* RBrace
+node MethodDefinition #member #declaration =
+    Decorator* Identifier* Operator? LBracket? name:#expression RBracket? Question? value:Function
+node PropertyDefinition #member #declaration =
+    Decorator* Identifier* LBracket? name:#expression RBracket? Question? Operator? type:TSTypeAnnotation? Operator? value:#expression?
+node PrivateIdentifier #expression #opaque
+node StaticBlock #member #block #scope = Identifier LBrace items:#statement* RBrace
+node AccessorProperty #member #opaque
+node ImportExpression #expression #opaque
+node ImportDeclaration #statement #import =
+    Keyword Identifier* default:ImportDefaultSpecifier? namespace:ImportNamespaceSpecifier? LBrace? named:ImportSpecifier* RBrace? Identifier? path:StringLiteral Keyword? Identifier? with_clause:WithClause?
+node ImportSpecifier #opaque
+node ImportDefaultSpecifier #opaque
+node ImportNamespaceSpecifier #opaque
+node WithClause #opaque
+node ImportAttribute #opaque
+node ExportDeclaration #statement #opaque
+node ExportNamedDeclaration #statement #opaque
+node ExportFromDeclaration #statement #opaque
+node ExportDefaultDeclaration #statement #opaque
+node ExportAllDeclaration #statement #opaque
+node ExportSpecifier #opaque
+node V8IntrinsicExpression #expression #opaque
+node BooleanLiteral #expression #literal = value:Keyword
+node NullLiteral #expression #literal = value:Keyword
+node NumericLiteral #expression #literal = value:Number
+node StringLiteral #expression #literal = value:String? StringLiteral?
+node BigIntLiteral #expression #literal = value:BigInt
+node RegExpLiteral #expression #literal = value:RegExp
+node JSXElement #expression #opaque
+node JSXOpeningElement #opaque
+node JSXClosingElement #opaque
+node JSXFragment #expression #opaque
+node JSXOpeningFragment #opaque
+node JSXClosingFragment #opaque
+node JSXNamespacedName #opaque
+node JSXMemberExpression #opaque
+node JSXExpressionContainer #opaque
+node JSXEmptyExpression #opaque
+node JSXAttribute #opaque
+node JSXSpreadAttribute #opaque
+node JSXIdentifier #opaque
+node JSXSpreadChild #opaque
 // Text of an element, and its `{" "}` children: the formatter moves whitespace between the two.
-node JSXText #transparent
-node TSThisParameter
-node TSEnumDeclaration
-node TSEnumBody
-node TSEnumMember
-node TSTypeAnnotation
-node TSLiteralType
-node TSConditionalType
-node TSUnionType
-node TSIntersectionType
-node TSParenthesizedType
-node TSTypeOperator
-node TSArrayType
-node TSIndexedAccessType
-node TSTupleType
-node TSNamedTupleMember
-node TSOptionalType
-node TSRestType
-node TSAnyKeyword
-node TSStringKeyword
-node TSBooleanKeyword
-node TSNumberKeyword
-node TSNeverKeyword
-node TSIntrinsicKeyword
-node TSUnknownKeyword
-node TSNullKeyword
-node TSUndefinedKeyword
-node TSVoidKeyword
-node TSSymbolKeyword
-node TSThisType
-node TSObjectKeyword
-node TSBigIntKeyword
-node TSTypeReference
-node TSQualifiedName
-node TSTypeParameterInstantiation
-node TSTypeParameter
-node TSTypeParameterDeclaration
-node TSTypeAliasDeclaration
-node TSClassImplements
-node TSInterfaceDeclaration
-node TSInterfaceBody
-node TSPropertySignature
-node TSIndexSignature
-node TSCallSignatureDeclaration
-node TSMethodSignature
-node TSConstructSignatureDeclaration
-node TSIndexSignatureName
-node TSInterfaceHeritage
-node TSTypePredicate
-node TSExternalModuleDeclaration
-node TSNamespaceDeclaration
-node TSGlobalDeclaration
-node TSModuleBlock
-node TSTypeLiteral
-node TSInferType
-node TSTypeQuery
-node TSImportType
-node TSImportTypeQualifiedName
-node TSFunctionType
-node TSConstructorType
-node TSMappedType
-node TSTemplateLiteralType
-node TSAsExpression
-node TSSatisfiesExpression
-node TSTypeAssertion
-node TSImportEqualsDeclaration
-node TSExternalModuleReference
-node TSNonNullExpression
-node Decorator
-node TSExportAssignment
-node TSNamespaceExportDeclaration
-node TSInstantiationExpression
-node JSDocNullableType
-node JSDocNonNullableType
-node JSDocUnknownType
+node JSXText #opaque #transparent
+node TSThisParameter #parameter #opaque
+node TSEnumDeclaration #statement #type-declaration #declaration = Identifier* Keyword* name:BindingIdentifier members:TSEnumBody
+node TSEnumBody #block = LBrace items:#member* RBrace
+node TSEnumMember #member #opaque
+node TSTypeAnnotation #opaque
+node TSLiteralType #opaque
+node TSConditionalType #opaque
+node TSUnionType #opaque
+node TSIntersectionType #opaque
+node TSParenthesizedType #opaque
+node TSTypeOperator #opaque
+node TSArrayType #opaque
+node TSIndexedAccessType #opaque
+node TSTupleType #opaque
+node TSNamedTupleMember #opaque
+node TSOptionalType #opaque
+node TSRestType #opaque
+node TSAnyKeyword #opaque
+node TSStringKeyword #opaque
+node TSBooleanKeyword #opaque
+node TSNumberKeyword #opaque
+node TSNeverKeyword #opaque
+node TSIntrinsicKeyword #opaque
+node TSUnknownKeyword #opaque
+node TSNullKeyword #opaque
+node TSUndefinedKeyword #opaque
+node TSVoidKeyword #opaque
+node TSSymbolKeyword #opaque
+node TSThisType #opaque
+node TSObjectKeyword #opaque
+node TSBigIntKeyword #opaque
+node TSTypeReference #opaque
+node TSQualifiedName #opaque
+node TSTypeParameterInstantiation #opaque
+node TSTypeParameter #opaque
+node TSTypeParameterDeclaration #opaque
+node TSTypeAliasDeclaration #statement #opaque
+node TSClassImplements #opaque
+node TSInterfaceDeclaration #statement #type-declaration #declaration #scope =
+    Identifier* name:BindingIdentifier type_parameters:TSTypeParameterDeclaration? Keyword? extends:TSInterfaceHeritage* members:TSInterfaceBody
+node TSInterfaceBody #block = LBrace items:#member* RBrace
+node TSPropertySignature #member #opaque
+node TSIndexSignature #member #opaque
+node TSCallSignatureDeclaration #member #opaque
+node TSMethodSignature #member #opaque
+node TSConstructSignatureDeclaration #member #opaque
+node TSIndexSignatureName #opaque
+node TSInterfaceHeritage #opaque
+node TSTypePredicate #opaque
+node TSExternalModuleDeclaration #statement #opaque
+node TSNamespaceDeclaration #statement #opaque
+node TSGlobalDeclaration #statement #opaque
+node TSModuleBlock #block #scope = LBrace items:#statement* RBrace
+node TSTypeLiteral #opaque
+node TSInferType #opaque
+node TSTypeQuery #opaque
+node TSImportType #opaque
+node TSImportTypeQualifiedName #opaque
+node TSFunctionType #opaque
+node TSConstructorType #opaque
+node TSMappedType #opaque
+node TSTemplateLiteralType #opaque
+node TSAsExpression #expression #opaque
+node TSSatisfiesExpression #expression #opaque
+node TSTypeAssertion #expression #opaque
+node TSImportEqualsDeclaration #statement #opaque
+node TSExternalModuleReference #opaque
+node TSNonNullExpression #expression #opaque
+node Decorator #statement #opaque
+node TSExportAssignment #statement #opaque
+node TSNamespaceExportDeclaration #statement #opaque
+node TSInstantiationExpression #expression #opaque
+node JSDocNullableType #opaque
+node JSDocNonNullableType #opaque
+node JSDocUnknownType #opaque

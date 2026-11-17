@@ -100,3 +100,56 @@ fn matches_the_extensions() {
         &["a.json", "a.jsonc", "a.css"],
     );
 }
+
+/// The fields of the roles resolve to the parts a layout or binder reads, and the tree fits the
+/// bodies.
+#[test]
+fn role_fields_resolve() {
+    let p = provider();
+    let g = p.grammar();
+    let src = "a.b?.c(x, 1)[2]; x += y in z; i++; --j; new Foo(1);\nclass K { m(a) { return a ? 1 : 2 } }\n";
+    let tree = p.parse(&SourceFile::new("a.ts", 1, src)).unwrap().tree;
+    core_syntax::shape::ShapeChecker::new(g)
+        .check(&tree)
+        .unwrap();
+    let field = |kind: &str, nth: usize, field: &str| {
+        let node = tree
+            .descendants()
+            .filter(|n| g.name(n.kind()) == kind)
+            .nth(nth)
+            .unwrap();
+        g.slot(&node, field)
+            .map(|e| e.to_string().trim().to_string())
+    };
+    assert_eq!(field("CallExpression", 0, "callee").unwrap(), "a.b?.c");
+    assert_eq!(field("CallExpression", 0, "arguments").unwrap(), "x");
+    assert_eq!(field("NewExpression", 0, "callee").unwrap(), "Foo");
+    assert_eq!(
+        field("ComputedMemberExpression", 0, "arguments").unwrap(),
+        "2"
+    );
+    assert_eq!(field("AssignmentExpression", 0, "operator").unwrap(), "+=");
+    assert_eq!(field("BinaryExpression", 0, "operator").unwrap(), "in");
+    assert_eq!(field("UpdateExpression", 0, "operator").unwrap(), "++");
+    assert_eq!(field("UpdateExpression", 1, "operator").unwrap(), "--");
+    assert_eq!(field("ConditionalExpression", 0, "else").unwrap(), "2");
+    assert_eq!(
+        field("Class", 0, "members").unwrap().chars().next(),
+        Some('{')
+    );
+    assert_eq!(field("MethodDefinition", 0, "name").unwrap(), "m");
+    assert_eq!(field("Function", 0, "parameters").unwrap(), "(a)");
+}
+
+/// Every corpus file that parses fits the bodies of `js.grammar`.
+///
+/// `bash tests/conformance/fetch-js-corpus.sh && cargo test --profile corpus -p lang-js --test integration -- --ignored fits_the_grammar`
+#[test]
+#[ignore]
+fn corpus_fits_the_grammar() {
+    provider_api::format_testing::check_corpus_shapes(
+        provider(),
+        "js",
+        &["js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts"],
+    );
+}

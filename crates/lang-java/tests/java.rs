@@ -176,3 +176,47 @@ fn aosp_is_a_four_column_indent() {
         "class A {\n    void f() {\n        g();\n    }\n}\n"
     );
 }
+
+/// The fields of the roles resolve to the parts a layout or binder reads, and the tree fits the
+/// bodies.
+#[test]
+fn role_fields_resolve() {
+    use provider_api::{LanguageProvider, SourceFile};
+    let p = lang_java::provider();
+    let g = p.grammar();
+    let src = "class A { int[] f(int a) { x = a > 1 ? a : -a; b.c(a).d[1] = new E(a); i++; return a; } }\n";
+    let tree = p.parse(&SourceFile::new("A.java", 1, src)).unwrap().tree;
+    core_syntax::shape::ShapeChecker::new(g)
+        .check(&tree)
+        .unwrap();
+    let field = |kind: &str, nth: usize, field: &str| {
+        let node = tree
+            .descendants()
+            .filter(|n| g.name(n.kind()) == kind)
+            .nth(nth)
+            .unwrap();
+        g.slot(&node, field)
+            .map(|e| e.to_string().trim().to_string())
+    };
+    assert_eq!(field("MethodDeclaration", 0, "name").unwrap(), "f");
+    assert_eq!(field("ClassDeclarationCore", 0, "name").unwrap(), "A");
+    assert_eq!(field("MethodInvocation", 0, "callee").unwrap(), "c");
+    assert_eq!(field("MethodInvocation", 0, "object").unwrap(), "b");
+    assert_eq!(field("ObjectCreationExpression", 0, "callee").unwrap(), "E");
+    assert_eq!(field("AssignmentExpression", 0, "left").unwrap(), "x");
+    assert_eq!(field("AssignmentExpression", 0, "operator").unwrap(), "=");
+    assert_eq!(field("BinaryExpression", 0, "left").unwrap(), "a");
+    assert_eq!(field("BinaryExpression", 0, "operator").unwrap(), ">");
+    assert_eq!(field("TernaryExpression", 0, "else").unwrap(), "-a");
+    assert_eq!(field("UpdateExpression", 0, "operator").unwrap(), "++");
+    assert_eq!(field("ArrayAccess", 0, "arguments").unwrap(), "1");
+}
+
+/// Every corpus file that parses fits the bodies of `java.grammar`.
+///
+/// `cargo test --profile corpus -p lang-java --test integration -- --ignored fits_the_grammar`
+#[test]
+#[ignore]
+fn corpus_fits_the_grammar() {
+    provider_api::format_testing::check_corpus_shapes(lang_java::provider(), "java", &["java"]);
+}

@@ -159,6 +159,60 @@ pub fn check_corpus(
     (count, unparsed)
 }
 
+/// Every file of `corpus` with an extension in `extensions` that parses without errors fits the
+/// bodies of the provider's grammar (`ShapeChecker`). Panics with the kinds that do not, each with
+/// its count and one example, so a grammar's roles and bodies are measured on real code.
+pub fn check_corpus_shapes(provider: impl LanguageProvider, corpus: &str, extensions: &[&str]) {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/conformance/corpus");
+    let checker = core_syntax::shape::ShapeChecker::new(provider.grammar());
+    let mut dirs = vec![root.join(corpus)];
+    let mut files = 0;
+    let mut failures: std::collections::BTreeMap<String, (usize, String)> = Default::default();
+    while let Some(d) = dirs.pop() {
+        let entries = std::fs::read_dir(&d)
+            .unwrap_or_else(|_| panic!("run tests/conformance/fetch-{corpus}-corpus.sh"));
+        for path in entries.map(|e| e.unwrap().path()) {
+            if path.is_dir() {
+                dirs.push(path);
+                continue;
+            }
+            let wanted = path
+                .extension()
+                .is_some_and(|e| extensions.iter().any(|x| e == *x));
+            let Ok(text) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            let file = SourceFile::new(
+                path.to_string_lossy(),
+                1,
+                text.trim_start_matches('\u{feff}'),
+            );
+            let Ok(parsed) = provider.parse(&file) else {
+                continue;
+            };
+            if !wanted || !parsed.errors.is_empty() {
+                continue;
+            }
+            files += 1;
+            for v in checker.violations(&parsed.tree) {
+                // The same violation at other places counts once: drop the text ranges.
+                let key: Vec<_> = v.split(' ').filter(|w| !w.contains("..")).collect();
+                let entry = failures.entry(key.join(" ")).or_default();
+                entry.0 += 1;
+                if entry.1.is_empty() {
+                    entry.1 = format!("{}: {v}", path.display());
+                }
+            }
+        }
+    }
+    println!("{files} files, {} distinct violations", failures.len());
+    let report: Vec<_> = failures
+        .iter()
+        .map(|(k, (n, example))| format!("{n}x {k}\n    {example}"))
+        .collect();
+    assert!(report.is_empty(), "{}", report.join("\n"));
+}
+
 /// The provider claims every path of `yes` and none of `no`.
 #[track_caller]
 pub fn assert_file_names(provider: &dyn LanguageProvider, yes: &[&str], no: &[&str]) {

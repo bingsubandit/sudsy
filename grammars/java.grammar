@@ -2,6 +2,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are loose: they name the parts, not every order.
 
 language java 23 "Java"
+roles
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -16,18 +17,18 @@ token Newline #trivia #newline
 token Comment #trivia #comment #indentable
 
 // Reserved and contextual keywords, `this`, `super`, `var`, `void` and `@interface`.
-token Keyword
+token Keyword #type-token
 // `int`, `boolean`, ...
-token PrimitiveType
+token PrimitiveType #type-token
 // A name (a declaration's too).
-token Identifier
+token Identifier #operand #type-token
 // A string or a text block: one token.
-token String #literal #string
-token Char #literal
+token String #literal #string #operand
+token Char #literal #operand
 // Integer and floating-point literals of every base.
-token Number #literal
-token Boolean #literal
-token Null #literal
+token Number #literal #operand
+token Boolean #literal #operand
+token Null #literal #operand
 
 token LBrace "{" #punctuation
 token RBrace "}" #punctuation
@@ -35,8 +36,8 @@ token LParen "(" #punctuation #glue
 token RParen ")" #punctuation #close
 token LBracket "[" #punctuation #glue
 token RBracket "]" #punctuation
-token Lt "<" #punctuation
-token Gt ">" #punctuation
+token Lt "<" #punctuation #operator
+token Gt ">" #punctuation #operator
 token Semi ";" #punctuation
 token Comma "," #punctuation #separator #glue
 token Dot "." #punctuation
@@ -46,159 +47,159 @@ token Arrow "->" #punctuation
 token At "@" #punctuation
 token Ellipsis "..." #punctuation
 token Question "?" #punctuation
-token Assign "=" #punctuation
+token Assign "=" #punctuation #operator
 // Every other operator, assignment operators included.
-token Operator #punctuation
+token Operator #punctuation #operator
 
 token Eof
 token Unknown #error
 
-node Program = items:#child* Eof
-node AnnotatedType #child = #child*
-node Annotation #child = #child*
-node AnnotationArgumentList #child = #child*
-node AnnotationTypeBody #child = #child*
-node AnnotationTypeDeclaration #child #type-decl = #child*
-node AnnotationTypeDeclarationCore #child = #child*
-node AnnotationTypeElementDeclaration #child #type-decl = #child*
-node ArgumentList #child = #child*
-node ArrayAccess #child = #child*
-node ArrayCreationExpression #child #expr = #child*
-node ArrayCreationType #child = #child*
-node ArrayInitializer #child #expr = #child*
-node ArrayType #child = #child*
-node AssertStatement #child #stmt = #child*
-node AssignmentExpression #child #expr = #child*
-node BinaryExpression #child #expr = #child*
-node Block #child #stmt = #child*
-node BreakStatement #child #stmt = #child*
-node CastExpression #child #expr = #child*
-node CatchAlternativeType #child = #child*
-node CatchClause #child = #child*
-node CatchFormalParameter #child = #child*
-node CatchType #child = #child*
-node ClassBody #child = #child*
-node ClassDeclaration #child #type-decl = #child*
-node ClassDeclarationCore #child = #child*
-node ClassLiteral #child #expr = #child*
-node CompactConstructorDeclaration #child = #child*
-node CompilationUnit #child = #child*
-node ConstantDeclaration #child = #child*
-node ConstructorBody #child = #child*
-node ConstructorDeclaration #child = #child*
-node ContinueStatement #child #stmt = #child*
-node CreatedClassType #child = #child*
-node DefaultValue #child = #child*
-node DimExpr #child = #child*
-node Dimension #child = #child*
-node DoStatement #child #stmt = #child*
-node ElementValueArrayInitializer #child = #child*
-node ElementValuePair #child = #child*
-node EnhancedForStatement #child #stmt = #child*
-node EnumBody #child = #child*
-node EnumBodyDeclarations #child = #child*
-node EnumConstant #child = #child*
-node EnumDeclaration #child #type-decl = #child*
-node EnumDeclarationCore #child = #child*
-node ExceptionType #child = #child*
-node ExplicitConstructorInvocation #child = #child*
-node ExpressionStatement #child #stmt = #child*
-node ExtendsInterfaces #child = #child*
-node FieldAccess #child = #child*
-node FieldDeclaration #child = #child*
-node FinallyClause #child = #child*
-node ForCondition #child = #child*
-node ForInitializer #child = #child*
-node ForSpec #child = #child*
-node ForStatement #child #stmt = #child*
-node ForUpdate #child = #child*
-node FormalParameter #child = #child*
-node FormalParameters #child = #child*
-node GenericType #child = #child*
-node Guard #child = #child*
-node IfStatement #child #stmt = #child*
-node ImportDeclaration #child = #child*
-node InferredLocalType #child = #child*
-node InferredParameters #child = #child*
-node InstanceofExpression #child #expr = #child*
-node InstanceofPattern #child = #child*
-node InterfaceBody #child = #child*
-node InterfaceDeclaration #child #type-decl = #child*
-node InterfaceDeclarationCore #child = #child*
-node InterfaceTypeList #child = #child*
-node Label #child = #child*
-node LabeledStatement #child #stmt = #child*
-node LambdaExpression #child #expr = #child*
-node LambdaFormalParameters #child = #child*
-node LocalTypeDeclaration #child #stmt = #child*
-node LocalTypeModifiers #child = #child*
-node LocalVariableDeclaration #child #stmt = #child*
-node LocalVariableDeclarationCore #child = #child*
-node MarkerAnnotation #child = #child*
-node MethodDeclaration #child = #child*
-node MethodInvocation #child = #child*
-node MethodName #child = #child*
-node MethodReference #child #expr = #child*
-node MethodReferenceName #child = #child*
-node Modifiers #child = #child*
-node ModuleBody #child = #child*
-node ModuleDeclaration #child = #child*
-node ModuleDirective #child = #child*
-node ObjectCreationExpression #child #expr = #child*
-node PackageDeclaration #child = #child*
-node ParenthesizedExpression #child #expr = #child*
-node PatternNode #child = #child*
-node PatternVariable #child = #child*
-node Permits #child = #child*
-node QualifiedSuperExpression #child #expr = #child*
-node ReceiverParameter #child = #child*
-node RecordBody #child = #child*
-node RecordComponent #child = #child*
-node RecordDeclaration #child #type-decl = #child*
-node RecordDeclarationCore #child = #child*
-node RecordHeader #child = #child*
-node Resource #child = #child*
-node ResourceSpecification #child = #child*
-node ReturnStatement #child #stmt = #child*
-node ScopedIdentifier #child = #child*
-node ScopedTypeName #child = #child*
-node SpreadParameter #child = #child*
-node StatementExpression #child #expr = #child*
-node StaticInitializer #child = #child*
-node SuperExpression #child #expr = #child*
-node SuperInterfaces #child = #child*
-node Superclass #child = #child*
-node SwitchBlockStatementGroup #child = #child*
-node SwitchBlockStatementGroupBody #child = #child*
-node SwitchCaseElement #child = #child*
-node SwitchCaseLabelRest #child = #child*
-node SwitchExpression #child #expr = #child*
-node SwitchExpressionBlock #child = #child*
-node SwitchExpressionRule #child = #child*
-node SwitchGroupStatements #child = #child*
-node SwitchLabel #child = #child*
-node SwitchStatement #child #stmt = #child*
-node SwitchStatementBlock #child = #child*
-node SwitchStatementRule #child = #child*
-node SynchronizedStatement #child #stmt = #child*
-node TernaryExpression #child #expr = #child*
-node ThisExpression #child #expr = #child*
-node ThrowStatement #child #stmt = #child*
-node Throws #child = #child*
-node TopLevelDeclaration #child = #child*
-node TryStatement #child #stmt = #child*
-node TryWithResourcesStatement #child #stmt = #child*
-node TypeArguments #child = #child*
-node TypeBound #child = #child*
-node TypeName #child = #child*
-node TypeOrStaticImportDeclaration #child = #child*
-node TypeParameter #child = #child*
-node TypeParameters #child = #child*
-node UnaryExpression #child #expr = #child*
-node UnitBeforeFirstMethod #child = #child*
-node UnnamedCompilationUnit #child = #child*
-node UpdateExpression #child #expr = #child*
-node VariableDeclarator #child = #child*
-node WhileStatement #child #stmt = #child*
-node Wildcard #child = #child*
-node YieldStatement #child #stmt = #child*
+node Program #opaque = items:#child* Eof
+node AnnotatedType #child #type #opaque = #child*
+node Annotation #child #annotation #opaque = #child*
+node AnnotationArgumentList #child #opaque = #child*
+node AnnotationTypeBody #child #block = LBrace items:#member* RBrace
+node AnnotationTypeDeclaration #child #member #opaque = #child*
+node AnnotationTypeDeclarationCore #child #type-declaration #declaration #scope = Keyword name:Identifier members:AnnotationTypeBody
+node AnnotationTypeElementDeclaration #child #member #opaque = #child*
+node ArgumentList #child #opaque = #child*
+node ArrayAccess #child #expression #index = object:#expression? object_token=object:#operand? LBracket arguments:#expression? arguments_token=arguments:#operand? RBracket
+node ArrayCreationExpression #child #expression #opaque = #child*
+node ArrayCreationType #child #opaque = #child*
+node ArrayInitializer #child #expression #opaque = #child*
+node ArrayType #child #type #opaque = #child*
+node AssertStatement #child #statement #opaque = #child*
+node AssignmentExpression #child #expression #assignment = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand?
+node BinaryExpression #child #expression #binary = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand?
+node Block #child #statement #member #block #scope = LBrace items:#statement* RBrace
+node BreakStatement #child #statement #opaque = #child*
+node CastExpression #child #expression #opaque = #child*
+node CatchAlternativeType #child #opaque = #child*
+node CatchClause #child #scope = Keyword CatchFormalParameter body:Block
+node CatchFormalParameter #child #opaque = #child*
+node CatchType #child #opaque = #child*
+node ClassBody #child #block = LBrace items:#member* RBrace
+node ClassDeclaration #child #member #opaque = #child*
+node ClassDeclarationCore #child #type-declaration #declaration #scope = Keyword name:Identifier TypeParameters? Superclass? SuperInterfaces? Permits? members:ClassBody
+node ClassLiteral #child #expression #opaque = #child*
+node CompactConstructorDeclaration #child #member #opaque = #child*
+node CompilationUnit #child #scope #block = items:#child*
+node ConstantDeclaration #child #member #opaque = #child*
+node ConstructorBody #child #block = LBrace items:#statement* RBrace
+node ConstructorDeclaration #child #member #declaration #function #scope = Modifiers? TypeParameters? name:Identifier parameters:FormalParameters Throws? body:ConstructorBody
+node ContinueStatement #child #statement #opaque = #child*
+node CreatedClassType #child #opaque = #child*
+node DefaultValue #child #opaque = #child*
+node DimExpr #child #opaque = #child*
+node Dimension #child #opaque = #child*
+node DoStatement #child #statement #opaque = #child*
+node ElementValueArrayInitializer #child #opaque = #child*
+node ElementValuePair #child #opaque = #child*
+node EnhancedForStatement #child #statement #scope = Keyword ForSpec body:#statement
+node EnumBody #child #block = LBrace items:#member* RBrace
+node EnumBodyDeclarations #child #member #opaque = #child*
+node EnumConstant #child #member #opaque = #child*
+node EnumDeclaration #child #member #opaque = #child*
+node EnumDeclarationCore #child #type-declaration #declaration #scope = Keyword name:Identifier SuperInterfaces? members:EnumBody
+node ExceptionType #child #opaque = #child*
+node ExplicitConstructorInvocation #child #statement #opaque = #child*
+node ExpressionStatement #child #statement #opaque = #child*
+node ExtendsInterfaces #child #opaque = #child*
+node FieldAccess #child #expression #member-access = object:#expression? object_token=object:#operand? Dot member:Identifier? this_member=member:ThisExpression?
+node FieldDeclaration #child #member #declaration = Modifiers? #annotation* #type-token? #type? declarators:VariableDeclarator* Semi
+node FinallyClause #child #opaque = #child*
+node ForCondition #child #opaque = #child*
+node ForInitializer #child #opaque = #child*
+node ForSpec #child #opaque = #child*
+node ForStatement #child #statement #scope = Keyword ForSpec body:#statement
+node ForUpdate #child #opaque = #child*
+node FormalParameter #child #parameter #opaque = #child*
+node FormalParameters #child #parameter-list = LParen parameters:#parameter* RParen
+node GenericType #child #type #opaque = #child*
+node Guard #child #opaque = #child*
+node IfStatement #child #statement #opaque = #child*
+node ImportDeclaration #child #opaque = #child*
+node InferredLocalType #child #opaque = #child*
+node InferredParameters #child #parameter-list = LParen? parameters:Identifier* RParen?
+node InstanceofExpression #child #expression #opaque = #child*
+node InstanceofPattern #child #opaque = #child*
+node InterfaceBody #child #block = LBrace items:#member* RBrace
+node InterfaceDeclaration #child #member #opaque = #child*
+node InterfaceDeclarationCore #child #type-declaration #declaration #scope = Keyword name:Identifier TypeParameters? ExtendsInterfaces? Permits? members:InterfaceBody
+node InterfaceTypeList #child #opaque = #child*
+node Label #child #opaque = #child*
+node LabeledStatement #child #statement #opaque = #child*
+node LambdaExpression #child #expression #function #scope = parameters:#parameter-list? single=parameters:Identifier? Arrow body:Block? expression_body:#expression? expression_token=expression_body:#operand?
+node LambdaFormalParameters #child #parameter-list = LParen? parameters:#parameter* RParen?
+node LocalTypeDeclaration #child #statement #opaque = #child*
+node LocalTypeModifiers #child #opaque = #child*
+node LocalVariableDeclaration #child #statement #opaque = #child*
+node LocalVariableDeclarationCore #child #declaration = Modifiers? #annotation* #type-token? #type? InferredLocalType? declarators:VariableDeclarator*
+node MarkerAnnotation #child #annotation #opaque = #child*
+node MethodDeclaration #child #member #declaration #function #scope = Modifiers? TypeParameters? #annotation* #type-token? #type? name:Identifier parameters:FormalParameters Dimension* Throws? body:Block? DefaultValue? Semi?
+node MethodInvocation #child #expression #call = object:#expression? object_token=object:#operand? Dot? TypeArguments? callee:MethodName arguments:ArgumentList
+node MethodName #child #opaque = #child*
+node MethodReference #child #expression #opaque = #child*
+node MethodReferenceName #child #opaque = #child*
+node Modifiers #child #opaque = #child*
+node ModuleBody #child #opaque = #child*
+node ModuleDeclaration #child #opaque = #child*
+node ModuleDirective #child #opaque = #child*
+node ObjectCreationExpression #child #expression #call = object:#expression? object_token=object:#operand? Dot? Keyword TypeArguments? callee:CreatedClassType arguments:ArgumentList ClassBody?
+node PackageDeclaration #child #opaque = #child*
+node ParenthesizedExpression #child #expression #opaque = #child*
+node PatternNode #child #opaque = #child*
+node PatternVariable #child #opaque = #child*
+node Permits #child #opaque = #child*
+node QualifiedSuperExpression #child #expression #opaque = #child*
+node ReceiverParameter #child #parameter #opaque = #child*
+node RecordBody #child #block = LBrace items:#member* RBrace
+node RecordComponent #child #opaque = #child*
+node RecordDeclaration #child #member #opaque = #child*
+node RecordDeclarationCore #child #type-declaration #declaration #scope = Keyword name:Identifier TypeParameters? RecordHeader SuperInterfaces? members:RecordBody
+node RecordHeader #child #opaque = #child*
+node Resource #child #opaque = #child*
+node ResourceSpecification #child #opaque = #child*
+node ReturnStatement #child #statement #opaque = #child*
+node ScopedIdentifier #child #expression #opaque = #child*
+node ScopedTypeName #child #type #opaque = #child*
+node SpreadParameter #child #parameter #opaque = #child*
+node StatementExpression #child #expression #opaque = #child*
+node StaticInitializer #child #member #opaque = #child*
+node SuperExpression #child #expression #opaque = #child*
+node SuperInterfaces #child #opaque = #child*
+node Superclass #child #opaque = #child*
+node SwitchBlockStatementGroup #child #opaque = #child*
+node SwitchBlockStatementGroupBody #child #opaque = #child*
+node SwitchCaseElement #child #opaque = #child*
+node SwitchCaseLabelRest #child #opaque = #child*
+node SwitchExpression #child #expression #opaque = #child*
+node SwitchExpressionBlock #child #opaque = #child*
+node SwitchExpressionRule #child #opaque = #child*
+node SwitchGroupStatements #child #opaque = #child*
+node SwitchLabel #child #opaque = #child*
+node SwitchStatement #child #statement #scope = Keyword ParenthesizedExpression SwitchStatementBlock
+node SwitchStatementBlock #child #opaque = #child*
+node SwitchStatementRule #child #opaque = #child*
+node SynchronizedStatement #child #statement #opaque = #child*
+node TernaryExpression #child #expression #conditional = condition:#expression? condition_token=condition:#operand? Operator then:#expression? then_token=then:#operand? Colon else:#expression? else_token=else:#operand?
+node ThisExpression #child #expression #opaque = #child*
+node ThrowStatement #child #statement #opaque = #child*
+node Throws #child #opaque = #child*
+node TopLevelDeclaration #child #opaque = #child*
+node TryStatement #child #statement #opaque = #child*
+node TryWithResourcesStatement #child #statement #scope = Keyword ResourceSpecification Block CatchClause* FinallyClause?
+node TypeArguments #child #opaque = #child*
+node TypeBound #child #opaque = #child*
+node TypeName #child #opaque = #child*
+node TypeOrStaticImportDeclaration #child #import = Keyword Keyword? path:ScopedIdentifier Dot? Operator? Semi
+node TypeParameter #child #opaque = #child*
+node TypeParameters #child #opaque = #child*
+node UnaryExpression #child #expression #unary = operator:#operator operand:#expression? operand_token=operand:#operand?
+node UnitBeforeFirstMethod #child #opaque = #child*
+node UnnamedCompilationUnit #child #opaque = #child*
+node UpdateExpression #child #expression #unary = prefix=operator:#operator? operand:#expression? operand_token=operand:#operand? postfix=operator:#operator?
+node VariableDeclarator #child #declaration = name:Identifier Dimension* Assign? init:#expression? init_token=init:#operand?
+node WhileStatement #child #statement #opaque = #child*
+node Wildcard #child #type #opaque = #child*
+node YieldStatement #child #statement #opaque = #child*

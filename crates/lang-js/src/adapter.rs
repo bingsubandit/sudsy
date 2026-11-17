@@ -97,6 +97,13 @@ fn parse_as(src: &str, source_type: SourceType) -> ParseResult {
             .map(|c| c.span.start)
             .collect();
         collector.visit_program(&parsed.program);
+        // oxc visits a function's `this` parameter before its parameter list (which starts before
+        // it) and a class's decorators inside the class (they may precede `export`): `replay`
+        // wants parents first, in source order.
+        let order = |n: &Node| (n.start, std::cmp::Reverse(n.end));
+        if !collector.nodes.is_sorted_by_key(order) {
+            collector.nodes.sort_by_key(order);
+        }
         let tokens = (parsed.tokens.iter())
             .filter(|t| t.end() > t.start())
             .map(|t| Tok {
