@@ -112,7 +112,8 @@ pub struct Grammar {
     bodies: Vec<Vec<Vec<SyntaxKind>>>,
     /// Per node kind: each label (and role field name) with its body item and, when every item up
     /// to it is a single required child, the item's position among the non-trivia children.
-    field_index: Vec<Vec<FieldAt>>,
+    /// Built on the first [`Grammar::slot`], not at load.
+    field_index: std::sync::OnceLock<Vec<Vec<FieldAt>>>,
     /// Trivia and `ERROR`, sorted: invisible to bodies.
     skip: Vec<SyntaxKind>,
     /// Node kinds per tag, in id order.
@@ -225,27 +226,6 @@ impl Grammar {
                 }
             }
         }
-        let mut field_index = Vec::with_capacity(self.nodes.len());
-        for d in &self.nodes {
-            let mut list = Vec::new();
-            let mut all_one = true;
-            for (i, item) in d.body.iter().enumerate() {
-                all_one &= item.cardinality == Cardinality::One;
-                let fixed = all_one.then_some(i);
-                for name in [item.label.as_deref(), item.field.as_deref()]
-                    .into_iter()
-                    .flatten()
-                {
-                    list.push(FieldAt {
-                        name: name.to_string(),
-                        item: i,
-                        fixed,
-                    });
-                }
-            }
-            field_index.push(list);
-        }
-        self.field_index = field_index;
         self.bodies = bodies;
         self.skip = skip;
         self.tag_nodes = tag_nodes;
@@ -310,6 +290,30 @@ impl Grammar {
 
     fn field_at(&self, kind: SyntaxKind, label: &str) -> Option<&FieldAt> {
         self.field_index
+            .get_or_init(|| {
+                self.nodes
+                    .iter()
+                    .map(|d| {
+                        let mut list = Vec::new();
+                        let mut all_one = true;
+                        for (i, item) in d.body.iter().enumerate() {
+                            all_one &= item.cardinality == Cardinality::One;
+                            let fixed = all_one.then_some(i);
+                            for name in [item.label.as_deref(), item.field.as_deref()]
+                                .into_iter()
+                                .flatten()
+                            {
+                                list.push(FieldAt {
+                                    name: name.to_string(),
+                                    item: i,
+                                    fixed,
+                                });
+                            }
+                        }
+                        list
+                    })
+                    .collect()
+            })
             .get(kind.index() as usize)?
             .iter()
             .find(|f| f.name == label)

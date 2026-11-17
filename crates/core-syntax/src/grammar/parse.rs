@@ -477,7 +477,7 @@ fn resolve(
         by_name,
         hash,
         bodies: Vec::new(),
-        field_index: Vec::new(),
+        field_index: Default::default(),
         skip: Vec::new(),
         tag_nodes: HashMap::new(),
     };
