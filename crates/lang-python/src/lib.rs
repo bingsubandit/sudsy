@@ -4,6 +4,7 @@
 mod adapter;
 mod analysis;
 mod format;
+mod hooks;
 mod rules;
 
 pub use format::{PythonFormatter, option_schema};

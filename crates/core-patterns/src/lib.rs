@@ -18,3 +18,34 @@ pub mod metavar;
 
 pub use file::{PatternError, PatternRule, load, load_lazy};
 pub use matcher::{Captures, Pattern, SnippetParser};
+
+/// The ids of the rule files in `shared/` (rules written on roles, built into every language whose
+/// grammar has them); their fixtures live in the languages that test them.
+pub const SHARED_IDS: &[&str] = &[
+    "no-assignment-in-condition",
+    "no-constant-comparison",
+    "no-constant-condition",
+    "no-empty-block",
+    "no-self-compare",
+];
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn shared_ids_are_the_shared_files() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/shared");
+        let mut ids: Vec<String> = std::fs::read_dir(dir)
+            .unwrap()
+            .map(|e| {
+                e.unwrap()
+                    .path()
+                    .file_stem()
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned()
+            })
+            .collect();
+        ids.sort();
+        assert_eq!(ids, super::SHARED_IDS);
+    }
+}

@@ -57,8 +57,8 @@ entries:
   F524: rule string-dot-format-missing-arguments
   F525: rule string-dot-format-mixing-automatic
   F541: rule f-string-missing-placeholders
-  F601: rule multi-value-repeated-key-literal
-  F602: rule multi-value-repeated-key-variable
+  F601: rule no-duplicate-keys
+  F602: rule no-duplicate-keys
   F621: wontfix ruff does not report it
   F622: rule multiple-starred-expressions
   F631: rule assert-tuple

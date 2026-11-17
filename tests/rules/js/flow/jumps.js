@@ -15,6 +15,7 @@ var o = { get a() {}, get b() { return; }, get c() { return 1; }, get d() { if (
 //                                                                ^^^^^ getter-return
 class K { get a() {} static get b() { return 1 } get c() { while (true) {} } }
 //        ^^^^^ getter-return
+//                                                                      ^^ no-empty-block
 function* p() {}
 function* q() { r(); }
 ^^^^^^^^^^^^^^^^^^^^^^ require-yield

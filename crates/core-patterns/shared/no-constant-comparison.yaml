@@ -1,0 +1,13 @@
+id: no-constant-comparison
+message: both sides of the comparison are literals, so the result is always the same
+description: >-
+  An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression).
+example: 'if (1 === 2) {}'
+severity: warn
+category: suspicious
+rule:
+  role: binary
+  operator: [equality, comparison]
+  fields:
+    left: { role: literal }
+    right: { role: literal }

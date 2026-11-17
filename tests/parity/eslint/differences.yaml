@@ -1,3 +1,11 @@
-differences: {}
-files: {}
+differences:
+  cond-parens: gap  an assignment in the one pair of parentheses of a ternary test is not reported; ESLint's except-parens mode wants a second pair there
+  constant-comparison-scope: gap  `no-constant-comparison` reports two literals compared anywhere; ESLint reports them only as a condition (`no-constant-condition`) and its `no-constant-binary-expression` reports other always-same results (`typeof a === undefined`)
+  switch-block: gap  `no-empty-block` does not see the empty body of a `switch`
+files:
+  comparisons/assign eslint:no-assignment-in-condition 4: cond-parens
+  comparisons/compare eslint:no-constant-comparison 3: constant-comparison-scope
+  comparisons/constant eslint:no-constant-condition 2: constant-comparison-scope
+  comparisons/constant sudsy:no-constant-comparison 2: constant-comparison-scope
+  empty/blocks eslint:no-empty-block 6: switch-block
 coverage: 100.0  # share of the recommended-set findings of eslint on the real-world corpus that Sudsy also reports (scripts/parity.sh coverage eslint)
