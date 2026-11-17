@@ -489,6 +489,17 @@ impl P<'_> {
             self.dedent();
             self.close(k::LIMIT_CLAUSE, m);
         }
+        self.offset_fetch();
+        if self.at("for") && self.is_t(1, T::Word) {
+            self.bump_as(k::KEYWORD);
+            while self.at_any(&["update", "no", "key", "share", "of", "nowait", "skip", "locked", "read", "only", "xml", "json", "browse", "path", "auto", "raw", "explicit"]) {
+                self.bump_as(k::KEYWORD);
+            }
+        }
+    }
+
+    /// `OFFSET n ROWS FETCH NEXT n ROWS ONLY`.
+    fn offset_fetch(&mut self) {
         while self.at_any(&["offset", "fetch"]) {
             self.bump_as(k::KEYWORD);
             self.eat_any(&["first", "next"]);
@@ -497,12 +508,6 @@ impl P<'_> {
             self.eat_any(&["only"]);
             if self.at("with") && self.is(1, "ties") {
                 self.eat_seq(&["with", "ties"]);
-            }
-        }
-        if self.at("for") && self.is_t(1, T::Word) {
-            self.bump_as(k::KEYWORD);
-            while self.at_any(&["update", "no", "key", "share", "of", "nowait", "skip", "locked", "read", "only", "xml", "json", "browse", "path", "auto", "raw", "explicit"]) {
-                self.bump_as(k::KEYWORD);
             }
         }
     }
@@ -522,6 +527,10 @@ impl P<'_> {
             }
             true
         });
+        // T-SQL: the paging belongs to the clause.
+        if self.d == Dialect::Tsql {
+            self.offset_fetch();
+        }
         self.dedent();
         self.close(k::ORDERBY_CLAUSE, m);
     }

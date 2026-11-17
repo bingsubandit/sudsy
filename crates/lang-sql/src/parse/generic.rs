@@ -119,6 +119,9 @@ impl P<'_> {
                     w.after_name = false;
                     w.expr = false;
                 }
+                T::Op if (self.at_op("-") || self.at_op("+")) && self.is_t(1, T::Number) && self.sign_here() => {
+                    self.bump_as(k::SIGN);
+                }
                 T::Op => {
                     w.value = self.at_op("=") && !w.expr && !w.columns;
                     w.expr = true;
@@ -189,6 +192,14 @@ impl P<'_> {
         self.close(node, m);
     }
 
+    /// `-4` after a word: the sign touches the number and a space comes before it.
+    fn sign_here(&self) -> bool {
+        let at = |n: usize| self.code.get(self.pos + n).map(|&c| self.lex[c as usize]);
+        let (Some(op), Some(num)) = (at(0), at(1)) else { return false };
+        let space_before = self.pos > 0 && self.code.get(self.pos - 1).is_some_and(|&c| self.lex[c as usize].end != op.start);
+        op.end == num.start && space_before
+    }
+
     fn prev_kind(&self) -> Option<T> {
         self.pos.checked_sub(1).and_then(|i| self.code.get(i)).map(|&c| self.lex[c as usize].kind)
     }
@@ -239,6 +250,11 @@ impl P<'_> {
         }
         w.item_start = false;
         // `CAST (int AS bool)`: types.
+        if quoted && w.after_name && (w.columns || w.params) {
+            self.type_name();
+            w.after_name = false;
+            return;
+        }
         if word && depth > 0 && !w.columns && !w.params && super::types::is_type_word(&up) && self.is(1, "as") {
             self.type_name();
             return;
