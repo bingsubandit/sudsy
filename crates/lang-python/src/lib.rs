@@ -6,6 +6,7 @@ mod format;
 mod forward;
 mod imports;
 mod names;
+mod hooks;
 mod rules;
 mod semantic;
 mod text;

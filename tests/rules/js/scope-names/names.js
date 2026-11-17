@@ -11,6 +11,7 @@ var x = 1; var x = 2; function x() {}
 function f2() {} function f2() {}
 //                        ^^ no-redeclare
 try {} catch (e) { var e; }
+//  ^^ no-empty-block
 before(); function before() {} before2(); var before2 = 1;
 ^^^^^^ no-use-before-define
 //                             ^^^^^^^ no-use-before-define
@@ -19,5 +20,6 @@ const s = s + 1; let t = () => t; class C { static p = C; q = C; } class D exten
 //                                                                                 ^ no-use-before-define
 for (var i of i) {} const { u = u } = {};
 //            ^ no-use-before-define
+//               ^^ no-empty-block
 //                              ^ no-use-before-define
 Promise.all([globalThis, hasOwnProperty]);

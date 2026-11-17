@@ -3,5 +3,8 @@ valid-typeof: warn
 no-unsafe-negation: warn
 no-compare-neg-zero: warn
 no-self-assign: warn
-no-cond-assign: warn
+no-assignment-in-condition: warn
 no-extra-boolean-cast: warn
+no-self-compare: warn
+no-constant-comparison: warn
+no-constant-condition: warn

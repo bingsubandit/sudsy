@@ -1,5 +1,5 @@
 //! Checks of string contents: `%` and `str.format` strings that do not fit their arguments
-//! (F50x, F52x), escape sequences that do not exist (W605), repeated dict keys (F601, F602).
+//! (F50x, F52x), escape sequences that do not exist (W605).
 //!
 //! A format string is read as CPython reads it; which right-hand sides are one value, a sequence
 //! or a mapping follows ruff. Each check of a family reports the findings of one analysis that
@@ -42,7 +42,6 @@ impl<T> Memo<T> {
 thread_local! {
     static PERCENT: Memo<Vec<Finding>> = const { Memo::new() };
     static DOT: Memo<Vec<Finding>> = const { Memo::new() };
-    static KEYS: Memo<Vec<(TextRange, String, bool)>> = const { Memo::new() };
 }
 
 fn report(c: &Check, ctx: &mut RuleContext<'_>, range: TextRange, found: &[Finding]) {
@@ -543,69 +542,4 @@ pub(super) fn invalid_escape(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
             }
         }
     }
-}
-
-/// F601 and F602: a literal or a name used as a key twice in one dict. `want` is the check's kind of
-/// key: names or literals.
-pub(super) fn dict_keys(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let repeated = KEYS.with(|m| m.get(n, || repeated_keys(ctx, n)));
-    let names = c.meta.id == "multi-value-repeated-key-variable";
-    for (range, text, _) in repeated.iter().filter(|r| r.2 == names) {
-        c.hit(ctx, *range, text);
-    }
-}
-
-/// The keys of a dict that an earlier key repeats: where, their text, and whether a name.
-fn repeated_keys(ctx: &RuleContext<'_>, n: &SyntaxNode) -> Vec<(TextRange, String, bool)> {
-    let mut out = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-    for key in dict_items(n).into_iter().filter_map(|(key, _)| key) {
-        let key = inner(&key);
-        let (id, name) = match key.kind() {
-            k::EXPR_STRING_LITERAL => (format!("s{}", string_value(&key)), false),
-            k::EXPR_BYTES_LITERAL => (format!("b{}", crate::text::code_text(&key)), false),
-            k::EXPR_NUMBER_LITERAL => match number(&crate::text::code_text(&key)) {
-                Some(id) => (id, false),
-                None => continue,
-            },
-            k::EXPR_BOOLEAN_LITERAL => (
-                format!("n{}", u8::from(crate::text::code_text(&key) == "True")),
-                false,
-            ),
-            k::EXPR_NONE_LITERAL => ("none".to_owned(), false),
-            k::EXPR_NAME => (format!("v{}", crate::text::code_text(&key)), true),
-            _ => continue,
-        };
-        if !seen.insert(id) {
-            let range = span(ctx, &key);
-            out.push((range, ctx.file.text[range].to_owned(), name));
-        }
-    }
-    out
-}
-
-/// The identity of a number literal as a dict key: `1`, `1.0` and `True` are one key.
-fn number(text: &str) -> Option<String> {
-    let t = text.replace('_', "");
-    if t.ends_with(['j', 'J']) {
-        return None;
-    }
-    let int = if let Some(h) = t.strip_prefix("0x").or_else(|| t.strip_prefix("0X")) {
-        i128::from_str_radix(h, 16).ok()
-    } else if let Some(o) = t.strip_prefix("0o").or_else(|| t.strip_prefix("0O")) {
-        i128::from_str_radix(o, 8).ok()
-    } else if let Some(b) = t.strip_prefix("0b").or_else(|| t.strip_prefix("0B")) {
-        i128::from_str_radix(b, 2).ok()
-    } else {
-        t.parse::<i128>().ok()
-    };
-    if let Some(i) = int {
-        return Some(format!("n{i}"));
-    }
-    let f: f64 = t.parse().ok()?;
-    Some(if f.fract() == 0.0 && f.abs() < 1e18 {
-        format!("n{}", f as i64)
-    } else {
-        format!("f{f}")
-    })
 }

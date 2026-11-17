@@ -115,24 +115,6 @@ example: "from __future__ import nope"
 severity: warn
 category: correctness
 ---
-id: multi-value-repeated-key-literal
-family: check
-params: { check: multi-value-repeated-key-literal }
-message: "dictionary key literal `{name}` repeated"
-description: "A literal used twice as a key of one dict (`1`, `1.0` and `True` are one key)."
-example: "d = {\"a\": 1, \"a\": 2}"
-severity: warn
-category: suspicious
----
-id: multi-value-repeated-key-variable
-family: check
-params: { check: multi-value-repeated-key-variable }
-message: "dictionary key `{name}` repeated"
-description: "A name used twice as a key of one dict."
-example: "d = {x: 1, x: 2}"
-severity: warn
-category: suspicious
----
 id: multiple-starred-expressions
 family: check
 params: { check: multiple-starred-expressions }

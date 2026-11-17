@@ -1,4 +1,4 @@
-empty-catch-block: warn
+no-empty-block: warn
 string-literal-equality: warn
 boolean-literal-comparison: warn
 equals-hash-code: warn

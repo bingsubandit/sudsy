@@ -7,7 +7,7 @@ sources:
   - "https://josefpihrt.github.io/docs/roslynator/analyzers"
 scope: "NOT a full catalogue: only analyzers that overlap Sudsy's existing rules or the planned StyleCop rules (plus the formatting analyzers RCS0xxx that match SA layout rules). The remaining ~280 are intentionally not listed."
 entries:
-  RCS1075: rule no-empty-catch
+  RCS1075: rule no-empty-block
   RCS1046: rule async-suffix
   "RCS1047": "planned | Non-async method names should not end with Async (on by default in Roslynator). Proposal: option `unnecessary_suffix: true` on async-suffix, or a second rule `no-async-suffix`; low priority."
   RCS1084: sdk IDE0029

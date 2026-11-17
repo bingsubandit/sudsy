@@ -2,6 +2,7 @@
 //! the language's [`RuleHooks`](crate::hooks::RuleHooks): `no-duplicate-keys`, `no-empty-keys` and
 //! `key-name-casing`.
 
+use crate::hooks::Accessor;
 use crate::options::{Check, Opt, OptionDecl};
 use crate::rule;
 use crate::rule::RuleContext;
@@ -63,6 +64,9 @@ rule! {
             .filter(|_| ctx.options.string("merge_keys") == "allow");
         // Ranges are found only for the keys that are reported (finding one reads the tree), so
         // the first occurrence is kept as its index and looked up again on a duplicate.
+        if hooks.custom_entries() {
+            return check_custom(node, ctx, merge_key);
+        }
         let mut seen = Seen::default();
         for (index, (_, key)) in entries(node, grammar).enumerate() {
             let name = hooks.key_name(&key, text);
@@ -76,6 +80,56 @@ rule! {
                 ctx.report(key_range(&key, grammar), format!("duplicate key `{name}`"))
                     .related(first, "first defined here");
             }
+        }
+    }
+}
+
+/// The path of a language with flat entries or accessors ([`RuleHooks::custom_entries`]), kept
+/// apart so that the others pay nothing for it.
+fn check_custom(node: &SyntaxNode, ctx: &mut RuleContext<'_>, merge_key: Option<&str>) {
+    let (grammar, hooks, text) = (ctx.file.grammar, ctx.file.hooks, ctx.file.text);
+    let accessors = hooks.has_accessors();
+    // name -> (kinds seen: 1 plain, 2 getter, 4 setter; index of the first), with accessors only
+    let mut kinds: HashMap<Cow<'_, str>, (u8, usize)> = HashMap::new();
+    let mut seen = Seen::default();
+    let flat = hooks.flat_keys(node);
+    let walked = flat
+        .is_none()
+        .then(|| entries(node, grammar))
+        .into_iter()
+        .flatten();
+    let listed = flat.iter().flatten().map(|k| (node.clone(), k.clone()));
+    let first_range = |first: usize, key: &SyntaxElement| {
+        let at = flat.as_ref().and_then(|f| f.get(first).cloned());
+        let at = at.or_else(|| entries(node, grammar).nth(first).map(|(_, k)| k));
+        key_range(at.as_ref().unwrap_or(key), grammar)
+    };
+    for (index, (entry, key)) in listed.chain(walked).enumerate() {
+        let name = hooks.key_name(&key, text);
+        if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
+            continue;
+        }
+        let repeat = if accessors {
+            let kind = match hooks.accessor(&entry) {
+                None => 1,
+                Some(Accessor::Get) => 2,
+                Some(Accessor::Set) => 4,
+            };
+            let slot = kinds.entry(name.clone()).or_insert((0, index));
+            let clash = if kind == 1 {
+                slot.0 != 0
+            } else {
+                slot.0 & (kind | 1) != 0
+            };
+            slot.0 |= kind;
+            clash.then_some((slot.1, name))
+        } else {
+            seen.first(name, index)
+        };
+        if let Some((first, name)) = repeat {
+            let first = first_range(first, &key);
+            ctx.report(key_range(&key, grammar), format!("duplicate key `{name}`"))
+                .related(first, "first defined here");
         }
     }
 }
