@@ -212,10 +212,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `no-delete-var` | js | suspicious | error | none | `delete` applied to a variable name. Equivalent: eslint no-delete-var. |
 | `no-dupe-class-members` | js | suspicious | error | none | A class member declared twice (a getter and a setter may share one, a static and an instance member may not clash). Equivalent: eslint no-dupe-class-members. |
 | `no-dupe-else-if` | js | suspicious | warn | none | An `else if` condition that an earlier condition of the chain already covers. Equivalent: eslint no-dupe-else-if. |
-| `no-dupe-keys` | js | suspicious | warn | none | A key that appears twice in one object literal (a getter and a setter may share one). Equivalent: eslint no-dupe-keys. |
-| `no-duplicate-case` | js | suspicious | warn | none | Two `case` clauses of one `switch` with the same test. Equivalent: eslint no-duplicate-case. |
 | `no-duplicate-enum-values` | js | suspicious | off | none | Two members of one enum initialized with the same string or number. Equivalent: typescript-eslint no-duplicate-enum-values. |
-| `no-empty` | js | suspicious | off | none | A block with no statement and no comment, or a `switch` with no case. Equivalent: eslint no-empty (partial). |
 | `no-empty-character-class` | js | suspicious | warn | none | `[]` in a regex literal, which matches nothing. Equivalent: eslint no-empty-character-class. |
 | `no-empty-object-type` | js | suspicious | off | none | The type `{}` (not in an intersection) and an interface with no members and at most one `extends`. Equivalent: typescript-eslint no-empty-object-type (partial). |
 | `no-empty-pattern` | js | suspicious | warn | none | A destructuring pattern with nothing in it (`{}`, `[]`). Equivalent: eslint no-empty-pattern. |

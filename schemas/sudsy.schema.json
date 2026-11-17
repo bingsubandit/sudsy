@@ -2266,6 +2266,14 @@
               "$ref": "#/definitions/rule",
               "description": "A `const` variable that is assigned to again (the initializer is not)."
             },
+            "no-constant-comparison": {
+              "$ref": "#/definitions/rule",
+              "description": "An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression)."
+            },
+            "no-constant-condition": {
+              "$ref": "#/definitions/rule",
+              "description": "The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and `while (1)` are the usual endless loop and are left alone."
+            },
             "no-control-regex": {
               "$ref": "#/definitions/rule",
               "description": "A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\\x00`, `\\u0000` or `\\u{0}`."
