@@ -15,6 +15,8 @@ pub enum Place {
     Parent,
     /// The nearest scope that holds `var` declarations.
     Var,
+    /// The nearest enclosing scope whose node has this kind (`infer U` goes to its conditional type).
+    Enclosing(&'static str),
 }
 
 /// The child nodes of a node a [`Flow`] applies to.
@@ -28,6 +30,8 @@ pub enum Sel {
     BeforeOp,
     /// The children after the first own token with this text.
     AfterText(&'static str),
+    /// All the children, when the node has an own token with this text (`export type { A }`).
+    WithToken(&'static str),
 }
 
 /// What the references among the selected children do with their names.
@@ -43,6 +47,8 @@ pub enum Flow {
     Type,
     /// They name values in a type (`typeof x`): read, and in a type.
     Query,
+    /// They are outside the scope of the node (the false branch of a conditional type).
+    Outside,
     /// The state of the node itself (assigned, a type) goes on to them: an array pattern.
     Through,
     /// Only the type state goes on: the left of a qualified name `N.T`, a member `a.b` in a type.
@@ -61,6 +67,8 @@ pub struct Declares {
     pub keywords: &'static [(&'static str, Flags, Place)],
     /// Read the keyword from the parent node (a declarator takes it from its declaration).
     pub keyword_on_parent: bool,
+    /// The place when the parent node has one of these kinds (`infer` type parameters).
+    pub parent_places: &'static [(&'static str, Place)],
     /// The name is the first child node's identifier or string (an enum member), not a binding node.
     pub name_child: bool,
 }
@@ -72,6 +80,7 @@ impl Declares {
         expression: None,
         keywords: &[],
         keyword_on_parent: false,
+        parent_places: &[],
         name_child: false,
     };
 }
@@ -107,6 +116,7 @@ pub struct Table {
     hosts: Vec<bool>,
     name_tokens: Vec<SyntaxKind>,
     operators: Vec<bool>,
+    params: Vec<bool>,
 }
 
 impl Table {
@@ -133,6 +143,7 @@ impl Table {
             hosts: vec![false; size(false)],
             name_tokens: name_tokens.iter().map(|n| kind(n)).collect(),
             operators: vec![false; size(true)],
+            params: vec![false; size(false)],
         };
         for row in rows {
             table.rows[kind(row.kind).index() as usize] = Some(row);
@@ -141,6 +152,7 @@ impl Table {
             let i = def.kind.index() as usize;
             table.scopes[i] = def.has_tag("scope");
             table.hosts[i] = def.has_tag("block");
+            table.params[i] = def.has_tag("parameter-list");
         }
         for name in hosts {
             table.hosts[kind(name).index() as usize] = true;
@@ -157,6 +169,11 @@ impl Table {
 
     pub(crate) fn is_scope(&self, kind: SyntaxKind) -> bool {
         self.scopes.get(kind.index() as usize).copied().unwrap_or(false)
+    }
+
+    /// A node whose references see only the parameters of the scope around it: the `parameter-list` role.
+    pub(crate) fn is_params(&self, kind: SyntaxKind) -> bool {
+        self.params.get(kind.index() as usize).copied().unwrap_or(false)
     }
 
     pub(crate) fn is_host(&self, kind: SyntaxKind) -> bool {

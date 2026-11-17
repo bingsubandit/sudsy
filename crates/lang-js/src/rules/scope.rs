@@ -178,7 +178,7 @@ pub(super) fn undef(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
                         .s
                         .ancestors(r.scope)
                         .any(|s| cx.s.scope(s).node.kind() == k::FUNCTION));
-            if r.is_type()
+            if (r.is_type() && !r.is_read())
                 || parent.as_ref().is_some_and(is_jsx_ref)
                 || typeof_operand
                 || arguments
