@@ -246,6 +246,7 @@ params: { check: fallthrough }
 message: "Expected a 'break' statement before '{name}'."
 description: A `case` with statements that can reach the next `case` or `default`, or an empty one followed by a blank line, without a comment that says `falls through` before the next one (or at the end of its block).
 example: "switch (a) { case 1: b(); case 2: c(); }   # the second case is reported"
+severity: off
 category: suspicious
 ---
 id: no-unused-expressions
@@ -263,6 +264,7 @@ params: { check: unexpected-multiline }
 message: "Unexpected newline between {name}."
 description: "`[`, `(` or a template at the start of a line right after an expression, which continues it (`a\\n[b]` is a property access, not two statements)."
 example: "var a = b\n(c || d).e()   # reported"
+severity: off
 category: suspicious
 ---
 id: no-control-regex
@@ -271,6 +273,7 @@ params: { check: control-regex }
 message: "Unexpected control character(s) in regular expression: {name}."
 description: A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\x00`, `\u0000` or `\u{0}`.
 example: "var r = /\\x1f/;   # reported"
+severity: off
 category: suspicious
 ---
 id: no-misleading-character-class
@@ -279,6 +282,7 @@ params: { check: misleading-character-class }
 message: "Unexpected combined character in character class."
 description: A character class of a regex (a literal or the constant string given to `RegExp`; names of variables written once are followed) in which a combining mark follows another character. The surrogate pair, emoji modifier, flag and joined-sequence checks are not made.
 example: "var r = /[A\\u0301]/;   # reported"
+severity: off
 category: suspicious
 ---
 id: no-duplicate-enum-values
