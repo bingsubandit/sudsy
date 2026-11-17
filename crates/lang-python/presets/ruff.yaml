@@ -29,8 +29,7 @@ python:
       undefined-local-with-import-star-usage: warn
       undefined-local-with-nested-import-star-usage: warn
       future-feature-not-defined: warn
-      multi-value-repeated-key-literal: warn
-      multi-value-repeated-key-variable: warn
+      no-duplicate-keys: warn
       multiple-starred-expressions: warn
       invalid-print-syntax: warn
       break-outside-loop: warn

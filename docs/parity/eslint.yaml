@@ -89,12 +89,12 @@ entries:
   no-catch-shadow: wontfix deprecated upstream
   no-class-assign: rule no-class-assign
   no-compare-neg-zero: rule no-compare-neg-zero
-  no-cond-assign: rule no-cond-assign | only the default `except-parens` mode
+  no-cond-assign: rule no-assignment-in-condition | only the default `except-parens` mode
   no-confusing-arrow: wontfix deprecated formatting rule with no formatter equivalent
   no-console: planned
   no-const-assign: rule no-const-assign
-  no-constant-binary-expression: planned
-  no-constant-condition: planned
+  no-constant-binary-expression: rule no-constant-comparison | only two literals compared
+  no-constant-condition: rule no-constant-condition | literals only (no object, function or `!` forms)
   no-constructor-return: planned
   no-continue: planned
   no-control-regex: rule no-control-regex
@@ -104,11 +104,11 @@ entries:
   no-dupe-args: planned
   no-dupe-class-members: rule no-dupe-class-members
   no-dupe-else-if: rule no-dupe-else-if
-  no-dupe-keys: rule no-dupe-keys
+  no-dupe-keys: rule no-duplicate-keys
   no-duplicate-case: rule no-duplicate-case
   no-duplicate-imports: planned
   no-else-return: planned
-  no-empty: rule no-empty | the `allowEmptyCatch` option is not supported
+  no-empty: rule no-empty-block | the `allowEmptyCatch` option is not supported
   no-empty-character-class: rule no-empty-character-class
   no-empty-function: planned
   no-empty-pattern: rule no-empty-pattern
@@ -172,7 +172,7 @@ entries:
   no-return-await: wontfix deprecated upstream
   no-script-url: planned
   no-self-assign: rule no-self-assign | the `props` option is always on; only identifiers and static member chains are compared
-  no-self-compare: planned
+  no-self-compare: rule no-self-compare
   no-sequences: planned
   no-setter-return: planned
   no-shadow: "rule no-shadow | the options keep their defaults (`builtinGlobals` off, `hoist` functions, `allow` empty, `ignoreOnInitialization` off)"

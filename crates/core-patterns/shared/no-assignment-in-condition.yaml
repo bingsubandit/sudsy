@@ -1,0 +1,17 @@
+id: no-assignment-in-condition
+message: an assignment is used as a condition (was `==` meant?)
+description: >-
+  The condition of an `if`, ternary or loop is an assignment not wrapped in parentheses of its own
+  (ESLint no-cond-assign, PHPCS Generic.CodeAnalysis.AssignmentInCondition). Python's `:=` is the
+  idiom and is left alone.
+example: 'if (a = b) {}'
+severity: warn
+category: suspicious
+report-on: field condition
+rule:
+  role: [conditional, loop]
+  fields:
+    condition:
+      all:
+        - { role: assignment }
+        - not: { fields: { operator: { regex: '^:=$' } } }

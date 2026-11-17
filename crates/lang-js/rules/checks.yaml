@@ -1,11 +1,3 @@
-id: no-dupe-keys
-family: check
-params: { check: dupe-keys }
-message: "Duplicate key '{name}'."
-description: A key that appears twice in one object literal (a getter and a setter may share one).
-example: "var o = { a: 1, a: 2 };   # the second a is reported"
-category: suspicious
----
 id: no-dupe-class-members
 family: check
 params: { check: dupe-class-members }
@@ -15,29 +7,12 @@ example: "class A { b() {} b() {} }   # the second b is reported"
 severity: error
 category: suspicious
 ---
-id: no-duplicate-case
-family: check
-params: { check: duplicate-case }
-message: "Duplicate case label."
-description: Two `case` clauses of one `switch` with the same test.
-example: "switch (a) { case 1: break; case 1: break; }   # the second case is reported"
-category: suspicious
----
 id: no-dupe-else-if
 family: check
 params: { check: dupe-else-if }
 message: "This branch can never execute. Its condition is a duplicate or covered by previous conditions in the if-else-if chain."
 description: An `else if` condition that an earlier condition of the chain already covers.
 example: "if (a) {} else if (a) {}   # the second a is reported"
-category: suspicious
----
-id: no-empty
-family: check
-params: { check: empty }
-message: "Empty {name} statement."
-description: A block with no statement and no comment, or a `switch` with no case.
-example: "if (a) {}   # reported"
-severity: off
 category: suspicious
 ---
 id: no-useless-catch
@@ -55,15 +30,6 @@ params: { check: self-assign }
 message: "'{name}' is assigned to itself."
 description: "`a = a`, `a.b = a.b`, `[a, b] = [a, b]`."
 example: "a = a;   # reported"
-category: suspicious
----
-id: no-cond-assign
-family: check
-params: { check: cond-assign }
-message: "Expected a conditional expression and instead saw an assignment."
-description: An assignment as the condition of `if`, `while`, `do`, `for` or `?:` that is not in parentheses of its own.
-example: "if (a = b) {}   # reported"
-severity: off
 category: suspicious
 ---
 id: use-isnan

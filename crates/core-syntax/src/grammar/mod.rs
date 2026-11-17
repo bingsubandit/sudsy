@@ -239,18 +239,30 @@ impl Grammar {
     /// operand and a prefix one before it are two items of the field `operator`).
     /// Found with the routine the generated accessors use, so it agrees with them.
     pub fn slot(&self, node: &SyntaxNode, label: &str) -> Option<SyntaxElement> {
+        self.slots(node, label)?.next()
+    }
+
+    /// Every child of `node` in the items labelled `label` or filling the role field `label`, in
+    /// source order (`None` for a node kind with no body).
+    pub fn slots<'a>(
+        &'a self,
+        node: &SyntaxNode,
+        label: &'a str,
+    ) -> Option<impl Iterator<Item = SyntaxElement> + 'a> {
         let def = self.def(node.kind())?;
         let body = GrammarBody {
             grammar: self,
             kinds: self.bodies.get(node.kind().index() as usize)?,
             body: &def.body,
         };
-        crate::ast::assign(node, body)
-            .find(|(i, _)| {
-                let item = &def.body[*i];
-                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
-            })
-            .map(|(_, e)| e)
+        Some(
+            crate::ast::assign(node, body)
+                .filter(move |(i, _)| {
+                    let item = &def.body[*i];
+                    item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+                })
+                .map(|(_, e)| e),
+        )
     }
 
     /// The operator kind (`equality`, `logical`, ...; [`crate::roles::OPERATOR_KINDS`]) of operator

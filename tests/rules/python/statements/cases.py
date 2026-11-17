@@ -49,8 +49,8 @@ def g(l: "int", O=1, *I):
 #          ^ unused-variable
 #               ^ useless-semicolon
     return {"k": 1, "k": 2, x: 1, x: 2}
-#                   ^^^ multi-value-repeated-key-literal
-#                                 ^ multi-value-repeated-key-variable
+#                   ^^^ no-duplicate-keys
+#                                 ^ no-duplicate-keys
 
 
 class I:

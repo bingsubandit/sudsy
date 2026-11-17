@@ -89,7 +89,7 @@ node NamedPlaceholderArgument #opaque
 node PlaceholderArgument #opaque
 node PositionalArgument #opaque
 node VariadicPlaceholderArgument #opaque
-node Array #expression #opaque
+node Array #expression #opaque #mapping
 node ArrayAccess #expression #index =
     object:#expression LBracket arguments:#expression RBracket
 node ArrayAppend #expression #opaque

@@ -182,7 +182,7 @@ node ExprLambda #expression #part #function #scope =
     Lambda parameters:Parameters? Colon expression_body:#expression
 node ExprIf #expression #part #conditional =
     body=then:#expression If condition:#expression Else orelse=else:#expression
-node ExprDict #expression #part #opaque
+node ExprDict #expression #part #opaque #mapping
 node ExprSet #expression #part #opaque
 node ExprListComp #expression #part #scope
 node ExprSetComp #expression #part #scope
