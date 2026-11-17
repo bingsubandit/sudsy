@@ -13,7 +13,31 @@ pub enum Scalar<'a> {
     Number(f64),
 }
 
+/// A getter or setter entry of an object: one of each may share a name.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Accessor {
+    Get,
+    Set,
+}
+
 pub trait RuleHooks: Send + Sync {
+    /// Does the language have accessor entries (JavaScript `get a() {}`)? Only then
+    /// `no-duplicate-keys` asks [`RuleHooks::accessor`] and lets a getter and a setter share a name.
+    fn has_accessors(&self) -> bool {
+        false
+    }
+
+    /// The keys, in order, of a `#mapping` whose entries are not nodes of their own (a Python
+    /// dict is flat: `key : value , ...`); `None` when the entries are `#key-value` nodes.
+    fn flat_keys(&self, _mapping: &SyntaxNode) -> Option<Vec<SyntaxElement>> {
+        None
+    }
+
+    /// Whether the `#key-value` entry is a getter or a setter.
+    fn accessor(&self, _entry: &SyntaxNode) -> Option<Accessor> {
+        None
+    }
+
     /// Whether a key is a name at all: `no-duplicate-keys` skips the others (HTML: template
     /// words inside a start tag, `{{ if }}`). The default is every key.
     fn is_name(&self, _key: &SyntaxElement, _text: &str) -> bool {

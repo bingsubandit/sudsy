@@ -24,7 +24,7 @@ class A {
     try {
       g();
     } catch (Exception e) {
-//    ^^^^^ empty-catch-block
+//                        ^ no-empty-block
     }
     try {
       g();

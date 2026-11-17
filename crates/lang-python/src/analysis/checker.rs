@@ -942,10 +942,6 @@ impl<'a> Visitor<'a> for Checker<'a> {
                 self.annotated_subscript(s);
             }
             Expr::Call(c) => self.call(c, expr),
-            Expr::Dict(d) => {
-                syntax::dict_keys(&mut self.m, self.src, d);
-                visitor::walk_expr(self, expr);
-            }
             Expr::Compare(c) => {
                 self.compare(c);
                 visitor::walk_expr(self, expr);

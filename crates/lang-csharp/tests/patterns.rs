@@ -83,7 +83,10 @@ fix-kind: suggestion
 "#,
     );
     let text = "class A { void F(bool b, int x) { if (b) { } if (x > 1) { x++; } } }\n";
-    let found = lint_with(&p, &ext, "a.cs", text, "");
+    let found: Vec<_> = lint_with(&p, &ext, "a.cs", text, "")
+        .into_iter()
+        .filter(|d| d.rule == "empty-then")
+        .collect();
     assert_eq!(found.len(), 1);
     assert_eq!(found[0].message, "if (b) has an empty body");
     assert_eq!(found[0].fixes[0].kind, core_rules::FixKind::Suggestion);

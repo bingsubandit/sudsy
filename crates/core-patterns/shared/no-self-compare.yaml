@@ -1,0 +1,13 @@
+id: no-self-compare
+message: a value is compared with itself
+description: >-
+  An equality or comparison whose two sides are the same tokens: the result never
+  changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is
+  reported too.
+example: 'if (a === a) {}'
+severity: warn
+category: suspicious
+rule:
+  role: binary
+  operator: [equality, comparison]
+  same: [left, right]

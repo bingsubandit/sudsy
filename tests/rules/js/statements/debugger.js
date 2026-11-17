@@ -21,4 +21,6 @@ var NaN, undefined, eval; function arguments() {} try {} catch (Infinity) {}
 //  ^^^ no-shadow-restricted-names
 //                  ^^^^ no-shadow-restricted-names
 //                                 ^^^^^^^^^ no-shadow-restricted-names
+//                                                    ^^ no-empty-block
 //                                                              ^^^^^^^^ no-shadow-restricted-names
+//                                                                        ^^ no-empty-block

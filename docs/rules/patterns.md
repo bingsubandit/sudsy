@@ -38,6 +38,7 @@ rule:
   kind: AttributeArgumentList
   regex: '^\(\s*\)$'
 report-on: first-token           # the diagnostic points at the `(`
+# report-on: field NAME          # or the node in a role field of the match (parentheses looked through)
 fix: ""
 fix-trim-before: true            # the fix also takes the spaces before the parentheses
 fix-kind: safe
@@ -129,6 +130,22 @@ token: { kind: [Ident], not-regex: '^${NAME:upper-snake}_' }
 message: 'the value `$0` should start with `${NAME:upper-snake}_`'
 ```
 - `type_matches` is not available (see roadmap).
+
+## Roles
+A rule can match on what a node is, not on the grammar's kind names, so one file runs in every grammar that has the roles ([../architecture/syntax-tree.md](../architecture/syntax-tree.md)):
+- `role: <name>` or a list: the node has one of these role tags. It pins the kinds the rule runs on; a built-in rule whose top-level `role` no node of the language has is left out of that language.
+- `operator: <kind>` or a list: the node's `operator` field is an operator of that kind (`Grammar::operator_kind`: `equality`, `comparison`, ...).
+- `fields: { <field>: <rule> }`: the child in each named role field (`Grammar::slot`) satisfies the rule. A token child satisfies `regex` (its text), `role` (a token carrying the tag) and `all`/`any`/`not`.
+- `same: [a, b]`: the two fields have the same tokens. `empty: true`: the node has no child node and no comment before its closing bracket. `inner: <rule>`: the node, looked through parentheses and wrappers that hold nothing else, satisfies the rule.
+
+```yaml
+id: no-self-compare
+rule:
+  role: binary
+  operator: [equality, comparison]
+  same: [left, right]
+```
+Shared rule files live in `crates/core-patterns/shared/` and are built into every grammar that declares `roles` (`build/lang-crate.rs`); their ids are `core_patterns::SHARED_IDS`, exempt from the one-fixture-folder-per-rule check, which a language that tests them meets with a `shared-bugs` folder. They are the bug rules `no-self-compare`, `no-constant-condition`, `no-constant-comparison`, `no-assignment-in-condition` and `no-empty-block`; `no-duplicate-case` (roles `#switch` and `#case`) and `no-duplicate-keys` (`#mapping`; `RuleHooks::has_accessors` lets a getter and a setter share a name, `flat_keys` serves a dict without entry nodes) are shared Rust rules. A tool's rule ids (ESLint `no-empty`, Checkstyle `EmptyCatchBlock`, ruff `F601`) are rows of its catalog in `docs/parity/` that name the shared rule. Not in the shared rules: Java (literals are tokens, conditions are `ParenthesizedExpression`: no `no-constant-condition`, `no-assignment-in-condition`), PHP `true` and Ruby `==` (a call, not `#binary`).
 
 ## Loading
 `core-patterns` compiles a file into `PatternRule`, a plain `core_rules::Rule`. Patterns compile when the config loads (a C# pattern file starts the worker then); a bad pattern is a config error naming its file. Ids are used as written; an id equal to a built-in's or defined twice for a language is a config error. Rules are leaked once per distinct file text (`Rule::meta` returns `&'static`), so an unchanged reload costs nothing. Fixtures: `provider_api::testing::expect` / `fix_with`.

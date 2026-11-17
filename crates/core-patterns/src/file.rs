@@ -300,10 +300,20 @@ struct ReportOn {
     /// An empty span at the start.
     start: bool,
     target: Option<String>,
+    /// The node in this slot of the matched node, parentheses looked through.
+    field: Option<String>,
 }
 
 fn report_on(text: &str) -> Result<ReportOn, String> {
     let text = text.trim();
+    if let Some(name) = text.strip_prefix("field ") {
+        return Ok(ReportOn {
+            first_token: false,
+            start: false,
+            target: None,
+            field: Some(name.trim().to_string()),
+        });
+    }
     let (first_token, rest) = match text.strip_prefix("first-token") {
         Some(rest) => (true, rest.trim()),
         None => (false, text),
@@ -317,7 +327,7 @@ fn report_on(text: &str) -> Result<ReportOn, String> {
         Some(name) if !name.is_empty() => Some(name.to_string()),
         _ => {
             return Err(format!(
-                "report-on `{text}`: write `$NAME`, `first-token`, `first-token $NAME`, `start` or `start $NAME`"
+                "report-on `{text}`: write `$NAME`, `first-token`, `first-token $NAME`, `start`, `start $NAME` or `field NAME`"
             ));
         }
     };
@@ -325,6 +335,7 @@ fn report_on(text: &str) -> Result<ReportOn, String> {
         first_token,
         start,
         target,
+        field: None,
     })
 }
 
@@ -806,6 +817,16 @@ pub fn load_lazy(
 ) -> Result<Vec<Box<dyn Rule>>, PatternError> {
     read_specs(source)?
         .into_iter()
+        // A rule written on roles that no node of the language has is not part of the language.
+        .filter(|spec| {
+            let roles = spec.rule.as_ref().and_then(|r| r.role.as_ref());
+            let grammar = parser.grammar();
+            roles.is_none_or(|r| {
+                r.list()
+                    .iter()
+                    .any(|n| !grammar.nodes_with_tag(n).is_empty())
+            })
+        })
         .map(|mut spec| {
             let id = spec.id.clone();
             let err = |e: String| PatternError(format!("rule `{id}`: {e}"));
@@ -896,6 +917,15 @@ impl PatternRule {
         let Some(on) = &self.body().report_on else {
             return range;
         };
+        if let Some(field) = &on.field {
+            return match grammar.slot(node, field) {
+                Some(SyntaxElement::Node(n)) => {
+                    significant_range(&crate::expr::unwrap(&n, grammar), grammar)
+                }
+                Some(SyntaxElement::Token(t)) => t.text_range(),
+                None => range,
+            };
+        }
         let capture = on.target.as_ref().and_then(|n| captures.get(n));
         let target = capture.map_or(range, |c| c.range);
         if on.start {

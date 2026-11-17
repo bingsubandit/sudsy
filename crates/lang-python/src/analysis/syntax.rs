@@ -2,9 +2,8 @@
 
 use super::model::Model;
 use ruff_python_ast::token::{Token, TokenKind};
-use ruff_python_ast::{self as ast, Expr, Stmt};
+use ruff_python_ast::{Expr, Stmt};
 use ruff_text_size::{Ranged, TextRange, TextSize};
-use rustc_hash::FxHashSet;
 
 /// E741: `l`, `O` and `I` look like digits.
 pub fn ambiguous_name(m: &mut Model<'_>, name: &str, range: TextRange) {
@@ -95,46 +94,6 @@ pub fn invalid_escapes(m: &mut Model<'_>, src: &str, tokens: &[Token]) {
                     format!("\\{next}"),
                 );
             }
-        }
-    }
-}
-
-/// F601 and F602: a literal or a name used as a key twice in one dict.
-pub fn dict_keys(m: &mut Model<'_>, src: &str, d: &ast::ExprDict) {
-    let mut seen: FxHashSet<String> = FxHashSet::default();
-    for item in &d.items {
-        let Some(key) = &item.key else {
-            continue;
-        };
-        let (id, check) = match key {
-            Expr::StringLiteral(s) => (
-                format!("s{}", s.value.to_str()),
-                "multi-value-repeated-key-literal",
-            ),
-            Expr::BytesLiteral(b) => (
-                format!("b{:?}", b.value.bytes().collect::<Vec<u8>>()),
-                "multi-value-repeated-key-literal",
-            ),
-            Expr::NumberLiteral(n) => match &n.value {
-                ast::Number::Int(i) => (format!("n{i}"), "multi-value-repeated-key-literal"),
-                ast::Number::Float(f) if f.fract() == 0.0 && f.abs() < 1e18 => (
-                    format!("n{}", *f as i64),
-                    "multi-value-repeated-key-literal",
-                ),
-                ast::Number::Float(f) => (format!("f{f}"), "multi-value-repeated-key-literal"),
-                ast::Number::Complex { .. } => continue,
-            },
-            Expr::BooleanLiteral(b) => (
-                format!("n{}", u8::from(b.value)),
-                "multi-value-repeated-key-literal",
-            ),
-            Expr::NoneLiteral(_) => ("none".to_string(), "multi-value-repeated-key-literal"),
-            Expr::Name(n) => (format!("v{}", n.id), "multi-value-repeated-key-variable"),
-            _ => continue,
-        };
-        if !seen.insert(id) {
-            let text = &src[key.range()];
-            m.hit(check, key.range(), text);
         }
     }
 }
