@@ -138,6 +138,10 @@ impl P<'_> {
             return;
         }
         self.select_clause();
+        if self.at("into") && !self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            self.obj_ref();
+        }
         if self.at("from") {
             self.from_clause();
         }
@@ -276,7 +280,7 @@ impl P<'_> {
 
     fn at_join(&self) -> bool {
         let mut n = 0;
-        if self.at_any(&["natural"]) {
+        if self.at("natural") && self.d != Dialect::Tsql {
             n += 1;
         }
         if self.is_t(n, T::Word) && ["inner", "left", "right", "full", "cross", "outer"].iter().any(|w| self.is(n, w)) {
@@ -462,6 +466,10 @@ impl P<'_> {
             } else {
                 self.list(|p| p.element());
             }
+            if self.at("with") && self.at_any_at(1, &["rollup", "cube", "totals"]) {
+                self.bump_as(k::KEYWORD);
+                self.bump_as(k::KEYWORD);
+            }
             self.dedent();
             self.close(k::GROUPBY_CLAUSE, m);
         }
@@ -520,6 +528,20 @@ impl P<'_> {
             self.bump_as(k::KEYWORD);
             while self.at_any(&["update", "no", "key", "share", "of", "nowait", "skip", "locked", "read", "only", "xml", "json", "browse", "path", "auto", "raw", "explicit"]) {
                 self.bump_as(k::KEYWORD);
+            }
+            // T-SQL `FOR XML PATH ('r'), TYPE, ROOT ('x')`.
+            while self.d == Dialect::Tsql && !self.eof() {
+                if self.is_t(0, T::LParen) {
+                    self.bracketed(|p| {
+                        p.list(|p| p.element());
+                    });
+                } else if self.is_t(0, T::Comma) && self.is_t(1, T::Word) {
+                    self.bump();
+                } else if self.is_t(0, T::Word) && !self.at_statement_start() && !self.at_any(&["option", "union", "except", "intersect"]) {
+                    self.bump_as(k::KEYWORD);
+                } else {
+                    break;
+                }
             }
         }
     }

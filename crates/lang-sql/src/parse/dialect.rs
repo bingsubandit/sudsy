@@ -23,7 +23,7 @@ impl Dialect {
 
     /// Reserved words: they never name something unquoted.
     pub fn is_reserved(self, upper: &str) -> bool {
-        sets().reserved[self as usize].contains(upper) || CLAUSE_WORDS.contains(&upper)
+        sets().reserved[self as usize].contains(upper) || CLAUSE_WORDS.contains(&upper) && !(self == Dialect::Tsql && upper == "NATURAL")
     }
 
     /// A date part (`DAY`, `HOUR`): a keyword in the first argument of the date functions.

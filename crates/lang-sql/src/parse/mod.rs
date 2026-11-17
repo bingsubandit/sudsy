@@ -15,6 +15,7 @@ mod generic;
 mod lexer;
 mod merge;
 mod mysql;
+mod options;
 mod postgres;
 mod stmt;
 mod tsql;

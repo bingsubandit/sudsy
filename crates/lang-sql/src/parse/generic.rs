@@ -95,7 +95,7 @@ impl P<'_> {
             "i" => k::IDENTIFIER,
             _ => k::KEYWORD,
         });
-        let grant = self.at_any(&["grant", "revoke", "deny"]);
+        let grant = self.at_any(&["grant", "revoke", "deny"]) || (self.at("alter") && self.is(2, "privileges"));
         let create_table = self.at("create") && (1..6).any(|i| self.is(i, "table"));
         let table_stmt = self.at_any(&["create", "alter"]) && (1..4).any(|i| self.is(i, "table"));
         self.generic_run(0, Walk { create_table, table_stmt, grant, create: self.at("create"), role_kind, prepare: self.at("prepare"), policy: (1..3).any(|i| self.is(i, "policy")), ..Walk::default() });
@@ -136,7 +136,12 @@ impl P<'_> {
                 }
                 T::Cast => {
                     self.bump();
-                    self.type_name();
+                    if self.d == super::Dialect::Tsql && self.starts_name(0) {
+                        // `OBJECT::schema.name`
+                        self.generic_name(false);
+                    } else {
+                        self.type_name();
+                    }
                     w.after_name = false;
                     w.expr = false;
                 }
@@ -148,7 +153,13 @@ impl P<'_> {
                     w.expr = true;
                     w.expect_name = false;
                     w.after_name = false;
-                    self.bump();
+                    if self.at_op("=") && self.d == super::Dialect::Tsql {
+                        let m = self.mark();
+                        self.bump();
+                        self.close(k::COMPARISON_OPERATOR, m);
+                    } else {
+                        self.bump();
+                    }
                 }
                 _ => {
                     w.expect_name = false;
@@ -232,6 +243,19 @@ impl P<'_> {
         let quoted = self.is_t(0, T::Quoted);
         let dotted = self.is_t(1, T::Dot) || self.prev_is_dot();
         let word = !quoted;
+        // T-SQL `WITH (...)`, `OPTION (...)`: an option list.
+        if word && self.d == super::Dialect::Tsql && matches!(up.as_str(), "WITH" | "OPTION") && self.is_t(1, T::LParen) && !w.columns && !w.params {
+            self.bump_as(k::KEYWORD);
+            self.options_bracket();
+            *w = Walk { create_table: w.create_table, table_stmt: w.table_stmt, ..Walk::default() };
+            return;
+        }
+        // T-SQL `OBJECT::name`: the class before `::` is a keyword.
+        if word && self.d == super::Dialect::Tsql && self.is_t(1, T::Cast) {
+            self.bump_as(k::KEYWORD);
+            w.expect_name = false;
+            return;
+        }
         // `PREPARE p AS UPDATE ...`: a statement of its own.
         if word && !dotted && matches!(up.as_str(), "UPDATE" | "DELETE" | "INSERT" | "MERGE") && self.prev_text_is("as") {
             self.statement_body();
@@ -239,10 +263,10 @@ impl P<'_> {
         }
         // A value of a setting (`SET x = on, off`) and the key before `=`.
         if word && !dotted && !w.columns && !w.params && !w.options && self.row.is_none() && (w.value || self.is_op(1, "=")) {
-            let kind = match (self.d == super::Dialect::Tsql, w.value) {
-                (false, _) => k::WORD,
-                (true, true) => k::WORD,
-                (true, false) => k::WORD,
+            let kind = match self.d {
+                super::Dialect::Tsql if self.keyword_like(0) => k::KEYWORD,
+                super::Dialect::Tsql => k::IDENTIFIER,
+                _ => k::WORD,
             };
             self.bump_as(kind);
             return;

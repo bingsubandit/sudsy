@@ -20,7 +20,15 @@ impl P<'_> {
             "while" => self.while_stmt(),
             "begin" => return self.begin_stmt(),
             "exec" | "execute" => self.exec_stmt(),
-            "print" | "return" | "throw" | "waitfor" => self.keyword_expr(),
+            "print" | "return" | "throw" => self.keyword_expr(),
+            "waitfor" => {
+                self.bump_as(k::KEYWORD);
+                if self.eat_any(&["delay", "time"]) {
+                    self.expression();
+                } else {
+                    self.generic();
+                }
+            }
             "raiserror" => self.raiserror(),
             "go" | "break" | "continue" => self.bump_as(k::KEYWORD),
             "create" | "alter" if self.routine_ahead() => self.routine(),
