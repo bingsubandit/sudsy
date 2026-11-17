@@ -88,7 +88,7 @@ pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
             _ => token(src, i, d, &mut left_open),
         };
         if d == Dialect::Mysql && kind == T::Word && src[i..end].eq_ignore_ascii_case("delimiter") {
-            let rest = &src[end..];
+            let rest = &src[end..end + rest_line_end(&src[end..])];
             let skip = rest.len() - rest.trim_start_matches([' ', '\t']).len();
             let word = rest[skip..].split_whitespace().next().unwrap_or("");
             if !word.is_empty() && !rest[..skip].contains('\n') {
@@ -101,7 +101,7 @@ pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
         if left_open {
             open.push(out.len() as u32);
         }
-        debug_assert!(end > i);
+        debug_assert!(end > i, "zero token at {i}: {kind:?} {:?} declared {declared}", &src[i..src.len().min(i + 12)]);
         out.push(Lex {
             kind,
             start: i as u32,
@@ -110,6 +110,10 @@ pub fn lex(src: &str, d: Dialect) -> (Vec<Lex>, Vec<u32>) {
         i = end;
     }
     (out, open)
+}
+
+fn rest_line_end(s: &str) -> usize {
+    s.find('\n').unwrap_or(s.len())
 }
 
 fn find(b: &[u8], from: usize, byte: u8) -> Option<usize> {
@@ -183,7 +187,7 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
         b':' if next == Some(b':') => return (T::Cast, i + 2),
         b':' if next == Some(b'=') => return (T::Op, i + 2),
         b':' => return (T::Colon, i + 1),
-        b'.' if !next.is_some_and(|n| n.is_ascii_digit()) => return (T::Dot, i + 1),
+        b'.' if !next.is_some_and(|n| n.is_ascii_digit()) || (i > 0 && (b[i - 1].is_ascii_alphanumeric() || b[i - 1] == b'_')) => return (T::Dot, i + 1),
         _ => {}
     }
     if c.is_ascii_digit() || (c == b'.' && next.is_some_and(|n| n.is_ascii_digit())) {

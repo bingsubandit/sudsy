@@ -55,6 +55,8 @@ struct Walk {
     expr: bool,
     /// The statement alters or creates a table.
     table_stmt: bool,
+    /// After `=` or `TO` of a setting: the words are values, not keywords.
+    value: bool,
     /// The statement is a `GRANT` or `REVOKE`: `select` there is a privilege.
     grant: bool,
     /// After the columns of a `CREATE TABLE`: `ENGINE = x` style options.
@@ -83,6 +85,9 @@ impl P<'_> {
 
     fn generic_run(&mut self, depth: usize, mut w: Walk) {
         while let Some(t) = self.t(0) {
+            if !matches!(t, T::Word | T::Quoted | T::Comma) {
+                w.value = false;
+            }
             match t {
                 T::Semi => break,
                 T::RParen | T::RSquare if depth > 0 => break,
@@ -113,6 +118,7 @@ impl P<'_> {
                     w.expr = false;
                 }
                 T::Op => {
+                    w.value = self.at_op("=") && !w.expr && !w.columns;
                     w.expr = true;
                     w.expect_name = false;
                     w.after_name = false;
@@ -165,7 +171,7 @@ impl P<'_> {
             } else if function && !more {
                 k::FUNCTION_IDENTIFIER
             } else {
-                k::IDENTIFIER
+                if self.d == super::Dialect::Tsql { k::IDENTIFIER } else { k::WORD }
             };
             self.bump_as(kind);
             if more {
@@ -191,6 +197,11 @@ impl P<'_> {
         let quoted = self.is_t(0, T::Quoted);
         let dotted = self.is_t(1, T::Dot) || self.prev_is_dot();
         let word = !quoted;
+        // A value of a setting (`SET x = on, off`) and the key before `=`.
+        if word && !dotted && !w.columns && !w.params && !w.options && (w.value || self.is_op(1, "=")) {
+            self.bump_as(k::WORD);
+            return;
+        }
         // `ENGINE = InnoDB` after the columns of a table.
         if w.options && word && depth == 0 && self.is_op(1, "=") {
             self.bump_as(k::WORD);
