@@ -1,5 +1,6 @@
 use super::*;
 use sha2::{Digest, Sha256};
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -17,123 +18,160 @@ fn err<T>(line: usize, message: impl Into<String>) -> Result<T, GrammarError> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-enum Lexeme {
-    Ident(String),
-    Str(String),
-    Tag(String),
+enum Lexeme<'a> {
+    Ident(&'a str),
+    Str(Cow<'a, str>),
+    Tag(&'a str),
     Int(u32),
     Sym(char),
 }
 
+/// One declaration: its first line and its lexemes, a range of the shared lexeme list.
 struct Decl {
     line: usize,
-    lexemes: Vec<Lexeme>,
+    start: usize,
+    end: usize,
 }
 
-fn lex_line(line_no: usize, text: &str, out: &mut Vec<Lexeme>) -> Result<(), GrammarError> {
-    let chars: Vec<char> = text.chars().collect();
+struct Lexed<'a> {
+    lexemes: Vec<Lexeme<'a>>,
+    decls: Vec<Decl>,
+}
+
+impl<'a> Lexed<'a> {
+    fn of(&self, d: &Decl) -> &[Lexeme<'a>] {
+        &self.lexemes[d.start..d.end]
+    }
+}
+
+fn lex_line<'a>(
+    line_no: usize,
+    text: &'a str,
+    out: &mut Vec<Lexeme<'a>>,
+) -> Result<(), GrammarError> {
+    let b = text.as_bytes();
+    let word = |c: u8| c.is_ascii_alphanumeric() || c == b'-';
     let mut i = 0;
-    while i < chars.len() {
-        let c = chars[i];
+    while i < b.len() {
+        let c = b[i];
         match c {
-            c if c.is_whitespace() => i += 1,
-            '/' if chars.get(i + 1) == Some(&'/') => break,
-            '"' => {
-                let mut s = String::new();
+            c if c.is_ascii_whitespace() => i += 1,
+            b'/' if b.get(i + 1) == Some(&b'/') => break,
+            b'"' => {
                 i += 1;
+                let start = i;
+                // Owned only when an escape forces a copy.
+                let mut owned: Option<String> = None;
                 loop {
-                    match chars.get(i) {
+                    match b.get(i) {
                         None => return err(line_no, "unterminated string"),
-                        Some('"') => break,
-                        Some('\\') => {
+                        Some(b'"') => break,
+                        Some(b'\\') => {
+                            let s = owned.get_or_insert_with(|| text[start..i].to_string());
                             i += 1;
-                            match chars.get(i) {
-                                Some(&e @ ('"' | '\\')) => s.push(e),
+                            match b.get(i) {
+                                Some(&e @ (b'"' | b'\\')) => s.push(e as char),
                                 _ => return err(line_no, "bad escape (use \\\" or \\\\)"),
                             }
+                            i += 1;
                         }
-                        Some(&ch) => s.push(ch),
+                        Some(_) => {
+                            let from = i;
+                            while i < b.len() && b[i] != b'"' && b[i] != b'\\' {
+                                i += 1;
+                            }
+                            if let Some(s) = owned.as_mut() {
+                                s.push_str(&text[from..i]);
+                            }
+                        }
                     }
-                    i += 1;
                 }
+                out.push(Lexeme::Str(match owned {
+                    Some(s) => Cow::Owned(s),
+                    None => Cow::Borrowed(&text[start..i]),
+                }));
                 i += 1;
-                out.push(Lexeme::Str(s));
             }
-            '#' => {
-                let start = i + 1;
+            b'#' => {
                 i += 1;
-                while i < chars.len() && (chars[i].is_ascii_alphanumeric() || chars[i] == '-') {
+                let start = i;
+                while i < b.len() && word(b[i]) {
                     i += 1;
                 }
                 if i == start {
                     return err(line_no, "empty tag");
                 }
-                out.push(Lexeme::Tag(chars[start..i].iter().collect()));
+                out.push(Lexeme::Tag(&text[start..i]));
             }
             c if c.is_ascii_digit() => {
                 let start = i;
-                while i < chars.len() && chars[i].is_ascii_digit() {
+                while i < b.len() && b[i].is_ascii_digit() {
                     i += 1;
                 }
-                let s: String = chars[start..i].iter().collect();
-                match s.parse() {
+                match text[start..i].parse() {
                     Ok(n) => out.push(Lexeme::Int(n)),
                     Err(_) => return err(line_no, "number too large"),
                 }
             }
-            c if c.is_ascii_alphabetic() || c == '_' => {
+            c if c.is_ascii_alphabetic() || c == b'_' => {
                 let start = i;
-                while i < chars.len()
-                    && (chars[i].is_ascii_alphanumeric() || chars[i] == '_' || chars[i] == '-')
-                {
+                while i < b.len() && (word(b[i]) || b[i] == b'_') {
                     i += 1;
                 }
-                out.push(Lexeme::Ident(chars[start..i].iter().collect()));
+                out.push(Lexeme::Ident(&text[start..i]));
             }
-            '=' | ':' | '?' | '*' => {
-                out.push(Lexeme::Sym(c));
+            b'=' | b':' | b'?' | b'*' => {
+                out.push(Lexeme::Sym(c as char));
                 i += 1;
             }
-            other => return err(line_no, format!("unexpected character {other:?}")),
+            _ => {
+                let other = text[i..].chars().next().unwrap_or('?');
+                return err(line_no, format!("unexpected character {other:?}"));
+            }
         }
     }
     Ok(())
 }
 
-fn split_decls(source: &str) -> Result<Vec<Decl>, GrammarError> {
+fn split_decls(source: &str) -> Result<Lexed<'_>, GrammarError> {
+    let mut lexemes = Vec::with_capacity(source.len() / 5);
     let mut decls: Vec<Decl> = Vec::new();
     for (i, raw) in source.lines().enumerate() {
         let line_no = i + 1;
-        let mut lexemes = Vec::new();
+        let start = lexemes.len();
         lex_line(line_no, raw, &mut lexemes)?;
-        if lexemes.is_empty() {
+        if lexemes.len() == start {
             continue;
         }
         if raw.starts_with(char::is_whitespace) {
             match decls.last_mut() {
-                Some(d) => d.lexemes.append(&mut lexemes),
+                Some(d) => d.end = lexemes.len(),
                 None => return err(line_no, "continuation line before any declaration"),
             }
         } else {
             decls.push(Decl {
                 line: line_no,
-                lexemes,
+                start,
+                end: lexemes.len(),
             });
         }
     }
-    Ok(decls)
+    Ok(Lexed { lexemes, decls })
 }
 
-fn content_hash(decls: &[Decl]) -> String {
+/// SHA-256 over the lexemes of a grammar source (the grammar's version).
+pub(super) fn content_hash(source: &str) -> String {
+    let lexed = split_decls(source).expect("a parsed grammar lexes again");
     let mut h = Sha256::new();
-    for d in decls {
-        for l in &d.lexemes {
-            let (tag, text) = match l {
-                Lexeme::Ident(s) => (b'i', s.clone()),
-                Lexeme::Str(s) => (b's', s.clone()),
-                Lexeme::Tag(s) => (b't', s.clone()),
+    for d in &lexed.decls {
+        for l in lexed.of(d) {
+            let mut buf = [0u8; 4];
+            let (tag, text): (u8, String) = match l {
+                Lexeme::Ident(s) => (b'i', (*s).into()),
+                Lexeme::Str(s) => (b's', s.to_string()),
+                Lexeme::Tag(s) => (b't', (*s).into()),
                 Lexeme::Int(n) => (b'n', n.to_string()),
-                Lexeme::Sym(c) => (b'y', c.to_string()),
+                Lexeme::Sym(c) => (b'y', c.encode_utf8(&mut buf).into()),
             };
             h.update([tag]);
             h.update(text.as_bytes());
@@ -147,36 +185,36 @@ fn content_hash(decls: &[Decl]) -> String {
 /// Cursor over one declaration's lexemes.
 struct Cursor<'a> {
     line: usize,
-    rest: &'a [Lexeme],
+    rest: &'a [Lexeme<'a>],
 }
 
 impl<'a> Cursor<'a> {
-    fn peek(&self) -> Option<&'a Lexeme> {
+    fn peek(&self) -> Option<&'a Lexeme<'a>> {
         self.rest.first()
     }
-    fn next(&mut self) -> Option<&'a Lexeme> {
+    fn next(&mut self) -> Option<&'a Lexeme<'a>> {
         let l = self.rest.first();
         if l.is_some() {
             self.rest = &self.rest[1..];
         }
         l
     }
-    fn ident(&mut self, what: &str) -> Result<String, GrammarError> {
+    fn ident(&mut self, what: &str) -> Result<&'a str, GrammarError> {
         match self.next() {
-            Some(Lexeme::Ident(s)) => Ok(s.clone()),
+            Some(Lexeme::Ident(s)) => Ok(s),
             _ => err(self.line, format!("expected {what}")),
         }
     }
-    fn string(&mut self, what: &str) -> Result<String, GrammarError> {
+    fn string(&mut self, what: &str) -> Result<&'a str, GrammarError> {
         match self.next() {
-            Some(Lexeme::Str(s)) => Ok(s.clone()),
+            Some(Lexeme::Str(s)) => Ok(s),
             _ => err(self.line, format!("expected {what}")),
         }
     }
-    fn tags(&mut self) -> Vec<String> {
+    fn tags(&mut self) -> Vec<&'a str> {
         let mut tags = Vec::new();
         while let Some(Lexeme::Tag(t)) = self.peek() {
-            tags.push(t.clone());
+            tags.push(*t);
             self.next();
         }
         tags
@@ -184,32 +222,32 @@ impl<'a> Cursor<'a> {
 }
 
 /// An item before names are resolved to kinds.
-struct RawItem {
-    label: Option<String>,
-    field: Option<String>,
-    target: RawTarget,
+struct RawItem<'a> {
+    label: Option<&'a str>,
+    field: Option<&'a str>,
+    target: RawTarget<'a>,
     cardinality: Cardinality,
 }
-enum RawTarget {
-    Name(String),
-    Tag(String),
+enum RawTarget<'a> {
+    Name(&'a str),
+    Tag(&'a str),
 }
 
-struct RawKind {
+struct RawKind<'a> {
     line: usize,
-    name: String,
+    name: &'a str,
     is_token: bool,
-    text: Option<String>,
-    tags: Vec<String>,
-    body: Vec<RawItem>,
+    text: Option<&'a str>,
+    tags: Vec<&'a str>,
+    body: Vec<RawItem<'a>>,
 }
 
-fn parse_body(c: &mut Cursor) -> Result<Vec<RawItem>, GrammarError> {
+fn parse_body<'a>(c: &mut Cursor<'a>) -> Result<Vec<RawItem<'a>>, GrammarError> {
     let mut items = Vec::new();
     while let Some(l) = c.next() {
         let mut field = None;
         let (label, target) = match l {
-            Lexeme::Tag(t) => (None, RawTarget::Tag(t.clone())),
+            Lexeme::Tag(t) => (None, RawTarget::Tag(t)),
             Lexeme::Ident(first) => {
                 if c.peek() == Some(&Lexeme::Sym('=')) {
                     c.next();
@@ -221,13 +259,13 @@ fn parse_body(c: &mut Cursor) -> Result<Vec<RawItem>, GrammarError> {
                 if c.peek() == Some(&Lexeme::Sym(':')) {
                     c.next();
                     let target = match c.next() {
-                        Some(Lexeme::Ident(n)) => RawTarget::Name(n.clone()),
-                        Some(Lexeme::Tag(t)) => RawTarget::Tag(t.clone()),
+                        Some(Lexeme::Ident(n)) => RawTarget::Name(n),
+                        Some(Lexeme::Tag(t)) => RawTarget::Tag(t),
                         _ => return err(c.line, "expected a kind or #tag after the label"),
                     };
-                    (Some(first.clone()), target)
+                    (Some(*first), target)
                 } else {
-                    (None, RawTarget::Name(first.clone()))
+                    (None, RawTarget::Name(first))
                 }
             }
             _ => return err(c.line, "expected a body item"),
@@ -254,24 +292,23 @@ fn parse_body(c: &mut Cursor) -> Result<Vec<RawItem>, GrammarError> {
 }
 
 pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
-    let decls = split_decls(source)?;
-    let hash = content_hash(&decls);
+    let lexed = split_decls(source)?;
 
     let mut language: Option<(String, LanguageId, String)> = None;
     let mut comments = CommentSyntax::default();
     let mut suppressions = Vec::new();
     let mut requires_roles = false;
-    let mut operators = HashMap::new();
+    let mut operators: HashMap<String, String> = HashMap::new();
     let mut precedence_rows: Vec<PrecedenceRow> = Vec::new();
-    let mut raw: Vec<RawKind> = Vec::new();
+    let mut raw: Vec<RawKind> = Vec::with_capacity(lexed.decls.len());
 
-    for d in &decls {
+    for d in &lexed.decls {
         let mut c = Cursor {
             line: d.line,
-            rest: &d.lexemes,
+            rest: lexed.of(d),
         };
         let keyword = c.ident("a declaration keyword")?;
-        match keyword.as_str() {
+        match keyword {
             "language" => {
                 let name = c.ident("language name")?;
                 let id = match c.next() {
@@ -280,10 +317,10 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                 };
                 let title = match c.peek() {
                     Some(Lexeme::Str(_)) => c.string("display name")?,
-                    _ => name.clone(),
+                    _ => name,
                 };
                 if language
-                    .replace((name, LanguageId::new(id), title))
+                    .replace((name.to_string(), LanguageId::new(id), title.to_string()))
                     .is_some()
                 {
                     return err(d.line, "duplicate language declaration");
@@ -292,13 +329,13 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
             "comments" => {
                 while let Some(l) = c.next() {
                     match l {
-                        Lexeme::Ident(k) if k == "line" => {
-                            comments.line = Some(c.string("line comment prefix")?)
+                        Lexeme::Ident("line") => {
+                            comments.line = Some(c.string("line comment prefix")?.to_string())
                         }
-                        Lexeme::Ident(k) if k == "block" => {
+                        Lexeme::Ident("block") => {
                             comments.block = Some((
-                                c.string("block comment start")?,
-                                c.string("block comment end")?,
+                                c.string("block comment start")?.to_string(),
+                                c.string("block comment end")?.to_string(),
                             ))
                         }
                         _ => return err(d.line, "expected `line` or `block`"),
@@ -313,7 +350,10 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                 }
                 while c.peek().is_some() {
                     let text = c.string("operator text")?;
-                    if operators.insert(text.clone(), kind.clone()).is_some() {
+                    if operators
+                        .insert(text.to_string(), kind.to_string())
+                        .is_some()
+                    {
                         return err(d.line, format!("operator `{text}` has two kinds"));
                     }
                 }
@@ -323,7 +363,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                     Some(Lexeme::Int(n)) if *n <= u8::MAX as u32 => *n as u8,
                     _ => return err(d.line, "precedence level must be 0..=255"),
                 };
-                let assoc = match c.ident("an associativity")?.as_str() {
+                let assoc = match c.ident("an associativity")? {
                     "left" => Assoc::Left,
                     "right" => Assoc::Right,
                     "same" => Assoc::Same,
@@ -333,12 +373,14 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                 let mut ops = Vec::new();
                 while c.peek().is_some() {
                     let text = c.string("operator text")?;
-                    if precedence_rows.iter().any(|r| r.operators.contains(&text))
-                        || ops.contains(&text)
+                    if precedence_rows
+                        .iter()
+                        .any(|r| r.operators.iter().any(|o| o == text))
+                        || ops.iter().any(|o| o == text)
                     {
                         return err(d.line, format!("operator `{text}` has two precedences"));
                     }
-                    ops.push(text);
+                    ops.push(text.to_string());
                 }
                 precedence_rows.push(PrecedenceRow {
                     level,
@@ -349,14 +391,17 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
             "suppress" => {
                 let role = c.ident("suppression role")?;
                 let marker = c.string("suppression marker")?;
-                suppressions.push(Suppression { role, marker });
+                suppressions.push(Suppression {
+                    role: role.to_string(),
+                    marker: marker.to_string(),
+                });
             }
             "token" | "node" => {
                 let is_token = keyword == "token";
                 let name = c.ident("a kind name")?;
                 let mut text = None;
                 if is_token && let Some(Lexeme::Str(s)) = c.peek() {
-                    text = Some(s.clone());
+                    text = Some(&**s);
                     c.next();
                 }
                 let tags = c.tags();
@@ -397,7 +442,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
         operators,
         precedence_rows,
         raw,
-        hash,
+        source,
     )
 }
 
@@ -412,7 +457,7 @@ fn resolve(
     operators: HashMap<String, String>,
     precedence_rows: Vec<PrecedenceRow>,
     raw: Vec<RawKind>,
-    hash: String,
+    source: &str,
 ) -> Result<Grammar, GrammarError> {
     // Pass 1: assign ids.
     let mut by_name: HashMap<String, SyntaxKind> = HashMap::new();
@@ -429,7 +474,7 @@ fn resolve(
         }
         let kind = SyntaxKind::new(language_id, r.is_token, *counter);
         *counter += 1;
-        if by_name.insert(r.name.clone(), kind).is_some() {
+        if by_name.insert(r.name.to_string(), kind).is_some() {
             return err(r.line, format!("duplicate kind `{}`", r.name));
         }
         kinds.push(kind);
@@ -440,50 +485,53 @@ fn resolve(
     let mut tag_class: HashMap<&str, Option<bool>> = HashMap::new();
     for r in &raw {
         for t in &r.tags {
-            let class = tag_class.entry(t).or_insert(Some(r.is_token));
+            let class = tag_class.entry(*t).or_insert(Some(r.is_token));
             if *class != Some(r.is_token) {
                 *class = None;
             }
         }
     }
 
+    // One shared string per distinct tag.
+    let interned: HashMap<&str, Arc<str>> = tag_class.keys().map(|t| (*t, Arc::from(*t))).collect();
+
     // Pass 2: resolve bodies.
     let mut nodes = Vec::new();
     let mut tokens = Vec::new();
     for (r, kind) in raw.iter().zip(kinds) {
         let mut body = Vec::new();
-        let mut labels = HashSet::new();
+        let mut labels: HashSet<&str> = HashSet::new();
         for it in &r.body {
             let target = match &it.target {
-                RawTarget::Name(n) => match by_name.get(n) {
+                RawTarget::Name(n) => match by_name.get(*n) {
                     Some(k) => Target::Kind(*k),
                     None => return err(r.line, format!("unknown kind `{n}`")),
                 },
-                RawTarget::Tag(t) => match tag_class.get(t.as_str()) {
-                    Some(Some(_)) => Target::Tag(t.clone()),
+                RawTarget::Tag(t) => match tag_class.get(t) {
+                    Some(Some(_)) => Target::Tag(interned[t].clone()),
                     // A union of nodes and tokens: found by `Grammar::slot`, no typed accessor.
-                    Some(None) => Target::Tag(t.clone()),
+                    Some(None) => Target::Tag(interned[t].clone()),
                     None => return err(r.line, format!("no kind carries tag #{t}")),
                 },
             };
             // Accessor names are unique; several items may fill one role field.
-            if let Some(l) = &it.label
-                && !labels.insert(l.clone())
+            if let Some(l) = it.label
+                && !labels.insert(l)
             {
                 return err(r.line, format!("duplicate label `{l}`"));
             }
             body.push(Item {
-                label: it.label.clone(),
-                field: it.field.clone(),
+                label: it.label.map(str::to_string),
+                field: it.field.map(str::to_string),
                 target,
                 cardinality: it.cardinality.clone(),
             });
         }
         let def = KindDef {
-            name: r.name.clone(),
+            name: r.name.to_string(),
             kind,
-            text: r.text.clone(),
-            tags: r.tags.clone(),
+            text: r.text.map(str::to_string),
+            tags: r.tags.iter().map(|t| interned[t].clone()).collect(),
             body,
         };
         if r.is_token {
@@ -507,8 +555,11 @@ fn resolve(
         nodes,
         tokens,
         by_name,
-        hash,
+        source: source.into(),
+        hash: OnceLock::new(),
         bodies: Vec::new(),
+        body_start: Vec::new(),
+        pool: Vec::new(),
         skip: Vec::new(),
         tag_nodes: HashMap::new(),
     };

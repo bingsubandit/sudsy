@@ -118,7 +118,7 @@ fn role(g: &Grammar, n: &SyntaxNode) -> Role {
     def.tags
         .iter()
         .find_map(|t| {
-            Some(match t.as_str() {
+            Some(match &**t {
                 "block" => Role::Block,
                 "conditional" => Role::Conditional,
                 "loop" => Role::Loop,

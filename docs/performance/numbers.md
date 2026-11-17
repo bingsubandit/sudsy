@@ -200,3 +200,4 @@ Astro 7.4.7 + Starlight 0.42.9, same machine, Node 24, one run, 10 000 synthetic
 - Incremental re-lint after an edit (cache hit/miss path).
 - `deep` depth in `bench.sh` (only `perf-bench semantic`).
 - Instruction counts of the C# phases (the worker is a separate .NET process valgrind does not follow).
+| Grammar load (`Grammar::parse` of `grammars/js.grammar`, release, counting allocator over 50 loads on the agent host; the JS grammar loads once per process in every HTML-family file) | 8006 -> 1654 allocations, 574 -> 213 us per load. The lexer borrows from the text (no `Vec<char>`, no `String` per lexeme), the content hash is computed on demand (`Grammar::hash`, from the kept source), tag names are shared `Arc<str>`, and body items are ranges of one pool of kinds instead of a `Vec` copy per item. CI bench numbers for html, vue, svelte and component.html format-query are in `bench/history.jsonl`. |

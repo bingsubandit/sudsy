@@ -30,6 +30,7 @@ mod parse;
 use crate::kind::{LanguageId, SyntaxKind};
 use crate::tree::{SyntaxElement, SyntaxNode};
 use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
 
 pub use parse::GrammarError;
 
@@ -43,7 +44,7 @@ pub enum Cardinality {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Target {
     Kind(SyntaxKind),
-    Tag(String),
+    Tag(Arc<str>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -61,14 +62,14 @@ pub struct KindDef {
     pub kind: SyntaxKind,
     /// Fixed text of a token (punctuation, keywords).
     pub text: Option<String>,
-    pub tags: Vec<String>,
+    pub tags: Vec<Arc<str>>,
     /// Shape of a node; empty for tokens.
     pub body: Vec<Item>,
 }
 
 impl KindDef {
     pub fn has_tag(&self, tag: &str) -> bool {
-        self.tags.iter().any(|t| t == tag)
+        self.tags.iter().any(|t| &**t == tag)
     }
 
     /// Labeled body items, i.e. the ones that become accessors.
@@ -134,12 +135,17 @@ pub struct Grammar {
     nodes: Vec<KindDef>,
     tokens: Vec<KindDef>,
     by_name: HashMap<String, SyntaxKind>,
-    hash: String,
+    /// The grammar text: the hash is computed from it on demand.
+    source: Box<str>,
+    hash: OnceLock<String>,
     /// Hot tags per kind, indexed like `tokens` and `nodes`.
     token_flags: Vec<u16>,
     node_flags: Vec<u16>,
-    /// Per node kind (indexed like `nodes`) and body item: the sorted kinds the item accepts.
-    bodies: Vec<Vec<Vec<SyntaxKind>>>,
+    /// Per body item of every node, in node order: the range of `pool` holding the sorted kinds
+    /// the item accepts. `body_start[i]..body_start[i + 1]` are the items of node `i`.
+    bodies: Vec<(u32, u32)>,
+    body_start: Vec<u32>,
+    pool: Vec<SyntaxKind>,
     /// Trivia and `ERROR`, sorted: invisible to bodies.
     skip: Vec<SyntaxKind>,
     /// Node kinds per tag, in id order.
@@ -186,7 +192,7 @@ struct FieldAt {
 #[derive(Clone, Copy)]
 struct GrammarBody<'g> {
     grammar: &'g Grammar,
-    kinds: &'g [Vec<SyntaxKind>],
+    kinds: &'g [(u32, u32)],
     body: &'g [Item],
 }
 
@@ -195,7 +201,10 @@ impl crate::ast::Body for GrammarBody<'_> {
         self.kinds.len()
     }
     fn accepts(&self, slot: usize, kind: SyntaxKind) -> bool {
-        self.kinds[slot].binary_search(&kind).is_ok()
+        self.grammar
+            .range(self.kinds[slot])
+            .binary_search(&kind)
+            .is_ok()
     }
     fn many(&self, slot: usize) -> bool {
         self.body[slot].cardinality == Cardinality::Many
@@ -207,58 +216,73 @@ impl crate::ast::Body for GrammarBody<'_> {
 
 impl Grammar {
     /// Fills the tables derived from the kinds: resolved bodies, the skipped kinds and the nodes
-    /// per tag.
+    /// per tag. One pass collects the kinds of every tag; a body item takes its range of the pool.
     fn resolve(&mut self) {
-        // The sorted kinds of each tag used by a body, found once: a body item copies them.
-        let mut by_tag: HashMap<String, Vec<SyntaxKind>> = HashMap::new();
-        let mut kinds_of = |target: &Target| -> Vec<SyntaxKind> {
-            match target {
-                Target::Kind(k) => vec![*k],
-                Target::Tag(t) => {
-                    if let Some(kinds) = by_tag.get(t) {
-                        return kinds.clone();
-                    }
-                    let mut kinds: Vec<SyntaxKind> =
-                        self.kinds_with_tag(t).map(|d| d.kind).collect();
-                    kinds.sort();
-                    by_tag.entry(t.clone()).or_insert(kinds).clone()
-                }
+        let mut all: HashMap<&str, Vec<SyntaxKind>> = HashMap::new();
+        let mut of_nodes: HashMap<&str, Vec<SyntaxKind>> = HashMap::new();
+        for d in self.tokens.iter().chain(&self.nodes) {
+            for t in &d.tags {
+                all.entry(t).or_default().push(d.kind);
             }
-        };
-        let bodies = self
-            .nodes
-            .iter()
-            .map(|d| d.body.iter().map(|i| kinds_of(&i.target)).collect())
-            .collect();
+        }
+        for d in &self.nodes {
+            for t in &d.tags {
+                of_nodes.entry(t).or_default().push(d.kind);
+            }
+        }
+        // The pool holds each tag's sorted kinds once; a body item of that tag shares the range.
+        let mut pool: Vec<SyntaxKind> = Vec::new();
+        let mut ranges: HashMap<&str, (u32, u32)> = HashMap::new();
+        let mut bodies = Vec::new();
+        let mut body_start = Vec::with_capacity(self.nodes.len() + 1);
+        for d in &self.nodes {
+            body_start.push(bodies.len() as u32);
+            for i in &d.body {
+                bodies.push(match &i.target {
+                    Target::Kind(k) => {
+                        pool.push(*k);
+                        (pool.len() as u32 - 1, pool.len() as u32)
+                    }
+                    Target::Tag(t) => *ranges.entry(t).or_insert_with(|| {
+                        let start = pool.len() as u32;
+                        let mut kinds = all.get(&**t).cloned().unwrap_or_default();
+                        kinds.sort();
+                        pool.extend(kinds);
+                        (start, pool.len() as u32)
+                    }),
+                });
+            }
+        }
+        body_start.push(bodies.len() as u32);
         let mut skip: Vec<SyntaxKind> = std::iter::once(SyntaxKind::ERROR)
-            .chain(self.kinds_with_tag("trivia").map(|d| d.kind))
+            .chain(all.get("trivia").into_iter().flatten().copied())
             .collect();
         skip.sort();
-        // Counted first, so that each list is allocated once at its size.
-        let mut counts: HashMap<&str, usize> = HashMap::new();
-        for tag in self.nodes.iter().flat_map(|d| &d.tags) {
-            *counts.entry(tag.as_str()).or_default() += 1;
-        }
-        let mut tag_nodes: HashMap<String, Vec<SyntaxKind>> = counts
+        let tag_nodes = of_nodes
             .into_iter()
-            .map(|(tag, n)| (tag.to_string(), Vec::with_capacity(n)))
+            .map(|(t, v)| (t.to_string(), v))
             .collect();
-        for d in &self.nodes {
-            for tag in &d.tags {
-                if let Some(v) = tag_nodes.get_mut(tag) {
-                    v.push(d.kind);
-                }
-            }
-        }
         self.bodies = bodies;
+        self.body_start = body_start;
+        self.pool = pool;
         self.skip = skip;
         self.tag_nodes = tag_nodes;
     }
 
+    fn range(&self, (start, end): (u32, u32)) -> &[SyntaxKind] {
+        &self.pool[start as usize..end as usize]
+    }
+
+    fn body_ranges(&self, node: SyntaxKind) -> Option<&[(u32, u32)]> {
+        let i = node.index() as usize;
+        let (a, b) = (*self.body_start.get(i)?, *self.body_start.get(i + 1)?);
+        self.bodies.get(a as usize..b as usize)
+    }
+
     /// For each body item of a node kind, the sorted kinds it accepts.
-    pub fn body_kinds(&self, node: SyntaxKind) -> Option<&[Vec<SyntaxKind>]> {
+    pub fn body_kinds(&self, node: SyntaxKind) -> Option<impl Iterator<Item = &[SyntaxKind]>> {
         self.def(node)?;
-        self.bodies.get(node.index() as usize).map(Vec::as_slice)
+        Some(self.body_ranges(node)?.iter().map(|r| self.range(*r)))
     }
 
     /// Trivia kinds and `ERROR`, sorted: they take no part in matching bodies.
@@ -279,7 +303,7 @@ impl Grammar {
         let def = self.def(node.kind())?;
         let body = GrammarBody {
             grammar: self,
-            kinds: self.bodies.get(node.kind().index() as usize)?,
+            kinds: self.body_ranges(node.kind())?,
             body: &def.body,
         };
         crate::ast::assign(node, body)
@@ -325,9 +349,8 @@ impl Grammar {
     }
 
     fn accepts(&self, kind: SyntaxKind, item: usize, child: SyntaxKind) -> bool {
-        self.bodies[kind.index() as usize][item]
-            .binary_search(&child)
-            .is_ok()
+        let ranges = self.body_ranges(kind);
+        ranges.is_some_and(|r| self.range(r[item]).binary_search(&child).is_ok())
     }
 
     fn slot_slow(
@@ -339,7 +362,7 @@ impl Grammar {
         let def = self.def(kind)?;
         let body = GrammarBody {
             grammar: self,
-            kinds: self.bodies.get(kind.index() as usize)?,
+            kinds: self.body_ranges(kind)?,
             body: &def.body,
         };
         crate::ast::assign_of(children, body)
@@ -360,7 +383,7 @@ impl Grammar {
         let body = def.and_then(|def| {
             Some(GrammarBody {
                 grammar: self,
-                kinds: self.bodies.get(node.kind().index() as usize)?,
+                kinds: self.body_ranges(node.kind())?,
                 body: &def.body,
             })
         });
@@ -437,7 +460,7 @@ impl Grammar {
 
     /// Content hash (hex SHA-256); the grammar's version.
     pub fn hash(&self) -> &str {
-        &self.hash
+        self.hash.get_or_init(|| parse::content_hash(&self.source))
     }
 
     pub fn nodes(&self) -> &[KindDef] {

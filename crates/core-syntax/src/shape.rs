@@ -48,7 +48,6 @@ impl<'g> ShapeChecker<'g> {
             return Ok(());
         }
         let slots: Vec<Slot> = kinds
-            .iter()
             .zip(&def.body)
             .map(|(kinds, item)| Slot {
                 kinds,
