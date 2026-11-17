@@ -13,7 +13,8 @@
 
 use crate::generated::kind as k;
 use core_syntax::{Grammar, SyntaxKind, grammars};
-use provider_api::adapter::{Kinds, Node, Tok, replay, whole_file};
+use crate::parse::tree::{Flat, KINDS, Leaf, Span, build};
+use provider_api::adapter::whole_file;
 use provider_api::{ParseError, ParseResult, SourceFile};
 use sqruff_lib_core::dialects::Dialect;
 use sqruff_lib_core::dialects::init::DialectKind;
@@ -28,14 +29,6 @@ use strum::IntoEnumIterator;
 
 /// The most bytes of one file; sqruff parses 0.3 to 1 MB/s and holds about 650 bytes per input byte at its peak: this bounds one parse to 2 s and 350 MB.
 pub const MAX_BYTES: usize = 512 << 10;
-
-const KINDS: Kinds = Kinds {
-    root: k::FILE,
-    eof: k::EOF,
-    unknown: k::UNKNOWN,
-    whitespace: k::WHITESPACE,
-    newline: k::NEWLINE,
-};
 
 /// The dialects compiled in, as `dialect` option values.
 pub const DIALECTS: [&str; 4] = ["ansi", "postgres", "mysql", "tsql"];
@@ -54,8 +47,14 @@ thread_local! {
     static BUILT: RefCell<Vec<(DialectKind, Dialect)>> = const { RefCell::new(Vec::new()) };
 }
 
+/// Temporary switch: the hand-written parser parses the files of the provider.
+pub static HAND: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// A file of the provider: the dialect is the `dialect` option.
 pub fn parse_file(file: &SourceFile) -> ParseResult {
+    if HAND.load(std::sync::atomic::Ordering::Relaxed) {
+        return crate::parse::parse(&file.text, file.language_version.as_deref().unwrap_or("ansi"));
+    }
     parse(
         &file.text,
         file.language_version.as_deref().unwrap_or("ansi"),
@@ -75,26 +74,6 @@ pub fn parse(src: &str, dialect: &str) -> ParseResult {
         Ok(flat) => build(src, flat),
         Err(message) => whole_file(src, KINDS, message),
     }
-}
-
-struct Leaf {
-    kind: SyntaxKind,
-    start: u32,
-    end: u32,
-}
-
-/// A grammar node over the leaves `first..end`.
-struct Span {
-    kind: SyntaxKind,
-    first: usize,
-    end: usize,
-}
-
-/// What the walk over sqruff's tree collects.
-struct Flat {
-    leaves: Vec<Leaf>,
-    nodes: Vec<Span>,
-    errors: Vec<ParseError>,
 }
 
 fn sqruff_parse(src: &str, kind: DialectKind) -> Result<Flat, String> {
@@ -325,47 +304,3 @@ fn token_kind(ty: Sq, raw: &str) -> SyntaxKind {
     }
 }
 
-/// Replays the leaves and nodes into a tree (`provider_api::adapter::replay`): the tokens are the
-/// leaves that are not trivia, a node spans its first to its last token, and the trivia between
-/// two tokens are the leaves sqruff lexed there.
-fn build(src: &str, flat: Flat) -> ParseResult {
-    let Flat {
-        leaves,
-        nodes,
-        errors,
-    } = flat;
-    let grammar = grammars::SQL.get();
-    let trivia = |l: &Leaf| grammar.is_trivia(l.kind);
-    let meta = |l: &Leaf| l.end == l.start;
-    let tokens: Vec<Tok> = (leaves.iter().filter(|l| !trivia(l)))
-        .map(|l| Tok {
-            kind: l.kind,
-            start: l.start,
-            end: l.end,
-        })
-        .collect();
-    // `nodes` is in post-order; opening order is by start, outer (later end) first. A node with no
-    // token is dropped.
-    let mut spans: Vec<(usize, Node)> = nodes
-        .iter()
-        .enumerate()
-        .filter_map(|(i, n)| {
-            let covered = &leaves[n.first..n.end];
-            let first = covered.iter().find(|l| !trivia(l) && !meta(l))?;
-            let last = covered.iter().rfind(|l| !trivia(l) && !meta(l))?;
-            let (start, end, kind) = (first.start, last.end, n.kind);
-            Some((i, Node { start, end, kind }))
-        })
-        .collect();
-    spans.sort_by_key(|(i, n)| (n.start, std::cmp::Reverse(n.end), std::cmp::Reverse(*i)));
-    let spans: Vec<Node> = spans.into_iter().map(|(_, n)| n).collect();
-    // The zero-width leaves share their start with the leaf after them: they are not looked up.
-    let lexed = |_: &str, pos: usize| {
-        let at = leaves.partition_point(|l| (l.start as usize) < pos);
-        let l = leaves[at..].iter().find(|l| !meta(l))?;
-        (l.start as usize == pos && trivia(l)).then_some((l.kind, (l.end - l.start) as usize))
-    };
-    let mut result = replay(src, KINDS, &tokens, &spans, lexed, |t, _| t);
-    result.errors = errors;
-    result
-}
