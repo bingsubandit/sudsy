@@ -434,6 +434,16 @@ impl Binder<'_> {
     /// The state of each child node of `node`, pushed on the arena. Read off the green tree, so
     /// the children and tokens of the node are not made.
     fn flows(&mut self, node: &SyntaxNode, row: &Row, state: State) {
+        // Children that only pass on a state of nothing get what a child gets by default.
+        if state == Access::NONE
+            && row
+                .children
+                .iter()
+                .all(|(_, f)| matches!(f, Flow::Through | Flow::ThroughType))
+        {
+            return;
+        }
+        let mut conds: Vec<(usize, bool)> = Vec::new();
         let fields: Vec<Option<TextRange>> = if row
             .children
             .iter()
@@ -498,13 +508,28 @@ impl Binder<'_> {
                 });
             index += 1;
             self.arena
-                .push(hit.map(|(_, (_, flow))| access(flow, node, state, op_text)));
+                .push(hit.map(|(_, (_, flow))| access(flow, node, state, op_text, &mut conds)));
         }
     }
 
     fn resolve(&mut self) {
-        let found: Vec<Option<SymbolId>> =
-            self.model.refs.iter().map(|r| self.model.find(r)).collect();
+        // Names are interned, so the same name read in the same scope finds the same symbol
+        // (unless it is read in a parameter list).
+        let mut seen: rustc_hash::FxHashMap<(u32, usize, bool), Option<SymbolId>> =
+            Default::default();
+        let found: Vec<Option<SymbolId>> = (self.model.refs.iter())
+            .map(|r| {
+                if !r.in_params.is_empty() {
+                    return self.model.find(r);
+                }
+                let key = (
+                    r.scope.0,
+                    Rc::as_ptr(&r.name) as *const u8 as usize,
+                    !(r.is_read() || r.is_write()),
+                );
+                *seen.entry(key).or_insert_with(|| self.model.find(r))
+            })
+            .collect();
         for (i, symbol) in found.into_iter().enumerate() {
             self.model.refs[i].symbol = symbol;
             if let Some(s) = symbol {
@@ -528,7 +553,13 @@ fn own_parts(
 }
 
 /// The state a [`Flow`] gives the child, and whether the child is outside the node's scope.
-fn access(flow: &Flow, node: &SyntaxNode, state: State, op_text: Option<&str>) -> (State, bool) {
+fn access(
+    flow: &Flow,
+    node: &SyntaxNode,
+    state: State,
+    op_text: Option<&str>,
+    conds: &mut Vec<(usize, bool)>,
+) -> (State, bool) {
     let rw = Access::READ.union(Access::WRITE);
     let query = Access::READ.union(Access::TYPE);
     match flow {
@@ -546,8 +577,16 @@ fn access(flow: &Flow, node: &SyntaxNode, state: State, op_text: Option<&str>) -
         Flow::Delete => (Access::READ.union(Access::DELETE), false),
         Flow::WriteVar => (Access::WRITE.union(Access::HOIST), false),
         Flow::OutsideQuery => (query, true),
+        // Each test runs once for the node, whatever the number of its children.
         Flow::Cond(test, yes, no) => {
-            access(if test(node) { yes } else { no }, node, state, op_text)
+            let key = *test as usize;
+            let held = conds.iter().find(|(k, _)| *k == key).map(|(_, v)| *v);
+            let hit = held.unwrap_or_else(|| {
+                let v = test(node);
+                conds.push((key, v));
+                v
+            });
+            access(if hit { yes } else { no }, node, state, op_text, conds)
         }
     }
 }

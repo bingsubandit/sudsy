@@ -15,8 +15,8 @@ use core_semantics::scopes::{
     Access, Declares, Flags, Flow, Model, Place, Redirect, Row, ScopeId, Sel, Table, bind,
 };
 use core_syntax::{Grammar, SyntaxNode, TextRange, TextSize, grammars};
+use rustc_hash::FxHashMap as HashMap;
 use std::cell::{OnceCell, RefCell};
-use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
@@ -291,6 +291,9 @@ fn table() -> &'static Table {
     TABLE.get_or_init(|| Table::new(grammars::PYTHON.get(), ROWS, &[], &["Name", "Star"]))
 }
 
+/// The start and kind of a node.
+type NodeKey = (u32, u32);
+
 /// What a scope rule reads: the model and the facts of the file.
 pub struct Cx {
     pub s: Model,
@@ -304,6 +307,8 @@ pub struct Cx {
     /// Syntax errors of quoted annotations: where and why.
     pub forward_errors: Vec<(TextRange, String)>,
     by_ref: OnceCell<HashMap<u32, usize>>,
+    /// What [`Cx::qualified`] found, by the start and kind of the node asked about.
+    qualified: RefCell<HashMap<NodeKey, Option<Rc<str>>>>,
 }
 
 thread_local! {
@@ -372,6 +377,7 @@ pub fn model(file: &FileContext<'_>) -> Option<Rc<Cx>> {
                     minor,
                     forward_errors: Vec::new(),
                     by_ref: OnceCell::new(),
+                    qualified: RefCell::default(),
                 };
                 cx.forward_references();
                 Some(Rc::new(cx))
@@ -432,6 +438,18 @@ impl Cx {
     /// The name a reference to a dotted name stands for through imports: `typing.Literal` for
     /// `Literal` imported from typing, `print` for the builtin; `None` for anything else.
     pub fn qualified(&self, node: &SyntaxNode) -> Option<String> {
+        let key = (u32::from(node.text_range().start()), node.kind().0);
+        if let Some(found) = self.qualified.borrow().get(&key) {
+            return found.as_deref().map(str::to_owned);
+        }
+        let found = self.qualify(node);
+        self.qualified
+            .borrow_mut()
+            .insert(key, found.as_deref().map(Rc::from));
+        found
+    }
+
+    fn qualify(&self, node: &SyntaxNode) -> Option<String> {
         match node.kind() {
             k::EXPR_NAME => {
                 let r = self.ref_at(self.range(node).start())?;

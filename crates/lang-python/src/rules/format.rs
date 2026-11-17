@@ -11,11 +11,41 @@ use crate::generated::kind as k;
 use crate::text::string_value;
 use core_rules::RuleContext;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, TextRange, TextSize};
+use std::cell::RefCell;
 use std::collections::BTreeSet;
+use std::rc::Rc;
 
 type Finding = (&'static str, String);
 
-fn report(c: &Check, ctx: &mut RuleContext<'_>, range: TextRange, found: Vec<Finding>) {
+/// The result of the analysis of the node the checks of a family ran on last: each check of the
+/// family asks for it, the first one works it out.
+struct Memo<T>(RefCell<Option<(SyntaxNode, Rc<T>)>>);
+
+impl<T> Memo<T> {
+    const fn new() -> Self {
+        Memo(RefCell::new(None))
+    }
+
+    fn get(&self, n: &SyntaxNode, f: impl FnOnce() -> T) -> Rc<T> {
+        let mut slot = self.0.borrow_mut();
+        if let Some((node, value)) = &*slot
+            && node == n
+        {
+            return value.clone();
+        }
+        let value = Rc::new(f());
+        *slot = Some((n.clone(), value.clone()));
+        value
+    }
+}
+
+thread_local! {
+    static PERCENT: Memo<Vec<Finding>> = const { Memo::new() };
+    static DOT: Memo<Vec<Finding>> = const { Memo::new() };
+    static KEYS: Memo<Vec<(TextRange, String, bool)>> = const { Memo::new() };
+}
+
+fn report(c: &Check, ctx: &mut RuleContext<'_>, range: TextRange, found: &[Finding]) {
     for (_, name) in found.iter().filter(|(id, _)| *id == c.meta.id) {
         c.hit(ctx, range, name);
     }
@@ -277,8 +307,8 @@ fn percent_findings(b: &SyntaxNode) -> Vec<Finding> {
 
 /// F501 to F509.
 pub(super) fn percent(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let found = percent_findings(n);
-    report(c, ctx, span(ctx, n), found);
+    let found = PERCENT.with(|m| m.get(n, || percent_findings(n)));
+    report(c, ctx, span(ctx, n), &found);
 }
 
 #[derive(Default)]
@@ -460,8 +490,8 @@ fn dot_findings(call: &SyntaxNode) -> Vec<Finding> {
 
 /// F521 to F525.
 pub(super) fn dot_format(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let found = dot_findings(n);
-    report(c, ctx, span(ctx, n), found);
+    let found = DOT.with(|m| m.get(n, || dot_findings(n)));
+    report(c, ctx, span(ctx, n), &found);
 }
 
 /// The text before the first quote: the prefix letters of a string.
@@ -518,6 +548,16 @@ pub(super) fn invalid_escape(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
 /// F601 and F602: a literal or a name used as a key twice in one dict. `want` is the check's kind of
 /// key: names or literals.
 pub(super) fn dict_keys(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    let repeated = KEYS.with(|m| m.get(n, || repeated_keys(ctx, n)));
+    let names = c.meta.id == "multi-value-repeated-key-variable";
+    for (range, text, _) in repeated.iter().filter(|r| r.2 == names) {
+        c.hit(ctx, *range, text);
+    }
+}
+
+/// The keys of a dict that an earlier key repeats: where, their text, and whether a name.
+fn repeated_keys(ctx: &RuleContext<'_>, n: &SyntaxNode) -> Vec<(TextRange, String, bool)> {
+    let mut out = Vec::new();
     let mut seen = std::collections::HashSet::new();
     for key in dict_items(n).into_iter().filter_map(|(key, _)| key) {
         let key = inner(&key);
@@ -536,12 +576,12 @@ pub(super) fn dict_keys(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
             k::EXPR_NAME => (format!("v{}", crate::text::code_text(&key)), true),
             _ => continue,
         };
-        if !seen.insert(id) && name == (c.meta.id == "multi-value-repeated-key-variable") {
+        if !seen.insert(id) {
             let range = span(ctx, &key);
-            let text = ctx.file.text[range].to_owned();
-            c.hit(ctx, range, &text);
+            out.push((range, ctx.file.text[range].to_owned(), name));
         }
     }
+    out
 }
 
 /// The identity of a number literal as a dict key: `1`, `1.0` and `True` are one key.
