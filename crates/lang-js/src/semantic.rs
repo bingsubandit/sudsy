@@ -366,6 +366,10 @@ mod cost {
             parse += p;
             bound += b;
         }
-        println!("{bytes} bytes: parse {:.2} ms, bind {:.2} ms", parse * 1e3, bound * 1e3);
+        println!(
+            "{bytes} bytes: parse {:.2} ms, bind {:.2} ms",
+            parse * 1e3,
+            bound * 1e3
+        );
     }
 }

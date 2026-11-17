@@ -9020,7 +9020,7 @@
       "upstream": [
         {
           "id": "no-misleading-character-class",
-          "partial": false,
+          "partial": true,
           "tool": "eslint"
         }
       ]
@@ -9127,11 +9127,6 @@
             "column": 1,
             "length": 7,
             "line": 2
-          },
-          {
-            "column": 1,
-            "length": 5,
-            "line": 3
           }
         ]
       },
@@ -10117,12 +10112,12 @@
       "upstream": [
         {
           "id": "no-unused-expressions",
-          "partial": false,
+          "partial": true,
           "tool": "eslint"
         },
         {
           "id": "no-unused-expressions",
-          "partial": false,
+          "partial": true,
           "tool": "typescript-eslint"
         }
       ]

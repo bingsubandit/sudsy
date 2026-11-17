@@ -7,11 +7,6 @@ prefix ktrs
 prefix mago
 prefix ruby
 prefix tree-sitter
-allow crates/lang-js/src/rules/imports.rs
-allow crates/lang-js/src/rules/scope.rs
-allow crates/lang-js/src/rules/shadow.rs
-allow crates/lang-js/src/rules/unused.rs
-allow crates/lang-js/src/semantic.rs
 allow crates/lang-markdown/src/mapping.rs
 allow crates/lang-python/src/analysis/checker.rs
 allow crates/lang-python/src/analysis/checker/lints.rs
