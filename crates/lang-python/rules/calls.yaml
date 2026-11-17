@@ -1,0 +1,31 @@
+id: regex-flag-alias
+message: "use of regular expression alias `re.$FLAG`: write the flag's full name"
+description: "`re.A`, `re.I`, `re.L`, `re.M`, `re.S`, `re.U` or `re.X`, the short names of `re.ASCII`, `re.IGNORECASE`, `re.LOCALE`, `re.MULTILINE`, `re.DOTALL`, `re.UNICODE` and `re.VERBOSE`."
+example: "import re\nx = re.compile(\"a\", re.I)"
+severity: warn
+category: style
+rule:
+  kind: ExprAttribute
+  regex: '^re\.(?<FLAG>[AILMSUX])$'
+---
+id: exec-call
+message: "use of `exec` detected"
+description: "A call of the builtin `exec`."
+example: 'exec("x = 1")'
+severity: warn
+category: suspicious
+rule:
+  pattern: 'exec($$$ARGS)'
+---
+id: hasattr-call
+message: 'using `hasattr(x, "__call__")` to test if x is callable is unreliable: use `callable(x)`'
+description: 'A call of `hasattr` or `getattr` that asks for `"__call__"`.'
+example: 'hasattr(x, "__call__")'
+severity: warn
+category: suspicious
+rule:
+  any:
+    - { pattern: 'hasattr($OBJ, "__call__")' }
+    - { pattern: "hasattr($OBJ, '__call__')" }
+    - { pattern: 'getattr($OBJ, "__call__", $$$D)' }
+    - { pattern: "getattr($OBJ, '__call__', $$$D)" }

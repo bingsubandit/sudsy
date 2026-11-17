@@ -15,4 +15,4 @@ second-format:
 refused:
   black-tests: 0
   ruff-fixtures: 0
-coverage: 6.7  # share of the default-set findings of ruff on the real-world corpus that Sudsy also reports (scripts/parity.sh coverage ruff)
+coverage: 95.6  # share of the default-set findings of ruff on the real-world corpus that Sudsy also reports (scripts/parity.sh coverage ruff)

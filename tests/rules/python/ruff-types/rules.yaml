@@ -1,0 +1,14 @@
+union-annotation: warn
+optional-annotation: warn
+deprecated-typing-alias: warn
+default-type-arguments: warn
+quoted-annotation: warn
+type-alias-annotation: warn
+generic-class: warn
+generic-function: warn
+datetime-utc-alias: warn
+deprecated-import: warn
+outdated-version-block: warn
+custom-type-var-return: warn
+any-eq-parameter: warn
+type-var-name-variance: warn

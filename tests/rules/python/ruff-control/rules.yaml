@@ -1,0 +1,16 @@
+blind-except: warn
+collapsible-if: warn
+try-except-pass: warn
+leftover-debugger: warn
+needless-bool: warn
+if-with-same-arms: warn
+open-file-without-with: warn
+nested-with: warn
+raise-vanilla-class: warn
+type-check-without-type-error: warn
+explicit-return-none: warn
+useless-expression: warn
+verbose-raise: warn
+bare-raise-outside-handler: warn
+exec-call: warn
+hasattr-call: warn

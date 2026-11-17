@@ -1,4 +1,5 @@
 __all__ = ["present", "missing"]
+#         ^^^^^^^^^^^^^^^^^^^^^^ unsorted-dunder-all
 #                     ^^^^^^^^^ undefined-export
 present = 1
 print(undefined, present, len)
@@ -15,6 +16,7 @@ def reads_before_assignment():
 def handled():
     try:
         name_error_is_handled
+#       ^^^^^^^^^^^^^^^^^^^^^ useless-expression
     except NameError:
         pass
     del present
@@ -24,8 +26,10 @@ def handled():
 
 
 def annotations(a: "Missing", b: "bad syntax here"):
+#                  ^^^^^^^^^ quoted-annotation
 #                   ^^^^^^^ undefined-name
 #                                ^^^^^^^^^^^^^^^^^ forward-annotation-syntax-error
+#                                ^^^^^^^^^^^^^^^^^ quoted-annotation
     x: int
     print(x)
 #         ^ undefined-name

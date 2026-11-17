@@ -3,11 +3,18 @@
 //! --rust` adds a module under `rules/` and lists it here.
 
 mod binding;
+mod branch;
+mod control;
+mod decl;
 mod format;
+mod isort;
 mod lints;
+mod literal;
+mod misc;
 mod scope;
 mod stmts;
 mod tree;
+mod types;
 
 use crate::generated::kind as k;
 use core_rules::{Family, Params, Rule, RuleMeta};
@@ -55,6 +62,172 @@ const CHECKS: &[Entry] = &[
     ("undefined-local", MODULE, scope::undefined_local),
     ("unused-variable", MODULE, scope::unused_variable),
     ("unused-annotation", MODULE, scope::unused_annotation),
+    (
+        "unused-unpacked-variable",
+        MODULE,
+        scope::unused_unpacked_variable,
+    ),
+    (
+        "redefined-argument-from-local",
+        MODULE,
+        scope::redefined_argument_from_local,
+    ),
+    (
+        "needless-bool",
+        &[k::STMT_IF, k::ELIF_ELSE_CLAUSE],
+        branch::needless_bool,
+    ),
+    (
+        "if-with-same-arms",
+        &[k::STMT_IF],
+        branch::if_with_same_arms,
+    ),
+    (
+        "open-file-without-with",
+        CALL,
+        branch::open_file_without_with,
+    ),
+    ("nested-with", &[k::STMT_WITH], branch::nested_with),
+    (
+        "raise-vanilla-class",
+        &[k::STMT_RAISE],
+        branch::raise_vanilla_class,
+    ),
+    (
+        "type-check-without-type-error",
+        &[k::STMT_IF],
+        branch::type_check_without_type_error,
+    ),
+    (
+        "explicit-return-none",
+        &[k::STMT_RETURN],
+        branch::explicit_return_none,
+    ),
+    (
+        "useless-expression",
+        &[k::STMT_EXPR],
+        branch::useless_expression,
+    ),
+    (
+        "implicit-concat-in-collection",
+        &[k::EXPR_LIST, k::EXPR_TUPLE, k::EXPR_SET],
+        literal::implicit_concat_in_collection,
+    ),
+    (
+        "unsorted-dunder-all",
+        &[k::STMT_ASSIGN, k::STMT_AUG_ASSIGN],
+        literal::unsorted_dunder_all,
+    ),
+    (
+        "unsorted-dunder-slots",
+        &[k::STMT_ASSIGN],
+        literal::unsorted_dunder_slots,
+    ),
+    ("union-annotation", &[k::EXPR_SUBSCRIPT], types::union),
+    ("optional-annotation", &[k::EXPR_SUBSCRIPT], types::optional),
+    (
+        "deprecated-typing-alias",
+        &[k::EXPR_SUBSCRIPT],
+        types::deprecated_alias,
+    ),
+    (
+        "default-type-arguments",
+        &[k::EXPR_SUBSCRIPT],
+        types::default_type_arguments,
+    ),
+    (
+        "quoted-annotation",
+        &[k::STMT_FUNCTION_DEF, k::STMT_ANN_ASSIGN, k::PARAMETER],
+        types::quoted_annotation,
+    ),
+    (
+        "type-alias-annotation",
+        &[k::STMT_ANN_ASSIGN],
+        types::type_alias_annotation,
+    ),
+    ("generic-class", &[k::STMT_CLASS_DEF], types::generic_class),
+    (
+        "generic-function",
+        &[k::STMT_FUNCTION_DEF],
+        types::generic_function,
+    ),
+    (
+        "datetime-utc-alias",
+        &[k::EXPR_ATTRIBUTE],
+        types::datetime_utc,
+    ),
+    (
+        "deprecated-import",
+        &[k::STMT_IMPORT_FROM],
+        types::deprecated_import,
+    ),
+    (
+        "outdated-version-block",
+        &[k::STMT_IF, k::ELIF_ELSE_CLAUSE],
+        types::outdated_version_block,
+    ),
+    ("unsorted-imports", lints::BODIES, isort::unsorted_imports),
+    (
+        "cached-method",
+        &[k::STMT_FUNCTION_DEF],
+        misc::cached_method,
+    ),
+    (
+        "function-call-in-default",
+        &[k::PARAMETER_WITH_DEFAULT],
+        misc::function_call_in_default,
+    ),
+    (
+        "custom-type-var-return",
+        &[k::STMT_FUNCTION_DEF],
+        misc::custom_type_var_return,
+    ),
+    (
+        "any-eq-parameter",
+        &[k::STMT_FUNCTION_DEF],
+        misc::any_eq_parameter,
+    ),
+    (
+        "subprocess-run-without-check",
+        CALL,
+        misc::subprocess_run_without_check,
+    ),
+    (
+        "type-var-name-variance",
+        &[k::STMT_ASSIGN],
+        misc::type_var_name_variance,
+    ),
+    ("static-join", CALL, misc::static_join),
+    ("verbose-raise", HANDLER, misc::verbose_raise),
+    (
+        "bare-raise-outside-handler",
+        &[k::STMT_RAISE],
+        misc::bare_raise_outside_handler,
+    ),
+    (
+        "mutable-class-default",
+        &[k::STMT_CLASS_DEF],
+        decl::mutable_class_default,
+    ),
+    (
+        "useless-import-alias",
+        &[k::ALIAS],
+        decl::useless_import_alias,
+    ),
+    ("blind-except", HANDLER, control::blind_except),
+    (
+        "collapsible-if",
+        &[k::STMT_IF, k::ELIF_ELSE_CLAUSE],
+        control::collapsible_if,
+    ),
+    ("try-except-pass", HANDLER, control::try_except_pass),
+    (
+        "leftover-debugger",
+        &[k::EXPR_CALL, k::STMT_IMPORT, k::STMT_IMPORT_FROM],
+        control::debugger,
+    ),
+    ("printf-string-formatting", BIN_OP, format::percent),
+    ("f-string", CALL, format::dot_format),
     (
         "undefined-local-with-import-star",
         MODULE,

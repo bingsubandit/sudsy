@@ -21,7 +21,9 @@ a = b = c = 1
 ^^^^^^^^^^^^^^^^ percent-format-positional-count-mismatch
 ^^^^^^^^^^^^^^^^ percent-format-star-requires-sequence
 "%s" % a
+^^^^^^^^ printf-string-formatting
 "%s %s" % (*a,)
 "%(x)s" % {"x": 1, **a}
 "%%" % ()
+^^^^^^^^^ printf-string-formatting
 b"%s" % (a, b)

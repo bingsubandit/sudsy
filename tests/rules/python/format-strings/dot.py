@@ -13,11 +13,13 @@ a = b = c = 1
 "{x}".format(x=1, y=2)
 ^^^^^^^^^^^^^^^^^^^^^^ string-dot-format-extra-named-arguments
 "{:{}}".format(a, b)
+^^^^^^^^^^^^^^^^^^^^ f-string
 "{:{:{}}}".format(a, b, c)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^ string-dot-format-invalid-format
 "{} {x}".format(*a, **b)
 "{}".format(a, *b)
 "{0[a].b}".format(a)
+^^^^^^^^^^^^^^^^^^^^ f-string
 "{!}".format(a)
 ^^^^^^^^^^^^^^^ string-dot-format-invalid-format
 "{0[}".format(a)

@@ -1,5 +1,6 @@
 """Docstring: not code for E402."""
 import os
+^^^^^^^^^ unsorted-imports
 #      ^^ unused-import
 __version__ = "1"
 x = 1
@@ -26,16 +27,19 @@ def f():
         pass
     except:
 #   ^ default-except-not-last
+#   ^ try-except-pass
 #   ^^^^^^ bare-except
         pass
     except ValueError:
         pass
     print >> sys.stderr, "x"
 #   ^^^^^^^^^^^^^^^^^^^ invalid-print-syntax
+#   ^^^^^^^^^^^^^^^^^^^^^^^^ useless-expression
 
 
 def g(l: "int", O=1, *I):
 #     ^ ambiguous-variable-name
+#        ^^^^^ quoted-annotation
 #               ^ ambiguous-variable-name
 #                     ^ ambiguous-variable-name
     l = 1
@@ -64,6 +68,7 @@ def O():
 
 
 from __future__ import division
+^ unsorted-imports
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ late-future-import
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ module-import-not-at-top-of-file
 

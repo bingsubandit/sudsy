@@ -99,7 +99,7 @@ fn attribute_name(e: &SyntaxNode) -> bool {
 }
 
 /// The arguments of a call: positional ones (starred included) and the keywords.
-fn call_args(call: &SyntaxNode) -> (Vec<SyntaxNode>, Vec<SyntaxNode>) {
+pub(super) fn call_args(call: &SyntaxNode) -> (Vec<SyntaxNode>, Vec<SyntaxNode>) {
     match call_arguments(call) {
         Some(a) => super::tree::arguments(&a),
         None => (Vec::new(), Vec::new()),
@@ -107,7 +107,7 @@ fn call_args(call: &SyntaxNode) -> (Vec<SyntaxNode>, Vec<SyntaxNode>) {
 }
 
 /// The name a call's callee has when it is a plain name that resolves to the builtin of that name.
-fn builtin_call(cx: &Cx, call: &SyntaxNode) -> Option<String> {
+pub(super) fn builtin_call(cx: &Cx, call: &SyntaxNode) -> Option<String> {
     let f = callee(call)?;
     (f.kind() == k::EXPR_NAME)
         .then(|| cx.qualified(&f))
@@ -115,7 +115,7 @@ fn builtin_call(cx: &Cx, call: &SyntaxNode) -> Option<String> {
         .filter(|q| !q.contains('.') && q.as_str() == code_text(&f))
 }
 
-fn is_none(e: &SyntaxNode) -> bool {
+pub(super) fn is_none(e: &SyntaxNode) -> bool {
     inner(e).kind() == k::EXPR_NONE_LITERAL
 }
 
@@ -299,7 +299,7 @@ fn function_name(n: &SyntaxNode) -> String {
     String::new()
 }
 
-fn has_token(n: &SyntaxNode, kind: SyntaxKind) -> bool {
+pub(super) fn has_token(n: &SyntaxNode, kind: SyntaxKind) -> bool {
     tokens(n).any(|t| t.kind() == kind)
 }
 
@@ -338,7 +338,7 @@ pub(super) fn double_negation(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'
     unary(c, n, ctx, None);
 }
 
-fn boolean(e: &SyntaxNode) -> Option<bool> {
+pub(super) fn boolean(e: &SyntaxNode) -> Option<bool> {
     let e = inner(e);
     (e.kind() == k::EXPR_BOOLEAN_LITERAL).then(|| code_text(&e) == "True")
 }
@@ -446,7 +446,7 @@ pub(super) fn set_attr_with_constant(c: &Check, n: &SyntaxNode, ctx: &mut RuleCo
 }
 
 /// The body-statement groups of a node: the `else` and `finally` parts are groups of their own.
-fn bodies(n: &SyntaxNode) -> Vec<Vec<SyntaxNode>> {
+pub(super) fn bodies(n: &SyntaxNode) -> Vec<Vec<SyntaxNode>> {
     let mut out = vec![Vec::new()];
     for e in n.children_with_tokens() {
         match e {
@@ -568,7 +568,7 @@ fn os_error_alias(c: &Check, cx: &Cx, ctx: &mut RuleContext<'_>, e: &SyntaxNode)
 }
 
 /// The exception type of an `except` clause.
-fn handler_type(ctx: &RuleContext<'_>, h: &SyntaxNode) -> Option<SyntaxNode> {
+pub(super) fn handler_type(ctx: &RuleContext<'_>, h: &SyntaxNode) -> Option<SyntaxNode> {
     ctx.file.grammar.slot(h, "type")?.into_node()
 }
 
@@ -593,6 +593,23 @@ pub(super) fn os_error_alias_check(c: &Check, n: &SyntaxNode, ctx: &mut RuleCont
     }
 }
 
+/// A list, dict or set display or comprehension, or a call that builds one.
+pub(super) fn is_mutable(cx: &Cx, e: &SyntaxNode) -> bool {
+    let d = inner(e);
+    match d.kind() {
+        k::EXPR_LIST
+        | k::EXPR_DICT
+        | k::EXPR_SET
+        | k::EXPR_LIST_COMP
+        | k::EXPR_SET_COMP
+        | k::EXPR_DICT_COMP => true,
+        k::EXPR_CALL => callee(&d)
+            .and_then(|f| cx.qualified(&f))
+            .is_some_and(|q| MUTABLE_CALLS.contains(&q.as_str())),
+        _ => false,
+    }
+}
+
 /// B006: a default that is mutable and shared by every call.
 pub(super) fn mutable_argument_default(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let Some(cx) = model(ctx.file) else { return };
@@ -606,19 +623,7 @@ pub(super) fn mutable_argument_default(c: &Check, n: &SyntaxNode, ctx: &mut Rule
     let (Some(parameter), Some(default)) = (parts.next(), parts.next()) else {
         return;
     };
-    let d = inner(&default);
-    let mutable = match d.kind() {
-        k::EXPR_LIST
-        | k::EXPR_DICT
-        | k::EXPR_SET
-        | k::EXPR_LIST_COMP
-        | k::EXPR_SET_COMP
-        | k::EXPR_DICT_COMP => true,
-        k::EXPR_CALL => callee(&d)
-            .and_then(|f| cx.qualified(&f))
-            .is_some_and(|q| MUTABLE_CALLS.contains(&q.as_str())),
-        _ => false,
-    };
+    let mutable = is_mutable(&cx, &default);
     let immutable = ctx
         .file
         .grammar
@@ -630,7 +635,7 @@ pub(super) fn mutable_argument_default(c: &Check, n: &SyntaxNode, ctx: &mut Rule
     }
 }
 
-fn immutable_annotation(cx: &Cx, a: &SyntaxNode) -> bool {
+pub(super) fn immutable_annotation(cx: &Cx, a: &SyntaxNode) -> bool {
     let a = inner(a);
     match a.kind() {
         k::EXPR_SUBSCRIPT => {
@@ -678,7 +683,7 @@ pub(super) fn redundant_tuple_in_handler(c: &Check, n: &SyntaxNode, ctx: &mut Ru
 
 /// The `raise` statements of a clause's body: nested blocks are read (not the `else` of a loop),
 /// `try` statements, functions and classes are not.
-fn collect_raises(body: impl Iterator<Item = SyntaxNode>, out: &mut Vec<SyntaxNode>) {
+pub(super) fn collect_raises(body: impl Iterator<Item = SyntaxNode>, out: &mut Vec<SyntaxNode>) {
     for s in body {
         match s.kind() {
             k::STMT_RAISE => out.push(s),

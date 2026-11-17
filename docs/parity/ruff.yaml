@@ -154,17 +154,17 @@ entries:
   ASYNC251: planned
   B002: planned
   B003: planned
-  B004: planned
+  B004: rule hasattr-call
   B005: planned
   B007: planned
-  B008: planned
+  B008: rule function-call-in-default
   B012: planned
   B014: planned
   B015: planned
   B016: planned
   B017: planned
-  B018: planned
-  B019: planned
+  B018: rule useless-expression
+  B019: rule cached-method
   B020: planned
   B021: planned
   B022: planned
@@ -188,7 +188,7 @@ entries:
   B909: deferred | preview rule
   B911: planned
   B912: planned
-  BLE001: planned
+  BLE001: rule blind-except
   C400: planned
   C401: planned
   C402: planned
@@ -348,7 +348,7 @@ entries:
   FIX002: planned
   FIX003: planned
   FIX004: planned
-  FLY002: planned
+  FLY002: rule static-join
   FURB101: deferred | preview rule
   FURB103: deferred | preview rule
   FURB105: planned
@@ -374,7 +374,7 @@ entries:
   FURB163: planned
   FURB164: planned
   FURB166: planned
-  FURB167: planned
+  FURB167: rule regex-flag-alias
   FURB168: planned
   FURB169: planned
   FURB171: planned
@@ -393,7 +393,7 @@ entries:
   G101: planned
   G201: planned
   G202: planned
-  I001: planned
+  I001: rule unsorted-imports
   I002: planned
   ICN001: planned
   ICN002: planned
@@ -405,7 +405,7 @@ entries:
   ISC001: planned
   ISC002: planned
   ISC003: planned
-  ISC004: planned
+  ISC004: rule implicit-concat-in-collection
   LOG001: planned
   LOG002: planned
   LOG004: planned
@@ -463,14 +463,14 @@ entries:
   PIE804: planned
   PIE807: planned
   PIE808: planned
-  PLC0105: planned
+  PLC0105: rule type-var-name-variance
   PLC0131: planned
   PLC0132: planned
   PLC0205: planned
   PLC0206: planned
   PLC0207: planned
   PLC0208: planned
-  PLC0414: planned
+  PLC0414: rule useless-import-alias
   PLC0415: planned
   PLC1802: planned
   PLC1901: deferred | preview rule
@@ -497,7 +497,7 @@ entries:
   PLE0604: planned
   PLE0605: planned
   PLE0643: planned
-  PLE0704: planned
+  PLE0704: rule bare-raise-outside-handler
   PLE1132: planned
   PLE1141: deferred | preview rule
   PLE1142: planned
@@ -533,7 +533,7 @@ entries:
   PLR0917: planned
   PLR1701: wontfix removed upstream
   PLR1702: deferred | preview rule
-  PLR1704: planned
+  PLR1704: rule redefined-argument-from-local
   PLR1706: wontfix removed upstream
   PLR1708: planned
   PLR1711: planned
@@ -572,7 +572,7 @@ entries:
   PLW1507: planned
   PLW1508: planned
   PLW1509: planned
-  PLW1510: planned
+  PLW1510: rule subprocess-run-without-check
   PLW1514: deferred | preview rule
   PLW1641: planned
   PLW2101: planned
@@ -663,7 +663,7 @@ entries:
   PYI016: planned
   PYI017: planned
   PYI018: planned
-  PYI019: planned
+  PYI019: rule custom-type-var-return
   PYI020: planned
   PYI021: planned
   PYI024: planned
@@ -671,7 +671,7 @@ entries:
   PYI026: planned
   PYI029: planned
   PYI030: planned
-  PYI032: planned
+  PYI032: rule any-eq-parameter
   PYI033: planned
   PYI034: planned
   PYI035: planned
@@ -705,7 +705,7 @@ entries:
   Q002: planned
   Q003: planned
   Q004: planned
-  RET501: planned
+  RET501: rule explicit-return-none
   RET502: planned
   RET503: planned
   RET504: planned
@@ -724,7 +724,7 @@ entries:
   RUF009: planned
   RUF010: planned
   RUF011: wontfix removed upstream
-  RUF012: planned
+  RUF012: rule mutable-class-default
   RUF013: planned
   RUF015: planned
   RUF016: planned
@@ -733,8 +733,8 @@ entries:
   RUF019: planned
   RUF020: planned
   RUF021: planned
-  RUF022: planned
-  RUF023: planned
+  RUF022: rule unsorted-dunder-all
+  RUF023: rule unsorted-dunder-slots
   RUF024: planned
   RUF026: planned
   RUF027: deferred | preview rule
@@ -767,7 +767,7 @@ entries:
   RUF056: deferred | preview rule
   RUF057: planned
   RUF058: planned
-  RUF059: planned
+  RUF059: rule unused-unpacked-variable
   RUF060: planned
   RUF061: planned
   RUF063: planned
@@ -784,7 +784,7 @@ entries:
   RUF074: deferred | preview rule
   RUF075: deferred | preview rule
   RUF077: deferred | preview rule
-  RUF100: planned
+  RUF100: deferred | a noqa comment that suppresses nothing needs the findings of all ruff rules
   RUF101: planned
   RUF102: planned
   RUF103: planned
@@ -794,14 +794,14 @@ entries:
   RUF200: planned
   RUF201: deferred | preview rule
   S101: planned
-  S102: planned
+  S102: rule exec-call
   S103: planned
   S104: planned
   S105: planned
   S106: planned
   S107: planned
   S108: planned
-  S110: planned
+  S110: rule try-except-pass
   S112: planned
   S113: planned
   S201: planned
@@ -867,8 +867,8 @@ entries:
   S702: planned
   S704: planned
   SIM101: planned
-  SIM102: planned
-  SIM103: planned
+  SIM102: rule collapsible-if
+  SIM103: rule needless-bool
   SIM105: planned
   SIM107: planned
   SIM108: planned
@@ -876,10 +876,10 @@ entries:
   SIM110: planned
   SIM112: planned
   SIM113: planned
-  SIM114: planned
-  SIM115: planned
+  SIM114: rule if-with-same-arms
+  SIM115: rule open-file-without-with
   SIM116: planned
-  SIM117: planned
+  SIM117: rule nested-with
   SIM220: planned
   SIM221: planned
   SIM222: planned
@@ -893,7 +893,7 @@ entries:
   SLOT000: planned
   SLOT001: planned
   SLOT002: planned
-  T100: planned
+  T100: rule leftover-debugger
   TC001: planned
   TC002: planned
   TC003: planned
@@ -915,11 +915,11 @@ entries:
   TID253: planned
   TID254: planned
   TID255: planned
-  TRY002: planned
+  TRY002: rule raise-vanilla-class
   TRY003: planned
-  TRY004: planned
+  TRY004: rule type-check-without-type-error
   TRY200: wontfix removed upstream
-  TRY201: planned
+  TRY201: rule verbose-raise
   TRY203: planned
   TRY300: planned
   TRY301: planned
@@ -928,8 +928,8 @@ entries:
   UP001: planned
   UP003: planned
   UP005: planned
-  UP006: planned
-  UP007: planned
+  UP006: rule deprecated-typing-alias
+  UP007: rule union-annotation
   UP008: planned
   UP009: planned
   UP010: planned
@@ -938,7 +938,7 @@ entries:
   UP013: planned
   UP014: planned
   UP015: planned
-  UP017: planned
+  UP017: rule datetime-utc-alias
   UP018: planned
   UP019: planned
   UP020: planned
@@ -950,23 +950,23 @@ entries:
   UP028: planned
   UP029: planned
   UP030: planned
-  UP031: planned
-  UP032: planned
+  UP031: rule printf-string-formatting
+  UP032: rule f-string
   UP033: planned
   UP034: planned
-  UP035: planned
-  UP036: planned
-  UP037: planned
+  UP035: rule deprecated-import
+  UP036: rule outdated-version-block
+  UP037: rule quoted-annotation
   UP038: wontfix removed upstream
   UP039: planned
-  UP040: planned
+  UP040: rule type-alias-annotation
   UP041: planned
   UP042: planned
-  UP043: planned
+  UP043: rule default-type-arguments
   UP044: planned
-  UP045: planned
-  UP046: planned
-  UP047: planned
+  UP045: rule optional-annotation
+  UP046: rule generic-class
+  UP047: rule generic-function
   UP048: deferred | preview rule
   UP049: planned
   UP050: planned

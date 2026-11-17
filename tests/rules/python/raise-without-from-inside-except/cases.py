@@ -11,6 +11,7 @@ except OSError as e:
         raise ValueError("inner handler")
 #       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ raise-without-from-inside-except
     raise e
+#   ^^^^^^^ verbose-raise
     raise ValueError() from e
     raise ValueError() from None
 

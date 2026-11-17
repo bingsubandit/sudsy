@@ -44,7 +44,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | prettier | - | 59 | 38 | 9 | 2 | 0 | 9 | 1 | 2 |
 | psscriptanalyzer | - | 75 | 12 | 8 | 0 | 0 | 1 | 54 | 0 |
 | roslynator | - | 340 | 23 | 7 | 289 | 18 | 1 | 2 | 289 |
-| ruff | 6.7% | 980 | 88 | 0 | 735 | 0 | 19 | 138 | 735 |
+| ruff | 95.6% | 980 | 133 | 0 | 689 | 0 | 19 | 139 | 689 |
 | shellcheck | - | 520 | 17 | 8 | 0 | 0 | 0 | 495 | 0 |
 | shfmt | - | 9 | 1 | 1 | 0 | 0 | 3 | 4 | 0 |
 | sqlfluff | - | 97 | 35 | 0 | 43 | 0 | 4 | 15 | 43 |

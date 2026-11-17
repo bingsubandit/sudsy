@@ -1,0 +1,15 @@
+unused-unpacked-variable: warn
+mutable-class-default: warn
+useless-import-alias: warn
+redefined-argument-from-local: warn
+implicit-concat-in-collection: warn
+unsorted-dunder-all: warn
+unsorted-dunder-slots: warn
+unsorted-imports: warn
+cached-method: warn
+function-call-in-default: warn
+subprocess-run-without-check: warn
+static-join: warn
+printf-string-formatting: warn
+f-string: warn
+regex-flag-alias: warn

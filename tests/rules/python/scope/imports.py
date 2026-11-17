@@ -1,7 +1,9 @@
 import os
+^ unsorted-imports
 import sys
 #      ^^^ unused-import
 import json as json
+#      ^^^^^^^^^^^^ useless-import-alias
 import a.b
 import a.c
 #      ^^^ unused-import

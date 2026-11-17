@@ -565,7 +565,7 @@ def coverage(tool, sudsy, version, prefix, exe):
         if r in on and (f, r) not in wanted and f not in fatal:
             extra[r] = extra.get(r, 0) + len(ms)
     print("only Sudsy (files the tool reports the rule in nowhere): " + (", ".join(f"{r} {n}" for r, n in sorted(extra.items(), key=lambda kv: -kv[1])[:12]) or "none"))
-    for rule, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:15]:
+    for rule, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:int(os.environ.get("COVERAGE_TOP", 15))]:
         print(f"  {rule}: {c} of {n} covered" + ("" if rule in mapping else " (no Sudsy rule)"))
     print(f"{tool} {version}: {hit} of {total} findings of {len(per)} rules in {len(names) - len(fatal)} files covered = {round(1000 * hit / total) / 10 if total else 100.0}%" + (f"; the template rules: {share}%" if tool in PLUGINS else ""))
     floor = (yaml.safe_load((folder / "differences.yaml").read_text(encoding="utf-8")) or {}).get("coverage")

@@ -66,7 +66,7 @@ The fixtures' `sudsy.yaml` extends `preset:csharp/stylecop`, so the formatter id
 
 | Tool | Set and corpus | Share |
 |---|---|---|
-| ruff | the default set of `ruff check --isolated --ignore-noqa` on Django, requests, Flask, Click, httpx, pytest and Black's sources (1,085 files) | 6.7% |
+| ruff | the default set of `ruff check --isolated --ignore-noqa` on Django, requests, Flask, Click, httpx, pytest and Black's sources (1,085 files) | 95.6% (open: RUF100 83 of 191 uncovered findings, then rules with at most 8 findings each) |
 | eslint | `js.configs.recommended` (no globals) on the `.js` files of the JS corpus outside Prettier's tests | 99.8% |
 | typescript-eslint | `tseslint.configs.recommended` on the `.ts` and `.tsx` files of the same corpus | 73.8% |
 | eslint-plugin-vue | `flat/recommended` on the `.vue` files of the HTML corpus outside Prettier's tests (Vue core, VitePress, Pinia, Nuxt UI; 943 files), the template rules | 100.0% (all rules 13.8%) |

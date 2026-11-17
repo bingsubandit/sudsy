@@ -237,6 +237,7 @@ fn percent_findings(b: &SyntaxNode) -> Vec<Finding> {
     let [left, right] = &parts[..] else {
         return out;
     };
+    let left = &inner(left);
     if operator(b) != Some(k::PERCENT) || left.kind() != k::EXPR_STRING_LITERAL {
         return out;
     }
@@ -300,6 +301,23 @@ fn percent_findings(b: &SyntaxNode) -> Vec<Finding> {
         Rhs::Single if !named => count(&mut out, 1),
         Rhs::Unknown if !named && pos == 0 => count(&mut out, 1),
         Rhs::Single | Rhs::Unknown => {}
+    }
+    if out.is_empty() {
+        let convertible = match classify(right) {
+            Rhs::Tuple(t) => !named && !t.iter().any(|e| inner(e).kind() == k::EXPR_STARRED),
+            Rhs::Dict(keys) => named && keys.is_some(),
+            Rhs::Unknown => matches!(
+                inner(right).kind(),
+                k::EXPR_NAME | k::EXPR_ATTRIBUTE | k::EXPR_SUBSCRIPT | k::EXPR_CALL
+            ),
+            Rhs::Single => {
+                !named && pos == 1 && !matches!(inner(right).kind(), k::EXPR_BOOL_OP | k::EXPR_IF)
+            }
+            Rhs::Sequence => false,
+        };
+        if convertible {
+            out.push(("printf-string-formatting", String::new()));
+        }
     }
     out
 }
@@ -438,6 +456,7 @@ fn dot_findings(call: &SyntaxNode) -> Vec<Finding> {
     let (Some(string), Some(member)) = (parts.next(), parts.next()) else {
         return out;
     };
+    let string = inner(&string);
     if string.kind() != k::EXPR_STRING_LITERAL || crate::text::code_text(&member) != "format" {
         return out;
     }
@@ -483,6 +502,21 @@ fn dot_findings(call: &SyntaxNode) -> Vec<Finding> {
         if !missing.is_empty() {
             out.push(("string-dot-format-missing-arguments", missing));
         }
+    }
+    // The arguments move into the string: they must not hold its quote character.
+    let quote = string
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .find(|t| t.kind() == k::STRING)
+        .and_then(|t| t.text().chars().find(|c| matches!(c, '\'' | '"')));
+    let clash = |a: &SyntaxNode| quote.is_none_or(|q| crate::text::code_text(a).contains(q));
+    if out.is_empty()
+        && !splat
+        && !args.iter().any(starred)
+        && !args.iter().any(clash)
+        && !keywords.iter().any(clash)
+    {
+        out.push(("f-string", String::new()));
     }
     out
 }

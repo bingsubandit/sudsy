@@ -445,7 +445,7 @@ params: { check: get-attr-with-constant }
 message: "`getattr` with a constant attribute is no safer than `x.attr`"
 description: "`getattr(x, \"name\")` with a literal name that is an identifier (two arguments)."
 example: "getattr(x, \"name\")"
-severity: off
+severity: warn
 category: style
 ---
 id: set-attr-with-constant
@@ -454,7 +454,7 @@ params: { check: set-attr-with-constant }
 message: "`setattr` with a constant attribute is no safer than `x.attr = v`"
 description: "A statement `setattr(x, \"name\", v)` with a literal name that is an identifier."
 example: "setattr(x, \"name\", 1)"
-severity: off
+severity: warn
 category: style
 ---
 id: assert-false
@@ -472,7 +472,7 @@ params: { check: redundant-tuple-in-exception-handler }
 message: "a one-element tuple is redundant in an exception handler"
 description: "An `except` clause that names a tuple of one exception."
 example: "try:\n    pass\nexcept (ValueError,):\n    pass"
-severity: off
+severity: warn
 category: style
 ---
 id: raise-without-from-inside-except
@@ -517,7 +517,7 @@ params: { check: useless-object-inheritance }
 message: "class `{name}` inherits from `object`, which every class does"
 description: "A class with the builtin `object` as a base."
 example: "class A(object):\n    pass"
-severity: off
+severity: warn
 category: style
 ---
 id: os-error-alias
@@ -526,7 +526,7 @@ params: { check: os-error-alias }
 message: "`{name}` is an alias of `OSError`"
 description: "`EnvironmentError`, `IOError`, `WindowsError`, `mmap.error`, `os.error`, `select.error` or `socket.error` in an `except` clause or a `raise`."
 example: "try:\n    pass\nexcept IOError:\n    pass"
-severity: off
+severity: warn
 category: style
 ---
 id: unicode-literal
@@ -535,7 +535,7 @@ params: { check: unicode-literal }
 message: "remove the `u` prefix: strings are unicode"
 description: "A string with the `u` prefix."
 example: "x = u\"a\""
-severity: off
+severity: warn
 category: style
 ---
 id: in-dict-keys
@@ -544,7 +544,7 @@ params: { check: in-dict-keys }
 message: "use `key in dict` instead of `key in dict.keys()`"
 description: "A membership test, `for` or comprehension over `.keys()` with no arguments."
 example: "x = k in d.keys()"
-severity: off
+severity: warn
 category: style
 ---
 id: negate-equal-op
@@ -553,7 +553,7 @@ params: { check: negate-equal-op }
 message: "use `a != b` instead of `not a == b`"
 description: "`not` applied to a comparison with `==`."
 example: "x = not a == b"
-severity: off
+severity: warn
 category: style
 ---
 id: negate-not-equal-op
@@ -562,7 +562,7 @@ params: { check: negate-not-equal-op }
 message: "use `a == b` instead of `not a != b`"
 description: "`not` applied to a comparison with `!=`."
 example: "x = not a != b"
-severity: off
+severity: warn
 category: style
 ---
 id: double-negation
@@ -571,7 +571,7 @@ params: { check: double-negation }
 message: "`not not a` is `a`"
 description: "`not` applied to `not`."
 example: "x = not not a"
-severity: off
+severity: warn
 category: style
 ---
 id: if-expr-with-true-false
@@ -580,7 +580,7 @@ params: { check: if-expr-with-true-false }
 message: "use `bool(...)` instead of `True if ... else False`"
 description: "A conditional expression with `True` and `False` arms."
 example: "x = True if a else False"
-severity: off
+severity: warn
 category: style
 ---
 id: if-expr-with-false-true
@@ -589,7 +589,7 @@ params: { check: if-expr-with-false-true }
 message: "use `not ...` instead of `False if ... else True`"
 description: "A conditional expression with `False` and `True` arms."
 example: "x = False if a else True"
-severity: off
+severity: warn
 category: style
 ---
 id: if-expr-with-twisted-arms
@@ -607,7 +607,7 @@ params: { check: unnecessary-placeholder }
 message: "unnecessary `{name}`: the body has other statements"
 description: "A `pass` or `...` statement in a body of two statements or more."
 example: "def f():\n    pass\n    x = 1"
-severity: off
+severity: warn
 category: style
 ---
 id: multiple-starts-ends-with
@@ -616,7 +616,7 @@ params: { check: multiple-starts-ends-with }
 message: "call `{name}` once with a tuple"
 description: "`a.startswith(x) or a.startswith(y)` (also `endswith`): the methods take a tuple."
 example: "x = a.startswith(\"a\") or a.startswith(\"b\")"
-severity: off
+severity: warn
 category: style
 ---
 id: unnecessary-collection-call
@@ -625,7 +625,7 @@ params: { check: unnecessary-collection-call }
 message: "unnecessary `{name}()` call: write a literal"
 description: "`dict()`, `list()` or `tuple()` with no arguments (`dict` with keyword arguments only)."
 example: "x = list()"
-severity: off
+severity: warn
 category: style
 ---
 id: invalid-escape-sequence
@@ -636,3 +636,381 @@ description: "A backslash in a string that is not raw and does not start an esca
 example: "x = \"\\d\""
 severity: warn
 category: suspicious
+---
+id: unused-unpacked-variable
+family: check
+params: { check: unused-unpacked-variable }
+message: "unpacked variable `{name}` is never used"
+description: "A name of a tuple target in a function that the function never reads (not `_` names, not in functions that call `locals()`)."
+example: "def f():\n    a, b = g()\n    return a"
+severity: warn
+category: suspicious
+---
+id: mutable-class-default
+family: check
+params: { check: mutable-class-default }
+message: "mutable default value for class attribute: annotate it with `ClassVar` or use an immutable value"
+description: "A class attribute assigned a list, dict, set or comprehension (or a call that builds one) without a `ClassVar` or `Final` annotation; data classes, Pydantic models and named tuples are left alone."
+example: "class A:\n    x = []"
+severity: warn
+category: suspicious
+---
+id: useless-import-alias
+family: check
+params: { check: useless-import-alias }
+message: "import alias `{name}` does not rename the original"
+description: "`import a as a` or `from m import a as a`."
+example: "import os as os"
+severity: warn
+category: style
+---
+id: blind-except
+family: check
+params: { check: blind-except }
+message: "do not catch blind exception `{name}`"
+description: "`except Exception` or `except BaseException` whose body neither raises again nor logs the traceback."
+example: "try:\n    pass\nexcept Exception:\n    pass"
+severity: warn
+category: suspicious
+---
+id: collapsible-if
+family: check
+params: { check: collapsible-if }
+message: "use a single `if` with `and` instead of nested `if` statements"
+description: "An `if` whose only statement is another `if`, neither having `elif` or `else`."
+example: "if a:\n    if b:\n        pass"
+severity: warn
+category: style
+---
+id: try-except-pass
+family: check
+params: { check: try-except-pass }
+message: "`try`-`except`-`pass`: consider logging the exception"
+description: "A handler for everything (`except:`, `except Exception`) whose only statement is `pass`."
+example: "try:\n    pass\nexcept Exception:\n    pass"
+severity: warn
+category: suspicious
+---
+id: leftover-debugger
+family: check
+params: { check: leftover-debugger }
+message: "remove the debugger: import or call left in the code"
+description: "An import of `pdb`, `ipdb`, `pudb`, `wdb`, `rpdb` or `bpdb`, or a call of `breakpoint()` or `pdb.set_trace()`."
+example: "import pdb"
+severity: warn
+category: suspicious
+---
+id: printf-string-formatting
+family: check
+params: { check: printf-string-formatting }
+message: "use format specifiers or an f-string instead of `%` formatting"
+description: "A `\"...\" % x` whose format string and values pair up (a tuple of as many values, a dict for named fields, or one value for one field)."
+example: "x = \"%s\" % y"
+severity: warn
+category: style
+---
+id: f-string
+family: check
+params: { check: f-string }
+message: "use an f-string instead of a `.format` call"
+description: "A `\"...\".format(...)` on a string literal whose fields all name an argument."
+example: "x = \"{}\".format(y)"
+severity: warn
+category: style
+---
+id: redefined-argument-from-local
+family: check
+params: { check: redefined-argument-from-local }
+message: "redefining argument with the local name `{name}`"
+description: "A `for` variable, `with ... as` name or `except ... as` name that is also an argument of its function."
+example: "def f(a):\n    with g() as a:\n        pass"
+severity: warn
+category: suspicious
+---
+id: needless-bool
+family: check
+params: { check: needless-bool }
+message: "return the condition directly instead of returning a boolean in each branch"
+description: "An `if` that returns `True` (or `False`) and is followed, or continued by `else`, by the opposite boolean."
+example: "def f(x):\n    if x:\n        return True\n    return False"
+severity: warn
+category: style
+---
+id: if-with-same-arms
+family: check
+params: { check: if-with-same-arms }
+message: "combine the `if` branches with `or`: their bodies are the same"
+description: "Two neighbouring branches of an `if`/`elif` chain with the same body."
+example: "if a:\n    x = 1\nelif b:\n    x = 1"
+severity: warn
+category: style
+---
+id: open-file-without-with
+family: check
+params: { check: open-file-without-with }
+message: "use a context manager for opening files"
+description: "A call of `open` (or of `tempfile.NamedTemporaryFile` and the like) that is not the context of a `with`, not returned and not given to `enter_context`."
+example: "f = open(\"a\")"
+severity: warn
+category: suspicious
+---
+id: nested-with
+family: check
+params: { check: nested-with }
+message: "use a single `with` statement with several contexts"
+description: "A `with` whose only statement is another `with` (both sync or both async)."
+example: "with a:\n    with b:\n        pass"
+severity: warn
+category: style
+---
+id: raise-vanilla-class
+family: check
+params: { check: raise-vanilla-class }
+message: "create your own exception instead of raising `Exception`"
+description: "A `raise` of the builtin `Exception`."
+example: "raise Exception(\"x\")"
+severity: warn
+category: style
+---
+id: type-check-without-type-error
+family: check
+params: { check: type-check-without-type-error }
+message: "prefer `TypeError` for an invalid type"
+description: "A branch tested with `isinstance`, `issubclass` or `callable` that raises a builtin exception other than `TypeError` (and `NotImplementedError`)."
+example: "if not isinstance(x, int):\n    raise ValueError(\"x\")"
+severity: warn
+category: style
+---
+id: explicit-return-none
+family: check
+params: { check: explicit-return-none }
+message: "do not explicitly `return None` in a function that returns nothing else"
+description: "A `return None` in a function whose other returns (if any) return nothing or `None`, and that is not a generator. Left alone: a function that is only `return None`, a property, a function annotated with anything but `None`."
+example: "def f(x):\n    if x:\n        return None\n    print(x)"
+severity: warn
+category: style
+---
+id: useless-expression
+family: check
+params: { check: useless-expression }
+message: "useless expression: assign it to a variable or remove it"
+description: "An expression statement that is only a name, an attribute, a number, a constant or a collection display."
+example: "x = 1\nx"
+severity: warn
+category: suspicious
+---
+id: implicit-concat-in-collection
+family: check
+params: { check: implicit-concat-in-collection }
+message: "parenthesize the implicit string concatenation in a collection, or add the missing comma"
+description: "An element of a list, tuple or set that is several string literals one after the other, without parentheses."
+example: "x = [\"a\" \"b\", \"c\"]"
+severity: warn
+category: suspicious
+---
+id: unsorted-dunder-all
+family: check
+params: { check: unsorted-dunder-all }
+message: "`{name}` is not sorted"
+description: "An `__all__` list or tuple of strings out of order: constants (upper case) first, then classes (capitalized), then the rest, each in natural order."
+example: "__all__ = [\"b\", \"a\"]"
+severity: warn
+category: style
+---
+id: unsorted-dunder-slots
+family: check
+params: { check: unsorted-dunder-slots }
+message: "`{name}` is not sorted"
+description: "A `__slots__` list or tuple of strings out of natural order."
+example: "class A:\n    __slots__ = (\"b\", \"a\")"
+severity: warn
+category: style
+---
+id: union-annotation
+family: check
+params: { check: union-annotation }
+message: "use `X | Y` instead of `Union`"
+description: "A `typing.Union[...]` subscript, for a target version that has `X | Y` (3.10)."
+example: "from typing import Union\nx: Union[int, str]"
+severity: warn
+category: style
+---
+id: optional-annotation
+family: check
+params: { check: optional-annotation }
+message: "use `X | None` instead of `Optional`"
+description: "A `typing.Optional[...]` subscript, for a target version that has `X | Y` (3.10)."
+example: "from typing import Optional\nx: Optional[int]"
+severity: warn
+category: style
+---
+id: deprecated-typing-alias
+family: check
+params: { check: deprecated-typing-alias }
+message: "use the builtin `{name}` instead of its alias in `typing`"
+description: "A subscript of `typing.List`, `Dict`, `Set`, `FrozenSet`, `Tuple` or `Type`, for a target version where the builtin is generic (3.9)."
+example: "from typing import List\nx: List[int]"
+severity: warn
+category: style
+---
+id: default-type-arguments
+family: check
+params: { check: default-type-arguments }
+message: "unnecessary default type arguments"
+description: "`Generator[X, None, None]` or `AsyncGenerator[X, None]`, for a target version where the arguments have defaults (3.13)."
+example: "from typing import Generator\nx: Generator[int, None, None]"
+severity: warn
+category: style
+---
+id: quoted-annotation
+family: check
+params: { check: quoted-annotation }
+message: "remove the quotes from the annotation"
+description: "A quoted name in a parameter, return or variable annotation, for a target version that does not evaluate annotations (3.14)."
+example: "def f(x: \"int\"):\n    pass"
+severity: warn
+category: style
+---
+id: type-alias-annotation
+family: check
+params: { check: type-alias-annotation }
+message: "type alias `{name}` uses `TypeAlias` instead of the `type` keyword"
+description: "`X: TypeAlias = ...`, for a target version with the `type` statement (3.12)."
+example: "from typing import TypeAlias\nX: TypeAlias = int"
+severity: warn
+category: style
+---
+id: generic-class
+family: check
+params: { check: generic-class }
+message: "generic class `{name}` uses a `Generic` base instead of type parameters"
+description: "A class with `Generic[...]` among its bases, for a target version with type parameters (3.12)."
+example: "from typing import Generic, TypeVar\nT = TypeVar(\"T\")\nclass A(Generic[T]):\n    pass"
+severity: warn
+category: style
+---
+id: generic-function
+family: check
+params: { check: generic-function }
+message: "generic function `{name}` should use type parameters"
+description: "A function outside a class whose signature uses a module-level `TypeVar`, `ParamSpec` or `TypeVarTuple`, for a target version with type parameters (3.12)."
+example: "from typing import TypeVar\nT = TypeVar(\"T\")\ndef f(x: T) -> T:\n    return x"
+severity: warn
+category: style
+---
+id: datetime-utc-alias
+family: check
+params: { check: datetime-utc-alias }
+message: "use `datetime.UTC` instead of `datetime.timezone.utc`"
+description: "`datetime.timezone.utc` (also imported as `timezone.utc`), for a target version that has `datetime.UTC` (3.11)."
+example: "import datetime\nx = datetime.timezone.utc"
+severity: warn
+category: style
+---
+id: deprecated-import
+family: check
+params: { check: deprecated-import }
+message: "{name}"
+description: "An import from `typing_extensions` of a name that `typing`, `collections.abc` or `warnings` has in the target version, from `typing` of an alias of a `collections.abc` class, or of `List`, `Dict`, `Set`, `FrozenSet`, `Tuple`, `Type`."
+example: "from typing_extensions import Self"
+severity: warn
+category: style
+---
+id: outdated-version-block
+family: check
+params: { check: outdated-version-block }
+message: "version block is outdated for the target Python version"
+description: "A test of `sys.version_info` against a version older than the target's, or of `sys.version_info[0]` against a number: the result is always the same."
+example: "import sys\nif sys.version_info >= (3, 8):\n    pass"
+severity: warn
+category: suspicious
+---
+id: unsorted-imports
+family: check
+params: { check: unsorted-imports }
+message: "the import block is not sorted or not formatted as isort writes it"
+description: "A block of imports that differs from the isort layout (ruff's defaults): sections of future, standard library, third-party, first-party and relative imports, `import x` before `from x import y`, names in natural order without regard to case, members as constants, classes, then variables, one statement for each module, lines over 88 columns in parentheses, one blank line between sections and after the block (two before a definition at module level). A folder or file next to the file, in the project root or in its `src` folder, is first-party."
+example: "import sys\nimport os"
+severity: warn
+category: style
+---
+id: cached-method
+family: check
+params: { check: cached-method }
+message: "use of `functools.lru_cache` or `functools.cache` on a method can lead to memory leaks"
+description: "A method decorated with `functools.lru_cache` or `functools.cache` (not a static method): the cache keeps `self` alive."
+example: "import functools\nclass A:\n    @functools.cache\n    def f(self):\n        pass"
+severity: warn
+category: suspicious
+---
+id: function-call-in-default
+family: check
+params: { check: function-call-in-default }
+message: "do not call `{name}` in an argument default: it runs once, when the function is defined"
+description: "A call in the default of a parameter (not in a lambda, not a call of an immutable builtin such as `tuple`)."
+example: "def f(x=list()):\n    pass"
+severity: warn
+category: suspicious
+---
+id: custom-type-var-return
+family: check
+params: { check: custom-type-var-return }
+message: "use `Self` instead of the custom type variable `{name}`"
+description: "A method whose `self` is annotated with a type variable that the return annotation repeats."
+example: "from typing import TypeVar\nT = TypeVar(\"T\")\nclass A:\n    def f(self: T) -> T:\n        return self"
+severity: warn
+category: style
+---
+id: any-eq-parameter
+family: check
+params: { check: any-eq-parameter }
+message: "prefer `object` to `Any` for the second parameter to `{name}`"
+description: "`other: Any` in `__eq__` or `__ne__`."
+example: "from typing import Any\nclass A:\n    def __eq__(self, other: Any) -> bool:\n        return True"
+severity: warn
+category: style
+---
+id: subprocess-run-without-check
+family: check
+params: { check: subprocess-run-without-check }
+message: "`subprocess.run` without an explicit `check` argument"
+description: "A call of `subprocess.run` with no `check` keyword (and no `**kwargs`)."
+example: "import subprocess\nsubprocess.run([\"ls\"])"
+severity: warn
+category: suspicious
+---
+id: type-var-name-variance
+family: check
+params: { check: type-var-name-variance }
+message: "the `TypeVar` name \"{name}\" does not say whether it is covariant or contravariant: end it with `_co` or `_contra`"
+description: "A `TypeVar` with `covariant=True` whose name does not end with `_co`, or with `contravariant=True` and a name that does not end with `_contra`."
+example: "from typing import TypeVar\nT = TypeVar(\"T\", covariant=True)"
+severity: warn
+category: style
+---
+id: static-join
+family: check
+params: { check: static-join }
+message: "consider an f-string instead of joining a fixed list of items"
+description: "`\"sep\".join([a, b])` of a list or tuple written out in the call, which an f-string says directly."
+example: "a = b = \"x\"\nx = \", \".join([a, b])"
+severity: warn
+category: style
+---
+id: verbose-raise
+family: check
+params: { check: verbose-raise }
+message: "use `raise` without the exception name"
+description: "`raise e` in the `except ... as e` clause, where a bare `raise` keeps the traceback."
+example: "try:\n    pass\nexcept ValueError as e:\n    raise e"
+severity: warn
+category: style
+---
+id: bare-raise-outside-handler
+family: check
+params: { check: bare-raise-outside-handler }
+message: "bare `raise` is not inside an exception handler"
+description: "A `raise` with no exception in code that no `except` clause of its function contains."
+example: "def f():\n    raise"
+severity: warn
+category: correctness

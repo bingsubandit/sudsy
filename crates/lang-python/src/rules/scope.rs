@@ -30,6 +30,8 @@ struct Findings {
     undefined_local: Vec<Hit>,
     unused_variable: Vec<Hit>,
     unused_annotation: Vec<Hit>,
+    unused_unpacked: Vec<Hit>,
+    redefined_argument: Vec<Hit>,
     import_star: Vec<Hit>,
     nested_star: Vec<Hit>,
 }
@@ -90,8 +92,10 @@ fn findings(cx: &Cx) -> Findings {
         star_usage: sorted(star_usage),
         undefined_export: sorted(undefined_export),
         undefined_local: sorted(undefined_locals(cx, &lv)),
-        unused_variable: sorted(unused_locals(cx, &lv, false)),
-        unused_annotation: sorted(unused_locals(cx, &lv, true)),
+        unused_variable: sorted(unused_locals(cx, &lv, Local::Variable)),
+        unused_annotation: sorted(unused_locals(cx, &lv, Local::Annotation)),
+        unused_unpacked: sorted(unused_locals(cx, &lv, Local::Unpacked)),
+        redefined_argument: sorted(redefined_arguments(cx, &bs)),
         import_star: sorted(import_star),
         nested_star: sorted(nested_star),
     }
@@ -544,7 +548,16 @@ fn undefined_locals(cx: &Cx, lv: &Lives<'_>) -> Vec<Hit> {
 
 /// F841 and F842: a local variable assigned or annotated and never read, and a name an `except`
 /// clause binds and its body never reads.
-fn unused_locals(cx: &Cx, lv: &Lives<'_>, annotation: bool) -> Vec<Hit> {
+#[derive(Clone, Copy, PartialEq)]
+enum Local {
+    Variable,
+    Annotation,
+    /// A name of a tuple target (RUF059).
+    Unpacked,
+}
+
+fn unused_locals(cx: &Cx, lv: &Lives<'_>, mode: Local) -> Vec<Hit> {
+    let annotation = mode == Local::Annotation;
     let locals = uses_locals(cx);
     let mut hits = Vec::new();
     for id in cx.s.symbol_ids() {
@@ -554,7 +567,7 @@ fn unused_locals(cx: &Cx, lv: &Lives<'_>, annotation: bool) -> Vec<Hit> {
         {
             continue;
         }
-        if !annotation && sym.flags.contains(Flags::CATCH) {
+        if mode == Local::Variable && sym.flags.contains(Flags::CATCH) {
             for d in sym.decls.iter().filter(|d| d.flags.contains(Flags::CATCH)) {
                 let handler = d.node(&cx.root).text_range();
                 let read =
@@ -577,7 +590,7 @@ fn unused_locals(cx: &Cx, lv: &Lives<'_>, annotation: bool) -> Vec<Hit> {
             matches!(
                 last.b.kind,
                 Kind::Assignment | Kind::NamedExpr | Kind::WithItem
-            ) && !last.b.unpacked
+            ) && (last.b.unpacked == (mode == Local::Unpacked))
         };
         if kind_ok && !last.used {
             hits.push((last.decl.name, sym.name.to_string()));
@@ -588,6 +601,35 @@ fn unused_locals(cx: &Cx, lv: &Lives<'_>, annotation: bool) -> Vec<Hit> {
 
 pub(super) fn unused_variable(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     report(c, ctx, |f| &f.unused_variable);
+}
+
+/// PLR1704: a `for`, `with` or `except` name that is also an argument of the function and has not been bound since.
+fn redefined_arguments(cx: &Cx, bs: &Bindings<'_>) -> Vec<Hit> {
+    let mut hits = Vec::new();
+    for id in cx.s.symbol_ids() {
+        let bindings = bs.get(id);
+        if !bindings.iter().any(|b| b.kind == Kind::Argument) {
+            continue;
+        }
+        let sym = cx.s.symbol(id);
+        // Only while the name still holds the argument: after another binding it holds a local.
+        for (i, (d, b)) in sym.decls.iter().zip(bindings).enumerate() {
+            if matches!(b.kind, Kind::LoopVar | Kind::WithItem | Kind::Except)
+                && bindings[..i].iter().all(|p| p.kind == Kind::Argument)
+            {
+                hits.push((d.name, sym.name.to_string()));
+            }
+        }
+    }
+    hits
+}
+
+pub(super) fn redefined_argument_from_local(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    report(c, ctx, |f| &f.redefined_argument);
+}
+
+pub(super) fn unused_unpacked_variable(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    report(c, ctx, |f| &f.unused_unpacked);
 }
 
 pub(super) fn unused_annotation(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
