@@ -213,6 +213,11 @@ impl P<'_> {
             let r = self.mark();
             self.bump();
             self.close(k::OBJECT_REFERENCE, r);
+        } else if self.at("table") && matches!(self.t(1), None | Some(T::Semi | T::Comma)) || self.at("table") && self.is(1, "from") {
+            // A column named `table`.
+            let r = self.mark();
+            self.bump_as(k::IDENTIFIER);
+            self.close(k::OBJECT_REFERENCE, r);
         } else if !self.element() {
             return false;
         }
@@ -367,6 +372,11 @@ impl P<'_> {
             self.bracketed(|p| {
                 p.list(|p| p.rowset_argument());
             });
+        } else if self.at("table") && matches!(self.t(1), None | Some(T::Semi | T::Comma | T::RParen)) || self.at("table") && self.is(1, "window") {
+            // A table named `table`.
+            let o = self.mark();
+            self.bump_as(k::IDENTIFIER);
+            self.close(k::OBJECT_REFERENCE, o);
         } else if self.at("dual") {
             let o = self.mark();
             self.bump_as(k::IDENTIFIER);

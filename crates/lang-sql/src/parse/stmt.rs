@@ -133,6 +133,9 @@ impl P<'_> {
         self.eat("into");
         self.eat("table");
         self.obj_ref();
+        if self.at("as") {
+            self.alias();
+        }
         if self.d == Dialect::Tsql && self.at("with") && self.is_t(1, T::LParen) {
             self.bump_as(k::KEYWORD);
             self.bracketed(|p| {

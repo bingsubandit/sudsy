@@ -395,7 +395,7 @@ fn number(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
 fn word(src: &str, i: usize, first: char, d: Dialect, open: &mut bool) -> (T, usize) {
     let b = src.as_bytes();
     // Prefixed strings: `N'..'`, `E'..'`, `X'..'`, `B'..'`, `U&'..'`.
-    if b.get(i + 1) == Some(&b'\'') && matches!(b[i], b'n' | b'N' | b'e' | b'E' | b'x' | b'X' | b'b' | b'B') {
+    if b.get(i + 1) == Some(&b'\'') && (matches!(b[i], b'e' | b'E' | b'x' | b'X' | b'b' | b'B') || (d == Dialect::Tsql && matches!(b[i], b'n' | b'N'))) {
         let escape = matches!(b[i], b'e' | b'E') || d == Dialect::Mysql;
         return (T::Str, quoted(b, i + 1, b'\'', escape, open));
     }

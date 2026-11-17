@@ -312,7 +312,7 @@ impl P<'_> {
                 self.obj_ref();
                 return true;
             }
-            _ if self.d == super::Dialect::Postgres && self.is_t(1, T::Str) && !self.reserved(0) => {
+            _ if (self.d == super::Dialect::Postgres || up == "N") && self.is_t(1, T::Str) && !self.reserved(0) => {
                 // `box '(0,0)'`: a typed literal.
                 self.bump_as(k::TYPE_IDENTIFIER);
                 self.bump();
@@ -696,6 +696,21 @@ impl P<'_> {
                 self.bump_as(k::KEYWORD);
                 self.eat_any(&["symmetric", "asymmetric"]);
                 *between += 1;
+            }
+            "OVERLAPS" if self.d == super::Dialect::Postgres && self.is_t(1, T::LParen) => {
+                self.bump_as(k::KEYWORD);
+                // `(DATE '..', INTERVAL '..')`: the words before the strings are types.
+                self.bracketed(|p| {
+                    p.list(|p| {
+                        if p.is_t(0, T::Word) && p.is_t(1, T::Str) {
+                            p.bump_as(k::TYPE_IDENTIFIER);
+                            p.bump();
+                            true
+                        } else {
+                            p.element()
+                        }
+                    });
+                });
             }
             "LIKE" | "ILIKE" | "RLIKE" | "REGEXP" | "GLOB" | "MATCH" | "OVERLAPS" | "ESCAPE" | "MEMBER" => {
                 self.bump_as(k::KEYWORD);

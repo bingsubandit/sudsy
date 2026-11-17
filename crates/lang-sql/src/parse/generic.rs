@@ -277,7 +277,7 @@ impl P<'_> {
             return;
         }
         // `CREATE FUNCTION add(..)`: the name before the bracket is a function name, reserved or not.
-        if word && !dotted && self.is_t(1, T::LParen) && (["function", "procedure", "method", "routine"].iter().any(|x| self.prev_text_is(x)) || (w.function_name && self.prev_kind() == Some(T::Comma))) {
+        if word && !dotted && (self.is_t(1, T::LParen) || self.t(1).is_none_or(|t| t == T::Semi)) && (["function", "procedure", "method", "routine"].iter().any(|x| self.prev_text_is(x)) || (w.function_name && self.prev_kind() == Some(T::Comma))) {
             self.generic_name(true);
             w.expect_name = false;
             w.after_name = true;

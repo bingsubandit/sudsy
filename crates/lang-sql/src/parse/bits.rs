@@ -157,7 +157,7 @@ impl P<'_> {
             self.bump();
             if !item(self) {
                 // A trailing comma before `)` stays in the list.
-                if !self.is_t(0, T::RParen) {
+                if !self.is_t(0, T::RParen) && !self.at("from") {
                     self.rewind(cp);
                 }
                 break;
