@@ -3,6 +3,7 @@
 //! `#separator`), merges its style with the node's layout directives, and returns a [`Doc`].
 
 mod block;
+mod call_chain;
 mod chain;
 mod key_value;
 mod list;
@@ -11,6 +12,7 @@ pub use block::{
     BlockStyle, block, block_between, block_open_inside, document, statement_sequence,
     statement_sequence_with,
 };
+pub use call_chain::{CHAIN_LABEL, ChainHooks, ChainPolicy, NoHooks, member_chain as call_chain};
 pub use chain::{
     MemberChain, binary_chain, ends_in_line_comment, gap_after_operator, member_chain,
 };

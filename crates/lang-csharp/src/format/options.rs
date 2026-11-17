@@ -86,14 +86,6 @@ pub fn indent_nested_binary(options: &ResolvedOptions) -> bool {
     options.bool(INDENT_NESTED_BINARY)
 }
 
-pub fn keep_accesses_with_call(options: &ResolvedOptions) -> bool {
-    options.bool(MEMBER_CHAIN_KEEP_ACCESSES)
-}
-
-pub fn chain_break_on_block(options: &ResolvedOptions) -> bool {
-    options.bool(MEMBER_CHAIN_BREAK_ON_BLOCK)
-}
-
 /// The brace of a wrapped `new T { ... }` goes on its own line.
 pub fn creation_brace_on_new_line(options: &ResolvedOptions) -> bool {
     !is(options, WRAPPED_BRACE_LINE, "none") && !brace_same_line(options, INITIALIZERS)

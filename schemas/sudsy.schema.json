@@ -5940,20 +5940,44 @@
               "type": "string"
             },
             "member_chain_break_on_block": {
-              "default": false,
-              "description": "Break a member chain one call per line when a call other than the last has an argument with a block body (a lambda), even if the chain would fit.",
-              "type": "boolean"
+              "default": "never",
+              "description": "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one.",
+              "enum": [
+                "never",
+                "inner",
+                "any"
+              ],
+              "type": "string"
+            },
+            "member_chain_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the lines of a broken member chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
             },
             "member_chain_keep_accesses": {
-              "default": false,
-              "description": "In a broken member chain a property access stays on the line of the call after it (`.A.B()` is one group) instead of starting a line of its own.",
-              "type": "boolean"
+              "default": "never",
+              "description": "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name).",
+              "enum": [
+                "never",
+                "head",
+                "always"
+              ],
+              "type": "string"
             },
             "member_chain_min_calls": {
               "default": 3,
               "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
               "maximum": 1000,
               "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_short_head": {
+              "default": 4,
+              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.Foo()`); a capitalized name, `this`, `base` and a keyword type always do.",
+              "maximum": 100,
+              "minimum": 0,
               "type": "integer"
             },
             "parameter_attribute_layout": {
@@ -6964,6 +6988,57 @@
               "maximum": 1000,
               "minimum": 20,
               "type": "integer"
+            },
+            "member_chain_break_on_block": {
+              "default": "any",
+              "description": "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one.",
+              "enum": [
+                "never",
+                "inner",
+                "any"
+              ],
+              "type": "string"
+            },
+            "member_chain_head_calls": {
+              "default": [
+                "stream"
+              ],
+              "description": "Calls that stay on the line of the head of a broken member chain when they are among its first two groups (`list.stream()`).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "member_chain_indent": {
+              "default": 2,
+              "description": "Levels of indentation of the lines of a broken member chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_keep_accesses": {
+              "default": "head",
+              "description": "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name).",
+              "enum": [
+                "never",
+                "head",
+                "always"
+              ],
+              "type": "string"
+            },
+            "member_chain_min_calls": {
+              "default": 2,
+              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_short_head": {
+              "default": 4,
+              "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `super` and a keyword type always do.",
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
             }
           },
           "type": "object"
@@ -7062,6 +7137,36 @@
               "maximum": 1000,
               "minimum": 20,
               "type": "integer"
+            },
+            "member_chain_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the lines of a broken member chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_min_calls": {
+              "default": 3,
+              "description": "With `member_chain_style: dotted`, a chain with at least this many calls is broken one call per line when it does not fit on a line.",
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_short_head": {
+              "default": 2,
+              "description": "A name of at most this many characters at the head of a broken member chain statement stays on the line of the first call (`z.object({`); a capitalized name, `this` and a name of `$` and `_` always do.",
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "member_chain_style": {
+              "default": "prettier",
+              "description": "Layout of a chain of member accesses and calls that does not fit: `prettier` keeps the head, its calls and indexes in the first group, a call group per line after it (a chain of up to two groups stays on one line); `dotted` breaks before every dot once there are `member_chain_min_calls` calls.",
+              "enum": [
+                "prettier",
+                "dotted"
+              ],
+              "type": "string"
             },
             "quote_props": {
               "default": "as_needed",
@@ -8134,20 +8239,44 @@
                     "type": "string"
                   },
                   "member_chain_break_on_block": {
-                    "default": false,
-                    "description": "Break a member chain one call per line when a call other than the last has an argument with a block body (a lambda), even if the chain would fit.",
-                    "type": "boolean"
+                    "default": "never",
+                    "description": "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one.",
+                    "enum": [
+                      "never",
+                      "inner",
+                      "any"
+                    ],
+                    "type": "string"
+                  },
+                  "member_chain_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the lines of a broken member chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
                   },
                   "member_chain_keep_accesses": {
-                    "default": false,
-                    "description": "In a broken member chain a property access stays on the line of the call after it (`.A.B()` is one group) instead of starting a line of its own.",
-                    "type": "boolean"
+                    "default": "never",
+                    "description": "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name).",
+                    "enum": [
+                      "never",
+                      "head",
+                      "always"
+                    ],
+                    "type": "string"
                   },
                   "member_chain_min_calls": {
                     "default": 3,
                     "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
                     "maximum": 1000,
                     "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_short_head": {
+                    "default": 4,
+                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.Foo()`); a capitalized name, `this`, `base` and a keyword type always do.",
+                    "maximum": 100,
+                    "minimum": 0,
                     "type": "integer"
                   },
                   "parameter_attribute_layout": {
@@ -9110,6 +9239,57 @@
                     "maximum": 1000,
                     "minimum": 20,
                     "type": "integer"
+                  },
+                  "member_chain_break_on_block": {
+                    "default": "any",
+                    "description": "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one.",
+                    "enum": [
+                      "never",
+                      "inner",
+                      "any"
+                    ],
+                    "type": "string"
+                  },
+                  "member_chain_head_calls": {
+                    "default": [
+                      "stream"
+                    ],
+                    "description": "Calls that stay on the line of the head of a broken member chain when they are among its first two groups (`list.stream()`).",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "member_chain_indent": {
+                    "default": 2,
+                    "description": "Levels of indentation of the lines of a broken member chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_keep_accesses": {
+                    "default": "head",
+                    "description": "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name).",
+                    "enum": [
+                      "never",
+                      "head",
+                      "always"
+                    ],
+                    "type": "string"
+                  },
+                  "member_chain_min_calls": {
+                    "default": 2,
+                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line.",
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_short_head": {
+                    "default": 4,
+                    "description": "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `super` and a keyword type always do.",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "integer"
                   }
                 },
                 "type": "object"
@@ -9208,6 +9388,36 @@
                     "maximum": 1000,
                     "minimum": 20,
                     "type": "integer"
+                  },
+                  "member_chain_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the lines of a broken member chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_min_calls": {
+                    "default": 3,
+                    "description": "With `member_chain_style: dotted`, a chain with at least this many calls is broken one call per line when it does not fit on a line.",
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_short_head": {
+                    "default": 2,
+                    "description": "A name of at most this many characters at the head of a broken member chain statement stays on the line of the first call (`z.object({`); a capitalized name, `this` and a name of `$` and `_` always do.",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "member_chain_style": {
+                    "default": "prettier",
+                    "description": "Layout of a chain of member accesses and calls that does not fit: `prettier` keeps the head, its calls and indexes in the first group, a call group per line after it (a chain of up to two groups stays on one line); `dotted` breaks before every dot once there are `member_chain_min_calls` calls.",
+                    "enum": [
+                      "prettier",
+                      "dotted"
+                    ],
+                    "type": "string"
                   },
                   "quote_props": {
                     "default": "as_needed",

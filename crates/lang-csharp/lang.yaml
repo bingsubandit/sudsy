@@ -64,11 +64,21 @@ options:
       default: false
       doc: "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`)."
   - member_chain_keep_accesses:
-      default: false
-      doc: "In a broken member chain a property access stays on the line of the call after it (`.A.B()` is one group) instead of starting a line of its own."
+      values: ["never", "head", "always"]
+      default: "never"
+      doc: "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name)."
+  - member_chain_short_head:
+      range: [0, 100]
+      default: 4
+      doc: "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.Foo()`); a capitalized name, `this`, `base` and a keyword type always do."
+  - member_chain_indent:
+      range: [1, 4]
+      default: 1
+      doc: "Levels of indentation of the lines of a broken member chain."
   - member_chain_break_on_block:
-      default: false
-      doc: "Break a member chain one call per line when a call other than the last has an argument with a block body (a lambda), even if the chain would fit."
+      values: ["never", "inner", "any"]
+      default: "never"
+      doc: "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one."
   - wrapped_brace_line:
       values: ["creation", "all", "none"]
       default: "creation"

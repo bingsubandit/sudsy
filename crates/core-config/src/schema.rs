@@ -55,12 +55,17 @@ impl OptionDef {
         }
     }
 
-    /// A list of words (letters, digits, `_`), empty by default.
-    pub fn words(name: &'static str, description: &'static str) -> Self {
+    /// A list of words (letters, digits, `_`).
+    pub fn words(name: &'static str, default: &[&str], description: &'static str) -> Self {
         OptionDef {
             name,
             kind: OptionKind::Words,
-            default: OptionValue::List(Vec::new()),
+            default: OptionValue::List(
+                default
+                    .iter()
+                    .map(|w| OptionValue::String((*w).into()))
+                    .collect(),
+            ),
             description,
         }
     }
