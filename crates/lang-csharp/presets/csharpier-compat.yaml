@@ -11,8 +11,8 @@ csharp:
     assignment_layout: fluid
     switch_arm_layout: assignment
     indent_nested_binary: true
-    member_chain_keep_accesses: true
-    member_chain_break_on_block: true
+    member_chain_keep_accesses: always
+    member_chain_break_on_block: "inner"
     wrapped_brace_line: all
     initializer_collapse: always
     initializer_expand: crowded

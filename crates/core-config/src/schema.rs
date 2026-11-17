@@ -55,12 +55,17 @@ impl OptionDef {
         }
     }
 
-    /// A list of words (letters, digits, `_`), empty by default.
-    pub fn words(name: &'static str, description: &'static str) -> Self {
+    /// A list of words (letters, digits, `_`).
+    pub fn words(name: &'static str, default: &[&str], description: &'static str) -> Self {
         OptionDef {
             name,
             kind: OptionKind::Words,
-            default: OptionValue::List(Vec::new()),
+            default: OptionValue::List(
+                default
+                    .iter()
+                    .map(|w| OptionValue::String((*w).into()))
+                    .collect(),
+            ),
             description,
         }
     }
@@ -379,6 +384,68 @@ pub mod shared {
             BRACKET_SPACING,
             default,
             "Spaces inside the braces of a one-line mapping or object: `{ a: 1 }` or `{a: 1}`.",
+        )
+    }
+
+    pub fn member_chain_style(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "member_chain_style",
+            &["fluent", "grouped"],
+            default,
+            "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line).",
+        )
+    }
+
+    pub fn member_chain_min_calls(default: i64) -> OptionDef {
+        OptionDef::int(
+            "member_chain_min_calls",
+            default,
+            (1, 1000),
+            "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
+        )
+    }
+
+    pub fn member_chain_keep_accesses(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "member_chain_keep_accesses",
+            &["never", "head", "always"],
+            default,
+            "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name).",
+        )
+    }
+
+    pub fn member_chain_break_on_block(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "member_chain_break_on_block",
+            &["never", "inner", "any"],
+            default,
+            "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one.",
+        )
+    }
+
+    pub fn member_chain_head_calls(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "member_chain_head_calls",
+            default,
+            "Calls that stay on the line of the head of a broken member chain when they are among its first two groups (`list.stream()`).",
+        )
+    }
+
+    pub fn member_chain_short_head(default: i64) -> OptionDef {
+        OptionDef::int(
+            "member_chain_short_head",
+            default,
+            (0, 100),
+            "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do.",
+        )
+    }
+
+    pub fn member_chain_indent(default: i64) -> OptionDef {
+        OptionDef::int(
+            "member_chain_indent",
+            default,
+            (1, 4),
+            "Levels of indentation of the lines of a broken member chain.",
         )
     }
 

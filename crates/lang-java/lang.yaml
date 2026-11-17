@@ -7,4 +7,10 @@ options:
   - indent_style
   - final_newline: true
   - end_of_line
+  - member_chain_min_calls: [2]
+  - member_chain_keep_accesses: ["head"]
+  - member_chain_break_on_block: ["any"]
+  - member_chain_head_calls: [["stream"]]
+  - member_chain_short_head: [4]
+  - member_chain_indent: [2]
 presets: [google]

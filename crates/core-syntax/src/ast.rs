@@ -123,7 +123,6 @@ pub fn assign<'a, B: Body + Copy + 'a>(
     parent: &SyntaxNode,
     body: B,
 ) -> impl Iterator<Item = (usize, SyntaxElement)> + 'a {
-    let mut current = 0;
     // A leading trivia child is passed over by kind, without materializing it; the rest is a
     // plain walk (a by-kind walk costs more allocations when nothing is skipped).
     let mut next = parent.first_child_or_token_by_kind(&|k| !body.skips(k));
@@ -138,6 +137,15 @@ pub fn assign<'a, B: Body + Copy + 'a>(
         next = element.clone();
         element
     });
+    assign_of(children, body)
+}
+
+/// [`assign`] on children already at hand.
+pub fn assign_of<'a, B: Body + Copy + 'a>(
+    children: impl Iterator<Item = SyntaxElement> + 'a,
+    body: B,
+) -> impl Iterator<Item = (usize, SyntaxElement)> + 'a {
+    let mut current = 0;
     children.filter_map(move |child| {
         let kind = child.kind();
         if body.skips(kind) {
