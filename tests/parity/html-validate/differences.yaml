@@ -9,3 +9,4 @@ files:
   references/ids html-validate:attribute-allowed-values 6: id-pattern-values
   accessibility/elements sudsy:input-missing-label 14: aria-hidden
   accessibility/elements sudsy:input-missing-label 15: aria-hidden
+coverage: 63.7  # share of the default-set findings of html-validate on its corpus that Sudsy also reports (scripts/parity.sh coverage html-validate)

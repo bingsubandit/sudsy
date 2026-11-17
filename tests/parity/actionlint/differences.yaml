@@ -15,3 +15,4 @@ files:
   corpus/actionlint/testdata/examples/invalid_ids_in_needs.yaml actionlint:unknown-needs 8: needs-location
   corpus/actionlint/testdata/examples/invalid_ids_in_needs.yaml sudsy:unknown-needs 9: needs-location
   invalid-runs-on/cases actionlint:invalid-runs-on 7: self-hosted-labels
+coverage: 5.4  # share of the default-set findings of actionlint on its corpus that Sudsy also reports (scripts/parity.sh coverage actionlint)

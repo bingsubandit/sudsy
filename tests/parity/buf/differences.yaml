@@ -7,3 +7,4 @@ files:
   corpus/protobuf/src/google/protobuf/edition_unittest.proto: empty-statements, statement-comments
   corpus/protobuf/src/google/protobuf/unittest.proto: statement-comments
   corpus/protobuf/src/google/protobuf/unittest_custom_options.proto: option-comments, literal-field-blank
+coverage: 85.9  # share of the default-set findings of buf on its corpus that Sudsy also reports (scripts/parity.sh coverage buf)

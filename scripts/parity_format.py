@@ -103,6 +103,8 @@ def install(spec, catalog, version, prefix):
             run(["curl", "-fsSL", "-o", archive, spec["release"].format(version=version, asset=asset)], ROOT)
             if asset.endswith((".zip", ".tar.gz", ".tar.xz")):
                 shutil.unpack_archive(archive, prefix)
+                if executable(prefix, spec["exe"]).exists():
+                    executable(prefix, spec["exe"]).chmod(0o755)
                 if not executable(prefix, spec["exe"]).exists():  # inside a folder of the archive
                     found = next(p for n in (spec["exe"] + ".exe", spec["exe"]) for p in prefix.rglob(n))
                     found.replace(prefix / found.name)
@@ -289,7 +291,7 @@ def prepare(config, parity):
         run(["bash", script], ROOT)
     if "catalog" not in config:
         return run(config["version_command"], ROOT).stdout.decode().strip(), None
-    version = catalog_version(config["catalog"])
+    version = config.get("version") or catalog_version(config["catalog"])  # `version`: the tool's release when the catalog pins something else (tflint: its ruleset)
     prefix = parity / f"{config['catalog']}-{version}"
     spec = config.get("install")
     if spec:  # a name: the install of that format entry

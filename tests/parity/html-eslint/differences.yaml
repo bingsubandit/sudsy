@@ -1,0 +1,1 @@
+coverage: 0.3  # share of the default-set findings of html-eslint on its corpus that Sudsy also reports (scripts/parity.sh coverage html-eslint)

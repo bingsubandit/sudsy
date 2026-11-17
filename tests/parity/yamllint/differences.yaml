@@ -1,0 +1,1 @@
+coverage: 73.8  # share of the default-set findings of yamllint on its corpus that Sudsy also reports (scripts/parity.sh coverage yamllint)

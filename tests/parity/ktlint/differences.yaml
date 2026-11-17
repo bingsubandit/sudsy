@@ -4,3 +4,4 @@ second-format:
   real-world: 0
 refused:
   real-world: 0
+coverage: 13.2  # share of the default-set findings of ktlint on its corpus that Sudsy also reports (scripts/parity.sh coverage ktlint)

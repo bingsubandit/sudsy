@@ -13,3 +13,4 @@ ratchet:
   sqlfluff-postgres: 122
   sqlfluff-tsql: 108
   postgres-regress: 37
+coverage: 4.4  # share of the default-set findings of sqlfluff on its corpus that Sudsy also reports (scripts/parity.sh coverage sqlfluff)
