@@ -186,14 +186,17 @@ fn role_fields_resolve() {
     let g = p.grammar();
     let src = "class A { int[] f(int a) { x = a > 1 ? a : -a; b.c(a).d[1] = new E(a); i++; return a; } }\n";
     let tree = p.parse(&SourceFile::new("A.java", 1, src)).unwrap().tree;
-    core_syntax::shape::ShapeChecker::new(g).check(&tree).unwrap();
+    core_syntax::shape::ShapeChecker::new(g)
+        .check(&tree)
+        .unwrap();
     let field = |kind: &str, nth: usize, field: &str| {
         let node = tree
             .descendants()
             .filter(|n| g.name(n.kind()) == kind)
             .nth(nth)
             .unwrap();
-        g.slot(&node, field).map(|e| e.to_string().trim().to_string())
+        g.slot(&node, field)
+            .map(|e| e.to_string().trim().to_string())
     };
     assert_eq!(field("MethodDeclaration", 0, "name").unwrap(), "f");
     assert_eq!(field("ClassDeclarationCore", 0, "name").unwrap(), "A");

@@ -109,25 +109,34 @@ fn role_fields_resolve() {
     let g = p.grammar();
     let src = "a.b?.c(x, 1)[2]; x += y in z; i++; --j; new Foo(1);\nclass K { m(a) { return a ? 1 : 2 } }\n";
     let tree = p.parse(&SourceFile::new("a.ts", 1, src)).unwrap().tree;
-    core_syntax::shape::ShapeChecker::new(g).check(&tree).unwrap();
+    core_syntax::shape::ShapeChecker::new(g)
+        .check(&tree)
+        .unwrap();
     let field = |kind: &str, nth: usize, field: &str| {
         let node = tree
             .descendants()
             .filter(|n| g.name(n.kind()) == kind)
             .nth(nth)
             .unwrap();
-        g.slot(&node, field).map(|e| e.to_string().trim().to_string())
+        g.slot(&node, field)
+            .map(|e| e.to_string().trim().to_string())
     };
     assert_eq!(field("CallExpression", 0, "callee").unwrap(), "a.b?.c");
     assert_eq!(field("CallExpression", 0, "arguments").unwrap(), "x");
     assert_eq!(field("NewExpression", 0, "callee").unwrap(), "Foo");
-    assert_eq!(field("ComputedMemberExpression", 0, "arguments").unwrap(), "2");
+    assert_eq!(
+        field("ComputedMemberExpression", 0, "arguments").unwrap(),
+        "2"
+    );
     assert_eq!(field("AssignmentExpression", 0, "operator").unwrap(), "+=");
     assert_eq!(field("BinaryExpression", 0, "operator").unwrap(), "in");
     assert_eq!(field("UpdateExpression", 0, "operator").unwrap(), "++");
     assert_eq!(field("UpdateExpression", 1, "operator").unwrap(), "--");
     assert_eq!(field("ConditionalExpression", 0, "else").unwrap(), "2");
-    assert_eq!(field("Class", 0, "members").unwrap().chars().next(), Some('{'));
+    assert_eq!(
+        field("Class", 0, "members").unwrap().chars().next(),
+        Some('{')
+    );
     assert_eq!(field("MethodDefinition", 0, "name").unwrap(), "m");
     assert_eq!(field("Function", 0, "parameters").unwrap(), "(a)");
 }

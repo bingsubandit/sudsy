@@ -178,7 +178,11 @@ pub fn check_corpus_shapes(provider: impl LanguageProvider, corpus: &str, extens
             let Ok(text) = std::fs::read_to_string(&path) else {
                 continue;
             };
-            let file = SourceFile::new(path.to_string_lossy(), 1, text.trim_start_matches('\u{feff}'));
+            let file = SourceFile::new(
+                path.to_string_lossy(),
+                1,
+                text.trim_start_matches('\u{feff}'),
+            );
             let Ok(parsed) = provider.parse(&file) else {
                 continue;
             };
