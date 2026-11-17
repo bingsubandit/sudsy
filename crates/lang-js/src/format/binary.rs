@@ -1,54 +1,14 @@
-//! Binary and logical expressions: chains of one precedence flattened into one group, the rest
-//! indented under the first operand (Prettier's `printBinaryishExpression`).
+//! Binary and logical expressions on the shared operator chain
+//! (`core_format::shapes::binary_chain`); what stays here is where a chain stands in JS (inside
+//! the parentheses of `if`, in a JSX attribute, ...), which right sides stay on the operator's
+//! line, and the comments in front of a chain.
 
-use super::ast::{is_binaryish, operator, parent, token_comments, un};
-use super::util::shape_error;
+use super::ast::{outer, parent, token_comments, un};
 use crate::generated::kind as k;
-use core_format::doc::{
-    Doc, concat, group, group_with_id, indent, indent_if_break, line, lit, new_group_id, softline,
-};
+use core_format::doc::{Doc, concat};
+use core_format::shapes::{self, Place};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::SyntaxNode;
-
-pub(crate) fn precedence(op: &str) -> u8 {
-    match op {
-        "??" => 1,
-        "||" => 2,
-        "&&" => 3,
-        "|" => 4,
-        "^" => 5,
-        "&" => 6,
-        "==" | "===" | "!=" | "!==" => 7,
-        "<" | ">" | "<=" | ">=" | "in" | "instanceof" => 8,
-        ">>" | "<<" | ">>>" => 9,
-        "+" | "-" => 10,
-        "*" | "/" | "%" => 11,
-        "**" => 12,
-        _ => 0,
-    }
-}
-
-pub(crate) fn is_bitwise(op: &str) -> bool {
-    matches!(op, ">>" | ">>>" | "<<" | "&" | "|" | "^")
-}
-
-fn multiplicative(op: &str) -> bool {
-    matches!(op, "*" | "/" | "%")
-}
-
-/// May `a op b op2 c` print as one chain without parentheses around `a op b`?
-pub(crate) fn should_flatten(parent_op: &str, node_op: &str) -> bool {
-    if precedence(node_op) != precedence(parent_op) || parent_op == "**" {
-        return false;
-    }
-    let equality = |o: &str| matches!(o, "==" | "===" | "!=" | "!==");
-    let shift = |o: &str| matches!(o, ">>" | ">>>" | "<<");
-    !(equality(parent_op) && equality(node_op)
-        || (node_op == "%" && multiplicative(parent_op))
-        || (parent_op == "%" && multiplicative(node_op))
-        || (node_op != parent_op && multiplicative(node_op) && multiplicative(parent_op))
-        || (shift(parent_op) && shift(node_op)))
-}
 
 /// `a || { ... }`, `a && [...]`: the right side stays on the operator's line.
 pub(crate) fn should_inline_logical(node: &SyntaxNode) -> bool {
@@ -69,22 +29,23 @@ pub(crate) fn should_inline_logical(node: &SyntaxNode) -> bool {
 }
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
-    // Comments on lines of their own in front of the chain go in front of its group, not inside
-    // the group of its first operand.
-    let lead = (matches!(
+    if !matches!(
         node.kind(),
         k::BINARY_EXPRESSION | k::LOGICAL_EXPRESSION | k::PRIVATE_IN_EXPRESSION
-    ))
-    .then(|| leading_token(node, cx))
-    .flatten();
+    ) {
+        return Ok(None);
+    }
+    // Comments on lines of their own in front of the chain go in front of its group, not inside
+    // the group of its first operand.
+    let lead = leading_token(node, cx);
     if let Some(t) = &lead {
         cx.hold_leading(t);
     }
-    let doc = format_chain(node, cx)?;
-    Ok(match (doc, &lead) {
-        (Some(d), Some(t)) => Some(concat(vec![cx.held_leading(t), d])),
-        (d, _) => d,
-    })
+    let doc = shapes::binary_chain(cx, node, &shapes::BinaryPolicy::of(cx.options), &Hooks)?;
+    Ok(Some(match &lead {
+        Some(t) => concat(vec![cx.held_leading(t), doc]),
+        None => doc,
+    }))
 }
 
 /// The first token of `node` past the parentheses (there are some) that are left out, when comments on lines of
@@ -111,120 +72,20 @@ fn leading_token(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Option<core_syntax::S
     .then_some(t)
 }
 
-fn format_chain(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
-    if !matches!(
-        node.kind(),
-        k::BINARY_EXPRESSION | k::LOGICAL_EXPRESSION | k::PRIVATE_IN_EXPRESSION
-    ) {
-        return Ok(None);
-    }
-    let p = parent(node);
-    let pk = p.as_ref().map(|p| p.kind());
-    let c = super::ast::outer(node);
-    let first_of_parent = p
-        .as_ref()
-        .is_some_and(|p| p.first_child().as_ref() == Some(&c));
-    let last_of_parent = p
-        .as_ref()
-        .is_some_and(|p| p.last_child().as_ref() == Some(&c));
-    let inside_parens = match pk {
-        Some(k::IF_STATEMENT | k::WHILE_STATEMENT | k::SWITCH_STATEMENT | k::WITH_STATEMENT) => {
-            first_of_parent
-        }
-        Some(k::DO_WHILE_STATEMENT) => last_of_parent,
-        Some(k::UNARY_EXPRESSION) => p
-            .as_ref()
-            .is_some_and(|p| super::unary::has_commented_parentheses(cx, p)),
-        Some(k::ARRAY_EXPRESSION) => super::embed::is_unindented_root(cx, node),
-        _ => false,
-    };
-    let mut parts = parts(node, cx, inside_parens)?;
-    if inside_parens {
-        return Ok(Some(concat(parts)));
-    }
-    let Some(p) = p else {
-        return Ok(Some(group(concat(parts))));
-    };
-    let pk = p.kind();
-    if (matches!(pk, k::CALL_EXPRESSION | k::NEW_EXPRESSION) && first_of_parent)
-        || pk == k::UNARY_EXPRESSION
-        || matches!(
-            pk,
-            k::STATIC_MEMBER_EXPRESSION | k::PRIVATE_FIELD_EXPRESSION
-        )
-    {
-        return Ok(Some(group(concat(vec![
-            indent(concat(vec![softline(), concat(parts)])),
-            softline(),
-        ]))));
-    }
-    let gp = parent(&p);
-    let gk = gp.as_ref().map(|g| g.kind());
-    let should_not_indent = matches!(pk, k::RETURN_STATEMENT | k::THROW_STATEMENT)
-        || (pk == k::JSX_EXPRESSION_CONTAINER && gk == Some(k::JSX_ATTRIBUTE))
-        || (pk == k::ARROW_FUNCTION_EXPRESSION && last_of_parent)
-        || (pk == k::FOR_STATEMENT && !last_of_parent)
-        || (pk == k::CONDITIONAL_EXPRESSION
-            && !matches!(
-                gk,
-                Some(k::RETURN_STATEMENT | k::THROW_STATEMENT | k::CALL_EXPRESSION)
-            ))
-        || pk == k::TEMPLATE_LITERAL;
-    let indent_if_inlining = matches!(
-        pk,
-        k::ASSIGNMENT_EXPRESSION
-            | k::VARIABLE_DECLARATOR
-            | k::PROPERTY_DEFINITION
-            | k::OBJECT_PROPERTY
-    );
-    let op = operator(cx, node)
-        .map(|t| t.text().to_string())
-        .unwrap_or_default();
-    let same_precedence_sub = node.first_child().map(|l| un(&l)).is_some_and(|l| {
-        is_binaryish(l.kind()) && should_flatten(&op, &super::ast::operator_text(cx, &l))
-    });
-    let inline = should_inline_logical(node);
-    if should_not_indent || (inline && !same_precedence_sub) || (!inline && indent_if_inlining) {
-        return Ok(Some(group(concat(parts))));
-    }
-    if parts.is_empty() {
-        return Ok(Some(Doc::Nil));
-    }
-    // A JSX right side is not part of the chain's group: it breaks on its own.
-    let jsx = node
-        .last_child()
-        .is_some_and(|r| super::ast::is_jsx(un(&r).kind()))
-        .then(|| parts.pop())
-        .flatten();
-    let mut it = parts.into_iter();
-    let head = it.next().unwrap_or(Doc::Nil);
-    let chain = concat(vec![head, indent(concat(it.collect()))]);
-    let Some(jsx) = jsx else {
-        return Ok(Some(group(chain)));
-    };
-    let id = new_group_id();
-    Ok(Some(group(concat(vec![
-        group_with_id(id, chain),
-        indent_if_break(id, jsx),
-    ]))))
-}
+struct Hooks;
 
-/// The operands and operators of the chain `node` starts, as the printed parts: the first
-/// operand, then ` ` and the operator and operand for each step.
-fn parts(
-    node: &SyntaxNode,
-    cx: &FormatCtx<'_>,
-    inside_parens: bool,
-) -> Result<Vec<Doc>, FormatError> {
-    let (Some(left), Some(right)) = (node.first_child(), node.last_child()) else {
-        return Err(shape_error("binary expression"));
-    };
-    let op_tok = operator(cx, node).ok_or_else(|| shape_error("binary expression"))?;
-    let op = op_tok.text().to_string();
-    let left_u = un(&left);
-    // Prettier's tree has no parentheses; only ones with a comment in the way (a comment after
-    // the `)` or inside, not in front of the content) are in the way of flattening.
-    let clean = |n: &SyntaxNode| {
+impl shapes::BinaryHooks for Hooks {
+    fn outer(&self, n: &SyntaxNode) -> SyntaxNode {
+        outer(n)
+    }
+
+    fn inner(&self, n: &SyntaxNode) -> SyntaxNode {
+        un(n)
+    }
+
+    /// Prettier's tree has no parentheses; only ones with a comment in the way (a comment after
+    /// the `)` or inside, not in front of the content) are in the way of flattening.
+    fn flattens(&self, cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
         std::iter::successors(Some(n.clone()), |x| {
             (x.kind() == k::PARENTHESIZED_EXPRESSION)
                 .then(|| x.first_child())
@@ -237,42 +98,68 @@ fn parts(
                     .filter_map(|e| e.into_token())
                     .any(|t| t.kind() == k::R_PAREN && token_comments(cx, &t))
         })
-    };
-    let mut parts = if is_binaryish(left_u.kind())
-        && node.kind() != k::PRIVATE_IN_EXPRESSION
-        && should_flatten(&op, &super::ast::operator_text(cx, &left_u))
-        && clean(&left)
-    {
-        // The comment after the nested chain goes after its last operand (see `JsFormatter`).
-        let last = cx
-            .last_token(&left_u)
-            .filter(|t| core_format::comments::has_trailing_comment(cx.grammar, t));
-        if let Some(t) = &last {
-            cx.detach_trailing(t);
+    }
+
+    fn reattach_comments(&self) -> bool {
+        true
+    }
+
+    fn inline_right(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+        should_inline_logical(node)
+    }
+
+    fn tail_outside(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+        node.last_child()
+            .is_some_and(|r| super::ast::is_jsx(un(&r).kind()))
+    }
+
+    fn place(&self, cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<Place> {
+        let p = parent(node);
+        let pk = p.as_ref().map(|p| p.kind());
+        let c = outer(node);
+        let first_of_parent = p
+            .as_ref()
+            .is_some_and(|p| p.first_child().as_ref() == Some(&c));
+        let last_of_parent = p
+            .as_ref()
+            .is_some_and(|p| p.last_child().as_ref() == Some(&c));
+        let inside_parens = match pk {
+            Some(
+                k::IF_STATEMENT | k::WHILE_STATEMENT | k::SWITCH_STATEMENT | k::WITH_STATEMENT,
+            ) => first_of_parent,
+            Some(k::DO_WHILE_STATEMENT) => last_of_parent,
+            Some(k::UNARY_EXPRESSION) => p
+                .as_ref()
+                .is_some_and(|p| super::unary::has_commented_parentheses(cx, p)),
+            Some(k::ARRAY_EXPRESSION) => super::embed::is_unindented_root(cx, node),
+            _ => false,
+        };
+        if inside_parens {
+            return Some(Place::Bare);
         }
-        let mut nested = parts(&left_u, cx, inside_parens)?;
-        if let Some(t) = &last {
-            nested.push(cx.reattach_trailing(t));
+        let Some(p) = p else {
+            return Some(Place::Flush);
+        };
+        let pk = p.kind();
+        if (matches!(pk, k::CALL_EXPRESSION | k::NEW_EXPRESSION) && first_of_parent)
+            || pk == k::UNARY_EXPRESSION
+            || matches!(
+                pk,
+                k::STATIC_MEMBER_EXPRESSION | k::PRIVATE_FIELD_EXPRESSION
+            )
+        {
+            return Some(Place::Wrapped);
         }
-        nested
-    } else {
-        vec![group(cx.format(&left)?)]
-    };
-    let inline = should_inline_logical(node);
-    let op_doc = cx.token(&op_tok);
-    let right_doc = cx.format(&right)?;
-    let rhs = if inline {
-        concat(vec![op_doc, lit(" "), right_doc])
-    } else {
-        concat(vec![op_doc, line(), right_doc])
-    };
-    let p = parent(node);
-    let right_u = un(&right);
-    let should_group = !(inside_parens && node.kind() == k::LOGICAL_EXPRESSION)
-        && p.is_none_or(|p| p.kind() != node.kind())
-        && left_u.kind() != node.kind()
-        && right_u.kind() != node.kind();
-    parts.push(lit(" "));
-    parts.push(if should_group { group(rhs) } else { rhs });
-    Ok(parts)
+        let gk = parent(&p).map(|g| g.kind());
+        let flush = (pk == k::JSX_EXPRESSION_CONTAINER && gk == Some(k::JSX_ATTRIBUTE))
+            || (pk == k::ARROW_FUNCTION_EXPRESSION && last_of_parent)
+            || (pk == k::FOR_STATEMENT && !last_of_parent)
+            || (pk == k::CONDITIONAL_EXPRESSION
+                && !matches!(
+                    gk,
+                    Some(k::RETURN_STATEMENT | k::THROW_STATEMENT | k::CALL_EXPRESSION)
+                ))
+            || pk == k::TEMPLATE_LITERAL;
+        flush.then_some(Place::Flush)
+    }
 }

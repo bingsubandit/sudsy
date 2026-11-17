@@ -4,7 +4,7 @@
 //! source lacks gets one around its printed document.
 
 use super::ast::{is_binaryish, is_member, operator_text, outer, parent, starts_with, un};
-use super::binary::{is_bitwise, precedence, should_flatten};
+use core_format::shapes::flattens;
 use super::util::{kids, shape_error, token_of};
 use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, lit};
@@ -356,16 +356,17 @@ pub(crate) fn needs_parens(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Need {
                     if pk == k::LOGICAL_EXPRESSION && kind == k::LOGICAL_EXPRESSION {
                         return yes(pop != op);
                     }
-                    let (np, pp) = (precedence(&op), precedence(&pop));
+                    let level = |o: &str| cx.grammar.precedence(o).map_or(0, |p| p.level);
+                    let (np, pp) = (level(&op), level(&pop));
                     // The left side of a chain of one precedence prints without its own parentheses.
-                    if first && pp == np && should_flatten(&pop, &op) {
+                    if first && pp == np && flattens(cx.grammar, &pop, &op) {
                         return Need::No;
                     }
                     yes(pp > np
                         || (pp == np && !first)
-                        || (pp == np && !should_flatten(&pop, &op))
+                        || (pp == np && !flattens(cx.grammar, &pop, &op))
                         || (pp < np && op == "%" && (pop == "+" || pop == "-"))
-                        || is_bitwise(&pop))
+                        || cx.grammar.operator_kind(&pop) == Some("bitwise"))
                 }
                 _ => Need::No,
             }
