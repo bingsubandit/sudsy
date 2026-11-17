@@ -25,7 +25,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | biome | - | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | buf | - | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
 | checkmake | - | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
-| checkstyle | - | 126 | 34 | 12 | 74 | 0 | 6 | 0 | 74 |
+| checkstyle | - | 126 | 36 | 12 | 72 | 0 | 6 | 0 | 72 |
 | csharpier | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | - | 56 | 50 | 3 | 0 | 1 | 2 | 0 | 0 |
 | eslint | 100.0% | 292 | 92 | 19 | 128 | 0 | 32 | 21 | 128 |
@@ -38,8 +38,9 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | html-eslint | - | 66 | 14 | 11 | 41 | 0 | 0 | 0 | 41 |
 | html-validate | - | 97 | 34 | 30 | 26 | 0 | 1 | 6 | 26 |
 | htmlhint | - | 44 | 10 | 6 | 28 | 0 | 0 | 0 | 28 |
-| ktlint | - | 97 | 33 | 7 | 57 | 0 | 0 | 0 | 57 |
+| ktlint | - | 97 | 34 | 7 | 56 | 0 | 0 | 0 | 56 |
 | markdownlint | - | 53 | 25 | 16 | 0 | 0 | 0 | 12 | 0 |
+| phpstan | - | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | prettier | - | 59 | 38 | 9 | 2 | 0 | 9 | 1 | 2 |
 | psscriptanalyzer | - | 75 | 12 | 8 | 0 | 0 | 1 | 54 | 0 |
 | roslynator | - | 340 | 23 | 7 | 289 | 18 | 1 | 2 | 289 |

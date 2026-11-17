@@ -334,9 +334,8 @@ impl Binder<'_> {
         if d.name_last
             && let Some(child) = node.children().last()
             && (d.skip_token.is_empty()
-                || !own_parts(&node.green(), node.text_range().start()).any(|(c, _)| {
-                    matches!(c, NodeOrToken::Token(t) if t.text() == d.skip_token)
-                }))
+                || !own_parts(&node.green(), node.text_range().start())
+                    .any(|(c, _)| matches!(c, NodeOrToken::Token(t) if t.text() == d.skip_token)))
             && let Some((name, range)) = self.last_name(&child)
         {
             self.declare(name, range, &child);
@@ -397,7 +396,10 @@ impl Binder<'_> {
 
     fn reference(&mut self, node: &SyntaxNode, state: State) {
         if state.contains(Access::DECLARE) {
-            return self.binding(node);
+            self.binding(node);
+            if !state.contains(Access::WRITE) {
+                return;
+            }
         }
         if self.inert > 0 {
             return;
@@ -462,7 +464,9 @@ impl Binder<'_> {
             if !is_name(&child) {
                 continue;
             }
-            let NodeOrToken::Token(t) = child else { continue };
+            let NodeOrToken::Token(t) = child else {
+                continue;
+            };
             let i = index;
             index += 1;
             let hit = uses.iter().find(|(sel, _)| match sel {
@@ -531,14 +535,21 @@ impl Binder<'_> {
             let wanted = row.children.iter().any(|(sel, f)| {
                 matches!(sel, Sel::BeforeOp) || matches!(f, Flow::Assigns | Flow::Assign(_))
             });
-            wanted.then(|| self.grammar.slot(node, "operator")?.into_node()).flatten()
+            wanted
+                .then(|| self.grammar.slot(node, "operator")?.into_node())
+                .flatten()
         });
-        let op_green = op_node.as_ref().and_then(|n| n.as_ref()).map(|n| (n.green(), n.text_range()));
+        let op_green = op_node
+            .as_ref()
+            .and_then(|n| n.as_ref())
+            .map(|n| (n.green(), n.text_range()));
         let op_alt = op_green
             .as_ref()
             .and_then(|(g, r)| self.first_code(g, r.start()));
         let op_start = op.map(|(_, r)| r.start()).or(op_alt.map(|(_, _, at)| at));
-        let op_text = op.map(|(t, _)| t.text()).or(op_alt.map(|(_, text, _)| text));
+        let op_text = op
+            .map(|(t, _)| t.text())
+            .or(op_alt.map(|(_, text, _)| text));
         let last = if row.children.iter().any(|(sel, _)| matches!(sel, Sel::Last)) {
             own_parts(&green, base)
                 .filter(|(c, _)| matches!(c, NodeOrToken::Node(_)))
@@ -574,7 +585,7 @@ impl Binder<'_> {
             self.arena.push(hit.map(|(_, (_, flow))| {
                 (
                     access_of(self.grammar, *flow, state, op_text),
-                    matches!(flow, Flow::Outside),
+                    matches!(flow, Flow::Outside | Flow::Capture),
                 )
             }));
         }
@@ -628,9 +639,9 @@ fn access_of(grammar: &Grammar, flow: Flow, state: State, op: Option<&str>) -> A
             Some(t) => match grammar.operator_kind(t) {
                 Some("assign") => Access::WRITE,
                 Some("compound") => Access::READ.union(Access::WRITE),
-                _ => Access::NONE,
+                _ => state,
             },
-            None => Access::NONE,
+            None => state,
         },
         Flow::Type => Access::TYPE,
         Flow::Query => Access::READ.union(Access::TYPE),
@@ -638,6 +649,7 @@ fn access_of(grammar: &Grammar, flow: Flow, state: State, op: Option<&str>) -> A
         Flow::ThroughType if state.contains(Access::TYPE) => state,
         Flow::ThroughType | Flow::Outside | Flow::Skip => Access::NONE,
         Flow::Declare => Access::DECLARE,
+        Flow::Capture => Access::DECLARE.union(Access::WRITE),
     }
 }
 

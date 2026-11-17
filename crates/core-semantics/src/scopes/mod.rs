@@ -49,8 +49,6 @@ impl Flags {
     pub const TYPE_PARAMETER: Flags = Flags(1 << 15);
     /// The name of a function or class expression, visible inside it only.
     pub const EXPRESSION_NAME: Flags = Flags(1 << 16);
-    /// A member variable of a class.
-    pub const FIELD: Flags = Flags(1 << 17);
 
     pub const fn union(self, o: Flags) -> Flags {
         Flags(self.0 | o.0)

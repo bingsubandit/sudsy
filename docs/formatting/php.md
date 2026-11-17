@@ -21,3 +21,6 @@ Not formatted yet: the file is kept as written.
 | `final_newline` | bool | `true` | End the file with a newline. |
 | `end_of_line` | `auto`, `lf`, `crlf` | `auto` | Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first line break. |
 <!-- /generated -->
+
+## Lint
+`undefined-variable` (on; PHPStan level 0, [../parity/phpstan.yaml](../parity/phpstan.yaml)) is the shared scope rule on `src/scope.rs`, PHP's table: a variable is declared by its first write in its function (assignment, `list`, `foreach`, `catch`, `global`, `static`, a parameter, `use`; `use (&$x)` also writes the variable of the function around the closure), a function sees none of the names around it (an arrow function sees them), and a read with no write anywhere in the function is reported. Not decided, so not reported: a variable passed to a call (it may be taken by reference), named by `isset`, `empty`, `unset` or a static property, `$this` and the superglobals, anything at the top level of a file (an including file may define it), and every function that uses `extract`, `parse_str`, `include`, `require`, `eval` or `$$name`.

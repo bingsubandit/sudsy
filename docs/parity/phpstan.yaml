@@ -1,0 +1,9 @@
+tool: "phpstan"
+version: "level 0 (no inventory yet: only the identifiers Sudsy reproduces are listed)"
+languages: ["php"]
+sources:
+  - "https://phpstan.org/user-guide/rule-levels"
+  - "https://phpstan.org/error-identifiers"
+scope: "Level 0 checks that need no type information or autoloading. The type-aware ones (unknown classes, functions and methods, argument counts) wait for a PHP analysis worker."
+entries:
+  variable.undefined: rule undefined-variable | Only a variable that nothing in its function assigns (PHPStan's level 0 reports exactly those); a variable passed to a call counts as assigned, and a function with `extract`, `parse_str`, `include` or `$$x` is not checked.

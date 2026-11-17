@@ -22,6 +22,23 @@ Answers are file-wide enumerations (`Answers`, `Declaration`, `Reference`), not 
 - `unreachable-code` reports the first statement of a run, only when none of its operations can run (`return c ? throw e : 0;` is not reported); never an unreachable `throw` or empty statement (compiler agreement). A body Roslyn cannot build a graph for (unresolved symbols) falls back to the syntactic check with the same exceptions.
 - `build` (language neutral) makes a graph from a grammar's statement roles (`#block`, `#conditional`, `#loop` with `condition`/`iterable`/`init`/`update`, `#switch`/`#case`, `#try`/`#catch`, `#return`, `#throw`, `#break`, `#continue`, `#labeled`): one `Other` operation per statement (its code span); loops without a test or with a literal `true`/`True`/`1` test never end by themselves; a `finally` block is built once per way into it; calls, accesses, name reads and `throw`s of a `try` body lead to its `catch` blocks. `Flow::reach` answers which statements can never run (`Reached::is_dead`), whether the end of the body is reachable (`end`) and whether a `case` ends reachable (`case_ends`). JS `no-unreachable`, `getter-return` and `no-fallthrough` use it.
 
+## Scope rules (`core_rules::scope_rules`)
+One rule family on the binder of `core_semantics::scopes` for the languages that supply a table (`ScopeLang`: rows by node kind, the token kinds a name is written with, and options). The model is built by the first scope rule that runs on a file and shared with the others. A rule needs no code of its own in a language: it is one line in the language's rule list.
+
+| Rule | Java | Kotlin | PHP | Reference |
+|---|---|---|---|---|
+| `unused-import` | on | on | | Checkstyle UnusedImports, ktlint no-unused-imports; an import is used when any name of the file is spelled like it (resolution does not count: a local does not hide an imported function), or a doc comment mentions it |
+| `unused-local-variable` | on | | | Checkstyle UnusedLocalVariable: never read (assigned only counts as unused; `x++` reads) |
+| `parameter-assignment` | off | | | Checkstyle ParameterAssignment |
+| `undefined-variable` | | | on | PHPStan level 0 |
+
+Row options a language chooses (language neutral; each is a field of `Row`, `Declares`, `Sel`, `Flow` or `ScopeLang`):
+- Names as tokens (`Row::tokens`, `ScopeLang::bare`): the own name tokens of a node declare (`Flow::Declare`), are not uses (`Flow::Skip`) or assign (`Flow::Assigns`: `=` writes, `+=` and `++` read and write, other operators pass the state on); selected by `Sel::First`, `Last`, `LastBefore(text)`, `All`, `BeforeOp`. With `bare`, a name token no row mentions is a use: Java has no node for a name, and reading too much only hides a finding.
+- `Declares::name_last` and `skip_token` (an import declares the last name of its path or alias, none for `*`), `Declares::parent_flags` (a declaration whose flags depend on its parent), `Row::inert` (names under an import path are no uses).
+- Scopes that do not see their surroundings (`Row::closed`: a PHP function), implicit declaration by a write (`ScopeLang::implicit`: PHP variables), `Flow::Capture` (a closure's `use (&$x)` declares in the closure and writes outside), `Sel::Kind` (children of one node kind).
+- A scope the table cannot decide (`Row::dynamic` kinds such as PHP `include` and `$$x`, `ScopeLang::dynamic` names such as `extract`) is marked, and `undefined-variable` leaves it alone.
+- `ScopeLang::docs` (comment prefix whose words use imports), `conventions` (imported functions called without being named), `globals` (names defined everywhere).
+
 ## Behavior summaries (`BehaviorSummaries`)
 - `does_not_return`: `[DoesNotReturn]`, built-in list (`Environment.Exit`, `Environment.FailFast`), and `csharp: semantics: does_not_return:` (qualified names, every overload).
 - `pure`: `[Pure]` and `semantics: pure:`; `is_pure` exists but no fix consumes it.

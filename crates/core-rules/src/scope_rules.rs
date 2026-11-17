@@ -3,12 +3,14 @@
 //! and the rules it wants, and the checks below read the model the binder builds, once per file.
 //! A construct the table cannot decide turns a rule off for its scope, never guesses.
 
+use crate::FileContext;
 use crate::checks::FileCache;
 use crate::diagnostic::Category;
 use crate::rule::{Level, Rule, RuleContext, RuleMeta};
-use crate::FileContext;
+use crate::tree::significant_range;
 use core_semantics::scopes::{Flags, Model, Row, Table, bind};
 use core_syntax::Grammar;
+use std::collections::HashSet;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
@@ -95,7 +97,11 @@ thread_local! {
 
 /// The model of the file, built by the first scope rule that runs on it.
 fn model(lang: &ScopeLang, file: &FileContext<'_>) -> Rc<Model> {
-    CACHE.with(|c| c.get(file, || bind(file.root, file.grammar, lang.table(file.grammar))))
+    CACHE.with(|c| {
+        c.get(file, || {
+            bind(file.root, file.grammar, lang.table(file.grammar))
+        })
+    })
 }
 
 #[derive(Clone, Copy)]
@@ -132,22 +138,34 @@ macro_rules! meta {
 impl ScopeRule {
     /// An import none of the file's names uses (and no doc comment mentions).
     pub const fn unused_import(lang: &'static ScopeLang) -> ScopeRule {
-        ScopeRule { check: Check::UnusedImport, lang }
+        ScopeRule {
+            check: Check::UnusedImport,
+            lang,
+        }
     }
 
     /// A local variable that is never read.
     pub const fn unused_local(lang: &'static ScopeLang) -> ScopeRule {
-        ScopeRule { check: Check::UnusedLocal, lang }
+        ScopeRule {
+            check: Check::UnusedLocal,
+            lang,
+        }
     }
 
     /// An assignment to a parameter.
     pub const fn parameter_assignment(lang: &'static ScopeLang) -> ScopeRule {
-        ScopeRule { check: Check::ParameterAssignment, lang }
+        ScopeRule {
+            check: Check::ParameterAssignment,
+            lang,
+        }
     }
 
     /// A variable read in a function that nothing in it ever assigns.
     pub const fn undefined_variable(lang: &'static ScopeLang) -> ScopeRule {
-        ScopeRule { check: Check::UndefinedVariable, lang }
+        ScopeRule {
+            check: Check::UndefinedVariable,
+            lang,
+        }
     }
 }
 
@@ -195,7 +213,7 @@ impl Rule for ScopeRule {
                  imports it with `use` or declares it with `global` or `static` (PHPStan level 0, \
                  always undefined variables). A variable passed to a call counts as assigned, \
                  since the call can take it by reference; a function that uses `extract`, \
-                 `compact`, `include` or `$$name` is not checked.",
+                 `parse_str`, `include` or `$$name` is not checked.",
                 "function f() { return $total; }   // $total is not defined"
             ),
         }
@@ -212,13 +230,18 @@ impl Rule for ScopeRule {
         };
         match self.check {
             Check::UnusedImport => {
+                // Used by name, whatever the name resolves to: a local `mock` does not hide the
+                // static import of the method `mock`.
+                let mut used: Option<HashSet<&str>> = None;
                 let mut docs: Option<String> = None;
                 for id in m.symbol_ids() {
                     let s = m.symbol(id);
-                    if !s.flags.contains(Flags::IMPORT)
-                        || !s.refs.is_empty()
-                        || lang.conventions.contains(&&*s.name)
-                    {
+                    if !s.flags.contains(Flags::IMPORT) || lang.conventions.contains(&&*s.name) {
+                        continue;
+                    }
+                    let used =
+                        used.get_or_insert_with(|| m.refs.iter().map(|r| &*r.name).collect());
+                    if used.contains(&*s.name) {
                         continue;
                     }
                     let docs = docs.get_or_insert_with(|| doc_text(file, lang.docs));
@@ -226,12 +249,13 @@ impl Rule for ScopeRule {
                         continue;
                     }
                     for d in &s.decls {
-                        ctx.report(d.node_range, format!("the import of `{}` is not used", s.name));
+                        let range = significant_range(&d.node(file.root), file.grammar);
+                        ctx.report(range, format!("the import of `{}` is not used", s.name));
                     }
                 }
             }
             Check::UnusedLocal => {
-                let skip = Flags::PARAMETER | Flags::IMPORT | Flags::FIELD;
+                let skip = Flags::PARAMETER | Flags::IMPORT;
                 for id in m.symbol_ids() {
                     let s = m.symbol(id);
                     if !s.flags.contains(Flags::LET)
@@ -243,7 +267,10 @@ impl Rule for ScopeRule {
                         continue;
                     }
                     for d in &s.decls {
-                        ctx.report(d.name, format!("the local variable `{}` is never read", s.name));
+                        ctx.report(
+                            d.name,
+                            format!("the local variable `{}` is never read", s.name),
+                        );
                     }
                 }
             }
@@ -283,7 +310,11 @@ fn doc_text(file: &FileContext<'_>, prefix: &str) -> String {
     if prefix.is_empty() {
         return out;
     }
-    for t in file.root.descendants_with_tokens().filter_map(|e| e.into_token()) {
+    for t in file
+        .root
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+    {
         if t.text().starts_with(prefix) && file.grammar.is_trivia(t.kind()) {
             out.push_str(t.text());
             out.push('\n');

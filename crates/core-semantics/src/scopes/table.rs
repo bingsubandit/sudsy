@@ -60,12 +60,15 @@ pub enum Flow {
     /// Only the type state goes on: the left of a qualified name `N.T`, a member `a.b` in a type.
     ThroughType,
     /// They are assigned when the node's operator is an assignment (`=`), read and assigned when
-    /// it is a compound one (`+=`) or `++`/`--`, and read otherwise.
+    /// it is a compound one (`+=`) or `++`/`--`, and as the node itself otherwise (`&$x`).
     Assigns,
     /// They declare their names in the nearest node that `declares` (a parameter, a variable).
     Declare,
     /// They are not references (a name in a position no scope looks up).
     Skip,
+    /// They declare their name in the scope of the node and assign the one of the scope around it
+    /// (`use (&$x)` of a closure).
+    Capture,
 }
 
 /// A node whose binding nodes declare names.
