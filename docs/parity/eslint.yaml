@@ -97,7 +97,7 @@ entries:
   no-constant-condition: planned
   no-constructor-return: planned
   no-continue: planned
-  no-control-regex: planned
+  no-control-regex: rule no-control-regex
   no-debugger: rule no-debugger
   no-delete-var: rule no-delete-var
   no-div-regex: planned
@@ -132,7 +132,7 @@ entries:
   no-lonely-if: planned
   no-loss-of-precision: rule no-loss-of-precision
   no-magic-numbers: planned
-  no-misleading-character-class: planned
+  no-misleading-character-class: rule no-misleading-character-class
   no-mixed-operators: wontfix deprecated formatting rule with no formatter equivalent
   no-mixed-requires: wontfix deprecated upstream
   no-mixed-spaces-and-tabs: formatter
@@ -189,12 +189,12 @@ entries:
   no-undef: rule no-undef | the `typeof` option keeps its default; `languageOptions.globals` is the rule's `globals` option, and `/*global*/` comments are not read; JSX tags are not references
   no-undefined: planned
   no-underscore-dangle: planned
-  no-unexpected-multiline: planned
+  no-unexpected-multiline: rule no-unexpected-multiline
   no-unneeded-ternary: planned
   no-unsafe-finally: rule no-unsafe-finally
   no-unsafe-negation: rule no-unsafe-negation | the `enforceForOrderingRelations` option is not supported
   no-unsafe-optional-chaining: planned
-  no-unused-expressions: planned
+  no-unused-expressions: rule no-unused-expressions
   no-unused-vars: rule no-unused-vars | the options keep their defaults; `/*exported*/` and `/*global*/` comments are not read; a JSX tag counts as a use
   no-use-before-define: rule no-use-before-define | the options keep their defaults; JSX tags are not references
   no-useless-backreference: planned
@@ -272,7 +272,7 @@ entries:
   consistent-return: planned
   constructor-super: planned
   getter-return: rule getter-return | the getters of Object.defineProperty and Reflect.defineProperty descriptors are not checked; paths are judged from jumps, if/else, try, switch and endless loops, not a flow graph
-  no-fallthrough: planned
+  no-fallthrough: rule no-fallthrough
   no-this-before-super: planned
   no-unreachable: rule no-unreachable | paths are judged from jumps, if/else, try, switch and endless loops, not a flow graph
   no-unreachable-loop: planned

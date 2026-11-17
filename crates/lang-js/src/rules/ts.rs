@@ -459,3 +459,25 @@ pub(super) fn adjacent_overloads(c: &Check, body: &SyntaxNode, ctx: &mut RuleCon
         last = Some(current);
     }
 }
+
+/// `a?.b!`, `a?.b.c!` and `(a?.b)!`: a non-null assertion on the end of an optional chain.
+pub(super) fn non_null_optional_chain(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    let mut e = un(n.children().next().unwrap_or_else(|| n.clone()));
+    loop {
+        if e.kind() == k::CHAIN_EXPRESSION || has_own(&e, ctx.file.grammar, "?.") {
+            c.hit(ctx, span(ctx, n), "");
+            return;
+        }
+        let through = matches!(
+            e.kind(),
+            k::CALL_EXPRESSION
+                | k::STATIC_MEMBER_EXPRESSION
+                | k::COMPUTED_MEMBER_EXPRESSION
+                | k::PRIVATE_FIELD_EXPRESSION
+        );
+        match e.children().next().filter(|_| through) {
+            Some(inner) => e = inner,
+            None => return,
+        }
+    }
+}

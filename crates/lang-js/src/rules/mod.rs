@@ -179,6 +179,11 @@ const CHECKS: &[Entry] = &[
         ts::extra_non_null,
     ),
     (
+        "non-null-optional-chain",
+        &[k::TS_NON_NULL_EXPRESSION],
+        ts::non_null_optional_chain,
+    ),
+    (
         "misused-new",
         &[
             k::METHOD_DEFINITION,

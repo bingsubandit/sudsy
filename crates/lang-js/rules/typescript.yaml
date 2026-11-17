@@ -66,15 +66,13 @@ rule:
   parent: { kind: TSTypeAliasDeclaration, child: { kind: TSTypeLiteral } }
 ---
 id: no-non-null-asserted-optional-chain
+family: check
+params: { check: non-null-optional-chain }
 message: "Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong."
-description: "A non-null assertion on an optional chain (`a?.b!`, `(a?.b)!`)."
+description: "A non-null assertion on the end of an optional chain (`a?.b!`, `(a?.b)!`)."
 example: "a?.b!;   # reported"
 severity: off
 category: suspicious
-rule:
-  any:
-    - { kind: TSNonNullExpression, child: { kind: ChainExpression } }
-    - { kind: TSNonNullExpression, child: { kind: ParenthesizedExpression, child: { kind: ChainExpression } } }
 ---
 id: no-unnecessary-type-constraint
 message: "Constraining the generic type `${NAME}` to `${C}` does nothing and is unnecessary."

@@ -35,7 +35,7 @@ fn can_declare(id: &SyntaxNode) -> bool {
         && up.next().is_some_and(|h| {
             matches!(
                 h.kind(),
-                k::PROGRAM | k::BLOCK_STATEMENT | k::STATIC_BLOCK | k::SWITCH_CASE
+                k::PROGRAM | k::BLOCK_STATEMENT | k::FUNCTION_BODY | k::STATIC_BLOCK | k::SWITCH_CASE
             )
         })
 }

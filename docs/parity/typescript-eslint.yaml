@@ -28,7 +28,7 @@ entries:
   no-array-constructor: planned
   no-confusing-non-null-assertion: planned
   no-dupe-class-members: planned
-  no-duplicate-enum-values: planned
+  no-duplicate-enum-values: rule no-duplicate-enum-values
   no-dynamic-delete: planned
   no-empty-function: planned
   no-empty-interface: wontfix deprecated upstream
@@ -56,7 +56,7 @@ entries:
   no-type-alias: wontfix deprecated upstream
   no-unnecessary-type-constraint: rule no-unnecessary-type-constraint
   no-unsafe-function-type: rule no-unsafe-function-type
-  no-unused-expressions: planned
+  no-unused-expressions: rule no-unused-expressions
   no-unused-vars: rule no-unused-vars | the options keep their defaults; `.d.ts` files and `declare module` blocks are not treated as used
   no-use-before-define: rule no-use-before-define | the options keep their defaults
   no-useless-constructor: planned
