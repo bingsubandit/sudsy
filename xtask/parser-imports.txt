@@ -8,7 +8,6 @@ prefix ktrs
 prefix mago
 prefix tree-sitter
 allow crates/lang-html/src/angular.rs
-allow crates/lang-html/src/dialect.rs
 allow crates/lang-html/src/format/print/angular.rs
 allow crates/lang-js/src/rules/imports.rs
 allow crates/lang-js/src/rules/scope.rs

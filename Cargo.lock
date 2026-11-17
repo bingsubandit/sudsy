@@ -1850,16 +1850,11 @@ version = "0.1.0-rc.1"
 dependencies = [
  "core-config",
  "core-format",
- "core-packs",
  "core-rules",
  "core-syntax",
- "core-treesitter",
  "oxc-htmlish-parser",
  "provider-api",
  "rowan",
- "tree-sitter-html",
- "tree-sitter-svelte",
- "tree-sitter-vue",
 ]
 
 [[package]]
@@ -2830,7 +2825,6 @@ dependencies = [
  "tree-sitter-containerfile",
  "tree-sitter-graphql",
  "tree-sitter-hcl",
- "tree-sitter-html",
  "tree-sitter-ini",
  "tree-sitter-make",
  "tree-sitter-md",
@@ -4253,14 +4247,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tree-sitter-html"
-version = "0.23.2"
-dependencies = [
- "cc",
- "tree-sitter-language",
-]
-
-[[package]]
 name = "tree-sitter-ini"
 version = "1.4.0"
 dependencies = [
@@ -4303,26 +4289,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "tree-sitter-svelte"
-version = "0.1.0"
-dependencies = [
- "cc",
- "tree-sitter-language",
-]
-
-[[package]]
 name = "tree-sitter-toml-ng"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9adc2c898ae49730e857d75be403da3f92bb81d8e37a2f918a08dd10de5ebb1"
-dependencies = [
- "cc",
- "tree-sitter-language",
-]
-
-[[package]]
-name = "tree-sitter-vue"
-version = "0.1.0"
 dependencies = [
  "cc",
  "tree-sitter-language",
