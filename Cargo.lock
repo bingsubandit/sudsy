@@ -588,6 +588,7 @@ dependencies = [
  "core-flow",
  "core-syntax",
  "rowan",
+ "rustc-hash 2.1.3",
  "serde",
 ]
 
