@@ -144,6 +144,8 @@ pub(crate) fn container_between(
 /// Adds a child between the delimiters: a node starts a slot, a separator ends the last one.
 fn place(g: &Grammar, slots: &mut Vec<Slot>, e: SyntaxElement) -> Result<(), String> {
     match e {
+        // (a zero-width node, which some parsers leave in a list, holds nothing to print)
+        SyntaxElement::Node(node) if node.text_range().is_empty() => {}
         SyntaxElement::Node(node) => slots.push(Slot { node, sep: None }),
         SyntaxElement::Token(t) if g.has_tag(t.kind(), "separator") => {
             match slots.last_mut().filter(|s| s.sep.is_none()) {

@@ -26,6 +26,9 @@ pub enum ListLayout {
     /// Like `Fit`, but a line break between the opening delimiter and the first item keeps the
     /// list expanded.
     PreserveOpenBreak,
+    /// Like `Fit`, but a list stays expanded when a line break separates two items in the source,
+    /// or stands both after the opening and before the closing delimiter.
+    PreserveItemBreak,
     /// Always one item per line.
     Break,
     /// Never a line break between the delimiters (blank lines and `BreakAll` are ignored), however
@@ -265,6 +268,7 @@ fn list_of(
             ListLayout::PreserveOpenBreak => {
                 !items.is_empty() && breaks_after_open(cx, node, &c.open)
             }
+            ListLayout::PreserveItemBreak => !items.is_empty() && item_breaks(cx, node, &c),
         }
     };
     let list = if broken {
@@ -307,6 +311,16 @@ fn spans_lines(
 ) -> bool {
     let range = TextRange::new(open.text_range().start(), close.text_range().start());
     cx.has_line_break(node, range)
+}
+
+/// Does a line break separate two items, or stand both after the opening and before the closing
+/// delimiter? (A break before the closing one after the separator of the last item counts.)
+fn item_breaks(cx: &FormatCtx<'_>, node: &SyntaxNode, c: &super::Container) -> bool {
+    let g = cx.grammar;
+    let ends = |s: &super::Slot| s.sep.clone().or_else(|| cx.last_token(&s.node));
+    let breaks = |s: &super::Slot| ends(s).is_some_and(|t| comments::break_after(g, &t));
+    c.slots.windows(2).any(|w| breaks(&w[0]))
+        || (c.slots.last().is_some_and(breaks) && breaks_after_open(cx, node, &c.open))
 }
 
 /// Is there a line break between the opening delimiter and the first token after it that is not

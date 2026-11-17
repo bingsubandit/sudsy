@@ -7,3 +7,18 @@ options:
   - indent_style
   - final_newline: true
   - end_of_line
+  - trailing_commas:
+      values: ["never", "multiline"]
+      default: "multiline"
+      doc: "Trailing comma after the last argument or parameter of a call or declaration that is laid out on several lines: `multiline` adds one, `never` removes it."
+  - function_signature_wrap_min_parameters:
+      range: [1, 1000]
+      default: 2
+      doc: "A function or constructor with at least this many parameters puts each on a line of its own, even when the signature fits."
+  - class_signature_wrap_min_parameters:
+      range: [1, 1000]
+      default: 1
+      doc: "A class with at least this many primary-constructor parameters puts each on a line of its own, even when the signature fits."
+  - assignment_layout: ["break"]
+  - assignment_conditional: ["always"]
+  - assignment_indent: [1]

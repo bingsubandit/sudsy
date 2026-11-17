@@ -162,7 +162,7 @@ fn fmt(input: &str) -> String {
 fn spacing_follows_ktlint() {
     assert_eq!(
         fmt("fun f(a:Int,b : Int):Int{return a+b}\nval x=if(a)1 else 2\n"),
-        "fun f(a: Int, b: Int): Int { return a + b }\n\nval x = if (a) 1 else 2\n"
+        "fun f(\n    a: Int,\n    b: Int,\n): Int = a + b\n\nval x = if (a) 1 else 2\n"
     );
     assert_eq!(fmt("val s = 0 .. 5\n"), "val s = 0..5\n");
 }
@@ -175,7 +175,7 @@ fn indentation_follows_the_nesting() {
     );
     assert_eq!(
         fmt("val x = foo(\n1,\n2\n)\nval s = \"\"\"\n  raw\n\"\"\"\n"),
-        "val x = foo(\n    1,\n    2\n)\nval s = \"\"\"\n  raw\n\"\"\"\n"
+        "val x =\n    foo(\n        1,\n        2,\n    )\nval s = \"\"\"\n  raw\n\"\"\"\n"
     );
 }
 
@@ -185,6 +185,6 @@ fn blank_lines_between_declarations() {
         fmt(
             "package a\nimport b.C\nclass X {\n\n    val a = 1\n    val b = 2\n    fun f() {}\n    fun g() {\n\n        x()\n\n\n    }\n}\n"
         ),
-        "package a\n\nimport b.C\n\nclass X {\n    val a = 1\n    val b = 2\n\n    fun f() {}\n\n    fun g() {\n        x()\n    }\n}\n"
+        "package a\nimport b.C\n\nclass X {\n    val a = 1\n    val b = 2\n\n    fun f() {}\n\n    fun g() {\n        x()\n    }\n}\n"
     );
 }

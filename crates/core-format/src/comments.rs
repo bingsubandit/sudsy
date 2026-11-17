@@ -177,7 +177,24 @@ fn before_element(g: &Grammar, e: &SyntaxElement) -> Option<SyntaxElement> {
         SyntaxElement::Token(t) => t.clone(),
         SyntaxElement::Node(n) => n.first_token()?,
     };
-    first.prev_token().map(|t| element_of(g, t))
+    prev_token_over_empty(first).map(|t| element_of(g, t))
+}
+
+/// `prev_token`, which gives up at an empty node (the parser leaves zero-width ones).
+fn prev_token_over_empty(t: SyntaxToken) -> Option<SyntaxToken> {
+    let mut e = SyntaxElement::Token(t);
+    loop {
+        match e.prev_sibling_or_token() {
+            Some(s) => match &s {
+                SyntaxElement::Token(t) => return Some(t.clone()),
+                SyntaxElement::Node(n) => match n.last_token() {
+                    Some(t) => return Some(t),
+                    None => e = s,
+                },
+            },
+            None => e = SyntaxElement::Node(e.parent()?),
+        }
+    }
 }
 
 fn after_element(g: &Grammar, e: &SyntaxElement) -> Option<SyntaxElement> {
@@ -185,7 +202,23 @@ fn after_element(g: &Grammar, e: &SyntaxElement) -> Option<SyntaxElement> {
         SyntaxElement::Token(t) => t.clone(),
         SyntaxElement::Node(n) => n.last_token()?,
     };
-    last.next_token().map(|t| element_of(g, t))
+    next_token_over_empty(last).map(|t| element_of(g, t))
+}
+
+fn next_token_over_empty(t: SyntaxToken) -> Option<SyntaxToken> {
+    let mut e = SyntaxElement::Token(t);
+    loop {
+        match e.next_sibling_or_token() {
+            Some(s) => match &s {
+                SyntaxElement::Token(t) => return Some(t.clone()),
+                SyntaxElement::Node(n) => match n.first_token() {
+                    Some(t) => return Some(t),
+                    None => e = s,
+                },
+            },
+            None => e = SyntaxElement::Node(e.parent()?),
+        }
+    }
 }
 
 fn is_trivia_element(g: &Grammar, e: &SyntaxElement) -> bool {
@@ -267,7 +300,7 @@ pub fn leading_trivia(g: &Grammar, tok: &SyntaxToken) -> Vec<SyntaxElement> {
 }
 
 /// A block comment of several lines that each start with `*` (after blanks) is re-indented as a
-/// whole: tag `#indentable`.
+/// whole: tag `#indentable` (`#indentable-doc`: only a `/**` one).
 fn indentable(text: &str) -> bool {
     let mut lines = text.lines();
     lines.next();
@@ -294,7 +327,10 @@ fn kind_of(g: &Grammar, e: &SyntaxElement) -> Option<CommentKind> {
         return None;
     }
     let text = element_text(e);
-    if g.has_tag(kind, "indentable") && indentable(&text) {
+    if (g.has_tag(kind, "indentable")
+        || (g.has_tag(kind, "indentable-doc") && text.starts_with("/**")))
+        && indentable(&text)
+    {
         return Some(CommentKind::Lines);
     }
     let is_line = g

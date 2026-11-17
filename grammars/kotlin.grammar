@@ -18,7 +18,7 @@ suppress ignore-end "sudsy-ignore-end"
 token Whitespace #trivia #whitespace
 token Newline #trivia #newline
 // `//`, `/* */` (nested), `/** */` and a `#!` first line.
-token Comment #trivia #comment #indentable
+token Comment #trivia #comment #indentable-doc
 token Lbracket "[" #punctuation
 token Rbracket "]" #punctuation
 token Lbrace "{" #punctuation

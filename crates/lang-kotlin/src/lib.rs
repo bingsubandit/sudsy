@@ -3,6 +3,7 @@
 
 mod adapter;
 mod format;
+mod rewrite;
 mod rules;
 mod scope;
 

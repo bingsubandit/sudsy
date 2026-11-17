@@ -28,9 +28,9 @@ Options declared by more than one language, generated from the option schemas; p
 | Option | Values | Defaults |
 |---|---|---|
 | `array_bracket_spacing` | bool | json `false`, toml `false`, yaml `false`, github-actions `false` |
-| `assignment_conditional` | `always`, `binary_test` | java `always`, js `binary_test`, csharp `always` |
-| `assignment_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
-| `assignment_layout` | `compact`, `fluid`, `break` | java `break`, js `fluid`, csharp `compact` |
+| `assignment_conditional` | `always`, `binary_test` | java `always`, js `binary_test`, kotlin `always`, csharp `always` |
+| `assignment_indent` | int 1-4 | java `2`, js `1`, kotlin `1`, csharp `1` |
+| `assignment_layout` | `compact`, `fluid`, `break` | java `break`, js `fluid`, kotlin `break`, csharp `compact` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
 | `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
 | `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |
@@ -62,7 +62,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `sequence_indent` | `preserve`, `indented`, `flush` | yaml `preserve`, github-actions `preserve` |
 | `single_attribute_per_line` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `single_quote` | bool | css `false`, scss `false`, less `false` |
-| `trailing_commas` | json: `never`, `multiline`; js: `all`, `es5`, `none`; toml: `never`, `multiline`; csharp: `preserve`, `never`, `multiline` | json `never`, js `all`, toml `multiline`, csharp `preserve` |
+| `trailing_commas` | json: `never`, `multiline`; js: `all`, `es5`, `none`; kotlin: `never`, `multiline`; toml: `never`, `multiline`; csharp: `preserve`, `never`, `multiline` | json `never`, js `all`, kotlin `multiline`, toml `multiline`, csharp `preserve` |
 | `whitespace_sensitivity` | `css`, `strict`, `ignore` | html `css`, angular `css`, vue `css`, svelte `css` |
 <!-- /generated -->
 
