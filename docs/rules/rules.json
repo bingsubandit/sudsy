@@ -194,13 +194,13 @@
         "language": "js",
         "spans": [
           {
-            "column": 29,
-            "length": 14,
+            "column": 34,
+            "length": 1,
             "line": 1
           },
           {
-            "column": 97,
-            "length": 16,
+            "column": 102,
+            "length": 3,
             "line": 1
           }
         ]
@@ -264,6 +264,7 @@
       "presets": [
         "html/html-validate-standard",
         "hcl/tflint-recommended",
+        "js/eslint-recommended",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -271,6 +272,11 @@
           "id": "suspicious/noDuplicateObjectKeys",
           "partial": false,
           "tool": "Biome"
+        },
+        {
+          "id": "no-dupe-keys",
+          "partial": false,
+          "tool": "eslint"
         },
         {
           "id": "jsonc/no-dupe-keys",
@@ -7212,35 +7218,6 @@
     {
       "category": "suspicious",
       "default_level": "warn",
-      "description": "A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
-        "language": "java",
-        "spans": [
-          {
-            "column": 7,
-            "length": 5,
-            "line": 19
-          }
-        ]
-      },
-      "fix": null,
-      "id": "empty-catch-block",
-      "languages": [
-        "java",
-        "powershell"
-      ],
-      "options": [],
-      "presets": [
-        "powershell/psscriptanalyzer"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
       "description": "A `;` that is the body of an `if` or a loop, such as `while (x);` (Checkstyle EmptyStatement).",
       "example": {
         "config": null,
@@ -10954,6 +10931,39 @@
       },
       "fix": null,
       "id": "approved-verbs",
+      "languages": [
+        "powershell"
+      ],
+      "options": [],
+      "presets": [
+        "powershell/psscriptanalyzer"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A `catch` clause whose block has no statement (a comment does not count).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "function Fetch-Data {\n    param(\n        [string]$Password,\n        [Parameter(Mandatory)][string] $UserPassphrase = 'x',\n        [securestring]$Secret,\n        [string]$Name,\n        [switch]$Force = $true,\n        [switch]$Quiet\n    )\n    try { Get-Item x } catch { }\n    try { Get-Item x } catch {\n        # ignored\n    }\n    try { Get-Item x } catch { Write-Error $_ }\n    try { 1 } catch { try { 2 } catch { throw } }\n}\nfunction Get-Thing { }\nfunction Fetch { }\nfunction global:Make-Thing { }\n$global:count = 1\n$x = $global:count + 1\nSet-Item $env:Path -Value $Global:Foo\n$script:count = 1\n$input = 1\n$true = 0\n$count = 1\n$x -eq $null\n$null -eq $x\nif ($a -ne $null -and $b -ceq $null) { }\n$x -eq $nullable\n$null = 1\n$global:LASTEXITCODE = 1\nforeach ($Event in 1) { }\nfunction Show-It($Error, [string]$Credential) { }\n",
+        "language": "powershell",
+        "spans": [
+          {
+            "column": 24,
+            "length": 9,
+            "line": 10
+          },
+          {
+            "column": 24,
+            "length": 1,
+            "line": 11
+          }
+        ]
+      },
+      "fix": null,
+      "id": "empty-catch-block",
       "languages": [
         "powershell"
       ],
@@ -22461,6 +22471,19 @@
       "category": "suspicious",
       "default_level": "warn",
       "description": "The condition of an `if`, ternary or loop is an assignment not wrapped in parentheses of its own (ESLint no-cond-assign, PHPCS Generic.CodeAnalysis.AssignmentInCondition). Python's `:=` is the idiom and is left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(int a, int b) {\n    if (a == a) { g(); }\n    if (true) { g(); }\n    while (true) { g(); }\n    if (a = b) { g(); }\n    if (1 == 2) { g(); }\n    try { g(); } catch (Exception e) { }\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 5,
+            "line": 6
+          }
+        ]
+      },
       "fix": null,
       "id": "no-assignment-in-condition",
       "languages": [
@@ -22473,8 +22496,16 @@
         "ruby"
       ],
       "options": [],
-      "presets": [],
-      "upstream": []
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-cond-assign",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
     },
     {
       "category": "style",
@@ -22514,6 +22545,19 @@
       "category": "suspicious",
       "default_level": "warn",
       "description": "An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(int a, int b) {\n    if (a == a) { g(); }\n    if (true) { g(); }\n    while (true) { g(); }\n    if (a = b) { g(); }\n    if (1 == 2) { g(); }\n    try { g(); } catch (Exception e) { }\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 6,
+            "line": 7
+          }
+        ]
+      },
       "fix": null,
       "id": "no-constant-comparison",
       "languages": [
@@ -22527,12 +22571,31 @@
       ],
       "options": [],
       "presets": [],
-      "upstream": []
+      "upstream": [
+        {
+          "id": "no-constant-binary-expression",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
     },
     {
       "category": "suspicious",
       "default_level": "warn",
       "description": "The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and `while (1)` are the usual endless loop and are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(int a, int b) {\n    if (a == a) { g(); }\n    if (true) { g(); }\n    while (true) { g(); }\n    if (a = b) { g(); }\n    if (1 == 2) { g(); }\n    try { g(); } catch (Exception e) { }\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 4,
+            "line": 4
+          }
+        ]
+      },
       "fix": null,
       "id": "no-constant-condition",
       "languages": [
@@ -22545,8 +22608,16 @@
         "ruby"
       ],
       "options": [],
-      "presets": [],
-      "upstream": []
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-constant-condition",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
     },
     {
       "category": "style",
@@ -22846,6 +22917,19 @@
       "category": "suspicious",
       "default_level": "warn",
       "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch` or `finally`; an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A { void F() {\n try { Run(); } catch (Exception) { }\n try { Run(); } catch { /* ignored on purpose */ }\n try { Run(); } catch { Log(); }\n try { Run(); } catch { try { Run(); } catch { Log(); } }\n} }\n",
+        "language": "csharp",
+        "spans": [
+          {
+            "column": 35,
+            "length": 3,
+            "line": 2
+          }
+        ]
+      },
       "fix": null,
       "id": "no-empty-block",
       "languages": [
@@ -22857,34 +22941,15 @@
         "ruby"
       ],
       "options": [],
-      "presets": [],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A catch block with no statements and no comment swallows the exception silently.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class A { void F() {\n try { } catch (Exception) { }\n try { } catch { /* ignored on purpose */ }\n try { } catch { Log(); }\n try { } catch { try { } catch { Log(); } }\n} }\n",
-        "language": "csharp",
-        "spans": [
-          {
-            "column": 10,
-            "length": 5,
-            "line": 2
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-empty-catch",
-      "languages": [
-        "csharp"
+      "presets": [
+        "js/eslint-recommended"
       ],
-      "options": [],
-      "presets": [],
       "upstream": [
+        {
+          "id": "no-empty",
+          "partial": true,
+          "tool": "eslint"
+        },
         {
           "id": "RCS1075",
           "partial": false,
@@ -23101,6 +23166,19 @@
       "category": "suspicious",
       "default_level": "warn",
       "description": "An equality or comparison whose two sides are the same tokens, without a call: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(int a, int b) {\n    if (a == a) { g(); }\n    if (true) { g(); }\n    while (true) { g(); }\n    if (a = b) { g(); }\n    if (1 == 2) { g(); }\n    try { g(); } catch (Exception e) { }\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 6,
+            "line": 3
+          }
+        ]
+      },
       "fix": null,
       "id": "no-self-compare",
       "languages": [
@@ -23114,7 +23192,13 @@
       ],
       "options": [],
       "presets": [],
-      "upstream": []
+      "upstream": [
+        {
+          "id": "no-self-compare",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
     },
     {
       "category": "style",

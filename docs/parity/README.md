@@ -25,10 +25,10 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | biome | - | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | buf | - | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
 | checkmake | - | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
-| checkstyle | - | 126 | 34 | 12 | 74 | 0 | 6 | 0 | 74 |
+| checkstyle | - | 126 | 35 | 12 | 73 | 0 | 6 | 0 | 73 |
 | csharpier | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | - | 56 | 50 | 3 | 0 | 1 | 2 | 0 | 0 |
-| eslint | 99.8% | 292 | 86 | 16 | 136 | 0 | 32 | 22 | 136 |
+| eslint | 99.8% | 292 | 87 | 18 | 133 | 0 | 32 | 22 | 133 |
 | eslint-plugin-jsonc | - | 44 | 36 | 6 | 0 | 0 | 2 | 0 | 0 |
 | eslint-plugin-svelte | - | 85 | 18 | 8 | 18 | 0 | 3 | 38 | 18 |
 | eslint-plugin-vue | - | 256 | 43 | 16 | 176 | 0 | 4 | 17 | 176 |
@@ -43,7 +43,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | prettier | - | 59 | 38 | 9 | 2 | 0 | 9 | 1 | 2 |
 | psscriptanalyzer | - | 75 | 12 | 8 | 0 | 0 | 1 | 54 | 0 |
 | roslynator | - | 340 | 23 | 7 | 289 | 18 | 1 | 2 | 289 |
-| ruff | 6.7% | 980 | 88 | 0 | 735 | 0 | 19 | 138 | 735 |
+| ruff | 6.7% | 980 | 90 | 0 | 733 | 0 | 19 | 138 | 733 |
 | shellcheck | - | 520 | 17 | 8 | 0 | 0 | 0 | 495 | 0 |
 | shfmt | - | 9 | 1 | 1 | 0 | 0 | 3 | 4 | 0 |
 | sqlfluff | - | 97 | 35 | 0 | 43 | 0 | 4 | 15 | 43 |

@@ -942,7 +942,7 @@
             },
             "empty-catch-block": {
               "$ref": "#/definitions/rule",
-              "description": "A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock)."
+              "description": "A `catch` clause whose block has no statement (a comment does not count)."
             },
             "empty-heading": {
               "$ref": "#/definitions/rule",
@@ -2476,10 +2476,6 @@
             "no-empty-block": {
               "$ref": "#/definitions/rule",
               "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch` or `finally`; an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement)."
-            },
-            "no-empty-catch": {
-              "$ref": "#/definitions/rule",
-              "description": "A catch block with no statements and no comment swallows the exception silently."
             },
             "no-empty-character-class": {
               "$ref": "#/definitions/rule",
