@@ -1,11 +1,11 @@
 import java.util.List;
 import java.util.Map;
-^ unused-import
+^^^^^^^^^^^^^^^^^^^^^ unused-import
 import java.util.Set;
 import java.io.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-^ unused-import
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unused-import
 
 /** Uses {@link Set}. */
 class A {

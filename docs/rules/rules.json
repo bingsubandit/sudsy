@@ -7369,6 +7369,37 @@
       "upstream": []
     },
     {
+      "category": "style",
+      "default_level": "off",
+      "description": "A parameter is assigned a new value (Checkstyle ParameterAssignment). No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  int f(int n, int m) {\n    n = 1;\n    n++;\n    int k = m;\n    k = 2;\n    return k + n;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 5,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 5,
+            "length": 1,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "parameter-assignment",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
       "category": "correctness",
       "default_level": "warn",
       "description": "`==` or `!=` with a string literal as an operand compares references (Checkstyle StringLiteralEquality).",
@@ -7402,7 +7433,7 @@
     {
       "category": "cleanup",
       "default_level": "warn",
-      "description": "An import whose name is not used in the file, not even in a Javadoc comment (Checkstyle UnusedImports). Imports with `*` are not checked. No fix: removing an import can change which class a name means.",
+      "description": "An import whose name the file does not use (Checkstyle UnusedImports, ktlint no-unused-imports). Imports with `*` are not checked, and a name in a doc comment counts as a use where the language has doc comments. No fix: removing an import can change which declaration a name means.",
       "example": {
         "config": null,
         "fixed": null,
@@ -7411,12 +7442,12 @@
         "spans": [
           {
             "column": 1,
-            "length": 1,
+            "length": 21,
             "line": 2
           },
           {
             "column": 1,
-            "length": 1,
+            "length": 33,
             "line": 6
           }
         ]
@@ -7425,12 +7456,54 @@
       "id": "unused-import",
       "languages": [
         "java",
+        "kotlin",
         "python"
       ],
       "options": [],
       "presets": [
         "python/ruff"
       ],
+      "upstream": []
+    },
+    {
+      "category": "cleanup",
+      "default_level": "warn",
+      "description": "A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable). No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import java.util.List;\n\nclass A {\n  int f(int a, List<String> xs) {\n    int unused = 1;\n    int written = 0;\n    written = 2;\n    int used = a;\n    int counter = 0;\n    counter++;\n    for (String s : xs) {\n      used += s.length();\n    }\n    for (int i = 0; i < 3; i++) {\n    }\n    Runnable r = () -> {\n      int inner = 1;\n    };\n    return used;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 6,
+            "line": 5
+          },
+          {
+            "column": 9,
+            "length": 7,
+            "line": 6
+          },
+          {
+            "column": 14,
+            "length": 1,
+            "line": 16
+          },
+          {
+            "column": 11,
+            "length": 5,
+            "line": 17
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-local-variable",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [],
       "upstream": []
     },
     {
@@ -11604,6 +11677,47 @@
       "id": "single-title",
       "languages": [
         "markdown"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "A variable is read in a function that never assigns it, takes it as a parameter, imports it with `use` or declares it with `global` or `static` (PHPStan level 0, always undefined variables). A variable passed to a call counts as assigned, since the call can take it by reference; a function that uses `extract`, `parse_str`, `include` or `$$name` is not checked.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<?php\n\nfunction f(int $a, $b = 1) {\n    $x = $a + $b;\n    [$p, $q] = g();\n    foreach ($arr as $k => $v) {\n        echo $k . $v . $p . $q . $x;\n    }\n    try {\n        h($m);\n    } catch (Exception $e) {\n        echo $e;\n    }\n    $r = function () use ($x) {\n        return $x + $undefined;\n    };\n    $s = fn($z) => $z + $x;\n    global $gg;\n    static $st = 0;\n    $x++;\n    preg_match('/a/', $a, $m2);\n    $list[] = 1;\n    echo $gg . $st . $m2 . $list . Foo::$bar . $this->z . $_GET['a'];\n    echo isset($maybe) ? \"$x {$y}\" : '';\n    return $s;\n}\n\nfunction g() {\n    return $top;\n}\n\nfunction h() {\n    extract($data);\n    return $name;\n}\n\n$top = 1;\necho $top . $nowhere;\n",
+        "language": "php",
+        "spans": [
+          {
+            "column": 14,
+            "length": 4,
+            "line": 6
+          },
+          {
+            "column": 21,
+            "length": 10,
+            "line": 15
+          },
+          {
+            "column": 31,
+            "length": 2,
+            "line": 24
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 29
+          }
+        ]
+      },
+      "fix": null,
+      "id": "undefined-variable",
+      "languages": [
+        "php"
       ],
       "options": [],
       "presets": [],

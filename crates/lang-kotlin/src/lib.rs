@@ -4,6 +4,7 @@
 mod adapter;
 mod format;
 mod rules;
+mod scope;
 
 pub use adapter::{MAX_BYTES, parse};
 pub use format::{KotlinFormatter, option_schema};

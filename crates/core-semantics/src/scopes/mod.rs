@@ -95,6 +95,8 @@ impl Access {
     pub const DELETE: Access = Access(16);
     /// Declared with no value.
     pub const BARE: Access = Access(32);
+    /// Declares its name (a parameter) instead of referring to it.
+    pub const DECLARE: Access = Access(64);
 
     pub const fn union(self, o: Access) -> Access {
         Access(self.0 | o.0)
@@ -111,6 +113,10 @@ pub struct Scope {
     pub node: SyntaxNode,
     /// `var` declarations of the scopes inside it stop here.
     pub var: bool,
+    /// Names are not looked up outside it.
+    pub closed: bool,
+    /// Its names cannot all be known (see `Row::dynamic`).
+    pub dynamic: bool,
     pub symbols: Vec<SymbolId>,
     /// Its names are not visible to the scopes nested in it.
     pub hidden: bool,
@@ -290,15 +296,18 @@ impl Model {
         let ty = !(r.is_read() || r.is_write());
         let want = if ty { Flags::TYPE } else { Flags::VALUE };
         let params = Flags::PARAMETER | Flags::TYPE_PARAMETER | Flags::EXPRESSION_NAME;
-        self.ancestors(r.scope).find_map(|s| {
-            if s != r.scope && self.scope(s).hidden {
-                return None;
-            }
-            let id = self.own(self.redirect(s, &r.name).unwrap_or(s), &r.name)?;
-            let f = self.symbol(id).flags;
-            (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params)))
-                .then_some(id)
-        })
+        let mut open = true;
+        self.ancestors(r.scope)
+            .take_while(|s| std::mem::replace(&mut open, !self.scope(*s).closed))
+            .find_map(|s| {
+                if s != r.scope && self.scope(s).hidden {
+                    return None;
+                }
+                let id = self.own(self.redirect(s, &r.name).unwrap_or(s), &r.name)?;
+                let f = self.symbol(id).flags;
+                (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params)))
+                    .then_some(id)
+            })
     }
 
     /// A reference the binder did not meet (a name inside a string), resolved like the others.
@@ -341,11 +350,19 @@ impl Model {
 }
 
 impl Scope {
-    pub(crate) fn new(parent: Option<ScopeId>, node: SyntaxNode, var: bool, hidden: bool) -> Scope {
+    pub(crate) fn new(
+        parent: Option<ScopeId>,
+        node: SyntaxNode,
+        var: bool,
+        hidden: bool,
+        closed: bool,
+    ) -> Scope {
         Scope {
             parent,
             node,
             var,
+            closed,
+            dynamic: false,
             symbols: Vec::new(),
             hidden,
             names: HashMap::default(),

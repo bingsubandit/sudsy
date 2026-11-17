@@ -3,4 +3,4 @@
 
 use core_rules::Rule;
 
-pub static RULES: &[&dyn Rule] = &[];
+pub static RULES: &[&dyn Rule] = &[&crate::scope::UNDEFINED_VARIABLE];

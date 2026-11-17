@@ -72,7 +72,7 @@ entries:
   no-single-line-block-comment: planned
   no-trailing-spaces: formatter
   no-unit-return: rule no-unit-return
-  no-unused-imports: planned | needs a scan of the names the file uses (a Rust rule)
+  no-unused-imports: rule unused-import
   no-wildcard-imports: rule no-wildcard-imports
   nullable-type-spacing: formatter
   op-spacing: formatter

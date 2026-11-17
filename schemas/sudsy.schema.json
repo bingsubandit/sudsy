@@ -3197,6 +3197,10 @@
               "$ref": "#/definitions/rule",
               "description": "A package whose last component is not `v1`, `v1test...`, `v1alpha1`, `v1beta1` or `v1p1alpha1` (`v1beta` too; buf lint PACKAGE_VERSION_SUFFIX)."
             },
+            "parameter-assignment": {
+              "$ref": "#/definitions/rule",
+              "description": "A parameter is assigned a new value (Checkstyle ParameterAssignment). No fix."
+            },
             "percent-format-expected-mapping": {
               "$ref": "#/definitions/rule",
               "description": "A `%` format with `%(name)s` placeholders applied to a tuple, list or set."
@@ -4850,6 +4854,10 @@
               "$ref": "#/definitions/rule",
               "description": "A name that no scope around the read binds and that is not a builtin (not when a `try` handles `NameError`)."
             },
+            "undefined-variable": {
+              "$ref": "#/definitions/rule",
+              "description": "A variable is read in a function that never assigns it, takes it as a parameter, imports it with `use` or declares it with `global` or `static` (PHPStan level 0, always undefined variables). A variable passed to a call counts as assigned, since the call can take it by reference; a function that uses `extract`, `parse_str`, `include` or `$$name` is not checked."
+            },
             "unicode-literal": {
               "$ref": "#/definitions/rule",
               "description": "A string with the `u` prefix."
@@ -5110,7 +5118,11 @@
             },
             "unused-import": {
               "$ref": "#/definitions/rule",
-              "description": "An import whose name is not used in the file, not even in a Javadoc comment (Checkstyle UnusedImports). Imports with `*` are not checked. No fix: removing an import can change which class a name means."
+              "description": "An import whose name the file does not use (Checkstyle UnusedImports, ktlint no-unused-imports). Imports with `*` are not checked, and a name in a doc comment counts as a use where the language has doc comments. No fix: removing an import can change which declaration a name means."
+            },
+            "unused-local-variable": {
+              "$ref": "#/definitions/rule",
+              "description": "A local variable that is never read: it is declared, and perhaps assigned, and that is all (Checkstyle UnusedLocalVariable). No fix."
             },
             "unused-private-member": {
               "description": "A private field, method, property or event that no file of the project uses (`analysis: deep`). Members with attributes, overrides, interface implementations, `extern` and `partial` methods are left alone, and so are the private                   methods named in `reflection_methods` of a type derived from one of                   `reflection_base_types` (a framework calls them by reflection; the `csharp/unity`                   preset lists Unity's). Overlaps the SDK analyzers IDE0051 (unused private member) and IDE0052 (unread private member).",

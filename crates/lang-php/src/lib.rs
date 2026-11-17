@@ -4,6 +4,7 @@
 mod adapter;
 mod format;
 mod rules;
+mod scope;
 
 pub use adapter::parse;
 pub use format::{PhpFormatter, option_schema};
