@@ -5,6 +5,8 @@ use super::table::{Declares, Flow, Place, Row, Sel, Table};
 use super::{Access, Decl, Flags, Model, RefId, Reference, Scope, ScopeId, Symbol, SymbolId};
 use core_syntax::{Grammar, SyntaxNode, SyntaxToken, TextRange};
 use rowan::WalkEvent;
+use std::collections::HashSet;
+use std::rc::Rc;
 
 /// What a node inherits from its parent about the references it holds: the access they have,
 /// none for a plain read.
@@ -34,6 +36,8 @@ struct Binder<'a> {
     scopes: Vec<ScopeId>,
     ctxs: Vec<Ctx>,
     params: Vec<ScopeId>,
+    /// One allocation per distinct name.
+    names: HashSet<Rc<str>>,
 }
 
 /// The model of the tree under `root`.
@@ -45,6 +49,7 @@ pub fn bind(root: &SyntaxNode, grammar: &Grammar, table: &Table) -> Model {
         scopes: Vec::new(),
         ctxs: Vec::new(),
         params: Vec::new(),
+        names: HashSet::new(),
     };
     let mut frames: Vec<Frame> = Vec::new();
     for event in root.preorder() {
@@ -120,6 +125,15 @@ impl Binder<'_> {
             frame.flows = self.flows(node, row, state);
         }
         frame
+    }
+
+    fn intern(&mut self, name: &str) -> Rc<str> {
+        if let Some(n) = self.names.get(name) {
+            return n.clone();
+        }
+        let n: Rc<str> = name.into();
+        self.names.insert(n.clone());
+        n
     }
 
     fn current(&self) -> ScopeId {
@@ -236,12 +250,13 @@ impl Binder<'_> {
             s.decls.push(decl);
             return;
         }
+        let interned = self.intern(name);
         let scope_ref = &mut self.model.scopes[scope.0 as usize];
         let id = SymbolId(self.model.symbols.len() as u32);
-        scope_ref.names_mut().insert(name.into(), id);
+        scope_ref.names_mut().insert(interned.clone(), id);
         scope_ref.symbols.push(id);
         self.model.symbols.push(Symbol {
-            name: name.into(),
+            name: interned,
             scope,
             flags,
             decls: vec![decl],
@@ -258,8 +273,9 @@ impl Binder<'_> {
         } else {
             state
         };
+        let name = self.intern(t.text());
         self.model.refs.push(Reference {
-            name: t.text().into(),
+            name,
             node: node.clone(),
             range: t.text_range(),
             access,
@@ -271,21 +287,10 @@ impl Binder<'_> {
 
     /// The state of each child node of `node`.
     fn flows(&self, node: &SyntaxNode, row: &Row, state: State) -> Vec<Option<(State, bool)>> {
-        let fields: Vec<Option<TextRange>> = row
-            .children
-            .iter()
-            .map(|(sel, _)| match sel {
-                Sel::Field(f) => self.grammar.slot(node, f).map(|e| e.text_range()),
-                _ => None,
-            })
-            .collect();
-        let tokens: Vec<SyntaxToken> = node
-            .children_with_tokens()
-            .filter_map(|e| e.into_token())
-            .collect();
-        let op = tokens.iter().find(|t| self.table.is_operator(t.kind()));
-        let op_start = op.map(|t| t.text_range().start());
-        let op_text = op.map(|t| t.text());
+        let tokens = || node.children_with_tokens().filter_map(|e| e.into_token());
+        let op = tokens().find(|t| self.table.is_operator(t.kind()));
+        let op_start = op.as_ref().map(|t| t.text_range().start());
+        let op_text = op.as_ref().map(|t| t.text());
         let mut out = Vec::new();
         for (index, child) in node.children().enumerate() {
             let start = child.text_range().start();
@@ -293,14 +298,16 @@ impl Binder<'_> {
                 .children
                 .iter()
                 .enumerate()
-                .find(|(i, (sel, _))| match sel {
+                .find(|(_, (sel, _))| match sel {
                     Sel::All => true,
                     Sel::First => index == 0,
-                    Sel::Field(_) => fields[*i] == Some(child.text_range()),
+                    Sel::Field(f) => {
+                        self.grammar.slot(node, f).map(|e| e.text_range())
+                            == Some(child.text_range())
+                    }
                     Sel::BeforeOp => op_start.is_none_or(|o| start < o),
-                    Sel::WithToken(text) => tokens.iter().any(|t| t.text() == *text),
-                    Sel::AfterText(text) => tokens
-                        .iter()
+                    Sel::WithToken(text) => tokens().any(|t| t.text() == *text),
+                    Sel::AfterText(text) => tokens()
                         .find(|t| t.text() == *text)
                         .is_some_and(|t| t.text_range().end() <= start),
                 });

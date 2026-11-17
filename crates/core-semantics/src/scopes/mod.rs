@@ -13,6 +13,7 @@ pub use table::{Declares, Flow, Place, Row, Sel, Table};
 
 use core_syntax::{SyntaxNode, TextRange};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ScopeId(pub u32);
@@ -101,7 +102,7 @@ pub struct Scope {
     /// `var` declarations of the scopes inside it stop here.
     pub var: bool,
     pub symbols: Vec<SymbolId>,
-    names: HashMap<Box<str>, SymbolId>,
+    names: HashMap<Rc<str>, SymbolId>,
 }
 
 /// One place a name is declared.
@@ -118,7 +119,7 @@ pub struct Decl {
 
 #[derive(Debug)]
 pub struct Symbol {
-    pub name: Box<str>,
+    pub name: Rc<str>,
     pub scope: ScopeId,
     /// The union of the flags of its declarations.
     pub flags: Flags,
@@ -129,7 +130,7 @@ pub struct Symbol {
 
 #[derive(Debug)]
 pub struct Reference {
-    pub name: Box<str>,
+    pub name: Rc<str>,
     /// The reference node.
     pub node: SyntaxNode,
     /// The name as written.
@@ -241,7 +242,7 @@ impl Scope {
         }
     }
 
-    pub(crate) fn names_mut(&mut self) -> &mut HashMap<Box<str>, SymbolId> {
+    pub(crate) fn names_mut(&mut self) -> &mut HashMap<Rc<str>, SymbolId> {
         &mut self.names
     }
 }
