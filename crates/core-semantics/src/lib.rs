@@ -4,6 +4,7 @@
 
 mod facts;
 mod layer;
+pub mod scopes;
 mod summaries;
 
 pub use facts::{

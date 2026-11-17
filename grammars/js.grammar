@@ -190,12 +190,12 @@ node JSXSpreadChild #opaque
 // Text of an element, and its `{" "}` children: the formatter moves whitespace between the two.
 node JSXText #opaque #transparent
 node TSThisParameter #parameter #opaque
-node TSEnumDeclaration #statement #type-declaration #declaration = Identifier* Keyword* name:BindingIdentifier members:TSEnumBody
+node TSEnumDeclaration #statement #type-declaration #declaration #scope = Identifier* Keyword* name:BindingIdentifier members:TSEnumBody
 node TSEnumBody #block = LBrace items:#member* RBrace
 node TSEnumMember #member #opaque
 node TSTypeAnnotation #opaque
 node TSLiteralType #opaque
-node TSConditionalType #opaque
+node TSConditionalType #scope
 node TSUnionType #opaque
 node TSIntersectionType #opaque
 node TSParenthesizedType #opaque
@@ -225,16 +225,16 @@ node TSQualifiedName #opaque
 node TSTypeParameterInstantiation #opaque
 node TSTypeParameter #opaque
 node TSTypeParameterDeclaration #opaque
-node TSTypeAliasDeclaration #statement #opaque
+node TSTypeAliasDeclaration #statement #scope
 node TSClassImplements #opaque
 node TSInterfaceDeclaration #statement #type-declaration #declaration #scope =
     Identifier* name:BindingIdentifier type_parameters:TSTypeParameterDeclaration? Keyword? extends:TSInterfaceHeritage* members:TSInterfaceBody
 node TSInterfaceBody #block = LBrace items:#member* RBrace
 node TSPropertySignature #member #opaque
 node TSIndexSignature #member #opaque
-node TSCallSignatureDeclaration #member #opaque
-node TSMethodSignature #member #opaque
-node TSConstructSignatureDeclaration #member #opaque
+node TSCallSignatureDeclaration #member #scope
+node TSMethodSignature #member #scope
+node TSConstructSignatureDeclaration #member #scope
 node TSIndexSignatureName #opaque
 node TSInterfaceHeritage #opaque
 node TSTypePredicate #opaque
@@ -247,9 +247,9 @@ node TSInferType #opaque
 node TSTypeQuery #opaque
 node TSImportType #opaque
 node TSImportTypeQualifiedName #opaque
-node TSFunctionType #opaque
-node TSConstructorType #opaque
-node TSMappedType #opaque
+node TSFunctionType #scope
+node TSConstructorType #scope
+node TSMappedType #scope
 node TSTemplateLiteralType #opaque
 node TSAsExpression #expression #opaque
 node TSSatisfiesExpression #expression #opaque

@@ -31,7 +31,6 @@ salsa = "0.28"
 serde = { version = "1", features = ["derive"] }
 serde_bytes = "0.11"
 serde-saphyr = "2"
-self_cell = "1"
 serde_json = "1"
 stacker = "0.1"
 sha2 = "0.11"
@@ -43,7 +42,6 @@ oxc_allocator = "=0.158.0"
 oxc_ast = "=0.158.0"
 oxc_ast_visit = "=0.158.0"
 oxc_parser = "=0.158.0"
-oxc_semantic = "=0.158.0"
 oxc_span = "=0.158.0"
 # Angular templates (HTML tree with blocks and bindings as spans); 0.0.x, pinned exactly like oxc, bumped by hand only.
 # ruff's parser crates are 0.0.x and break weekly: pinned exactly to the version Pyrefly pins, bumped by hand only (dependabot ignores them).

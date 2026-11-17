@@ -1,15 +1,12 @@
 //! Rules about how modules are imported that need to know what an imported name is used for.
 
-use super::scope::run;
+use super::scope::{ref_at, run};
 use super::{Check, code_text, span};
 use crate::generated::kind as k;
 use crate::semantic::{Cx, model};
 use core_rules::RuleContext;
+use core_semantics::scopes::Reference;
 use core_syntax::SyntaxNode;
-use oxc_ast::AstKind;
-use oxc_ast::ast::ImportDeclarationSpecifier;
-use oxc_semantic::{NodeId, Reference};
-use oxc_span::{GetSpan, Span};
 
 /// `no-require-imports`: `require(...)` of the global `require`, and `import a = require(...)`.
 pub(super) fn require_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
@@ -22,20 +19,9 @@ pub(super) fn require_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'
             return;
         }
         // A `require` the file declares itself is not the module loader.
-        let start = u32::from(span(ctx, &callee).start());
-        let declared = model(ctx.file).is_some_and(|m| {
-            m.with(|cx| {
-                let sc = cx.s.scoping();
-                let global = sc
-                    .root_unresolved_references()
-                    .iter()
-                    .find(|(name, _)| name.as_str() == "require");
-                !global.is_some_and(|(_, ids)| {
-                    ids.iter()
-                        .any(|&id| cx.s.reference_span(sc.get_reference(id)).start == start)
-                })
-            })
-        });
+        let start = span(ctx, &callee).start();
+        let declared = model(ctx.file)
+            .is_some_and(|cx| !ref_at(&cx, start).is_some_and(|r| r.symbol.is_none()));
         if declared {
             return;
         }
@@ -43,28 +29,25 @@ pub(super) fn require_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'
     c.hit(ctx, range, "");
 }
 
-/// Is the value reference `r` safe in a type-only import (`typeof a`, `a.b` in a type, a
+/// Is the value reference `id` safe in a type-only import (`typeof a`, `a.b` in a type, a
 /// computed key of a type literal)?
-fn value_use_is_type(cx: &Cx<'_, '_>, id: NodeId) -> bool {
-    let nodes = cx.s.nodes();
-    let (mut child, mut parent) = (id, nodes.parent_id(id));
-    loop {
-        match cx.kind(parent) {
-            AstKind::TSTypeQuery(_) => return true,
-            AstKind::TSQualifiedName(_)
-            | AstKind::StaticMemberExpression(_)
-            | AstKind::ComputedMemberExpression(_) => {}
-            AstKind::TSPropertySignature(p) => return p.key.span() == cx.span(child),
+fn value_use_is_type(id: &SyntaxNode) -> bool {
+    let mut child = id.clone();
+    while let Some(parent) = child.parent() {
+        match parent.kind() {
+            k::TS_TYPE_QUERY => return true,
+            k::TS_QUALIFIED_NAME | k::STATIC_MEMBER_EXPRESSION | k::COMPUTED_MEMBER_EXPRESSION => {}
+            k::TS_PROPERTY_SIGNATURE => return parent.children().next().as_ref() == Some(&child),
             _ => return false,
         }
         child = parent;
-        parent = nodes.parent_id(parent);
     }
+    false
 }
 
-fn only_type_use(cx: &Cx<'_, '_>, r: &Reference) -> bool {
+fn only_type_use(r: &Reference) -> bool {
     if r.is_read() || r.is_write() {
-        return value_use_is_type(cx, r.node_id());
+        return value_use_is_type(&r.node);
     }
     r.is_type()
 }
@@ -81,6 +64,32 @@ fn word_list(names: &[String]) -> String {
     }
 }
 
+/// The names of an import declaration's specifiers that are only used as types, and how many
+/// specifiers are not.
+fn type_only_names(cx: &Cx, d: &SyntaxNode) -> (Vec<String>, usize) {
+    let (mut types, mut others) = (Vec::new(), 0);
+    for s in d.children().filter(|s| {
+        matches!(
+            s.kind(),
+            k::IMPORT_SPECIFIER | k::IMPORT_DEFAULT_SPECIFIER | k::IMPORT_NAMESPACE_SPECIFIER
+        )
+    }) {
+        if s.kind() == k::IMPORT_SPECIFIER && cx.has_own(&s, "type") {
+            continue;
+        }
+        let local = s.descendants().find(|n| n.kind() == k::BINDING_IDENTIFIER);
+        let name = local.as_ref().map(|l| code_text(l, cx.g)).unwrap_or_default();
+        let sym = local.as_ref().and_then(|l| cx.symbol_of(l));
+        let mut refs = sym.into_iter().flat_map(|sid| cx.s.refs_of(sid)).peekable();
+        if !cx.jsx_pragma(&name) && refs.peek().is_some() && refs.all(only_type_use) {
+            types.push(name);
+        } else {
+            others += 1;
+        }
+    }
+    (types, others)
+}
+
 /// `consistent-type-imports`: an import only used as a type is written `import type`, and a type
 /// is not imported with `import("a")`.
 pub(super) fn type_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
@@ -90,49 +99,19 @@ pub(super) fn type_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>)
     }
     let message = c.message.clone();
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
-        let mut hits: Vec<(Span, String)> = Vec::new();
+        let mut hits = Vec::new();
         if !cx.ts {
             return hits;
         }
-        for (_, node) in cx.s.nodes().iter_enumerated() {
-            let AstKind::ImportDeclaration(d) = node.kind() else {
-                continue;
-            };
-            let Some(specifiers) = &d.specifiers else {
-                continue;
-            };
-            if d.import_kind.is_type() {
+        for d in cx.root.descendants().filter(|d| d.kind() == k::IMPORT_DECLARATION) {
+            if cx.has_own(&d, "type") {
                 continue;
             }
-            let (mut types, mut others) = (Vec::new(), 0);
-            for s in specifiers {
-                let (local, is_type) = match s {
-                    ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                        (&s.local, s.import_kind.is_type())
-                    }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => (&s.local, false),
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => (&s.local, false),
-                };
-                if is_type {
-                    continue;
-                }
-                let refs: Vec<&Reference> = local
-                    .symbol_id
-                    .get()
-                    .map(|sid| sc.get_resolved_references(sid).collect())
-                    .unwrap_or_default();
-                let pragma = cx.jsx_pragma(local.name.as_ref());
-                if !pragma && !refs.is_empty() && refs.iter().all(|r| only_type_use(cx, r)) {
-                    types.push(local.name.to_string());
-                } else {
-                    others += 1;
-                }
-            }
+            let (types, others) = type_only_names(cx, &d);
             if types.is_empty() {
                 continue;
             }
-            let text = if others == 0 && d.with_clause.is_none() {
+            let text = if others == 0 && cx.slot(&d, "with_clause").is_none() {
                 "All imports in the declaration are only used as types. Use `import type`."
                     .to_string()
             } else if others == 0 {
@@ -140,7 +119,7 @@ pub(super) fn type_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>)
             } else {
                 message.replace("{name}", &word_list(&types))
             };
-            hits.push((d.span, text));
+            hits.push((cx.range(&d), text));
         }
         hits
     });

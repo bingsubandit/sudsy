@@ -3,48 +3,49 @@
 //! declaration merging. The checks follow the two rules' own helpers.
 
 use super::Check;
-use super::scope::{contains, is_function, run, var_scope};
+use super::scope::{is_function, param_init, run};
+use crate::generated::kind as k;
 use crate::semantic::Cx;
 use core_rules::RuleContext;
-use core_syntax::SyntaxNode;
-use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    ExportDefaultDeclarationKind, Expression, Statement, TSNamespaceDeclarationBody,
-};
-use oxc_semantic::{NodeId, Reference, SymbolFlags, SymbolId};
-use oxc_span::{GetSpan, Span};
+use core_semantics::scopes::{Decl, Flags, Reference, Symbol};
+use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange};
 
-fn is_loop(k: AstKind<'_>) -> bool {
+fn is_loop(n: &SyntaxNode) -> bool {
     matches!(
-        k,
-        AstKind::ForStatement(_)
-            | AstKind::ForInStatement(_)
-            | AstKind::ForOfStatement(_)
-            | AstKind::WhileStatement(_)
-            | AstKind::DoWhileStatement(_)
+        n.kind(),
+        k::FOR_STATEMENT
+            | k::FOR_IN_STATEMENT
+            | k::FOR_OF_STATEMENT
+            | k::WHILE_STATEMENT
+            | k::DO_WHILE_STATEMENT
     )
 }
 
-fn is_export(k: AstKind<'_>) -> bool {
+fn is_export(n: &SyntaxNode) -> bool {
     matches!(
-        k,
-        AstKind::ExportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_)
-            | AstKind::ExportDefaultDeclaration(_)
-            | AstKind::ExportAllDeclaration(_)
+        n.kind(),
+        k::EXPORT_DECLARATION
+            | k::EXPORT_NAMED_DECLARATION
+            | k::EXPORT_DEFAULT_DECLARATION
+            | k::EXPORT_ALL_DECLARATION
     )
+}
+
+fn is_param(n: &SyntaxNode) -> bool {
+    matches!(n.kind(), k::FORMAL_PARAMETER | k::FORMAL_PARAMETER_REST)
 }
 
 /// Is the identifier at `id` inside `typeof x` in a type?
-fn in_type_query(cx: &Cx<'_, '_>, id: NodeId) -> bool {
-    let mut at = cx.s.nodes().parent_id(id);
-    loop {
-        match cx.kind(at) {
-            AstKind::TSTypeQuery(_) => return true,
-            AstKind::TSQualifiedName(_) => at = cx.s.nodes().parent_id(at),
+fn in_type_query(id: &SyntaxNode) -> bool {
+    let mut at = id.parent();
+    while let Some(n) = at {
+        match n.kind() {
+            k::TS_TYPE_QUERY => return true,
+            k::TS_QUALIFIED_NAME => at = n.parent(),
             _ => return false,
         }
     }
+    false
 }
 
 /// A read, as typescript-eslint counts them: a type reference reads too.
@@ -54,133 +55,138 @@ fn is_read(r: &Reference) -> bool {
 
 /// Does the expression statement (or the expression, in a sequence of them) have no use for its
 /// value?
-fn unused_expression(cx: &Cx<'_, '_>, id: NodeId) -> bool {
-    let parent = cx.s.nodes().parent_id(id);
-    match cx.kind(parent) {
-        AstKind::ExpressionStatement(_) => true,
-        AstKind::SequenceExpression(s) => {
-            s.expressions.last().is_none_or(|l| l.span() != cx.span(id))
-                || unused_expression(cx, parent)
+fn unused_expression(n: &SyntaxNode) -> bool {
+    let Some(parent) = n.parent() else {
+        return false;
+    };
+    match parent.kind() {
+        k::EXPRESSION_STATEMENT => true,
+        k::SEQUENCE_EXPRESSION => {
+            parent.children().last().as_ref() != Some(n) || unused_expression(&parent)
         }
         _ => false,
     }
 }
 
-fn in_loop(cx: &Cx<'_, '_>, id: NodeId) -> bool {
-    for a in cx.s.nodes().ancestor_ids(id) {
-        let k = cx.kind(a);
-        if is_function(k) {
+fn in_loop(n: &SyntaxNode) -> bool {
+    for a in n.ancestors().skip(1) {
+        if is_function(&a) {
             return false;
         }
-        if is_loop(k) {
+        if is_loop(&a) {
             return true;
         }
     }
     false
 }
 
-fn is_statement_or_declaration(k: AstKind<'_>) -> bool {
-    let name = format!("{:?}", k.ty());
+fn is_statement_or_declaration(cx: &Cx, n: &SyntaxNode) -> bool {
+    let name = cx.kind_name(n);
     name.ends_with("Statement") || name.ends_with("Declaration")
 }
 
 /// Can the function around the reference outlive the right-hand side it is in (it is stored or
 /// returned, so a call to it later may still read the variable)?
-fn storable_function(cx: &Cx<'_, '_>, id: NodeId, rhs: Span) -> bool {
-    let Some(function) = (cx.s.nodes().ancestor_ids(id)).find(|a| is_function(cx.kind(*a))) else {
+fn storable_function(cx: &Cx, id: &SyntaxNode, rhs: TextRange) -> bool {
+    let Some(function) = id.ancestors().skip(1).find(is_function) else {
         return false;
     };
-    if !contains(rhs, cx.span(function)) {
+    if !rhs.contains_range(cx.range(&function)) {
         return false;
     }
-    let (mut node, mut parent) = (function, cx.s.nodes().parent_id(function));
-    while contains(rhs, cx.span(parent)) {
-        match cx.kind(parent) {
-            AstKind::SequenceExpression(s) => {
-                if s.expressions
-                    .last()
-                    .is_none_or(|l| l.span() != cx.span(node))
-                {
+    let (mut node, mut parent) = (function.clone(), function.parent());
+    while let Some(p) = parent {
+        if !rhs.contains_range(cx.range(&p)) {
+            break;
+        }
+        match p.kind() {
+            k::SEQUENCE_EXPRESSION => {
+                if p.children().last().as_ref() != Some(&node) {
                     return false;
                 }
             }
-            AstKind::CallExpression(c) => return c.callee.span() != cx.span(node),
-            AstKind::NewExpression(n) => return n.callee.span() != cx.span(node),
-            AstKind::AssignmentExpression(_)
-            | AstKind::TaggedTemplateExpression(_)
-            | AstKind::YieldExpression(_) => return true,
-            k if is_statement_or_declaration(k) => return true,
+            k::CALL_EXPRESSION | k::NEW_EXPRESSION => {
+                return cx.slot(&p, "callee").as_ref() != Some(&node);
+            }
+            k::ASSIGNMENT_EXPRESSION | k::TAGGED_TEMPLATE_EXPRESSION | k::YIELD_EXPRESSION => {
+                return true;
+            }
+            _ if is_statement_or_declaration(cx, &p) => return true,
             _ => {}
         }
-        node = parent;
-        parent = cx.s.nodes().parent_id(parent);
+        node = p.clone();
+        parent = p.parent();
     }
     false
 }
 
+fn is_logical_assignment(cx: &Cx, assignment: &SyntaxNode) -> bool {
+    assignment
+        .tokens()
+        .find(|t| t.kind() == k::OPERATOR && !cx.g.is_trivia(t.kind()))
+        .is_some_and(|t| matches!(t.text(), "&&=" | "||=" | "??="))
+}
+
 /// `a = a + 1` and `a++` as statements read `a` only to write it again.
-fn read_for_itself(cx: &Cx<'_, '_>, r: &Reference, rhs: Option<Span>) -> bool {
+fn read_for_itself(cx: &Cx, r: &Reference, rhs: Option<TextRange>) -> bool {
     if !is_read(r) {
         return false;
     }
-    let id = r.node_id();
-    let span = cx.span(id);
-    let own = match cx.parent(id) {
-        AstKind::AssignmentExpression(a) => {
-            a.left.span() == span
-                && !a.operator.is_logical()
-                && unused_expression(cx, cx.s.nodes().parent_id(id))
+    let id = &r.node;
+    let own = match id.parent() {
+        Some(p) if p.kind() == k::ASSIGNMENT_EXPRESSION => {
+            cx.slot(&p, "left").as_ref() == Some(id)
+                && !is_logical_assignment(cx, &p)
+                && unused_expression(&p)
         }
-        AstKind::UpdateExpression(_) => unused_expression(cx, cx.s.nodes().parent_id(id)),
+        Some(p) if p.kind() == k::UPDATE_EXPRESSION => unused_expression(&p),
         _ => false,
     };
-    own || rhs.is_some_and(|rhs| contains(rhs, span) && !storable_function(cx, id, rhs))
+    own || rhs.is_some_and(|rhs| rhs.contains_range(cx.range(id)) && !storable_function(cx, id, rhs))
 }
 
 /// The right-hand side of the statement `a = ...` the reference writes, while later reads of the
 /// variable can only come from it.
-fn rhs_node(cx: &Cx<'_, '_>, r: &Reference, sid: SymbolId, prev: Option<Span>) -> Option<Span> {
-    let id = r.node_id();
-    let span = cx.span(id);
-    let sc = cx.s.scoping();
+fn rhs_node(cx: &Cx, r: &Reference, sym: &Symbol, prev: Option<TextRange>) -> Option<TextRange> {
+    let id = &r.node;
+    let span = cx.range(id);
     if let Some(prev) = prev
-        && contains(prev, span)
+        && prev.contains_range(span)
     {
         return Some(prev);
     }
-    let later =
-        var_scope(cx, r.scope_id()) != var_scope(cx, sc.symbol_scope_id(sid)) || in_loop(cx, id);
-    match cx.parent(id) {
-        AstKind::AssignmentExpression(a)
-            if a.left.span() == span
-                && unused_expression(cx, cx.s.nodes().parent_id(id))
-                && !later =>
-        {
-            Some(a.right.span())
-        }
-        _ => None,
+    let later = cx.s.var_scope(r.scope) != cx.s.var_scope(sym.scope) || in_loop(id);
+    let p = id.parent()?;
+    if p.kind() == k::ASSIGNMENT_EXPRESSION
+        && cx.slot(&p, "left").as_ref() == Some(id)
+        && unused_expression(&p)
+        && !later
+    {
+        return cx.slot(&p, "right").map(|r| cx.range(&r));
     }
+    None
 }
 
-/// The node of the parameter list a binding belongs to, when it is one of a function.
-fn param_list(cx: &Cx<'_, '_>, binding: NodeId) -> Option<NodeId> {
-    for a in cx.s.nodes().ancestor_ids(binding) {
-        match cx.kind(a) {
-            AstKind::FormalParameters(_) => return Some(a),
-            k if is_function(k) => return None,
-            _ => {}
+/// The parameter list a binding belongs to, when it is one of a function.
+fn param_list(binding: &SyntaxNode) -> Option<SyntaxNode> {
+    for a in binding.ancestors().skip(1) {
+        if a.kind() == k::FORMAL_PARAMETERS {
+            return Some(a);
+        }
+        if is_function(&a) {
+            return None;
         }
     }
     None
 }
 
 /// Does the binding take a default (`a = 1`, `{ a = 1 }`), which writes it?
-fn has_default(cx: &Cx<'_, '_>, binding: NodeId) -> bool {
-    for a in cx.s.nodes().ancestor_ids(binding) {
-        match cx.kind(a) {
-            AstKind::AssignmentPattern(_) => return true,
-            AstKind::FormalParameter(p) => return p.initializer.is_some(),
-            AstKind::FormalParameters(_) => return false,
+fn has_default(binding: &SyntaxNode) -> bool {
+    for a in binding.ancestors().skip(1) {
+        match a.kind() {
+            k::ASSIGNMENT_PATTERN => return true,
+            k::FORMAL_PARAMETER => return param_init(&a).is_some(),
+            k::FORMAL_PARAMETERS => return false,
             _ => {}
         }
     }
@@ -189,64 +195,66 @@ fn has_default(cx: &Cx<'_, '_>, binding: NodeId) -> bool {
 
 /// Is the body of a `for ... in/of` a single `return` (the loop variable is then used as a
 /// guard)?
-fn only_returns(body: &oxc_ast::ast::Statement<'_>) -> bool {
-    match body {
-        oxc_ast::ast::Statement::ReturnStatement(_) => true,
-        oxc_ast::ast::Statement::BlockStatement(b) => {
-            matches!(
-                b.body.as_slice(),
-                [oxc_ast::ast::Statement::ReturnStatement(_)]
-            )
+fn only_returns(body: Option<SyntaxNode>) -> bool {
+    let Some(body) = body else { return false };
+    match body.kind() {
+        k::RETURN_STATEMENT => true,
+        k::BLOCK_STATEMENT => {
+            let mut items = body.children();
+            items.next().is_some_and(|s| s.kind() == k::RETURN_STATEMENT) && items.next().is_none()
         }
         _ => false,
     }
 }
 
 /// Does the declarator belong to a `for ... in/of` whose body only returns?
-fn returns_in_loop(cx: &Cx<'_, '_>, decl: NodeId) -> bool {
-    let nodes = cx.s.nodes();
-    match cx.kind(nodes.parent_id(nodes.parent_id(decl))) {
-        AstKind::ForInStatement(f) => only_returns(&f.body),
-        AstKind::ForOfStatement(f) => only_returns(&f.body),
+fn returns_in_loop(cx: &Cx, decl: &SyntaxNode) -> bool {
+    match decl.parent().and_then(|d| d.parent()) {
+        Some(s) if matches!(s.kind(), k::FOR_IN_STATEMENT | k::FOR_OF_STATEMENT) => {
+            only_returns(cx.slot(&s, "body"))
+        }
         _ => false,
     }
 }
 
 /// Does the list of statements export names by a statement of its own (`export { a }`,
 /// `export * from`, `export =`, `export default a`)? Declarations it holds are then not ambient.
-fn overriding(body: &[Statement<'_>]) -> bool {
-    body.iter().any(|s| match s {
-        Statement::ExportNamedDeclaration(_)
-        | Statement::ExportFromDeclaration(_)
-        | Statement::ExportAllDeclaration(_)
-        | Statement::TSExportAssignment(_) => true,
-        Statement::ExportDefaultDeclaration(d) => {
-            matches!(d.declaration, ExportDefaultDeclarationKind::Identifier(_))
+fn overriding(body: &SyntaxNode) -> bool {
+    body.children().any(|s| match s.kind() {
+        k::EXPORT_NAMED_DECLARATION
+        | k::EXPORT_FROM_DECLARATION
+        | k::EXPORT_ALL_DECLARATION
+        | k::TS_EXPORT_ASSIGNMENT => true,
+        k::EXPORT_DEFAULT_DECLARATION => {
+            s.children().any(|c| c.kind() == k::IDENTIFIER_REFERENCE)
         }
         _ => false,
     })
 }
 
 /// Is the declaration in a `.d.ts` file or a `declare` module, where it may be used from outside?
-fn ambient(cx: &Cx<'_, '_>, node: NodeId) -> bool {
-    let nodes = cx.s.nodes();
-    let statement = if matches!(cx.kind(node), AstKind::VariableDeclarator(_)) {
-        nodes.parent_id(node)
+fn ambient(cx: &Cx, node: &SyntaxNode) -> bool {
+    let statement = if node.kind() == k::VARIABLE_DECLARATOR {
+        node.parent()
     } else {
-        node
+        Some(node.clone())
     };
-    let container = nodes.parent_id(statement);
-    match cx.kind(container) {
-        AstKind::Program(p) => cx.definition && !overriding(&p.body),
-        AstKind::TSModuleBlock(b) => {
+    let Some(container) = statement.and_then(|s| s.parent()) else {
+        return false;
+    };
+    match container.kind() {
+        k::PROGRAM => cx.definition && !overriding(&container),
+        k::TS_MODULE_BLOCK => {
             let declared = cx.definition
-                || nodes.ancestor_ids(container).any(|a| match cx.kind(a) {
-                    AstKind::TSNamespaceDeclaration(n) => n.declare,
-                    AstKind::TSExternalModuleDeclaration(m) => m.declare,
-                    AstKind::TSGlobalDeclaration(g) => g.declare,
-                    _ => false,
+                || container.ancestors().any(|a| {
+                    matches!(
+                        a.kind(),
+                        k::TS_NAMESPACE_DECLARATION
+                            | k::TS_EXTERNAL_MODULE_DECLARATION
+                            | k::TS_GLOBAL_DECLARATION
+                    ) && cx.has_own(&a, "declare")
                 });
-            declared && !overriding(&b.body)
+            declared && !overriding(&container)
         }
         _ => false,
     }
@@ -254,136 +262,108 @@ fn ambient(cx: &Cx<'_, '_>, node: NodeId) -> bool {
 
 /// Symbols the language makes use of by their declaration alone (typescript-eslint's
 /// `eslintUsed`), and the names the rule does not check.
-fn skipped(cx: &Cx<'_, '_>, sid: SymbolId, flags: SymbolFlags, node: NodeId, name: Span) -> bool {
-    let sc = cx.s.scoping();
-    if flags.contains(SymbolFlags::EnumMember) {
+fn skipped(cx: &Cx, sym: &Symbol) -> bool {
+    if sym.flags.contains(Flags::ENUM_MEMBER) {
         return true;
     }
-    let first = cx.kind(node);
+    let first = &sym.decls[0];
     // The name of a function or class expression belongs to its own scope.
-    let own_name = match first {
-        AstKind::Function(f) => f.r#type == oxc_ast::ast::FunctionType::FunctionExpression,
-        AstKind::Class(k) => k.r#type == oxc_ast::ast::ClassType::ClassExpression,
-        _ => false,
-    };
-    if own_name {
+    if first.flags.contains(Flags::EXPRESSION_NAME) {
         return true;
     }
-    match first {
-        AstKind::FormalParameter(p) => {
-            if p.accessibility.is_some() || p.readonly || p.r#override {
+    let node = &first.node;
+    match node.kind() {
+        k::FORMAL_PARAMETER => {
+            if ["public", "private", "protected", "readonly", "override"]
+                .iter()
+                .any(|m| cx.has_own(node, m))
+            {
                 return true;
             }
         }
         // `[K in T]` declares `K` for the mapped type alone.
-        AstKind::TSMappedType(_) => return true,
+        k::TS_MAPPED_TYPE => return true,
         // `namespace A.B {}` declares no names of its own.
-        AstKind::TSNamespaceDeclaration(n)
-            if matches!(
-                n.body,
-                TSNamespaceDeclarationBody::TSNamespaceDeclaration(_)
-            ) || matches!(cx.parent(node), AstKind::TSNamespaceDeclaration(_)) =>
+        k::TS_NAMESPACE_DECLARATION
+            if node.children().any(|c| c.kind() == k::TS_NAMESPACE_DECLARATION)
+                || node.parent().is_some_and(|p| p.kind() == k::TS_NAMESPACE_DECLARATION) =>
         {
             return true;
         }
         _ => {}
     }
     if cx.ts
-        && (cx.decls(sid).iter().any(|d| ambient(cx, d.1))
-            || (flags.contains(SymbolFlags::Import) && cx.jsx_pragma(sc.symbol_name(sid))))
+        && (sym.decls.iter().any(|d| ambient(cx, &d.node))
+            || (sym.flags.contains(Flags::IMPORT) && cx.jsx_pragma(&sym.name)))
     {
         return true;
     }
-    if let Some(b) = cx.binding(name.start) {
-        let nodes = cx.s.nodes();
-        // The parameters of signatures and of setters are not checked.
-        let in_params = matches!(
-            first,
-            AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
-        );
-        if in_params && let Some(list) = param_list(cx, b) {
-            let owner = nodes.parent_id(list);
-            let setter = matches!(cx.parent(owner), AstKind::MethodDefinition(m) if m.kind.is_set())
-                || matches!(cx.parent(owner), AstKind::ObjectProperty(p) if p.kind == oxc_ast::ast::PropertyKind::Set);
-            let signature = matches!(
-                cx.kind(owner),
-                AstKind::TSFunctionType(_)
-                    | AstKind::TSConstructorType(_)
-                    | AstKind::TSMethodSignature(_)
-                    | AstKind::TSCallSignatureDeclaration(_)
-                    | AstKind::TSConstructSignatureDeclaration(_)
-            ) || matches!(cx.kind(owner), AstKind::Function(f) if f.body.is_none());
-            if setter || signature {
-                return true;
-            }
-        }
-        // `for (const a of b) return;`
-        if matches!(first, AstKind::VariableDeclarator(_)) && returns_in_loop(cx, node) {
+    // The parameters of signatures and of setters are not checked.
+    if is_param(node)
+        && let Some(owner) = param_list(&first.binding).and_then(|l| l.parent())
+    {
+        let setter = owner.parent().is_some_and(|p| {
+            matches!(p.kind(), k::METHOD_DEFINITION | k::OBJECT_PROPERTY) && cx.has_own(&p, "set")
+        });
+        let signature = matches!(
+            owner.kind(),
+            k::TS_FUNCTION_TYPE
+                | k::TS_CONSTRUCTOR_TYPE
+                | k::TS_METHOD_SIGNATURE
+                | k::TS_CALL_SIGNATURE_DECLARATION
+                | k::TS_CONSTRUCT_SIGNATURE_DECLARATION
+        ) || (owner.kind() == k::FUNCTION && cx.slot(&owner, "body").is_none());
+        if setter || signature {
             return true;
         }
     }
-    let _ = sid;
-    let _ = sc;
-    false
+    // `for (const a of b) return;`
+    node.kind() == k::VARIABLE_DECLARATOR && returns_in_loop(cx, node)
 }
 
 /// Is the symbol exported (its declaration is, or it is a merged type that is)?
-fn exported(cx: &Cx<'_, '_>, flags: SymbolFlags, decls: &[(Span, NodeId)]) -> bool {
-    decls.iter().any(|(_, n)| {
-        let k = cx.kind(*n);
-        if matches!(
-            k,
-            AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
-        ) {
+fn exported(sym: &Symbol) -> bool {
+    sym.decls.iter().any(|d| {
+        if is_param(&d.node) {
             return false;
         }
-        let at = if matches!(k, AstKind::VariableDeclarator(_)) {
-            cx.s.nodes().parent_id(*n)
+        let at = if d.node.kind() == k::VARIABLE_DECLARATOR {
+            d.node.parent()
         } else {
-            *n
+            Some(d.node.clone())
         };
-        let merged = matches!(
-            k,
-            AstKind::TSTypeAliasDeclaration(_) | AstKind::TSInterfaceDeclaration(_)
-        ) && flags.intersects(SymbolFlags::Value);
-        is_export(cx.parent(at)) && !merged
+        let merged = d.flags.intersects(Flags::TYPE_ALIAS.union(Flags::INTERFACE))
+            && sym.flags.contains(Flags::VALUE);
+        at.and_then(|a| a.parent()).is_some_and(|p| is_export(&p)) && !merged
     })
 }
 
 /// The spans a reference from inside does not count as a use of the variable.
+#[derive(Default)]
 struct Own {
-    functions: Vec<Span>,
-    types: Vec<Span>,
-    modules: Vec<Span>,
-    enums: Vec<Span>,
+    functions: Vec<TextRange>,
+    others: Vec<TextRange>,
 }
 
-fn own_spans(cx: &Cx<'_, '_>, decls: &[(Span, NodeId)]) -> Own {
-    let mut own = Own {
-        functions: Vec::new(),
-        types: Vec::new(),
-        modules: Vec::new(),
-        enums: Vec::new(),
-    };
-    for (_, n) in decls {
-        match cx.kind(*n) {
-            AstKind::Function(f) => own.functions.push(f.span),
-            AstKind::VariableDeclarator(d) => {
-                if let Some(
-                    init @ (Expression::FunctionExpression(_)
-                    | Expression::ArrowFunctionExpression(_)),
-                ) = &d.init
+fn own_spans(cx: &Cx, decls: &[&Decl]) -> Own {
+    let mut own = Own::default();
+    for d in decls {
+        let n = &d.node;
+        match n.kind() {
+            k::FUNCTION => own.functions.push(cx.range(n)),
+            k::VARIABLE_DECLARATOR => {
+                if let Some(init) = cx.slot(n, "init")
+                    && is_function(&init)
                 {
-                    own.functions.push(init.span());
+                    own.functions.push(cx.range(&init));
                 }
             }
-            k @ (AstKind::TSInterfaceDeclaration(_) | AstKind::TSTypeAliasDeclaration(_)) => {
-                own.types.push(k.span());
-            }
-            k @ (AstKind::TSNamespaceDeclaration(_)
-            | AstKind::TSExternalModuleDeclaration(_)
-            | AstKind::TSGlobalDeclaration(_)) => own.modules.push(k.span()),
-            k @ AstKind::TSEnumDeclaration(_) => own.enums.push(k.span()),
+            k::TS_INTERFACE_DECLARATION
+            | k::TS_TYPE_ALIAS_DECLARATION
+            | k::TS_NAMESPACE_DECLARATION
+            | k::TS_EXTERNAL_MODULE_DECLARATION
+            | k::TS_GLOBAL_DECLARATION
+            | k::TS_ENUM_DECLARATION => own.others.push(cx.range(n)),
             _ => {}
         }
     }
@@ -391,110 +371,70 @@ fn own_spans(cx: &Cx<'_, '_>, decls: &[(Span, NodeId)]) -> Own {
 }
 
 /// A variable as ESLint's scope manager has it: a name with its declarations and the references
-/// that resolve to it. oxc has one symbol where ESLint has two for a class declaration (inside
-/// and outside its body) and for a `var` in a `catch` block named like the parameter.
+/// that resolve to it. The scope model has one symbol where ESLint has two for a class
+/// declaration (inside and outside its body).
 struct Var<'s> {
-    sid: SymbolId,
-    flags: SymbolFlags,
-    decls: Vec<(Span, NodeId)>,
+    sym: &'s Symbol,
+    decls: Vec<&'s Decl>,
     refs: Vec<&'s Reference>,
 }
 
-fn variables<'s>(cx: &Cx<'s, '_>) -> Vec<Var<'s>> {
-    let sc = cx.s.scoping();
+fn variables<'s>(cx: &'s Cx) -> Vec<Var<'s>> {
     let mut out = Vec::new();
-    for sid in sc.symbol_ids() {
-        let flags = sc.symbol_flags(sid);
-        let decls = cx.decls(sid);
-        let mut refs: Vec<&Reference> = sc.get_resolved_references(sid).collect();
-        refs.sort_by_key(|r| cx.span(r.node_id()).start);
-        if let AstKind::Class(k) = cx.kind(decls[0].1)
-            && k.r#type == oxc_ast::ast::ClassType::ClassDeclaration
-        {
-            refs.retain(|r| !contains(k.span, cx.span(r.node_id())));
+    for id in cx.s.symbol_ids() {
+        let sym = cx.s.symbol(id);
+        let decls: Vec<&Decl> = sym.decls.iter().collect();
+        let mut refs: Vec<&Reference> = cx.s.refs_of(id).collect();
+        let first = decls[0];
+        if first.node.kind() == k::CLASS && !first.flags.contains(Flags::EXPRESSION_NAME) {
+            let class = cx.range(&first.node);
+            refs.retain(|r| !class.contains_range(r.range));
         }
-        let is_catch = |d: &(Span, NodeId)| matches!(cx.kind(d.1), AstKind::CatchParameter(_));
-        if flags.contains(SymbolFlags::CatchVariable)
-            && decls.iter().any(is_catch)
-            && !decls.iter().all(is_catch)
-        {
-            let (catch, other): (Vec<_>, Vec<_>) = decls.into_iter().partition(is_catch);
-            let clause = cx.span(cx.s.nodes().parent_id(catch[0].1));
-            let (inner, outer): (Vec<_>, Vec<_>) = refs
-                .into_iter()
-                .partition(|r| contains(clause, cx.span(r.node_id())));
-            out.push(Var {
-                sid,
-                flags: SymbolFlags::CatchVariable,
-                decls: catch,
-                refs: inner,
-            });
-            out.push(Var {
-                sid,
-                flags: flags - SymbolFlags::CatchVariable,
-                decls: other,
-                refs: outer,
-            });
-        } else {
-            out.push(Var {
-                sid,
-                flags,
-                decls,
-                refs,
-            });
-        }
+        out.push(Var { sym, decls, refs });
     }
     out
 }
 
 /// Does the declaration write the variable (an initializer, a loop variable, a default)?
-fn writes_declaration(cx: &Cx<'_, '_>, (name, node): (Span, NodeId)) -> bool {
-    match cx.kind(node) {
-        AstKind::VariableDeclarator(d) => {
-            let nodes = cx.s.nodes();
-            d.init.is_some()
-                || matches!(
-                    cx.kind(nodes.parent_id(nodes.parent_id(node))),
-                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
-                )
+fn writes_declaration(cx: &Cx, d: &Decl) -> bool {
+    match d.node.kind() {
+        k::VARIABLE_DECLARATOR => {
+            cx.slot(&d.node, "init").is_some()
+                || d.node
+                    .parent()
+                    .and_then(|p| p.parent())
+                    .is_some_and(|s| matches!(s.kind(), k::FOR_IN_STATEMENT | k::FOR_OF_STATEMENT))
         }
-        AstKind::FormalParameter(_) => cx.binding(name.start).is_some_and(|b| has_default(cx, b)),
+        k::FORMAL_PARAMETER => has_default(&d.binding),
         _ => false,
     }
 }
 
 /// Is the variable read, as ESLint's `isUsedVariable` decides (typescript-eslint's version in
-/// TypeScript files; the two agree on JavaScript).
-fn is_used(cx: &Cx<'_, '_>, v: &Var<'_>) -> bool {
+/// TypeScript files; the two agree on JavaScript)?
+fn is_used(cx: &Cx, v: &Var<'_>) -> bool {
     let own = own_spans(cx, &v.decls);
-    let imported_as_type =
-        v.flags.contains(SymbolFlags::TypeImport) && !v.flags.contains(SymbolFlags::Import);
-    let mut rhs: Option<Span> = None;
+    let imported_as_type = v.decls.iter().all(|d| cx.is_type_import(d));
+    let mut rhs: Option<TextRange> = None;
     for &r in &v.refs {
-        let id = r.node_id();
-        let span = cx.span(id);
+        let id = &r.node;
+        let span = cx.range(id);
         let for_itself = read_for_itself(cx, r, rhs);
-        rhs = rhs_node(cx, r, v.sid, rhs);
-        let inside = |spans: &[Span]| spans.iter().any(|s| contains(*s, span));
-        let type_only = cx.ts && !imported_as_type && in_type_query(cx, id);
+        rhs = rhs_node(cx, r, v.sym, rhs);
+        let inside = |spans: &[TextRange]| spans.iter().any(|s| s.contains_range(span));
+        let type_only = cx.ts && !imported_as_type && in_type_query(id);
         if is_read(r)
             && !for_itself
             && !type_only
             && !inside(&own.functions)
-            && !inside(&own.types)
-            && !inside(&own.modules)
-            && !inside(&own.enums)
+            && !inside(&own.others)
         {
             return true;
         }
         // `for (a of b) return;` with the loop variable an existing one.
-        if let AstKind::ForInStatement(f) = cx.parent(id)
-            && only_returns(&f.body)
-        {
-            return true;
-        }
-        if let AstKind::ForOfStatement(f) = cx.parent(id)
-            && only_returns(&f.body)
+        if let Some(p) = id.parent()
+            && matches!(p.kind(), k::FOR_IN_STATEMENT | k::FOR_OF_STATEMENT)
+            && only_returns(cx.slot(&p, "body"))
         {
             return true;
         }
@@ -502,30 +442,19 @@ fn is_used(cx: &Cx<'_, '_>, v: &Var<'_>) -> bool {
     false
 }
 
-/// The parameters of the function a (simple) parameter belongs to that come after it.
-fn after_last_used(cx: &Cx<'_, '_>, sid: SymbolId, start: u32, list: NodeId) -> bool {
-    let sc = cx.s.scoping();
-    for other in sc.iter_bindings_in(sc.symbol_scope_id(sid)) {
-        let (name, node) = cx.decls(other)[0];
-        if name.start <= start
-            || !matches!(
-                cx.kind(node),
-                AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_)
-            )
-        {
+/// Do the parameters of the list after this one hold a used one?
+fn after_last_used(cx: &Cx, sym: &Symbol, start: core_syntax::TextSize, list: &SyntaxNode) -> bool {
+    for other in cx.s.scope(sym.scope).symbols.iter().map(|s| (*s, cx.s.symbol(*s))) {
+        let (oid, other) = other;
+        let first = &other.decls[0];
+        if first.name.start() <= start || !is_param(&first.node) {
             continue;
         }
-        let Some(b) = cx.binding(name.start) else {
-            continue;
-        };
-        if param_list(cx, b) != Some(list) {
+        if param_list(&first.binding).as_ref() != Some(list) {
             continue;
         }
-        let referenced = sc
-            .get_resolved_references(other)
-            .any(|r| !(cx.ts && in_type_query(cx, r.node_id())));
-        let forced = skipped(cx, other, sc.symbol_flags(other), node, name);
-        if referenced || forced || has_default(cx, b) {
+        let referenced = cx.s.refs_of(oid).any(|r| !(cx.ts && in_type_query(&r.node)));
+        if referenced || skipped(cx, other) || has_default(&first.binding) {
             return false;
         }
     }
@@ -535,21 +464,18 @@ fn after_last_used(cx: &Cx<'_, '_>, sid: SymbolId, start: u32, list: NodeId) -> 
 /// `no-unused-vars`
 pub(super) fn unused_vars(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     run(ctx, |cx| {
-        let sc = cx.s.scoping();
         let mut hits = Vec::new();
         for v in variables(cx) {
-            let (name, node) = v.decls[0];
-            if skipped(cx, v.sid, v.flags, node, name) || exported(cx, v.flags, &v.decls) {
+            let first = v.decls[0];
+            if skipped(cx, v.sym) || exported(v.sym) {
                 continue;
             }
-            let kind = cx.kind(node);
             // A plain parameter only counts when no later one is used.
-            if let AstKind::FormalParameter(p) = kind
-                && p.initializer.is_none()
-                && let Some(b) = cx.binding(name.start)
-                && matches!(cx.parent(b), AstKind::FormalParameter(_))
-                && let Some(list) = param_list(cx, b)
-                && !after_last_used(cx, v.sid, name.start, list)
+            if first.node.kind() == k::FORMAL_PARAMETER
+                && param_init(&first.node).is_none()
+                && first.binding.parent().is_some_and(|p| p.kind() == k::FORMAL_PARAMETER)
+                && let Some(list) = param_list(&first.binding)
+                && !after_last_used(cx, v.sym, first.name.start(), &list)
             {
                 continue;
             }
@@ -557,24 +483,21 @@ pub(super) fn unused_vars(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>)
                 continue;
             }
             // `import { T } from "t"; type U = typeof T;` and `T` as a type only: not unused.
-            let queried = cx.ts && v.refs.iter().any(|r| in_type_query(cx, r.node_id()));
-            if queried
-                && v.flags
-                    .intersects(SymbolFlags::Import | SymbolFlags::TypeImport)
-            {
+            let queried = cx.ts && v.refs.iter().any(|r| in_type_query(&r.node));
+            if queried && v.sym.flags.contains(Flags::IMPORT) {
                 continue;
             }
-            let home = var_scope(cx, sc.symbol_scope_id(v.sid));
+            let home = cx.s.var_scope(v.sym.scope);
             let writes = (v.refs.iter())
-                .filter(|r| r.is_write() && var_scope(cx, r.scope_id()) == home)
-                .map(|r| cx.s.reference_span(r))
+                .filter(|r| r.is_write() && cx.s.var_scope(r.scope) == home)
+                .map(|r| r.range)
                 .chain(
                     v.decls
                         .iter()
-                        .filter(|d| writes_declaration(cx, **d))
-                        .map(|d| d.0),
+                        .filter(|d| writes_declaration(cx, d))
+                        .map(|d| d.name),
                 );
-            let write = writes.max_by_key(|s| s.start);
+            let write = writes.max_by_key(|s| s.start());
             let assigned = write.is_some() || v.refs.iter().any(|r| r.is_write());
             let action = if queried {
                 "assigned a value but only used as a type"
@@ -584,9 +507,9 @@ pub(super) fn unused_vars(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>)
                 "defined but never used"
             };
             hits.push((
-                write.unwrap_or(name),
+                write.unwrap_or(first.name),
                 c.message
-                    .replace("{name}", sc.symbol_name(v.sid))
+                    .replace("{name}", &v.sym.name)
                     .replace("{action}", action),
             ));
         }
