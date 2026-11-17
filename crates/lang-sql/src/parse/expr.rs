@@ -219,7 +219,25 @@ impl P<'_> {
         while self.is_t(n, T::LParen) {
             n += 1;
         }
-        self.is(n, "select") || self.is(n, "with") || self.is(n, "values")
+        if !(self.is(n, "select") || self.is(n, "with") || self.is(n, "values")) {
+            return false;
+        }
+        // `(select ..) = 0 and x`: a bracket that goes on as an expression is not a query.
+        let (mut depth, mut i) = (0i32, 0);
+        while let Some(t) = self.t(i) {
+            match t {
+                T::LParen => depth += 1,
+                T::RParen => {
+                    depth -= 1;
+                    if depth == 0 {
+                        break;
+                    }
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        !(self.is_t(i + 1, T::Op) || (self.is_t(i + 1, T::Word) && self.at_op_word(i + 1)))
     }
 
     fn word_operand(&mut self, c: &mut Chain) -> bool {
@@ -461,6 +479,9 @@ impl P<'_> {
             let before = self.pos;
             if std::mem::take(&mut self.type_first) && self.type_name() {
                 // the type of `CONVERT`
+            } else if self.at_any(&["signed", "unsigned"]) && self.d == super::Dialect::Mysql {
+                self.bump_as(k::KEYWORD);
+                self.eat_any(&["integer", "int"]);
             } else if dates && self.is_t(0, T::Word) && self.d.is_unit(self.text(0)) && matches!(self.t(1), Some(T::Comma | T::RParen) | Some(T::Word)) {
                 self.bump_as(k::KEYWORD);
             } else if self.at_query_start() && self.at_any(&["select", "with"]) {
@@ -484,7 +505,10 @@ impl P<'_> {
         loop {
             if self.at("as") && self.is_t(1, T::Word) {
                 self.bump_as(k::KEYWORD);
-                if !self.type_name() {
+                if self.at_any(&["signed", "unsigned"]) && self.d == super::Dialect::Mysql {
+                    self.bump_as(k::KEYWORD);
+                    self.eat_any(&["integer", "int"]);
+                } else if !self.type_name() {
                     self.expression();
                 }
             } else if self.at("order") && self.is(1, "by") {
