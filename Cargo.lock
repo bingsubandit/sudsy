@@ -1901,6 +1901,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "provider-api",
+ "regex-syntax",
 ]
 
 [[package]]

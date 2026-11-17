@@ -97,3 +97,39 @@ description: "An import of a TypeScript file whose names are only used as types 
 example: "import { T } from 't'; let a: T;   # the import is reported"
 severity: off
 category: style
+---
+id: prefer-const
+family: check
+params: { check: prefer-const }
+message: "'{name}' is never reassigned. Use 'const' instead."
+description: A `let` variable that is written once, in the scope that declares it, where the write could be its declaration (an initializer, a `for-in` / `for-of` head, or an assignment statement of the same block). A destructuring assignment to members, parameters or outer names is left alone, as is the `let` of a `for (;;)` head.
+example: "let a = 1; f(a);   # reported"
+severity: off
+category: style
+---
+id: prefer-rest-params
+family: check
+params: { check: prefer-rest-params }
+message: "Use the rest parameters instead of 'arguments'."
+description: "`arguments` in an ordinary function, except as the object of `arguments.name`."
+example: "function f() { g(arguments); }   # reported"
+severity: off
+category: style
+---
+id: no-unsafe-function-type
+family: check
+params: { check: unsafe-function-type }
+message: "The `Function` type accepts any function-like value. Prefer explicitly defining any function parameters and return type."
+description: "The global type `Function` as a type name, `extends` or `implements` target."
+example: "let f: Function;   # reported"
+severity: off
+category: suspicious
+---
+id: no-wrapper-object-types
+family: check
+params: { check: wrapper-object-types }
+message: "Prefer using the primitive `{primitive}` as a type name, rather than the upper-cased `{name}`."
+description: "The global types `BigInt`, `Boolean`, `Number`, `Object`, `String` and `Symbol` as type names."
+example: "let s: String;   # reported"
+severity: off
+category: suspicious

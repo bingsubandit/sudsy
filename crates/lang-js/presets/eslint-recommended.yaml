@@ -9,6 +9,7 @@ js:
       no-compare-neg-zero: error
       no-cond-assign: error
       no-const-assign: error
+      no-control-regex: error
       no-debugger: error
       no-delete-var: error
       no-dupe-class-members: error
@@ -19,10 +20,12 @@ js:
       no-empty-character-class: error
       no-empty-pattern: error
       no-extra-boolean-cast: error
+      no-fallthrough: error
       no-func-assign: error
       no-import-assign: error
       no-irregular-whitespace: error
       no-loss-of-precision: error
+      no-misleading-character-class: error
       no-octal: error
       no-prototype-builtins: error
       no-redeclare: error
@@ -31,9 +34,11 @@ js:
       no-shadow-restricted-names: error
       no-sparse-arrays: error
       no-undef: error
+      no-unexpected-multiline: error
       no-unreachable: error
       no-unsafe-finally: error
       no-unsafe-negation: error
+      no-unused-expressions: error
       no-unused-vars: error
       no-useless-catch: error
       no-useless-escape: error

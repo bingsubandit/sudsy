@@ -45,7 +45,7 @@ entries:
   no-misused-new: rule no-misused-new
   no-namespace: rule no-namespace | the option `allowDeclarations` keeps its default
   no-non-null-asserted-nullish-coalescing: planned
-  no-non-null-asserted-optional-chain: planned
+  no-non-null-asserted-optional-chain: rule no-non-null-asserted-optional-chain
   no-non-null-assertion: rule no-non-null-assertion
   no-redeclare: rule no-redeclare | `builtinGlobals` and `/*global*/` comments are not supported; `ignoreDeclarationMerge` keeps its default
   no-require-imports: rule no-require-imports | the options (`allow`, `allowAsImport`) keep their defaults; a `require` the file declares itself is not reported
@@ -54,15 +54,15 @@ entries:
   no-shadow: rule no-shadow | the options keep their defaults
   no-this-alias: rule no-this-alias | the options (`allowDestructuring`, `allowedNames`) keep their defaults
   no-type-alias: wontfix deprecated upstream
-  no-unnecessary-type-constraint: planned
-  no-unsafe-function-type: planned
+  no-unnecessary-type-constraint: rule no-unnecessary-type-constraint
+  no-unsafe-function-type: rule no-unsafe-function-type
   no-unused-expressions: planned
   no-unused-vars: rule no-unused-vars | the options keep their defaults; `.d.ts` files and `declare module` blocks are not treated as used
   no-use-before-define: rule no-use-before-define | the options keep their defaults
   no-useless-constructor: planned
   no-useless-empty-export: planned
   no-var-requires: wontfix deprecated upstream
-  no-wrapper-object-types: planned
+  no-wrapper-object-types: rule no-wrapper-object-types
   parameter-properties: planned
   prefer-as-const: rule prefer-as-const
   prefer-enum-initializers: planned

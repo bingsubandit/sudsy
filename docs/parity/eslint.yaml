@@ -205,7 +205,7 @@ entries:
   no-useless-constructor: planned
   no-useless-escape: rule no-useless-escape | regex `v` flag classes are read like `u` classes
   no-useless-rename: planned
-  no-var: planned
+  no-var: rule no-var
   no-void: planned
   no-warning-comments: planned
   no-whitespace-before-property: formatter
@@ -222,6 +222,7 @@ entries:
   padded-blocks: formatter
   padding-line-between-statements: wontfix deprecated formatting rule with no formatter equivalent
   prefer-arrow-callback: planned
+  prefer-const: rule prefer-const | the options keep their defaults (`destructuring: any`, `ignoreReadBeforeAssign: false`)
   prefer-destructuring: planned
   prefer-exponentiation-operator: planned
   prefer-named-capture-group: planned
@@ -231,8 +232,8 @@ entries:
   prefer-promise-reject-errors: planned
   prefer-reflect: wontfix deprecated upstream
   prefer-regex-literals: planned
-  prefer-rest-params: planned
-  prefer-spread: planned
+  prefer-rest-params: rule prefer-rest-params
+  prefer-spread: rule prefer-spread
   prefer-template: planned
   preserve-caught-error: planned
   quote-props: formatter
@@ -278,4 +279,4 @@ entries:
   no-useless-return: planned
 deferred:
   - gap: "needs scope analysis (oxc_semantic) beyond the nine scope rules built"
-    ids: [block-scoped-var, no-eval, no-extend-native, no-extra-bind, no-global-assign, no-implicit-globals, no-implied-eval, no-invalid-this, no-labels, no-lone-blocks, no-loop-func, no-new-native-nonconstructor, no-new-wrappers, no-obj-calls, no-restricted-globals, no-undef-init, no-unmodified-loop-condition, no-unused-labels, no-unused-private-class-members, no-useless-assignment, prefer-const, require-atomic-updates]
+    ids: [block-scoped-var, no-eval, no-extend-native, no-extra-bind, no-global-assign, no-implicit-globals, no-implied-eval, no-invalid-this, no-labels, no-lone-blocks, no-loop-func, no-new-native-nonconstructor, no-new-wrappers, no-obj-calls, no-restricted-globals, no-undef-init, no-unmodified-loop-condition, no-unused-labels, no-unused-private-class-members, no-useless-assignment, require-atomic-updates]
