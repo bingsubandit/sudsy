@@ -36,7 +36,10 @@ impl P<'_> {
                 self.bump_as(k::TYPE_IDENTIFIER);
             }
         }
-        if head != "INTERVAL" {
+        if matches!(head.as_str(), "TIMETZ" | "TIMESTAMPTZ") && self.d == super::Dialect::Postgres {
+            // The layout keeps the space before these arguments.
+            self.generic_bracket_run();
+        } else if head != "INTERVAL" {
             self.type_args();
         }
         if self.at("array") {
@@ -106,7 +109,7 @@ impl P<'_> {
 const TYPE_WORDS: &[&str] = &[
     "INT", "INTEGER", "BIGINT", "SMALLINT", "TINYINT", "MEDIUMINT", "SERIAL", "BIGSERIAL", "SMALLSERIAL", "VARCHAR", "CHAR",
     "CHARACTER", "NVARCHAR", "NCHAR", "TEXT", "NTEXT", "STRING", "BOOLEAN", "BOOL", "BIT", "DATE", "TIME", "TIMESTAMP",
-    "TIMESTAMPTZ", "DATETIME", "DATETIME2", "SMALLDATETIME", "INTERVAL", "NUMERIC", "DECIMAL", "NUMBER", "FLOAT", "REAL",
+    "TIMESTAMPTZ", "TIMETZ", "DATETIME", "DATETIME2", "SMALLDATETIME", "INTERVAL", "NUMERIC", "DECIMAL", "NUMBER", "FLOAT", "REAL",
     "DOUBLE", "MONEY", "SMALLMONEY", "UUID", "UNIQUEIDENTIFIER", "JSON", "JSONB", "XML", "BYTEA", "BLOB", "CLOB",
     "BINARY", "VARBINARY", "LONGTEXT", "MEDIUMTEXT", "TINYTEXT", "LONGBLOB", "MEDIUMBLOB", "TINYBLOB", "YEAR", "ENUM",
     "GEOMETRY", "GEOGRAPHY", "INET", "CIDR", "MACADDR", "OID", "SQL_VARIANT", "IMAGE", "ROWVERSION", "TIMESTAMP",

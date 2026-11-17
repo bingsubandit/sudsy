@@ -16,7 +16,8 @@ const INTRODUCERS: &[&str] = &[
     "WRAPPER", "LANGUAGE", "CAST", "DICTIONARY", "CONFIGURATION", "PARSER", "TEMPLATE", "OPERATOR", "FAMILY", "CLASS", "GROUP",
     "STATISTICS", "TRANSFORM", "EVENT", "SYNONYM", "ASSEMBLY", "CATALOG", "LOGIN", "PLAN", "WORKLOAD", "RESOURCE",
     "ENDPOINT", "ROUTE", "CERTIFICATE", "AGGREGATE", "FUNCTION", "PROCEDURE", "ROUTINE", "EXECUTE", "USE",
-    "DESCRIBE", "DESC", "EXISTS", "ONLY", "INHERITS", "METHOD", "NAMES", "CHARSET", "COLLATE",
+    "DESCRIBE", "DESC", "EXISTS", "ONLY", "INHERITS", "METHOD", "NAMES", "CHARSET", "COLLATE", "ROUTINES", "FUNCTIONS",
+    "TYPES", "ATTRIBUTE", "OF",
 ];
 
 /// Words that are never a name, whatever precedes them.
@@ -71,6 +72,10 @@ struct Walk {
     policy: bool,
     /// The statement is a `PREPARE`: the bracket after its name lists types.
     prepare: bool,
+    /// After `ATTRIBUTE name`: a type follows.
+    attribute: bool,
+    /// What `CURRENT_USER` and the like are in a role position of this statement.
+    role_kind: Option<core_syntax::SyntaxKind>,
 }
 
 impl P<'_> {
@@ -83,11 +88,17 @@ impl P<'_> {
             return;
         }
         let second = if self.is_t(1, T::Word) { self.text(1).to_string() } else { String::new() };
-        self.row = self.d.statement_row(self.text(0), &second);
+        let row = self.d.statement_row(self.text(0), &second);
+        self.row = row.filter(|r| r.iter().any(|e| !e.starts_with('@')));
+        let role_kind = row.and_then(|r| r.iter().find_map(|e| e.strip_prefix("@role="))).map(|c| match c {
+            "w" => k::WORD,
+            "i" => k::IDENTIFIER,
+            _ => k::KEYWORD,
+        });
         let grant = self.at_any(&["grant", "revoke", "deny"]);
         let create_table = self.at("create") && (1..6).any(|i| self.is(i, "table"));
         let table_stmt = self.at_any(&["create", "alter"]) && (1..4).any(|i| self.is(i, "table"));
-        self.generic_run(0, Walk { create_table, table_stmt, grant, create: self.at("create"), prepare: self.at("prepare"), policy: (1..3).any(|i| self.is(i, "policy")), ..Walk::default() });
+        self.generic_run(0, Walk { create_table, table_stmt, grant, create: self.at("create"), role_kind, prepare: self.at("prepare"), policy: (1..3).any(|i| self.is(i, "policy")), ..Walk::default() });
     }
 
     /// `DECLARE CONTINUE HANDLER`, `DECLARE c CURSOR`, `DECLARE x CONDITION`: not a variable.
@@ -285,7 +296,7 @@ impl P<'_> {
             self.type_name();
             return;
         }
-        if word && !dotted && w.after_name && super::types::is_type_word(&up) && (w.columns || w.params || depth > 0) {
+        if word && !dotted && w.after_name && super::types::is_type_word(&up) && (w.columns || w.params || depth > 0 || w.attribute) {
             self.type_name();
             w.after_name = false;
             return;
@@ -299,9 +310,15 @@ impl P<'_> {
             let kind = match (role, up.as_str()) {
                 (false, _) => k::FUNCTION_IDENTIFIER,
                 (true, "CURRENT_USER" | "SESSION_USER") if w.policy => k::IDENTIFIER,
-                _ => k::KEYWORD,
+                _ => w.role_kind.unwrap_or(k::KEYWORD),
             };
             self.bump_as(kind);
+            if role {
+                w.name_list = true;
+                w.expect_name = false;
+                w.after_name = false;
+                return;
+            }
             *w = Walk { create_table: w.create_table, table_stmt: w.table_stmt, grant: w.grant, ..Walk::default() };
             return;
         }
@@ -343,10 +360,16 @@ impl P<'_> {
                     k::IDENTIFIER
                 }
             }
+            _ if word && matches!(up.as_str(), "TRUE" | "FALSE") => k::WORD_LITERAL,
             _ if self.keyword_like(0) || self.reserved(0) => k::KEYWORD,
             _ => k::IDENTIFIER,
         };
         let after_character = self.prev_text_is("character");
+        if word && !dotted && self.d == super::Dialect::Postgres && w.create && self.prev_word().as_deref() == Some("USING") && !self.is_t(1, T::LParen) {
+            self.bump_as(k::WORD);
+            return;
+        }
+        let first = matches!(self.prev_kind(), None | Some(T::Semi | T::Data));
         let rename_to = up == "TO" && w.aggregate && self.prev_text_is("rename");
         self.bump_as(kind);
         if kind == k::KEYWORD {
@@ -362,7 +385,8 @@ impl P<'_> {
             } else if !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) {
                 w.function_name = false;
             }
-            if INTRODUCERS.contains(&up.as_str()) || (up == "SET" && after_character) {
+            w.attribute = up == "ATTRIBUTE";
+            if INTRODUCERS.contains(&up.as_str()) || (up == "SET" && after_character) || (up == "ALTER" && !first) {
                 w.expect_name = true;
             } else if !MODIFIERS.contains(&up.as_str()) {
                 w.expect_name = false;
