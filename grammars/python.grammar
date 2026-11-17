@@ -243,7 +243,8 @@ node TypeParamParamSpec #declaration =
 node InterpolatedStringFormatSpec #opaque
 node PatternArguments #opaque
 node PatternKeyword #opaque
-node Comprehension #opaque
+node Comprehension #opaque =
+    Async? For target:#expression In iter:#expression
 node Arguments #opaque
 node Parameters #parameter-list =
     parameters:#parameter* Slash? #parameter* Star? #parameter*
@@ -251,7 +252,7 @@ node Parameter #declaration #parameter =
     Star? DoubleStar? name:Identifier Colon? annotation:#expression?
 node ParameterWithDefault #parameter #opaque
 node Keyword #opaque
-node Alias #opaque
+node Alias #opaque = name:Identifier As? asname:Identifier?
 node WithItem #opaque
 node MatchCase #case =
     Case test=pattern:#pattern If? guard:#expression? Colon body:#statement*

@@ -9,7 +9,7 @@ mod build;
 mod table;
 
 pub use build::bind;
-pub use table::{Declares, Flow, Place, Row, Sel, Table};
+pub use table::{Declares, Flow, Place, Redirect, Row, Sel, Table};
 
 use core_syntax::{SyntaxKind, SyntaxNode, TextRange};
 use std::collections::HashMap;
@@ -49,6 +49,10 @@ impl Flags {
     pub const TYPE_PARAMETER: Flags = Flags(1 << 15);
     /// The name of a function or class expression, visible inside it only.
     pub const EXPRESSION_NAME: Flags = Flags(1 << 16);
+    /// Declared by a statement that sends a name to another scope (`global`, `nonlocal`).
+    pub const REDIRECT: Flags = Flags(1 << 17);
+    /// Declared with no value (`x: int`): no read finds a value.
+    pub const BARE: Flags = Flags(1 << 18);
 
     pub const fn union(self, o: Flags) -> Flags {
         Flags(self.0 | o.0)
@@ -85,6 +89,12 @@ impl Access {
     pub const WRITE: Access = Access(2);
     /// Written in a type: names a type (`x: T`), or with READ a value (`typeof x`).
     pub const TYPE: Access = Access(4);
+    /// Assigned in the nearest scope that holds `var` declarations.
+    pub const HOIST: Access = Access(8);
+    /// Unbound (`del x`); with READ.
+    pub const DELETE: Access = Access(16);
+    /// Declared with no value.
+    pub const BARE: Access = Access(32);
 
     pub const fn union(self, o: Access) -> Access {
         Access(self.0 | o.0)
@@ -102,7 +112,11 @@ pub struct Scope {
     /// `var` declarations of the scopes inside it stop here.
     pub var: bool,
     pub symbols: Vec<SymbolId>,
+    /// Its names are not visible to the scopes nested in it.
+    pub hidden: bool,
     names: HashMap<Rc<str>, SymbolId>,
+    /// Names whose declarations and references go to another scope (`global`, `nonlocal`).
+    redirects: Option<HashMap<Rc<str>, ScopeId>>,
 }
 
 /// One place a name is declared.
@@ -118,6 +132,8 @@ pub struct Decl {
     pub binding_range: TextRange,
     pub binding_kind: SyntaxKind,
     pub flags: Flags,
+    /// The scope the declaration is written in (not the symbol's, when `global` sent it elsewhere).
+    pub from: ScopeId,
 }
 
 impl Decl {
@@ -178,6 +194,10 @@ impl Reference {
         node_at(root, self.node_range, self.node_kind)
     }
 
+    pub fn is_delete(&self) -> bool {
+        self.access.contains(Access::DELETE)
+    }
+
     pub fn is_write(&self) -> bool {
         self.access.contains(Access::WRITE)
     }
@@ -192,11 +212,28 @@ impl Reference {
     }
 }
 
+/// A leaf whose text names things (a string in an annotation), found in a type position.
+#[derive(Debug)]
+pub struct TextRef {
+    pub node_range: TextRange,
+    pub node_kind: SyntaxKind,
+    pub scope: ScopeId,
+}
+
+impl TextRef {
+    /// The leaf, found in the tree `root` the model was built from.
+    pub fn node(&self, root: &SyntaxNode) -> SyntaxNode {
+        node_at(root, self.node_range, self.node_kind)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Model {
     pub scopes: Vec<Scope>,
     pub symbols: Vec<Symbol>,
     pub refs: Vec<Reference>,
+    /// The leaves of rows with `text` that stand in a type position, in source order.
+    pub texts: Vec<TextRef>,
 }
 
 impl Model {
@@ -237,8 +274,14 @@ impl Model {
     pub fn lookup(&self, from: ScopeId, name: &str, ty: bool) -> Option<SymbolId> {
         let want = if ty { Flags::TYPE } else { Flags::VALUE };
         self.ancestors(from)
-            .filter_map(|s| self.own(s, name))
+            .filter(|s| *s == from || !self.scope(*s).hidden)
+            .filter_map(|s| self.own(self.redirect(s, name).unwrap_or(s), name))
             .find(|s| self.symbol(*s).flags.intersects(want))
+    }
+
+    /// Where the declarations and references of `name` in `scope` go, when a statement sent them elsewhere.
+    pub fn redirect(&self, scope: ScopeId, name: &str) -> Option<ScopeId> {
+        self.scope(scope).redirects.as_ref()?.get(name).copied()
     }
 
     /// The symbol the reference finds: as [`Model::lookup`], except that a reference in a
@@ -248,11 +291,42 @@ impl Model {
         let want = if ty { Flags::TYPE } else { Flags::VALUE };
         let params = Flags::PARAMETER | Flags::TYPE_PARAMETER | Flags::EXPRESSION_NAME;
         self.ancestors(r.scope).find_map(|s| {
-            let id = self.own(s, &r.name)?;
+            if s != r.scope && self.scope(s).hidden {
+                return None;
+            }
+            let id = self.own(self.redirect(s, &r.name).unwrap_or(s), &r.name)?;
             let f = self.symbol(id).flags;
             (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params)))
                 .then_some(id)
         })
+    }
+
+    /// A reference the binder did not meet (a name inside a string), resolved like the others.
+    pub fn add_reference(
+        &mut self,
+        name: &str,
+        range: TextRange,
+        node: (TextRange, SyntaxKind),
+        access: Access,
+        scope: ScopeId,
+    ) -> RefId {
+        let mut r = Reference {
+            name: name.into(),
+            node_range: node.0,
+            node_kind: node.1,
+            range,
+            access,
+            scope,
+            in_params: Vec::new(),
+            symbol: None,
+        };
+        r.symbol = self.find(&r);
+        let id = RefId(self.refs.len() as u32);
+        if let Some(s) = r.symbol {
+            self.symbols[s.0 as usize].refs.push(id);
+        }
+        self.refs.push(r);
+        id
     }
 
     /// The references no scope resolves.
@@ -267,14 +341,20 @@ impl Model {
 }
 
 impl Scope {
-    pub(crate) fn new(parent: Option<ScopeId>, node: SyntaxNode, var: bool) -> Scope {
+    pub(crate) fn new(parent: Option<ScopeId>, node: SyntaxNode, var: bool, hidden: bool) -> Scope {
         Scope {
             parent,
             node,
             var,
             symbols: Vec::new(),
+            hidden,
             names: HashMap::new(),
+            redirects: None,
         }
+    }
+
+    pub(crate) fn redirects_mut(&mut self) -> &mut HashMap<Rc<str>, ScopeId> {
+        self.redirects.get_or_insert_with(HashMap::new)
     }
 
     pub(crate) fn names_mut(&mut self) -> &mut HashMap<Rc<str>, SymbolId> {

@@ -2,9 +2,13 @@
 //! tokens into the lossless tree, the formatter prints the file in Black's style (`ruff format`).
 
 mod adapter;
-mod analysis;
 mod format;
+mod forward;
+mod imports;
+mod names;
 mod rules;
+mod semantic;
+mod text;
 
 pub use format::{PythonFormatter, option_schema};
 

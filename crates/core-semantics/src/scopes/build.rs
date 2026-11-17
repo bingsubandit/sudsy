@@ -1,8 +1,10 @@
 //! The binder: one pre-order walk that opens scopes, declares names and records references as the
 //! language's [`Table`] says, then resolves every reference by name up the scope chain.
 
-use super::table::{Declares, Flow, Place, Row, Sel, Table};
-use super::{Access, Decl, Flags, Model, RefId, Reference, Scope, ScopeId, Symbol, SymbolId};
+use super::table::{Declares, Flow, Place, Redirect, Row, Sel, Table};
+use super::{
+    Access, Decl, Flags, Model, RefId, Reference, Scope, ScopeId, Symbol, SymbolId, TextRef,
+};
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, TextRange, TextSize};
 use rowan::{GreenNodeData, GreenTokenData, NodeOrToken, WalkEvent};
 use std::collections::HashSet;
@@ -113,7 +115,10 @@ impl Binder<'_> {
         if self.table.is_scope(kind) {
             let id = ScopeId(self.model.scopes.len() as u32);
             let var = row.is_some_and(|r| r.var_scope);
-            self.model.scopes.push(Scope::new(outer, node.clone(), var));
+            let hidden = row.is_some_and(|r| r.hidden);
+            self.model
+                .scopes
+                .push(Scope::new(outer, node.clone(), var, hidden));
             self.scopes.push(id);
             frame.scope = true;
         }
@@ -122,11 +127,21 @@ impl Binder<'_> {
             self.declares(node, d, frame.scope, outer);
             frame.decl = true;
         }
+        if let Some(how) = row.redirect {
+            self.redirect(node, how);
+        }
         if row.binding {
             self.binding(node);
         }
         if row.reference {
-            self.reference(node, state);
+            self.reference(node, state, row);
+        }
+        if row.text && state.contains(Access::TYPE) {
+            self.model.texts.push(TextRef {
+                node_range: node.text_range(),
+                node_kind: kind,
+                scope: self.current(),
+            });
         }
         if !row.children.is_empty() {
             self.flows(node, row, state);
@@ -232,8 +247,36 @@ impl Binder<'_> {
                 place = p;
             }
         }
+        let scope = self.place_scope(place, own_scope, outer);
+        self.ctxs.push(Ctx {
+            flags,
+            scope,
+            node: node.clone(),
+        });
+        for sel in d.names {
+            let child = match sel {
+                Sel::Field(f) => self.grammar.slot(node, f).and_then(|e| e.into_node()),
+                Sel::Kind(k) => node.children().find(|c| self.grammar.name(c.kind()) == *k),
+                _ => None,
+            };
+            if let Some(child) = child
+                && let Some((name, range)) = self.name_token(&child, false)
+            {
+                self.declare(name, range, &child);
+                break;
+            }
+        }
+        if d.name_child
+            && let Some(child) = node.children().next()
+            && let Some((name, range)) = self.name_token(&child, true)
+        {
+            self.declare(name, range, &child);
+        }
+    }
+
+    fn place_scope(&self, place: Place, own_scope: bool, outer: Option<ScopeId>) -> ScopeId {
         let current = self.current();
-        let scope = match place {
+        match place {
             Place::Scope => current,
             Place::Parent if own_scope => outer.unwrap_or(ScopeId(0)),
             Place::Parent => current,
@@ -245,17 +288,44 @@ impl Binder<'_> {
                 .copied()
                 .find(|s| self.grammar.name(self.model.scope(*s).node.kind()) == kind)
                 .unwrap_or(current),
-        };
-        self.ctxs.push(Ctx {
-            flags,
-            scope,
-            node: node.clone(),
-        });
-        if d.name_child
-            && let Some(child) = node.children().next()
-            && let Some((name, range)) = self.name_token(&child, true)
-        {
-            self.declare(name, range, &child);
+        }
+    }
+
+    /// `global x`, `nonlocal x`: the names of the child nodes are declared in another scope, and
+    /// this scope sends its declarations and references of them there.
+    fn redirect(&mut self, node: &SyntaxNode, how: Redirect) {
+        let current = self.current();
+        for child in node.children() {
+            let Some((name, range)) = self.name_token(&child, false) else {
+                continue;
+            };
+            let target = match how {
+                Redirect::Top => ScopeId(0),
+                Redirect::Outer => {
+                    let vars: Vec<ScopeId> = self
+                        .model
+                        .ancestors(current)
+                        .skip(1)
+                        .filter(|s| self.model.scope(*s).var)
+                        .collect();
+                    vars.iter()
+                        .copied()
+                        .find(|s| self.model.own(*s, &name).is_some())
+                        .or(vars.first().copied())
+                        .unwrap_or(ScopeId(0))
+                }
+            };
+            self.declare_in(
+                name.clone(),
+                range,
+                &child,
+                (node.text_range(), node.kind()),
+                Flags::VALUE | Flags::REDIRECT,
+                target,
+            );
+            self.model.scopes[current.0 as usize]
+                .redirects_mut()
+                .insert(name, target);
         }
     }
 
@@ -270,15 +340,32 @@ impl Binder<'_> {
 
     fn declare(&mut self, name: Rc<str>, range: TextRange, binding: &SyntaxNode) {
         let Some(ctx) = self.ctxs.last() else { return };
+        let node = (ctx.node.text_range(), ctx.node.kind());
+        let (scope, flags) = (ctx.scope, ctx.flags);
+        self.declare_in(name, range, binding, node, flags, scope);
+    }
+
+    fn declare_in(
+        &mut self,
+        name: Rc<str>,
+        range: TextRange,
+        binding: &SyntaxNode,
+        node: (TextRange, SyntaxKind),
+        flags: Flags,
+        mut scope: ScopeId,
+    ) {
+        if let Some(target) = self.model.redirect(scope, &name) {
+            scope = target;
+        }
         let decl = Decl {
             name: range,
-            node_range: ctx.node.text_range(),
-            node_kind: ctx.node.kind(),
+            node_range: node.0,
+            node_kind: node.1,
             binding_range: binding.text_range(),
             binding_kind: binding.kind(),
-            flags: ctx.flags,
+            flags,
+            from: self.current(),
         };
-        let (scope, flags) = (ctx.scope, ctx.flags);
         let scope_ref = &mut self.model.scopes[scope.0 as usize];
         // The name of a function expression is a variable of its own, between the function's scope
         // and the one around it: a declaration of the same name in the function is another one.
@@ -306,7 +393,7 @@ impl Binder<'_> {
         });
     }
 
-    fn reference(&mut self, node: &SyntaxNode, state: State) {
+    fn reference(&mut self, node: &SyntaxNode, state: State, row: &Row) {
         let Some((name, range)) = self.name_token(node, false) else {
             return;
         };
@@ -315,6 +402,23 @@ impl Binder<'_> {
         } else {
             state
         };
+        if access.contains(Access::WRITE)
+            && let Some((flags, place)) = row.implicit
+        {
+            let place = if access.contains(Access::HOIST) {
+                Place::Var
+            } else {
+                place
+            };
+            let scope = self.place_scope(place, false, None);
+            let at = (node.text_range(), node.kind());
+            let flags = if access.contains(Access::BARE) {
+                flags | Flags::BARE
+            } else {
+                flags
+            };
+            self.declare_in(name.clone(), range, node, at, flags, scope);
+        }
         self.model.refs.push(Reference {
             name,
             node_range: node.text_range(),
@@ -347,6 +451,17 @@ impl Binder<'_> {
         };
         let green = node.green();
         let base = node.text_range().start();
+        let node_count = if row
+            .children
+            .iter()
+            .any(|(s, _)| matches!(s, Sel::ExceptLast))
+        {
+            own_parts(&green, base)
+                .filter(|(c, _)| matches!(c, NodeOrToken::Node(_)))
+                .count()
+        } else {
+            0
+        };
         let own_tokens = || {
             own_parts(&green, base).filter_map(|(c, r)| match c {
                 NodeOrToken::Token(t) => Some((t, r)),
@@ -369,6 +484,11 @@ impl Binder<'_> {
                 .find(|(i, (sel, _))| match sel {
                     Sel::All => true,
                     Sel::First => index == 0,
+                    Sel::ExceptLast => index + 1 < node_count,
+                    Sel::Kind(k) => match &child {
+                        NodeOrToken::Node(n) => self.grammar.name(SyntaxKind(n.kind().0)) == *k,
+                        NodeOrToken::Token(_) => false,
+                    },
                     Sel::Field(_) => fields[*i] == Some(range),
                     Sel::BeforeOp => op_start.is_none_or(|o| start < o),
                     Sel::WithToken(text) => own_tokens().any(|(t, _)| t.text() == *text),
@@ -377,22 +497,8 @@ impl Binder<'_> {
                         .is_some_and(|(_, r)| r.end() <= start),
                 });
             index += 1;
-            self.arena.push(hit.map(|(_, (_, flow))| {
-                (
-                    match flow {
-                        Flow::Write => Access::WRITE,
-                        Flow::ReadWrite => Access::READ.union(Access::WRITE),
-                        Flow::Assign(plain) if op_text == Some(*plain) => Access::WRITE,
-                        Flow::Assign(_) => Access::READ.union(Access::WRITE),
-                        Flow::Type => Access::TYPE,
-                        Flow::Query => Access::READ.union(Access::TYPE),
-                        Flow::Through => state,
-                        Flow::ThroughType if state.contains(Access::TYPE) => state,
-                        Flow::ThroughType | Flow::Outside => Access::NONE,
-                    },
-                    matches!(flow, Flow::Outside),
-                )
-            }));
+            self.arena
+                .push(hit.map(|(_, (_, flow))| access(flow, node, state, op_text)));
         }
     }
 
@@ -419,4 +525,29 @@ fn own_parts(
         at += c.text_len();
         (c, range)
     })
+}
+
+/// The state a [`Flow`] gives the child, and whether the child is outside the node's scope.
+fn access(flow: &Flow, node: &SyntaxNode, state: State, op_text: Option<&str>) -> (State, bool) {
+    let rw = Access::READ.union(Access::WRITE);
+    let query = Access::READ.union(Access::TYPE);
+    match flow {
+        Flow::Write => (Access::WRITE, false),
+        Flow::ReadWrite => (rw, false),
+        Flow::Assign(plain) if op_text == Some(*plain) => (Access::WRITE, false),
+        Flow::Assign(_) => (rw, false),
+        Flow::Type => (Access::TYPE, false),
+        Flow::Query => (query, false),
+        Flow::Through => (state, false),
+        Flow::ThroughType if state.contains(Access::TYPE) => (state, false),
+        Flow::ThroughType => (Access::NONE, false),
+        Flow::Outside => (Access::NONE, true),
+        Flow::WriteBare => (Access::WRITE.union(Access::BARE), false),
+        Flow::Delete => (Access::READ.union(Access::DELETE), false),
+        Flow::WriteVar => (Access::WRITE.union(Access::HOIST), false),
+        Flow::OutsideQuery => (query, true),
+        Flow::Cond(test, yes, no) => {
+            access(if test(node) { yes } else { no }, node, state, op_text)
+        }
+    }
 }

@@ -7,12 +7,3 @@ prefix mago
 prefix ruby
 prefix tree-sitter
 allow crates/lang-markdown/src/mapping.rs
-allow crates/lang-python/src/analysis/checker.rs
-allow crates/lang-python/src/analysis/checker/lints.rs
-allow crates/lang-python/src/analysis/dot_format.rs
-allow crates/lang-python/src/analysis/finish.rs
-allow crates/lang-python/src/analysis/formats.rs
-allow crates/lang-python/src/analysis/mod.rs
-allow crates/lang-python/src/analysis/model.rs
-allow crates/lang-python/src/analysis/semantic.rs
-allow crates/lang-python/src/analysis/syntax.rs
