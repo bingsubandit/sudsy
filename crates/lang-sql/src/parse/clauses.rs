@@ -214,7 +214,7 @@ impl P<'_> {
 
     pub fn from_expression(&mut self) -> bool {
         let m = self.mark();
-        if self.is_t(0, T::LParen) && !self.at_query_start() {
+        if self.is_t(0, T::LParen) && (!self.at_query_start() || self.nested_join_bracket()) {
             // A bracketed join: `(a JOIN b ON ...)`.
             self.bracketed(|p| {
                 p.from_element();
@@ -240,6 +240,29 @@ impl P<'_> {
         }
         self.close(k::FROM_EXPRESSION, m);
         true
+    }
+
+    /// `((select ..) AS a JOIN ..)`: a bracket whose first item is a bracketed query with an alias.
+    fn nested_join_bracket(&self) -> bool {
+        if !self.is_t(1, T::LParen) {
+            return false;
+        }
+        let mut depth = 0;
+        let mut n = 1;
+        while let Some(t) = self.t(n) {
+            match t {
+                T::LParen => depth += 1,
+                T::RParen => {
+                    depth -= 1;
+                    if depth == 0 {
+                        break;
+                    }
+                }
+                _ => {}
+            }
+            n += 1;
+        }
+        self.is_t(n + 1, T::Word) && !self.at_any_at(n + 1, &["union", "intersect", "except", "minus", "order", "limit", "offset", "fetch"])
     }
 
     fn at_join(&self) -> bool {
@@ -443,19 +466,6 @@ impl P<'_> {
             self.expression();
             self.dedent();
         }
-    }
-
-    fn window_spec(&mut self) {
-        self.bracketed(|p| {
-            let m = p.mark();
-            if p.at("partition") {
-                p.partition_by();
-            }
-            if p.at("order") {
-                p.order_by();
-            }
-            p.close(k::WINDOW_SPECIFICATION, m);
-        });
     }
 
     /// `ORDER BY`, `LIMIT`, `OFFSET`, `FETCH`, `FOR UPDATE`: what ends a query.

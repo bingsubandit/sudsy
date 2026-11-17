@@ -144,6 +144,10 @@ impl<'a> P<'a> {
     }
 
     /// Is the next token one of `ws`?
+    pub fn at_any_at(&self, n: usize, words: &[&str]) -> bool {
+        words.iter().any(|w| self.is(n, w))
+    }
+
     pub fn at_any(&self, ws: &[&str]) -> bool {
         self.is_t(0, T::Word) && ws.iter().any(|w| self.text(0).eq_ignore_ascii_case(w))
     }

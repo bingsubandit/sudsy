@@ -127,7 +127,7 @@ impl P<'_> {
                 c.lone = false;
                 true
             }
-            Some(T::LSquare) if self.d == super::Dialect::Postgres => {
+            Some(T::LSquare) if matches!(self.d, super::Dialect::Postgres | super::Dialect::Ansi) => {
                 self.array_accessor();
                 true
             }
@@ -371,25 +371,30 @@ impl P<'_> {
         }
         self.eat("over");
         if self.is_t(0, T::LParen) {
-            self.bracketed(|p| {
-                let m = p.mark();
-                if p.at_name() && !p.at_any(&["partition", "order"]) {
-                    p.eat_name();
-                }
-                if p.at("partition") {
-                    p.partition_by();
-                }
-                if p.at("order") {
-                    p.order_by();
-                }
-                p.frame();
-                p.close(k::WINDOW_SPECIFICATION, m);
-            });
+            self.window_spec();
         } else {
             self.eat_name();
         }
         self.dedent();
         self.close(k::OVER_CLAUSE, m);
+    }
+
+    /// `(name PARTITION BY .. ORDER BY .. ROWS ..)`.
+    pub(super) fn window_spec(&mut self) {
+        self.bracketed(|p| {
+            let m = p.mark();
+            if p.at_name() && !p.at_any(&["partition", "order", "rows", "range", "groups"]) {
+                p.eat_name();
+            }
+            if p.at("partition") {
+                p.partition_by();
+            }
+            if p.at("order") {
+                p.order_by();
+            }
+            p.frame();
+            p.close(k::WINDOW_SPECIFICATION, m);
+        });
     }
 
     fn frame(&mut self) {
@@ -580,7 +585,7 @@ impl P<'_> {
                 }
                 if self.at_any(&["null", "true", "false"]) {
                     self.bump_as(k::WORD_LITERAL);
-                    return self.after_is();
+                    return self.after_is() && self.infix(no_logic, between);
                 }
                 self.eat_any(&["unknown", "document"]);
                 if self.eat("json") {
@@ -594,7 +599,7 @@ impl P<'_> {
                     self.eat_any(&["nfc", "nfd", "nfkc", "nfkd"]);
                     self.eat("normalized");
                 }
-                return self.after_is();
+                return self.after_is() && self.infix(no_logic, between);
             }
             "NOT" if self.is(1, "in") || self.is(1, "like") || self.is(1, "between") || self.is(1, "ilike") || self.is(1, "similar") || self.is(1, "rlike") || self.is(1, "regexp") || self.is(1, "glob") => {
                 self.bump_as(k::KEYWORD);
@@ -610,7 +615,7 @@ impl P<'_> {
                             p.list(|p| p.element());
                         }
                     });
-                    return self.after_is();
+                    return self.after_is() && self.infix(no_logic, between);
                 }
             }
             "BETWEEN" => {
@@ -630,7 +635,7 @@ impl P<'_> {
             }
             "ISNULL" | "NOTNULL" => {
                 self.bump_as(k::KEYWORD);
-                return self.after_is();
+                return self.after_is() && self.infix(no_logic, between);
             }
             "DIV" | "MOD" | "XOR" if self.d == super::Dialect::Mysql => self.bump_as(k::BINARY_OPERATOR),
             _ => return false,

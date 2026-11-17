@@ -282,7 +282,7 @@ impl P<'_> {
         let kind = if self.keyword_like(0) || self.reserved(0) { k::KEYWORD } else { k::IDENTIFIER };
         self.bump_as(kind);
         if kind == k::KEYWORD {
-            if matches!(up.as_str(), "FUNCTION" | "PROCEDURE" | "PROC" | "AGGREGATE") {
+            if matches!(up.as_str(), "FUNCTION" | "PROCEDURE" | "PROC" | "AGGREGATE" | "ROUTINE") {
                 w.function_name = true;
             } else if !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) {
                 w.function_name = false;
