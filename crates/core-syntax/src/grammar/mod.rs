@@ -260,29 +260,6 @@ impl Grammar {
             .map(|(_, e)| e)
     }
 
-    /// Every child of `node` in the items labelled `label` or filling the role field `label`, in
-    /// source order (`None` for a node kind with no body).
-    pub fn slots<'a>(
-        &'a self,
-        node: &SyntaxNode,
-        label: &'a str,
-    ) -> Option<impl Iterator<Item = SyntaxElement> + 'a> {
-        let def = self.def(node.kind())?;
-        let body = GrammarBody {
-            grammar: self,
-            kinds: self.bodies.get(node.kind().index() as usize)?,
-            body: &def.body,
-        };
-        Some(
-            crate::ast::assign(node, body)
-                .filter(move |(i, _)| {
-                    let item = &def.body[*i];
-                    item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
-                })
-                .map(|(_, e)| e),
-        )
-    }
-
     /// [`Grammar::slot`] on the non-trivia children of `node` already collected (`children`):
     /// no second walk of the tree; an item that follows only single required items is read at its
     /// fixed child position.
