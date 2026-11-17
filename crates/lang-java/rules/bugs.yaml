@@ -1,13 +1,3 @@
-id: empty-catch-block
-message: 'the catch block is empty: handle the exception or say in a comment why it is ignored'
-description: >-
-  A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock).
-example: 'try { f(); } catch (Exception e) { }'
-severity: warn
-category: suspicious
-rule: { kind: CatchClause, child: { kind: Block, regex: '^\{\s*\}$' } }
-report-on: first-token
----
 id: string-literal-equality
 message: 'strings are compared with `equals`, not `==` or `!=`'
 description: >-

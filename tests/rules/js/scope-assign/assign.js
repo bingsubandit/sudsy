@@ -7,6 +7,7 @@ const c = 1; c = 2; c += 1; c++; [c] = [1]; ({ c } = {}); for (c of []) {}
 //                                ^ no-const-assign
 //                                             ^ no-const-assign
 //                                                             ^ no-const-assign
+//                                                                      ^^ no-empty-block
 class K { static f() { K = 1; } } K = 2; (class L { f() { L = 1; } });
 //                     ^ no-class-assign
 //                                ^ no-class-assign

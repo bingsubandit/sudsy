@@ -28,7 +28,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | checkstyle | - | 126 | 34 | 12 | 74 | 0 | 6 | 0 | 74 |
 | csharpier | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | - | 56 | 50 | 3 | 0 | 1 | 2 | 0 | 0 |
-| eslint | 99.8% | 292 | 86 | 16 | 136 | 0 | 32 | 22 | 136 |
+| eslint | 99.8% | 292 | 87 | 18 | 133 | 0 | 32 | 22 | 133 |
 | eslint-plugin-jsonc | - | 44 | 36 | 6 | 0 | 0 | 2 | 0 | 0 |
 | eslint-plugin-svelte | - | 85 | 18 | 8 | 18 | 0 | 3 | 38 | 18 |
 | eslint-plugin-vue | - | 256 | 43 | 16 | 176 | 0 | 4 | 17 | 176 |

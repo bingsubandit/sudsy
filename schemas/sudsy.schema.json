@@ -942,7 +942,7 @@
             },
             "empty-catch-block": {
               "$ref": "#/definitions/rule",
-              "description": "A `catch` block with nothing in it, not even a comment (Checkstyle EmptyCatchBlock)."
+              "description": "A `catch` clause whose block has no statement (a comment does not count)."
             },
             "empty-heading": {
               "$ref": "#/definitions/rule",
@@ -1981,14 +1981,6 @@
               "$ref": "#/definitions/rule",
               "description": "An import at module level after code (docstrings, `__all__`, blocks, and `sys.path` or `os.environ` setup are not code)."
             },
-            "multi-value-repeated-key-literal": {
-              "$ref": "#/definitions/rule",
-              "description": "A literal used twice as a key of one dict (`1`, `1.0` and `True` are one key)."
-            },
-            "multi-value-repeated-key-variable": {
-              "$ref": "#/definitions/rule",
-              "description": "A name used twice as a key of one dict."
-            },
             "multiple-imports-on-one-line": {
               "$ref": "#/definitions/rule",
               "description": "An `import` that names several modules."
@@ -2206,6 +2198,10 @@
               "$ref": "#/definitions/rule",
               "description": "A RUN that calls apt."
             },
+            "no-assignment-in-condition": {
+              "$ref": "#/definitions/rule",
+              "description": "The condition of an `if`, ternary or loop is an assignment not wrapped in parentheses of its own (ESLint no-cond-assign, PHPCS Generic.CodeAnalysis.AssignmentInCondition). Python's `:=` is the idiom and is left alone."
+            },
             "no-async-promise-executor": {
               "$ref": "#/definitions/rule",
               "description": "`new Promise(async ...)`: an error thrown in the executor is lost."
@@ -2262,10 +2258,6 @@
               "$ref": "#/definitions/rule",
               "description": "`x === -0` is true for `0` too; use `Object.is(x, -0)`."
             },
-            "no-cond-assign": {
-              "$ref": "#/definitions/rule",
-              "description": "An assignment as the condition of `if`, `while`, `do`, `for` or `?:` that is not in parentheses of its own."
-            },
             "no-conditional-comment": {
               "$ref": "#/definitions/rule",
               "description": "An Internet Explorer conditional comment (`<!--[if IE]>`). Only IE 9 and older read them; other browsers see a comment."
@@ -2273,6 +2265,14 @@
             "no-const-assign": {
               "$ref": "#/definitions/rule",
               "description": "A `const` variable that is assigned to again (the initializer is not)."
+            },
+            "no-constant-comparison": {
+              "$ref": "#/definitions/rule",
+              "description": "An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression)."
+            },
+            "no-constant-condition": {
+              "$ref": "#/definitions/rule",
+              "description": "The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and `while (1)` are the usual endless loop and are left alone."
             },
             "no-copy-whole-stage": {
               "$ref": "#/definitions/rule",
@@ -2362,10 +2362,6 @@
               "$ref": "#/definitions/rule",
               "description": "An `else if` condition that an earlier condition of the chain already covers."
             },
-            "no-dupe-keys": {
-              "$ref": "#/definitions/rule",
-              "description": "A key that appears twice in one object literal (a getter and a setter may share one)."
-            },
             "no-dupe-on-directives": {
               "$ref": "#/definitions/rule",
               "description": "Svelte's `no-dupe-on-directives` (eslint-plugin-svelte). Same event and modifiers twice; put both handlers in one function."
@@ -2388,7 +2384,7 @@
             },
             "no-duplicate-case": {
               "$ref": "#/definitions/rule",
-              "description": "Two `case` clauses of one `switch` with the same test."
+              "description": "Two arms of one `switch` (or `match`, `when`, `case`) have the same test; the second arm can never run. ESLint `no-duplicate-case`."
             },
             "no-duplicate-class": {
               "$ref": "#/definitions/rule",
@@ -2465,17 +2461,13 @@
               "$ref": "#/definitions/rule",
               "description": "A one-line paragraph that is only emphasized text without closing punctuation (markdownlint MD036); use a heading."
             },
-            "no-empty": {
-              "$ref": "#/definitions/rule",
-              "description": "A block with no statement and no comment, or a `switch` with no case."
-            },
             "no-empty-attribute-parens": {
               "$ref": "#/definitions/rule",
               "description": "An attribute with empty parentheses: `[Foo()]` is `[Foo]`. Parentheses with a comment in them are left alone."
             },
-            "no-empty-catch": {
+            "no-empty-block": {
               "$ref": "#/definitions/rule",
-              "description": "A catch block with no statements and no comment swallows the exception silently."
+              "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch` or `finally` (also when the language wraps the block in a node of its own); an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement)."
             },
             "no-empty-character-class": {
               "$ref": "#/definitions/rule",
@@ -2879,6 +2871,10 @@
             "no-self-closing": {
               "$ref": "#/definitions/rule",
               "description": "`<div />` is a start tag in HTML: the browser ignores the slash and the element stays open. Void elements (see `void-style`), `<svg>` and `<math>` are left alone."
+            },
+            "no-self-compare": {
+              "$ref": "#/definitions/rule",
+              "description": "An equality or comparison whose two sides are the same tokens: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too."
             },
             "no-shadow": {
               "$ref": "#/definitions/rule",

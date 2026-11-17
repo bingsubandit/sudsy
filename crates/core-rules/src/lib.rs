@@ -9,6 +9,7 @@
 //! * [`layout`]: layout directives that rules attach for the formatter.
 //! * `suppress`: `sudsy-disable-next-line`, `-disable-line`, `-disable`/`-enable`, `-disable-file`.
 
+pub mod cases;
 pub mod checks;
 pub mod comments;
 pub mod configure;
@@ -45,7 +46,7 @@ pub use engine::{
 pub use extension::{ALL_LANGUAGES, ExtensionRule, Extensions};
 pub use family::{Family, Params};
 pub use fixes::{Analysis, FixOutcome, fix_loop};
-pub use hooks::{DEFAULT_HOOKS, DefaultHooks, RuleHooks, Scalar};
+pub use hooks::{Accessor, DEFAULT_HOOKS, DefaultHooks, RuleHooks, Scalar};
 pub use layout::{Attach, LayoutRole, attached, run_layout};
 pub use lines::LineIndex;
 pub use options::{Check, Opt, OptionDecl, RuleOptions};

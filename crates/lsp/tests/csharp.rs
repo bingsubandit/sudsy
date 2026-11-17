@@ -17,11 +17,11 @@ fn edits_diagnostics_and_formatting_share_one_worker() {
     let t = tempfile::tempdir().unwrap();
     std::fs::write(
         t.path().join("sudsy.yaml"),
-        "lint:\n  rules:\n    no-empty-catch: error\n",
+        "lint:\n  rules:\n    no-empty-block: error\n",
     )
     .unwrap();
     let mut client = Client::start(t.path(), providers(&lang_csharp::testing::built_worker()));
-    let text = "class A{void M(){try{}catch{}}}";
+    let text = "class A{void M(){try{F();}catch{}}}";
     let uri = client.open("A.cs", "csharp", text);
 
     let found = client.diagnostics(&uri);

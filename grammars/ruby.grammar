@@ -155,7 +155,7 @@ node GlobalVariableRead #expression #reference =
 node GlobalVariableTarget #expression #opaque
 node GlobalVariableWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node Hash #expression #opaque
+node Hash #expression #opaque #mapping
 node HashPattern #expression #opaque
 node If #expression #conditional #else-branch = Statements? Keyword? condition:#expression Keyword? Operator? then:Statements? else:#else-branch? Keyword?
 node Imaginary #expression #literal =

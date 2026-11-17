@@ -3,6 +3,7 @@
 //! `#mapping` and `#sequence` (`no-duplicate-sections`: `#sections`), so they do nothing in a
 //! language that does not tag them.
 
+use crate::cases::NoDuplicateCase;
 use crate::comments::{CommentSpace, NoEmptyComment};
 use crate::keys::{KeyNameCasing, NoDuplicateKeys, NoEmptyKeys};
 use crate::options::{Check, Opt, OptionDecl};
@@ -17,6 +18,7 @@ pub static RULES: &[&dyn Rule] = &[
     &CommentSpace,
     &NoEmptyComment,
     &NoDuplicateKeys,
+    &NoDuplicateCase,
     &NoEmptyKeys,
     &NoDuplicateSections,
     &KeyNameCasing,
