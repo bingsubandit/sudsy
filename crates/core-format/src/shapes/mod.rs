@@ -9,17 +9,15 @@ mod chain;
 mod key_value;
 mod list;
 
+pub use binary_chain::{
+    BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
+};
 pub use block::{
     BlockStyle, block, block_between, block_open_inside, document, statement_sequence,
     statement_sequence_with,
 };
-pub use binary_chain::{
-    BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
-};
 pub use call_chain::{CHAIN_LABEL, ChainHooks, ChainPolicy, NoHooks, member_chain as call_chain};
-pub use chain::{
-    MemberChain, ends_in_line_comment, gap_after_operator, member_chain,
-};
+pub use chain::{MemberChain, ends_in_line_comment, gap_after_operator, member_chain};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};
 

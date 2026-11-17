@@ -35,7 +35,12 @@ impl shapes::BinaryHooks for BinaryHooks {
 }
 
 fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    shapes::binary_chain(cx, node, &shapes::BinaryPolicy::of(cx.options), &BinaryHooks)
+    shapes::binary_chain(
+        cx,
+        node,
+        &shapes::BinaryPolicy::of(cx.options),
+        &BinaryHooks,
+    )
 }
 
 fn ternary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

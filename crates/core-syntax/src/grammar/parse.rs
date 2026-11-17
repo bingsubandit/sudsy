@@ -615,7 +615,10 @@ node Long =
         assert_eq!((p.level, p.assoc), (1, Assoc::Left));
         assert_eq!(g.precedence("%").unwrap().assoc, Assoc::None);
         assert!(g.precedence("/").is_none());
-        assert!(Grammar::parse("language x 1\nprecedence 1 left \"+\"\nprecedence 2 left \"+\"").is_err());
+        assert!(
+            Grammar::parse("language x 1\nprecedence 1 left \"+\"\nprecedence 2 left \"+\"")
+                .is_err()
+        );
         assert!(Grammar::parse("language x 1\nprecedence 1 wide \"+\"").is_err());
     }
 

@@ -4,10 +4,10 @@
 //! source lacks gets one around its printed document.
 
 use super::ast::{is_binaryish, is_member, operator_text, outer, parent, starts_with, un};
-use core_format::shapes::flattens;
 use super::util::{kids, shape_error, token_of};
 use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, lit};
+use core_format::shapes::flattens;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 

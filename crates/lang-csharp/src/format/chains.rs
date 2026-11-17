@@ -236,7 +236,12 @@ impl shapes::BinaryHooks for BinaryHooks {
 /// `a + b + c`: the shared operator chain (`core_format::shapes::binary_chain`) under the
 /// `binary_*` options.
 pub fn binary_chain(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    shapes::binary_chain(cx, node, &shapes::BinaryPolicy::of(cx.options), &BinaryHooks)
+    shapes::binary_chain(
+        cx,
+        node,
+        &shapes::BinaryPolicy::of(cx.options),
+        &BinaryHooks,
+    )
 }
 
 // ------------------------------------------------------------------- member

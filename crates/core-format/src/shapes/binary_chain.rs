@@ -5,10 +5,10 @@
 //! judge (where the chain stands, what is inline, parentheses) comes through [`BinaryHooks`].
 
 use super::chain::ends_in_line_comment;
+use crate::FormatCtx;
 use crate::comments;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use crate::FormatCtx;
 use core_config::{OptionValue, ResolvedOptions};
 use core_syntax::{Assoc, Grammar, SyntaxElement, SyntaxNode, SyntaxToken};
 
@@ -364,11 +364,7 @@ fn node_kind(hooks: &dyn BinaryHooks, e: &SyntaxElement) -> Option<core_syntax::
 }
 
 /// The place from the roles around the chain and the policy.
-fn default_place(
-    cx: &FormatCtx<'_>,
-    policy: &BinaryPolicy,
-    parent: Option<&SyntaxNode>,
-) -> Place {
+fn default_place(cx: &FormatCtx<'_>, policy: &BinaryPolicy, parent: Option<&SyntaxNode>) -> Place {
     let g = cx.grammar;
     let Some(p) = parent else {
         return Place::Indented;
