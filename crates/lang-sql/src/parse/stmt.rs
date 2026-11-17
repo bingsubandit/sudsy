@@ -120,6 +120,11 @@ impl P<'_> {
                 p.list(|p| p.obj_ref());
             });
         }
+        if self.at("overriding") {
+            self.bump_as(k::KEYWORD);
+            self.bump_as(k::KEYWORD);
+            self.eat("value");
+        }
         if self.at("values") {
             self.values_clause();
         } else if self.at_query_start() {

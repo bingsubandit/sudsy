@@ -36,7 +36,9 @@ impl P<'_> {
                 self.bump_as(k::TYPE_IDENTIFIER);
             }
         }
-        self.type_args();
+        if head != "INTERVAL" {
+            self.type_args();
+        }
         if self.at("array") {
             self.bump_as(k::TYPE_IDENTIFIER);
         }

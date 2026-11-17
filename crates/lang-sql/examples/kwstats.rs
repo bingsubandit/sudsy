@@ -8,7 +8,7 @@ fn main() {
     let g = lang_sql::provider().grammar().clone();
     let root = std::path::PathBuf::from("tests/conformance/corpus/sql/sqlfluff/test/fixtures/dialects");
     let mut stats: BTreeMap<String, (u32, u32, u32)> = BTreeMap::new(); // keyword, identifier-ish, other
-    for d in ["ansi", "postgres", "mysql", "tsql"] {
+    for d in a[2..].iter().map(String::as_str) {
         for e in std::fs::read_dir(root.join(d)).unwrap() {
             let p = e.unwrap().path();
             if p.extension().is_none_or(|e| e != "sql") {

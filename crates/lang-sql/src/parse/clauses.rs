@@ -45,7 +45,13 @@ impl P<'_> {
             self.eat_seq(&["not", "materialized"]);
         }
         if self.is_t(0, T::LParen) {
-            self.bracketed(|p| p.query());
+            self.bracketed(|p| {
+                if p.at_any(&["insert", "update", "delete"]) {
+                    p.statement_body();
+                } else {
+                    p.query();
+                }
+            });
         }
         // `SEARCH DEPTH FIRST BY id SET col`, `CYCLE id SET c USING path`.
         while self.at_any(&["search", "cycle"]) {
@@ -95,6 +101,9 @@ impl P<'_> {
             self.bracketed(|p| p.query());
         } else if self.at("values") {
             self.values_clause();
+            if !in_set {
+                self.tail_clauses();
+            }
         } else {
             self.select_stmt(in_set);
         }

@@ -270,6 +270,19 @@ impl P<'_> {
                 }
                 return true;
             }
+            "TIMESTAMP" | "TIME" if self.at_any_at(1, &["with", "without"]) && self.is(2, "time") && self.is(3, "zone") && self.is_t(4, T::Str) => {
+                for _ in 0..4 {
+                    self.bump_as(k::KEYWORD);
+                }
+                self.bump();
+                return true;
+            }
+            "CURRENT" if self.is(1, "of") => {
+                self.bump_as(k::KEYWORD);
+                self.bump_as(k::KEYWORD);
+                self.obj_ref();
+                return true;
+            }
             "DATE" | "TIME" | "TIMESTAMP" | "DATETIME" | "TIMESTAMPTZ" if self.is_t(1, T::Str) => {
                 self.bump_as(k::KEYWORD);
                 self.bump();
@@ -516,6 +529,8 @@ impl P<'_> {
                 self.bump();
                 if self.is_t(0, T::Word) || self.is_t(0, T::Quoted) {
                     self.eat_name();
+                } else if self.at_op("*") {
+                    self.bump();
                 }
                 c.lone = false;
             } else if self.at("collate") && self.is_t(1, T::Word) | self.is_t(1, T::Quoted) {

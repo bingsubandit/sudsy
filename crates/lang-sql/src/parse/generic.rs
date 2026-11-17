@@ -20,7 +20,7 @@ const INTRODUCERS: &[&str] = &[
 ];
 
 /// Words that are never a name, whatever precedes them.
-const NEVER_NAMES: &[&str] = &["DELETE", "UPDATE", "INSERT", "SELECT", "ALL", "CASCADE", "RESTRICT", "NO", "SET", "NULL", "BY", "OF", "ACCESS", "CURRENT", "NONE", "DEPENDS", "OWNED"];
+const NEVER_NAMES: &[&str] = &["DELETE", "UPDATE", "INSERT", "SELECT", "ALL", "CASCADE", "RESTRICT", "NO", "SET", "NULL", "BY", "OF", "ACCESS", "CURRENT", "NONE", "DEPENDS", "OWNED", "COMMIT"];
 
 /// Words that sit between an introducer and the name it introduces.
 const MODIFIERS: &[&str] = &[
@@ -123,7 +123,7 @@ impl P<'_> {
                     self.bump_as(k::SIGN);
                 }
                 T::Op => {
-                    w.value = self.at_op("=") && !w.expr && !w.columns;
+                    w.value = self.at_op("=") && !w.columns;
                     w.expr = true;
                     w.expect_name = false;
                     w.after_name = false;
@@ -210,6 +210,11 @@ impl P<'_> {
         let quoted = self.is_t(0, T::Quoted);
         let dotted = self.is_t(1, T::Dot) || self.prev_is_dot();
         let word = !quoted;
+        // `PREPARE p AS UPDATE ...`: a statement of its own.
+        if word && !dotted && matches!(up.as_str(), "UPDATE" | "DELETE" | "INSERT") && self.prev_text_is("as") {
+            self.statement_body();
+            return;
+        }
         // A value of a setting (`SET x = on, off`) and the key before `=`.
         if word && !dotted && !w.columns && !w.params && !w.options && (w.value || self.is_op(1, "=")) {
             let kind = match (self.d == super::Dialect::Tsql, w.value) {
@@ -255,6 +260,11 @@ impl P<'_> {
         }
         w.item_start = false;
         // `CAST (int AS bool)`: types.
+        if word && !dotted && w.after_name && w.columns && self.is_t(1, T::LParen) && !self.reserved(0) {
+            self.type_name();
+            w.after_name = false;
+            return;
+        }
         if quoted && w.after_name && (w.columns || w.params) {
             self.type_name();
             w.after_name = false;
@@ -276,7 +286,7 @@ impl P<'_> {
             return;
         }
         // An item of a bracketed list that is a bare word: a name (`(no)`, `(name)`).
-        let bare_item = word && depth > 0 && !w.columns && !w.params && !self.reserved(0) && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen));
+        let bare_item = word && depth > 0 && (w.create_table || w.table_stmt) && !w.columns && !w.params && !self.reserved(0) && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen));
         let name_here = bare_item || w.expect_name && !self.reserved(0) && !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) && !NEVER_NAMES.contains(&up.as_str());
         let calls = (w.expr || (depth > 0 && !w.columns && !w.params)) && !self.reserved(0) || super::expr::BARE_FUNCTIONS.contains(&up.as_str());
         if (word || quoted) && calls && (self.is_t(1, T::LParen) || (w.expr && self.name_then_paren())) && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN") {
