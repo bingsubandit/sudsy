@@ -53,10 +53,7 @@ rule! {
         cases(node, g, &mut found, 2);
         let mut seen = Repeats::default();
         for case in found {
-            let Some(tests) = g.slots(&case, "test") else {
-                continue;
-            };
-            for test in tests {
+            for test in g.slots(&case, "test") {
                 let range = significant_range(&case, g);
                 let key = words(&test, g);
                 seen.check(ctx, key, range, || "duplicate case label".to_string(), "first case");
