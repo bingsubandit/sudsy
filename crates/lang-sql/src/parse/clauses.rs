@@ -393,6 +393,20 @@ impl P<'_> {
         self.chain(true);
     }
 
+    /// A table hint: `NOLOCK`, `INDEX(ix)`.
+    pub fn table_hint(&mut self) -> bool {
+        if !self.is_t(0, T::Word) {
+            return false;
+        }
+        self.bump_as(k::KEYWORD);
+        if self.is_t(0, T::LParen) {
+            self.bracketed(|p| {
+                p.list(|p| p.element());
+            });
+        }
+        true
+    }
+
     /// What can follow a table and its alias: `TABLESAMPLE`, hints, `WITH (NOLOCK)`.
     fn table_suffix(&mut self) {
         // MySQL: `PARTITION (p0)`, `FORCE INDEX (i)`.
@@ -420,13 +434,7 @@ impl P<'_> {
         if self.at("with") && self.is_t(1, T::LParen) && self.d == Dialect::Tsql {
             self.bump_as(k::KEYWORD);
             self.bracketed(|p| {
-                p.list(|p| {
-                    let ok = p.is_t(0, T::Word);
-                    if ok {
-                        p.bump_as(k::KEYWORD);
-                    }
-                    ok
-                });
+                p.list(|p| p.table_hint());
             });
         }
     }

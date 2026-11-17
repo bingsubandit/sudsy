@@ -119,6 +119,12 @@ impl P<'_> {
         self.eat("into");
         self.eat("table");
         self.obj_ref();
+        if self.d == Dialect::Tsql && self.at("with") && self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            self.bracketed(|p| {
+                p.list(|p| p.table_hint());
+            });
+        }
         if self.is_t(0, T::LParen) && !self.paren_query_ahead() {
             self.bracketed(|p| {
                 p.list(|p| p.obj_ref());

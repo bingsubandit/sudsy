@@ -261,13 +261,13 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
             return (T::Var, j);
         }
     }
-    if matches!(c, b'@' | b'#') && matches!(d, Dialect::Tsql | Dialect::Mysql) {
+    if (c == b'@' && matches!(d, Dialect::Tsql | Dialect::Mysql)) || (c == b'#' && d == Dialect::Mysql) {
         let mut j = i + 1;
         if b.get(j) == Some(&c) {
             j += 1;
         }
         let start = j;
-        while j < b.len() && is_word_char(src[j..].chars().next().unwrap_or(' '), Dialect::Mysql) {
+        while j < b.len() && is_word_char(src[j..].chars().next().unwrap_or(' '), d) {
             j += src[j..].chars().next().map_or(1, char::len_utf8);
         }
         if j > start {

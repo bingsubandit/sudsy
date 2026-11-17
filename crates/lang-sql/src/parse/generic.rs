@@ -327,7 +327,7 @@ impl P<'_> {
                 w.name_list = false;
             }
             w.after_name = false;
-            w.expr = EXPR_AFTER.contains(&up.as_str());
+            w.expr = EXPR_AFTER.contains(&up.as_str()) || (up == "AS" && w.columns);
             if matches!(up.as_str(), "RETURNS" | "AS") && self.at_type_word() {
                 self.type_name();
             }

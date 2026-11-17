@@ -128,7 +128,10 @@ impl P<'_> {
             let cp = self.cp();
             self.bump();
             if !item(self) {
-                self.rewind(cp);
+                // A trailing comma before `)` stays in the list.
+                if !self.is_t(0, T::RParen) {
+                    self.rewind(cp);
+                }
                 break;
             }
         }
