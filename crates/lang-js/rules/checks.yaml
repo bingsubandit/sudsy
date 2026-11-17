@@ -239,3 +239,53 @@ description: "Overloads of one function or method (or call and construct signatu
 example: "interface I { a(): void; b(): void; a(x: number): void }   # the last a is reported"
 severity: off
 category: style
+---
+id: no-fallthrough
+family: check
+params: { check: fallthrough }
+message: "Expected a 'break' statement before '{name}'."
+description: A `case` with statements that can reach the next `case` or `default`, or an empty one followed by a blank line, without a comment that says `falls through` before the next one (or at the end of its block).
+example: "switch (a) { case 1: b(); case 2: c(); }   # the second case is reported"
+category: suspicious
+---
+id: no-unused-expressions
+family: check
+params: { check: unused-expressions }
+message: "Expected an assignment or function call and instead saw an expression."
+description: "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them."
+example: "a + b;   # reported"
+severity: off
+category: suspicious
+---
+id: no-unexpected-multiline
+family: check
+params: { check: unexpected-multiline }
+message: "Unexpected newline between {name}."
+description: "`[`, `(` or a template at the start of a line right after an expression, which continues it (`a\\n[b]` is a property access, not two statements)."
+example: "var a = b\n(c || d).e()   # reported"
+category: suspicious
+---
+id: no-control-regex
+family: check
+params: { check: control-regex }
+message: "Unexpected control character(s) in regular expression: {name}."
+description: A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\x00`, `\u0000` or `\u{0}`.
+example: "var r = /\\x1f/;   # reported"
+category: suspicious
+---
+id: no-misleading-character-class
+family: check
+params: { check: misleading-character-class }
+message: "Unexpected combined character in character class."
+description: A character class of a regex (a literal or the constant string given to `RegExp`; names of variables written once are followed) in which a combining mark follows another character. The surrogate pair, emoji modifier, flag and joined-sequence checks are not made.
+example: "var r = /[A\\u0301]/;   # reported"
+category: suspicious
+---
+id: no-duplicate-enum-values
+family: check
+params: { check: duplicate-enum-values }
+message: "Duplicate enum member value {name}."
+description: Two members of one enum initialized with the same string or number.
+example: "enum E { A = 0, B = 0 }   # the second member is reported"
+severity: off
+category: suspicious

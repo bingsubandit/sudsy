@@ -2,13 +2,16 @@
 //! family they name for ESLint's core rules that read the syntax tree. `cargo xtask new-rule js
 //! <id> --rust` adds a module under `rules/` and lists it here.
 
+mod binder;
 mod dupes;
 mod escapes;
 mod flow;
 mod imports;
 mod misc;
+mod regexp;
 mod scope;
 mod shadow;
+mod stmts;
 mod ts;
 mod unused;
 
@@ -116,6 +119,36 @@ const CHECKS: &[Entry] = &[
         &[k::NUMERIC_LITERAL],
         escapes::loss_of_precision,
     ),
+    ("fallthrough", &[k::SWITCH_STATEMENT], flow::fallthrough),
+    (
+        "unused-expressions",
+        &[k::EXPRESSION_STATEMENT],
+        stmts::unused_expressions,
+    ),
+    (
+        "unexpected-multiline",
+        &[
+            k::COMPUTED_MEMBER_EXPRESSION,
+            k::CALL_EXPRESSION,
+            k::TAGGED_TEMPLATE_EXPRESSION,
+        ],
+        stmts::unexpected_multiline,
+    ),
+    (
+        "duplicate-enum-values",
+        &[k::TS_ENUM_DECLARATION],
+        stmts::duplicate_enum_values,
+    ),
+    (
+        "control-regex",
+        &[k::REG_EXP_LITERAL, k::NEW_EXPRESSION, k::CALL_EXPRESSION],
+        regexp::control_regex,
+    ),
+    (
+        "misleading-character-class",
+        &[k::REG_EXP_LITERAL, k::NEW_EXPRESSION, k::CALL_EXPRESSION],
+        regexp::misleading_class,
+    ),
     ("undef", &[k::PROGRAM], scope::undef),
     ("const-assign", &[k::PROGRAM], scope::const_assign),
     ("class-assign", &[k::PROGRAM], scope::class_assign),
@@ -124,6 +157,10 @@ const CHECKS: &[Entry] = &[
     ("redeclare", &[k::PROGRAM], scope::redeclare),
     ("use-before-define", &[k::PROGRAM], scope::use_before_define),
     ("shadow", &[k::PROGRAM], shadow::shadow),
+    ("prefer-const", &[k::PROGRAM], binder::prefer_const),
+    ("prefer-rest-params", &[k::PROGRAM], binder::prefer_rest_params),
+    ("unsafe-function-type", &[k::PROGRAM], binder::unsafe_function),
+    ("wrapper-object-types", &[k::PROGRAM], binder::wrapper_types),
     ("unused-vars", &[k::PROGRAM], unused::unused_vars),
     (
         "require-imports",

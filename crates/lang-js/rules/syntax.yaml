@@ -126,3 +126,25 @@ rule:
   any:
     - { regex: '^(NaN|Infinity|eval|arguments)$' }
     - { regex: '^undefined$', not: { parent: { kind: VariableDeclarator, regex: '^undefined$' } } }
+---
+id: no-var
+message: "Unexpected var, use let or const instead."
+description: "A `var` declaration."
+example: "var a = 1;   # reported"
+severity: off
+category: style
+rule: { kind: VariableDeclaration, regex: '^(declare\s+)?var\b' }
+---
+id: prefer-spread
+message: "Use the spread operator instead of '.apply()'."
+description: "`f.apply(undefined, args)` and `o.m.apply(o, args)` with an `args` that is not an array literal."
+example: "f.apply(undefined, a);   # reported"
+severity: off
+category: style
+rule:
+  any:
+    - { pattern: '$F.apply(null, $A)' }
+    - { pattern: '$F.apply(undefined, $A)' }
+    - { pattern: '$O.$M.apply($O, $A)' }
+constraints:
+  A: { not-regex: '^(\[|\.\.\.)' }

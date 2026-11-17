@@ -3,13 +3,23 @@ js:
   lint:
     rules:
       ban-ts-comment: error
+      no-duplicate-enum-values: error
       no-empty-object-type: error
       no-explicit-any: error
       no-extra-non-null-assertion: error
       no-misused-new: error
       no-namespace: error
+      no-non-null-asserted-optional-chain: error
       no-require-imports: error
       no-this-alias: error
+      no-unnecessary-type-constraint: error
+      no-unsafe-function-type: error
+      no-unused-expressions: error
       no-unused-vars: error
+      no-var: error
+      no-wrapper-object-types: error
       prefer-as-const: error
+      prefer-const: error
+      prefer-rest-params: error
+      prefer-spread: error
       triple-slash-reference: error
