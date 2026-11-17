@@ -7,4 +7,28 @@ options:
   - indent_style
   - final_newline: true
   - end_of_line
+  - member_chain_min_calls:
+      range: [1, 1000]
+      default: 2
+      doc: "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line."
+  - member_chain_keep_accesses:
+      values: ["never", "head", "always"]
+      default: "head"
+      doc: "In a broken member chain an access stays on the line of the call after it (`.a.b()` is one group) instead of starting a line of its own: `always`, or `head` in the first group only (which stays on the line of the head when the head name is short or a type name)."
+  - member_chain_break_on_block:
+      values: ["never", "inner", "any"]
+      default: "any"
+      doc: "Break a member chain one call per line when it has an argument with a block body (a lambda or an anonymous class) even if the chain would fit: `inner` when a call other than the last has one, `any` when any call has one."
+  - member_chain_head_calls:
+      kind: "words"
+      default: ["stream"]
+      doc: "Calls that stay on the line of the head of a broken member chain when they are among its first two groups (`list.stream()`)."
+  - member_chain_short_head:
+      range: [0, 100]
+      default: 4
+      doc: "A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `super` and a keyword type always do."
+  - member_chain_indent:
+      range: [1, 4]
+      default: 2
+      doc: "Levels of indentation of the lines of a broken member chain."
 presets: [google]

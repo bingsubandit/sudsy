@@ -262,6 +262,56 @@ impl Grammar {
         }
     }
 
+    /// The labelled children of `node` with their labels (and role field names), in source order,
+    /// found in one pass: for a reader that needs several fields of one node.
+    pub fn fields(&self, node: &SyntaxNode) -> Vec<(&str, SyntaxElement)> {
+        let (Some(def), Some(kinds)) = (
+            self.def(node.kind()),
+            self.bodies.get(node.kind().index() as usize),
+        ) else {
+            return Vec::new();
+        };
+        let body = GrammarBody {
+            grammar: self,
+            kinds,
+            body: &def.body,
+        };
+        let mut out = Vec::new();
+        for (i, e) in crate::ast::assign(node, body) {
+            let item = &def.body[i];
+            for name in [item.label.as_deref(), item.field.as_deref()]
+                .into_iter()
+                .flatten()
+            {
+                out.push((name, e.clone()));
+            }
+        }
+        out
+    }
+
+    /// Every child of `node` in the items labelled `label` (or filling the role field `label`), in
+    /// source order: the arguments of a call whose parentheses are children of the call.
+    pub fn slots(&self, node: &SyntaxNode, label: &str) -> Vec<SyntaxElement> {
+        let Some(def) = self.def(node.kind()) else {
+            return Vec::new();
+        };
+        let Some(kinds) = self.bodies.get(node.kind().index() as usize) else {
+            return Vec::new();
+        };
+        let body = GrammarBody {
+            grammar: self,
+            kinds,
+            body: &def.body,
+        };
+        crate::ast::assign(node, body)
+            .filter(|(i, _)| {
+                let item = &def.body[*i];
+                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+            })
+            .map(|(_, e)| e)
+            .collect()
+    }
+
     /// What is wrong with the roles of a grammar that declared `roles`: a node kind with no role
     /// tag and no `#opaque`, an opaque one with a role, a role whose required fields its body
     /// lacks. Empty for a grammar that did not opt in.

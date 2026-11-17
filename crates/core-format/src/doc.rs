@@ -106,6 +106,24 @@ impl Doc {
         }
     }
 
+    /// Does printing this document contain a forced line break (a hard line, a broken group)?
+    pub fn will_break(&self) -> bool {
+        match self {
+            Doc::HardLine | Doc::BreakParent | Doc::LineStart(_) | Doc::NewlineIfNeeded => true,
+            Doc::Outdent(..) => true,
+            Doc::Shared(s) => s.forced,
+            Doc::Concat(parts) | Doc::Fill(parts) => parts.iter().any(Doc::will_break),
+            Doc::Group(g) => g.broken || g.contents.will_break(),
+            Doc::Indent(x)
+            | Doc::Align(_, x)
+            | Doc::Label(_, x)
+            | Doc::IndentIfBreak(_, x)
+            | Doc::LineSuffix(x) => x.will_break(),
+            Doc::IfBreak { broken, flat, .. } => broken.will_break() || flat.will_break(),
+            _ => false,
+        }
+    }
+
     /// Marks groups that contain a forced break as broken. The printer does this itself; call it
     /// directly only to inspect a document.
     pub fn propagate_breaks(&mut self) -> bool {

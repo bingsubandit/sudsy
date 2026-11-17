@@ -3,6 +3,7 @@
 One line each; none is committed, except the small tasks below.
 
 ## Small tasks
+- Java member chains: 101 files fewer than before the kit (4402 of 5337); closing them needs `this`-head, head-call counting and chain-in-cast policy values. Call arguments (hug rules) wait for the object, array and template roles of R4; the `member_chain_*` option declarations repeat in three `lang.yaml` files and want one shared declaration.
 - Java: generalization step ([architecture/adding-a-language.md](architecture/adding-a-language.md#after-a-language-lands-the-generalization-step)).
 - Java formatter gaps (named in `tests/parity/google-java-format/differences.yaml`, 84.4% identical): re-wrap line comments over the width and write `//x` as `// x`; drop `()` from `@A()` (the safety check compares node kinds, so the token pair needs `#optional`); indent a chain in a ternary condition one level more; AOSP's import groups.
 - Kotlin: generalization step ([architecture/adding-a-language.md](architecture/adding-a-language.md#after-a-language-lands-the-generalization-step)); the `intellij_idea` and `android_studio` code styles as options; `.kts` and Gradle Kotlin DSL checks.

@@ -23,6 +23,22 @@ options:
       values: ["all", "es5", "none"]
       default: "all"
       doc: "Trailing comma of a list that breaks over several lines: `all` after every list including function parameters and call arguments, `es5` after objects, arrays, destructuring and import/export lists only, `none` never."
+  - member_chain_style:
+      values: ["prettier", "dotted"]
+      default: "prettier"
+      doc: "Layout of a chain of member accesses and calls that does not fit: `prettier` keeps the head, its calls and indexes in the first group, a call group per line after it (a chain of up to two groups stays on one line); `dotted` breaks before every dot once there are `member_chain_min_calls` calls."
+  - member_chain_short_head:
+      range: [0, 100]
+      default: 2
+      doc: "A name of at most this many characters at the head of a broken member chain statement stays on the line of the first call (`z.object({`); a capitalized name, `this` and a name of `$` and `_` always do."
+  - member_chain_indent:
+      range: [1, 4]
+      default: 1
+      doc: "Levels of indentation of the lines of a broken member chain."
+  - member_chain_min_calls:
+      range: [1, 1000]
+      default: 3
+      doc: "With `member_chain_style: dotted`, a chain with at least this many calls is broken one call per line when it does not fit on a line."
   - bracket_spacing: true
   - arrow_parens:
       values: ["always", "avoid"]

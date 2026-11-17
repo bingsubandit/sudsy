@@ -42,7 +42,7 @@ fn call(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         && super::ast::is_member(callee_u.kind())
         && !has_inner_comment(cx, &callee_u)
     {
-        return chain::member_chain(cx, node, &c);
+        return chain::member_chain(cx, node);
     }
     let mut parts = Vec::new();
     if is_new {
