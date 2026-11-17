@@ -2,9 +2,7 @@
 //! language's [`Table`] says, then resolves every reference by name up the scope chain.
 
 use super::table::{Declares, Flow, Place, Row, Sel, Table};
-use super::{
-    Access, Decl, Flags, Model, RefId, Reference, Scope, ScopeId, Symbol, SymbolId,
-};
+use super::{Access, Decl, Flags, Model, RefId, Reference, Scope, ScopeId, Symbol, SymbolId};
 use core_syntax::{Grammar, SyntaxNode, SyntaxToken, TextRange};
 use rowan::WalkEvent;
 
@@ -137,7 +135,13 @@ impl Binder<'_> {
         self.table.is_name_token(t.kind()).then_some(t)
     }
 
-    fn declares(&mut self, node: &SyntaxNode, d: &Declares, own_scope: bool, outer: Option<ScopeId>) {
+    fn declares(
+        &mut self,
+        node: &SyntaxNode,
+        d: &Declares,
+        own_scope: bool,
+        outer: Option<ScopeId>,
+    ) {
         let (mut flags, mut place) = (d.flags, d.place);
         if let Some(parent) = node.parent()
             && let Some((_, p)) = d
@@ -154,7 +158,11 @@ impl Binder<'_> {
             place = p;
         }
         if !d.keywords.is_empty() {
-            let from = if d.keyword_on_parent { node.parent() } else { Some(node.clone()) };
+            let from = if d.keyword_on_parent {
+                node.parent()
+            } else {
+                Some(node.clone())
+            };
             let hit = from.and_then(|n| {
                 n.children_with_tokens()
                     .filter_map(|e| e.into_token())
@@ -219,7 +227,9 @@ impl Binder<'_> {
         // and the one around it: a declaration of the same name in the function is another one.
         if let Some(&id) = scope_ref.names_mut().get(name)
             && (flags.contains(Flags::EXPRESSION_NAME)
-                || !self.model.symbols[id.0 as usize].flags.contains(Flags::EXPRESSION_NAME))
+                || !self.model.symbols[id.0 as usize]
+                    .flags
+                    .contains(Flags::EXPRESSION_NAME))
         {
             let s = &mut self.model.symbols[id.0 as usize];
             s.flags = s.flags | flags;
@@ -240,8 +250,14 @@ impl Binder<'_> {
     }
 
     fn reference(&mut self, node: &SyntaxNode, state: State) {
-        let Some(t) = self.name_token(node) else { return };
-        let access = if state == Access::NONE { Access::READ } else { state };
+        let Some(t) = self.name_token(node) else {
+            return;
+        };
+        let access = if state == Access::NONE {
+            Access::READ
+        } else {
+            state
+        };
         self.model.refs.push(Reference {
             name: t.text().into(),
             node: node.clone(),
@@ -263,41 +279,54 @@ impl Binder<'_> {
                 _ => None,
             })
             .collect();
-        let tokens: Vec<SyntaxToken> = node.children_with_tokens().filter_map(|e| e.into_token()).collect();
+        let tokens: Vec<SyntaxToken> = node
+            .children_with_tokens()
+            .filter_map(|e| e.into_token())
+            .collect();
         let op = tokens.iter().find(|t| self.table.is_operator(t.kind()));
         let op_start = op.map(|t| t.text_range().start());
         let op_text = op.map(|t| t.text());
         let mut out = Vec::new();
         for (index, child) in node.children().enumerate() {
             let start = child.text_range().start();
-            let hit = row.children.iter().enumerate().find(|(i, (sel, _))| match sel {
-                Sel::All => true,
-                Sel::First => index == 0,
-                Sel::Field(_) => fields[*i] == Some(child.text_range()),
-                Sel::BeforeOp => op_start.is_none_or(|o| start < o),
-                Sel::WithToken(text) => tokens.iter().any(|t| t.text() == *text),
-                Sel::AfterText(text) => tokens
-                    .iter()
-                    .find(|t| t.text() == *text)
-                    .is_some_and(|t| t.text_range().end() <= start),
-            });
-            out.push(hit.map(|(_, (_, flow))| (match flow {
-                Flow::Write => Access::WRITE,
-                Flow::ReadWrite => Access::READ.union(Access::WRITE),
-                Flow::Assign(plain) if op_text == Some(*plain) => Access::WRITE,
-                Flow::Assign(_) => Access::READ.union(Access::WRITE),
-                Flow::Type => Access::TYPE,
-                Flow::Query => Access::READ.union(Access::TYPE),
-                Flow::Through => state,
-                Flow::ThroughType if state.contains(Access::TYPE) => state,
-                Flow::ThroughType | Flow::Outside => Access::NONE,
-            }, matches!(flow, Flow::Outside))));
+            let hit = row
+                .children
+                .iter()
+                .enumerate()
+                .find(|(i, (sel, _))| match sel {
+                    Sel::All => true,
+                    Sel::First => index == 0,
+                    Sel::Field(_) => fields[*i] == Some(child.text_range()),
+                    Sel::BeforeOp => op_start.is_none_or(|o| start < o),
+                    Sel::WithToken(text) => tokens.iter().any(|t| t.text() == *text),
+                    Sel::AfterText(text) => tokens
+                        .iter()
+                        .find(|t| t.text() == *text)
+                        .is_some_and(|t| t.text_range().end() <= start),
+                });
+            out.push(hit.map(|(_, (_, flow))| {
+                (
+                    match flow {
+                        Flow::Write => Access::WRITE,
+                        Flow::ReadWrite => Access::READ.union(Access::WRITE),
+                        Flow::Assign(plain) if op_text == Some(*plain) => Access::WRITE,
+                        Flow::Assign(_) => Access::READ.union(Access::WRITE),
+                        Flow::Type => Access::TYPE,
+                        Flow::Query => Access::READ.union(Access::TYPE),
+                        Flow::Through => state,
+                        Flow::ThroughType if state.contains(Access::TYPE) => state,
+                        Flow::ThroughType | Flow::Outside => Access::NONE,
+                    },
+                    matches!(flow, Flow::Outside),
+                )
+            }));
         }
         out
     }
 
     fn resolve(&mut self) {
-        let found: Vec<Option<SymbolId>> = self.model.refs.iter().map(|r| self.model.find(r)).collect();
+        let found: Vec<Option<SymbolId>> =
+            self.model.refs.iter().map(|r| self.model.find(r)).collect();
         for (i, symbol) in found.into_iter().enumerate() {
             self.model.refs[i].symbol = symbol;
             if let Some(s) = symbol {

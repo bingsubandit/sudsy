@@ -4,10 +4,10 @@
 //! with the others, so a run with syntax rules only never pays for it.
 
 use crate::adapter::source_type;
+use crate::generated::kind as k;
 use core_rules::FileContext;
 use core_rules::checks::FileCache;
 use core_rules::tree::significant_range;
-use crate::generated::kind as k;
 use core_semantics::scopes::{
     Decl, Declares, Flags, Flow, Model, Place, Row, Sel, Symbol, SymbolId, Table, bind,
 };
@@ -98,9 +98,17 @@ const ROWS: &[Row] = &[
         ..Row::NONE
     },
     names("FormalParameter", V.union(Flags::PARAMETER), Place::Scope),
-    names("FormalParameterRest", V.union(Flags::PARAMETER), Place::Scope),
+    names(
+        "FormalParameterRest",
+        V.union(Flags::PARAMETER),
+        Place::Scope,
+    ),
     names("CatchParameter", V.union(Flags::CATCH), Place::Scope),
-    names("TSEnumDeclaration", V.union(T).union(Flags::ENUM), Place::Parent),
+    names(
+        "TSEnumDeclaration",
+        V.union(T).union(Flags::ENUM),
+        Place::Parent,
+    ),
     Row {
         kind: "TSEnumMember",
         declares: Some(Declares {
@@ -110,9 +118,21 @@ const ROWS: &[Row] = &[
         }),
         ..Row::NONE
     },
-    names("TSInterfaceDeclaration", T.union(Flags::INTERFACE), Place::Parent),
-    names("TSTypeAliasDeclaration", T.union(Flags::TYPE_ALIAS), Place::Parent),
-    names("TSNamespaceDeclaration", V.union(T).union(Flags::NAMESPACE), Place::Scope),
+    names(
+        "TSInterfaceDeclaration",
+        T.union(Flags::INTERFACE),
+        Place::Parent,
+    ),
+    names(
+        "TSTypeAliasDeclaration",
+        T.union(Flags::TYPE_ALIAS),
+        Place::Parent,
+    ),
+    names(
+        "TSNamespaceDeclaration",
+        V.union(T).union(Flags::NAMESPACE),
+        Place::Scope,
+    ),
     Row {
         kind: "TSTypeParameter",
         declares: Some(Declares {
@@ -137,16 +157,28 @@ const ROWS: &[Row] = &[
         reference: true,
         ..Row::NONE
     },
-    flows("AssignmentExpression", &[(Sel::BeforeOp, Flow::Assign("="))]),
+    flows(
+        "AssignmentExpression",
+        &[(Sel::BeforeOp, Flow::Assign("="))],
+    ),
     flows("UpdateExpression", &[(Sel::All, Flow::ReadWrite)]),
     flows("ForInStatement", &[(Sel::Field("left"), Flow::Write)]),
     flows("ForOfStatement", &[(Sel::Field("left"), Flow::Write)]),
     flows("ArrayAssignmentTarget", &[(Sel::All, Flow::Through)]),
     flows("ObjectAssignmentTarget", &[(Sel::All, Flow::Through)]),
     flows("AssignmentTargetRest", &[(Sel::All, Flow::Through)]),
-    flows("AssignmentTargetWithDefault", &[(Sel::First, Flow::Through)]),
-    flows("AssignmentTargetPropertyIdentifier", &[(Sel::First, Flow::Through)]),
-    flows("AssignmentTargetPropertyProperty", &[(Sel::AfterText(":"), Flow::Through)]),
+    flows(
+        "AssignmentTargetWithDefault",
+        &[(Sel::First, Flow::Through)],
+    ),
+    flows(
+        "AssignmentTargetPropertyIdentifier",
+        &[(Sel::First, Flow::Through)],
+    ),
+    flows(
+        "AssignmentTargetPropertyProperty",
+        &[(Sel::AfterText(":"), Flow::Through)],
+    ),
     flows("ParenthesizedExpression", &[(Sel::All, Flow::Through)]),
     flows("TSNonNullExpression", &[(Sel::All, Flow::Through)]),
     flows("TSAsExpression", &[(Sel::First, Flow::Through)]),
@@ -156,10 +188,16 @@ const ROWS: &[Row] = &[
     flows("TSInterfaceHeritage", &[(Sel::First, Flow::Type)]),
     flows("TSTypeQuery", &[(Sel::All, Flow::Query)]),
     flows("TSConditionalType", &[(Sel::AfterText(":"), Flow::Outside)]),
-    flows("ExportNamedDeclaration", &[(Sel::WithToken("type"), Flow::Type)]),
+    flows(
+        "ExportNamedDeclaration",
+        &[(Sel::WithToken("type"), Flow::Type)],
+    ),
     flows(
         "ExportSpecifier",
-        &[(Sel::WithToken("type"), Flow::Type), (Sel::First, Flow::ThroughType)],
+        &[
+            (Sel::WithToken("type"), Flow::Type),
+            (Sel::First, Flow::ThroughType),
+        ],
     ),
     flows("TSQualifiedName", &[(Sel::First, Flow::ThroughType)]),
     flows("StaticMemberExpression", &[(Sel::First, Flow::ThroughType)]),
@@ -211,7 +249,8 @@ impl Cx {
 
     /// Does `n` have an own token (not trivia) with this text (`static`, `set`, `type`)?
     pub fn has_own(&self, n: &SyntaxNode, text: &str) -> bool {
-        n.tokens().any(|t| t.text() == text && !self.g.is_trivia(t.kind()))
+        n.tokens()
+            .any(|t| t.text() == text && !self.g.is_trivia(t.kind()))
     }
 
     /// The span of `n` without the trivia around it.

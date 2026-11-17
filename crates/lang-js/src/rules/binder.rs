@@ -30,8 +30,12 @@ fn can_declare(id: &SyntaxNode) -> bool {
     let Some(assign) = host_of(id).filter(|h| h.kind() == k::ASSIGNMENT_EXPRESSION) else {
         return false;
     };
-    let mut up = assign.ancestors().skip(1).skip_while(|a| a.kind() == k::PARENTHESIZED_EXPRESSION);
-    up.next().is_some_and(|s| s.kind() == k::EXPRESSION_STATEMENT)
+    let mut up = assign
+        .ancestors()
+        .skip(1)
+        .skip_while(|a| a.kind() == k::PARENTHESIZED_EXPRESSION);
+    up.next()
+        .is_some_and(|s| s.kind() == k::EXPRESSION_STATEMENT)
         && up.next().is_some_and(|h| {
             matches!(
                 h.kind(),
@@ -43,9 +47,12 @@ fn can_declare(id: &SyntaxNode) -> bool {
 /// Does the destructuring assignment `left` assign to a member, or (one level deep) to a name
 /// from outside the scope of `sym` or to a parameter?
 fn blocked_destructuring(cx: &Cx, left: &SyntaxNode, sym: &Symbol) -> bool {
-    let members = left
-        .descendants()
-        .any(|d| matches!(d.kind(), k::STATIC_MEMBER_EXPRESSION | k::COMPUTED_MEMBER_EXPRESSION));
+    let members = left.descendants().any(|d| {
+        matches!(
+            d.kind(),
+            k::STATIC_MEMBER_EXPRESSION | k::COMPUTED_MEMBER_EXPRESSION
+        )
+    });
     let outer = left
         .children()
         .filter_map(|c| match c.kind() {
@@ -92,7 +99,10 @@ fn const_site(cx: &Cx, id: core_semantics::scopes::SymbolId) -> Option<TextRange
             }
             if let Some(host) = host_of(&r.node).filter(|h| h.kind() == k::ASSIGNMENT_EXPRESSION)
                 && let Some(left) = cx.slot(&host, "left")
-                && matches!(left.kind(), k::ARRAY_ASSIGNMENT_TARGET | k::OBJECT_ASSIGNMENT_TARGET)
+                && matches!(
+                    left.kind(),
+                    k::ARRAY_ASSIGNMENT_TARGET | k::OBJECT_ASSIGNMENT_TARGET
+                )
                 && blocked_destructuring(cx, &left, sym)
             {
                 return None;
@@ -161,7 +171,9 @@ fn global_types<'a>(cx: &'a Cx, names: &'a [&str]) -> impl Iterator<Item = &'a R
 /// `no-unsafe-function-type`
 pub(super) fn unsafe_function(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     run(ctx, |cx| {
-        global_types(cx, &["Function"]).map(|r| (r.range, c.message.clone())).collect()
+        global_types(cx, &["Function"])
+            .map(|r| (r.range, c.message.clone()))
+            .collect()
     });
 }
 
@@ -172,7 +184,12 @@ pub(super) fn wrapper_types(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_
         global_types(cx, NAMES)
             .map(|r| {
                 let primitive = r.name.to_lowercase();
-                (r.range, c.message.replace("{name}", &r.name).replace("{primitive}", &primitive))
+                (
+                    r.range,
+                    c.message
+                        .replace("{name}", &r.name)
+                        .replace("{primitive}", &primitive),
+                )
             })
             .collect()
     });

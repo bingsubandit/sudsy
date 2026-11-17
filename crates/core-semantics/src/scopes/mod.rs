@@ -214,7 +214,8 @@ impl Model {
         self.ancestors(r.scope).find_map(|s| {
             let id = self.own(s, &r.name)?;
             let f = self.symbol(id).flags;
-            (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params))).then_some(id)
+            (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params)))
+                .then_some(id)
         })
     }
 

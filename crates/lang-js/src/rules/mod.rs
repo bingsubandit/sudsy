@@ -158,8 +158,16 @@ const CHECKS: &[Entry] = &[
     ("use-before-define", &[k::PROGRAM], scope::use_before_define),
     ("shadow", &[k::PROGRAM], shadow::shadow),
     ("prefer-const", &[k::PROGRAM], binder::prefer_const),
-    ("prefer-rest-params", &[k::PROGRAM], binder::prefer_rest_params),
-    ("unsafe-function-type", &[k::PROGRAM], binder::unsafe_function),
+    (
+        "prefer-rest-params",
+        &[k::PROGRAM],
+        binder::prefer_rest_params,
+    ),
+    (
+        "unsafe-function-type",
+        &[k::PROGRAM],
+        binder::unsafe_function,
+    ),
     ("wrapper-object-types", &[k::PROGRAM], binder::wrapper_types),
     ("unused-vars", &[k::PROGRAM], unused::unused_vars),
     (

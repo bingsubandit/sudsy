@@ -134,7 +134,11 @@ impl Table {
                 .unwrap_or_else(|| panic!("scope table: no kind `{name}` in the grammar"))
         };
         let size = |tokens: bool| {
-            let list = if tokens { grammar.tokens() } else { grammar.nodes() };
+            let list = if tokens {
+                grammar.tokens()
+            } else {
+                grammar.nodes()
+            };
             list.len()
         };
         let mut table = Table {
@@ -168,16 +172,25 @@ impl Table {
     }
 
     pub(crate) fn is_scope(&self, kind: SyntaxKind) -> bool {
-        self.scopes.get(kind.index() as usize).copied().unwrap_or(false)
+        self.scopes
+            .get(kind.index() as usize)
+            .copied()
+            .unwrap_or(false)
     }
 
     /// A node whose references see only the parameters of the scope around it: the `parameter-list` role.
     pub(crate) fn is_params(&self, kind: SyntaxKind) -> bool {
-        self.params.get(kind.index() as usize).copied().unwrap_or(false)
+        self.params
+            .get(kind.index() as usize)
+            .copied()
+            .unwrap_or(false)
     }
 
     pub(crate) fn is_host(&self, kind: SyntaxKind) -> bool {
-        self.hosts.get(kind.index() as usize).copied().unwrap_or(false)
+        self.hosts
+            .get(kind.index() as usize)
+            .copied()
+            .unwrap_or(false)
     }
 
     pub(crate) fn is_name_token(&self, kind: SyntaxKind) -> bool {
@@ -185,6 +198,9 @@ impl Table {
     }
 
     pub(crate) fn is_operator(&self, kind: SyntaxKind) -> bool {
-        self.operators.get(kind.index() as usize).copied().unwrap_or(false)
+        self.operators
+            .get(kind.index() as usize)
+            .copied()
+            .unwrap_or(false)
     }
 }

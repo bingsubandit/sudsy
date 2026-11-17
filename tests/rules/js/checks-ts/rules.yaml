@@ -1,0 +1,5 @@
+no-duplicate-enum-values: warn
+no-non-null-asserted-optional-chain: warn
+no-unnecessary-type-constraint: warn
+no-unsafe-function-type: warn
+no-wrapper-object-types: warn

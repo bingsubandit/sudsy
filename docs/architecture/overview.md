@@ -10,7 +10,7 @@ A Rust core owns everything language-neutral; each language contributes a provid
 | `core-incremental` | Salsa database: parse, options, format, lint, semantics as queries |
 | `core-format` | Layout doc, printer, shapes, directives, comments, safety check |
 | `core-rules` | Rule trait and scopes, diagnostics, fixes, suppressions, shared rules, extension set |
-| `core-semantics` | Capability layers, per-file answers, symbol ids, behavior summaries |
+| `core-semantics` | Capability layers, per-file answers, symbol ids, behavior summaries, the scope model and binder (`scopes`, driven by a per-language table) |
 | `core-flow` | Flow graph, worklist solver, reachability, liveness, reaching defs, definite assignment |
 | `core-patterns` | Pattern matcher and YAML pattern rules |
 | `core-plugins` | wasmtime host for Wasm rule plugins |

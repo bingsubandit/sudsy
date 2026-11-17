@@ -142,7 +142,8 @@ fn read_for_itself(cx: &Cx, r: &Reference, rhs: Option<TextRange>) -> bool {
         Some(p) if p.kind() == k::UPDATE_EXPRESSION => unused_expression(&p),
         _ => false,
     };
-    own || rhs.is_some_and(|rhs| rhs.contains_range(cx.range(id)) && !storable_function(cx, id, rhs))
+    own || rhs
+        .is_some_and(|rhs| rhs.contains_range(cx.range(id)) && !storable_function(cx, id, rhs))
 }
 
 /// The right-hand side of the statement `a = ...` the reference writes, while later reads of the
@@ -201,7 +202,10 @@ fn only_returns(body: Option<SyntaxNode>) -> bool {
         k::RETURN_STATEMENT => true,
         k::BLOCK_STATEMENT => {
             let mut items = body.children();
-            items.next().is_some_and(|s| s.kind() == k::RETURN_STATEMENT) && items.next().is_none()
+            items
+                .next()
+                .is_some_and(|s| s.kind() == k::RETURN_STATEMENT)
+                && items.next().is_none()
         }
         _ => false,
     }
@@ -225,9 +229,7 @@ fn overriding(body: &SyntaxNode) -> bool {
         | k::EXPORT_FROM_DECLARATION
         | k::EXPORT_ALL_DECLARATION
         | k::TS_EXPORT_ASSIGNMENT => true,
-        k::EXPORT_DEFAULT_DECLARATION => {
-            s.children().any(|c| c.kind() == k::IDENTIFIER_REFERENCE)
-        }
+        k::EXPORT_DEFAULT_DECLARATION => s.children().any(|c| c.kind() == k::IDENTIFIER_REFERENCE),
         _ => false,
     })
 }
@@ -285,8 +287,12 @@ fn skipped(cx: &Cx, sym: &Symbol) -> bool {
         k::TS_MAPPED_TYPE => return true,
         // `namespace A.B {}` declares no names of its own.
         k::TS_NAMESPACE_DECLARATION
-            if node.children().any(|c| c.kind() == k::TS_NAMESPACE_DECLARATION)
-                || node.parent().is_some_and(|p| p.kind() == k::TS_NAMESPACE_DECLARATION) =>
+            if node
+                .children()
+                .any(|c| c.kind() == k::TS_NAMESPACE_DECLARATION)
+                || node
+                    .parent()
+                    .is_some_and(|p| p.kind() == k::TS_NAMESPACE_DECLARATION) =>
         {
             return true;
         }
@@ -332,7 +338,9 @@ fn exported(sym: &Symbol) -> bool {
         } else {
             Some(d.node.clone())
         };
-        let merged = d.flags.intersects(Flags::TYPE_ALIAS.union(Flags::INTERFACE))
+        let merged = d
+            .flags
+            .intersects(Flags::TYPE_ALIAS.union(Flags::INTERFACE))
             && sym.flags.contains(Flags::VALUE);
         at.and_then(|a| a.parent()).is_some_and(|p| is_export(&p)) && !merged
     })
@@ -444,7 +452,12 @@ fn is_used(cx: &Cx, v: &Var<'_>) -> bool {
 
 /// Do the parameters of the list after this one hold a used one?
 fn after_last_used(cx: &Cx, sym: &Symbol, start: core_syntax::TextSize, list: &SyntaxNode) -> bool {
-    for other in cx.s.scope(sym.scope).symbols.iter().map(|s| (*s, cx.s.symbol(*s))) {
+    for other in
+        cx.s.scope(sym.scope)
+            .symbols
+            .iter()
+            .map(|s| (*s, cx.s.symbol(*s)))
+    {
         let (oid, other) = other;
         let first = &other.decls[0];
         if first.name.start() <= start || !is_param(&first.node) {
@@ -453,7 +466,9 @@ fn after_last_used(cx: &Cx, sym: &Symbol, start: core_syntax::TextSize, list: &S
         if param_list(&first.binding).as_ref() != Some(list) {
             continue;
         }
-        let referenced = cx.s.refs_of(oid).any(|r| !(cx.ts && in_type_query(&r.node)));
+        let referenced =
+            cx.s.refs_of(oid)
+                .any(|r| !(cx.ts && in_type_query(&r.node)));
         if referenced || skipped(cx, other) || has_default(&first.binding) {
             return false;
         }
@@ -473,7 +488,10 @@ pub(super) fn unused_vars(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>)
             // A plain parameter only counts when no later one is used.
             if first.node.kind() == k::FORMAL_PARAMETER
                 && param_init(&first.node).is_none()
-                && first.binding.parent().is_some_and(|p| p.kind() == k::FORMAL_PARAMETER)
+                && first
+                    .binding
+                    .parent()
+                    .is_some_and(|p| p.kind() == k::FORMAL_PARAMETER)
                 && let Some(list) = param_list(&first.binding)
                 && !after_last_used(cx, v.sym, first.name.start(), &list)
             {

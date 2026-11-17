@@ -321,32 +321,52 @@ fn comment_before(t: &SyntaxToken, g: &Grammar) -> Option<String> {
 /// Does the comment say the fallthrough is meant (`falls through`, `fall through`, `fallthrough`)?
 fn says_fallthrough(comment: &str) -> bool {
     let text = comment.to_ascii_lowercase();
-    let directive = text.trim_start_matches(['/', '*', ' ']).starts_with("eslint");
-    !directive && ["fallthrough", "fallsthrough", "fall through", "falls through"].iter().any(|p| text.contains(p))
+    let directive = text
+        .trim_start_matches(['/', '*', ' '])
+        .starts_with("eslint");
+    !directive
+        && [
+            "fallthrough",
+            "fallsthrough",
+            "fall through",
+            "falls through",
+        ]
+        .iter()
+        .any(|p| text.contains(p))
 }
 
 /// `no-fallthrough`: a `case` whose statements can reach the next one, without a comment that says so.
 pub(super) fn fallthrough(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let g = ctx.file.grammar;
-    let cases: Vec<_> = n.children().filter(|c| c.kind() == k::SWITCH_CASE).collect();
+    let cases: Vec<_> = n
+        .children()
+        .filter(|c| c.kind() == k::SWITCH_CASE)
+        .collect();
     for pair in cases.windows(2) {
         let (case, next) = (&pair[0], &pair[1]);
         let skip = usize::from(!has_own(case, g, "default"));
         let body: Vec<_> = case.children().skip(skip).collect();
-        let Some(next_token) = code_token(next, g) else { continue };
+        let Some(next_token) = code_token(next, g) else {
+            continue;
+        };
         let gap = TextRange::new(span(ctx, case).end(), next_token.text_range().start());
         let blank = ctx.file.text[gap].matches('\n').count() >= 2;
         if body.iter().any(|s| exits(s, g)) || !(!body.is_empty() || blank) {
             continue;
         }
         let in_block = match body.as_slice() {
-            [b] if b.kind() == k::BLOCK_STATEMENT => {
-                b.last_token().and_then(|close| comment_before(&close, g)).is_some_and(|m| says_fallthrough(&m))
-            }
+            [b] if b.kind() == k::BLOCK_STATEMENT => b
+                .last_token()
+                .and_then(|close| comment_before(&close, g))
+                .is_some_and(|m| says_fallthrough(&m)),
             _ => false,
         };
         if !in_block && !comment_before(&next_token, g).is_some_and(|m| says_fallthrough(&m)) {
-            let name = if has_own(next, g, "default") { "default" } else { "case" };
+            let name = if has_own(next, g, "default") {
+                "default"
+            } else {
+                "case"
+            };
             c.hit(ctx, span(ctx, next), name);
         }
     }

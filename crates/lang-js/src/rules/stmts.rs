@@ -17,7 +17,9 @@ fn does_nothing(n: &SyntaxNode, g: &Grammar) -> bool {
         | k::TS_AS_EXPRESSION
         | k::TS_TYPE_ASSERTION
         | k::TS_NON_NULL_EXPRESSION
-        | k::TS_INSTANTIATION_EXPRESSION => n.children().next().is_some_and(|e| does_nothing(&e, g)),
+        | k::TS_INSTANTIATION_EXPRESSION => {
+            n.children().next().is_some_and(|e| does_nothing(&e, g))
+        }
         k::UNARY_EXPRESSION => !has_own(n, g, "void") && !has_own(n, g, "delete"),
         k::ARRAY_EXPRESSION
         | k::ARROW_FUNCTION_EXPRESSION
@@ -63,7 +65,9 @@ fn code_before(t: &SyntaxToken, g: &Grammar) -> Option<SyntaxToken> {
 
 /// Reports a line break between the code before `open` and `open`.
 fn break_before(c: &Check, open: &SyntaxToken, ctx: &mut RuleContext<'_>, what: &str) {
-    let Some(prev) = code_before(open, ctx.file.grammar) else { return };
+    let Some(prev) = code_before(open, ctx.file.grammar) else {
+        return;
+    };
     let gap = TextRange::new(prev.text_range().end(), open.text_range().start());
     if ctx.file.text[gap].contains('\n') {
         c.hit(ctx, gap, what);
@@ -74,7 +78,9 @@ fn break_before(c: &Check, open: &SyntaxToken, ctx: &mut RuleContext<'_>, what: 
 pub(super) fn unexpected_multiline(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let g = ctx.file.grammar;
     let own = |text: &str| {
-        n.children_with_tokens().filter_map(|e| e.into_token()).find(|t| t.text() == text)
+        n.children_with_tokens()
+            .filter_map(|e| e.into_token())
+            .find(|t| t.text() == text)
     };
     if has_own(n, g, "?.") {
         return;
@@ -86,16 +92,20 @@ pub(super) fn unexpected_multiline(c: &Check, n: &SyntaxNode, ctx: &mut RuleCont
             }
         }
         k::CALL_EXPRESSION => {
-            let arguments = n.children().skip(1).any(|a| a.kind() != k::TS_TYPE_PARAMETER_INSTANTIATION);
+            let arguments = n
+                .children()
+                .skip(1)
+                .any(|a| a.kind() != k::TS_TYPE_PARAMETER_INSTANTIATION);
             if let (true, Some(open)) = (arguments, own("(")) {
                 break_before(c, &open, ctx, "function and ( of function call");
             }
         }
         _ => {
-            let first = n
-                .children()
-                .last()
-                .and_then(|q| q.descendants_with_tokens().filter_map(|e| e.into_token()).find(|t| !g.is_trivia(t.kind())));
+            let first = n.children().last().and_then(|q| {
+                q.descendants_with_tokens()
+                    .filter_map(|e| e.into_token())
+                    .find(|t| !g.is_trivia(t.kind()))
+            });
             if let Some(open) = first {
                 break_before(c, &open, ctx, "template tag and template literal");
             }
@@ -108,10 +118,16 @@ fn enum_value(init: &SyntaxNode, g: &Grammar) -> Option<String> {
     let text = code_text(init, g);
     match init.kind() {
         k::STRING_LITERAL => Some(format!("s{}", &text[1..text.len() - 1])),
-        k::TEMPLATE_LITERAL if !text.contains("${") => Some(format!("s{}", &text[1..text.len() - 1])),
+        k::TEMPLATE_LITERAL if !text.contains("${") => {
+            Some(format!("s{}", &text[1..text.len() - 1]))
+        }
         k::NUMERIC_LITERAL => {
             let t = text.replace('_', "").to_ascii_lowercase();
-            let radix = |p: &str, r| t.strip_prefix(p).and_then(|d| u64::from_str_radix(d, r).ok()).map(|v| v as f64);
+            let radix = |p: &str, r| {
+                t.strip_prefix(p)
+                    .and_then(|d| u64::from_str_radix(d, r).ok())
+                    .map(|v| v as f64)
+            };
             let v = radix("0x", 16)
                 .or_else(|| radix("0o", 8))
                 .or_else(|| radix("0b", 2))

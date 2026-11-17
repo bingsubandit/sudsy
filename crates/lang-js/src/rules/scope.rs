@@ -88,7 +88,6 @@ const BUILTINS: &[&str] = &[
 /// What a `commonjs` file (`.cjs`) adds.
 const COMMONJS: &[&str] = &["exports", "global", "module", "require"];
 
-
 pub(super) type Hit = (TextRange, String);
 
 /// Runs `f` on the file's model (nothing for a file that does not parse) and reports what it
@@ -257,7 +256,8 @@ fn member_written(cx: &Cx, id: &SyntaxNode) -> bool {
             if callee.kind() != k::STATIC_MEMBER_EXPRESSION {
                 return false;
             }
-            let (Some(object), Some(member)) = (cx.slot(&callee, "object"), cx.slot(&callee, "member"))
+            let (Some(object), Some(member)) =
+                (cx.slot(&callee, "object"), cx.slot(&callee, "member"))
             else {
                 return false;
             };
@@ -352,7 +352,9 @@ pub(super) fn redeclare(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
                 .collect();
             if cx.ts {
                 // An overload signature is not a declaration of its own.
-                decls.retain(|d| !(d.node.kind() == k::FUNCTION && cx.slot(&d.node, "body").is_none()));
+                decls.retain(|d| {
+                    !(d.node.kind() == k::FUNCTION && cx.slot(&d.node, "body").is_none())
+                });
                 if decls.len() > 1 {
                     decls = merged(decls);
                 }
@@ -445,7 +447,9 @@ fn evaluated_during_init(cx: &Cx, r: &Reference, sym: &Symbol, first: &Decl) -> 
                     _ => false,
                 };
             }
-            k::ASSIGNMENT_PATTERN if a.children().last().is_some_and(|e| inside(e.text_range())) => {
+            k::ASSIGNMENT_PATTERN
+                if a.children().last().is_some_and(|e| inside(e.text_range())) =>
+            {
                 return true;
             }
             k::FORMAL_PARAMETER if param_init(&a).is_some_and(|e| inside(e.text_range())) => {

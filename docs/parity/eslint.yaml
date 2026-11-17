@@ -132,7 +132,7 @@ entries:
   no-lonely-if: planned
   no-loss-of-precision: rule no-loss-of-precision
   no-magic-numbers: planned
-  no-misleading-character-class: rule no-misleading-character-class
+  no-misleading-character-class: rule no-misleading-character-class | the surrogate pair, emoji modifier, flag and joined-sequence checks are not made
   no-mixed-operators: wontfix deprecated formatting rule with no formatter equivalent
   no-mixed-requires: wontfix deprecated upstream
   no-mixed-spaces-and-tabs: formatter
@@ -194,7 +194,7 @@ entries:
   no-unsafe-finally: rule no-unsafe-finally
   no-unsafe-negation: rule no-unsafe-negation | the `enforceForOrderingRelations` option is not supported
   no-unsafe-optional-chaining: planned
-  no-unused-expressions: rule no-unused-expressions
+  no-unused-expressions: rule no-unused-expressions | the options keep their defaults
   no-unused-vars: rule no-unused-vars | the options keep their defaults; `/*exported*/` and `/*global*/` comments are not read; a JSX tag counts as a use
   no-use-before-define: rule no-use-before-define | the options keep their defaults; JSX tags are not references
   no-useless-backreference: planned
@@ -278,5 +278,5 @@ entries:
   no-unreachable-loop: planned
   no-useless-return: planned
 deferred:
-  - gap: "needs scope analysis (oxc_semantic) beyond the nine scope rules built"
+  - gap: "needs scope analysis beyond the scope rules built"
     ids: [block-scoped-var, no-eval, no-extend-native, no-extra-bind, no-global-assign, no-implicit-globals, no-implied-eval, no-invalid-this, no-labels, no-lone-blocks, no-loop-func, no-new-native-nonconstructor, no-new-wrappers, no-obj-calls, no-restricted-globals, no-undef-init, no-unmodified-loop-condition, no-unused-labels, no-unused-private-class-members, no-useless-assignment, require-atomic-updates]

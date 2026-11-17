@@ -18,7 +18,10 @@ fn line_of(text: &str, offset: TextSize) -> usize {
 
 /// Is the parameter `binding` one of a function type, a signature or a function without a body?
 fn in_signature(cx: &Cx, binding: &SyntaxNode) -> bool {
-    let Some(params) = binding.ancestors().find(|a| a.kind() == k::FORMAL_PARAMETERS) else {
+    let Some(params) = binding
+        .ancestors()
+        .find(|a| a.kind() == k::FORMAL_PARAMETERS)
+    else {
         return false;
     };
     let Some(owner) = params.parent() else {
@@ -102,7 +105,8 @@ pub(super) fn shadow(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
             let global = |s: ScopeId| {
                 let n = &m.scope(s).node;
                 n.kind() == k::TS_MODULE_BLOCK
-                    && n.parent().is_some_and(|p| p.kind() == k::TS_GLOBAL_DECLARATION)
+                    && n.parent()
+                        .is_some_and(|p| p.kind() == k::TS_GLOBAL_DECLARATION)
             };
             if m.ancestors(scope).any(global) {
                 continue;
@@ -124,8 +128,9 @@ pub(super) fn shadow(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
                     .then(|| outer_decl.node.parent().map(|d| cx.range(&d)))
                     .flatten();
                 expression
-                    && declaration
-                        .is_some_and(|d| d.start() < inner.name.start() && inner.name.end() < d.end())
+                    && declaration.is_some_and(|d| {
+                        d.start() < inner.name.start() && inner.name.end() < d.end()
+                    })
                     && m.scope(scope).parent == Some(outer_sym.scope)
             };
             let hoisted = outer_decl.flags.contains(Flags::FUNCTION)
@@ -133,8 +138,10 @@ pub(super) fn shadow(c: &Check, _n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
                 && cx.slot(&outer_decl.node, "body").is_some();
             let in_tdz = inner.name.end() < outer_decl.name.start() && !hoisted;
             let ts_skip = cx.ts && {
-                let signature = matches!(inner.node.kind(), k::FORMAL_PARAMETER | k::FORMAL_PARAMETER_REST)
-                    && in_signature(cx, &inner.binding);
+                let signature = matches!(
+                    inner.node.kind(),
+                    k::FORMAL_PARAMETER | k::FORMAL_PARAMETER_REST
+                ) && in_signature(cx, &inner.binding);
                 let generic = inner.node.kind() == k::TS_TYPE_PARAMETER
                     && static_method_generic(cx, &inner.node);
                 cx.is_value(sym) != cx.is_value(outer_sym) || signature || generic

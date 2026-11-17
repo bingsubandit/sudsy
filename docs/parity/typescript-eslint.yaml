@@ -56,7 +56,7 @@ entries:
   no-type-alias: wontfix deprecated upstream
   no-unnecessary-type-constraint: rule no-unnecessary-type-constraint
   no-unsafe-function-type: rule no-unsafe-function-type
-  no-unused-expressions: rule no-unused-expressions
+  no-unused-expressions: rule no-unused-expressions | the options keep their defaults
   no-unused-vars: rule no-unused-vars | the options keep their defaults; `.d.ts` files and `declare module` blocks are not treated as used
   no-use-before-define: rule no-use-before-define | the options keep their defaults
   no-useless-constructor: planned
@@ -78,5 +78,5 @@ entries:
 deferred:
   - gap: "needs type information from the TypeScript worker (`recommended-type-checked` and the stylistic type-checked rules)"
     ids: [await-thenable, consistent-return, consistent-type-exports, dot-notation, naming-convention, no-array-delete, no-base-to-string, no-confusing-void-expression, no-deprecated, no-duplicate-type-constituents, no-floating-promises, no-for-in-array, no-generated-empty-object-type, no-implied-eval, no-meaningless-void-operator, no-misused-promises, no-misused-spread, no-mixed-enums, no-redundant-type-constituents, no-unnecessary-boolean-literal-compare, no-unnecessary-condition, no-unnecessary-qualifier, no-unnecessary-template-expression, no-unnecessary-type-arguments, no-unnecessary-type-assertion, no-unnecessary-type-conversion, no-unnecessary-type-parameters, no-unsafe-argument, no-unsafe-assignment, no-unsafe-call, no-unsafe-enum-assignment, no-unsafe-enum-comparison, no-unsafe-member-access, no-unsafe-return, no-unsafe-type-assertion, no-unsafe-unary-minus, no-useless-default-assignment, non-nullable-type-assertion-style, only-throw-error, prefer-destructuring, prefer-find, prefer-includes, prefer-nullish-coalescing, prefer-optional-chain, prefer-promise-reject-errors, prefer-readonly, prefer-readonly-parameter-types, prefer-reduce-type-parameter, prefer-regexp-exec, prefer-return-this-type, prefer-string-starts-ends-with, promise-function-async, related-getter-setter-pairs, require-array-sort-compare, require-await, restrict-plus-operands, restrict-template-expressions, return-await, strict-boolean-expressions, strict-void-return, switch-exhaustiveness-check, unbound-method, use-unknown-in-catch-callback-variable]
-  - gap: "needs scope analysis (oxc_semantic) beyond the nine scope rules built"
+  - gap: "needs scope analysis beyond the scope rules built"
     ids: [no-invalid-this, no-unnecessary-parameter-property-assignment, no-unsafe-declaration-merging, no-unused-private-class-members]

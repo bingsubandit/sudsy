@@ -1,0 +1,9 @@
+no-fallthrough: warn
+no-unused-expressions: warn
+no-unexpected-multiline: warn
+no-control-regex: warn
+no-misleading-character-class: warn
+no-var: warn
+prefer-const: warn
+prefer-rest-params: warn
+prefer-spread: warn

@@ -41,9 +41,15 @@ fn cook(source: &str) -> String {
                 None => out.push('x'),
             },
             'u' if chars.get(i) == Some(&'{') => {
-                let end = chars[i..].iter().position(|c| *c == '}').map_or(i, |p| i + p);
+                let end = chars[i..]
+                    .iter()
+                    .position(|c| *c == '}')
+                    .map_or(i, |p| i + p);
                 let digits: String = chars[i + 1..end].iter().collect();
-                if let Some(ch) = u32::from_str_radix(&digits, 16).ok().and_then(char::from_u32) {
+                if let Some(ch) = u32::from_str_radix(&digits, 16)
+                    .ok()
+                    .and_then(char::from_u32)
+                {
                     out.push(ch);
                 }
                 i = end + 1;
@@ -61,7 +67,12 @@ fn cook(source: &str) -> String {
 
 /// The string an expression always evaluates to: literals, `+`, and the names of variables that
 /// are written once, with an initializer that is one itself.
-fn constant(cx: Option<&Cx>, n: &SyntaxNode, g: &core_syntax::Grammar, depth: u8) -> Option<String> {
+fn constant(
+    cx: Option<&Cx>,
+    n: &SyntaxNode,
+    g: &core_syntax::Grammar,
+    depth: u8,
+) -> Option<String> {
     if depth > 16 {
         return None;
     }
@@ -75,7 +86,10 @@ fn constant(cx: Option<&Cx>, n: &SyntaxNode, g: &core_syntax::Grammar, depth: u8
         k::BINARY_EXPRESSION => {
             let mut parts = n.children();
             let (left, right) = (parts.next()?, parts.next()?);
-            let plus = n.children_with_tokens().filter_map(|e| e.into_token()).any(|t| t.text() == "+");
+            let plus = n
+                .children_with_tokens()
+                .filter_map(|e| e.into_token())
+                .any(|t| t.text() == "+");
             plus.then_some(())?;
             Some(constant(cx, &left, g, depth + 1)? + &constant(cx, &right, g, depth + 1)?)
         }
@@ -83,9 +97,12 @@ fn constant(cx: Option<&Cx>, n: &SyntaxNode, g: &core_syntax::Grammar, depth: u8
             let cx = cx?;
             let r = ref_at(cx, cx.range(n).start())?;
             let sym = cx.s.symbol(r.symbol?);
-            let [decl] = sym.decls.as_slice() else { return None };
+            let [decl] = sym.decls.as_slice() else {
+                return None;
+            };
             let once = decl.flags.contains(Flags::CONST)
-                || (decl.flags.contains(Flags::VAR) && !cx.s.refs_of(r.symbol?).any(|w| w.is_write()));
+                || (decl.flags.contains(Flags::VAR)
+                    && !cx.s.refs_of(r.symbol?).any(|w| w.is_write()));
             if !once || decl.node.kind() != k::VARIABLE_DECLARATOR {
                 return None;
             }
@@ -103,7 +120,9 @@ fn pattern(ctx: &RuleContext<'_>, n: &SyntaxNode) -> Option<String> {
         return Some(text[1..text.rfind('/')?.max(1)].to_string());
     }
     let mut parts = n.children();
-    let callee = parts.next().filter(|f| f.kind() == k::IDENTIFIER_REFERENCE && code_text(f, g) == "RegExp")?;
+    let callee = parts
+        .next()
+        .filter(|f| f.kind() == k::IDENTIFIER_REFERENCE && code_text(f, g) == "RegExp")?;
     let _ = callee;
     let arg = parts.next()?;
     let cx = model(ctx.file);
@@ -160,7 +179,9 @@ fn controls(pattern: &str) -> Vec<String> {
 
 /// `no-control-regex`
 pub(super) fn control_regex(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(pattern) = pattern(ctx, n) else { return };
+    let Some(pattern) = pattern(ctx, n) else {
+        return;
+    };
     let found = controls(&pattern);
     if !found.is_empty() {
         c.hit(ctx, span(ctx, n), &found.join(", "));
@@ -173,9 +194,10 @@ fn marks() -> &'static [(u32, u32)] {
     MARKS.get_or_init(|| {
         use regex_syntax::hir::{Class, HirKind};
         match regex_syntax::parse(r"\p{M}").map(|h| h.into_kind()) {
-            Ok(HirKind::Class(Class::Unicode(u))) => {
-                u.iter().map(|r| (r.start() as u32, r.end() as u32)).collect()
-            }
+            Ok(HirKind::Class(Class::Unicode(u))) => u
+                .iter()
+                .map(|r| (r.start() as u32, r.end() as u32))
+                .collect(),
             _ => Vec::new(),
         }
     })
@@ -240,7 +262,8 @@ fn combined_in_class(pattern: &str) -> bool {
                 };
                 while i < chars.len() && chars[i] != ']' {
                     let Some(first) = atom(&mut i) else { break };
-                    let range = chars.get(i) == Some(&'-') && chars.get(i + 1).is_some_and(|c| *c != ']');
+                    let range =
+                        chars.get(i) == Some(&'-') && chars.get(i + 1).is_some_and(|c| *c != ']');
                     match first {
                         None => seq.clear(),
                         Some(cp) if range => {
