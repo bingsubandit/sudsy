@@ -21,64 +21,21 @@ pub(super) fn rule(
     })
 }
 
-fn precedence(op: &str) -> u8 {
-    match op {
-        "||" => 1,
-        "&&" => 2,
-        "|" => 3,
-        "^" => 4,
-        "&" => 5,
-        "==" | "!=" => 6,
-        "<" | ">" | "<=" | ">=" => 7,
-        "<<" | ">>" | ">>>" => 8,
-        "+" | "-" => 9,
-        _ => 10,
-    }
-}
+/// Operands that are tokens print with the comment rules of the language.
+struct BinaryHooks;
 
-/// The operands and operators of a chain of binary operators of one precedence.
-fn operands(cx: &FormatCtx<'_>, node: &SyntaxNode, out: &mut Vec<SyntaxElement>) {
-    let els = kids(cx, node);
-    let prec = els
-        .get(1)
-        .and_then(|o| first(cx, o))
-        .map(|t| precedence(t.text()));
-    for (i, e) in els.iter().enumerate() {
-        match e {
-            SyntaxElement::Node(n)
-                if i == 0
-                    && n.kind() == k::BINARY_EXPRESSION
-                    && kids(cx, n)
-                        .get(1)
-                        .and_then(|o| first(cx, o))
-                        .map(|t| precedence(t.text()))
-                        == prec =>
-            {
-                operands(cx, n, out);
-            }
-            _ => out.push(e.clone()),
-        }
+impl shapes::BinaryHooks for BinaryHooks {
+    fn token(&self, cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
+        tok(cx, t)
+    }
+
+    fn comment_ends_line(&self, cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
+        line_comment_after(cx, t)
     }
 }
 
 fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let mut els = Vec::new();
-    operands(cx, node, &mut els);
-    let mut parts = vec![el(cx, &els[0])?];
-    let mut rest = Vec::new();
-    let mut prev_operand = &els[0];
-    for pair in els[1..].chunks(2) {
-        let [op, rhs] = pair else {
-            return generic(cx, node);
-        };
-        rest.push(line_after(cx, prev_operand));
-        rest.push(el(cx, op)?);
-        rest.push(gap_after(cx, op));
-        rest.push(el(cx, rhs)?);
-        prev_operand = rhs;
-    }
-    parts.push(cont(doc::concat(rest)));
-    Ok(doc::group(doc::concat(parts)))
+    shapes::binary_chain(cx, node, &shapes::BinaryPolicy::of(cx.options), &BinaryHooks)
 }
 
 fn ternary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

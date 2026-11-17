@@ -82,10 +82,6 @@ pub fn switch_arm_as_assignment(options: &ResolvedOptions) -> bool {
     is(options, SWITCH_ARM_LAYOUT, "assignment")
 }
 
-pub fn indent_nested_binary(options: &ResolvedOptions) -> bool {
-    options.bool(INDENT_NESTED_BINARY)
-}
-
 /// The brace of a wrapped `new T { ... }` goes on its own line.
 pub fn creation_brace_on_new_line(options: &ResolvedOptions) -> bool {
     !is(options, WRAPPED_BRACE_LINE, "none") && !brace_same_line(options, INITIALIZERS)

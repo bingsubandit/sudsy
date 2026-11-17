@@ -262,6 +262,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let mut suppressions = Vec::new();
     let mut requires_roles = false;
     let mut operators = HashMap::new();
+    let mut precedence_rows: Vec<PrecedenceRow> = Vec::new();
     let mut raw: Vec<RawKind> = Vec::new();
 
     for d in &decls {
@@ -317,6 +318,34 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                     }
                 }
             }
+            "precedence" => {
+                let level = match c.next() {
+                    Some(Lexeme::Int(n)) if *n <= u8::MAX as u32 => *n as u8,
+                    _ => return err(d.line, "precedence level must be 0..=255"),
+                };
+                let assoc = match c.ident("an associativity")?.as_str() {
+                    "left" => Assoc::Left,
+                    "right" => Assoc::Right,
+                    "same" => Assoc::Same,
+                    "none" => Assoc::None,
+                    other => return err(d.line, format!("unknown associativity `{other}`")),
+                };
+                let mut ops = Vec::new();
+                while c.peek().is_some() {
+                    let text = c.string("operator text")?;
+                    if precedence_rows.iter().any(|r| r.operators.contains(&text))
+                        || ops.contains(&text)
+                    {
+                        return err(d.line, format!("operator `{text}` has two precedences"));
+                    }
+                    ops.push(text);
+                }
+                precedence_rows.push(PrecedenceRow {
+                    level,
+                    assoc,
+                    operators: ops,
+                });
+            }
             "suppress" => {
                 let role = c.ident("suppression role")?;
                 let marker = c.string("suppression marker")?;
@@ -366,6 +395,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
         suppressions,
         requires_roles,
         operators,
+        precedence_rows,
         raw,
         hash,
     )
@@ -380,6 +410,7 @@ fn resolve(
     suppressions: Vec<Suppression>,
     requires_roles: bool,
     operators: HashMap<String, String>,
+    precedence_rows: Vec<PrecedenceRow>,
     raw: Vec<RawKind>,
     hash: String,
 ) -> Result<Grammar, GrammarError> {
@@ -470,6 +501,8 @@ fn resolve(
         suppressions,
         requires_roles,
         operators,
+        precedence_rows,
+        precedence: OnceLock::new(),
         token_flags: super::hot_flags(&tokens),
         node_flags: super::hot_flags(&nodes),
         nodes,
@@ -570,6 +603,20 @@ node Long =
                 .check_roles()
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn precedence_lines_give_level_and_associativity() {
+        let g = Grammar::parse(
+            "language x 1\nprecedence 1 left \"+\" \"-\"\nprecedence 2 same \"*\"\nprecedence 2 none \"%\"",
+        )
+        .unwrap();
+        let p = g.precedence("-").unwrap();
+        assert_eq!((p.level, p.assoc), (1, Assoc::Left));
+        assert_eq!(g.precedence("%").unwrap().assoc, Assoc::None);
+        assert!(g.precedence("/").is_none());
+        assert!(Grammar::parse("language x 1\nprecedence 1 left \"+\"\nprecedence 2 left \"+\"").is_err());
+        assert!(Grammar::parse("language x 1\nprecedence 1 wide \"+\"").is_err());
     }
 
     #[test]

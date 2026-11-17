@@ -11,6 +11,14 @@ pub const MEMBER_CHAIN_HEAD_CALLS: &str = "member_chain_head_calls";
 pub const MEMBER_CHAIN_SHORT_HEAD: &str = "member_chain_short_head";
 #[allow(dead_code)]
 pub const MEMBER_CHAIN_INDENT: &str = "member_chain_indent";
+#[allow(dead_code)]
+pub const BINARY_OPERATOR_LINE: &str = "binary_operator_line";
+#[allow(dead_code)]
+pub const BINARY_INDENT: &str = "binary_indent";
+#[allow(dead_code)]
+pub const BINARY_HUG: &str = "binary_hug";
+#[allow(dead_code)]
+pub const INDENT_NESTED_BINARY: &str = "indent_nested_binary";
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
@@ -26,6 +34,10 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::member_chain_head_calls(&["stream"]),
         core_config::shared::member_chain_short_head(4),
         core_config::shared::member_chain_indent(2),
+        core_config::shared::binary_operator_line("start"),
+        core_config::shared::binary_indent(2),
+        core_config::shared::binary_hug("never"),
+        core_config::shared::indent_nested_binary(true),
     ])
     .with_presets(vec![
         core_config::Preset::new("java/google", include_str!("../presets/google.yaml")),

@@ -1,7 +1,7 @@
 //! Expressions that lay out as a chain: binary operators, member accesses and calls, assignments
 //! and the conditional operator.
 
-use super::options::{fluid_assignments, indent_nested_binary};
+use super::options::fluid_assignments;
 use super::seq::{R, paren_group, seq_of, sig};
 use super::tags::{self, Tag};
 use crate::generated::kind as k;
@@ -211,112 +211,32 @@ pub fn parenthesized(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 // ------------------------------------------------------------------- binary
 
-/// Operators of one precedence level chain into one layout; the level of an operator token.
-fn level(op: &str) -> u8 {
-    match op {
-        "*" | "/" | "%" => 1,
-        "+" | "-" => 2,
-        "<<" | ">>" | ">>>" => 3,
-        "<" | ">" | "<=" | ">=" => 4,
-        "==" | "!=" => 5,
-        "&" => 6,
-        "^" => 7,
-        "|" => 8,
-        "&&" => 9,
-        "||" => 10,
-        "??" => 11,
-        "and" => 12,
-        _ => 13,
+/// The layouts that indent their own value: a chain inside them leaves its continuation lines
+/// flush.
+struct BinaryHooks;
+
+impl shapes::BinaryHooks for BinaryHooks {
+    fn place(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<shapes::Place> {
+        let kind = node.parent()?.kind();
+        matches!(
+            kind,
+            k::EQUALS_VALUE_CLAUSE
+                | k::ARROW_EXPRESSION_CLAUSE
+                | k::PARENTHESIZED_EXPRESSION
+                | k::IF_STATEMENT
+                | k::WHILE_STATEMENT
+                | k::DO_STATEMENT
+                | k::LOCK_STATEMENT
+                | k::SWITCH_STATEMENT
+        )
+        .then_some(shapes::Place::Flush)
     }
 }
 
-fn parts_of(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-) -> Option<(SyntaxNode, SyntaxToken, SyntaxNode)> {
-    match sig(cx, node).as_slice() {
-        [
-            SyntaxElement::Node(l),
-            SyntaxElement::Token(op),
-            SyntaxElement::Node(r),
-        ] => Some((l.clone(), op.clone(), r.clone())),
-        _ => None,
-    }
-}
-
-/// Is the expression whose parent is `parent` printed inside something that already indents
-/// its continuation lines? (A chain inside a chain of another precedence is indented only with
-/// `indent_nested_binary`.)
-fn parent_indents(cx: &FormatCtx<'_>, parent: Option<SyntaxNode>) -> bool {
-    let Some(p) = parent else { return false };
-    let kind = p.kind();
-    matches!(
-        kind,
-        k::EQUALS_VALUE_CLAUSE
-            | k::ARROW_EXPRESSION_CLAUSE
-            | k::PARENTHESIZED_EXPRESSION
-            | k::IF_STATEMENT
-            | k::WHILE_STATEMENT
-            | k::DO_STATEMENT
-            | k::LOCK_STATEMENT
-            | k::SWITCH_STATEMENT
-    ) || tags::has(cx.grammar, kind, Tag::Assignment)
-        || (tags::has(cx.grammar, kind, Tag::BinaryChain) && !indent_nested_binary(cx.options))
-}
-
-/// `a + b + c`: the operands of one precedence level, one per line (operator first) when the
-/// whole does not fit.
+/// `a + b + c`: the shared operator chain (`core_format::shapes::binary_chain`) under the
+/// `binary_*` options.
 pub fn binary_chain(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let g = cx.grammar;
-    let (_, top_op, _) = parts_of(cx, node).ok_or_else(|| shape("binary expression"))?;
-    let lvl = level(top_op.text());
-    let same_level = |n: &SyntaxNode| {
-        tags::has(g, n.kind(), Tag::BinaryChain)
-            && parts_of(cx, n).is_some_and(|(_, op, _)| level(op.text()) == lvl)
-    };
-    if lvl == 11 {
-        return coalesce_chain(cx, node);
-    }
-    // Left to right: walk down the left spine.
-    let mut rest: Vec<(SyntaxToken, SyntaxNode)> = Vec::new();
-    let mut cur = node.clone();
-    let first = loop {
-        let (l, op, r) = parts_of(cx, &cur).ok_or_else(|| shape("binary expression"))?;
-        rest.push((op, r));
-        if same_level(&l) {
-            cur = l;
-        } else {
-            break l;
-        }
-    };
-    rest.reverse();
-    let indent = !parent_indents(cx, node.parent());
-    shapes::binary_chain(cx, &first, &rest, indent)
-}
-
-/// `a ?? b ?? c` groups to the right: `a ?? (b ?? c)`.
-fn coalesce_chain(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let g = cx.grammar;
-    let mut operands: Vec<SyntaxNode> = Vec::new();
-    let mut ops: Vec<SyntaxToken> = Vec::new();
-    let mut cur = node.clone();
-    loop {
-        let (l, op, r) = parts_of(cx, &cur).ok_or_else(|| shape("binary expression"))?;
-        operands.push(l);
-        ops.push(op);
-        let continues = tags::has(g, r.kind(), Tag::BinaryChain)
-            && parts_of(cx, &r).is_some_and(|(_, o, _)| level(o.text()) == 11);
-        if continues {
-            cur = r;
-        } else {
-            operands.push(r);
-            break;
-        }
-    }
-    let first = operands.remove(0);
-    let rest: Vec<(SyntaxToken, SyntaxNode)> = ops.into_iter().zip(operands).collect();
-    let indent = !parent_indents(cx, node.parent());
-    shapes::binary_chain(cx, &first, &rest, indent)
+    shapes::binary_chain(cx, node, &shapes::BinaryPolicy::of(cx.options), &BinaryHooks)
 }
 
 // ------------------------------------------------------------------- member

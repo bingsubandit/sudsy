@@ -19,6 +19,9 @@ Options declared by more than one language, generated from the option schemas; p
 | Option | Values | Defaults |
 |---|---|---|
 | `array_bracket_spacing` | bool | json `false`, toml `false`, yaml `false`, github-actions `false` |
+| `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
+| `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
+| `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |
 | `blank_lines_after_key` | `preserve`, `remove` | yaml `preserve`, github-actions `preserve` |
 | `bracket_same_line` | bool | html `false`, js `false`, angular `false`, vue `false`, svelte `false` |
 | `bracket_spacing` | bool | json `true`, graphql `true`, js `true`, toml `true`, yaml `true`, github-actions `true` |
@@ -30,6 +33,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `embedded_language_formatting` | `auto`, `off` | html `auto`, markdown `auto`, angular `auto`, vue `auto`, svelte `auto` |
 | `end_of_line` | `auto`, `lf`, `crlf` | json `auto`, css `auto`, scss `auto`, less `auto`, html `auto`, cpp `auto`, c `auto`, dockerfile `auto`, editorconfig `auto`, gitignore `auto`, graphql `auto`, hcl `auto`, ini `auto`, java `auto`, js `auto`, kotlin `auto`, makefile `auto`, markdown `auto`, php `auto`, powershell `auto`, protobuf `auto`, python `auto`, ruby `auto`, shell `auto`, sql `auto`, toml `auto`, xml `auto`, yaml `auto`, github-actions `auto`, angular `auto`, vue `auto`, svelte `auto`, csharp `auto` |
 | `final_newline` | bool | json `true`, css `true`, scss `true`, less `true`, html `true`, cpp `true`, c `true`, dockerfile `true`, editorconfig `true`, gitignore `true`, graphql `true`, hcl `true`, ini `true`, java `true`, js `true`, kotlin `true`, makefile `true`, markdown `true`, php `true`, powershell `true`, protobuf `true`, python `true`, ruby `true`, shell `true`, sql `true`, toml `true`, xml `true`, yaml `true`, github-actions `true`, angular `true`, vue `true`, svelte `true`, csharp `true` |
+| `indent_nested_binary` | bool | java `true`, js `true`, csharp `false` |
 | `indent_script_and_style` | bool | vue `false`, svelte `true` |
 | `indent_size` | int 1-16 | json `2`, css `2`, scss `2`, less `2`, html `2`, cpp `2`, c `2`, dockerfile `4`, graphql `2`, hcl `2`, java `2`, js `2`, kotlin `4`, makefile `2`, markdown `2`, php `4`, powershell `4`, protobuf `2`, python `4`, ruby `2`, shell `4`, sql `4`, toml `2`, xml `2`, yaml `2`, github-actions `2`, angular `2`, vue `2`, svelte `2`, csharp `4` |
 | `indent_style` | `space`, `tab` | json `space`, css `space`, scss `space`, less `space`, html `space`, cpp `space`, c `space`, dockerfile `space`, graphql `space`, java `space`, js `space`, kotlin `space`, makefile `space`, php `space`, powershell `space`, protobuf `space`, python `space`, ruby `space`, shell `tab`, sql `space`, toml `space`, xml `space`, angular `space`, vue `space`, svelte `space`, csharp `space` |

@@ -45,4 +45,8 @@ The preset `java/google` (`extends: [preset:java/google@1]`) sets 2-column inden
 | `member_chain_head_calls` | list of words | `[stream]` | Calls that stay on the line of the head of a broken member chain when they are among its first two groups (`list.stream()`). |
 | `member_chain_short_head` | int 0-100 | `4` | A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do. |
 | `member_chain_indent` | int 1-4 | `2` | Levels of indentation of the lines of a broken member chain. |
+| `binary_operator_line` | `start`, `end` | `start` | Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator). |
+| `binary_indent` | int 1-4 | `2` | Levels of indentation of the continuation lines of a broken operator chain. |
+| `binary_hug` | `never`, `assignment`, `statement` | `never` | A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`. |
+| `indent_nested_binary` | bool | `true` | Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b \|\| c`). |
 <!-- /generated -->

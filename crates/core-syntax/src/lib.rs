@@ -23,7 +23,7 @@ pub mod trivia;
 pub mod wire;
 
 pub use embedded::Embedded;
-pub use grammar::Grammar;
+pub use grammar::{Assoc, Grammar, Precedence};
 pub use kind::{LanguageId, SyntaxKind};
 pub use rowan::{Checkpoint, GreenNode, TextRange, TextSize};
 pub use tree::{

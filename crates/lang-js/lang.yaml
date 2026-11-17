@@ -27,6 +27,10 @@ options:
   - member_chain_min_calls: [3]
   - member_chain_short_head: [2]
   - member_chain_indent: [1]
+  - binary_operator_line: ["end"]
+  - binary_indent: [1]
+  - binary_hug: ["statement"]
+  - indent_nested_binary: [true]
   - bracket_spacing: true
   - arrow_parens:
       values: ["always", "avoid"]

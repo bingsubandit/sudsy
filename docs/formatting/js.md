@@ -48,6 +48,10 @@ Known gaps: with `semi: false` Prettier also writes the protecting `;` before th
 | `member_chain_min_calls` | int 1-1000 | `3` | A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style). |
 | `member_chain_short_head` | int 0-100 | `2` | A name of at most this many characters at the head of a broken member chain stays on the line of the first call (`x.foo()`); a capitalized name, `this`, `base`, `super` and a keyword type always do. |
 | `member_chain_indent` | int 1-4 | `1` | Levels of indentation of the lines of a broken member chain. |
+| `binary_operator_line` | `start`, `end` | `end` | Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator). |
+| `binary_indent` | int 1-4 | `1` | Levels of indentation of the continuation lines of a broken operator chain. |
+| `binary_hug` | `never`, `assignment`, `statement` | `statement` | A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`. |
+| `indent_nested_binary` | bool | `true` | Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b \|\| c`). |
 | `bracket_spacing` | bool | `true` | Spaces inside the braces of a one-line mapping or object: `{ a: 1 }` or `{a: 1}`. |
 | `arrow_parens` | `always`, `avoid` | `always` | Parentheses around the lone parameter of an arrow function: `always` writes `(x) => x`, `avoid` writes `x => x` when the parameter is a plain name (no type, default, rest or destructuring). |
 | `bracket_same_line` | bool | `false` | JSX: put the `>` of a multi-line element on the line of its last attribute instead of on a line of its own. |

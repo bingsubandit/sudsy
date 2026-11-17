@@ -13,4 +13,8 @@ options:
   - member_chain_head_calls: [["stream"]]
   - member_chain_short_head: [4]
   - member_chain_indent: [2]
+  - binary_operator_line: ["start"]
+  - binary_indent: [2]
+  - binary_hug: ["never"]
+  - indent_nested_binary: [true]
 presets: [google]

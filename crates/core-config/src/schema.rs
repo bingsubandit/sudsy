@@ -449,6 +449,41 @@ pub mod shared {
         )
     }
 
+    pub fn binary_operator_line(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "binary_operator_line",
+            &["start", "end"],
+            default,
+            "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+        )
+    }
+
+    pub fn binary_indent(default: i64) -> OptionDef {
+        OptionDef::int(
+            "binary_indent",
+            default,
+            (1, 4),
+            "Levels of indentation of the continuation lines of a broken operator chain.",
+        )
+    }
+
+    pub fn binary_hug(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "binary_hug",
+            &["never", "assignment", "statement"],
+            default,
+            "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+        )
+    }
+
+    pub fn indent_nested_binary(default: bool) -> OptionDef {
+        OptionDef::boolean(
+            "indent_nested_binary",
+            default,
+            "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
+        )
+    }
+
     pub fn array_bracket_spacing(default: bool) -> OptionDef {
         OptionDef::boolean(
             ARRAY_BRACKET_SPACING,

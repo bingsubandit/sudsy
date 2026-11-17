@@ -3,6 +3,17 @@
 
 language java 23 "Java"
 roles
+// Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).
+precedence 1 left "||"
+precedence 2 left "&&"
+precedence 3 left "|"
+precedence 4 left "^"
+precedence 5 left "&"
+precedence 6 left "==" "!="
+precedence 7 left "<" ">" "<=" ">="
+precedence 8 left "<<" ">>" ">>>"
+precedence 9 left "+" "-"
+precedence 10 left "*" "/" "%"
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -70,7 +81,7 @@ node ArrayInitializer #child #expression #opaque = #child*
 node ArrayType #child #type #opaque = #child*
 node AssertStatement #child #statement #opaque = #child*
 node AssignmentExpression #child #expression #assignment = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand?
-node BinaryExpression #child #expression #binary = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand?
+node BinaryExpression #child #expression #binary-chain #binary = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand?
 node Block #child #statement #member #block #scope = LBrace items:#statement* RBrace
 node BreakStatement #child #statement #opaque = #child*
 node CastExpression #child #expression #opaque = #child*

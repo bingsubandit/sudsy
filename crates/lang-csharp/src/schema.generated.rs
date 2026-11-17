@@ -16,6 +16,14 @@ pub const MEMBER_CHAIN_SHORT_HEAD: &str = "member_chain_short_head";
 #[allow(dead_code)]
 pub const MEMBER_CHAIN_INDENT: &str = "member_chain_indent";
 #[allow(dead_code)]
+pub const BINARY_OPERATOR_LINE: &str = "binary_operator_line";
+#[allow(dead_code)]
+pub const BINARY_INDENT: &str = "binary_indent";
+#[allow(dead_code)]
+pub const BINARY_HUG: &str = "binary_hug";
+#[allow(dead_code)]
+pub const INDENT_NESTED_BINARY: &str = "indent_nested_binary";
+#[allow(dead_code)]
 pub const PREPROCESSOR_SYMBOLS: &str = "preprocessor_symbols";
 #[allow(dead_code)]
 pub const PREPROCESSOR_SYMBOL_SETS: &str = "preprocessor_symbol_sets";
@@ -39,8 +47,6 @@ pub const INDENT_SWITCH_SECTION_BLOCK: &str = "indent_switch_section_block";
 pub const ASSIGNMENT_LAYOUT: &str = "assignment_layout";
 #[allow(dead_code)]
 pub const SWITCH_ARM_LAYOUT: &str = "switch_arm_layout";
-#[allow(dead_code)]
-pub const INDENT_NESTED_BINARY: &str = "indent_nested_binary";
 #[allow(dead_code)]
 pub const WRAPPED_BRACE_LINE: &str = "wrapped_brace_line";
 #[allow(dead_code)]
@@ -112,6 +118,10 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::member_chain_break_on_block("never"),
         core_config::shared::member_chain_short_head(4),
         core_config::shared::member_chain_indent(1),
+        core_config::shared::binary_operator_line("start"),
+        core_config::shared::binary_indent(1),
+        core_config::shared::binary_hug("assignment"),
+        core_config::shared::indent_nested_binary(false),
         core_config::OptionDef::words("preprocessor_symbols", &[], "Conditional compilation symbols (`DEBUG`, `NET8_0`) defined when parsing, which decide the active branch of `#if`. Branches that are inactive under these symbols stay as they are unless `preprocessor_symbol_sets` or `derive_symbol_sets` format them."),
         core_config::OptionDef::word_sets("preprocessor_symbol_sets", "Further sets of conditional compilation symbols. The file is also parsed with each set (a set replaces `preprocessor_symbols`), and the `#if` branches that are inactive under `preprocessor_symbols` but active under a set are formatted from that parse. Empty (the default) leaves inactive branches as they are."),
         core_config::OptionDef::boolean("derive_symbol_sets", false, "Also parse with sets of symbols taken from the `#if` and `#elif` conditions of the file (the empty set, all symbols, then each symbol, then pairs and so on, at most 16 sets, after those of `preprocessor_symbol_sets`) until every branch has been active once, and format the branches that are inactive under `preprocessor_symbols` from those parses. A branch no set activates stays as it is."),
@@ -124,7 +134,6 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::boolean("indent_switch_section_block", true, "Indent a block that is the only statement of a `case` section below its label; when false the block starts at the label's indentation."),
         core_config::OptionDef::choice("assignment_layout", &["compact", "fluid"], "compact", "Where the value after `=` or the body after `=>` goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator; a string that spans lines stays on the operator's              line, and the body of an expression lambda moves below `=>` when the lambda does              not fit."),
         core_config::OptionDef::choice("switch_arm_layout", &["inline", "assignment"], "inline", "Layout of a switch expression arm: `inline` keeps `pattern => value` as one run of tokens; `assignment` lays out the value like the right-hand side of `=` (see `assignment_layout`)."),
-        core_config::OptionDef::boolean("indent_nested_binary", false, "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`)."),
         core_config::OptionDef::choice("wrapped_brace_line", &["creation", "all", "none"], "creation", "Opening brace of an initializer or property pattern that is laid out on several lines: `creation` puts it on its own line for `new T { ... }` only; `all` also for an initializer nested in an assignment (`Prop = { ... }`) and for property patterns; `none` keeps it on the line of the expression."),
         core_config::OptionDef::choice("initializer_collapse", &["preserve", "always"], "preserve", "Initializers and collection expressions: `preserve` keeps one expanded when the source has a line break in it; `always` puts one on a single line whenever it fits."),
         core_config::OptionDef::boolean("preserve_query_breaks", false, "A query expression with a line break in the source keeps one clause per line even when it fits on a line."),

@@ -30,6 +30,7 @@ mod parse;
 use crate::kind::{LanguageId, SyntaxKind};
 use crate::tree::{SyntaxElement, SyntaxNode};
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 pub use parse::GrammarError;
 
@@ -89,6 +90,34 @@ pub struct Suppression {
     pub marker: String,
 }
 
+/// How operators of one precedence level join into a chain (`precedence` lines).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Assoc {
+    /// `a op b op c` is `(a op b) op c`; every operator of the level flattens.
+    Left,
+    /// `a op (b op c)`: flattens down the right side.
+    Right,
+    /// Only repeats of the same operator flatten (`a * b * c`, not `a * b / c`).
+    Same,
+    /// Never flattens (`a == b == c`).
+    None,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Precedence {
+    /// Higher binds tighter.
+    pub level: u8,
+    pub assoc: Assoc,
+}
+
+/// One `precedence <level> <assoc> "op"...` line.
+#[derive(Clone, Debug)]
+pub struct PrecedenceRow {
+    pub level: u8,
+    pub assoc: Assoc,
+    pub operators: Vec<String>,
+}
+
 #[derive(Clone, Debug)]
 pub struct Grammar {
     pub language: String,
@@ -101,6 +130,9 @@ pub struct Grammar {
     pub requires_roles: bool,
     /// Operator text to operator kind (`operators` lines).
     operators: HashMap<String, String>,
+    /// The `precedence` lines and the table built from them on first use.
+    precedence_rows: Vec<PrecedenceRow>,
+    precedence: OnceLock<HashMap<String, Precedence>>,
     nodes: Vec<KindDef>,
     tokens: Vec<KindDef>,
     by_name: HashMap<String, SyntaxKind>,
@@ -350,6 +382,27 @@ impl Grammar {
             Some(kind) => Some(kind),
             None => crate::roles::common_operator_kind(text),
         }
+    }
+
+    /// The precedence level and associativity of binary operator text (the grammar's `precedence`
+    /// lines); `None` for text with no entry.
+    pub fn precedence(&self, text: &str) -> Option<Precedence> {
+        self.precedence
+            .get_or_init(|| {
+                let mut map = HashMap::new();
+                for row in &self.precedence_rows {
+                    for op in &row.operators {
+                        let p = Precedence {
+                            level: row.level,
+                            assoc: row.assoc,
+                        };
+                        map.insert(op.clone(), p);
+                    }
+                }
+                map
+            })
+            .get(text)
+            .copied()
     }
 
     /// What is wrong with the roles of a grammar that declared `roles`: a node kind with no role

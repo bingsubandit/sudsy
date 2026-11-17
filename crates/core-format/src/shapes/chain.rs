@@ -1,8 +1,7 @@
 use crate::FormatCtx;
 use crate::comments::{self, CommentKind};
 use crate::doc::{self, Doc};
-use crate::error::FormatError;
-use core_syntax::{SyntaxNode, SyntaxToken};
+use core_syntax::SyntaxToken;
 
 /// Does a line comment follow this token on its line? Whatever comes next must then start a new
 /// line, or the comment would move to the end of a later line and change owner.
@@ -19,29 +18,6 @@ pub fn gap_after_operator(cx: &FormatCtx<'_>, op: &SyntaxToken) -> Doc {
     } else {
         doc::lit(" ")
     }
-}
-
-/// `a + b + c`: the operands in one group, the operator first on each continuation line when
-/// the whole does not fit. `indent` indents the continuation lines; leave it off when the
-/// caller already does.
-pub fn binary_chain(
-    cx: &FormatCtx<'_>,
-    first: &SyntaxNode,
-    rest: &[(SyntaxToken, SyntaxNode)],
-    indent: bool,
-) -> Result<Doc, FormatError> {
-    let mut tail = Vec::with_capacity(rest.len() * 4);
-    for (op, operand) in rest {
-        tail.push(doc::line());
-        tail.push(cx.token(op));
-        tail.push(gap_after_operator(cx, op));
-        tail.push(cx.format(operand)?);
-    }
-    let tail = doc::concat(tail);
-    Ok(doc::group(doc::concat(vec![
-        cx.format(first)?,
-        if indent { doc::indent(tail) } else { tail },
-    ])))
 }
 
 /// The pieces of a chain of member accesses and calls, already laid out.

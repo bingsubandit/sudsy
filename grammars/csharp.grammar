@@ -10,6 +10,18 @@
 
 language csharp 2 "C#"
 roles
+// Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).
+precedence 1 right "??"
+precedence 2 left "||"
+precedence 3 left "&&"
+precedence 4 left "|"
+precedence 5 left "^"
+precedence 6 left "&"
+precedence 7 left "==" "!="
+precedence 8 left "<" ">" "<=" ">=" "is" "as"
+precedence 9 left "<<" ">>" ">>>"
+precedence 10 left "+" "-"
+precedence 11 left "*" "/" "%"
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"

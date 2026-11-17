@@ -5752,6 +5752,32 @@
               ],
               "type": "string"
             },
+            "binary_hug": {
+              "default": "assignment",
+              "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+              "enum": [
+                "never",
+                "assignment",
+                "statement"
+              ],
+              "type": "string"
+            },
+            "binary_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the continuation lines of a broken operator chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "binary_operator_line": {
+              "default": "start",
+              "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+              "enum": [
+                "start",
+                "end"
+              ],
+              "type": "string"
+            },
             "blank_line_after_comment": {
               "default": "preserve",
               "description": "Blank line between the last `//` or `///` comment in front of code and that code: `preserve` keeps the source's (at most one); `remove` drops it. Comments at the start of a file and `////` comments keep theirs.",
@@ -7007,6 +7033,32 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "binary_hug": {
+              "default": "never",
+              "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+              "enum": [
+                "never",
+                "assignment",
+                "statement"
+              ],
+              "type": "string"
+            },
+            "binary_indent": {
+              "default": 2,
+              "description": "Levels of indentation of the continuation lines of a broken operator chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "binary_operator_line": {
+              "default": "start",
+              "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+              "enum": [
+                "start",
+                "end"
+              ],
+              "type": "string"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -7020,6 +7072,11 @@
             "final_newline": {
               "default": true,
               "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_nested_binary": {
+              "default": true,
+              "description": "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
               "type": "boolean"
             },
             "indent_size": {
@@ -7141,6 +7198,32 @@
               ],
               "type": "string"
             },
+            "binary_hug": {
+              "default": "statement",
+              "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+              "enum": [
+                "never",
+                "assignment",
+                "statement"
+              ],
+              "type": "string"
+            },
+            "binary_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the continuation lines of a broken operator chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "binary_operator_line": {
+              "default": "end",
+              "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+              "enum": [
+                "start",
+                "end"
+              ],
+              "type": "string"
+            },
             "bracket_same_line": {
               "default": false,
               "description": "JSX: put the `>` of a multi-line element on the line of its last attribute instead of on a line of its own.",
@@ -7164,6 +7247,11 @@
             "final_newline": {
               "default": true,
               "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_nested_binary": {
+              "default": true,
+              "description": "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
               "type": "boolean"
             },
             "indent_size": {
@@ -8048,6 +8136,32 @@
                     "enum": [
                       "inline",
                       "hanging"
+                    ],
+                    "type": "string"
+                  },
+                  "binary_hug": {
+                    "default": "assignment",
+                    "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+                    "enum": [
+                      "never",
+                      "assignment",
+                      "statement"
+                    ],
+                    "type": "string"
+                  },
+                  "binary_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the continuation lines of a broken operator chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "binary_operator_line": {
+                    "default": "start",
+                    "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+                    "enum": [
+                      "start",
+                      "end"
                     ],
                     "type": "string"
                   },
@@ -9258,6 +9372,32 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "binary_hug": {
+                    "default": "never",
+                    "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+                    "enum": [
+                      "never",
+                      "assignment",
+                      "statement"
+                    ],
+                    "type": "string"
+                  },
+                  "binary_indent": {
+                    "default": 2,
+                    "description": "Levels of indentation of the continuation lines of a broken operator chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "binary_operator_line": {
+                    "default": "start",
+                    "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+                    "enum": [
+                      "start",
+                      "end"
+                    ],
+                    "type": "string"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -9271,6 +9411,11 @@
                   "final_newline": {
                     "default": true,
                     "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_nested_binary": {
+                    "default": true,
+                    "description": "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
                     "type": "boolean"
                   },
                   "indent_size": {
@@ -9392,6 +9537,32 @@
                     ],
                     "type": "string"
                   },
+                  "binary_hug": {
+                    "default": "statement",
+                    "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
+                    "enum": [
+                      "never",
+                      "assignment",
+                      "statement"
+                    ],
+                    "type": "string"
+                  },
+                  "binary_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the continuation lines of a broken operator chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "binary_operator_line": {
+                    "default": "end",
+                    "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+                    "enum": [
+                      "start",
+                      "end"
+                    ],
+                    "type": "string"
+                  },
                   "bracket_same_line": {
                     "default": false,
                     "description": "JSX: put the `>` of a multi-line element on the line of its last attribute instead of on a line of its own.",
@@ -9415,6 +9586,11 @@
                   "final_newline": {
                     "default": true,
                     "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_nested_binary": {
+                    "default": true,
+                    "description": "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
                     "type": "boolean"
                   },
                   "indent_size": {

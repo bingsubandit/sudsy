@@ -4,6 +4,20 @@
 
 language js 17 "JavaScript/TypeScript"
 roles
+// Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).
+precedence 1 left "??"
+precedence 2 left "||"
+precedence 3 left "&&"
+precedence 4 left "|"
+precedence 5 left "^"
+precedence 6 left "&"
+precedence 7 none "==" "===" "!=" "!=="
+precedence 8 left "<" ">" "<=" ">=" "in" "instanceof"
+precedence 9 none "<<" ">>" ">>>"
+precedence 10 left "+" "-"
+precedence 11 same "*" "/"
+precedence 11 none "%"
+precedence 12 none "**"
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -85,9 +99,9 @@ node SpreadElement #expression #opaque
 node UpdateExpression #expression #unary =
     prefix=operator:#operator? LParen* operand:#expression RParen* postfix=operator:#operator?
 node UnaryExpression #expression #unary = operator:#operator operand:#expression
-node BinaryExpression #expression #binary = left:#expression operator:#operator right:#expression
-node PrivateInExpression #expression #opaque
-node LogicalExpression #expression #binary = left:#expression operator:#operator right:#expression
+node BinaryExpression #expression #binary-chain #binary = left:#expression operator:#operator right:#expression
+node PrivateInExpression #expression #binary-chain #binary = left:PrivateIdentifier operator:#operator right:#expression
+node LogicalExpression #expression #binary-chain #binary = left:#expression operator:#operator right:#expression
 node ConditionalExpression #expression #conditional = condition:#expression Question then:#expression Colon else:#expression
 node AssignmentExpression #expression #assignment = LParen* left:#expression RParen* operator:#operator right:#expression
 node ArrayAssignmentTarget #expression #opaque

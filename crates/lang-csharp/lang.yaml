@@ -20,6 +20,10 @@ options:
   - member_chain_break_on_block: ["never"]
   - member_chain_short_head: [4]
   - member_chain_indent: [1]
+  - binary_operator_line: ["start"]
+  - binary_indent: [1]
+  - binary_hug: ["assignment"]
+  - indent_nested_binary: [false]
   - preprocessor_symbols:
       kind: "words"
       doc: "Conditional compilation symbols (`DEBUG`, `NET8_0`) defined when parsing, which decide the active branch of `#if`. Branches that are inactive under these symbols stay as they are unless `preprocessor_symbol_sets` or `derive_symbol_sets` format them."
@@ -61,9 +65,6 @@ options:
       values: ["inline", "assignment"]
       default: "inline"
       doc: "Layout of a switch expression arm: `inline` keeps `pattern => value` as one run of tokens; `assignment` lays out the value like the right-hand side of `=` (see `assignment_layout`)."
-  - indent_nested_binary:
-      default: false
-      doc: "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`)."
   - wrapped_brace_line:
       values: ["creation", "all", "none"]
       default: "creation"
