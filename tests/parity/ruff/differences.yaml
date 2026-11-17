@@ -9,9 +9,9 @@ ratchet:
   ruff-fixtures: 104
   real-world: 1006
 second-format:
-  black-tests: 1
+  black-tests: 0
   real-world: 0
-  ruff-fixtures: 6
+  ruff-fixtures: 0
 refused:
   black-tests: 0
   ruff-fixtures: 0

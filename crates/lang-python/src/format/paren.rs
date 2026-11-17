@@ -34,8 +34,14 @@ fn strip_all(cx: &FormatCtx<'_>, e: &SyntaxNode, named: bool, yields: bool) -> S
     let mut cur = e.clone();
     while cur.kind() == k::PARENTHESIZED {
         let ks = kids(cx, &cur);
+        let eol = ends_line(cx, &cur);
         let plain = ks.iter().all(|x| match x {
-            core_syntax::SyntaxElement::Token(t) => !has_comments(cx, t),
+            core_syntax::SyntaxElement::Token(t) => {
+                !has_comments(cx, t)
+                    || eol
+                        && Some(t) == ks.last().and_then(|l| l.as_token())
+                        && core_format::comments::leading_comments(cx.grammar, t).is_empty()
+            }
             _ => true,
         });
         let inner = cur.children().next();
@@ -166,9 +172,30 @@ fn maybe_parenthesize_inner(
         | k::EXPR_F_STRING
         | k::EXPR_T_STRING
         | k::EXPR_BOOLEAN_LITERAL
-        | k::EXPR_NONE_LITERAL => best_fit(cx, &inner, prefix),
+        | k::EXPR_NONE_LITERAL => best_fit(cx, &inner, prefix, e),
         _ => expr::expr(cx, &inner),
     }
+}
+
+/// Parentheses around an implicit concatenation of strings that end the logical line: a comment
+/// after the closing one is the line's comment, like one after the last string.
+fn ends_line(cx: &FormatCtx<'_>, paren: &SyntaxNode) -> bool {
+    let joins = paren.children().next().is_some_and(|n| {
+        n.kind() != k::PARENTHESIZED
+            && n.children().count() > 1
+            && expr::joined_with(cx, &n, true).is_some()
+    });
+    joins
+        && cx
+            .last_token(paren)
+            .is_some_and(|t| ends_logical_line(cx, &t))
+}
+
+/// Is `tok` the last token of its (innermost) statement? A comment after it is the statement's.
+pub(crate) fn ends_logical_line(cx: &FormatCtx<'_>, tok: &core_syntax::SyntaxToken) -> bool {
+    tok.parent_ancestors()
+        .find(|a| cx.grammar.name(a.kind()).starts_with("Stmt"))
+        .is_some_and(|stmt| cx.last_token(&stmt).as_ref() == Some(tok))
 }
 
 /// The head of a chain of attributes, calls and subscripts when it is several strings in a row.
@@ -207,7 +234,7 @@ fn starts_with_atom(n: &SyntaxNode) -> bool {
 
 /// Parentheses only when the expression fits on a line of its own inside them and the line
 /// before it fits with the opening one.
-fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize) -> R {
+fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize, outer: &SyntaxNode) -> R {
     let d = with_open(true, || expr::expr(cx, inner))?;
     let s = style(cx);
     let strings = matches!(
@@ -215,7 +242,9 @@ fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize) -> R {
         k::EXPR_STRING_LITERAL | k::EXPR_BYTES_LITERAL | k::EXPR_F_STRING | k::EXPR_T_STRING
     );
     if strings && inner.children().count() > 1 {
-        return Ok(parenthesize_if_expands(d));
+        return Ok(
+            joined_with_comment(cx, inner, outer).unwrap_or_else(|| parenthesize_if_expands(d))
+        );
     }
     match flat_width(&d) {
         Some(w)
@@ -225,6 +254,44 @@ fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize) -> R {
         }
         _ => Ok(d),
     }
+}
+
+/// An implicit concatenation followed by a comment that counts for the width (ruff): it is joined
+/// inside the parentheses only when the comment fits after the joined string too (the comment
+/// follows the closing parenthesis there, where the string's own group does not see it).
+fn joined_with_comment(cx: &FormatCtx<'_>, inner: &SyntaxNode, outer: &SyntaxNode) -> Option<Doc> {
+    let last = cx.last_token(outer)?;
+    let width: usize = core_format::comments::trailing_comments(cx.grammar, &last)
+        .iter()
+        .map(|c| c.text().to_string())
+        .filter(|t| !is_pragma(t))
+        .map(|t| 2 + t.chars().count())
+        .sum();
+    if width == 0 || !ends_logical_line(cx, &last) {
+        return None;
+    }
+    let parts = expr::string_parts(cx, inner);
+    let flat = expr::joined_with(cx, inner, true)?;
+    let s = style(cx);
+    let id = core_format::doc::new_group_id();
+    let expanded = group(core_format::doc::join(&brk(), parts));
+    let inside = if (depth() + 1) * s.indent + flat.chars().count() + width <= s.width {
+        core_format::doc::text(flat.clone())
+    } else {
+        expanded
+    };
+    Some(core_format::doc::group_with_id(
+        id,
+        concat(vec![
+            if_break(lit("("), Doc::Nil),
+            indent(concat(vec![
+                softline(),
+                core_format::doc::if_break_in(id, inside, core_format::doc::text(flat)),
+            ])),
+            softline(),
+            if_break(lit(")"), Doc::Nil),
+        ]),
+    ))
 }
 
 /// The width of a document up to its first possible line break.

@@ -5,7 +5,7 @@ use super::expr::{elem, expr};
 use super::util::*;
 use crate::generated::kind as k;
 use core_format::FormatCtx;
-use core_format::doc::{Doc, concat, group, lit};
+use core_format::doc::{Doc, concat, group, hardline, lit};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 
 /// Binding strength of a binary operator (higher binds tighter).
@@ -85,7 +85,7 @@ fn chain(cx: &FormatCtx<'_>, elems: &[SyntaxElement], breakable: bool) -> R {
         .and_then(|e| e.as_node())
         .is_some_and(is_multiline_string);
     let mut pair: Vec<Doc> = Vec::new();
-    for e in elems {
+    for (i, e) in elems.iter().enumerate() {
         match e {
             SyntaxElement::Token(t) => {
                 if !pair.is_empty() {
@@ -98,11 +98,15 @@ fn chain(cx: &FormatCtx<'_>, elems: &[SyntaxElement], breakable: bool) -> R {
                 pair.push(sp());
             }
             SyntaxElement::Node(n) => {
+                let implicit = matches!(n.kind(), k::EXPR_STRING_LITERAL | k::EXPR_BYTES_LITERAL)
+                    && n.children().count() > 1;
+                let held = held_operand_comment(cx, n, i + 1 < elems.len() && !implicit);
                 let d = if matches!(n.kind(), k::EXPR_STRING_LITERAL | k::EXPR_BYTES_LITERAL) {
                     super::expr::strings(cx, n, false)?
                 } else {
                     expr(cx, n)?
                 };
+                let d = concat(vec![d, held.map_or(Doc::Nil, |l| cx.held_trailing(&l))]);
                 if pairs {
                     pair.push(d);
                 } else {
@@ -120,6 +124,25 @@ fn chain(cx: &FormatCtx<'_>, elems: &[SyntaxElement], breakable: bool) -> R {
         });
     }
     Ok(group(concat(parts)))
+}
+
+/// The comment after an operand that ends where its flattened parent does (`(a) | (b)  # c` before
+/// the next operator): printed after the operand, outside its own parentheses, which would break.
+fn held_operand_comment(
+    cx: &FormatCtx<'_>,
+    n: &SyntaxNode,
+    inner: bool,
+) -> Option<core_syntax::SyntaxToken> {
+    let last = cx.last_token(n).filter(|l| {
+        inner
+            && !cx.is_held(l)
+            && core_format::comments::comment_at_end(cx.grammar, n)
+            && core_format::comments::has_trailing_comment(cx.grammar, l)
+            && n.parent()
+                .is_some_and(|p| cx.last_token(&p).is_some_and(|pl| pl == *l))
+    })?;
+    cx.hold_trailing(&last);
+    Some(last)
 }
 
 /// An implicit concatenation or a string with line breaks: no break before the operator after it.
@@ -273,26 +296,39 @@ fn ternary_parts(
 
 pub(crate) fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let mut parts = Vec::new();
+    let mut broke = false;
     for e in kids(cx, node) {
         match &e {
             SyntaxElement::Token(t) if t.kind() == k::LAMBDA => {
                 parts.push(cx.token(t));
+                // A comment ends its line: what follows starts the next one.
+                broke = has_comment(cx, t);
+                if broke {
+                    parts.push(hardline());
+                }
             }
             SyntaxElement::Node(n) if n.kind() == k::PARAMETERS => {
                 let items = super::list::lambda_parameters(cx, n)?;
                 if !items.is_nil() {
-                    parts.push(sp());
+                    if !broke {
+                        parts.push(sp());
+                    }
                     parts.push(items);
                 }
             }
             SyntaxElement::Token(t) if t.kind() == k::COLON => {
                 parts.push(cx.token(t));
-                parts.push(sp());
+                parts.push(if has_comment(cx, t) { hardline() } else { sp() });
             }
             _ => parts.push(elem(cx, &e)?),
         }
     }
     Ok(concat(parts))
+}
+
+/// A trailing comment ends its line: what follows starts the next one.
+fn has_comment(cx: &FormatCtx<'_>, t: &core_syntax::SyntaxToken) -> bool {
+    core_format::comments::has_trailing_comment(cx.grammar, t)
 }
 
 /// `target := value`.

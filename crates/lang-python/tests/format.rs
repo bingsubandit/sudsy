@@ -293,3 +293,16 @@ fn implicit_concatenated_docstring() {
         "def a():\n    \"This is a implicitconcatenateddocstring\"\n\n\ndef b():\n    \"This is a implicitconcatenateddocstring\"\n"
     );
 }
+
+/// Each input once changed on a second format: the comment after an attribute chain's head, after
+/// an operand before its operator, inside a lambda, and after the parts of an implicit
+/// concatenation.
+#[test]
+fn comments_stable() {
+    assert_eq!(
+        fmt(
+            "variable = (\n    something # a comment\n    .first_method(\"some string\")\n)\nrows = [(1 << j) |    # first\n        (1 << (n + i-j + n-1)) |    # second\n        (1 << (n + 2*n-1 + i+j))\n        for j in rangen]\n(\n    lambda  # comment 1\n    *args, **kwargs: # comment 2\n    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(*args, **kwargs) + 1\n)\n____aaa = \"aaaaaaaaaaaaaaaaaaaaa\" \"aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbvvvvvvvvvvvvvvv\"  # c\nc = (a\n     +\n     \"a\" \"b\" # comment\n     * b\n     )\n"
+        ),
+        "variable = (\n    something  # a comment\n    .first_method(\"some string\")\n)\nrows = [\n    (1 << j)  # first\n    | (1 << (n + i - j + n - 1))  # second\n    | (1 << (n + 2 * n - 1 + i + j))\n    for j in rangen\n]\n(\n    lambda  # comment 1\n    *args, **kwargs:  # comment 2\n    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(*args, **kwargs) + 1\n)\n____aaa = (\n    \"aaaaaaaaaaaaaaaaaaaaa\" \"aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbvvvvvvvvvvvvvvv\"\n)  # c\nc = a + \"ab\" * b  # comment\n"
+    );
+}

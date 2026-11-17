@@ -533,6 +533,12 @@ impl<'a> FormatCtx<'a> {
         held.entry(at).or_insert(None);
     }
 
+    /// Has [`FormatCtx::hold_trailing`] been called for `tok`?
+    pub fn is_held(&self, tok: &SyntaxToken) -> bool {
+        let held = self.held.lock().expect("held lock");
+        held.contains_key(&tok.text_range().start())
+    }
+
     /// The comments [`FormatCtx::hold_trailing`] held back, as the printed trailing comments of the
     /// token; nothing when the token was not printed through the context.
     pub fn held_trailing(&self, tok: &SyntaxToken) -> Doc {

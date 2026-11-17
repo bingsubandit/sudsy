@@ -132,19 +132,22 @@ pub(crate) fn string_token(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
 /// Strings of an implicit concatenation, one per line when they do not fit.
 /// `own_group`: the parts break on their own; otherwise the group around the string decides.
 pub(crate) fn strings(cx: &FormatCtx<'_>, node: &SyntaxNode, own_group: bool) -> R {
-    let mut parts = Vec::new();
-    for part in node.children() {
-        match part.kind() {
-            k::F_STRING | k::T_STRING => parts.push(fstring(cx, &part)),
-            _ => {
-                let t = tokens(cx, &part).into_iter().next();
-                parts.push(match t {
-                    Some(t) => string_token(cx, &t),
-                    None => Doc::Nil,
-                });
-            }
-        }
+    // A comment after the last part, with more of the expression after it, goes after the whole
+    // string, so that it does not keep the parts from joining.
+    let mid = node
+        .children()
+        .last()
+        .and_then(|p| tokens(cx, &p).into_iter().next())
+        .filter(|t| {
+            node.children().count() > 1
+                && core_format::comments::has_trailing_comment(cx.grammar, t)
+                && !cx.is_held(t)
+        });
+    if let Some(t) = &mid {
+        cx.hold_trailing(t);
     }
+    let mut parts = string_parts(cx, node);
+    let flat = joined_with(cx, node, mid.is_some()).filter(|_| parts.len() > 1);
     let multiline = node
         .descendants_with_tokens()
         .filter_map(|e| e.into_token())
@@ -159,16 +162,52 @@ pub(crate) fn strings(cx: &FormatCtx<'_>, node: &SyntaxNode, own_group: bool) ->
         });
     }
     let expanded = doc::join(&brk(), parts);
-    let d = match joined(cx, node) {
+    let d = match flat {
         Some(flat) => doc::if_break(expanded, doc::text(flat)),
         None => expanded,
     };
-    Ok(if own_group { group(d) } else { d })
+    let d = if own_group || mid.is_some() {
+        group(d)
+    } else {
+        d
+    };
+    Ok(match &mid {
+        Some(t) => concat(vec![d, cx.held_trailing(t).without_break_parents()]),
+        None => d,
+    })
+}
+
+/// The documents of the parts of a string.
+pub(crate) fn string_parts(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<Doc> {
+    let mut parts = Vec::new();
+    for part in node.children() {
+        match part.kind() {
+            k::F_STRING | k::T_STRING => parts.push(fstring(cx, &part)),
+            _ => {
+                let t = tokens(cx, &part).into_iter().next();
+                parts.push(match t {
+                    Some(t) => string_token(cx, &t),
+                    None => Doc::Nil,
+                });
+            }
+        }
+    }
+    parts
 }
 
 /// The parts of an implicit concatenation as one string, when they are plain strings of one
 /// kind that need no escapes to share a quote (ruff joins them when they fit on a line).
 pub(crate) fn joined(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<String> {
+    joined_with(cx, node, false)
+}
+
+/// [`joined`]; `end_comment`: a comment after the last part is the line's and stays out of it.
+pub(crate) fn joined_with(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    end_comment: bool,
+) -> Option<String> {
+    let last_part = node.children().last();
     let mut prefix = None;
     let mut quote = None;
     let mut body = String::new();
@@ -180,7 +219,10 @@ pub(crate) fn joined(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<String> {
             .children_with_tokens()
             .filter_map(|e| e.into_token())
             .find(|t| t.kind() == k::STRING)?;
-        if has_comments(cx, &t) {
+        let tail = end_comment && last_part.as_ref() == Some(&part);
+        if !core_format::comments::leading_comments(cx.grammar, &t).is_empty()
+            || !tail && !core_format::comments::trailing_comments(cx.grammar, &t).is_empty()
+        {
             return None;
         }
         let text = literal::string(t.text(), style(cx).quote);
@@ -270,13 +312,20 @@ fn links(node: &SyntaxNode) -> (SyntaxNode, Vec<Link>) {
     (cur, out)
 }
 
-/// Does a comment stand between the dot and the names of an attribute chain, or between a
+/// Does a comment stand after the head of an attribute chain, between the dot and the names, or between a
 /// callee and its `(` or `[`?
 pub(crate) fn chain_has_comments(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
     let mut cur = node.clone();
     loop {
         match cur.kind() {
             k::EXPR_ATTRIBUTE => {
+                if cur
+                    .children()
+                    .next()
+                    .is_some_and(|h| core_format::comments::comment_at_end(cx.grammar, &h))
+                {
+                    return true;
+                }
                 for e in cur.children_with_tokens().skip(1) {
                     let hit = match &e {
                         SyntaxElement::Token(t) => {
@@ -343,12 +392,19 @@ fn trailers(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     }];
     let mut rest: Vec<Doc> = Vec::new();
     let mut after_bracket = false;
+    // A comment after the head ends its line: the first `.attr` goes to the next one (ruff).
+    let mut after_comment = matches!(ls.first(), Some(Link::Attr(_)))
+        && core_format::comments::comment_at_end(cx.grammar, &head)
+        && cx
+            .last_token(&head)
+            .is_some_and(|l| core_format::comments::has_trailing_comment(cx.grammar, &l));
     for l in &ls {
         let in_rest = !rest.is_empty();
         match l {
             Link::Attr(n) => {
-                if (fluent || in_rest) && after_bracket {
+                if ((fluent || in_rest) && after_bracket) || after_comment {
                     rest.push(soft_brk());
+                    after_comment = false;
                 }
                 let target = if rest.is_empty() {
                     &mut first
