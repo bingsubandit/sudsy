@@ -250,7 +250,7 @@ impl P<'_> {
                 self.bump_as(k::WORD_LITERAL);
                 return true;
             }
-            "EXISTS" if self.is_t(1, T::LParen) => {
+            "EXISTS" if self.is_t(1, T::LParen) && !std::mem::take(&mut self.exists_fn) => {
                 self.bump_as(k::KEYWORD);
                 self.bracketed(|p| {
                     if p.at_query_start() {
@@ -630,7 +630,7 @@ impl P<'_> {
                     self.close(k::COMPARISON_OPERATOR, m);
                 } else if ARITH.contains(&text) || (self.d == super::Dialect::Postgres && PG_BINARY.contains(&text)) {
                     self.bump_as(k::BINARY_OPERATOR);
-                } else if (text == "?" && self.d != super::Dialect::Postgres) || text == "$" || text == "\\" {
+                } else if (text == "?" && self.d != super::Dialect::Postgres) || text == "$" || text.starts_with('\\') {
                     return false;
                 } else {
                     self.bump();

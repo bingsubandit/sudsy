@@ -24,6 +24,7 @@ impl P<'_> {
                     let kind = if keywords && self.keyword_like(0) { k::KEYWORD } else { k::IDENTIFIER };
                     self.bump_as(kind);
                 }
+                T::Op if (self.at_op("-") || self.at_op("+")) && self.is_t(1, T::Number) => self.bump_as(k::SIGN),
                 T::Op if self.at_op("=") => {
                     let m = self.mark();
                     self.bump();

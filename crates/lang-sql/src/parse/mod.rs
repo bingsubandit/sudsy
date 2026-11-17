@@ -76,6 +76,8 @@ pub(crate) struct P<'a> {
     /// The statement table's row of the statement walked generically.
     /// The statement walked generically is a `CREATE INDEX`.
     pub index: bool,
+    /// The select element being parsed starts with `EXISTS (`: a function call there.
+    pub exists_fn: bool,
     pub row: Option<&'static std::collections::HashSet<&'static str>>,
 }
 
@@ -107,6 +109,7 @@ impl<'a> P<'a> {
             type_first: false,
             row: None,
             index: false,
+            exists_fn: false,
         };
         for i in open {
             let l = p.lex[i as usize];

@@ -218,8 +218,13 @@ impl P<'_> {
             let r = self.mark();
             self.bump_as(k::IDENTIFIER);
             self.close(k::OBJECT_REFERENCE, r);
-        } else if !self.element() {
-            return false;
+        } else {
+            self.exists_fn = self.d == Dialect::Postgres && self.at("exists") && self.is_t(1, T::LParen);
+            let ok = self.element();
+            self.exists_fn = false;
+            if !ok {
+                return false;
+            }
         }
         self.alias();
         self.close(k::SELECT_CLAUSE_ELEMENT, m);

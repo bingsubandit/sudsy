@@ -20,6 +20,11 @@ pub(super) fn file(p: &mut P) {
             continue;
         }
         let before = p.pos;
+        if p.is_t(0, T::Op) && p.text(0).starts_with('\\') {
+            // A psql meta command between statements.
+            p.bump();
+            continue;
+        }
         if p.is_t(0, T::Data) {
             p.bump_as(k::WORD);
             continue;
@@ -86,7 +91,7 @@ impl P<'_> {
                     self.bump();
                 }
             }
-            "show" if self.d == Dialect::Postgres => {
+            "show" | "reset" if self.d == Dialect::Postgres => {
                 self.bump_as(k::KEYWORD);
                 while self.is_t(0, T::Word) {
                     self.bump_as(k::WORD);
