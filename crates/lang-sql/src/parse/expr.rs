@@ -365,18 +365,22 @@ impl P<'_> {
         loop {
             let dotted = self.is_t(1, T::Dot);
             if dotted {
-                self.bump_as(k::IDENTIFIER);
+                self.bump_as(if self.is_t(0, T::Quoted) { k::QUOTED_IDENTIFIER } else { k::IDENTIFIER });
                 self.bump();
             } else {
-                self.bump_as(k::FUNCTION_IDENTIFIER);
+                self.bump_as(if self.is_t(0, T::Quoted) { k::QUOTED_IDENTIFIER } else { k::FUNCTION_IDENTIFIER });
                 break;
             }
         }
-        if self.pos - nm > 1 {
+        if self.pos - nm > 1 && self.kinds[self.pos - 1] != k::QUOTED_IDENTIFIER {
             self.kinds[self.pos - 1] = k::WORD;
         }
         let name = self.src[self.lex[self.code[self.pos - 1] as usize].start as usize..self.lex[self.code[self.pos - 1] as usize].end as usize].to_ascii_uppercase();
         let dates = DATE_FUNCTIONS.contains(&name.as_str());
+        // T-SQL's own grammar names these functions: keywords.
+        if self.d == super::Dialect::Tsql && self.pos - nm == 1 && (matches!(name.as_str(), "CONVERT" | "TRY_CONVERT" | "ISJSON") || name.starts_with("JSON_")) {
+            self.kinds[self.pos - 1] = k::KEYWORD;
+        }
         self.close(k::FUNCTION_NAME, nm);
         self.type_first = self.d == super::Dialect::Tsql && matches!(name.as_str(), "CONVERT" | "TRY_CONVERT");
         self.function_contents(dates);

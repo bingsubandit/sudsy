@@ -222,7 +222,7 @@ impl P<'_> {
         } else if self.at("on") {
             self.bump_as(k::KEYWORD);
             self.bump_as(k::KEYWORD);
-            self.obj_ref();
+            self.bump_as(k::WORD);
         }
         if !self.eat("do") {
             return;

@@ -124,7 +124,7 @@ impl P<'_> {
                     self.bump();
                 }
                 T::LParen => {
-                    let columns = w.after_name && w.create_table && depth == 0;
+                    let columns = (w.after_name || self.prev_text_is("table")) && w.create_table && depth == 0;
                     let params = w.after_name && (w.function_name || w.prepare);
                     self.generic_bracket(depth, columns, params, w.create_table || w.table_stmt);
                     w.options |= columns;
@@ -270,6 +270,11 @@ impl P<'_> {
             self.bump_as(k::KEYWORD);
             return;
         }
+        if word && !dotted && up == "VALUE" && self.prev_text_is("rename") {
+            self.bump_as(k::KEYWORD);
+            w.expect_name = false;
+            return;
+        }
         // `CREATE FUNCTION add(..)`: the name before the bracket is a function name, reserved or not.
         if word && !dotted && self.is_t(1, T::LParen) && (["function", "procedure", "method", "routine"].iter().any(|x| self.prev_text_is(x)) || (w.function_name && self.prev_kind() == Some(T::Comma))) {
             self.generic_name(true);
@@ -299,6 +304,13 @@ impl P<'_> {
             self.bump_as(k::KEYWORD);
             self.options_bracket(true);
             *w = Walk { create_table: w.create_table, table_stmt: w.table_stmt, ..Walk::default() };
+            return;
+        }
+        // `ON ASYMMETRIC KEY::name`: the two words before `::` are the class.
+        if word && self.d == super::Dialect::Tsql && self.is_t(1, T::Word) && self.is_t(2, T::Cast) {
+            self.bump_as(k::KEYWORD);
+            self.bump_as(k::KEYWORD);
+            w.expect_name = false;
             return;
         }
         // T-SQL `OBJECT::name`: the class before `::` is a keyword.
@@ -475,7 +487,7 @@ impl P<'_> {
             w.function_name |= rename_to;
             w.after_name = false;
             w.expr = EXPR_AFTER.contains(&up.as_str()) || (up == "AS" && w.columns);
-            if (matches!(up.as_str(), "AS" | "RETURNS") && self.at_type_word()) || (up == "RETURNS" && self.d == super::Dialect::Postgres && self.is_t(0, T::Word) && !self.reserved(0) && !self.at_any(&["setof", "trigger"])) {
+            if (matches!(up.as_str(), "AS" | "RETURNS") && self.at_type_word() && !self.at("enum")) || (up == "RETURNS" && self.d == super::Dialect::Postgres && self.is_t(0, T::Word) && !self.reserved(0) && !self.at_any(&["setof", "trigger"])) {
                 self.type_name();
             }
             if (w.columns || w.create_table || w.table_stmt) && !w.options && up == "DEFAULT" && self.expr_ahead() {

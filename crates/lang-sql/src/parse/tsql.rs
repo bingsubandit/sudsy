@@ -248,9 +248,11 @@ impl P<'_> {
                 self.list(|p| p.parameter());
                 self.dedent();
             } else if self.is_t(0, T::LParen) {
+                self.indent();
                 self.bracketed(|p| {
                     p.list(|p| p.parameter());
                 });
+                self.dedent();
             } else if self.at_any(&["procedure", "proc", "function", "trigger"]) {
                 self.bump_as(k::KEYWORD);
                 if self.starts_name(0) {
