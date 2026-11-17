@@ -5,3 +5,4 @@ equals-hash-code: warn
 missing-switch-default: warn
 empty-statement: warn
 upper-ell: warn
+unused-local-variable: off

@@ -1,1 +1,2 @@
 array-type-style: warn
+unused-local-variable: off

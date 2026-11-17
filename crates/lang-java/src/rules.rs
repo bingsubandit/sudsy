@@ -5,9 +5,14 @@ use crate::generated::kind as k;
 use core_rules::options::{Check, Opt, OptionDecl};
 use core_rules::{Re, Rule, RuleContext, rule};
 use core_syntax::{SyntaxNode, SyntaxToken, TextRange};
-use std::collections::HashSet;
 
-pub static RULES: &[&dyn Rule] = &[&NamingConvention, &ModifierOrder, &UnusedImport];
+pub static RULES: &[&dyn Rule] = &[
+    &NamingConvention,
+    &ModifierOrder,
+    &crate::scope::UNUSED_IMPORT,
+    &crate::scope::UNUSED_LOCAL,
+    &crate::scope::PARAMETER_ASSIGNMENT,
+];
 
 fn tokens(node: &SyntaxNode) -> impl Iterator<Item = SyntaxToken> {
     node.children_with_tokens().filter_map(|e| e.into_token())
@@ -215,58 +220,4 @@ rule! {
             top = rank;
         }
     }
-}
-
-rule! {
-    pub UnusedImport {
-        id: "unused-import",
-        category: Cleanup,
-        default: Warn,
-        description: "An import whose name is not used in the file, not even in a Javadoc comment \
-                  (Checkstyle UnusedImports). Imports with `*` are not checked. No fix: removing \
-                  an import can change which class a name means.",
-        example: "import java.util.List;   // List is not used",
-        kinds: &[k::PROGRAM],
-    }
-
-    fn check(&self, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-        let imports: Vec<SyntaxNode> = node.descendants().filter(|n| n.kind() == k::IMPORT_DECLARATION).collect();
-        if imports.is_empty() {
-            return;
-        }
-        let mut used: HashSet<String> = HashSet::new();
-        let mut javadoc = String::new();
-        for e in node.descendants_with_tokens() {
-            let Some(t) = e.into_token() else { continue };
-            if t.kind() == k::COMMENT && t.text().starts_with("/**") {
-                javadoc.push_str(t.text());
-            } else if t.kind() == k::IDENTIFIER
-                && !t.parent().is_some_and(|p| p.ancestors().any(|a| a.kind() == k::IMPORT_DECLARATION))
-            {
-                used.insert(t.text().to_string());
-            }
-        }
-        for import in imports {
-            let Some(last) = import.descendants_with_tokens().filter_map(|e| e.into_token()).filter(|t| t.kind() == k::IDENTIFIER).last()
-            else {
-                continue; // `import a.*;`
-            };
-            let star = import.descendants_with_tokens().filter_map(|e| e.into_token()).any(|t| t.text() == "*");
-            let name = last.text();
-            if star || used.contains(name) || mentions(&javadoc, name) {
-                continue;
-            }
-            ctx.report(import.text_range(), format!("the import of `{name}` is not used"));
-        }
-    }
-}
-
-/// Whether Javadoc text contains `name` as a whole word.
-fn mentions(javadoc: &str, name: &str) -> bool {
-    javadoc.match_indices(name).any(|(i, _)| {
-        let before = javadoc[..i].chars().next_back();
-        let after = javadoc[i + name.len()..].chars().next();
-        let word = |c: Option<char>| c.is_some_and(|c| c.is_alphanumeric() || c == '_');
-        !word(before) && !word(after)
-    })
 }

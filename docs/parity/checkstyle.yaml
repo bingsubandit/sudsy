@@ -74,7 +74,7 @@ entries:
   IllegalCatch: planned
   IllegalThrows: planned
   IllegalInstantiation: planned
-  ParameterAssignment: planned
+  ParameterAssignment: rule parameter-assignment
   ReturnCount: planned
   NestedIfDepth: planned
   NestedTryDepth: planned
@@ -107,7 +107,7 @@ entries:
   UnnecessarySemicolonAfterOuterTypeDeclaration: planned
   UnnecessarySemicolonInEnumeration: planned
   UnnecessarySemicolonInTryWithResources: planned
-  UnusedLocalVariable: planned
+  UnusedLocalVariable: rule unused-local-variable
   JavadocMethod: planned
   JavadocType: planned
   JavadocVariable: planned

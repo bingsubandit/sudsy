@@ -26,6 +26,12 @@ pub enum Sel {
     First,
     /// The child filling a role field or labelled item of the grammar's body.
     Field(&'static str),
+    /// The children of this node kind.
+    Kind(&'static str),
+    /// The last child (the last own name token of a node's tokens).
+    Last,
+    /// The last own name token before the first own token with this text (`for (T t : xs)`).
+    LastBefore(&'static str),
     /// The children before the first own operator token.
     BeforeOp,
     /// The children after the first own token with this text.
@@ -53,6 +59,16 @@ pub enum Flow {
     Through,
     /// Only the type state goes on: the left of a qualified name `N.T`, a member `a.b` in a type.
     ThroughType,
+    /// They are assigned when the node's operator is an assignment (`=`), read and assigned when
+    /// it is a compound one (`+=`) or `++`/`--`, and as the node itself otherwise (`&$x`).
+    Assigns,
+    /// They declare their names in the nearest node that `declares` (a parameter, a variable).
+    Declare,
+    /// They are not references (a name in a position no scope looks up).
+    Skip,
+    /// They declare their name in the scope of the node and assign the one of the scope around it
+    /// (`use (&$x)` of a closure).
+    Capture,
 }
 
 /// A node whose binding nodes declare names.
@@ -71,6 +87,12 @@ pub struct Declares {
     pub parent_places: &'static [(&'static str, Place)],
     /// The name is the first child node's identifier or string (an enum member), not a binding node.
     pub name_child: bool,
+    /// The name is the last name token under the last child node (the end of an import path or
+    /// its alias); none when the node has an own token with `skip_token`.
+    pub name_last: bool,
+    pub skip_token: &'static str,
+    /// The flags when the parent node has one of these kinds (a property in a class is a member).
+    pub parent_flags: &'static [(&'static str, Flags)],
 }
 
 impl Declares {
@@ -82,6 +104,9 @@ impl Declares {
         keyword_on_parent: false,
         parent_places: &[],
         name_child: false,
+        name_last: false,
+        skip_token: "",
+        parent_flags: &[],
     };
 }
 
@@ -96,6 +121,16 @@ pub struct Row {
     /// A leaf that refers to a name.
     pub reference: bool,
     pub children: &'static [(Sel, Flow)],
+    /// What the node's own name tokens do, for a grammar whose names are bare tokens, not nodes
+    /// (the first row that selects a token decides).
+    pub tokens: &'static [(Sel, Flow)],
+    /// The scope the node opens does not see the names of the scopes around it (a PHP function).
+    pub closed: bool,
+    /// Names under the node are not references (an import path); what the node declares still is.
+    pub inert: bool,
+    /// The node makes the names of its scope unknowable (`$$x`, `include`): rules that need
+    /// every name of the scope leave it alone.
+    pub dynamic: bool,
 }
 
 impl Row {
@@ -106,6 +141,10 @@ impl Row {
         binding: false,
         reference: false,
         children: &[],
+        tokens: &[],
+        closed: false,
+        inert: false,
+        dynamic: false,
     };
 }
 
@@ -117,6 +156,9 @@ pub struct Table {
     name_tokens: Vec<SyntaxKind>,
     operators: Vec<bool>,
     params: Vec<bool>,
+    bare: bool,
+    implicit: Option<Flags>,
+    dynamic: &'static [&'static str],
 }
 
 impl Table {
@@ -148,6 +190,9 @@ impl Table {
             name_tokens: name_tokens.iter().map(|n| kind(n)).collect(),
             operators: vec![false; size(true)],
             params: vec![false; size(false)],
+            bare: false,
+            implicit: None,
+            dynamic: &[],
         };
         for row in rows {
             table.rows[kind(row.kind).index() as usize] = Some(row);
@@ -165,6 +210,38 @@ impl Table {
             table.operators[def.kind.index() as usize] = def.has_tag("operator");
         }
         table
+    }
+
+    /// Every own name token of a node is a reference unless a row says otherwise (Java: names
+    /// are bare tokens, so a use is any name that is not a declaration).
+    pub fn bare_names(mut self, bare: bool) -> Table {
+        self.bare = bare;
+        self
+    }
+
+    /// A write to a name no scope declares declares it with these flags in the nearest `var`
+    /// scope (PHP and Python variables).
+    pub fn implicit(mut self, flags: Option<Flags>) -> Table {
+        self.implicit = flags;
+        self
+    }
+
+    /// Referring to one of these names makes the names of the scope unknowable (`extract`).
+    pub fn dynamic_names(mut self, names: &'static [&'static str]) -> Table {
+        self.dynamic = names;
+        self
+    }
+
+    pub(crate) fn is_bare(&self) -> bool {
+        self.bare
+    }
+
+    pub(crate) fn implicit_flags(&self) -> Option<Flags> {
+        self.implicit
+    }
+
+    pub(crate) fn is_dynamic_name(&self, name: &str) -> bool {
+        self.dynamic.contains(&name)
     }
 
     pub(crate) fn row(&self, kind: SyntaxKind) -> Option<&'static Row> {

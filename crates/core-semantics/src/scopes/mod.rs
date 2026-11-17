@@ -85,6 +85,8 @@ impl Access {
     pub const WRITE: Access = Access(2);
     /// Written in a type: names a type (`x: T`), or with READ a value (`typeof x`).
     pub const TYPE: Access = Access(4);
+    /// Declares its name (a parameter) instead of referring to it.
+    pub const DECLARE: Access = Access(8);
 
     pub const fn union(self, o: Access) -> Access {
         Access(self.0 | o.0)
@@ -101,6 +103,10 @@ pub struct Scope {
     pub node: SyntaxNode,
     /// `var` declarations of the scopes inside it stop here.
     pub var: bool,
+    /// Names are not looked up outside it.
+    pub closed: bool,
+    /// Its names cannot all be known (see `Row::dynamic`).
+    pub dynamic: bool,
     pub symbols: Vec<SymbolId>,
     names: HashMap<Rc<str>, SymbolId>,
 }
@@ -247,12 +253,15 @@ impl Model {
         let ty = !(r.is_read() || r.is_write());
         let want = if ty { Flags::TYPE } else { Flags::VALUE };
         let params = Flags::PARAMETER | Flags::TYPE_PARAMETER | Flags::EXPRESSION_NAME;
-        self.ancestors(r.scope).find_map(|s| {
-            let id = self.own(s, &r.name)?;
-            let f = self.symbol(id).flags;
-            (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params)))
-                .then_some(id)
-        })
+        let mut open = true;
+        self.ancestors(r.scope)
+            .take_while(|s| std::mem::replace(&mut open, !self.scope(*s).closed))
+            .find_map(|s| {
+                let id = self.own(s, &r.name)?;
+                let f = self.symbol(id).flags;
+                (f.intersects(want) && (!r.in_params.contains(&s) || f.intersects(params)))
+                    .then_some(id)
+            })
     }
 
     /// The references no scope resolves.
@@ -267,11 +276,13 @@ impl Model {
 }
 
 impl Scope {
-    pub(crate) fn new(parent: Option<ScopeId>, node: SyntaxNode, var: bool) -> Scope {
+    pub(crate) fn new(parent: Option<ScopeId>, node: SyntaxNode, var: bool, closed: bool) -> Scope {
         Scope {
             parent,
             node,
             var,
+            closed,
+            dynamic: false,
             symbols: Vec::new(),
             names: HashMap::new(),
         }
