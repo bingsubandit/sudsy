@@ -292,7 +292,7 @@ impl P<'_> {
     }
 
     /// `schema.name(`: a dotted name that ends in a bracket.
-    fn name_then_paren(&self) -> bool {
+    pub(super) fn name_then_paren(&self) -> bool {
         let mut n = 0;
         while self.starts_name(n) && self.is_t(n + 1, T::Dot) {
             n += 2;
@@ -350,7 +350,8 @@ impl P<'_> {
             self.eat("group");
             self.bracketed(|p| {
                 if p.at("where") {
-                    p.where_clause();
+                    p.bump_as(k::KEYWORD);
+                    p.expression();
                 } else {
                     p.order_by();
                 }
@@ -550,7 +551,7 @@ impl P<'_> {
                     self.close(k::COMPARISON_OPERATOR, m);
                 } else if ARITH.contains(&text) {
                     self.bump_as(k::BINARY_OPERATOR);
-                } else if text == "?" || text == "$" || text == "\\" {
+                } else if (text == "?" && self.d != super::Dialect::Postgres) || text == "$" || text == "\\" {
                     return false;
                 } else {
                     self.bump();
@@ -627,7 +628,10 @@ impl P<'_> {
                 self.bump_as(k::KEYWORD);
                 self.eat("to");
             }
-            "ISNULL" | "NOTNULL" => self.bump_as(k::KEYWORD),
+            "ISNULL" | "NOTNULL" => {
+                self.bump_as(k::KEYWORD);
+                return self.after_is();
+            }
             "DIV" | "MOD" | "XOR" if self.d == super::Dialect::Mysql => self.bump_as(k::BINARY_OPERATOR),
             _ => return false,
         }

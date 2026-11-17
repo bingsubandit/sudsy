@@ -51,11 +51,11 @@ impl T {
 
 const OPS4: &[&str] = &["!~~*"];
 const OPS3: &[&str] = &[
-    "->>", "#>>", "<=>", "!~*", "~~*", "<->", "<#>", "&&&", "|>>", "<<|", "&<|", "|&>", "!~~", "<<=",
+    "->>", "#>>", "<=>", "!~*", "~~*", "<->", "<#>", "<+>", "&&&", "|>>", "<<|", "&<|", "|&>", "!~~", "<<=",
     ">>=", "||/", "|/ ",
 ];
 const OPS2: &[&str] = &[
-    "<>", "<=", ">=", "!=", "||", "->", "#>", "@>", "<@", "?|", "?&", "&&", "!!", "=>", ":=", "~*",
+    "<>", "<=", ">=", "&>", "&<", "!=", "||", "->", "#>", "@>", "<@", "?|", "?&", "&&", "!!", "=>", ":=", "~*",
     "!~", "~~", "<<", ">>", "@@", "#-", "~=", "!<", "!>", "+=", "-=", "*=", "/=", "%=", "&=", "|=",
     "^=", "||", "..",
 ];
@@ -232,6 +232,14 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
         b',' => return (T::Comma, i + 1),
         b';' => return (T::Semi, i + 1),
         b':' if next == Some(b':') => return (T::Cast, i + 2),
+        b':' if d == Dialect::Postgres && matches!(next, Some(b'\'' | b'"')) => {
+            return (T::Var, quoted(b, i + 1, next.unwrap_or(b'\''), false, open));
+        }
+        b'U' | b'u' if d == Dialect::Postgres && next == Some(b'&') && matches!(b.get(i + 2), Some(b'\'' | b'"')) => {
+            let q = b[i + 2];
+            let end = quoted(b, i + 2, q, false, open);
+            return (if q == b'"' { T::Quoted } else { T::Str }, end);
+        }
         b':' if next == Some(b'=') => return (T::Op, i + 2),
         b':' => return (T::Colon, i + 1),
         b'.' if !next.is_some_and(|n| n.is_ascii_digit()) || (i > 0 && (b[i - 1].is_ascii_alphanumeric() || b[i - 1] == b'_')) => return (T::Dot, i + 1),

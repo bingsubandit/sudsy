@@ -55,6 +55,8 @@ struct Walk {
     expr: bool,
     /// The statement alters or creates a table.
     table_stmt: bool,
+    /// The last name was one of a list that a comma continues.
+    name_list: bool,
     /// After `=` or `TO` of a setting: the words are values, not keywords.
     value: bool,
     /// The statement is a `GRANT` or `REVOKE`: `select` there is a privilege.
@@ -107,7 +109,7 @@ impl P<'_> {
                 T::Word | T::Quoted => self.generic_word(&mut w, depth),
                 T::Comma => {
                     w.item_start = w.columns || w.params;
-                    w.expect_name = w.expect_name && !w.item_start;
+                    w.expect_name = (w.expect_name || w.name_list) && !w.item_start;
                     w.after_name = false;
                     self.bump();
                 }
@@ -171,7 +173,7 @@ impl P<'_> {
             } else if function && !more {
                 k::FUNCTION_IDENTIFIER
             } else {
-                if self.d == super::Dialect::Tsql { k::IDENTIFIER } else { k::WORD }
+                k::IDENTIFIER
             };
             self.bump_as(kind);
             if more {
@@ -227,7 +229,7 @@ impl P<'_> {
                 return;
             }
             if w.params && word && matches!(up.as_str(), "IN" | "OUT" | "INOUT" | "VARIADIC") {
-                self.bump_as(k::WORD);
+                self.bump_as(if self.d == super::Dialect::Postgres { k::KEYWORD } else { k::WORD });
                 w.item_start = true;
                 return;
             }
@@ -256,7 +258,7 @@ impl P<'_> {
         let bare_item = word && depth > 0 && !w.columns && !w.params && !self.reserved(0) && matches!(self.prev_kind(), Some(T::LParen | T::Comma)) && matches!(self.t(1), Some(T::Comma | T::RParen));
         let name_here = bare_item || w.expect_name && !self.reserved(0) && !MODIFIERS.contains(&up.as_str()) && !INTRODUCERS.contains(&up.as_str()) && !NEVER_NAMES.contains(&up.as_str());
         let calls = (w.expr || (depth > 0 && !w.columns && !w.params)) && !self.reserved(0) || super::expr::BARE_FUNCTIONS.contains(&up.as_str());
-        if (word || quoted) && calls && self.is_t(1, T::LParen) && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN") {
+        if (word || quoted) && calls && (self.is_t(1, T::LParen) || (w.expr && self.name_then_paren())) && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN") {
             self.chain(false);
             w.expr = false;
             return;
@@ -264,6 +266,7 @@ impl P<'_> {
         if quoted || dotted || name_here {
             let function = w.function_name;
             self.generic_name(function);
+            w.name_list = true;
             w.expect_name = false;
             w.after_name = true;
             return;
@@ -288,6 +291,7 @@ impl P<'_> {
                 w.expect_name = true;
             } else if !MODIFIERS.contains(&up.as_str()) {
                 w.expect_name = false;
+                w.name_list = false;
             }
             w.after_name = false;
             w.expr = EXPR_AFTER.contains(&up.as_str());

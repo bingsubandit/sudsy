@@ -311,6 +311,9 @@ impl P<'_> {
     pub fn from_element(&mut self) -> bool {
         let m = self.mark();
         let t = self.mark();
+        if self.at("lateral") && !self.is_t(1, T::Dot) {
+            self.bump_as(k::KEYWORD);
+        }
         if self.is_t(0, T::LParen) {
             self.bracketed(|p| {
                 if p.at_query_start() {
@@ -319,9 +322,6 @@ impl P<'_> {
                     p.from_expression();
                 }
             });
-        } else if self.at("lateral") {
-            self.bump_as(k::KEYWORD);
-            return self.from_element_rest(m, t);
         } else if self.at("dual") {
             let o = self.mark();
             self.bump_as(k::IDENTIFIER);
