@@ -54,8 +54,8 @@ pub const ROLES: &[Role] = &[
     },
     Role {
         name: "loop",
-        fields: "body condition?",
-        doc: "`while`, `do`, `for`, `foreach`; no condition in a `foreach` or `for (;;)`",
+        fields: "body condition? iterable? init? update?",
+        doc: "`while`, `do`, `for`, `foreach`; no condition in a `foreach` (it has an `iterable`) or `for (;;)`; `init` and `update` are the parts of a `for` that run before the loop and after each pass",
     },
     Role {
         name: "switch",
@@ -86,6 +86,21 @@ pub const ROLES: &[Role] = &[
         name: "throw",
         fields: "value",
         doc: "raises an exception; `value` is optional (a rethrow)",
+    },
+    Role {
+        name: "break",
+        fields: "label?",
+        doc: "leaves the innermost loop or switch, or the labeled statement `label` names",
+    },
+    Role {
+        name: "continue",
+        fields: "label?",
+        doc: "goes on with the next pass of the innermost loop, or of the labeled one",
+    },
+    Role {
+        name: "labeled",
+        fields: "label body",
+        doc: "a statement with a name that `break` and `continue` can address",
     },
     Role {
         name: "key-value",

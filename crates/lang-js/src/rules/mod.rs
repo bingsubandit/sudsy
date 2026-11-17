@@ -5,9 +5,9 @@
 mod binder;
 mod dupes;
 mod escapes;
-mod flow;
 mod imports;
 mod misc;
+mod reach;
 mod regexp;
 mod scope;
 mod shadow;
@@ -85,15 +85,15 @@ const CHECKS: &[Entry] = &[
             k::BREAK_STATEMENT,
             k::CONTINUE_STATEMENT,
         ],
-        flow::unsafe_finally,
+        stmts::unsafe_finally,
     ),
-    ("unreachable", &[k::PROGRAM], flow::unreachable),
+    ("unreachable", reach::UNITS, reach::unreachable),
     (
         "getter-return",
         &[k::METHOD_DEFINITION, k::OBJECT_PROPERTY],
-        flow::getter_return,
+        reach::getter_return,
     ),
-    ("require-yield", &[k::FUNCTION], flow::require_yield),
+    ("require-yield", &[k::FUNCTION], stmts::require_yield),
     (
         "useless-escape",
         &[k::STRING_LITERAL, k::TEMPLATE_LITERAL, k::REG_EXP_LITERAL],
@@ -119,7 +119,7 @@ const CHECKS: &[Entry] = &[
         &[k::NUMERIC_LITERAL],
         escapes::loss_of_precision,
     ),
-    ("fallthrough", &[k::SWITCH_STATEMENT], flow::fallthrough),
+    ("fallthrough", &[k::SWITCH_STATEMENT], reach::fallthrough),
     (
         "unused-expressions",
         &[k::EXPRESSION_STATEMENT],

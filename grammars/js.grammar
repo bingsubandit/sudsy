@@ -113,16 +113,16 @@ node WhileStatement #statement #loop = Keyword LParen condition:#expression RPar
 node ForStatement #statement #scope #loop =
     Keyword LParen declaration:VariableDeclaration? init:#expression? Semicolon test=condition:#expression? Semicolon update:#expression? RParen body:#statement
 node ForInStatement #statement #scope #loop =
-    Keyword Keyword? LParen LParen* declaration:VariableDeclaration? left:#expression? RParen* Keyword? Identifier? right:#expression RParen body:#statement
+    Keyword Keyword? LParen LParen* declaration:VariableDeclaration? left:#expression? RParen* Keyword? Identifier? right=iterable:#expression RParen body:#statement
 node ForOfStatement #statement #scope #loop =
-    Keyword Keyword? LParen LParen* declaration:VariableDeclaration? left:#expression? RParen* Keyword? Identifier? right:#expression RParen body:#statement
-node ContinueStatement #statement #opaque
-node BreakStatement #statement #opaque
+    Keyword Keyword? LParen LParen* declaration:VariableDeclaration? left:#expression? RParen* Keyword? Identifier? right=iterable:#expression RParen body:#statement
+node ContinueStatement #statement #continue = Keyword label:LabelIdentifier? Semicolon?
+node BreakStatement #statement #break = Keyword label:LabelIdentifier? Semicolon?
 node ReturnStatement #statement #return = Keyword value:#expression? Semicolon?
 node WithStatement #statement #opaque
 node SwitchStatement #statement #scope #switch = Keyword LParen discriminant=subject:#expression RParen LBrace cases:SwitchCase* RBrace
 node SwitchCase #case = Keyword test:#expression? Colon body:#statement*
-node LabeledStatement #statement #opaque
+node LabeledStatement #statement #labeled = label:LabelIdentifier Colon body:#statement
 node ThrowStatement #statement #throw = Keyword value:#expression Semicolon?
 node TryStatement #statement #try = Keyword body:BlockStatement catches:CatchClause* Keyword? finally:BlockStatement?
 node CatchClause #scope #catch = Keyword LParen? parameter:CatchParameter? RParen? body:BlockStatement

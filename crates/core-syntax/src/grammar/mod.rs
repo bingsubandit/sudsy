@@ -239,18 +239,31 @@ impl Grammar {
     /// operand and a prefix one before it are two items of the field `operator`).
     /// Found with the routine the generated accessors use, so it agrees with them.
     pub fn slot(&self, node: &SyntaxNode, label: &str) -> Option<SyntaxElement> {
-        let def = self.def(node.kind())?;
-        let body = GrammarBody {
-            grammar: self,
-            kinds: self.bodies.get(node.kind().index() as usize)?,
-            body: &def.body,
-        };
-        crate::ast::assign(node, body)
-            .find(|(i, _)| {
-                let item = &def.body[*i];
-                item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label)
+        self.slots(node, label).next()
+    }
+
+    /// Every child of `node` in the items of the field `label`, in order (the `cases` of a switch).
+    pub fn slots<'a>(
+        &'a self,
+        node: &'a SyntaxNode,
+        label: &'a str,
+    ) -> impl Iterator<Item = SyntaxElement> + 'a {
+        let def = self.def(node.kind());
+        let body = def.and_then(|def| {
+            Some(GrammarBody {
+                grammar: self,
+                kinds: self.bodies.get(node.kind().index() as usize)?,
+                body: &def.body,
             })
-            .map(|(_, e)| e)
+        });
+        body.into_iter()
+            .flat_map(move |body| {
+                crate::ast::assign(node, body).filter_map(move |(i, e)| {
+                    let item = &body.body[i];
+                    (item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label))
+                        .then_some(e)
+                })
+            })
     }
 
     /// The operator kind (`equality`, `logical`, ...; [`crate::roles::OPERATOR_KINDS`]) of operator

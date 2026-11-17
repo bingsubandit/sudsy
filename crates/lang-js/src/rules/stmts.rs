@@ -1,10 +1,10 @@
 //! Rules about single statements and expressions: `no-unused-expressions`,
-//! `no-unexpected-multiline` and `no-duplicate-enum-values`.
+//! `no-unexpected-multiline`, `no-duplicate-enum-values`, `no-unsafe-finally` and `require-yield`.
 
 use super::{Check, code_text, has_own, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
-use core_syntax::{Grammar, SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
 use std::collections::HashSet;
 
 /// Does the expression do nothing (ESLint's defaults: short circuits, ternaries and tagged
@@ -152,5 +152,82 @@ pub(super) fn duplicate_enum_values(c: &Check, n: &SyntaxNode, ctx: &mut RuleCon
         if !seen.insert(value.clone()) {
             c.hit(ctx, span(ctx, &member), &value[1..]);
         }
+    }
+}
+
+fn is_loop(kind: SyntaxKind) -> bool {
+    matches!(
+        kind,
+        k::WHILE_STATEMENT
+            | k::DO_WHILE_STATEMENT
+            | k::FOR_STATEMENT
+            | k::FOR_IN_STATEMENT
+            | k::FOR_OF_STATEMENT
+    )
+}
+
+fn is_function(kind: SyntaxKind) -> bool {
+    matches!(kind, k::FUNCTION | k::ARROW_FUNCTION_EXPRESSION | k::CLASS)
+}
+
+fn label_of(n: &SyntaxNode, g: &Grammar) -> Option<String> {
+    n.children()
+        .find(|l| l.kind() == k::LABEL_IDENTIFIER)
+        .map(|l| code_text(&l, g))
+}
+
+/// Is `block` the `finally` block of a `try`?
+fn is_finalizer(block: &SyntaxNode, g: &Grammar) -> bool {
+    let after_finally =
+        std::iter::successors(block.prev_sibling_or_token(), |e| e.prev_sibling_or_token())
+            .find(|e| !e.as_token().is_some_and(|t| g.is_trivia(t.kind())))
+            .is_some_and(|e| e.as_token().is_some_and(|t| t.text() == "finally"));
+    after_finally && block.parent().is_some_and(|p| p.kind() == k::TRY_STATEMENT)
+}
+
+/// `return`, `throw`, and a `break` or `continue` that leaves the `finally` block.
+pub(super) fn unsafe_finally(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    let g = ctx.file.grammar;
+    let label = label_of(n, g);
+    let jump = n.kind();
+    let mut current = n.clone();
+    while let Some(p) = current.parent() {
+        match p.kind() {
+            kind if is_function(kind) => return,
+            kind if is_loop(kind)
+                && label.is_none()
+                && matches!(jump, k::BREAK_STATEMENT | k::CONTINUE_STATEMENT) =>
+            {
+                return;
+            }
+            k::SWITCH_STATEMENT if label.is_none() && jump == k::BREAK_STATEMENT => return,
+            k::LABELED_STATEMENT if label.is_some() && label_of(&p, g) == label => return,
+            k::BLOCK_STATEMENT if is_finalizer(&p, g) => {
+                c.hit(ctx, span(ctx, n), g.name(jump));
+                return;
+            }
+            _ => {}
+        }
+        current = p;
+    }
+}
+
+fn has_yield(n: &SyntaxNode) -> bool {
+    n.children()
+        .any(|c| c.kind() == k::YIELD_EXPRESSION || (c.kind() != k::FUNCTION && has_yield(&c)))
+}
+
+/// A generator with a body and no `yield`.
+pub(super) fn require_yield(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
+    let g = ctx.file.grammar;
+    let method = n
+        .parent()
+        .filter(|p| matches!(p.kind(), k::METHOD_DEFINITION | k::OBJECT_PROPERTY));
+    let generator = has_own(n, g, "*") || method.is_some_and(|m| has_own(&m, g, "*"));
+    let Some(body) = n.children().find(|b| b.kind() == k::FUNCTION_BODY) else {
+        return;
+    };
+    if generator && body.children().next().is_some() && !has_yield(&body) {
+        c.hit(ctx, span(ctx, n), "");
     }
 }

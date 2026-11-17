@@ -479,6 +479,8 @@ dependencies = [
 name = "core-flow"
 version = "0.0.1"
 dependencies = [
+ "core-syntax",
+ "rowan",
  "serde",
 ]
 
@@ -1823,6 +1825,7 @@ name = "lang-js"
 version = "0.0.1"
 dependencies = [
  "core-config",
+ "core-flow",
  "core-format",
  "core-rules",
  "core-semantics",
