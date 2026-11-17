@@ -13,7 +13,7 @@ Hand-written Rust, generated files left out:
 
 - The sharing mechanism is the grammar file: a node kind carries role tags (`#member-chain`, `#binary-chain`, `#key-value`) and named fields, and shared shapes, shared rules and pattern rules read those. The languages behind an external parser do not use it. Node kinds with a role tag: C# 282 of 321, JS 2 of 191, Python 5 of 92, SQL 0 of 44, Kotlin 0 of 120, Java 45 of 149, PHP 30 of 169. Their formatters match on kind constants and find parts by position.
 - Lists, operator chains, member chains and call arguments are written once per language: `lang-js/src/format/{call,chain,binary,assign,parens}.rs`, `lang-csharp/src/format/{chains,lists}.rs`, `lang-python/src/format/{op,list,paren}.rs`, `lang-java/src/format/expr.rs`. `core_format::shapes` is 1,096 lines; Python uses none of it.
-- `core-semantics` and `core-flow` were used by C# only. JS reads the shared binder `core-semantics::scopes` through its own table (`semantic.rs`; S1); Python keeps ruff's AST in a thread-local (`analysis/`, about 2,900 lines); `lang-js/src/rules/flow.rs` has its own reachability.
+- `core-semantics` and `core-flow` were used by C# only. JS reads the shared binder `core-semantics::scopes` through its own table (`semantic.rs`; S1); Python reads it through its own table too (`semantic.rs`; S2); `lang-js/src/rules/flow.rs` has its own reachability.
 - Parser types are used outside the adapter in `lang-js` (5 files), `lang-python` (7), `lang-sql` (2), `lang-java` (2) and `lang-html` (2), so a parser bump or replacement is not a one-file change.
 - The two generalization steps removed a net 431 lines of Rust. They moved provider glue and the adapter replay, which is not where a language's cost is.
 
@@ -81,7 +81,7 @@ L1 is a test of the design. If the three languages cannot hold their ratchets on
 | # | Step | Where | Done when | After |
 |---|---|---|---|---|
 | S1 | The scope model and binder in `core-semantics`, with JS's binding table and resolution data; the shared rule family with ESLint's ids as rows; a parity mode that compares findings by rule and reported name | `core-semantics`, `core-rules`, `lang-js` | on the `eslint` and `typescript-eslint` parity corpora no problem the reference tool reports is missed (decision 2: compared by rule and reported name per file, not by position); `oxc_semantic` and the second parse are gone; `js.lint` within budget | R2, M4 |
-| S2 | Python on the same model (ruff ids as rows); the kept AST and `analysis/model.rs` go | `lang-python` | the same measure on the `ruff` parity corpus | S1, R3 |
+| S2 (done) | Python on the same model (ruff ids as rows); the kept AST and `analysis/model.rs` go | `lang-python` | the same measure on the `ruff` parity corpus | S1, R3 |
 | S3 | A flow-graph builder from statement roles; JS `no-unreachable` on `core-flow` | `core-flow`, `lang-js` | `rules/flow.rs` deleted, same findings (done: `core_flow::build`; `no-unreachable`, `getter-return` and `no-fallthrough` run on it) | R2 |
 | S4 | Java, Kotlin and PHP get the scope rules from tables alone | `lang-*` | lines per language recorded | S1, R3 |
 

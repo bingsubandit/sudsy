@@ -33,6 +33,12 @@ pub fn parse_file(file: &SourceFile) -> ParseResult {
 }
 
 pub fn parse(src: &str, target: PythonVersion) -> ParseResult {
+    let result = tree(src, target);
+    crate::semantic::note_parse(src, !result.errors.is_empty(), u32::from(target.minor));
+    result
+}
+
+fn tree(src: &str, target: PythonVersion) -> ParseResult {
     let parsed = parse_unchecked(
         src,
         ParseOptions::from(Mode::Module).with_target_version(target),
@@ -88,11 +94,13 @@ pub fn parse(src: &str, target: PythonVersion) -> ParseResult {
     let mut result = replay(src, kinds, &tokens, &nodes, comments, |t, _| t);
     errors.append(&mut result.errors);
     errors.sort_by_key(|e| e.start);
-    if errors.is_empty() {
-        crate::analysis::keep(src, parsed, target);
-    }
     result.errors = errors;
     result
+}
+
+/// The parse of a piece of code found in a string (a quoted annotation), for the newest version.
+pub fn parse_snippet(src: &str) -> ParseResult {
+    tree(src, PythonVersion::latest())
 }
 
 /// A comment or a backslash that ends a line, at the start of the text between two tokens.

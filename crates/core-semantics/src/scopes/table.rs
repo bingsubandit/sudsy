@@ -4,7 +4,7 @@
 //! table only says which of those scopes hold `var` declarations.
 
 use super::Flags;
-use core_syntax::{Grammar, SyntaxKind};
+use core_syntax::{Grammar, SyntaxKind, SyntaxNode};
 
 /// The scope a declaration goes to.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -32,6 +32,10 @@ pub enum Sel {
     AfterText(&'static str),
     /// All the children, when the node has an own token with this text (`export type { A }`).
     WithToken(&'static str),
+    /// The children of this node kind (`Decorator`).
+    Kind(&'static str),
+    /// All the child nodes but the last (the targets of `a = b = c`).
+    ExceptLast,
 }
 
 /// What the references among the selected children do with their names.
@@ -49,10 +53,30 @@ pub enum Flow {
     Query,
     /// They are outside the scope of the node (the false branch of a conditional type).
     Outside,
+    /// They are read and unbound (`del x`).
+    Delete,
+    /// They are assigned and declared with no value (`x: int`).
+    WriteBare,
     /// The state of the node itself (assigned, a type) goes on to them: an array pattern.
     Through,
     /// Only the type state goes on: the left of a qualified name `N.T`, a member `a.b` in a type.
     ThroughType,
+    /// They are assigned and declared in the nearest scope that holds `var` declarations (a walrus
+    /// in a comprehension).
+    WriteVar,
+    /// As [`Flow::Outside`], and they name values in a type (an annotation, evaluated outside).
+    OutsideQuery,
+    /// The first flow when the predicate holds for the row's node, else the second.
+    Cond(fn(&SyntaxNode) -> bool, &'static Flow, &'static Flow),
+}
+
+/// Where the names of a statement that sends declarations elsewhere (`global`, `nonlocal`) go.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Redirect {
+    /// The top scope.
+    Top,
+    /// The nearest scope above the current one that holds `var` declarations (and the name, if one does).
+    Outer,
 }
 
 /// A node whose binding nodes declare names.
@@ -71,6 +95,9 @@ pub struct Declares {
     pub parent_places: &'static [(&'static str, Place)],
     /// The name is the first child node's identifier or string (an enum member), not a binding node.
     pub name_child: bool,
+    /// The name is in the first of these children that the node has (a function's `name`, an
+    /// import's `asname` before its `name`), not in a binding node.
+    pub names: &'static [Sel],
 }
 
 impl Declares {
@@ -82,6 +109,7 @@ impl Declares {
         keyword_on_parent: false,
         parent_places: &[],
         name_child: false,
+        names: &[],
     };
 }
 
@@ -96,6 +124,15 @@ pub struct Row {
     /// A leaf that refers to a name.
     pub reference: bool,
     pub children: &'static [(Sel, Flow)],
+    /// The names of the node's child nodes are declared in another scope for the rest of this one.
+    pub redirect: Option<Redirect>,
+    /// The names declared here are not visible to the scopes nested in this one (class bodies).
+    pub hidden: bool,
+    /// A reference that is assigned declares its name, with these flags, in this place (assigning
+    /// declares: Python).
+    pub implicit: Option<(Flags, Place)>,
+    /// A leaf whose text names things when it stands in a type position: the model lists it.
+    pub text: bool,
 }
 
 impl Row {
@@ -106,6 +143,10 @@ impl Row {
         binding: false,
         reference: false,
         children: &[],
+        redirect: None,
+        hidden: false,
+        implicit: None,
+        text: false,
     };
 }
 
