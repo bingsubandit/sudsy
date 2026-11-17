@@ -51,13 +51,16 @@ Trailing trivia: after a token up to and including the end of its line. Leading:
 | `#unary` | `operand` `operator?` | prefix, postfix or keyword operator on one operand |
 | `#assignment` | `left` `operator` `right` | stores a value, plain or compound |
 | `#conditional` | `condition` `then` `else?` | ternary expression, or an `if` statement or branch (`else` is the else branch, absent without one; in Python the first `elif`/`else` clause, whose siblings are the rest); a clause with no condition (`else`) has no `condition` |
-| `#loop` | `body` `condition?` | `while`, `do`, `for`, `foreach`; no condition in a `foreach` or `for (;;)` |
+| `#loop` | `body` `condition?` `iterable?` `init?` `update?` | `while`, `do`, `for`, `foreach`; no condition in a `foreach` (it has an `iterable`) or `for (;;)`; `init` and `update` are the parts of a `for` that run before the loop and after each pass |
 | `#switch` | `cases` `subject?` | selects among cases by a value (`switch`, `match`, SQL `CASE`); `cases` are the `#case` nodes or the items that hold them |
 | `#case` | `test` `body` | one arm of a switch; `test` is the value, pattern or condition (repeated when one arm has several labels, absent for the default arm) |
 | `#try` | `body` `catches` `finally` | `try` with its `#catch` clauses (any number) and `finally` block (optional) |
 | `#catch` | `body` `parameter?` | an exception handler; `parameter` is the caught type or variable, absent in a catch-all |
 | `#return` | `value` | leaves a function; `value` is optional |
 | `#throw` | `value` | raises an exception; `value` is optional (a rethrow) |
+| `#break` | `label?` | leaves the innermost loop or switch, or the labeled statement `label` names |
+| `#continue` | `label?` | goes on with the next pass of the innermost loop, or of the labeled one |
+| `#labeled` | `label` `body` | a statement with a name that `break` and `continue` can address |
 | `#key-value` | `key` `value?` | an entry of an object or dictionary, or a named argument (`value` absent when it is the next sibling) |
 | `#function` | `parameters` `body?` `expression_body?` | method, lambda or local function |
 | `#parameter-list` | `parameters` | the parameters of a function with their brackets |

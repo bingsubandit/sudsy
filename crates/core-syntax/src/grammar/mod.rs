@@ -256,14 +256,13 @@ impl Grammar {
                 body: &def.body,
             })
         });
-        body.into_iter()
-            .flat_map(move |body| {
-                crate::ast::assign(node, body).filter_map(move |(i, e)| {
-                    let item = &body.body[i];
-                    (item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label))
-                        .then_some(e)
-                })
+        body.into_iter().flat_map(move |body| {
+            crate::ast::assign(node, body).filter_map(move |(i, e)| {
+                let item = &body.body[i];
+                (item.label.as_deref() == Some(label) || item.field.as_deref() == Some(label))
+                    .then_some(e)
             })
+        })
     }
 
     /// The operator kind (`equality`, `logical`, ...; [`crate::roles::OPERATOR_KINDS`]) of operator

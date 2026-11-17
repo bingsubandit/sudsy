@@ -123,6 +123,8 @@ dependencies = [
 name = "core-flow"
 version = "0.0.1"
 dependencies = [
+ "core-syntax",
+ "rowan",
  "serde",
 ]
 

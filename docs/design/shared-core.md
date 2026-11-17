@@ -80,7 +80,7 @@ L1 is a test of the design. If the three languages cannot hold their ratchets on
 |---|---|---|---|---|
 | S1 | The scope model and binder in `core-semantics`, with JS's binding table and resolution data; the shared rule family with ESLint's ids as rows; a parity mode that compares findings by rule and reported name | `core-semantics`, `core-rules`, `lang-js` | on the `eslint` and `typescript-eslint` parity corpora no problem the reference tool reports is missed (decision 2: compared by rule and reported name per file, not by position); `oxc_semantic` and the second parse are gone; `js.lint` within budget | R2, M4 |
 | S2 | Python on the same model (ruff ids as rows); the kept AST and `analysis/model.rs` go | `lang-python` | the same measure on the `ruff` parity corpus | S1, R3 |
-| S3 | A flow-graph builder from statement roles; JS `no-unreachable` on `core-flow` | `core-flow`, `lang-js` | `rules/flow.rs` deleted, same findings | R2 |
+| S3 | A flow-graph builder from statement roles; JS `no-unreachable` on `core-flow` | `core-flow`, `lang-js` | `rules/flow.rs` deleted, same findings (done: `core_flow::build`; `no-unreachable`, `getter-return` and `no-fallthrough` run on it) | R2 |
 | S4 | Java, Kotlin and PHP get the scope rules from tables alone | `lang-*` | lines per language recorded | S1, R3 |
 
 ### Parsers

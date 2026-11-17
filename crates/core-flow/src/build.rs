@@ -6,7 +6,7 @@
 //! test never ends by itself, a `finally` block is built once per way of entering it, and the
 //! calls, accesses and `throw`s of a `try` body lead to its handlers.
 
-use crate::graph::{Block, BodyGraph, Edge, EdgeKind, Op};
+use crate::graph::{Block, BodyGraph, Edge, Op};
 use core_syntax::{Grammar, SyntaxElement, SyntaxNode, code_span};
 use rowan::WalkEvent;
 
@@ -147,9 +147,17 @@ enum Target {
 }
 
 enum Frame<'t> {
-    Loop { brk: usize, cont: usize },
-    Switch { brk: usize },
-    Label { name: &'t str, brk: usize },
+    Loop {
+        brk: usize,
+        cont: usize,
+    },
+    Switch {
+        brk: usize,
+    },
+    Label {
+        name: &'t str,
+        brk: usize,
+    },
     Catch(Vec<usize>),
     /// Jumps that cross a `finally`, with the block they leave from.
     Finally(Vec<(Target, usize)>),
@@ -318,6 +326,10 @@ impl<'a> Builder<'a> {
 
     fn stmt(&mut self, n: &SyntaxNode) {
         self.emit(n);
+        self.walk(n);
+    }
+
+    fn walk(&mut self, n: &SyntaxNode) {
         match role(self.g, n) {
             Role::Block => {
                 for s in self.nodes(n, "items") {
@@ -485,18 +497,31 @@ impl<'a> Builder<'a> {
             self.frames.push(Frame::Catch(entries.clone()));
         }
         self.guards += usize::from(has_finally) + usize::from(has_catch);
+        let start = self.cur;
         if let Some(body) = self.node(n, "body") {
             self.stmt(&body);
         }
         if has_catch {
             self.frames.pop();
             self.guards -= 1;
+            // a body that runs to its end may have failed on the way
+            for &e in &entries {
+                self.edge(self.cur, e, 3);
+            }
         }
         let mut normal = vec![self.cur];
         for (c, entry) in catches.iter().zip(entries) {
+            // the handler's own statements run whether or not a throw reaches it (what follows the
+            // `try` stays reachable); only its block, built in the entry, can be unreachable
             self.cur = entry;
-            if let Some(body) = self.node(c, "body") {
-                self.stmt(&body);
+            let body = self.node(c, "body");
+            if let Some(body) = &body {
+                self.emit(body);
+            }
+            self.cur = self.new_block();
+            self.always(start, self.cur);
+            if let Some(body) = &body {
+                self.walk(body);
             }
             normal.push(self.cur);
         }
