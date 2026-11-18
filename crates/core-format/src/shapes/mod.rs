@@ -7,11 +7,13 @@ mod binary_chain;
 mod block;
 mod call_chain;
 mod chain;
+mod compound;
 mod conditional;
 pub mod flow;
 mod heritage;
 mod key_value;
 mod list;
+mod maybe_parenthesize;
 mod parens;
 mod signature;
 
@@ -30,12 +32,14 @@ pub use call_chain::{
     member_chain as call_chain,
 };
 pub use chain::{MemberChain, ends_in_line_comment, gap_after_operator, member_chain};
+pub use compound::{body as compound_body, continuation as compound_continuation};
 pub use conditional::{
     Around, ConditionalHooks, ConditionalPolicy, NoConditionalHooks, conditional,
 };
 pub use heritage::{HeritageLayout, heritage};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};
+pub use maybe_parenthesize::{between, enclosed, maybe_parenthesize};
 pub use parens::{
     Need, NoParenHooks, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, first_char,
     is_dropped_close, paren_group, parenthesized, unwrap, wrap,

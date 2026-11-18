@@ -86,7 +86,6 @@ fn control(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let els = flat(cx, node);
     let mut parts = Vec::new();
     let mut prev: Option<SyntaxToken> = None;
-    let mut after_block = false;
     let mut head = true;
     for (i, e) in els.iter().enumerate() {
         let before = i.checked_sub(1).map(|j| &els[j]);
@@ -101,24 +100,13 @@ fn control(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         let trailing_kw =
             (is_tok(e, "else") || (is_tok(e, "while") && node.kind() == k::DO_STATEMENT)) && !head;
         if is_body {
-            if e.kind() == k::BLOCK
-                || (e.kind() == k::IF_STATEMENT && before.is_some_and(|b| is_tok(b, "else")))
-            {
-                parts.push(before.map_or_else(|| doc::lit(" "), |b| gap_after(cx, b)));
-                parts.push(el(cx, e)?);
-            } else {
-                parts.push(doc::group(doc::indent(doc::concat(vec![
-                    doc::line(),
-                    el(cx, e)?,
-                ]))));
-            }
-            after_block = e.kind() == k::BLOCK;
+            let inline = e.kind() == k::IF_STATEMENT && before.is_some_and(|b| is_tok(b, "else"));
+            parts.push(shapes::compound_body(cx, e, el(cx, e)?, inline, true));
         } else if trailing_kw {
-            parts.push(if after_block {
-                doc::lit(" ")
-            } else {
-                doc::hardline()
-            });
+            let (Some(body), Some(kw)) = (before, e.as_token()) else {
+                return Err(core_format::FormatError::Shape("control statement".into()));
+            };
+            parts.push(shapes::compound_continuation(cx, body, kw));
             parts.push(el(cx, e)?);
         } else {
             if let (Some(a), Some(b)) = (&prev, first(cx, e))

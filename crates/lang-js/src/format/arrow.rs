@@ -8,6 +8,7 @@ use core_format::doc::{
     Doc, concat, group, group_broken, if_break, if_break_in, indent, indent_if_break, join, line,
     lit, new_group_id, softline,
 };
+use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::SyntaxNode;
 
@@ -257,12 +258,7 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
                 core_format::context::leading_comments_doc(&after_arrow),
                 held.as_ref().map_or(Doc::Nil, |t| cx.held_leading(t)),
                 if sequence {
-                    group(concat(vec![
-                        lit("("),
-                        indent(concat(vec![softline(), body_doc])),
-                        softline(),
-                        lit(")"),
-                    ]))
+                    shapes::enclosed(lit("("), body_doc, lit(")"))
                 } else {
                     body_doc
                 },
@@ -274,12 +270,7 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
             },
         ])
     } else if body_u.kind() == k::SEQUENCE_EXPRESSION && !cx.is_ignored(&body) {
-        concat(vec![
-            lit(" ("),
-            indent(concat(vec![softline(), body_doc])),
-            softline(),
-            lit(")"),
-        ])
+        shapes::between(lit(" ("), body_doc, lit(")"))
     } else if same_line {
         concat(vec![lit(" "), body_doc])
     } else {

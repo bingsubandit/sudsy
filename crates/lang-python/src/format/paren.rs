@@ -6,18 +6,14 @@ use super::util::*;
 use super::{expr, list, op};
 use crate::generated::kind as k;
 use core_format::FormatCtx;
-use core_format::doc::{Doc, concat, group, if_break, indent, lit, softline};
+use core_format::doc::{Doc, group, if_break, lit};
+use core_format::shapes;
 use core_syntax::SyntaxNode;
 
 /// `(`, the content one level deeper, `)`: the parentheses show only when the content does not
 /// fit on the line.
 pub(crate) fn parenthesize_if_expands(d: Doc) -> Doc {
-    group(concat(vec![
-        if_break(lit("("), Doc::Nil),
-        indent(concat(vec![softline(), d])),
-        softline(),
-        if_break(lit(")"), Doc::Nil),
-    ]))
+    shapes::maybe_parenthesize(d)
 }
 
 /// The expression below the redundant parentheses of `e` (those without comments).
@@ -282,15 +278,11 @@ fn joined_with_comment(cx: &FormatCtx<'_>, inner: &SyntaxNode, outer: &SyntaxNod
     };
     Some(core_format::doc::group_with_id(
         id,
-        concat(vec![
+        shapes::between(
             if_break(lit("("), Doc::Nil),
-            indent(concat(vec![
-                softline(),
-                core_format::doc::if_break_in(id, inside, core_format::doc::text(flat)),
-            ])),
-            softline(),
+            core_format::doc::if_break_in(id, inside, core_format::doc::text(flat)),
             if_break(lit(")"), Doc::Nil),
-        ]),
+        ),
     ))
 }
 

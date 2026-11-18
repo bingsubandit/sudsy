@@ -317,10 +317,7 @@ pub fn binary_chain(
         Place::Wrapped => {
             let mut parts = vec![first_doc];
             parts.extend(tail);
-            doc::group(doc::concat(vec![
-                doc::indent(doc::concat(vec![doc::softline(), doc::concat(parts)])),
-                doc::softline(),
-            ]))
+            super::enclosed(doc::Doc::Nil, doc::concat(parts), doc::Doc::Nil)
         }
         _ if flush => {
             let mut parts = vec![first_doc];

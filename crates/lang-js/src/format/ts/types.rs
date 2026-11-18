@@ -240,10 +240,7 @@ fn cast(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         ) && p.children().next().is_some_and(|c| c == n)
     });
     Ok(if operand {
-        group(concat(vec![
-            indent(concat(vec![softline(), doc.without_break_parents()])),
-            softline(),
-        ]))
+        core_format::shapes::enclosed(Doc::Nil, doc.without_break_parents(), Doc::Nil)
     } else {
         doc
     })
@@ -561,12 +558,11 @@ fn mapped(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             SyntaxElement::Token(t) if t.text() == "[" => key = Some((cx.token(t), Vec::new())),
             SyntaxElement::Token(t) if t.text() == "]" => {
                 if let Some((open, parts)) = key.take() {
-                    inner.push(group(concat(vec![
+                    inner.push(core_format::shapes::enclosed(
                         open,
-                        indent(concat(vec![softline(), concat(parts)])),
-                        softline(),
+                        concat(parts),
                         cx.token(t),
-                    ])));
+                    ));
                 }
             }
             SyntaxElement::Token(t) => match t.text() {

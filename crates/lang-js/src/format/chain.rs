@@ -43,12 +43,7 @@ fn lookup(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
                 parts.push(if numeric {
                     concat(vec![open, inner, cx.token(t)])
                 } else {
-                    group(concat(vec![
-                        open,
-                        indent(concat(vec![softline(), inner])),
-                        softline(),
-                        cx.token(t),
-                    ]))
+                    core_format::shapes::enclosed(open, inner, cx.token(t))
                 });
             }
             SyntaxElement::Token(t) => parts.push(cx.token(t)),

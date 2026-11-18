@@ -8,7 +8,8 @@ use super::util::*;
 use crate::generated::kind as k;
 use core_format::FormatCtx;
 use core_format::comments;
-use core_format::doc::{self, Doc, concat, group, hardline, indent, lit, softline};
+use core_format::doc::{self, Doc, concat, group, hardline, indent, lit};
+use core_format::shapes;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 pub(crate) fn seq_of(kind: SyntaxKind) -> Seq {
@@ -333,12 +334,7 @@ fn with_items_doc(
         Some(o) if open_comment => cx.token(o),
         _ => doc::if_break(lit("("), Doc::Nil),
     };
-    let body = concat(vec![
-        open_doc,
-        indent(concat(vec![softline(), concat(parts)])),
-        softline(),
-        doc::if_break(lit(")"), Doc::Nil),
-    ]);
+    let body = shapes::between(open_doc, concat(parts), doc::if_break(lit(")"), Doc::Nil));
     Ok(
         if magic || open_comment || !end.is_empty() || comma_comment {
             doc::group_broken(body)
