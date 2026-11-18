@@ -281,7 +281,7 @@ fn parenthesized_node(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         && inner.kind() == k::EXPR_TUPLE
         && list::is_bare(cx, inner)
     {
-        return list::parenthesized_tuple(cx, open, close, inner);
+        return list::parenthesized_tuple(cx, node, inner);
     }
     let inner: Result<Vec<Doc>, FormatError> = with_fluent(true, || {
         with_open(true, || {
@@ -615,12 +615,7 @@ pub(crate) fn pattern(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         k::PATTERN_MATCH_SEQUENCE | k::PATTERN_MATCH_MAPPING => {
             let ks = kids(cx, node);
             if ks.first().and_then(tok_kind).is_some_and(is_open) {
-                let p = list::split(cx, node);
-                let one = node.kind() == k::PATTERN_MATCH_SEQUENCE
-                    && p.open.as_ref().is_some_and(|o| o.kind() == k::LPAR)
-                    && p.runs.len() == 1
-                    && p.commas[0].is_some();
-                return list::bracketed(cx, &p, one, false);
+                return list::pattern_list(cx, node);
             }
             let p = list::from_elements(None, None, ks);
             let mut parts = Vec::new();

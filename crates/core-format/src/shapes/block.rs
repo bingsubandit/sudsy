@@ -103,7 +103,7 @@ fn block_of(
     let ends = ends_of(cx, &c.open, &c.close, &moved);
     let items = sequence_items(
         cx,
-        render_slots(cx, &c.slots)?,
+        render_slots(cx, &c.slots, true)?,
         style.max_blank_lines,
         style.force_blank,
         style.keep_same_line,
@@ -221,17 +221,10 @@ pub fn statement_sequence_with(
     force_blank: Option<BlankRule>,
     keep_same_line: bool,
 ) -> Result<Doc, FormatError> {
-    let slots: Vec<Slot> = items
-        .iter()
-        .map(|n| Slot {
-            node: n.clone(),
-            sep: None,
-            hole: false,
-        })
-        .collect();
+    let slots: Vec<Slot> = items.iter().map(|n| Slot::new(n.clone())).collect();
     Ok(sequence_items(
         cx,
-        render_slots(cx, &slots)?,
+        render_slots(cx, &slots, true)?,
         max_blank_lines,
         force_blank,
         keep_same_line,

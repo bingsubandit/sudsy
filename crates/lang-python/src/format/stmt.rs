@@ -79,7 +79,10 @@ fn assign(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 /// The flat width of what stands before an assignment's value (a forced break: no room).
 fn prefix_width(parts: &[Doc]) -> usize {
-    paren::flat_width(&concat(parts.to_vec())).unwrap_or(1000)
+    parts
+        .iter()
+        .try_fold(0, |n, d| d.flat_width().map(|w| n + w))
+        .unwrap_or(1000)
 }
 
 /// `target: annotation = value`.

@@ -137,7 +137,7 @@ fn maybe_parenthesize_inner(
             // The parts join when the line up to the first bracket holds them.
             let joins =
                 implicit_concat_head(&inner).is_some_and(|h| expr::joined(cx, &h).is_some());
-            if joins && depth() * style(cx).indent + prefix + head_width(&d) <= style(cx).width {
+            if joins && depth() * style(cx).indent + prefix + d.head_width() <= style(cx).width {
                 Ok(d)
             } else {
                 Ok(parenthesize_if_expands(d))
@@ -148,7 +148,7 @@ fn maybe_parenthesize_inner(
                 // Split at the brackets when the line up to the first one fits.
                 let d = with_open(true, || expr::expr(cx, &inner))?;
                 let s = style(cx);
-                let head = head_width(&d);
+                let head = d.head_width();
                 if depth() * s.indent + prefix + head <= s.width {
                     Ok(d)
                 } else if depth() * s.indent + prefix < s.width
@@ -244,7 +244,7 @@ fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize, outer: &Synta
             joined_with_comment(cx, inner, outer).unwrap_or_else(|| parenthesize_if_expands(d))
         );
     }
-    match flat_width(&d) {
+    match d.flat_width() {
         Some(w)
             if (depth() + 1) * s.indent + w <= s.width && depth() * s.indent + prefix < s.width =>
         {
@@ -286,68 +286,6 @@ fn joined_with_comment(cx: &FormatCtx<'_>, inner: &SyntaxNode, outer: &SyntaxNod
             if_break(lit(")"), Doc::Nil),
         ),
     ))
-}
-
-/// The width of a document up to its first possible line break.
-fn head_width(d: &Doc) -> usize {
-    fn walk(d: &Doc, w: &mut usize) -> bool {
-        match d {
-            Doc::Text(s) => {
-                *w += s.chars().count();
-                false
-            }
-            Doc::Verbatim(s) => {
-                *w += s.chars().count();
-                false
-            }
-            Doc::Line | Doc::SoftLine | Doc::HardLine => true,
-            Doc::Concat(ps) => ps.iter().any(|p| walk(p, w)),
-            Doc::Group(g) => walk(&g.contents, w),
-            Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
-                walk(d, w)
-            }
-            Doc::IfBreak { flat, .. } => walk(flat, w),
-            Doc::Shared(s) => walk(&s.doc, w),
-            _ => false,
-        }
-    }
-    let mut w = 0;
-    walk(d, &mut w);
-    w
-}
-
-/// The width of a document printed flat; `None` when it has a forced line break.
-pub(crate) fn flat_width(d: &Doc) -> Option<usize> {
-    Some(match d {
-        Doc::Nil | Doc::SoftLine | Doc::LineSuffix(_) | Doc::LineSuffixBoundary => 0,
-        Doc::Text(s) => {
-            if s.contains('\n') {
-                return None;
-            }
-            s.chars().count()
-        }
-        Doc::Verbatim(s) => s.chars().count(),
-        Doc::Line => 1,
-        Doc::Concat(ps) | Doc::Fill(ps) => {
-            let mut n = 0;
-            for p in ps {
-                n += flat_width(p)?;
-            }
-            n
-        }
-        Doc::Group(g) => {
-            if g.broken {
-                return None;
-            }
-            flat_width(&g.contents)?
-        }
-        Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
-            flat_width(d)?
-        }
-        Doc::IfBreak { flat, .. } => flat_width(flat)?,
-        Doc::Shared(s) => flat_width(&s.doc)?,
-        _ => return None,
-    })
 }
 
 /// The right-hand side of an assignment; `prefix` is the width of the targets and `=` before it.

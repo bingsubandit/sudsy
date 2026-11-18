@@ -56,7 +56,15 @@ impl NodeFormatter for PythonFormatter {
         if node.parent().is_none() && node.kind() == k::MOD_MODULE {
             return block::module(cx, node).map(Some);
         }
-        Ok((node.parent().is_none()).then(|| cx.verbatim_node(node)))
+        if node.parent().is_none() {
+            return Ok(Some(cx.verbatim_node(node)));
+        }
+        // The items of a list: the expressions, parameters and the like.
+        let kind = node.kind();
+        if util::is_stmt(kind) || util::is_clause(kind) {
+            return Ok(None);
+        }
+        expr::expr(cx, node).map(Some)
     }
 
     fn value<'a>(&self, item: &'a SyntaxElement) -> Cow<'a, str> {

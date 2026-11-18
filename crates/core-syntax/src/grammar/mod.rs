@@ -254,6 +254,8 @@ pub struct Grammar {
     /// Hot tags per kind, indexed like `tokens` and `nodes`.
     token_flags: Vec<u32>,
     node_flags: Vec<u32>,
+    /// Does a node kind carry `trivia` (a structured comment)?
+    trivia_nodes: bool,
     /// Per body item of every node, in node order: the range of `pool` holding the sorted kinds
     /// the item accepts. `body_start[i]..body_start[i + 1]` are the items of node `i`.
     bodies: Vec<(u32, u32)>,
@@ -820,6 +822,11 @@ impl Grammar {
     }
 
     #[inline]
+    /// Is any node kind trivia (a doc comment that is a node)?
+    pub fn has_trivia_nodes(&self) -> bool {
+        self.trivia_nodes
+    }
+
     pub fn is_trivia(&self, kind: SyntaxKind) -> bool {
         self.flags_of(kind) & TRIVIA != 0
     }

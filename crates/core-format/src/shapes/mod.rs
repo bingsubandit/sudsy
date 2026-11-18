@@ -56,7 +56,10 @@ pub use declaration::{
 };
 pub use heritage::{HeritageLayout, heritage};
 pub use key_value::{KeyValueStyle, key_value};
-pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};
+pub use list::{
+    ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_around,
+    delimited_list_between,
+};
 pub use maybe_parenthesize::{between, enclosed, head_test, keyword_argument, maybe_parenthesize};
 pub use parens::{
     Need, NoParenHooks, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, first_char,
@@ -89,6 +92,57 @@ pub(crate) struct Slot {
     /// An empty item that is only its separator (`[a, , b]`); `node` is then the node of the
     /// separator.
     hole: bool,
+    /// What makes the item a bare token or a run; most items have none.
+    ext: Option<Box<Ext>>,
+}
+
+#[derive(Default)]
+struct Ext {
+    /// An item that starts with a bare token (Python's `*` and `/` among parameters, the `**` of
+    /// a dict); `node` is then its parent.
+    bare: Option<SyntaxToken>,
+    /// The elements after the first one of an item that is a run (`key: value`: a token tagged
+    /// `#key-separator` and a node after it; `**x`: a token tagged `#rest` and the node after it).
+    run: Vec<SyntaxElement>,
+    /// The run waits for the node after its last token.
+    open: bool,
+}
+
+impl Slot {
+    fn new(node: SyntaxNode) -> Slot {
+        Slot {
+            node,
+            sep: None,
+            hole: false,
+            ext: None,
+        }
+    }
+
+    fn bare(&self) -> Option<&SyntaxToken> {
+        self.ext.as_ref().and_then(|e| e.bare.as_ref())
+    }
+
+    fn run(&self) -> &[SyntaxElement] {
+        self.ext.as_ref().map_or(&[], |e| &e.run)
+    }
+
+    /// The last node of a run.
+    fn last_node(&self) -> SyntaxNode {
+        self.run()
+            .iter()
+            .rev()
+            .find_map(|e| e.as_node().cloned())
+            .unwrap_or_else(|| self.node.clone())
+    }
+
+    /// The last token of the item.
+    fn last_token(&self, cx: &FormatCtx<'_>) -> Option<SyntaxToken> {
+        match self.run().last() {
+            Some(SyntaxElement::Token(t)) => Some(t.clone()),
+            Some(SyntaxElement::Node(n)) => cx.last_token(n),
+            None => self.bare().cloned().or_else(|| cx.last_token(&self.node)),
+        }
+    }
 }
 
 /// A node with open and close delimiter tokens and items between them.
@@ -103,6 +157,31 @@ pub(crate) struct Container {
 /// The container of a node whose first and last significant elements are its delimiters.
 pub(crate) fn container(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Container, FormatError> {
     container_between(cx, node, None, &[])
+}
+
+/// The container whose items are the children of `items` and whose delimiters `open` and
+/// `close` stand outside it (the parentheses of a tuple that has none of its own).
+pub(crate) fn container_around(
+    cx: &FormatCtx<'_>,
+    items: &SyntaxNode,
+    open: &SyntaxToken,
+    close: &SyntaxToken,
+) -> Result<Container, FormatError> {
+    let g = cx.grammar;
+    let mut slots: Vec<Slot> = Vec::new();
+    for e in items
+        .children_with_tokens()
+        .filter(|e| !g.is_trivia(e.kind()))
+    {
+        place(g, &[], &mut slots, e)
+            .map_err(|m| FormatError::Shape(format!("{}: {m}", g.name(items.kind()))))?;
+    }
+    Ok(Container {
+        open: open.clone(),
+        close: close.clone(),
+        prefix: None,
+        slots,
+    })
 }
 
 /// The container formed by the elements of `node` from the delimiter token `open` to the
@@ -202,16 +281,24 @@ fn place(
                 .filter_map(SyntaxElement::into_token)
                 .find(|t| !g.is_trivia(t.kind()));
             slots.push(Slot {
-                node,
-                sep,
                 hole: true,
+                sep,
+                ..Slot::new(node)
             })
         }
-        SyntaxElement::Node(node) => slots.push(Slot {
-            node,
-            sep: None,
-            hole: false,
-        }),
+        SyntaxElement::Node(node) => {
+            match slots
+                .last_mut()
+                .and_then(|s| s.ext.as_deref_mut())
+                .filter(|e| e.open)
+            {
+                Some(ext) => {
+                    ext.run.push(SyntaxElement::Node(node));
+                    ext.open = false;
+                }
+                None => slots.push(Slot::new(node)),
+            }
+        }
         SyntaxElement::Token(t) if g.has_tag(t.kind(), "separator") => {
             match slots.last_mut().filter(|s| s.sep.is_none()) {
                 Some(slot) => slot.sep = Some(t),
@@ -219,9 +306,9 @@ fn place(
                 None if g.has_tag(t.kind(), "hole") => {
                     let node = t.parent().ok_or("separator without a parent")?;
                     slots.push(Slot {
-                        node,
                         sep: Some(t),
                         hole: true,
+                        ..Slot::new(node)
                     });
                 }
                 None => return Err("separator without a preceding item".into()),
@@ -229,7 +316,29 @@ fn place(
         }
         // `;` after a statement: not an item, and not kept.
         SyntaxElement::Token(t) if g.has_tag(t.kind(), "stray") => {}
-        SyntaxElement::Token(t) => return Err(format!("unexpected token `{}`", t.text())),
+        // The separator of a key and its value continues the item.
+        SyntaxElement::Token(t) if g.has_tag(t.kind(), "key-separator") => {
+            match slots
+                .last_mut()
+                .filter(|s| s.sep.is_none() && !s.ext.as_ref().is_some_and(|e| e.open))
+            {
+                Some(slot) => {
+                    let ext = slot.ext.get_or_insert_with(Default::default);
+                    ext.run.push(SyntaxElement::Token(t));
+                    ext.open = true;
+                }
+                None => return Err("key separator without a preceding key".into()),
+            }
+        }
+        // Any other token is an item of its own; a `#rest` one (`**`) starts a run.
+        SyntaxElement::Token(t) => slots.push(Slot {
+            ext: Some(Box::new(Ext {
+                open: g.has_tag(t.kind(), "rest"),
+                bare: Some(t.clone()),
+                run: Vec::new(),
+            })),
+            ..Slot::new(t.parent().ok_or("token without a parent")?)
+        }),
     }
     Ok(())
 }
@@ -249,6 +358,38 @@ pub(crate) struct Rendered {
     sep: Option<SyntaxToken>,
     /// An empty item (see [`Slot::hole`]).
     hole: bool,
+    /// The last token of an item that is a bare token or a run (see [`Slot`]).
+    tail: Option<SyntaxToken>,
+}
+
+impl Rendered {
+    /// The last token of the item.
+    fn last_token(&self, cx: &FormatCtx<'_>) -> Option<SyntaxToken> {
+        match &self.tail {
+            Some(t) => Some(t.clone()),
+            None => cx.last_token(&self.last),
+        }
+    }
+}
+
+/// The document of an item that is a bare token or a run, a blank after the separator of a key.
+fn run_doc(cx: &FormatCtx<'_>, slot: &Slot, commented: bool) -> Result<Doc, FormatError> {
+    let mut parts = vec![match slot.bare() {
+        Some(t) => cx.token(t),
+        None => cx.format_known(&slot.node, commented)?,
+    }];
+    for e in slot.run() {
+        match e {
+            SyntaxElement::Node(n) => parts.push(cx.format_known(n, false)?),
+            SyntaxElement::Token(t) => {
+                parts.push(cx.token(t));
+                if cx.grammar.has_tag(t.kind(), "key-separator") {
+                    parts.push(doc::lit(" "));
+                }
+            }
+        }
+    }
+    Ok(doc::concat(parts))
 }
 
 fn no_tokens() -> FormatError {
@@ -282,6 +423,7 @@ fn leading_info(
 pub(crate) fn render_slots(
     cx: &FormatCtx<'_>,
     slots: &[Slot],
+    marks: bool,
 ) -> Result<Vec<Rendered>, FormatError> {
     let mut out = Vec::with_capacity(slots.len());
     let mut i = 0;
@@ -299,17 +441,33 @@ pub(crate) fn render_slots(
                 verbatim: false,
                 sep: slots[i].sep.clone(),
                 hole: true,
+                tail: None,
+            });
+            i += 1;
+            continue;
+        }
+        if let Some(t) = slots[i].bare() {
+            out.push(Rendered {
+                first: slots[i].node.clone(),
+                last: slots[i].last_node(),
+                blank_before: comments::blank_lines_before(cx.grammar, t),
+                doc: run_doc(cx, &slots[i], false)?,
+                verbatim: false,
+                sep: slots[i].sep.clone(),
+                hole: false,
+                tail: slots[i].last_token(cx),
             });
             i += 1;
             continue;
         }
         let (blank_before, mark, commented) = leading_info(cx, &slots[i].node)?;
+        let mark = mark.filter(|_| marks);
         if mark == Some(IgnoreMark::Start) {
             let j = ignore::region_end(slots.len(), i, |n| {
                 Ok::<_, FormatError>(leading_info(cx, &slots[n].node)?.1)
             })? - 1;
             let tok = cx.first_token(&slots[i].node).ok_or_else(no_tokens)?;
-            let last = cx.last_token(&slots[j].node).ok_or_else(no_tokens)?;
+            let last = slots[j].last_token(cx).ok_or_else(no_tokens)?;
             out.push(Rendered {
                 first: slots[i].node.clone(),
                 last: slots[j].node.clone(),
@@ -318,17 +476,24 @@ pub(crate) fn render_slots(
                 verbatim: true,
                 sep: slots[j].sep.clone(),
                 hole: false,
+                tail: Some(last),
             });
             i = j + 1;
         } else {
+            let run = !slots[i].run().is_empty();
             out.push(Rendered {
                 first: slots[i].node.clone(),
-                last: slots[i].node.clone(),
+                last: slots[i].last_node(),
                 blank_before,
-                doc: cx.format_known(&slots[i].node, commented)?,
+                doc: if run {
+                    run_doc(cx, &slots[i], commented)?
+                } else {
+                    cx.format_known(&slots[i].node, commented)?
+                },
                 verbatim: mark == Some(IgnoreMark::Ignore),
                 sep: slots[i].sep.clone(),
                 hole: false,
+                tail: run.then(|| slots[i].last_token(cx)).flatten(),
             });
             i += 1;
         }
@@ -402,7 +567,7 @@ pub(crate) fn separator_comments(cx: &FormatCtx<'_>, item: &Rendered) -> Doc {
     if own.is_empty() {
         return Doc::Nil;
     }
-    let mut line_comment_open = cx.last_token(&item.last).is_some_and(|last| {
+    let mut line_comment_open = item.last_token(cx).is_some_and(|last| {
         comments::trailing_comments(g, &last)
             .iter()
             .any(|c| c.kind == CommentKind::Line)

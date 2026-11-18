@@ -129,6 +129,86 @@ impl Doc {
         }
     }
 
+    /// The width of the document printed on one line, `None` when it has a forced line break.
+    pub fn flat_width(&self) -> Option<usize> {
+        Some(match self {
+            Doc::Nil | Doc::SoftLine | Doc::LineSuffix(_) | Doc::LineSuffixBoundary => 0,
+            Doc::Text(s) => {
+                if s.contains('\n') {
+                    return None;
+                }
+                s.chars().count()
+            }
+            Doc::Verbatim(s) => s.chars().count(),
+            Doc::Line => 1,
+            Doc::Concat(ps) | Doc::Fill(ps) => {
+                let mut n = 0;
+                for p in ps {
+                    n += p.flat_width()?;
+                }
+                n
+            }
+            Doc::Group(g) => {
+                if g.broken {
+                    return None;
+                }
+                g.contents.flat_width()?
+            }
+            Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
+                d.flat_width()?
+            }
+            Doc::IfBreak { flat, .. } => flat.flat_width()?,
+            Doc::Shared(s) => s.doc.flat_width()?,
+            _ => return None,
+        })
+    }
+
+    /// The width of the document up to its first possible line break.
+    pub fn head_width(&self) -> usize {
+        fn walk(d: &Doc, w: &mut usize) -> bool {
+            match d {
+                Doc::Text(s) => {
+                    *w += s.chars().count();
+                    false
+                }
+                Doc::Verbatim(s) => {
+                    *w += s.chars().count();
+                    false
+                }
+                Doc::Line | Doc::SoftLine | Doc::HardLine => true,
+                Doc::Concat(ps) => ps.iter().any(|p| walk(p, w)),
+                Doc::Group(g) => walk(&g.contents, w),
+                Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
+                    walk(d, w)
+                }
+                Doc::IfBreak { flat, .. } => walk(flat, w),
+                Doc::Shared(s) => walk(&s.doc, w),
+                _ => false,
+            }
+        }
+        let mut w = 0;
+        walk(self, &mut w);
+        w
+    }
+
+    /// The document printed on one line: no group breaks, a line is a blank.
+    pub fn flattened(self) -> Doc {
+        crate::deep(|| match self {
+            Doc::Line => lit(" "),
+            Doc::SoftLine => Doc::Nil,
+            Doc::Group(g) => g.contents.flattened(),
+            Doc::IfBreak { flat, .. } => flat.flattened(),
+            Doc::Concat(ps) | Doc::Fill(ps) => {
+                Doc::Concat(ps.into_iter().map(Doc::flattened).collect())
+            }
+            Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
+                d.flattened()
+            }
+            Doc::Shared(s) => s.doc.clone().flattened(),
+            other => other,
+        })
+    }
+
     /// Marks groups that contain a forced break as broken. The printer does this itself; call it
     /// directly only to inspect a document.
     pub fn propagate_breaks(&mut self) -> bool {

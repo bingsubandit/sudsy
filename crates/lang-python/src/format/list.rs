@@ -5,8 +5,8 @@
 use super::expr::elem;
 use super::util::*;
 use crate::generated::kind as k;
-use core_format::doc::{Doc, concat, group, group_broken, hardline, if_break, indent, lit};
-use core_format::shapes;
+use core_format::doc::{Doc, concat, group, group_broken, hardline, if_break, lit};
+use core_format::shapes::{self, ListLayout, ListStyle, TrailingComma};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
@@ -108,63 +108,102 @@ fn has_magic(cx: &FormatCtx<'_>, p: &Parts) -> bool {
     style(cx).magic_comma && p.commas.last().is_some_and(|c| c.is_some())
 }
 
-/// `open items close`, broken one item per line when it does not fit or has a magic comma.
-pub(crate) fn bracketed(cx: &FormatCtx<'_>, p: &Parts, one_tuple: bool, no_trailing: bool) -> R {
-    with_fluent(true, || {
-        with_open(true, || {
-            bracketed_inner(cx, p, one_tuple, no_trailing, false)
-        })
-    })
+/// The style of a bracketed list from the elements between its delimiters: a trailing comma when
+/// the list breaks (not for one item, unless `single_comma`; always for a one-item tuple), the
+/// magic comma of the source keeps it expanded.
+fn list_style(
+    cx: &FormatCtx<'_>,
+    inner: &[SyntaxElement],
+    one_tuple: bool,
+    no_trailing: bool,
+    single_comma: bool,
+) -> ListStyle {
+    let commas = inner
+        .iter()
+        .filter(|e| tok_kind(e) == Some(k::COMMA))
+        .count();
+    let last = inner
+        .last()
+        .and_then(|e| e.as_token())
+        .filter(|t| t.kind() == k::COMMA);
+    let items = if inner.is_empty() {
+        0
+    } else {
+        commas + usize::from(last.is_none())
+    };
+    let commented = last.is_some_and(|c| has_comments(cx, c));
+    let magic = style(cx).magic_comma && last.is_some() && !one_tuple && !no_trailing;
+    let trailing_comma = if one_tuple {
+        TrailingComma::Always
+    } else if no_trailing && !commented {
+        TrailingComma::Never
+    } else if items > 1 || single_comma || magic || commented {
+        TrailingComma::WhenBroken
+    } else {
+        TrailingComma::Never
+    };
+    ListStyle {
+        trailing_comma,
+        layout: if magic {
+            ListLayout::MagicTrailingComma
+        } else {
+            ListLayout::Fit
+        },
+        max_blank_lines: 0,
+        hang: true,
+        keep_blank_before_end_comments: false,
+        ignore_marks: false,
+        ..ListStyle::default()
+    }
 }
 
-fn bracketed_inner(
+/// The inner elements of a node that is its delimiters and what stands between them.
+fn inside(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxElement> {
+    let mut ks = kids(cx, node);
+    if ks.len() >= 2 {
+        ks.pop();
+        ks.remove(0);
+    }
+    ks
+}
+
+/// Does the list have exactly one item and a comma after it (a one-item tuple)?
+fn is_one_item(inner: &[SyntaxElement]) -> bool {
+    matches!(inner, [_, c] if tok_kind(c) == Some(k::COMMA))
+}
+
+/// A node that is its delimiters and the items between them: broken one item per line when it
+/// does not fit or has a magic comma.
+fn bracketed(
     cx: &FormatCtx<'_>,
-    p: &Parts,
+    node: &SyntaxNode,
     one_tuple: bool,
     no_trailing: bool,
     single_comma: bool,
 ) -> R {
-    let (Some(open), Some(close)) = (&p.open, &p.close) else {
-        return Err(shape_error("list without delimiters"));
-    };
-    let end = core_format::comments::leading_comments(cx.grammar, close);
-    if !end.is_empty() {
-        cx.hold_leading(close);
-    }
-    let end_doc = if end.is_empty() {
-        Doc::Nil
-    } else {
-        concat(vec![hardline(), core_format::comment_lines(&end)])
-    };
-    if p.runs.is_empty() {
-        if end.is_empty() {
-            // A comment after the `(` of empty brackets ends the line.
-            let gap = if has_comments(cx, open) {
-                hardline()
-            } else {
-                Doc::Nil
-            };
-            return Ok(concat(vec![cx.token(open), gap, cx.token(close)]));
-        }
-        return Ok(concat(vec![
-            cx.token(open),
-            indent(end_doc),
-            hardline(),
-            cx.token(close),
-        ]));
-    }
-    let magic = has_magic(cx, p) && !one_tuple && !no_trailing;
-    let inner = items(cx, p, one_tuple, no_trailing, single_comma)?;
-    let inner = if magic {
-        group_broken(inner)
-    } else {
-        group(inner)
-    };
-    Ok(shapes::enclosed(
-        cx.token(open),
-        concat(vec![inner, end_doc]),
-        cx.token(close),
-    ))
+    bracketed_in(
+        cx,
+        node,
+        &inside(cx, node),
+        one_tuple,
+        no_trailing,
+        single_comma,
+    )
+}
+
+/// [`bracketed`] with the elements between the delimiters already at hand.
+fn bracketed_in(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    inner: &[SyntaxElement],
+    one_tuple: bool,
+    no_trailing: bool,
+    single_comma: bool,
+) -> R {
+    let st = list_style(cx, inner, one_tuple, no_trailing, single_comma);
+    with_fluent(true, || {
+        with_open(true, || shapes::delimited_list(cx, node, &st))
+    })
 }
 
 fn is_single_generator(e: &SyntaxElement) -> bool {
@@ -229,31 +268,30 @@ pub(crate) fn collection(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     if node.kind() == k::EXPR_TUPLE && is_bare(cx, node) {
         return bare_tuple(cx, node);
     }
-    let p = split(cx, node);
-    let one_tuple = node.kind() == k::EXPR_TUPLE && p.runs.len() == 1 && p.commas[0].is_some();
-    bracketed(cx, &p, one_tuple, false)
+    let inner = inside(cx, node);
+    let one_tuple = node.kind() == k::EXPR_TUPLE && is_one_item(&inner);
+    bracketed_in(cx, node, &inner, one_tuple, false, false)
 }
 
-/// The tuple of a pair of parentheses that are not its own (`(a, b)` in a `Parenthesized` node).
-pub(crate) fn parenthesized_tuple(
-    cx: &FormatCtx<'_>,
-    open: &SyntaxToken,
-    close: &SyntaxToken,
-    tuple: &SyntaxNode,
-) -> R {
-    let mut p = split(cx, tuple);
-    p.open = Some(open.clone());
-    p.close = Some(close.clone());
-    let one = p.runs.len() == 1 && p.commas[0].is_some();
-    bracketed(cx, &p, one, false)
+/// The tuple `tuple` inside the parentheses of `node`, which are not its own.
+pub(crate) fn parenthesized_tuple(cx: &FormatCtx<'_>, node: &SyntaxNode, tuple: &SyntaxNode) -> R {
+    let (Some(open), Some(close)) = (node.first_token(), node.last_token()) else {
+        return Err(shape_error("Parenthesized"));
+    };
+    let inner = kids(cx, tuple);
+    let st = list_style(cx, &inner, is_one_item(&inner), false, false);
+    with_fluent(true, || {
+        with_open(true, || {
+            shapes::delimited_list_around(cx, node, tuple, &open, &close, &st)
+        })
+    })
 }
 
 /// Call arguments, class bases, class patterns.
 pub(crate) fn arguments(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let p = split(cx, node);
-    let single_gen =
-        p.runs.len() == 1 && p.runs[0].len() == 1 && is_single_generator(&p.runs[0][0]);
-    bracketed(cx, &p, false, single_gen)
+    let inner = inside(cx, node);
+    let single_gen = matches!(inner.as_slice(), [only] if is_single_generator(only));
+    bracketed_in(cx, node, &inner, false, single_gen, false)
 }
 
 /// `class A():` prints as `class A:`.
@@ -270,15 +308,20 @@ pub(crate) fn class_arguments(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 }
 
 pub(crate) fn parameters(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let p = split(cx, node);
-    with_fluent(true, || {
-        with_open(true, || bracketed_inner(cx, &p, false, false, true))
-    })
+    bracketed(cx, node, false, false, true)
 }
 
 pub(crate) fn type_params(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let p = split(cx, node);
-    bracketed(cx, &p, false, false)
+    bracketed(cx, node, false, false, false)
+}
+
+/// A `case` pattern in brackets: a sequence or a mapping.
+pub(crate) fn pattern_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    let inner = inside(cx, node);
+    let one = node.kind() == k::PATTERN_MATCH_SEQUENCE
+        && is_one_item(&inner)
+        && kids(cx, node).first().and_then(tok_kind) == Some(k::LPAR);
+    bracketed_in(cx, node, &inner, one, false, false)
 }
 
 /// The names of `from x import ...`: in parentheses, one per line, when they do not fit.

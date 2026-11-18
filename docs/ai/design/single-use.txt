@@ -378,10 +378,8 @@ local lang-protobuf/format.rs key-value-layout # lang: protobuf
 local lang-python/format/block.rs blank-lines-between-members # lang: python
 local lang-python/format/comment.rs source-rewrite # lang: python
 local lang-python/format/expr.rs member-chain # lang: python
-local lang-python/format/list.rs delimited-list # lang: python
 local lang-python/format/op.rs binary-chain-layout # lang: python
 local lang-python/format/paren.rs parenthesized-expression # lang: python
-local lang-python/format/util.rs node-sequence # lang: python
 local lang-python/rules/lints.rs call-shape-checks # lang: python
 local lang-python/rules/misc.rs call-shape-checks # lang: python
 local lang-python/rules/stmts.rs statement-shape-checks # lang: python

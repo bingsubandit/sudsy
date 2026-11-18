@@ -5,8 +5,8 @@ files:
   ruff-fixtures: layout-gaps
   real-world: layout-gaps
 ratchet:
-  black-tests: 189
-  ruff-fixtures: 105
+  black-tests: 190
+  ruff-fixtures: 107
   real-world: 1006
 second-format:
   black-tests: 0

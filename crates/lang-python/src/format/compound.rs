@@ -33,6 +33,7 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         SyntaxElement::Token(t) => Ok(cx.token(t)),
     })?;
     parts.push(lead);
+    let head_from = parts.len();
     let mut prev: Option<&SyntaxElement> = None;
     let with_items = node.kind() == k::STMT_WITH;
     while i < ks.len() {
@@ -137,7 +138,18 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                     if prev.is_some() && !no_space {
                         parts.push(sp());
                     }
-                    parts.push(header_node(cx, node, n)?);
+                    let d = header_node(cx, node, n)?;
+                    if n.kind() == k::ARGUMENTS && node.kind() == k::STMT_CLASS_DEF {
+                        // The bases are the heritage clause of the class header.
+                        let head = concat(parts.split_off(head_from));
+                        parts.push(shapes::header(
+                            head,
+                            vec![(Doc::Nil, d)],
+                            &shapes::HeaderStyle::default(),
+                        ));
+                    } else {
+                        parts.push(d);
+                    }
                 }
             }
         }
@@ -226,7 +238,7 @@ fn header_node(cx: &FormatCtx<'_>, parent: &SyntaxNode, n: &SyntaxNode) -> R {
                 .find(|c| c.kind() == k::PARAMETERS)
                 .is_some_and(|p| kids(cx, &p).len() > 2);
             if params && !n.descendants_with_tokens().any(|e| e.kind() == k::COMMENT) {
-                Ok(flatten(expr::expr(cx, n)?))
+                Ok(expr::expr(cx, n)?.flattened())
             } else if params {
                 expr::expr(cx, n)
             } else {

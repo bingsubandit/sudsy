@@ -1,6 +1,6 @@
-//! Helpers shared by the formatting modules: children, tokens, options, document shapes.
+//! Helpers shared by the formatting modules: tokens, options, document shapes.
 //!
-//! concept: node-sequence
+//! concept: none (glue: helpers of the formatting modules)
 
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc, concat, if_break, line, lit, softline};
@@ -74,11 +74,7 @@ pub(crate) fn style<'a>(cx: &'a FormatCtx<'_>) -> &'a Style {
     })
 }
 
-pub(crate) fn kids(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxElement> {
-    node.children_with_tokens()
-        .filter(|e| !cx.grammar.is_trivia(e.kind()))
-        .collect()
-}
+pub(crate) use core_format::seq::kids;
 
 pub(crate) fn tokens(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxToken> {
     kids(cx, node)
@@ -202,22 +198,6 @@ pub(crate) fn trailing_inline(cx: &FormatCtx<'_>, tok: &SyntaxToken) -> Doc {
         }
     }
     concat(parts)
-}
-
-/// The document printed on one line: a group never breaks.
-pub(crate) fn flatten(d: Doc) -> Doc {
-    match d {
-        Doc::Line => lit(" "),
-        Doc::SoftLine => Doc::Nil,
-        Doc::Group(g) => flatten(g.contents),
-        Doc::IfBreak { flat, .. } => flatten(*flat),
-        Doc::Concat(ps) | Doc::Fill(ps) => Doc::Concat(ps.into_iter().map(flatten).collect()),
-        Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
-            flatten(*d)
-        }
-        Doc::Shared(s) => flatten(s.doc.clone()),
-        other => other,
-    }
 }
 
 /// `elif`, `else`, `except` and `case` clauses: nodes that belong to a compound statement.

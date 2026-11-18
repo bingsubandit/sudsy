@@ -1035,6 +1035,7 @@ fn resolve(
         embeds: Vec::new(),
         containers: Vec::new(),
         token_flags: super::hot_flags(&tokens),
+        trivia_nodes: nodes.iter().any(|d| d.has_tag("trivia")),
         node_flags: super::hot_flags(&nodes),
         nodes,
         tokens,

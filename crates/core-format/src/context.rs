@@ -430,9 +430,10 @@ impl<'a> FormatCtx<'a> {
 
     /// Is `t` inside a structured trivia node (a doc comment) below `node`?
     fn in_trivia_node(&self, t: &SyntaxToken, node: &SyntaxNode) -> bool {
-        t.parent_ancestors()
-            .take_while(|a| a != node)
-            .any(|a| self.grammar.is_trivia(a.kind()))
+        self.grammar.has_trivia_nodes()
+            && t.parent_ancestors()
+                .take_while(|a| a != node)
+                .any(|a| self.grammar.is_trivia(a.kind()))
     }
 
     /// A token with its leading and trailing comments.
