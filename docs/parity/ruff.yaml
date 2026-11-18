@@ -24,7 +24,7 @@ entries:
   E702: rule multiple-statements-on-one-line-semicolon
   E703: rule useless-semicolon
   E711: rule none-comparison
-  E712: rule true-false-comparison
+  E712: rule boolean-literal-comparison
   E713: rule not-in-test
   E714: rule not-is-test
   E721: rule type-comparison
@@ -37,7 +37,7 @@ entries:
   E999: rule syntax-error
   F401: rule unused-import
   F402: rule shadowed-variable
-  F403: rule undefined-local-with-import-star
+  F403: rule no-wildcard-imports
   F404: rule late-future-import
   F405: rule undefined-local-with-import-star-usage
   F406: rule undefined-local-with-nested-import-star-usage

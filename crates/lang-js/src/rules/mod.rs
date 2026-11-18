@@ -46,11 +46,6 @@ const CHECKS: &[Entry] = &[
     ("dupe-else-if", &[k::IF_STATEMENT], dupes::dupe_else_if),
     ("useless-catch", &[k::TRY_STATEMENT], misc::useless_catch),
     (
-        "self-assign",
-        &[k::ASSIGNMENT_EXPRESSION],
-        misc::self_assign,
-    ),
-    (
         "use-isnan",
         &[k::BINARY_EXPRESSION, k::SWITCH_STATEMENT, k::SWITCH_CASE],
         misc::use_isnan,
@@ -101,11 +96,6 @@ const CHECKS: &[Entry] = &[
         "loss-of-precision",
         &[k::NUMERIC_LITERAL],
         escapes::loss_of_precision,
-    ),
-    (
-        "unused-expressions",
-        &[k::EXPRESSION_STATEMENT],
-        stmts::unused_expressions,
     ),
     (
         "unexpected-multiline",

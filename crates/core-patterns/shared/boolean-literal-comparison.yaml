@@ -1,0 +1,14 @@
+id: boolean-literal-comparison
+message: 'comparing with a boolean literal is redundant: use the expression itself or `!`'
+description: >-
+  An equality with `true` or `false` (`x == true`, `x != False`) on either side (ruff E712,
+  Checkstyle SimplifyBooleanExpression).
+example: 'if (done == true) {}'
+severity: off
+category: cleanup
+rule:
+  role: binary
+  operator: equality
+  any:
+    - fields: { left: { regex: '^(?:true|false|True|False)$' } }
+    - fields: { right: { regex: '^(?:true|false|True|False)$' } }

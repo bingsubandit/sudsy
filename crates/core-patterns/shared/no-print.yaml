@@ -1,0 +1,14 @@
+id: no-print
+per-language: true
+message: output goes through the logger, not a print call
+description: >-
+  A call of one of the `calls` that write to the console (ruff T201 and T203); a language lists its
+  calls in its grammar's `rule` row.
+example: 'print("x")'
+severity: off
+category: style
+options:
+  - { name: calls, type: list, default: [], description: Calls that print }
+rule:
+  role: call
+  fields: { callee: { in-option: calls } }

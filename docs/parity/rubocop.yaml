@@ -123,7 +123,7 @@ entries:
   Lint/SafeNavigationConsistency: planned
   Lint/SafeNavigationWithEmpty: planned
   Lint/ScriptPermission: planned
-  Lint/SelfAssignment: rule self-assignment | not multiple assignment (`a, b = a, b`)
+  Lint/SelfAssignment: rule no-self-assign | not multiple assignment (`a, b = a, b`)
   Lint/SendWithMixinArgument: planned
   Lint/ShadowedArgument: planned
   Lint/ShadowedException: planned

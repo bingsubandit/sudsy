@@ -8,15 +8,6 @@ rule:
   kind: ExprAttribute
   regex: '^re\.(?<FLAG>[AILMSUX])$'
 ---
-id: exec-call
-message: "use of `exec` detected"
-description: "A call of the builtin `exec`."
-example: 'exec("x = 1")'
-severity: warn
-category: suspicious
-rule:
-  pattern: 'exec($$$ARGS)'
----
 id: hasattr-call
 message: 'using `hasattr(x, "__call__")` to test if x is callable is unreliable: use `callable(x)`'
 description: 'A call of `hasattr` or `getattr` that asks for `"__call__"`.'

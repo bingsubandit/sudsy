@@ -17,7 +17,7 @@ raise-exception: warn
 redundant-string-coercion: warn
 rescue-exception: warn
 return-in-void-context: warn
-self-assignment: warn
+no-self-assign: warn
 struct-new-override: warn
 suppressed-exception: warn
 underscore-prefixed-variable-used: warn

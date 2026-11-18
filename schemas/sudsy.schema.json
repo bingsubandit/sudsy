@@ -400,7 +400,7 @@
               "$ref": "#/definitions/rule",
               "description": "Vue's `attributes-order` (eslint-plugin-vue) with its default order. A bare `v-bind=\"object\"` takes the place of the attribute it precedes. Not sorted alphabetically."
             },
-            "avoid-star-import": {
+            "no-wildcard-imports": {
               "$ref": "#/definitions/rule",
               "description": "An import with `*` (Checkstyle AvoidStarImport)."
             },
@@ -4709,7 +4709,7 @@
               "$ref": "#/definitions/rule",
               "description": "An alias that repeats the name it is given to, `a AS a` (sqlfluff AL09)."
             },
-            "self-assignment": {
+            "no-self-assign": {
               "$ref": "#/definitions/rule",
               "description": "`a = a`, `@a ||= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment)."
             },
@@ -5062,7 +5062,7 @@
               "$ref": "#/definitions/rule",
               "description": "A `/// <reference path=\"x\" />` before the first statement, and a `/// <reference types=\"x\" />` for a module the file imports."
             },
-            "true-false-comparison": {
+            "boolean-literal-comparison": {
               "$ref": "#/definitions/rule",
               "description": "A comparison of a value to `True` or `False` with `==` or `!=`."
             },
@@ -5098,7 +5098,7 @@
               "$ref": "#/definitions/rule",
               "description": "A name in `__all__` that the module does not bind."
             },
-            "undefined-local-with-import-star": {
+            "no-wildcard-imports": {
               "$ref": "#/definitions/rule",
               "description": "A star import."
             },

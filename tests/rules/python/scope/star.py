@@ -1,5 +1,5 @@
 from star import *
-^^^^^^^^^^^^^^^^^^ undefined-local-with-import-star
+^^^^^^^^^^^^^^^^^^ no-wildcard-imports
 
 __all__ = ["present", "from_star"]
 #                     ^^^^^^^^^^^ undefined-local-with-import-star-usage
@@ -10,7 +10,7 @@ print(undefined, present, len)
 
 def nested():
     from other import *
-#   ^^^^^^^^^^^^^^^^^^^ undefined-local-with-import-star
+#   ^^^^^^^^^^^^^^^^^^^ no-wildcard-imports
 #   ^^^^^^^^^^^^^^^^^^^ undefined-local-with-nested-import-star-usage
 
 
