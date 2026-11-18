@@ -6,15 +6,6 @@ severity: off
 category: suspicious
 rule: { kind: Block, regex: '^\{\s*\}$' }
 ---
-id: comment-no-empty
-message: the comment is empty
-description: A comment with nothing in it.
-example: "/* */   # reported"
-severity: off
-category: suspicious
-rule: { kind: Stylesheet }
-token: { kind: [Comment], deep: true, regex: '^/\*\s*\*/$' }
----
 id: no-empty-source
 message: the file is empty
 description: A file with nothing but whitespace (a file with only comments is not empty).

@@ -58,15 +58,6 @@ rule:
   regex: '^\[\s*[^\]=\s]+\s*[~|^$*]?=\s*[^"''\s\]]'
   inside: { kind: Prelude, parent: { kind: Rule } }
 ---
-id: comment-whitespace-inside
-message: "put a space inside the comment's delimiters"
-description: "A comment whose text touches `/*` or `*/`."
-example: "/*a*/   # reported"
-severity: off
-category: style
-rule: { kind: Stylesheet }
-token: { kind: [Comment], deep: true, regex: '^/\*+[^\s*/]|[^\s*/]\*+/$|^/\*\*/$' }
----
 id: color-no-invalid-hex
 message: "the hex color `$0` is not valid"
 description: "A hex color that does not have 3, 4, 6 or 8 hex digits."

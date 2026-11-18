@@ -4,16 +4,16 @@ from pprint import pprint as pp
 a = b = c = f = 1
 
 print(1)
-^^^^^^^^ print
+^^^^^^^^ no-print
 print()
-^^^^^^^ print
+^^^^^^^ no-print
 print("x", file=f)
 print("x", file=None)
-^^^^^^^^^^^^^^^^^^^^^ print
+^^^^^^^^^^^^^^^^^^^^^ no-print
 pprint.pprint(1)
-^^^^^^^^^^^^^^^^ pprint
+^^^^^^^^^^^^^^^^ no-print
 pp(2)
-^^^^^ pprint
+^^^^^ no-print
 pprint(3)
 x = dict()
 #   ^^^^^^ unnecessary-collection-call

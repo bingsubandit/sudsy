@@ -1,0 +1,18 @@
+id: boolean-literal-comparison
+message: 'comparing with a boolean literal is redundant: use the expression itself or `!`'
+description: >-
+  An equality with `true` or `false` (`x == true`, `x != False`) on either side (ruff E712,
+  Checkstyle SimplifyBooleanExpression).
+example: 'if (done == true) {}'
+severity: off
+category: cleanup
+options:
+  - { name: literals, type: list, default: ['true', 'false', 'True', 'False'], description: The texts that are boolean literals }
+  - { name: not_operators, type: list, default: [], description: Equality operators that are not a comparison of value (Python `is`) }
+rule:
+  role: binary
+  operator: equality
+  not: { fields: { operator: { in-option: not_operators } } }
+  any:
+    - fields: { left: { in-option: literals } }
+    - fields: { right: { in-option: literals } }

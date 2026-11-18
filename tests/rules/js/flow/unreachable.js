@@ -18,7 +18,7 @@ function i(x) { l: { break l; } k(); }
 function j() { for (;;) { continue; k(); } }
 //                                  ^^^^ unreachable-code
 function k(x) { try { return 1; } catch (e) { } m(); }
-//                                          ^^^ no-empty-block
+//                                ^^^^^^^^^^^^^ no-empty-catch
 //                                          ^^^ unreachable-code
 function l(x) { do { break; } while (x); n(); }
 function m() { return; let z = 1; const y = 2; class Z {} }

@@ -14,7 +14,7 @@ js:
       no-this-alias: error
       no-unnecessary-type-constraint: error
       no-unsafe-function-type: error
-      no-unused-expressions: error
+      no-useless-expression: error
       unused-variable: error
       unused-parameter: error
       no-var: error

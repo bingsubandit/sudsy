@@ -13,7 +13,7 @@ from . import q
 from __future__ import annotations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ late-future-import
 from k import *
-^^^^^^^^^^^^^^^ undefined-local-with-import-star
+^^^^^^^^^^^^^^^ no-wildcard-imports
 
 import re
 import re

@@ -165,6 +165,16 @@ impl RuleOptions {
         }
     }
 
+    /// Is `text` an item of the list option, without building the list.
+    pub fn list_has(&self, name: &str, text: &str) -> bool {
+        match self.values.get(name) {
+            Some(OptionValue::List(items)) => items
+                .iter()
+                .any(|i| matches!(i, OptionValue::String(s) if s == text)),
+            _ => false,
+        }
+    }
+
     pub fn list(&self, name: &str) -> Vec<&str> {
         match self.values.get(name) {
             Some(OptionValue::List(items)) => items

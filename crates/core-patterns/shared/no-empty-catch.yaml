@@ -1,0 +1,27 @@
+id: no-empty-catch
+message: 'the catch clause is empty: the error is swallowed'
+description: >-
+  A `catch`, `except` or `rescue` clause whose body has no statement (a lone `pass` counts as
+  none) and no comment, so the error is silently ignored (ESLint no-empty, Checkstyle
+  EmptyCatchBlock, ruff S110, RuboCop Lint/SuppressedException). With `broad_only` only a clause that
+  catches everything or one of the `types` is reported.
+example: 'try { run(); } catch (e) { }'
+severity: warn
+category: suspicious
+options:
+  - { name: broad_only, type: bool, default: false, description: Report only a clause that catches everything or a broad type }
+  - { name: types, type: list, default: [], description: Types that count as broad }
+rule:
+  role: catch
+  any:
+    - fields: { body: { empty: true } }
+    - all:
+        - { single: body }
+        - fields: { body: { role: empty-statement } }
+    - not: { fields: { body: { regex: '' } } }
+  not:
+    all:
+      - { option: broad_only }
+      - fields: { type: { regex: '' } }
+      - not:
+          items: { type: { any: [{ in-option: types }, { has: { in-option: types } }] } }

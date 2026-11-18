@@ -18,12 +18,11 @@ python:
       none-comparison: warn
       not-in-test: warn
       not-is-test: warn
-      pprint: warn
-      print: warn
+      no-print: warn
       raise-without-from-inside-except: warn
-      true-false-comparison: warn
+      boolean-literal-comparison: warn
       type-comparison: warn
-      undefined-local-with-import-star: warn
+      no-wildcard-imports: warn
       undefined-local-with-import-star-usage: warn
       useless-semicolon: warn
       zip-without-explicit-strict: warn

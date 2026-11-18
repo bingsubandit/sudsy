@@ -13,7 +13,7 @@ useless-semicolon: warn
 ambiguous-variable-name: warn
 ambiguous-class-name: warn
 ambiguous-function-name: warn
-bare-except: warn
+no-broad-catch: warn
 lambda-assignment: warn
 future-feature-not-defined: warn
 multiple-starred-expressions: warn

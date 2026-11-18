@@ -39,7 +39,7 @@ css:
       declaration-block-single-line-max-declarations: { level: warn, options: {"max": 1} }
       number-max-precision: { level: warn, options: {"max": 4} }
       block-no-empty: warn
-      comment-no-empty: warn
+      no-empty-comment: warn
       no-empty-source: warn
       length-zero-no-unit: warn
       function-url-quotes: warn
@@ -47,7 +47,7 @@ css:
       no-invalid-double-slash-comments: warn
       selector-pseudo-element-colon-notation: warn
       selector-attribute-quotes: warn
-      comment-whitespace-inside: warn
+      comment-space: { level: warn, options: { block: true, line: false } }
       color-no-invalid-hex: warn
       color-no-hex: warn
       selector-class-pattern: { level: warn, options: {"pattern": "^[a-z]+(-[a-z]+)*$"} }

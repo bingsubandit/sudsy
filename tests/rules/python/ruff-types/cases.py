@@ -33,8 +33,8 @@ class A(Generic[T]):
 from typing import TypeVar
 T = TypeVar("T")
 def f(x: T) -> T:
-#   ^ redeclared-variable
 #   ^ generic-function
+#   ^ redeclared-variable
     return x
 
 import datetime

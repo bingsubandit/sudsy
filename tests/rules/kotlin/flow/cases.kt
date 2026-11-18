@@ -15,7 +15,7 @@ fun d(x: List<Int>, y: Boolean) {
 }
 fun h(x: Int) {
     try { return } catch (e: Exception) { }
-//                                      ^^^ no-empty-block
+//                 ^^^^^^^^^^^^^^^^^^^^^^^^ no-empty-catch
 //                                      ^^^ unreachable-code
     i()
     when (x) {

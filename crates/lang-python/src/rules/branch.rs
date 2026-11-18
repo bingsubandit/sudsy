@@ -164,16 +164,6 @@ fn raised_class(r: &SyntaxNode) -> Option<SyntaxNode> {
     (class.kind() == k::EXPR_NAME).then_some(class)
 }
 
-/// TRY002: `raise Exception(...)`.
-pub(super) fn raise_vanilla_class(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(class) = raised_class(n).filter(|e| code_text(e) == "Exception") else {
-        return;
-    };
-    if model(ctx.file).is_some_and(|cx| cx.qualified(&class).as_deref() == Some("Exception")) {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
-
 /// Is `e` a combination of `isinstance`, `issubclass` and `callable` calls?
 fn is_type_check(cx: &Cx, e: &SyntaxNode) -> bool {
     let e = inner(e);
@@ -272,25 +262,6 @@ pub(super) fn explicit_return_none(c: &Check, n: &SyntaxNode, ctx: &mut RuleCont
         .descendants()
         .any(|y| matches!(y.kind(), k::EXPR_YIELD | k::EXPR_YIELD_FROM));
     if only_none && !yields {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
-
-/// B018: an expression statement that does nothing.
-pub(super) fn useless_expression(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(e) = n.children().next() else { return };
-    if matches!(
-        e.kind(),
-        k::EXPR_NAME
-            | k::EXPR_ATTRIBUTE
-            | k::EXPR_NUMBER_LITERAL
-            | k::EXPR_BOOLEAN_LITERAL
-            | k::EXPR_NONE_LITERAL
-            | k::EXPR_LIST
-            | k::EXPR_SET
-            | k::EXPR_DICT
-            | k::EXPR_TUPLE
-    ) {
         c.hit(ctx, span(ctx, n), "");
     }
 }

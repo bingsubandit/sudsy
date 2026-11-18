@@ -10,9 +10,9 @@ z = 'a #{b}'
 ^^^^^^^^^^^^ mixed-regexp-capture-types
 /(?<a>x)(?:y)/
 a = a
-^^^^^ self-assignment
+^^^^^ no-self-assign
 @b ||= @b
-^^^^^^^^^ self-assignment
+^^^^^^^^^ no-self-assign
 c = d
 ^ unused-local-variable
 f == 0.1
@@ -30,13 +30,13 @@ end
 begin
   1
 rescue Exception
-^^^^^^^^^^^^^^^^ rescue-exception
-^^^^^^^^^^^^^^^^ suppressed-exception
+^^^^^^^^^^^^^^^^ no-broad-catch
+^^^^^^^^^^^^^^^^ no-empty-catch
 end
 begin
   1
 rescue
-^^^^^^ suppressed-exception
+^^^^^^ no-empty-catch
 end
 # rubocop:disable Foo/Bar
 ^^^^^^^^^^^^^^^^^^^^^^^^^ unknown-cop-name

@@ -1,0 +1,20 @@
+id: no-throw-generic
+per-language: true
+message: raise a specific exception, not a generic one
+description: >-
+  A `raise` or `throw` of one of the generic `types`, itself or a call of it, which callers cannot
+  tell from any other error (ruff TRY002, RuboCop Lint/RaiseException). A language lists the types
+  in its grammar's `rule` row.
+example: 'raise Exception("x")'
+severity: off
+category: style
+options:
+  - { name: types, type: list, default: [], description: Generic exception types }
+rule:
+  role: throw
+  fields:
+    value:
+      any:
+        - { in-option: types }
+        - role: call
+          fields: { callee: { in-option: types } }

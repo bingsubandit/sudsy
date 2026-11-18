@@ -1,2 +1,2 @@
 block-no-empty: warn
-comment-no-empty: warn
+no-empty-comment: warn

@@ -4,9 +4,11 @@ python:
     rules:
       any-eq-parameter: warn
       assert-tuple: warn
-      bare-except: warn
+      no-broad-catch:
+        level: warn
+        options:
+          types: [Exception, BaseException]
       bare-raise-outside-handler: warn
-      blind-except: warn
       break-outside-loop: warn
       cached-method: warn
       collapsible-if: warn
@@ -18,7 +20,7 @@ python:
       deprecated-import: warn
       deprecated-typing-alias: warn
       double-negation: warn
-      exec-call: warn
+      no-eval: warn
       explicit-return-none: warn
       f-string: warn
       f-string-missing-placeholders: warn
@@ -38,7 +40,7 @@ python:
       invalid-print-syntax: warn
       is-literal: warn
       late-future-import: warn
-      leftover-debugger: warn
+      no-debugger: warn
       multiple-starred-expressions: warn
       multiple-starts-ends-with: warn
       mutable-argument-default: warn
@@ -64,7 +66,7 @@ python:
       printf-string-formatting: warn
       quoted-annotation: warn
       raise-not-implemented: warn
-      raise-vanilla-class: warn
+      no-throw-generic: warn
       redeclared-variable: warn
       redundant-tuple-in-exception-handler: warn
       regex-flag-alias: warn
@@ -78,7 +80,7 @@ python:
       string-dot-format-missing-arguments: warn
       string-dot-format-mixing-automatic: warn
       subprocess-run-without-check: warn
-      try-except-pass: warn
+      no-empty-catch: warn
       type-alias-annotation: warn
       type-check-without-type-error: warn
       type-var-name-variance: warn
@@ -97,7 +99,7 @@ python:
       unused-import: warn
       unused-unpacked-variable: warn
       unused-variable: warn
-      useless-expression: warn
+      no-useless-expression: warn
       useless-import-alias: warn
       useless-object-inheritance: warn
       verbose-raise: warn

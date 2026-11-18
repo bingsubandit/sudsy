@@ -24,11 +24,11 @@ entries:
   E702: rule multiple-statements-on-one-line-semicolon
   E703: rule useless-semicolon
   E711: rule none-comparison
-  E712: rule true-false-comparison
+  E712: rule boolean-literal-comparison
   E713: rule not-in-test
   E714: rule not-is-test
   E721: rule type-comparison
-  E722: rule bare-except
+  E722: rule no-broad-catch
   E731: rule lambda-assignment
   E741: rule ambiguous-variable-name
   E742: rule ambiguous-class-name
@@ -37,7 +37,7 @@ entries:
   E999: rule syntax-error
   F401: rule unused-import
   F402: rule shadowed-variable
-  F403: rule undefined-local-with-import-star
+  F403: rule no-wildcard-imports
   F404: rule late-future-import
   F405: rule undefined-local-with-import-star-usage
   F406: rule undefined-local-with-nested-import-star-usage
@@ -95,8 +95,8 @@ entries:
   SIM210: rule if-expr-with-true-false
   SIM211: rule if-expr-with-false-true
   SIM212: rule if-expr-with-twisted-arms
-  T201: rule print
-  T203: rule pprint
+  T201: rule no-print
+  T203: rule no-print
   UP004: rule useless-object-inheritance
   UP024: rule os-error-alias
   UP025: rule unicode-literal
@@ -163,7 +163,7 @@ entries:
   B015: planned
   B016: planned
   B017: planned
-  B018: rule useless-expression
+  B018: rule no-useless-expression
   B019: rule cached-method
   B020: planned
   B021: planned
@@ -188,7 +188,7 @@ entries:
   B909: deferred | preview rule
   B911: planned
   B912: planned
-  BLE001: rule blind-except
+  BLE001: rule no-broad-catch
   C400: planned
   C401: planned
   C402: planned
@@ -794,14 +794,14 @@ entries:
   RUF200: planned
   RUF201: deferred | preview rule
   S101: planned
-  S102: rule exec-call
+  S102: rule no-eval
   S103: planned
   S104: planned
   S105: planned
   S106: planned
   S107: planned
   S108: planned
-  S110: rule try-except-pass
+  S110: rule no-empty-catch
   S112: planned
   S113: planned
   S201: planned
@@ -893,7 +893,7 @@ entries:
   SLOT000: planned
   SLOT001: planned
   SLOT002: planned
-  T100: rule leftover-debugger
+  T100: rule no-debugger
   TC001: planned
   TC002: planned
   TC003: planned
@@ -915,7 +915,7 @@ entries:
   TID253: planned
   TID254: planned
   TID255: planned
-  TRY002: rule raise-vanilla-class
+  TRY002: rule no-throw-generic
   TRY003: planned
   TRY004: rule type-check-without-type-error
   TRY200: wontfix removed upstream

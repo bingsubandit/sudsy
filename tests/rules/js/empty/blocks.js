@@ -1,7 +1,7 @@
 if (a) {} else { /* kept */ }
 //     ^^ no-empty-block
 try { f(); } catch (e) {} finally {}
-//                     ^^ no-empty-block
+//           ^^^^^^^^^^^^ no-empty-catch
 //                                ^^ no-empty-block
 try { f(); } catch (e) { throw e; }
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no-useless-catch

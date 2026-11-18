@@ -1,8 +1,8 @@
 try:
     pass
 except Exception:
-^ try-except-pass
-#      ^^^^^^^^^ blind-except
+^ no-broad-catch
+^ no-empty-catch
     pass
 
 if a:
@@ -15,12 +15,12 @@ if a:
 try:
     pass
 except Exception:
-^ try-except-pass
-#      ^^^^^^^^^ blind-except
+^ no-broad-catch
+^ no-empty-catch
     pass
 
-import pdb
-^^^^^^^^^^ leftover-debugger
+breakpoint()
+^^^^^^^^^^^^ no-debugger
 
 def f(x):
     if x:
@@ -48,7 +48,7 @@ with a:
         pass
 
 raise Exception("x")
-^^^^^^^^^^^^^^^^^^^^ raise-vanilla-class
+^^^^^^^^^^^^^^^^^^^^ no-throw-generic
 
 if not isinstance(x, int):
 ^ unreachable-code
@@ -64,7 +64,7 @@ def f(x):
 
 x = 1
 x
-^ useless-expression
+^ no-useless-expression
 
 try:
     pass
@@ -78,7 +78,7 @@ def f():
 #   ^^^^^ bare-raise-outside-handler
 
 exec("x = 1")
-^^^^^^^^^^^^^ exec-call
+^^^^^^^^^^^^^ no-eval
 
 hasattr(x, "__call__")
 ^^^^^^^^^^^^^^^^^^^^^^ hasattr-call

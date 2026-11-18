@@ -3,6 +3,7 @@
 
 language java 23 "Java"
 roles
+rule boolean-literal-comparison level warn
 // Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).
 precedence 1 left "||"
 precedence 2 left "&&"
@@ -114,7 +115,7 @@ node EnumDeclaration #child #member #opaque = #child*
 node EnumDeclarationCore #child #wrapper #type-declaration #declaration #scope = Keyword name:Identifier SuperInterfaces? members:EnumBody
 node ExceptionType #child #opaque = #child*
 node ExplicitConstructorInvocation #child #statement #opaque = #child*
-node ExpressionStatement #child #statement #opaque = #child*
+node ExpressionStatement #child #statement #expression-statement = expression:#expression? expression_token=expression:#operand? Semi?
 node ExtendsInterfaces #child #opaque = #child*
 node FieldAccess #child #expression #member-access = object:#expression? object_token=object:#operand? Dot member:Identifier? this_member=member:ThisExpression?
 node FieldDeclaration #child #member #declaration = Modifiers? #annotation* #type-token? #type? declarators:VariableDeclarator* Semi

@@ -63,10 +63,6 @@ fn star_imports(cx: &crate::semantic::Cx, nested_only: bool) -> Vec<(TextRange, 
     out
 }
 
-pub(super) fn import_star(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    run(c, ctx, |cx| star_imports(cx, false));
-}
-
 pub(super) fn nested_import_star(c: &Check, _: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     run(c, ctx, |cx| star_imports(cx, true));
 }
