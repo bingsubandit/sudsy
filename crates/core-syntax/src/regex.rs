@@ -27,6 +27,28 @@ pub struct RegexCall {
     pub flavor: String,
     /// The operator that joins two strings into one; none: the argument is one literal.
     pub concat: Option<String>,
+    /// The index of the argument that holds the pattern (0: the first).
+    pub arg: usize,
+    /// The pattern is written between delimiters, and flags follow (`'/a+/i'`).
+    pub delimited: bool,
     /// The text of the callee, without spaces (`RegExp`, `re.compile`).
     pub callees: Vec<String>,
+}
+
+/// The pattern of a delimited regex string (`/a+/i` is `a+`): the first character opens it and
+/// the matching bracket, or the same character, closes it before the flags.
+pub fn undelimit(text: &str) -> Option<&str> {
+    let open = text
+        .chars()
+        .next()
+        .filter(|c| !c.is_alphanumeric() && !c.is_whitespace() && *c != '\\')?;
+    let close = match open {
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        '<' => '>',
+        c => c,
+    };
+    let body = &text[open.len_utf8()..];
+    Some(&body[..body.rfind(close)?])
 }

@@ -1,6 +1,7 @@
 extensions: [php, phtml, inc]
 formatter: PhpFormatter
 parse: adapter::parse_file
+families: "&[core_rules::regex_source::FAMILY]"
 options:
   - indent_size: 4
   - line_width: 120

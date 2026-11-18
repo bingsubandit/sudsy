@@ -50,9 +50,7 @@ pub(crate) fn soft_brk() -> Doc {
 /// The `string` row of Python's string token.
 pub(crate) fn syntax() -> &'static core_syntax::strings::StringSyntax {
     let g = core_syntax::grammars::PYTHON.get();
-    g.string_rows(crate::generated::kind::STRING)
-        .next()
-        .expect("the Python grammar has a string row")
+    g.string_row(crate::generated::kind::STRING)
 }
 
 pub(crate) struct Style {

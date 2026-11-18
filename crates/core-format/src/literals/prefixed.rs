@@ -218,7 +218,7 @@ fn fields_hold_quotes(body: &str) -> bool {
 /// unescaped, so a quote change keeps it.
 pub fn string_value(syn: &StringSyntax, text: &str) -> String {
     match split(syn, text) {
-        Some((p, _, body)) => format!("{}{}", prefix_value(p), super::unescape_quotes(body)),
+        Some((p, _, body)) => format!("{}{}", prefix_value(p), super::unescape_quotes(body, syn)),
         None => text.to_string(),
     }
 }

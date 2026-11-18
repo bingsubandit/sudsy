@@ -98,25 +98,8 @@ fn element_doc(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Result<Doc, FormatError
 
 /// The literals of a string token (`"a" "b"` is two) without the blanks between them.
 fn pieces(text: &str) -> Vec<&str> {
-    let (mut out, mut start, mut quote) = (Vec::new(), 0, None);
-    let mut chars = text.char_indices();
-    while let Some((i, c)) = chars.next() {
-        match (quote, c) {
-            (Some(_), '\\') => {
-                chars.next();
-            }
-            (Some(q), c) if c == q => {
-                out.push(&text[start..=i]);
-                quote = None;
-            }
-            (None, '"' | '\'') => {
-                start = i;
-                quote = Some(c);
-            }
-            _ => {}
-        }
-    }
-    out
+    let mut rows = core_syntax::grammars::PROTOBUF.get().string_rows(k::STRING);
+    rows.next().map(|r| r.pieces(text)).unwrap_or_default()
 }
 
 fn is_multi_string(e: &SyntaxElement) -> bool {

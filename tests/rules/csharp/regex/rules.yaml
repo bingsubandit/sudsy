@@ -1,0 +1,3 @@
+no-control-regex: warn
+no-regex-spaces: warn
+no-misleading-character-class: warn

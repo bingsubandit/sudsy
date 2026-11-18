@@ -3,6 +3,8 @@
 
 pub mod prefixed;
 
+use core_syntax::strings::StringSyntax;
+
 /// How a string token is re-quoted.
 #[derive(Clone, Copy)]
 pub struct StringStyle {
@@ -17,8 +19,12 @@ pub struct StringStyle {
 
 /// A string token (`'..'` or `".."`) with the preferred quote, unless its text has more of that
 /// quote than of the other. Other escapes stay as written, except that an escaped quote that
-/// needs no escape loses its backslash and an unescaped enclosing quote gains one.
-pub fn string(raw: &str, style: StringStyle) -> String {
+/// needs no escape loses its backslash and an unescaped enclosing quote gains one. `syn` is the
+/// token's row: it says which character escapes (a row with none leaves the token as written).
+pub fn string(raw: &str, style: StringStyle, syn: &StringSyntax) -> String {
+    let Some(escape) = syn.escape else {
+        return raw.to_string();
+    };
     let body = &raw[1..raw.len() - 1];
     if style.interpolation
         && body
@@ -59,16 +65,16 @@ pub fn string(raw: &str, style: StringStyle) -> String {
             continue;
         }
         match c {
-            '\\' => match chars.next() {
+            c if c == escape => match chars.next() {
                 Some(e) if e == other => out.push(e),
                 Some(e) => {
-                    out.push('\\');
+                    out.push(escape);
                     out.push(e);
                 }
-                None => out.push('\\'),
+                None => out.push(escape),
             },
             c if c == quote => {
-                out.push('\\');
+                out.push(escape);
                 out.push(c);
             }
             c => out.push(c),
@@ -80,16 +86,17 @@ pub fn string(raw: &str, style: StringStyle) -> String {
 
 /// The body with `\"` and `\'` as plain quotes (other escapes stay): the one thing a quote
 /// change may alter, so the value to compare.
-pub fn unescape_quotes(body: &str) -> String {
+pub fn unescape_quotes(body: &str, syn: &StringSyntax) -> String {
+    let escape = syn.escape.unwrap_or('\\');
     let mut out = String::with_capacity(body.len());
     let mut chars = body.chars();
     while let Some(c) = chars.next() {
         match (c, chars.clone().next()) {
-            ('\\', Some(q @ ('"' | '\''))) => {
+            (e, Some(q @ ('"' | '\''))) if e == escape => {
                 chars.next();
                 out.push(q);
             }
-            ('\\', Some(o)) => {
+            (e, Some(o)) if e == escape => {
                 chars.next();
                 out.push(c);
                 out.push(o);
@@ -205,26 +212,36 @@ mod tests {
         interpolation: false,
     };
 
+    fn syn() -> StringSyntax {
+        StringSyntax {
+            escape: Some('\\'),
+            ..Default::default()
+        }
+    }
+
     #[test]
     fn strings_take_the_cheaper_quote() {
         let single = StringStyle { single: true, ..JS };
-        assert_eq!(string("'a'", JS), "\"a\"");
-        assert_eq!(string("\"a\"", single), "'a'");
-        assert_eq!(string("'say \"hi\"'", JS), "'say \"hi\"'");
-        assert_eq!(string("'a\"b\\'c\\'d'", JS), "\"a\\\"b'c'd\"");
-        assert_eq!(string("\"it's\"", single), "\"it's\"");
+        assert_eq!(string("'a'", JS, &syn()), "\"a\"");
+        assert_eq!(string("\"a\"", single, &syn()), "'a'");
+        assert_eq!(string("'say \"hi\"'", JS, &syn()), "'say \"hi\"'");
+        assert_eq!(string("'a\"b\\'c\\'d'", JS, &syn()), "\"a\\\"b'c'd\"");
+        assert_eq!(string("\"it's\"", single, &syn()), "\"it's\"");
         let css = StringStyle {
             keep_quoted: true,
             interpolation: true,
             ..JS
         };
-        assert_eq!(string("\"\\\"\\'\"", css), "\"\\\"\\'\"");
-        assert_eq!(string("'#{\"a\"}'", css), "'#{\"a\"}'");
+        assert_eq!(string("\"\\\"\\'\"", css, &syn()), "\"\\\"\\'\"");
+        assert_eq!(string("'#{\"a\"}'", css, &syn()), "'#{\"a\"}'");
     }
 
     #[test]
     fn quote_escapes_are_values() {
-        assert_eq!(unescape_quotes("a\\\"b\\'c\\\\d\\n"), "a\"b'c\\\\d\\n");
+        assert_eq!(
+            unescape_quotes("a\\\"b\\'c\\\\d\\n", &syn()),
+            "a\"b'c\\\\d\\n"
+        );
     }
 
     #[test]

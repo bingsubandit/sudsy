@@ -5,6 +5,8 @@
 //! `>` is always a token of its own (`>>` and `>>>` are joined by the parser in an expression, so
 //! `List<List<X>>` needs no splitting); `>=`, `>>=` and `>>>=` are lexed whole.
 
+use crate::generated::kind as k;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum T {
@@ -434,8 +436,8 @@ fn token(src: &str, i: usize, errors: &mut Vec<(u32, u32, &'static str)>) -> (T,
             }
         }
         b'0'..=b'9' => number(b, i),
-        b'"' => string(src, i, errors),
-        b'\'' => char_literal(src, i, errors),
+        b'"' => quoted(src, i, k::STRING, errors),
+        b'\'' => quoted(src, i, k::CHAR, errors),
         _ => {
             let ch = src[i..].chars().next().unwrap_or(' ');
             if is_id_start(ch) {
@@ -501,48 +503,36 @@ fn number(b: &[u8], i: usize) -> (T, usize) {
     (T::NumberLit, k - i)
 }
 
-/// A string literal or a text block.
-fn string(src: &str, i: usize, errors: &mut Vec<(u32, u32, &'static str)>) -> (T, usize) {
-    let b = src.as_bytes();
-    let n = b.len();
-    if b[i..].starts_with(b"\"\"\"") {
-        let mut k = i + 3;
-        while k < n {
-            match b[k] {
-                b'\\' => k += 2,
-                b'"' if b[k..].starts_with(b"\"\"\"") => return (T::StringLit, k + 3 - i),
-                _ => k += 1,
-            }
-        }
-        errors.push((i as u32, (n - i) as u32, "unterminated text block"));
-        return (T::StringLit, n - i);
+/// A string literal, a text block or a character literal, scanned by the kind's `string` row; one
+/// that is not closed ends at the line break (a text block: at the end of the file).
+fn quoted(
+    src: &str,
+    i: usize,
+    kind: core_syntax::SyntaxKind,
+    errors: &mut Vec<(u32, u32, &'static str)>,
+) -> (T, usize) {
+    let row = core_syntax::grammars::JAVA
+        .get()
+        .string_rows(kind)
+        .next()
+        .expect("the Java grammar has a string row");
+    let (end, closed) = row.scan(src, i, false);
+    if !closed {
+        let message = if kind == k::CHAR {
+            "unterminated character"
+        } else if src[i..].starts_with("\"\"\"") {
+            "unterminated text block"
+        } else {
+            "unterminated string"
+        };
+        errors.push((i as u32, (end - i) as u32, message));
     }
-    let mut k = i + 1;
-    while k < n {
-        match b[k] {
-            b'"' => return (T::StringLit, k + 1 - i),
-            b'\n' | b'\r' => break,
-            b'\\' if k + 1 < n && b[k + 1] != b'\n' && b[k + 1] != b'\r' => k += 2,
-            _ => k += 1,
-        }
-    }
-    errors.push((i as u32, (k.min(n) - i) as u32, "unterminated string"));
-    (T::StringLit, k.min(n) - i)
-}
-
-/// A character literal; one that is not closed ends at the line break.
-fn char_literal(src: &str, i: usize, errors: &mut Vec<(u32, u32, &'static str)>) -> (T, usize) {
-    let b = src.as_bytes();
-    let n = b.len();
-    let mut k = i + 1;
-    while k < n {
-        match b[k] {
-            b'\'' if k > i + 1 => return (T::CharLit, k + 1 - i),
-            b'\n' | b'\r' => break,
-            b'\\' if k + 1 < n && b[k + 1] != b'\n' && b[k + 1] != b'\r' => k += 2,
-            _ => k += 1,
-        }
-    }
-    errors.push((i as u32, (k.min(n) - i) as u32, "unterminated character"));
-    (T::CharLit, k.min(n) - i)
+    (
+        if kind == k::CHAR {
+            T::CharLit
+        } else {
+            T::StringLit
+        },
+        end - i,
+    )
 }
