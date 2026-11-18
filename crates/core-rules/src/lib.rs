@@ -51,7 +51,8 @@ pub use diagnostic::{
     Category, Diagnostic, Edit, FORMAT, Fix, FixKind, Related, SYNTAX_ERROR, Severity,
 };
 pub use engine::{
-    ActiveRule, FileReport, layers_needed, run_file, run_project, run_rules, silence,
+    ActiveRule, FileReport, layers_needed, run_file, run_file_rules, run_project, run_rules,
+    silence,
 };
 pub use extension::{ALL_LANGUAGES, ExtensionRule, Extensions};
 pub use family::{Family, Params};

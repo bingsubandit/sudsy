@@ -95,6 +95,12 @@ pub trait NodeFormatter: Send + Sync {
         1
     }
 
+    /// The text of the language's `format.rules`: the rows of the rules that run on the source
+    /// before layout (`core_rules::Rule::formats`) are in it. Empty: the language has none.
+    fn rows(&self) -> &'static str {
+        ""
+    }
+
     fn rewrite_source(
         &self,
         _tree: &SyntaxNode,

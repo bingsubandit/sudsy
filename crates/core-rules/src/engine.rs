@@ -58,6 +58,36 @@ pub fn run_rules(file: &FileContext<'_>, active: &[ActiveRule<'_>], collect: boo
     traverse(file, active, collect, None)
 }
 
+/// The diagnostics of the rules' [`Rule::check_file`] alone, with no walk of the nodes for the
+/// rules that subscribe to kinds: the rules the formatter runs before layout (`Rule::formats`)
+/// look at the file as a whole.
+pub fn run_file_rules<'a>(
+    file: &'a FileContext<'a>,
+    active: &[ActiveRule<'_>],
+    format: crate::rule::FormatInput<'a>,
+    rows: &'a str,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let ranges = crate::tree::TraversalCache::default();
+    for a in active {
+        let mut ctx = RuleContext::new(
+            file,
+            &a.options,
+            a.rule.meta(),
+            a.severity,
+            &mut diagnostics,
+        );
+        ctx.ranges = Some(&ranges);
+        ctx.format = Some(format);
+        ctx.rows = rows;
+        a.rule.check_file(file, &mut ctx);
+    }
+    diagnostics.sort_by(|a, b| {
+        (a.range.start(), a.range.end(), &a.rule).cmp(&(b.range.start(), b.range.end(), &b.rule))
+    });
+    diagnostics
+}
+
 /// The traversal behind [`run_rules`] and [`crate::layout::run_layout`]; `layout` is where the
 /// rules' `attach` calls go (they are ignored without it).
 pub(crate) fn traverse(

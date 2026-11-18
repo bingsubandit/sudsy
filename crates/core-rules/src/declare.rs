@@ -35,6 +35,7 @@ macro_rules! rule {
             $(options: [$($options:expr),* $(,)?],)?
             $(kinds: $kinds:expr,)?
             $(tags: $tags:expr,)?
+            $(format: $format:literal,)?
         }
         $($items:item)*
     ) => {
@@ -62,6 +63,10 @@ macro_rules! rule {
 
             $(fn tags(&self) -> &[&'static str] {
                 $tags
+            })?
+
+            $(fn formats(&self) -> bool {
+                $format
             })?
 
             $($items)*

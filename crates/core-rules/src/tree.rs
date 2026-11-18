@@ -1,7 +1,7 @@
 //! Helpers over the shared tree that several languages' rules need.
 
-use core_syntax::{Grammar, SyntaxNode, SyntaxToken, TextRange};
-use std::cell::{Cell, RefCell};
+use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
+use std::cell::{Cell, OnceCell, RefCell};
 
 /// The span of a node from its first token that is not trivia to the end of its last one:
 /// comments and blank space around the node are not part of it. Found from the two ends, so it
@@ -18,9 +18,37 @@ pub struct TraversalCache {
     range: Cell<Option<(TextRange, TextRange)>>,
     ascii: Cell<Option<bool>>,
     seen: RefCell<Vec<(&'static str, TextRange)>>,
+    /// Every node of the file by kind, in document order, built on the first ask.
+    by_kind: OnceCell<Vec<Vec<SyntaxNode>>>,
 }
 
 impl TraversalCache {
+    /// The nodes of the file of the given kinds, in document order: one walk of the file answers
+    /// every rule that looks for kinds.
+    pub fn nodes(&self, root: &SyntaxNode, kinds: &[SyntaxKind]) -> Vec<SyntaxNode> {
+        let index = self.by_kind.get_or_init(|| {
+            let mut by: Vec<Vec<SyntaxNode>> = Vec::new();
+            for n in root.descendants() {
+                let at = n.kind().index() as usize;
+                if at >= by.len() {
+                    by.resize_with(at + 1, Vec::new);
+                }
+                by[at].push(n);
+            }
+            by
+        });
+        let mut found: Vec<SyntaxNode> = kinds
+            .iter()
+            .filter_map(|k| index.get(k.index() as usize))
+            .flatten()
+            .cloned()
+            .collect();
+        if kinds.len() > 1 {
+            found.sort_by_key(|n| n.text_range().start());
+        }
+        found
+    }
+
     pub fn significant_range(&self, node: &SyntaxNode, grammar: &Grammar) -> TextRange {
         let whole = node.text_range();
         match self.range.get() {

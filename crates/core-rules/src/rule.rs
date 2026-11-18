@@ -79,6 +79,47 @@ pub struct FileContext<'a> {
     pub embedded: &'a [EmbeddedTree],
 }
 
+/// The formatter's side of a file for [`Rule::formats`] rules: its options.
+#[derive(Clone, Copy)]
+pub struct FormatInput<'a> {
+    pub options: &'a core_config::ResolvedOptions,
+}
+
+impl<'a> RuleContext<'a> {
+    /// What a rule makes of its rows, made once per language (the key is the rows' text, which is
+    /// static) and shared by the files.
+    pub fn parsed<T: std::any::Any + Send + Sync>(
+        &self,
+        rule: &'static str,
+        make: impl FnOnce() -> T,
+    ) -> std::sync::Arc<T> {
+        type Store = std::sync::Mutex<
+            std::collections::HashMap<
+                (usize, usize, &'static str),
+                std::sync::Arc<dyn std::any::Any + Send + Sync>,
+            >,
+        >;
+        static STORE: std::sync::OnceLock<Store> = std::sync::OnceLock::new();
+        let key = (self.rows.as_ptr() as usize, self.rows.len(), rule);
+        let mut store = STORE
+            .get_or_init(Default::default)
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let found = store
+            .entry(key)
+            .or_insert_with(|| std::sync::Arc::new(make()));
+        found
+            .clone()
+            .downcast()
+            .unwrap_or_else(|_| panic!("rows of `{rule}` change type"))
+    }
+
+    /// The rows of the section named `rule` in the language's `format.rules`.
+    pub fn section<'r>(&self, rule: &'r str) -> impl Iterator<Item = &'a str> + use<'a, 'r> {
+        core_format::rules::section(self.rows, rule)
+    }
+}
+
 /// The parse of a region of the file written in another language: its offsets count from the
 /// start of `range`.
 pub struct EmbeddedTree {
@@ -105,9 +146,28 @@ pub struct RuleContext<'a> {
     pub(crate) out: &'a mut Vec<Diagnostic>,
     pub(crate) layout: Option<&'a mut LayoutSink>,
     pub(crate) ranges: Option<&'a TraversalCache>,
+    /// What the formatter hands the rules it runs before layout (`None` in a lint run).
+    pub format: Option<FormatInput<'a>>,
+    /// The language's `format.rules` text: a rule that rewrites code reads its rows in the section
+    /// named like it.
+    pub rows: &'a str,
 }
 
 impl<'a> RuleContext<'a> {
+    /// The nodes of the file of the given kinds, in document order (the traversal shares one walk
+    /// among the rules that ask).
+    pub fn nodes(&self, kinds: &[core_syntax::SyntaxKind]) -> Vec<core_syntax::SyntaxNode> {
+        match self.ranges {
+            Some(cache) => cache.nodes(self.file.root, kinds),
+            None => self
+                .file
+                .root
+                .descendants()
+                .filter(|n| kinds.contains(&n.kind()))
+                .collect(),
+        }
+    }
+
     pub fn new(
         file: &'a FileContext<'a>,
         options: &'a RuleOptions,
@@ -123,6 +183,8 @@ impl<'a> RuleContext<'a> {
             out,
             layout: None,
             ranges: None,
+            format: None,
+            rows: "",
         }
     }
 
@@ -186,6 +248,14 @@ pub trait Rule: Send + Sync {
     /// reports. A layout rule is also run when the file is formatted, with its diagnostics dropped.
     fn layout_role(&self) -> LayoutRole {
         LayoutRole::None
+    }
+
+    /// Whether the formatter runs the rule's fixes on the source before it lays the code out (a
+    /// rewrite such as dropping an empty statement): the rule's data is the section named like it
+    /// in the language's `format.rules`, no section means the language has none of it. Such a
+    /// rule is `off` in lint unless the config turns it on (it reads its rows through `RuleContext::section`).
+    fn formats(&self) -> bool {
+        false
     }
 
     /// Node scope: the kinds [`Rule::check`] is called for.

@@ -5,6 +5,9 @@ use core_config::ResolvedOptions;
 use core_format::{
     DirectiveTable, Embedder, FormatCtx, FormatError, Variants, format_tree, safety,
 };
+use core_rules::options::RuleOptions;
+use core_rules::rule::FormatInput;
+use core_rules::{ActiveRule, FileContext, Severity};
 use core_syntax::SyntaxNode;
 use std::path::Path;
 
@@ -88,14 +91,20 @@ pub fn format_parsed_with(
     // A rewrite can unlock the next (`((T))` loses one pair of parentheses per round): repeat
     // until the text is stable, so that formatting the output changes nothing more.
     let mut current: Option<(SourceFile, ParseResult)> = None;
-    for _ in 0..provider.formatter().rewrite_rounds() {
+    // The rules that rewrite the source take a round of their own: the language's rewrite follows.
+    let rounds = provider.formatter().rewrite_rounds()
+        + usize::from(!provider.formatter().rows().is_empty());
+    for _ in 0..rounds {
         let (text, tree) = match &current {
             Some((f, p)) => (&f.text, &p.tree),
             None => (&file.text, &parsed.tree),
         };
-        let Some(next) = provider
-            .formatter()
-            .rewrite_source(tree, text, grammar, options)
+        let Some(next) = rule_rewrite(provider, &file.id, tree, text, options)
+            .or_else(|| {
+                provider
+                    .formatter()
+                    .rewrite_source(tree, text, grammar, options)
+            })
             .filter(|t| t != text)
         else {
             break;
@@ -123,6 +132,74 @@ pub fn format_parsed_with(
         return format_checked(provider, again, reparsed, options, directives, embedder);
     }
     format_checked(provider, file, parsed, options, directives, embedder)
+}
+
+/// The shared rules that rewrite the source that the language has rows for, found once per
+/// language (the rows' text is static).
+fn format_rules(rows: &'static str) -> std::sync::Arc<Vec<ActiveRule<'static>>> {
+    type Store = std::sync::Mutex<
+        std::collections::HashMap<(usize, usize), std::sync::Arc<Vec<ActiveRule<'static>>>>,
+    >;
+    static STORE: std::sync::OnceLock<Store> = std::sync::OnceLock::new();
+    let mut store = STORE
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    store
+        .entry((rows.as_ptr() as usize, rows.len()))
+        .or_insert_with(|| {
+            let active = core_rules::shared::RULES
+                .iter()
+                .copied()
+                .filter(|r| r.formats() && rows.contains(&format!("[{}]", r.meta().id)))
+                .filter_map(|rule| {
+                    let options =
+                        RuleOptions::resolve(rule.meta().options, &Default::default()).ok()?;
+                    Some(ActiveRule {
+                        rule,
+                        severity: Severity::Warning,
+                        options,
+                    })
+                })
+                .collect();
+            std::sync::Arc::new(active)
+        })
+        .clone()
+}
+
+/// The source with the fixes of the shared rules that rewrite it (`core_rules::Rule::formats`)
+/// applied, for the ones the language has rows for; `None` when none of them has anything to do.
+fn rule_rewrite(
+    provider: &dyn LanguageProvider,
+    id: &str,
+    tree: &SyntaxNode,
+    text: &str,
+    options: &ResolvedOptions,
+) -> Option<String> {
+    let formatter = provider.formatter();
+    let rows = formatter.rows();
+    let active = format_rules(rows);
+    if active.is_empty() {
+        return None;
+    }
+    let lines = core_rules::LineIndex::new(text);
+    let context = FileContext {
+        path: Path::new(id),
+        text,
+        root: tree,
+        grammar: provider.grammar(),
+        lines: &lines,
+        body_kinds: provider.body_kinds(),
+        hooks: provider.rule_hooks(),
+        embedded: &[],
+        semantics: None,
+    };
+    let diagnostics = core_rules::run_file_rules(&context, &active, FormatInput { options }, rows);
+    let chosen = core_rules::fixes::select(&diagnostics, |_| true);
+    if chosen.is_empty() {
+        return None;
+    }
+    Some(core_rules::fixes::apply(text, &chosen))
 }
 
 /// Formats a tree that has no syntax errors and checks the output against it. Code that the
