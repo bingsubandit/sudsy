@@ -4,9 +4,9 @@
 mod adapter;
 mod format;
 mod forward;
+mod hooks;
 mod imports;
 mod names;
-mod hooks;
 mod rules;
 mod semantic;
 mod text;
