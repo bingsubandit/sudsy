@@ -54,6 +54,8 @@ pub struct Item {
     pub field: Option<String>,
     pub target: Target,
     pub cardinality: Cardinality,
+    /// The range of `Grammar::pool` holding the sorted kinds the item accepts.
+    kinds: (u32, u32),
 }
 
 #[derive(Clone, Debug)]
@@ -141,10 +143,8 @@ pub struct Grammar {
     /// Hot tags per kind, indexed like `tokens` and `nodes`.
     token_flags: Vec<u16>,
     node_flags: Vec<u16>,
-    /// Per body item of every node, in node order: the range of `pool` holding the sorted kinds
-    /// the item accepts. `body_start[i]..body_start[i + 1]` are the items of node `i`.
-    bodies: Vec<(u32, u32)>,
-    body_start: Vec<u32>,
+    /// The sorted kinds of every body item (each tag's once, shared by its items); an item holds
+    /// its range.
     pool: Vec<SyntaxKind>,
     /// Trivia and `ERROR`, sorted: invisible to bodies.
     skip: Vec<SyntaxKind>,
@@ -192,17 +192,16 @@ struct FieldAt {
 #[derive(Clone, Copy)]
 struct GrammarBody<'g> {
     grammar: &'g Grammar,
-    kinds: &'g [(u32, u32)],
     body: &'g [Item],
 }
 
 impl crate::ast::Body for GrammarBody<'_> {
     fn slots(&self) -> usize {
-        self.kinds.len()
+        self.body.len()
     }
     fn accepts(&self, slot: usize, kind: SyntaxKind) -> bool {
         self.grammar
-            .range(self.kinds[slot])
+            .range(self.body[slot].kinds)
             .binary_search(&kind)
             .is_ok()
     }
@@ -234,9 +233,7 @@ impl Grammar {
         let mut pool: Vec<SyntaxKind> = Vec::new();
         let mut ranges: HashMap<&str, (u32, u32)> = HashMap::new();
         let mut bodies = Vec::new();
-        let mut body_start = Vec::with_capacity(self.nodes.len() + 1);
         for d in &self.nodes {
-            body_start.push(bodies.len() as u32);
             for i in &d.body {
                 bodies.push(match &i.target {
                     Target::Kind(k) => {
@@ -253,7 +250,6 @@ impl Grammar {
                 });
             }
         }
-        body_start.push(bodies.len() as u32);
         let mut skip: Vec<SyntaxKind> = std::iter::once(SyntaxKind::ERROR)
             .chain(all.get("trivia").into_iter().flatten().copied())
             .collect();
@@ -262,8 +258,10 @@ impl Grammar {
             .into_iter()
             .map(|(t, v)| (t.to_string(), v))
             .collect();
-        self.bodies = bodies;
-        self.body_start = body_start;
+        let mut ranges = bodies.into_iter();
+        for i in self.nodes.iter_mut().flat_map(|d| &mut d.body) {
+            i.kinds = ranges.next().expect("a range per body item");
+        }
         self.pool = pool;
         self.skip = skip;
         self.tag_nodes = tag_nodes;
@@ -273,16 +271,9 @@ impl Grammar {
         &self.pool[start as usize..end as usize]
     }
 
-    fn body_ranges(&self, node: SyntaxKind) -> Option<&[(u32, u32)]> {
-        let i = node.index() as usize;
-        let (a, b) = (*self.body_start.get(i)?, *self.body_start.get(i + 1)?);
-        self.bodies.get(a as usize..b as usize)
-    }
-
     /// For each body item of a node kind, the sorted kinds it accepts.
     pub fn body_kinds(&self, node: SyntaxKind) -> Option<impl Iterator<Item = &[SyntaxKind]>> {
-        self.def(node)?;
-        Some(self.body_ranges(node)?.iter().map(|r| self.range(*r)))
+        Some(self.def(node)?.body.iter().map(|i| self.range(i.kinds)))
     }
 
     /// Trivia kinds and `ERROR`, sorted: they take no part in matching bodies.
@@ -303,7 +294,6 @@ impl Grammar {
         let def = self.def(node.kind())?;
         let body = GrammarBody {
             grammar: self,
-            kinds: self.body_ranges(node.kind())?,
             body: &def.body,
         };
         crate::ast::assign(node, body)
@@ -349,8 +339,8 @@ impl Grammar {
     }
 
     fn accepts(&self, kind: SyntaxKind, item: usize, child: SyntaxKind) -> bool {
-        let ranges = self.body_ranges(kind);
-        ranges.is_some_and(|r| self.range(r[item]).binary_search(&child).is_ok())
+        let def = self.def(kind);
+        def.is_some_and(|d| self.range(d.body[item].kinds).binary_search(&child).is_ok())
     }
 
     fn slot_slow(
@@ -362,7 +352,6 @@ impl Grammar {
         let def = self.def(kind)?;
         let body = GrammarBody {
             grammar: self,
-            kinds: self.body_ranges(kind)?,
             body: &def.body,
         };
         crate::ast::assign_of(children, body)
@@ -383,7 +372,6 @@ impl Grammar {
         let body = def.and_then(|def| {
             Some(GrammarBody {
                 grammar: self,
-                kinds: self.body_ranges(node.kind())?,
                 body: &def.body,
             })
         });

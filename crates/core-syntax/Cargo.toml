@@ -16,5 +16,8 @@ serde_bytes.workspace = true
 proptest.workspace = true
 rmp-serde.workspace = true
 
+[build-dependencies]
+sha2.workspace = true
+
 [lints]
 workspace = true

@@ -159,27 +159,13 @@ fn split_decls(source: &str) -> Result<Lexed<'_>, GrammarError> {
     Ok(Lexed { lexemes, decls })
 }
 
-/// SHA-256 over the lexemes of a grammar source (the grammar's version).
+/// SHA-256 of the grammar source in hex (the grammar's version); `build.rs` computes the same
+/// for the built-in grammars.
 pub(super) fn content_hash(source: &str) -> String {
-    let lexed = split_decls(source).expect("a parsed grammar lexes again");
-    let mut h = Sha256::new();
-    for d in &lexed.decls {
-        for l in lexed.of(d) {
-            let mut buf = [0u8; 4];
-            let (tag, text): (u8, String) = match l {
-                Lexeme::Ident(s) => (b'i', (*s).into()),
-                Lexeme::Str(s) => (b's', s.to_string()),
-                Lexeme::Tag(s) => (b't', (*s).into()),
-                Lexeme::Int(n) => (b'n', n.to_string()),
-                Lexeme::Sym(c) => (b'y', c.encode_utf8(&mut buf).into()),
-            };
-            h.update([tag]);
-            h.update(text.as_bytes());
-            h.update([0]);
-        }
-        h.update(b"\n");
-    }
-    h.finalize().iter().map(|b| format!("{b:02x}")).collect()
+    Sha256::digest(source.as_bytes())
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
 
 /// Cursor over one declaration's lexemes.
@@ -525,6 +511,7 @@ fn resolve(
                 field: it.field.map(str::to_string),
                 target,
                 cardinality: it.cardinality.clone(),
+                kinds: (0, 0),
             });
         }
         let def = KindDef {
@@ -557,8 +544,6 @@ fn resolve(
         by_name,
         source: source.into(),
         hash: OnceLock::new(),
-        bodies: Vec::new(),
-        body_start: Vec::new(),
         pool: Vec::new(),
         skip: Vec::new(),
         tag_nodes: HashMap::new(),
@@ -612,20 +597,11 @@ node Long =
     }
 
     #[test]
-    fn hash_ignores_comments_and_layout_but_not_order() {
+    fn hash_follows_the_source() {
         let a = Grammar::parse(SAMPLE).unwrap();
-        let b = Grammar::parse(
-            &SAMPLE
-                .replace("// sample", "// other\n\n")
-                .replace("  ", " "),
-        )
-        .unwrap();
-        assert_eq!(a.hash(), b.hash());
-        let swapped = SAMPLE.replace(
-            "token Space #trivia\ntoken Comma \",\" #separator",
-            "token Comma \",\" #separator\ntoken Space #trivia",
-        );
-        assert_ne!(a.hash(), Grammar::parse(&swapped).unwrap().hash());
+        assert_eq!(a.hash(), Grammar::parse(SAMPLE).unwrap().hash());
+        let other = SAMPLE.replace("Comma", "Semi");
+        assert_ne!(a.hash(), Grammar::parse(&other).unwrap().hash());
     }
 
     #[test]

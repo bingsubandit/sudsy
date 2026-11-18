@@ -1,6 +1,7 @@
 //! Writes `grammars::registry`: one loader per `grammars/*.grammar` and the lookup by language
 //! name, so adding a grammar file is the whole registration.
 
+use sha2::{Digest, Sha256};
 use std::{env, fs, path::PathBuf};
 
 fn main() {
@@ -19,8 +20,12 @@ fn main() {
         let header = text.lines().find(|l| l.starts_with("language ")).unwrap();
         let mut parts = header.split_whitespace().skip(1);
         let (language, id) = (parts.next().unwrap(), parts.next().unwrap());
+        let hash: String = Sha256::digest(text.as_bytes())
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
         out += &format!(
-            "pub const {}: LazyGrammar = LazyGrammar::new(\"{language}\", {id}, {name});
+            "pub const {}: LazyGrammar = LazyGrammar::new(\"{language}\", {id}, \"{hash}\", {name});
 
 ",
             name.to_uppercase()

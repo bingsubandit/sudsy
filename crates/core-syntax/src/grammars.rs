@@ -14,14 +14,22 @@ fn load(cell: &'static OnceLock<Grammar>, src: &str) -> &'static Grammar {
 pub struct LazyGrammar {
     pub language: &'static str,
     pub id: LanguageId,
+    /// `Grammar::hash` of the grammar, known without parsing it.
+    pub hash: &'static str,
     load: fn() -> &'static Grammar,
 }
 
 impl LazyGrammar {
-    pub const fn new(language: &'static str, id: u8, load: fn() -> &'static Grammar) -> Self {
+    pub const fn new(
+        language: &'static str,
+        id: u8,
+        hash: &'static str,
+        load: fn() -> &'static Grammar,
+    ) -> Self {
         LazyGrammar {
             language,
             id: LanguageId::new(id),
+            hash,
             load,
         }
     }

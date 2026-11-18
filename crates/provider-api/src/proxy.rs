@@ -444,7 +444,7 @@ impl WorkerProxy {
         let ours = Hello {
             protocol_version: PROTOCOL_VERSION,
             grammar_hash: match self.config.grammar {
-                Some(g) => g.get().hash().to_string(),
+                Some(g) => g.hash.to_string(),
                 None => self.config.grammar_hash.clone(),
             },
             flow_graph_format: FLOW_GRAPH_FORMAT_VERSION,
