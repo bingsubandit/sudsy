@@ -12,6 +12,7 @@ use core_format::doc::{
     Doc, concat, conditional_group, fill, group, group_broken, hardline, if_break, indent, line,
     line_suffix_boundary, lit, shared, softline, text,
 };
+use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxNode, SyntaxToken};
 
@@ -49,12 +50,7 @@ fn spread(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let inner = concat(parts);
     // Comments inside the braces go on lines of their own.
     Ok(if commented {
-        group(concat(vec![
-            open,
-            indent(concat(vec![softline(), inner])),
-            softline(),
-            close,
-        ]))
+        shapes::enclosed(open, inner, close)
     } else {
         concat(vec![open, inner, close])
     })
@@ -648,12 +644,7 @@ fn wrap_in_parens(node: &SyntaxNode, cx: &FormatCtx<'_>, elem: Doc) -> Doc {
             if_break(lit(s), Doc::Nil)
         }
     };
-    let d = concat(vec![
-        paren("("),
-        indent(concat(vec![softline(), elem])),
-        softline(),
-        paren(")"),
-    ]);
+    let d = shapes::between(paren("("), elem, paren(")"));
     if in_call_in_container {
         group_broken(d)
     } else {

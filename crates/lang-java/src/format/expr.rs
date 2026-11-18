@@ -228,12 +228,7 @@ fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     } else {
         doc::concat(parts)
     };
-    let mut out = vec![
-        el(cx, open)?,
-        doc::indent(doc::concat(vec![doc::softline(), body])),
-        doc::softline(),
-        el(cx, close)?,
-    ];
+    let mut out = vec![shapes::between(el(cx, open)?, body, el(cx, close)?)];
     if trailing {
         out.push(doc::break_parent());
     }

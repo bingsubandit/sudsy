@@ -8,6 +8,7 @@ use super::ast::{
 use super::util::{R, elem, keyword, kids, node_of, semi, shape_error, token_of};
 use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, group, hardline, if_break, indent, line, lit, softline};
+use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
@@ -47,12 +48,7 @@ fn unary(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let arg_doc = if let Some(doc) = commented_parenthesized(cx, &arg)? {
         doc
     } else if has_leading_comment_in_parens(cx, &arg) && !cx.is_ignored(&arg) {
-        group(concat(vec![
-            lit("("),
-            indent(concat(vec![softline(), cx.format(&arg)?])),
-            softline(),
-            lit(")"),
-        ]))
+        shapes::enclosed(lit("("), cx.format(&arg)?, lit(")"))
     } else {
         cx.format(&arg)?
     };
@@ -244,18 +240,19 @@ fn return_or_throw(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         let seq = arg_u.kind() == k::SEQUENCE_EXPRESSION;
         group(concat(vec![
             lit(" "),
-            if seq {
-                lit("(")
-            } else {
-                if_break(lit("("), Doc::Nil)
-            },
-            indent(concat(vec![softline(), printed])),
-            softline(),
-            if seq {
-                lit(")")
-            } else {
-                if_break(lit(")"), Doc::Nil)
-            },
+            shapes::between(
+                if seq {
+                    lit("(")
+                } else {
+                    if_break(lit("("), Doc::Nil)
+                },
+                printed,
+                if seq {
+                    lit(")")
+                } else {
+                    if_break(lit(")"), Doc::Nil)
+                },
+            ),
         ]))
     } else {
         concat(vec![lit(" "), printed])

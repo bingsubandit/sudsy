@@ -2,7 +2,7 @@
 
 use crate::generated::kind as k;
 use core_config::OptionValue;
-use core_format::doc::{self, Doc, concat, group, if_break, indent, line, lit, softline};
+use core_format::doc::{self, Doc, concat, if_break, line, lit, softline};
 use core_format::{FormatCtx, FormatError, comments};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
@@ -106,13 +106,8 @@ pub(crate) fn has_comments(cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
         || !comments::trailing_comments(cx.grammar, t).is_empty()
 }
 
-/// `( inner )` that breaks onto indented lines when it does not fit.
-pub(crate) fn soft_block(inner: Doc) -> Doc {
-    concat(vec![indent(concat(vec![softline(), inner])), softline()])
-}
-
 pub(crate) fn parenthesized(open: Doc, inner: Doc, close: Doc) -> Doc {
-    group(concat(vec![open, soft_block(inner), close]))
+    core_format::shapes::enclosed(open, inner, close)
 }
 
 /// [`parenthesized`] around bracket tokens; own-line comments in front of the closing one stay

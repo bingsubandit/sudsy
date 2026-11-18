@@ -3,9 +3,8 @@
 use super::expr::elem;
 use super::util::*;
 use crate::generated::kind as k;
-use core_format::doc::{
-    Doc, concat, group, group_broken, hardline, if_break, indent, lit, softline,
-};
+use core_format::doc::{Doc, concat, group, group_broken, hardline, if_break, indent, lit};
+use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
@@ -159,12 +158,11 @@ fn bracketed_inner(
     } else {
         group(inner)
     };
-    Ok(group(concat(vec![
+    Ok(shapes::enclosed(
         cx.token(open),
-        indent(concat(vec![softline(), inner, end_doc])),
-        softline(),
+        concat(vec![inner, end_doc]),
         cx.token(close),
-    ])))
+    ))
 }
 
 fn is_single_generator(e: &SyntaxElement) -> bool {
@@ -303,12 +301,7 @@ fn import_names_inner(cx: &FormatCtx<'_>, p: &Parts) -> R {
         Some(o) if open_comment => cx.token(o),
         _ => if_break(lit("("), Doc::Nil),
     };
-    let body = concat(vec![
-        open,
-        indent(concat(vec![softline(), inner])),
-        softline(),
-        if_break(lit(")"), Doc::Nil),
-    ]);
+    let body = shapes::between(open, inner, if_break(lit(")"), Doc::Nil));
     Ok(if magic {
         group_broken(body)
     } else {

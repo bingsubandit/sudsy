@@ -111,12 +111,7 @@ impl Pr<'_, '_> {
                 };
                 Some(doc::concat(vec![
                     doc::text(name),
-                    doc::group(doc::concat(vec![
-                        doc::lit("("),
-                        doc::indent(doc::concat(vec![doc::softline(), args])),
-                        doc::softline(),
-                        doc::lit(")"),
-                    ])),
+                    core_format::shapes::enclosed(doc::lit("("), args, doc::lit(")")),
                 ]))
             }
             _ => None,
