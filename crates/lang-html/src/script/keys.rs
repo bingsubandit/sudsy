@@ -9,7 +9,6 @@
 use super::Cx;
 use super::js::{self, args, calls, members, span, static_name, string};
 use super::props::{DefineProps, Scan, entries, init_of};
-use core_rules::Accessor;
 use core_semantics::scopes::ScopeId;
 use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange};
 use lang_js::generated::kind as j;
@@ -84,9 +83,9 @@ fn object_keys(obj: &SyntaxNode, add: &mut impl FnMut(&SyntaxNode, String)) {
         let Some(name) = static_name(&m).filter(|n| !n.is_empty()) else {
             continue;
         };
-        if m.accessor == Some(Accessor::Set) {
+        if m.accessor == Some("set") {
             let getter = members(obj).find(|(g, gm)| {
-                gm.accessor == Some(Accessor::Get)
+                gm.accessor == Some("get")
                     && !getters_used.contains(g)
                     && static_name(gm).is_some_and(|n| n == name)
             });

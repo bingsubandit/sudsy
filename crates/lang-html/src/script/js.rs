@@ -3,7 +3,7 @@
 //!
 //! concept: role-accessors
 
-use core_rules::{Accessor, names};
+use core_rules::names;
 use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange, code_span, first_code_token, grammars};
 use lang_js::generated::kind as j;
 
@@ -52,10 +52,9 @@ pub(super) fn key_name(key: &SyntaxNode) -> Option<String> {
 
 /// The arguments of a call.
 pub(super) fn args(call: &SyntaxNode) -> impl Iterator<Item = SyntaxNode> {
-    grammars::JS
-        .get()
-        .slots(call, "arguments")
-        .filter_map(|e| e.into_node())
+    call.children()
+        .skip(1)
+        .filter(|c| c.kind() != j::TS_TYPE_PARAMETER_INSTANTIATION)
 }
 
 /// The first type argument of a call.
@@ -78,7 +77,8 @@ pub(super) fn calls(n: &SyntaxNode, name: &str) -> bool {
 pub(super) struct Member {
     pub key: SyntaxNode,
     pub value: Option<SyntaxNode>,
-    pub accessor: Option<Accessor>,
+    /// `get` or `set`.
+    pub accessor: Option<&'static str>,
     pub shorthand: bool,
 }
 
@@ -89,7 +89,11 @@ pub(super) fn member(p: &SyntaxNode) -> Option<Member> {
     }
     let mut nodes = p.children();
     let key = nodes.next()?;
-    let accessor = names::accessor(grammars::JS.get(), p);
+    let accessor = p.tokens().find_map(|t| match t.text() {
+        "get" => Some("get"),
+        "set" => Some("set"),
+        _ => None,
+    });
     let shorthand = key.child(j::IDENTIFIER_REFERENCE).is_some();
     Some(Member {
         key,
