@@ -18,6 +18,7 @@ mod extensions;
 mod fixed;
 mod layout;
 mod semantic;
+mod trees;
 #[cfg(feature = "count")]
 #[global_allocator]
 static A: counting::Counting = counting::Counting;
@@ -233,6 +234,15 @@ fn main() -> Result<()> {
             rest.first().map(|d| std::path::Path::new(d.as_str())),
             limit,
         );
+    }
+    if which == "parse-time" {
+        let lang = args.get(1).ok_or_else(|| anyhow!("parse-time LANG [N]"))?;
+        let passes = args.get(2).map_or(Ok(100), |n| n.parse())?;
+        return fixed::parse_time(lang, passes, std::path::Path::new("bench/inputs"));
+    }
+    if which == "trees" {
+        let rest: Vec<String> = args.iter().skip(2).cloned().collect();
+        return trees::run(std::path::Path::new(&args[1]), &rest);
     }
     if which == "fixed" {
         let rest: Vec<&String> = args
