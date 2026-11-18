@@ -1,0 +1,20 @@
+id: no-useless-expression
+per-language: true
+message: the expression does nothing as a statement
+description: >-
+  An expression statement that is only a name, a literal, a member access or an operator
+  expression: it is evaluated and thrown away (ESLint no-unused-expressions, ruff B018). Which
+  kinds of expression have no effect of their own is the grammar's `#pure` tag.
+example: 'a + b;'
+severity: off
+category: suspicious
+rule:
+  role: expression-statement
+  fields:
+    expression:
+      any:
+        - &pure
+          all:
+            - { role: pure }
+            - not: { role: unary, fields: { operator: { regex: '^(?:void|delete)$' } } }
+        - { role: parenthesized, child: *pure }

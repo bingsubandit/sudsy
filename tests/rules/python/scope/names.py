@@ -15,7 +15,7 @@ def reads_before_assignment():
 def handled():
     try:
         name_error_is_handled
-#       ^^^^^^^^^^^^^^^^^^^^^ useless-expression
+#       ^^^^^^^^^^^^^^^^^^^^^ no-useless-expression
     except NameError:
         pass
     del present

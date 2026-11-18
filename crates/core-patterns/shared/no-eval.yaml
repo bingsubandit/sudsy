@@ -1,0 +1,14 @@
+id: no-eval
+per-language: true
+message: a string is run as code
+description: >-
+  A call of one of the `calls` that run a string as code (ruff S102, ESLint no-eval); a language
+  lists its calls in its grammar's `rule` row.
+example: 'exec("x = 1")'
+severity: warn
+category: suspicious
+options:
+  - { name: calls, type: list, default: [], description: Calls that run a string as code }
+rule:
+  role: call
+  fields: { callee: { in-option: calls } }

@@ -1,0 +1,24 @@
+id: no-broad-catch
+per-language: true
+message: 'the clause catches too much: name the exceptions it handles'
+description: >-
+  A `catch`, `except` or `rescue` that catches everything (`bare`), or one of the broad `types` and
+  does not raise the error again and has no call matching `handled` (ruff E722 and BLE001, RuboCop
+  Lint/RescueException). A language sets what is broad in its grammar's `rule` row.
+example: "try:\n    f()\nexcept:\n    g()"
+severity: warn
+category: suspicious
+options:
+  - { name: bare, type: bool, default: false, description: A clause with no type is broad }
+  - { name: types, type: list, default: [], description: Types that are broad }
+  - { name: handled, type: regex, default: '\b\B', description: A call that handles the error (logs its traceback) }
+rule:
+  role: catch
+  any:
+    - all:
+        - { option: bare }
+        - not: { fields: { type: { regex: '' } } }
+    - all:
+        - items: { type: { any: [{ in-option: types }, { has: { in-option: types } }] } }
+        - not: { rethrows: true }
+        - not: { has: { role: call, regex-option: handled } }

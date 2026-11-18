@@ -1,7 +1,7 @@
 class A { void F() {
  try { } catch (Exception) { }
 //   ^^^ no-empty-block
-//                         ^^^ no-empty-block
+//       ^^^^^^^^^^^^^^^^^^^^^ no-empty-catch
  try { } catch { /* ignored on purpose */ }
 //   ^^^ no-empty-block
  try { } catch { Log(); }

@@ -1,15 +1,17 @@
 id: no-empty-block
 message: the block is empty (put code or a comment in it)
 description: >-
-  A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch`
-  or `finally` (also when the language wraps the block in a node of its own); an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and
-  EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).
-example: 'try { run(); } catch (e) { }'
+  A block with no statement and no comment, as the body of an `if`, `else`, loop, `try` or `finally`
+  (also when the language wraps the block in a node of its own; an empty `catch` is `no-empty-catch`)
+  (ESLint no-empty, Checkstyle EmptyBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).
+example: 'if (a) { }'
 severity: warn
 category: suspicious
 rule:
   role: block
   empty: true
+  not:
+    parent: { role: catch }
   any:
-    - parent: { role: [conditional, loop, try, catch] }
-    - parent: { parent: { role: [conditional, loop, try, catch] } }
+    - parent: { role: [conditional, loop, try] }
+    - parent: { parent: { role: [conditional, loop, try] } }

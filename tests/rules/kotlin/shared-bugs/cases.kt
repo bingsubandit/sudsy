@@ -7,5 +7,5 @@ fun f(a: Int) {
     when (a) { 1 -> g(); 1 -> g() }
 //                       ^^^^^^^^ no-duplicate-case
     try { g() } catch (e: Exception) { }
-//                                   ^^^ no-empty-block
+//              ^^^^^^^^^^^^^^^^^^^^^^^^ no-empty-catch
 }

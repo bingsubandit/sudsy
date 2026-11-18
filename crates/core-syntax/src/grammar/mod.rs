@@ -5,6 +5,7 @@
 //! language json 1 "JSON"              // name, LanguageId (1..=31), display name (optional)
 //! comments line "//" block "/*" "*/"   // either part optional
 //! trivia Comment line "#" block "/*" "*/"   // text between tokens: see `trivia_row`; `limits stack 256 bytes 16 depth 2000`
+//! rule no-print level off calls "print" // a rule's level and option values in this language (optional rows)
 //! hoisted "var"                        // declaration keywords whose bare declarations hoist (optional)
 //! suppress disable-next-line "sudsy-disable-next-line"   // role, marker; roles: disable-next-line,
 //!                                                        // disable-line, disable, enable, disable-file, ignore*
@@ -96,6 +97,15 @@ pub struct Suppression {
     pub marker: String,
 }
 
+/// A `rule` row: the language's level and option values of a shared rule (`level`; each option's
+/// strings, read as the option's type).
+#[derive(Debug, Clone)]
+pub struct RuleRow {
+    pub id: String,
+    pub level: Option<String>,
+    pub options: Vec<(String, Vec<String>)>,
+}
+
 /// How operators of one precedence level join into a chain (`precedence` lines).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Assoc {
@@ -164,6 +174,8 @@ pub struct Grammar {
     operators: HashMap<String, String>,
     /// Declaration keywords whose declarations hoist (`hoisted` line: JS `var`).
     hoisted: Vec<String>,
+    /// The `rule` rows: a shared rule's level and option values for this language.
+    rule_rows: Vec<RuleRow>,
     /// The `precedence` lines (a handful of rows: scanned, no table).
     precedence_rows: Vec<PrecedenceRow>,
     keys: KeySyntax,
@@ -414,6 +426,11 @@ impl Grammar {
     /// The node kinds carrying `tag`, in id order (precomputed; empty for an unknown tag).
     pub fn nodes_with_tag(&self, tag: &str) -> &[SyntaxKind] {
         self.tag_nodes.get(tag).map_or(&[], Vec::as_slice)
+    }
+
+    /// The language's `rule` row of the rule `id`.
+    pub fn rule_row(&self, id: &str) -> Option<&RuleRow> {
+        self.rule_rows.iter().find(|r| r.id == id)
     }
 
     /// Is `keyword` one of the `hoisted` declaration keywords?

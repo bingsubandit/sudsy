@@ -349,22 +349,6 @@ fn bare_handlers(n: &SyntaxNode, cx: &Cx) -> Vec<(SyntaxNode, bool)> {
         .collect()
 }
 
-pub(super) fn bare_except(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(cx) = model(ctx.file) else { return };
-    for (h, _) in bare_handlers(n, &cx) {
-        let reraises =
-            statements(&h).any(|s| s.kind() == k::STMT_RAISE && s.children().next().is_none());
-        if !reraises
-            && let Some(t) = h
-                .children_with_tokens()
-                .filter_map(|e| e.into_token())
-                .find(|t| t.kind() == k::EXCEPT)
-        {
-            c.hit(ctx, t.text_range(), "");
-        }
-    }
-}
-
 pub(super) fn default_except_not_last(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let Some(cx) = model(ctx.file) else { return };
     for (h, not_last) in bare_handlers(n, &cx) {

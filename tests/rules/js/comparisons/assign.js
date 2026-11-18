@@ -1,17 +1,14 @@
 a = a; a.b = a.b; a["b"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;
-//  ^ no-self-assign
-//           ^^^ no-self-assign
-//                         ^^^ no-self-assign
-//                                     ^^^^ no-self-assign
-//                                                    ^^^^^^ no-self-assign
-//                                                                                    ^ no-self-assign
+^^^^^ no-self-assign
+//     ^^^^^^^^^ no-self-assign
+//                              ^^^^^^^^^^^ no-self-assign
+//                                           ^^^^^^^^^^^^^^^ no-self-assign
+//                                                                              ^^^^^^^ no-self-assign
 [a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });
-//        ^ no-self-assign
-//           ^ no-self-assign
-//                            ^ no-self-assign
-//                                  ^ no-self-assign
-//                                                                  ^ no-self-assign
-//                                                                                         ^ no-self-assign
+^^^^^^^^^^^^^^^ no-self-assign
+//               ^^^^^^^^^^^^^^^^^^^^^ no-self-assign
+//                                                        ^^^^^^^^^^^^^ no-self-assign
+//                                                                         ^^^^^^^^^^^^^^^^^^^ no-self-assign
 if (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}
 //  ^^^^^ no-assignment-in-condition
 //         ^^ no-empty-block

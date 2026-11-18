@@ -6,7 +6,11 @@ css:
     rules:
       at-rule-no-vendor-prefix: error
       color-hex-length: error
-      comment-whitespace-inside: error
+      comment-space:
+        level: error
+        options:
+          block: true
+          line: false
       container-name-pattern:
         level: error
         options:

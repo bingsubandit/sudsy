@@ -1,0 +1,15 @@
+id: no-self-assign
+message: a variable is assigned to itself
+description: >-
+  A plain or logical assignment whose two sides are the same tokens, `a = a`, `a.b = a.b` or
+  `@a ||= @a` (ESLint no-self-assign, RuboCop Lint/SelfAssignment).
+example: 'a = a'
+severity: warn
+category: suspicious
+options:
+  - { name: operators, type: list, default: ['=', '||=', '&&=', '??='], description: The assignment operators that store the right side as it is }
+rule:
+  role: assignment
+  fields:
+    operator: { in-option: operators }
+  same: [left, right]

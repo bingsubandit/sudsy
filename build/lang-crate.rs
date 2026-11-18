@@ -40,10 +40,12 @@ fn main() {
             // A rule none of whose roles a node of the grammar has is not built in at all.
             .filter(|p| {
                 let text = fs::read_to_string(p).unwrap();
+                // The rule's own roles are those of its first line with `role:`; a rule with none
+                // (written on kinds or patterns) is always built in.
                 let roles = text
                     .lines()
-                    .find_map(|l| l.strip_prefix("  role:"))
-                    .unwrap_or("");
+                    .find_map(|l| l.split_once("role:").map(|(_, r)| r));
+                let Some(roles) = roles else { return true };
                 let mut names = roles
                     .split(|c: char| !(c.is_alphanumeric() || c == '-'))
                     .filter(|n| !n.is_empty());

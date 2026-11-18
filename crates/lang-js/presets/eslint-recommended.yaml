@@ -19,6 +19,7 @@ js:
       no-duplicate-case: error
       no-duplicate-keys: error
       no-empty-block: error
+      no-empty-catch: error
       no-empty-character-class: error
       no-empty-pattern: error
       no-extra-boolean-cast: error
@@ -40,7 +41,7 @@ js:
       unreachable-code: error
       no-unsafe-finally: error
       no-unsafe-negation: error
-      no-unused-expressions: error
+      no-useless-expression: error
       unused-variable: error
       unused-parameter: error
       no-useless-catch: error

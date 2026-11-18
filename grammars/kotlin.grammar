@@ -4,6 +4,7 @@
 
 language kotlin 22 "Kotlin"
 roles
+rule no-wildcard-imports level warn
 operators coalesce "?:"
 comments line "//" block "/*" "*/"
 trivia Comment line "//" first "#!" block "/*" "*/" nested

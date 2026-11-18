@@ -3,6 +3,8 @@
 
 language ruby 25 "Ruby"
 roles
+rule no-broad-catch level warn types "Exception"
+rule no-empty-catch level off
 comments line "#"
 trivia Comment line "#" lines "=begin" "=end"
 trivia Whitespace continuation
@@ -74,7 +76,7 @@ node Assoc #key-value = key:#expression Operator? value:#expression?
 node AssocSplat #opaque
 node BackReferenceRead #expression #reference =
     name:Variable
-node Begin #expression #body #opaque
+node Begin #expression #body #try = Keyword? body:Statements? catches:Rescue* Else? finally:Ensure? Statements? Keyword?
 node BlockArgument #block-pass #opaque
 node BlockLocalVariable #opaque
 node Block #block #scope #block-arg =
@@ -94,22 +96,22 @@ node CaseMatch #expression #opaque
 node Case #expression #switch = Keyword subject:#expression? cases:When* Else? Keyword?
 node Class #expression #declaration #type-declaration #scope =
     Keyword name:#expression Operator? superclass:#expression? members:#body? Keyword?
-node ClassVariableAndWrite #expression #opaque =
+node ClassVariableAndWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node ClassVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ClassVariableOrWrite #expression #opaque =
+node ClassVariableOrWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node ClassVariableRead #expression #reference =
     name:Variable
 node ClassVariableTarget #expression #opaque
 node ClassVariableWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ConstantAndWrite #expression #opaque =
+node ConstantAndWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node ConstantOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node ConstantOrWrite #expression #opaque =
+node ConstantOrWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node ConstantPathAndWrite #expression #opaque =
     left:#target operator:#operator right:#expression
@@ -134,7 +136,7 @@ node Defined #expression #opaque
 node Else #else-branch #statements = Keyword? Colon? stmts=items:Statements? value=items:#expression? Ensure? Keyword?
 node EmbeddedStatements #opaque
 node EmbeddedVariable #opaque
-node Ensure #opaque
+node Ensure #statements = Keyword items:Statements? Keyword?
 node ErrorRecovery #opaque
 node False #expression #literal =
     value:Keyword
@@ -146,11 +148,11 @@ node For #expression #opaque
 node ForwardingArguments #expression #opaque
 node ForwardingParameter #opaque
 node ForwardingSuper #expression #opaque
-node GlobalVariableAndWrite #expression #opaque =
+node GlobalVariableAndWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node GlobalVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node GlobalVariableOrWrite #expression #opaque =
+node GlobalVariableOrWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node GlobalVariableRead #expression #reference =
     name:Variable
@@ -169,11 +171,11 @@ node IndexAndWrite #expression #opaque
 node IndexOperatorWrite #expression #opaque
 node IndexOrWrite #expression #opaque
 node IndexTarget #expression #opaque
-node InstanceVariableAndWrite #expression #opaque =
+node InstanceVariableAndWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node InstanceVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node InstanceVariableOrWrite #expression #opaque =
+node InstanceVariableOrWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node InstanceVariableRead #expression #reference =
     name:Variable
@@ -192,11 +194,11 @@ node KeywordHash #expression #opaque
 node KeywordRestParameter #declaration
 node Lambda #expression #function #scope =
     Operator parameters:#block-params? #bopen body:#body? #bclose
-node LocalVariableAndWrite #expression #opaque =
+node LocalVariableAndWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node LocalVariableOperatorWrite #expression #assignment =
     left:#target operator:#operator right:#expression
-node LocalVariableOrWrite #expression #opaque =
+node LocalVariableOrWrite #expression #assignment =
     left:#target operator:#operator right:#expression
 node LocalVariableRead #expression #reference =
     name:#member-name
@@ -237,7 +239,7 @@ node RegularExpression #expression #opaque
 node RequiredKeywordParameter #declaration
 node RequiredParameter #declaration
 node RescueModifier #expression #opaque
-node Rescue #opaque
+node Rescue #catch = Keyword type:#expression* Operator? parameter:#expression? Keyword? body:Statements?
 node RestParameter #declaration
 node Retry #expression #opaque
 node Return #expression #return = Keyword value:Arguments?

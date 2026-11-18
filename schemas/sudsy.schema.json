@@ -400,10 +400,6 @@
               "$ref": "#/definitions/rule",
               "description": "Vue's `attributes-order` (eslint-plugin-vue) with its default order. A bare `v-bind=\"object\"` takes the place of the attribute it precedes. Not sorted alphabetically."
             },
-            "avoid-star-import": {
-              "$ref": "#/definitions/rule",
-              "description": "An import with `*` (Checkstyle AvoidStarImport)."
-            },
             "backslash-separator": {
               "$ref": "#/definitions/rule",
               "description": "`build\\out` is the pattern `buildout`: the backslash escapes `o`. Windows-style separators never match what was meant. Reported for a backslash before a letter, digit, `_` or `-` (`\\.` and `\\#` are ordinary escapes). No fix."
@@ -416,10 +412,6 @@
               "$ref": "#/definitions/rule",
               "description": "Angular's `banana-in-box` (@angular-eslint/template). `([x])` is no binding. Only in `.component.html` files."
             },
-            "bare-except": {
-              "$ref": "#/definitions/rule",
-              "description": "An `except` clause without an exception type, unless its body has a bare `raise` of its own."
-            },
             "bare-raise-outside-handler": {
               "$ref": "#/definitions/rule",
               "description": "A `raise` with no exception in code that no `except` clause of its function contains."
@@ -428,17 +420,56 @@
               "$ref": "#/definitions/rule",
               "description": "`x == x`, `a && a` and other comparison, logical and bitwise operators whose two sides are the same code (RuboCop Lint/BinaryOperatorWithIdenticalOperands)."
             },
-            "blind-except": {
-              "$ref": "#/definitions/rule",
-              "description": "`except Exception` or `except BaseException` whose body neither raises again nor logs the traceback."
-            },
             "block-no-empty": {
               "$ref": "#/definitions/rule",
               "description": "A rule or at-rule block with nothing in it, comments included."
             },
             "boolean-literal-comparison": {
-              "$ref": "#/definitions/rule",
-              "description": "`x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression)."
+              "description": "An equality with `true` or `false` (`x == true`, `x != False`) on either side (ruff E712, Checkstyle SimplifyBooleanExpression).",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "literals": {
+                          "default": [
+                            "true",
+                            "false",
+                            "True",
+                            "False"
+                          ],
+                          "description": "The texts that are boolean literals",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "not_operators": {
+                          "default": [],
+                          "description": "Equality operators that are not a comparison of value (Python `is`)",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "boolean-symbol": {
               "$ref": "#/definitions/rule",
@@ -542,21 +573,45 @@
               "$ref": "#/definitions/rule",
               "description": "A fenced code block in which every line starts with `$ ` shows commands without their output, which makes copying them awkward (markdownlint MD014)."
             },
-            "comment-no-empty": {
-              "$ref": "#/definitions/rule",
-              "description": "A comment with nothing in it."
-            },
             "comment-space": {
-              "$ref": "#/definitions/rule",
-              "description": "A line comment has text right after its marker. Exempt: nothing but whitespace after the marker, a marker repeated (`////`, `##`), `--` separator lines, and a `#!` shebang on the first line. The fix inserts the space."
+              "description": "A line comment has text right after its marker. Exempt: nothing but whitespace after the marker, a marker repeated (`////`, `##`), `--` separator lines, and a `#!` shebang on the first line. The fix inserts the space.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "block": {
+                          "default": false,
+                          "description": "Also check block comments: text right after the opening or before the closing delimiter is reported (`/*a*/`). Exempt: an empty comment, and a delimiter repeated (`/**`, `/***/`). The fix inserts the space.",
+                          "type": "boolean"
+                        },
+                        "line": {
+                          "default": true,
+                          "description": "Check line comments (`// a`). Off, only block comments are checked (with `block`).",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "comment-syntax": {
               "$ref": "#/definitions/rule",
               "description": "A `//` comment where `#` is the convention (tflint terraform_comment_syntax). The fix writes `#`."
-            },
-            "comment-whitespace-inside": {
-              "$ref": "#/definitions/rule",
-              "description": "A comment whose text touches `/*` or `*/`."
             },
             "consistent-type-definitions": {
               "$ref": "#/definitions/rule",
@@ -1090,10 +1145,6 @@
             "equals-hash-code": {
               "$ref": "#/definitions/rule",
               "description": "A class body that declares `boolean equals(Object)` and no `hashCode()`: equal objects get different hash codes (Checkstyle EqualsHashCode)."
-            },
-            "exec-call": {
-              "$ref": "#/definitions/rule",
-              "description": "A call of the builtin `exec`."
             },
             "explicit-return-none": {
               "$ref": "#/definitions/rule",
@@ -1702,10 +1753,6 @@
                   "type": "object"
                 }
               ]
-            },
-            "leftover-debugger": {
-              "$ref": "#/definitions/rule",
-              "description": "An import of `pdb`, `ipdb`, `pudb`, `wdb`, `rpdb` or `bpdb`, or a call of `breakpoint()` or `pdb.set_trace()`."
             },
             "length-zero-no-unit": {
               "$ref": "#/definitions/rule",
@@ -2386,6 +2433,50 @@
               "$ref": "#/definitions/rule",
               "description": "Svelte's `no-bind-value-on-checkable-inputs` (eslint-plugin-svelte)."
             },
+            "no-broad-catch": {
+              "description": "A `catch`, `except` or `rescue` that catches everything (`bare`), or one of the broad `types` and does not raise the error again and has no call matching `handled` (ruff E722 and BLE001, RuboCop Lint/RescueException). A language sets what is broad in its grammar's `rule` row.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "bare": {
+                          "default": true,
+                          "description": "A clause with no type is broad",
+                          "type": "boolean"
+                        },
+                        "handled": {
+                          "default": "^[A-Za-z_][A-Za-z0-9_.]*[.]exception[(]|exc_info[ ]*=[ ]*[^F ]",
+                          "description": "A call that handles the error (logs its traceback)",
+                          "type": "string"
+                        },
+                        "types": {
+                          "default": [],
+                          "description": "Types that are broad",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
             "no-case-declarations": {
               "$ref": "#/definitions/rule",
               "description": "`let`, `const`, a function or a class declared directly in a `case` clause, where it is visible to the other cases."
@@ -2435,8 +2526,43 @@
               "description": "A `COPY --from` with `/` as a source and as the target."
             },
             "no-debugger": {
-              "$ref": "#/definitions/rule",
-              "description": "A `debugger` statement."
+              "description": "A debugger statement, a call of one of the `calls` that start a debugger or an import matching `imports` (ESLint no-debugger, ruff T100); a language lists its calls in its grammar's `rule` row.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "calls": {
+                          "default": [],
+                          "description": "Calls that start a debugger",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "imports": {
+                          "default": "\\b\\B",
+                          "description": "An import of a debugger module",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "no-default-summary": {
               "$ref": "#/definitions/rule",
@@ -2635,7 +2761,46 @@
             },
             "no-empty-block": {
               "$ref": "#/definitions/rule",
-              "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch` or `finally` (also when the language wraps the block in a node of its own); an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement)."
+              "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try` or `finally` (also when the language wraps the block in a node of its own; an empty `catch` is `no-empty-catch`) (ESLint no-empty, Checkstyle EmptyBlock, PHPCS Generic.CodeAnalysis.EmptyStatement)."
+            },
+            "no-empty-catch": {
+              "description": "A `catch`, `except` or `rescue` clause whose body has no statement (a lone `pass` counts as none) and no comment, so the error is silently ignored (ESLint no-empty, Checkstyle EmptyCatchBlock, ruff S110, RuboCop Lint/SuppressedException). With `broad_only` only a clause that catches everything or one of the `types` is reported.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "broad_only": {
+                          "default": false,
+                          "description": "Report only a clause that catches everything or a broad type",
+                          "type": "boolean"
+                        },
+                        "types": {
+                          "default": [],
+                          "description": "Types that count as broad",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "no-empty-character-class": {
               "$ref": "#/definitions/rule",
@@ -2710,6 +2875,42 @@
                           "default": true,
                           "description": "Check flow mappings (`{a: }`).",
                           "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "no-eval": {
+              "description": "A call of one of the `calls` that run a string as code (ruff S102, ESLint no-eval); a language lists its calls in its grammar's `rule` row.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "calls": {
+                          "default": [
+                            "exec"
+                          ],
+                          "description": "Calls that run a string as code",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
                         }
                       },
                       "type": "object"
@@ -2988,6 +3189,54 @@
               "$ref": "#/definitions/rule",
               "description": "A call of `ConvertTo-SecureString` with `-AsPlainText`."
             },
+            "no-print": {
+              "description": "A call of one of the `calls` that write to the console (ruff T201 and T203), unless an argument matching `redirect` sends the output elsewhere and none matching `console` sends it back to the console; a language lists its calls and the two argument patterns in its grammar's `rule` row.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "calls": {
+                          "default": [
+                            "print",
+                            "pprint.pprint",
+                            "pp"
+                          ],
+                          "description": "Calls that print",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "console": {
+                          "default": "^file[ ]*=[ ]*(None|sys[.]std(out|err))$",
+                          "description": "An argument that sends the output to the console",
+                          "type": "string"
+                        },
+                        "redirect": {
+                          "default": "^file[ ]*=",
+                          "description": "An argument that sends the output elsewhere",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
             "no-prototype-builtins": {
               "$ref": "#/definitions/rule",
               "description": "`obj.hasOwnProperty(k)`, `isPrototypeOf` and `propertyIsEnumerable` called on an object that may not inherit them; use `Object.prototype.hasOwnProperty.call(obj, k)`."
@@ -3045,8 +3294,43 @@
               "description": "An ARG or ENV whose name contains `api_key`, `client_key`, `password`, `private`, `secret`, `token` or `username`, or is a well-known credential variable. Build secrets belong in `--mount=type=secret`."
             },
             "no-self-assign": {
-              "$ref": "#/definitions/rule",
-              "description": "`a = a`, `a.b = a.b`, `[a, b] = [a, b]`."
+              "description": "A plain or logical assignment whose two sides are the same tokens, `a = a`, `a.b = a.b` or `@a ||= @a` (ESLint no-self-assign, RuboCop Lint/SelfAssignment).",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "operators": {
+                          "default": [
+                            "=",
+                            "||=",
+                            "&&=",
+                            "??="
+                          ],
+                          "description": "The assignment operators that store the right side as it is",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "no-self-closing": {
               "$ref": "#/definitions/rule",
@@ -3095,6 +3379,42 @@
             "no-this-alias": {
               "$ref": "#/definitions/rule",
               "description": "`const self = this` and `self = this` (destructuring `this` is allowed)."
+            },
+            "no-throw-generic": {
+              "description": "A `raise` or `throw` of one of the generic `types`, itself or a call of it, which callers cannot tell from any other error (ruff TRY002, RuboCop Lint/RaiseException). A language lists the types in its grammar's `rule` row.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "types": {
+                          "default": [
+                            "Exception"
+                          ],
+                          "description": "Generic exception types",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "no-trailing-punctuation": {
               "$ref": "#/definitions/rule",
@@ -3152,10 +3472,6 @@
               "$ref": "#/definitions/rule",
               "description": "An anchor that no alias refers to. The fix removes the anchor, which changes nothing about the data."
             },
-            "no-unused-expressions": {
-              "$ref": "#/definitions/rule",
-              "description": "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them."
-            },
             "no-use-v-else-with-v-for": {
               "$ref": "#/definitions/rule",
               "description": "Vue's `no-use-v-else-with-v-for` (eslint-plugin-vue). Put the `v-for` on a child or a wrapping `<template>`."
@@ -3175,6 +3491,10 @@
             "no-useless-escape": {
               "$ref": "#/definitions/rule",
               "description": "A backslash in a string, template or regex that escapes nothing special (`\"\\d\"`, `/\\-/`)."
+            },
+            "no-useless-expression": {
+              "$ref": "#/definitions/rule",
+              "description": "An expression statement that is only a name, a literal, a member access or an operator expression: it is evaluated and thrown away (ESLint no-unused-expressions, ruff B018). Which kinds of expression have no effect of their own is the grammar's `#pure` tag."
             },
             "no-useless-mustaches": {
               "$ref": "#/definitions/rule",
@@ -3210,7 +3530,7 @@
             },
             "no-wildcard-imports": {
               "$ref": "#/definitions/rule",
-              "description": "An import that ends in `.*` (ktlint no-wildcard-imports)."
+              "description": "An import of every name of a package or module, `import a.b.*;` or `from a import *` (Checkstyle AvoidStarImport, ktlint no-wildcard-imports, ruff F403)."
             },
             "no-with": {
               "$ref": "#/definitions/rule",
@@ -3387,10 +3707,6 @@
               "$ref": "#/definitions/rule",
               "description": "A `begin ... end while cond` or `until` loop, which behaves unlike the other loops (RuboCop Lint/Loop)."
             },
-            "pprint": {
-              "$ref": "#/definitions/rule",
-              "description": "A call of `pprint.pprint`."
-            },
             "prefer-as-const": {
               "$ref": "#/definitions/rule",
               "description": "A literal type that repeats the literal it is given to (`let a: 'a' = 'a'`, `'a' as 'a'`, `<'a'>'a'`); write `as const`."
@@ -3426,10 +3742,6 @@
             "presentation-role-style": {
               "$ref": "#/definitions/rule",
               "description": "`none` and `presentation` are synonyms; `none` is the one ARIA 1.2 prefers."
-            },
-            "print": {
-              "$ref": "#/definitions/rule",
-              "description": "A call of the builtin `print` without a `file` argument (or with `file=None`)."
             },
             "printf-string-formatting": {
               "$ref": "#/definitions/rule",
@@ -3722,10 +4034,6 @@
               "$ref": "#/definitions/rule",
               "description": "A `raise` of `NotImplemented`."
             },
-            "raise-vanilla-class": {
-              "$ref": "#/definitions/rule",
-              "description": "A `raise` of the builtin `Exception`."
-            },
             "raise-without-from-inside-except": {
               "$ref": "#/definitions/rule",
               "description": "A `raise` of an exception inside an `except` clause (nested `if`, loops, `with` and `match` included; `try`, functions and classes not) without `from`, unless it raises the name the clause bound."
@@ -3793,10 +4101,6 @@
             "required-version": {
               "$ref": "#/definitions/rule",
               "description": "A `terraform` block with no `required_version` argument (tflint terraform_required_version, in the file that has the block: the rule does not know the other files of the module)."
-            },
-            "rescue-exception": {
-              "$ref": "#/definitions/rule",
-              "description": "A `rescue` that names `Exception` (RuboCop Lint/RescueException)."
             },
             "return-in-void-context": {
               "$ref": "#/definitions/rule",
@@ -4709,10 +5013,6 @@
               "$ref": "#/definitions/rule",
               "description": "An alias that repeats the name it is given to, `a AS a` (sqlfluff AL09)."
             },
-            "self-assignment": {
-              "$ref": "#/definitions/rule",
-              "description": "`a = a`, `@a ||= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment)."
-            },
             "separate-attributes": {
               "$ref": "#/definitions/rule",
               "description": "One attribute per attribute list: `[A, B]` becomes `[A]` and `[B]`. Lists on parameters and type parameters are left alone. The fix is not offered when the list has a comment in it."
@@ -5018,10 +5318,6 @@
               "$ref": "#/definitions/rule",
               "description": "A call of `subprocess.run` with no `check` keyword (and no `**kwargs`)."
             },
-            "suppressed-exception": {
-              "$ref": "#/definitions/rule",
-              "description": "A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException)."
-            },
             "suppression-justification": {
               "$ref": "#/definitions/rule",
               "description": "`SuppressMessage` needs a `Justification` that says something: not missing, `null`, empty, blank or `\"<Pending>\"`. Matches the attribute by name. No fix."
@@ -5062,14 +5358,6 @@
               "$ref": "#/definitions/rule",
               "description": "A `/// <reference path=\"x\" />` before the first statement, and a `/// <reference types=\"x\" />` for a module the file imports."
             },
-            "true-false-comparison": {
-              "$ref": "#/definitions/rule",
-              "description": "A comparison of a value to `True` or `False` with `==` or `!=`."
-            },
-            "try-except-pass": {
-              "$ref": "#/definitions/rule",
-              "description": "A handler for everything (`except:`, `except Exception`) whose only statement is `pass`."
-            },
             "tuple-element-names-in-signatures": {
               "$ref": "#/definitions/rule",
               "description": "A tuple type in the signature of a method, constructor, property, indexer, conversion operator or delegate whose elements have no names. Overrides and implementations of interface members are left alone (their names are not the member's to choose). No fix."
@@ -5097,10 +5385,6 @@
             "undefined-export": {
               "$ref": "#/definitions/rule",
               "description": "A name in `__all__` that the module does not bind."
-            },
-            "undefined-local-with-import-star": {
-              "$ref": "#/definitions/rule",
-              "description": "A star import."
             },
             "undefined-local-with-import-star-usage": {
               "$ref": "#/definitions/rule",
@@ -5613,10 +5897,6 @@
             "useless-echo": {
               "$ref": "#/definitions/rule",
               "description": "An `echo` whose only argument is a command substitution."
-            },
-            "useless-expression": {
-              "$ref": "#/definitions/rule",
-              "description": "An expression statement that is only a name, an attribute, a number, a constant or a collection display."
             },
             "useless-import-alias": {
               "$ref": "#/definitions/rule",

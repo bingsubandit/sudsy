@@ -56,7 +56,7 @@ entries:
   no-type-alias: wontfix deprecated upstream
   no-unnecessary-type-constraint: rule no-unnecessary-type-constraint
   no-unsafe-function-type: rule no-unsafe-function-type
-  no-unused-expressions: rule no-unused-expressions | the options keep their defaults
+  no-unused-expressions: rule no-useless-expression | the options keep their defaults
   no-unused-vars: rule unused-variable, unused-parameter | the options keep their defaults; `.d.ts` files and `declare module` blocks are not treated as used
   no-use-before-define: rule use-before-define | the options keep their defaults
   no-useless-constructor: planned

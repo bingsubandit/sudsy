@@ -7,8 +7,8 @@ class A {
 //      ^ unused-variable
     int z = G();
     try { G(); } catch (Exception e) { }
+//               ^^^^^^^^^^^^^^^^^^^^^^^ no-empty-catch
 //                                ^ unused-variable
-//                                   ^^^ no-empty-block
     if (false) { G(); }
 //      ^^^^^ no-constant-condition
 //               ^^^^ unreachable-code

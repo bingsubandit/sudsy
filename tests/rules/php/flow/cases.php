@@ -17,7 +17,7 @@ function d($x) {
 }
 function h($x) {
     try { return 1; } catch (E $e) { }
-//                                 ^^^ no-empty-block
+//                    ^^^^^^^^^^^^^^^^ no-empty-catch
 //                                 ^^^ unreachable-code
     i();
     switch ($x) {

@@ -3,7 +3,7 @@ try:
     pass
 except:
 ^ default-except-not-last
-^^^^^^ bare-except
+^ no-broad-catch
     pass
 except A:
     pass
