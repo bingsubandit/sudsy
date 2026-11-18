@@ -239,6 +239,7 @@ fn lift_comment(seq: &mut Seq, s: usize, c: usize) {
             }
         }
     }
+    seq.gaps = super::space::gaps(seq);
 }
 
 /// Fixes every line that is too long and can be (from the end, so indexes stay valid); returns

@@ -14,6 +14,7 @@ impl P<'_> {
         if !self.is_t(0, T::LParen) {
             return;
         }
+        let m = self.mark();
         self.bracketed(|p| {
             while let Some(t) = p.t(0) {
                 match t {
@@ -31,5 +32,6 @@ impl P<'_> {
                 }
             }
         });
+        self.close(k::FUNCTION_CONTENTS, m);
     }
 }

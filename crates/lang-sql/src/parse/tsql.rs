@@ -296,16 +296,22 @@ impl P<'_> {
     /// `CREATE PROCEDURE name @p int, ... AS body`, `CREATE FUNCTION name (...) RETURNS t AS BEGIN ... END`.
     fn routine(&mut self) {
         let m = self.mark();
+        let mut function = false;
         while !self.eof() && !self.is_t(0, T::Semi) && !self.at("as") {
             if self.is_t(0, T::Var) {
                 self.indent();
                 self.list(|p| p.parameter());
                 self.dedent();
             } else if self.is_t(0, T::LParen) {
+                let signature = self.mark();
                 self.bracketed(|p| {
                     p.list(|p| p.parameter());
                 });
+                if function {
+                    self.close(k::FUNCTION_CONTENTS, signature);
+                }
             } else if self.at_any(&["procedure", "proc", "function", "trigger"]) {
+                function = self.at("function");
                 self.bump_as(k::KEYWORD);
                 if self.starts_name(0) {
                     self.routine_name();

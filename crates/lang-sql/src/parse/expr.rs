@@ -157,7 +157,11 @@ impl P<'_> {
                 return true;
             }
             if self.at_any_op(&["~", "!!", "@", "|/", "||/", "#"]) && !self.is_t(1, T::Comma) {
-                self.bump();
+                if self.at_op("~") {
+                    self.bump_as(k::PREFIX);
+                } else {
+                    self.bump();
+                }
                 return true;
             }
             return false;

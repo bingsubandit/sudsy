@@ -1,92 +1,33 @@
-//! Spacing between blocks on one line (sqlfluff's LT01, LT06): each block wants `Single` space,
-//! `Touch` (none) or `Any` (as written) before and after; an `inline` variant also removes a line
-//! break. Blocks claim the wishes of the nodes they start or end, and the innermost node that
-//! holds both neighbours may ask for them to touch.
+//! Spacing between blocks on one line (sqlfluff's LT01, LT06): the `[space]` rows of
+//! `format.rules` say for each pair of neighbouring tokens whether one blank, none or the source's
+//! stands between them, the `[joined]` rows whether a line break between them goes. The rows are
+//! read once per file; a round of the layout only applies them to the current gaps.
 //!
 //! concept: token-spacing-rows
 
-use super::seq::{NONE, Seq, is_comment};
+use super::seq::{Seq, is_comment};
 use crate::generated::kind as k;
-use core_syntax::SyntaxKind;
 
-#[derive(Clone, Copy, PartialEq)]
-enum Sp {
-    Single,
-    Touch,
-    Any,
+/// What the rows say about the gap before a block.
+#[derive(Clone, Copy, Default)]
+pub struct Gap {
+    /// One blank (`Some(true)`), none (`Some(false)`) or as written (`None`).
+    pub want: Option<bool>,
+    /// A line break in the gap goes.
+    pub join: bool,
 }
 
-/// `(spacing, strip line breaks)`.
-type Wish = (Sp, bool);
-
-const SINGLE: Wish = (Sp::Single, false);
-const TOUCH: Wish = (Sp::Touch, false);
-const INLINE: Wish = (Sp::Touch, true);
-const JOIN: Wish = (Sp::Single, true);
-const ANY: Wish = (Sp::Any, false);
-
-/// Is `parent` a common table expression? Its brackets stay on the line of the name and `AS`.
-fn cte_bracket(seq: &Seq, parent: u32) -> bool {
-    parent != NONE && seq.nodes[parent as usize].kind == k::COMMON_TABLE_EXPRESSION
-}
-
-/// What the block `i` asks for before and after.
-fn wishes(seq: &Seq, i: usize) -> (Wish, Wish) {
-    let (mut before, mut after) = (SINGLE, SINGLE);
-    let (mut start, mut end) = (true, true);
-    let mut n = seq.blocks[i].node;
-    while n != NONE && (start || end) {
-        let node = &seq.nodes[n as usize];
-        start &= node.first == i as u32;
-        end &= node.last == i as u32;
-        if start {
-            before = match node.kind {
-                k::FUNCTION_CONTENTS
-                | k::BRACKETED_ARGUMENTS
-                | k::ARRAY_ACCESSOR
-                | k::SEMI_STRUCTURED_EXPRESSION => INLINE,
-                k::ALIAS_COLUMN_LIST => TOUCH,
-                k::BRACKETED if cte_bracket(seq, node.parent) => JOIN,
-                _ => before,
-            };
+/// The gap before each block; the first has none.
+pub fn gaps(seq: &Seq) -> Vec<Gap> {
+    let mut gaps = vec![Gap::default()];
+    gaps.extend((1..seq.blocks.len()).map(|i| {
+        let (a, b) = (&seq.blocks[i - 1].token, &seq.blocks[i].token);
+        Gap {
+            want: seq.rules.want(a, b),
+            join: seq.rules.joined(a, b),
         }
-        n = node.parent;
-    }
-    match seq.blocks[i].kind {
-        k::COMMA | k::SEMICOLON | k::R_PAREN | k::R_SQUARE | k::EOF => before = TOUCH,
-        // A `:` that starts a line is a sqlcmd command (`:r file`), whose word it touches.
-        k::COLON => {
-            (before, after) = (
-                TOUCH,
-                if i == 0 || seq.points[i].newlines > 0 {
-                    ANY
-                } else {
-                    SINGLE
-                },
-            )
-        }
-        k::DOT | k::SLICE => (before, after) = (TOUCH, TOUCH),
-        k::PREFIX => after = TOUCH,
-        k::L_PAREN | k::L_SQUARE => after = TOUCH,
-        k::CAST_OP => (before, after) = (TOUCH, INLINE),
-        k::SIGN => after = INLINE,
-        k::OPERATOR if seq.blocks[i].text == "@" => (before, after) = (TOUCH, TOUCH),
-        k::OPERATOR if seq.blocks[i].node == 0 => before = TOUCH,
-        k::LINE_COMMENT | k::BLOCK_COMMENT => (before, after) = (ANY, ANY),
-        // A raw multi-line word (`COPY .. FROM STDIN` with its data rows) is taken as written.
-        k::WORD if seq.blocks[i].text.contains('\n') => (before, after) = (ANY, ANY),
-        _ => {}
-    }
-    (before, after)
-}
-
-/// What the innermost node holding both blocks asks for.
-fn within(kind: SyntaxKind) -> Option<Wish> {
-    match kind {
-        k::OBJECT_REFERENCE | k::FUNCTION_NAME | k::SEMI_STRUCTURED_EXPRESSION => Some(INLINE),
-        k::COMPARISON_OPERATOR => Some(TOUCH),
-        _ => None,
-    }
+    }));
+    gaps
 }
 
 /// Would the text of the two blocks fuse into other tokens with nothing between them?
@@ -96,123 +37,31 @@ fn fuses(prev: &str, next: &str, prev_is_sign: bool) -> bool {
         || (prev_is_sign && b.is_some_and(|c| "+-*/<>=~!@#%^&|`?".contains(c)))
 }
 
-/// The bracket at block `i` after a function name or an object reference: does it touch the name
-/// (`Some(true)`), or keep a space (`Some(false)`: a procedure's parameters)? Object references
-/// are function names in `DROP FUNCTION`, `CREATE FUNCTION` and `DROP AGGREGATE`.
-fn name_bracket(seq: &Seq, i: usize) -> Option<bool> {
-    let prev = &seq.nodes[seq.blocks[i - 1].node as usize];
-    if prev.last != i as u32 - 1 || !matches!(prev.kind, k::FUNCTION_NAME | k::OBJECT_REFERENCE) {
-        return None;
-    }
-    let mut n = prev.parent;
-    while n != NONE && seq.nodes[n as usize].kind != k::STATEMENT {
-        n = seq.nodes[n as usize].parent;
-    }
-    let first = if n == NONE {
-        0
-    } else {
-        seq.nodes[n as usize].first as usize
-    };
-    let head = |w: &str| {
-        seq.blocks[first..(first + 4).min(seq.blocks.len())]
-            .iter()
-            .any(|b| b.text.eq_ignore_ascii_case(w))
-    };
-    if (head("procedure") || head("proc")) && head("create") {
-        Some(false)
-    } else if prev.kind == k::FUNCTION_NAME
-        || head("function")
-        || head("aggregate")
-        || head("procedure")
-    {
-        Some(true)
-    } else {
-        None
-    }
-}
-
-/// Is block `i` a `~` in front of its operand (not the binary `~` of a regex match)?
-fn is_prefix_tilde(seq: &Seq, i: usize) -> bool {
-    let b = &seq.blocks[i];
-    b.kind == k::OPERATOR
-        && b.text == "~"
-        && (i == 0
-            || !matches!(
-                seq.blocks[i - 1].kind,
-                k::IDENTIFIER
-                    | k::QUOTED_IDENTIFIER
-                    | k::NUMBER
-                    | k::STRING
-                    | k::R_PAREN
-                    | k::R_SQUARE
-                    | k::WORD_LITERAL
-            ))
-}
-
 /// Sets the gap of every point that sits inside a line; returns whether anything changed.
 pub fn respace(seq: &mut Seq) -> bool {
     (1..seq.blocks.len()).fold(false, |changed, i| respace_point(seq, i, false) | changed)
 }
 
-/// Sets the gap before block `i`; `strip` removes a line break whatever the blocks ask for.
+/// Sets the gap before block `i`; `strip` removes a line break whatever the rows say.
 pub fn respace_point(seq: &mut Seq, i: usize, strip: bool) -> bool {
-    let (before, after) = (wishes(seq, i).0, wishes(seq, i - 1).1);
-    let (mut pre, mut post) = (after, before);
-    if seq.blocks[i].kind == k::L_PAREN {
-        match name_bracket(seq, i) {
-            Some(true) => post = INLINE,
-            Some(false) => post = SINGLE,
-            None => {}
-        }
-    }
-    if seq.blocks[i].kind == k::L_SQUARE
-        && matches!(
-            seq.blocks[i - 1].kind,
-            k::KEYWORD
-                | k::IDENTIFIER
-                | k::TYPE_IDENTIFIER
-                | k::QUOTED_IDENTIFIER
-                | k::R_SQUARE
-                | k::R_PAREN
-        )
+    let Gap { want, join } = seq.gaps[i];
+    // A `:` that starts a line is a sqlcmd command (`:r file`): the blank after it stays.
+    let want = if seq.blocks[i - 1].kind == k::COLON && (i == 1 || seq.points[i - 1].newlines > 0)
     {
-        post = TOUCH;
-    }
-    if seq.blocks[i - 1].text.eq_ignore_ascii_case("delimiter") {
-        (pre, post) = (SINGLE, SINGLE);
-    }
-    if is_prefix_tilde(seq, i - 1) {
-        if seq.blocks[i].text == "~" {
-            (pre, post) = (ANY, ANY);
-        } else {
-            pre = TOUCH;
-        }
-    }
-    let mut strip = strip || pre.1 || post.1;
-    let common = seq.common_node(i - 1, i);
-    if let Some((sp, inline)) = within(seq.nodes[common as usize].kind) {
-        strip |= inline;
-        if sp == Sp::Touch {
-            pre.0 = if pre.0 == Sp::Any { Sp::Any } else { Sp::Touch };
-            post.0 = if post.0 == Sp::Any {
-                Sp::Any
-            } else {
-                Sp::Touch
-            };
-        }
-    }
-    if is_comment(seq.blocks[i - 1].kind) || is_comment(seq.blocks[i].kind) {
-        strip = false;
-    }
-    let touch = pre.0 == Sp::Touch || post.0 == Sp::Touch;
-    let any = pre.0 == Sp::Any || post.0 == Sp::Any;
+        None
+    } else {
+        want
+    };
+    let comment = is_comment(seq.blocks[i - 1].kind) || is_comment(seq.blocks[i].kind);
+    let touch = want == Some(false);
+    let any = want.is_none();
     let fuse = (touch || any)
         && fuses(
             &seq.blocks[i - 1].text,
             &seq.blocks[i].text,
             seq.blocks[i - 1].kind == k::SIGN,
         );
-    let strip = strip && !fuse;
+    let strip = (strip || join) && !comment && !fuse;
     // The characters of one operator (`+=`, `||`) the parser lexed apart stay together.
     let op = |j: usize| {
         let b = &seq.blocks[j];
@@ -250,5 +99,58 @@ pub fn respace_point(seq: &mut Seq, i: usize, strip: bool) -> bool {
             true
         }
         _ => had_break,
+    }
+}
+
+#[cfg(test)]
+mod diff {
+    use super::*;
+    use crate::layout::space_old::old_gap;
+
+    #[test]
+    #[ignore]
+    fn rows_agree_with_the_old_wishes() {
+        let rows = super::super::ROWS.get().space();
+        let dir = std::path::Path::new("/scratch/slots/sudsy/5/parity/sqlfluff-work");
+        let mut seen: std::collections::BTreeMap<String, (usize, String)> = Default::default();
+        let mut total = 0;
+        let mut names: Vec<_> = std::fs::read_dir(dir).unwrap().map(|e| e.unwrap().path()).collect();
+        names.sort();
+        for path in names {
+            let Some(name) = path.file_name().and_then(|n| n.to_str()).map(String::from) else { continue };
+            if !name.ends_with(".sql") { continue }
+            let dialect = if name.starts_with("mysql") { "mysql" } else if name.starts_with("tsql") { "tsql" } else if name.starts_with("postgres") { "postgres" } else { "ansi" };
+            let Ok(text) = std::fs::read_to_string(&path) else { continue };
+            let parsed = crate::parse(&text, dialect);
+            if !parsed.errors.is_empty() { continue }
+            let grammar = provider_api::LanguageProvider::grammar(&crate::provider()).clone();
+            let seq = Seq::build(&parsed.tree, &grammar, rows);
+            let g = gaps(&seq);
+            for i in 1..seq.blocks.len() {
+                total += 1;
+                let (o, ostrip) = old_gap(&seq, i);
+                let nw = match g[i].want { Some(true) => 1, Some(false) => 0, None => 2 };
+                let nstrip = g[i].join && !is_comment(seq.blocks[i - 1].kind) && !is_comment(seq.blocks[i].kind);
+                if o != nw || ostrip != nstrip {
+                    let a = &seq.blocks[i - 1];
+                    let b = &seq.blocks[i];
+                    let pk = |n: u32| if n == super::super::seq::NONE { "-".to_string() } else { grammar.name(seq.nodes[n as usize].kind).to_string() };
+                    let key = format!(
+                        "old {o}/{ostrip} new {nw}/{nstrip}  {}({}) / {}({})  common {}",
+                        grammar.name(a.kind), pk(a.node), grammar.name(b.kind), pk(b.node),
+                        pk(seq.common_node(i - 1, i))
+                    );
+                    let name = format!("{name} `{}` `{}`", a.text, b.text);
+                    let e = seen.entry(key).or_insert((0, name.clone()));
+                    e.0 += 1;
+                }
+            }
+        }
+        let mut v: Vec<_> = seen.into_iter().collect();
+        v.sort_by_key(|(_, (n, _))| std::cmp::Reverse(*n));
+        for (k, (n, f)) in v.iter().take(150) {
+            println!("{n:5} {k}   e.g. {f}");
+        }
+        println!("pairs {total}, distinct mismatches {}", v.len());
     }
 }

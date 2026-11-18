@@ -5,3 +5,29 @@ Identifier : identifier_case
 FunctionIdentifier : function_case
 WordLiteral : literal_case
 TypeIdentifier : type_case
+
+# Blanks between two tokens of a line (sqlfluff LT01, LT06; syntax: crates/core-format/src/spacing.rs).
+[space]
+text=delimiter / * : yes
+kind=LineComment|BlockComment|Data / * : keep
+* / kind=LineComment|BlockComment|Data : keep
+kind=Prefix&text=~ / text=~ : keep
+kind=Dot|Slice|Prefix|LParen|LSquare|Sign|CastOp / * : no
+text=@&kind=Operator / * : no
+* / kind=Comma|Semicolon|RParen|RSquare|Eof|Colon|Dot|Slice|CastOp : no
+* / text=@&kind=Operator : no
+* / kind=Operator&parent=File : no
+* / kind=LParen&parent=Bracketed&grand=FunctionContents|BracketedArguments : no
+* / kind=LSquare&parent=ArrayAccessor : no
+kind=Keyword|Identifier|TypeIdentifier|QuotedIdentifier|RSquare|RParen / kind=LSquare : no
+parent=ComparisonOperator / parent=ComparisonOperator : no
+* / * : yes
+
+# Tokens that stay on one line although the source breaks between them.
+[joined]
+kind=CastOp|Sign / *
+* / kind=LParen&parent=Bracketed&grand=FunctionContents|BracketedArguments
+kind=Dot&parent=ObjectReference|FunctionName / *
+* / kind=Dot&parent=ObjectReference|FunctionName
+kind!=Keyword|Identifier|TypeIdentifier|QuotedIdentifier|RSquare|RParen / kind=LSquare&parent=ArrayAccessor
+* / kind=LParen&parent=Bracketed&grand=CommonTableExpression

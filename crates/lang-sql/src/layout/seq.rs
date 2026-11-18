@@ -9,7 +9,7 @@
 //! concept: line-layout-engine
 
 use crate::generated::kind as k;
-use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
+use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use std::borrow::Cow;
 
 pub const NONE: u32 = u32::MAX;
@@ -45,6 +45,7 @@ pub struct Block {
     pub kind: SyntaxKind,
     pub text: String,
     pub node: u32,
+    pub token: SyntaxToken,
 }
 
 pub struct Node {
@@ -61,6 +62,10 @@ pub struct Seq {
     pub points: Vec<Point>,
     pub blocks: Vec<Block>,
     pub nodes: Vec<Node>,
+    /// What the spacing rows say about the gap before each block.
+    pub gaps: Vec<super::space::Gap>,
+    /// The rows `gaps` come from.
+    pub rules: &'static core_format::spacing::SpaceRules,
 }
 
 pub fn is_comment(kind: SyntaxKind) -> bool {
@@ -68,11 +73,17 @@ pub fn is_comment(kind: SyntaxKind) -> bool {
 }
 
 impl Seq {
-    pub fn build(root: &SyntaxNode, grammar: &Grammar) -> Seq {
+    pub fn build(
+        root: &SyntaxNode,
+        grammar: &Grammar,
+        rules: &'static core_format::spacing::SpaceRules,
+    ) -> Seq {
         let mut seq = Seq {
             points: Vec::new(),
             blocks: Vec::new(),
             nodes: Vec::new(),
+            gaps: Vec::new(),
+            rules,
         };
         let mut point = Point::default();
         let mut stack: Vec<(u32, Option<SyntaxElement>)> = Vec::new();
@@ -126,11 +137,13 @@ impl Seq {
                             kind,
                             text: text.to_string(),
                             node: owner,
+                            token: t.clone(),
                         });
                     }
                 }
             }
         }
+        seq.gaps = super::space::gaps(&seq);
         seq
     }
 

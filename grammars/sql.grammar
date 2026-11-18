@@ -48,6 +48,8 @@ token Word #name-part
 token QuotedIdentifier #name-part
 token String #literal #string
 token Number #literal
+// The raw lines of a `COPY .. FROM STDIN` block.
+token Data
 
 // Where the parser opens (`Indent`, `ImplicitIndent`) or closes (`Dedent`) an indented block: zero-width, they carry the
 // indentation structure of the file.

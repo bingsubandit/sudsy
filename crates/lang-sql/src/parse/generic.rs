@@ -192,6 +192,8 @@ struct Walk {
     options: bool,
     /// The statement is a `CREATE`.
     create: bool,
+    /// The statement is a `CREATE` of a procedure: its parameters keep a blank before the bracket.
+    procedure: bool,
     /// `ALTER AGGREGATE ..`: the name after `RENAME TO` is a function name.
     aggregate: bool,
     /// The statement is a `CREATE`/`ALTER POLICY`: its roles are names.
@@ -265,6 +267,8 @@ impl P<'_> {
                 grant,
                 perms: grant && self.d == super::Dialect::Tsql,
                 create: self.at("create"),
+                procedure: self.at("create")
+                    && (1..4).any(|i| self.is(i, "procedure") || self.is(i, "proc")),
                 role_kind,
                 type_stmt: self.at("create") && self.is(1, "type"),
                 statistics: self.at("create") && self.is(1, "statistics"),
@@ -301,6 +305,8 @@ impl P<'_> {
                     let columns = (w.after_name && w.create_table && depth == 0)
                         || (w.type_stmt && depth == 0 && self.prev_text_is("table"));
                     let params = w.after_name && (w.function_name || w.prepare);
+                    let signature = w.after_name && w.function_name && !w.procedure;
+                    let m = self.mark();
                     self.generic_bracket(
                         depth,
                         columns,
@@ -308,6 +314,9 @@ impl P<'_> {
                         w.create_table || w.table_stmt,
                         w.after_name && w.index_stmt && depth == 0,
                     );
+                    if signature {
+                        self.close(k::FUNCTION_CONTENTS, m);
+                    }
                     w.options |= columns;
                     w.expect_name = false;
                     w.after_name = false;

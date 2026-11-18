@@ -11,6 +11,8 @@ mod breaks;
 mod indent;
 mod seq;
 mod space;
+#[cfg(test)]
+mod space_old;
 mod wrap;
 
 use core_config::{ResolvedOptions, shared};
@@ -39,7 +41,7 @@ fn signature(seq: &Seq) -> Vec<(u32, String)> {
 }
 
 pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -> Doc {
-    let mut seq = Seq::build(root, grammar);
+    let mut seq = Seq::build(root, grammar, ROWS.get().space());
     match options.text("dialect") {
         "mysql" => blocks::add_indents(&mut seq),
         "tsql" => blocks::add_tsql_indents(&mut seq),
@@ -72,6 +74,15 @@ pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -
         if !wrapped && signature(&seq) == before {
             break;
         }
+    }
+    if std::env::var_os("SQLDBG").is_some() {
+        let mut t = String::new();
+        for (p, b) in seq.points.iter().zip(&seq.blocks) {
+            t.push_str(&"\n".repeat(p.newlines as usize));
+            t.push_str(&p.ws);
+            t.push_str(&b.text);
+        }
+        eprintln!("SQLDBG<<{t}>>");
     }
     print(&seq)
 }

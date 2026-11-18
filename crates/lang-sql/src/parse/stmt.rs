@@ -72,7 +72,7 @@ pub(super) fn file(p: &mut P) {
         }
         let before = p.pos;
         if p.is_t(0, T::Data) {
-            p.bump_as(k::WORD);
+            p.bump_as(k::DATA);
             continue;
         }
         if p.d == Dialect::Mysql && p.at("delimiter") {
