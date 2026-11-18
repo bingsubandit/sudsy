@@ -21,8 +21,8 @@ files:
   prettier-svelte: svelte-blocks, svelte-attributes, svelte-ignore, svelte-syntax, svelte-inline
   real-world-svelte: svelte-attributes, svelte-inline
 ratchet:
-  prettier-html: 127
-  prettier-vue: 55
+  prettier-html: 129
+  prettier-vue: 56
   prettier-svelte: 51
   prettier-vue-html: 10
   real-world: 216

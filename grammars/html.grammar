@@ -1,4 +1,4 @@
-// HTML, parsed by tree-sitter (tree-sitter-html, forked in grammars/tree-sitter-html) and mapped by the mapping of crates/lang-html/lang.yaml.
+// HTML, Vue, Svelte and Angular, parsed by the hand-written parser of crates/lang-html/src/parser.
 // An element is its start tag (`StartTag`), its content and its end tag; void
 // elements and elements closed by an implied end tag have no `EndTag`. Text, entities, CDATA sections and
 // the text of `<script>`, `<style>`, `<textarea>` and `<title>` are one `Chunk` each (a token inside).

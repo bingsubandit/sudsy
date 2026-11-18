@@ -27,6 +27,7 @@ pub fn providers() -> Vec<Box<dyn LanguageProvider>> {
         Box::new(lang_css::provider(lang_css::Dialect::Css)),
         Box::new(lang_css::provider(lang_css::Dialect::Scss)),
         Box::new(lang_css::provider(lang_css::Dialect::Less)),
+        Box::new(lang_html::provider()),
         Box::new(lang_cpp::provider(lang_cpp::Dialect::Cpp)),
         Box::new(lang_cpp::provider(lang_cpp::Dialect::C)),
         // generated:providers
@@ -35,7 +36,6 @@ pub fn providers() -> Vec<Box<dyn LanguageProvider>> {
         Box::new(lang_gitignore::provider()),
         Box::new(lang_graphql::provider()),
         Box::new(lang_hcl::provider()),
-        Box::new(lang_html::provider()),
         Box::new(lang_ini::provider()),
         Box::new(lang_java::provider()),
         Box::new(lang_js::provider()),

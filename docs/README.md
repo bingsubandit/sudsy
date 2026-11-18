@@ -23,7 +23,7 @@ Current state only; history is in git. Update the doc for the area you change in
 | [formatting/sql.md](formatting/sql.md) | SQL: sqruff parser and its adapter, dialects, limits, the formatter and its sqlfluff parity, conformance |
 | [formatting/toml.md](formatting/toml.md) | TOML parser (tree-sitter), formatter, options, conformance |
 | [formatting/xml.md](formatting/xml.md) | XML parser (tree-sitter), well-formedness checks, formatter, options, conformance |
-| [formatting/html.md](formatting/html.md) | HTML parser (tree-sitter, forked grammar), tree shape, conformance corpus, options |
+| [formatting/html.md](formatting/html.md) | HTML parser (hand-written, modes for Vue, Svelte, Angular), tree shape, conformance corpus, options |
 | [formatting/editorconfig.md](formatting/editorconfig.md) | `.editorconfig` parser (tree-sitter), formatter, options, conformance |
 | [formatting/ini.md](formatting/ini.md) | `.ini` parser (tree-sitter), formatter, options, rules, conformance |
 | [formatting/gitignore.md](formatting/gitignore.md) | `.gitignore`-syntax files parser (tree-sitter), formatter, rules, conformance |

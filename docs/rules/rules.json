@@ -223,8 +223,8 @@
         }
       ],
       "presets": [
-        "hcl/tflint-recommended",
         "html/html-validate-standard",
+        "hcl/tflint-recommended",
         "html/html-validate-standard"
       ],
       "upstream": [

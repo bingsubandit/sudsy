@@ -1,4 +1,3 @@
-# Generated from lang.yaml by `cargo xtask codegen`.
 [package]
 name = "lang-html"
 autotests = false
@@ -11,24 +10,14 @@ build = "../../build/lang-crate.rs"
 [dependencies]
 core-config.workspace = true
 core-format.workspace = true
-core-packs.workspace = true
 core-rules.workspace = true
 core-syntax.workspace = true
-core-treesitter.workspace = true
 oxc-htmlish-parser.workspace = true
 provider-api.workspace = true
 rowan.workspace = true
-tree-sitter-html = { workspace = true, optional = true }
-tree-sitter-svelte = { workspace = true, optional = true }
-tree-sitter-vue = { workspace = true, optional = true }
 
 [build-dependencies]
 core-syntax.workspace = true
-
-[features]
-# The grammar is linked in; without it the language loads from its language pack.
-default = ["static-grammars"]
-static-grammars = ["dep:tree-sitter-html", "dep:tree-sitter-vue", "dep:tree-sitter-svelte"]
 
 [lints]
 workspace = true

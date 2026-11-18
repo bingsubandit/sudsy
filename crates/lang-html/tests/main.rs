@@ -3,3 +3,4 @@
 mod angular;
 mod html;
 mod rule_fixtures;
+mod scratch;
