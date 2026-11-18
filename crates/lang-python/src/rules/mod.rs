@@ -5,7 +5,6 @@
 mod branch;
 mod control;
 mod decl;
-mod format;
 mod isort;
 mod lints;
 mod literal;
@@ -38,7 +37,6 @@ const CALL: &[core_syntax::SyntaxKind] = &[k::EXPR_CALL];
 const UNARY: &[core_syntax::SyntaxKind] = &[k::EXPR_UNARY_OP];
 const IF_EXPR: &[core_syntax::SyntaxKind] = &[k::EXPR_IF];
 const HANDLER: &[core_syntax::SyntaxKind] = &[k::EXCEPT_HANDLER_EXCEPT_HANDLER];
-const BIN_OP: &[core_syntax::SyntaxKind] = &[k::EXPR_BIN_OP];
 const MODULE: &[core_syntax::SyntaxKind] = &[k::MOD_MODULE];
 
 const CHECKS: &[Entry] = &[
@@ -201,8 +199,6 @@ const CHECKS: &[Entry] = &[
         &[k::EXPR_CALL, k::STMT_IMPORT, k::STMT_IMPORT_FROM],
         control::debugger,
     ),
-    ("printf-string-formatting", BIN_OP, format::percent),
-    ("f-string", CALL, format::dot_format),
     (
         "undefined-local-with-import-star",
         MODULE,
@@ -373,66 +369,6 @@ const CHECKS: &[Entry] = &[
         "unicode-literal",
         &[k::STRING_LITERAL],
         lints::unicode_literal,
-    ),
-    ("percent-format-invalid-format", BIN_OP, format::percent),
-    (
-        "percent-format-unsupported-format-character",
-        BIN_OP,
-        format::percent,
-    ),
-    (
-        "percent-format-positional-count-mismatch",
-        BIN_OP,
-        format::percent,
-    ),
-    (
-        "percent-format-mixed-positional-and-named",
-        BIN_OP,
-        format::percent,
-    ),
-    ("percent-format-expected-mapping", BIN_OP, format::percent),
-    (
-        "percent-format-extra-named-arguments",
-        BIN_OP,
-        format::percent,
-    ),
-    ("percent-format-missing-argument", BIN_OP, format::percent),
-    ("percent-format-expected-sequence", BIN_OP, format::percent),
-    (
-        "percent-format-star-requires-sequence",
-        BIN_OP,
-        format::percent,
-    ),
-    ("string-dot-format-invalid-format", CALL, format::dot_format),
-    (
-        "string-dot-format-mixing-automatic",
-        CALL,
-        format::dot_format,
-    ),
-    (
-        "string-dot-format-extra-positional-arguments",
-        CALL,
-        format::dot_format,
-    ),
-    (
-        "string-dot-format-extra-named-arguments",
-        CALL,
-        format::dot_format,
-    ),
-    (
-        "string-dot-format-missing-arguments",
-        CALL,
-        format::dot_format,
-    ),
-    (
-        "invalid-escape-sequence",
-        &[
-            k::STRING_LITERAL,
-            k::BYTES_LITERAL,
-            k::F_STRING,
-            k::T_STRING,
-        ],
-        format::invalid_escape,
     ),
     (
         "invalid-syntax",

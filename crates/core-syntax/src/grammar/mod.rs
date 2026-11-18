@@ -10,6 +10,7 @@
 //!                                                        // disable-line, disable, enable, disable-file, ignore*
 //! token Whitespace #trivia #whitespace // variable-text token with tags
 //! token LBrace "{" #punctuation        // fixed-text token
+//! format percent operator "%"         // format strings: see `FormatRow`
 //! string String quote "\"" escape "\\" map "n" 10 hex "u" 4   // a string kind: see `string_row`
 //! node Member #key-value = key:String Colon value:#value
 //! node Array #value #delimited-list = LBracket elements:#value* RBracket
@@ -151,6 +152,25 @@ pub struct PrecedenceRow {
     pub operators: Vec<String>,
 }
 
+/// Where the arguments of a format string are, in a `format <flavor> <via> "<name>"` row.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FormatVia {
+    /// `"text" <name> arguments`: a `#binary` whose left operand is the string and whose operator
+    /// text is the name (`%`).
+    Operator,
+    /// `"text".<name>(arguments)`: a `#call` of a `#member-access` on the string with that member.
+    Method,
+}
+
+/// A `format` row: strings of the flavor (the placeholder syntax of `core_rules::format_strings`:
+/// `percent`, `brace`) are checked against the arguments found the way `via` says.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FormatRow {
+    pub flavor: String,
+    pub via: FormatVia,
+    pub name: String,
+}
+
 #[derive(Clone, Debug)]
 pub struct Grammar {
     pub language: String,
@@ -179,6 +199,8 @@ pub struct Grammar {
     pub trivia: TriviaSyntax,
     /// The `limits` row.
     pub limits: Limits,
+    /// The `format` rows: how a format string and its arguments are written.
+    pub formats: Vec<FormatRow>,
     nodes: Vec<KindDef>,
     tokens: Vec<KindDef>,
     by_name: HashMap<String, SyntaxKind>,

@@ -3369,7 +3369,7 @@
             },
             "percent-format-unsupported-format-character": {
               "$ref": "#/definitions/rule",
-              "description": "A `%` format with a conversion character Python does not know."
+              "description": "A `%` format with a conversion character the language does not know."
             },
             "phony-declared": {
               "$ref": "#/definitions/rule",
