@@ -253,7 +253,7 @@ node UseItemSequence #opaque
 node YieldFrom #expression #opaque
 node YieldPair #expression #opaque
 node YieldValue #expression #opaque
-node ExpressionStatement #stmt #opaque
+node ExpressionStatement #stmt #expression-statement
 node BracedExpressionStringPart #opaque
 node DocumentString #expression #opaque
 node InterpolatedString #expression #opaque

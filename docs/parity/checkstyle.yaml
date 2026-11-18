@@ -15,7 +15,7 @@ entries:
   EmptyStatement: rule empty-statement | Only the body of an `if` or a loop.
   UpperEll: rule upper-ell
   ArrayTypeStyle: rule array-type-style
-  AvoidStarImport: rule avoid-star-import | No allow-list option.
+  AvoidStarImport: rule no-wildcard-imports | No allow-list option.
   NeedBraces: rule need-braces | No option for single-line bodies.
   ModifierOrder: rule modifier-order | Annotations are not checked against the modifiers.
   UnusedImports: rule unused-import | Names in Javadoc count as used; no option to turn that off.

@@ -4,6 +4,13 @@
 
 language python 20 "Python"
 roles
+rule no-useless-expression level warn
+rule no-debugger calls "breakpoint" "pdb.set_trace" "ipdb.set_trace" "pudb.set_trace" "wdb.set_trace" "rpdb.set_trace" "bpdb.set_trace" "pdbr.set_trace"
+rule no-print calls "print" "pprint.pprint"
+rule no-eval calls "exec"
+rule no-empty-catch level off broad_only "true" types "Exception" "BaseException"
+rule no-broad-catch bare "true"
+rule no-throw-generic types "Exception"
 operators equality "is"
 operators arithmetic "//" "@"
 comments line "#"
@@ -178,8 +185,8 @@ node StmtImportFrom #statement #import =
     From #dots* module:Identifier? Import path=names:Alias*
 node StmtGlobal #statement #opaque
 node StmtNonlocal #statement #opaque
-node StmtExpr #statement #opaque
-node StmtPass #statement #opaque
+node StmtExpr #statement #expression-statement = expression=value:#expression
+node StmtPass #statement #empty-statement
 node StmtBreak #statement #break = Break
 node StmtContinue #statement #continue = Continue
 node ExprBoolOp #expression #part #binary =
@@ -194,8 +201,8 @@ node ExprLambda #expression #part #function #scope =
     Lambda parameters:Parameters? Colon expression_body:#expression
 node ExprIf #expression #part #conditional =
     body=then:#expression If condition:#expression Else orelse=else:#expression
-node ExprDict #expression #part #opaque #mapping
-node ExprSet #expression #part #opaque
+node ExprDict #expression #part #opaque #mapping #pure
+node ExprSet #expression #part #opaque #pure
 node ExprListComp #expression #part #scope
 node ExprSetComp #expression #part #scope
 node ExprDictComp #expression #part #scope
@@ -216,23 +223,23 @@ node ExprStringLiteral #expression #part #restyle #literal #string-literal =
     value:StringLiteral*
 node ExprBytesLiteral #expression #part #restyle #literal =
     value:BytesLiteral*
-node ExprNumberLiteral #expression #part #literal =
+node ExprNumberLiteral #expression #part #literal #pure =
     value:#number
-node ExprBooleanLiteral #expression #part #literal =
+node ExprBooleanLiteral #expression #part #literal #pure =
     value:#constant
-node ExprNoneLiteral #expression #part #literal =
+node ExprNoneLiteral #expression #part #literal #pure =
     value:None
 node ExprEllipsisLiteral #expression #part #literal =
     value:Ellipsis
-node ExprAttribute #expression #part #member-access =
+node ExprAttribute #expression #part #member-access #pure =
     object:#expression Dot member:Identifier
 node ExprSubscript #expression #part #index =
     object:#expression Lsqb arguments:#expression Rsqb
 node ExprStarred #expression #part #opaque #rest
-node ExprName #expression #part #reference =
+node ExprName #expression #part #reference #pure =
     name:Name
-node ExprList #expression #part #opaque #collection
-node ExprTuple #expression #part #opaque #collection
+node ExprList #expression #part #opaque #collection #pure
+node ExprTuple #expression #part #opaque #collection #pure
 node ExprSlice #expression #part #opaque
 node ExceptHandlerExceptHandler #catch #branch =
     Except Star? parameter=type:#expression? As? name:Identifier? Colon body:#statement*

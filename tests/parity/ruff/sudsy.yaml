@@ -21,9 +21,9 @@ python:
       pprint: warn
       print: warn
       raise-without-from-inside-except: warn
-      true-false-comparison: warn
+      boolean-literal-comparison: warn
       type-comparison: warn
-      undefined-local-with-import-star: warn
+      no-wildcard-imports: warn
       undefined-local-with-import-star-usage: warn
       useless-semicolon: warn
       zip-without-explicit-strict: warn

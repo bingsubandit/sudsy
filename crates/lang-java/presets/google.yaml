@@ -7,7 +7,7 @@ java:
   lint:
     rules:
       array-type-style: warn
-      avoid-star-import: warn
+      no-wildcard-imports: warn
       modifier-order: warn
       need-braces: warn
       max-line-length:

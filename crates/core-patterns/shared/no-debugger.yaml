@@ -1,0 +1,16 @@
+id: no-debugger
+per-language: true
+message: a call that stops in a debugger was left in the code
+description: >-
+  A debugger statement or a call of one of the `calls` that start a debugger (ESLint no-debugger,
+  ruff T100); a language lists its calls in its grammar's `rule` row.
+example: 'debugger;'
+severity: warn
+category: suspicious
+options:
+  - { name: calls, type: list, default: [], description: Calls that start a debugger }
+rule:
+  any:
+    - { role: debugger }
+    - role: call
+      fields: { callee: { in-option: calls } }

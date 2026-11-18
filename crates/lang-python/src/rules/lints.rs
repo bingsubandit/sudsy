@@ -164,21 +164,6 @@ pub(super) fn get_attr_with_constant(c: &Check, n: &SyntaxNode, ctx: &mut RuleCo
     }
 }
 
-pub(super) fn print(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(cx) = model(ctx.file) else { return };
-    if builtin_call(&cx, n).as_deref() == Some("print") && writes_to_console(&cx, n, "file") {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
-
-pub(super) fn pprint(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(cx) = model(ctx.file) else { return };
-    let pprint = callee(n).and_then(|f| cx.qualified(&f)).as_deref() == Some("pprint.pprint");
-    if pprint && writes_to_console(&cx, n, "stream") {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
-
 pub(super) fn zip_without_strict(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let Some(cx) = model(ctx.file) else { return };
     if cx.minor < 10 || builtin_call(&cx, n).as_deref() != Some("zip") {

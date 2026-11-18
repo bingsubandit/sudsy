@@ -7145,7 +7145,7 @@
         ]
       },
       "fix": null,
-      "id": "avoid-star-import",
+      "id": "no-wildcard-imports",
       "languages": [
         "java"
       ],
@@ -15428,7 +15428,7 @@
         ]
       },
       "fix": null,
-      "id": "true-false-comparison",
+      "id": "boolean-literal-comparison",
       "languages": [
         "python"
       ],
@@ -15635,7 +15635,7 @@
         ]
       },
       "fix": null,
-      "id": "undefined-local-with-import-star",
+      "id": "no-wildcard-imports",
       "languages": [
         "python"
       ],
@@ -16819,7 +16819,7 @@
         ]
       },
       "fix": null,
-      "id": "self-assignment",
+      "id": "no-self-assign",
       "languages": [
         "ruby"
       ],

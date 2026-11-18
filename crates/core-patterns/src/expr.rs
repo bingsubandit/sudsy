@@ -51,6 +51,9 @@ pub struct Spec {
     pub child: Option<Box<Spec>>,
     /// The bool option of this name is true.
     pub option: Option<String>,
+    /// The text of the node (a token: its text) is an item of this `list` option.
+    #[serde(rename = "in-option")]
+    pub in_option: Option<String>,
     pub all: Option<Vec<Spec>>,
     pub any: Option<Vec<Spec>>,
     pub not: Option<Box<Spec>>,
@@ -63,6 +66,10 @@ pub struct Spec {
     /// Each named role field of the node holds this rule (an element: a token matches by
     /// `regex`, `role`, `any`, `all`, `not`).
     pub fields: Option<BTreeMap<String, Spec>>,
+    /// Some child in each named role field holds this rule (`fields` reads the first).
+    pub items: Option<BTreeMap<String, Spec>>,
+    /// The named role field holds exactly one child.
+    pub single: Option<String>,
     /// The two named fields have the same tokens.
     pub same: Option<Vec<String>>,
     /// The node holds no node and no comment before its closing bracket.
@@ -109,12 +116,15 @@ pub enum Expr {
     Parent(Box<Expr>),
     Child(Box<Expr>),
     Option(String),
+    InOption(String),
     All(Vec<Expr>),
     Any(Vec<Expr>),
     Not(Box<Expr>),
     Role(Vec<String>, Vec<SyntaxKind>),
     Operator(Vec<String>),
     Fields(Vec<(String, Expr)>),
+    Items(Vec<(String, Expr)>),
+    Single(String),
     Same(String, String),
     Empty,
     Inner(Box<Expr>),
@@ -244,6 +254,15 @@ impl Expr {
             }
             all.push(Expr::Option(name.clone()));
         }
+        if let Some(name) = &spec.in_option {
+            if !options
+                .iter()
+                .any(|o| o.name == name && matches!(o.default, Opt::List(_)))
+            {
+                return Err(format!("option `{name}` is not a declared `list` option"));
+            }
+            all.push(Expr::InOption(name.clone()));
+        }
         if let Some(list) = &spec.all {
             all.push(Expr::All(list.iter().map(sub).collect::<Result<_, _>>()?));
         }
@@ -257,7 +276,7 @@ impl Expr {
             let names = names.list();
             let mut kinds = Vec::new();
             for n in &names {
-                if core_syntax::roles::role(n).is_none() {
+                if !core_syntax::roles::is_tag(n) {
                     return Err(format!("`{n}` is not a role"));
                 }
                 kinds.extend_from_slice(parser.grammar().nodes_with_tag(n));
@@ -276,6 +295,16 @@ impl Expr {
                 .collect::<Result<_, String>>()?;
             all.push(Expr::Fields(list));
         }
+        if let Some(fields) = &spec.items {
+            let list = fields
+                .iter()
+                .map(|(k, s)| Ok((k.clone(), sub(s)?)))
+                .collect::<Result<_, String>>()?;
+            all.push(Expr::Items(list));
+        }
+        if let Some(field) = &spec.single {
+            all.push(Expr::Single(field.clone()));
+        }
         if let Some(pair) = &spec.same {
             let [a, b] = pair.as_slice() else {
                 return Err("`same` names two fields".into());
@@ -291,8 +320,8 @@ impl Expr {
         match all.len() {
             0 => Err(
                 "a rule needs at least one of pattern, kind, regex, path, nth, inside, not-inside, \
-                      has, not-has, parent, child, option, all, any, not, role, operator, fields, \
-                      same, empty, inner"
+                      has, not-has, parent, child, option, in-option, all, any, not, role, operator, fields, \
+                      items, single, same, empty, inner"
                     .into(),
             ),
             1 => Ok(all.remove(0)),
@@ -341,6 +370,13 @@ impl Expr {
                 .any(|c| cx.spend() && e.matches(&c, cx).is_some())
                 .then(Captures::new),
             Expr::Option(name) => cx.options.bool(name).then(Captures::new),
+            Expr::InOption(name) => {
+                let range = cx.ranges.significant_range(node, cx.grammar);
+                cx.options
+                    .list(name)
+                    .contains(&&cx.text[range])
+                    .then(Captures::new)
+            }
             Expr::All(list) => {
                 let mut captures = Captures::new();
                 for e in list {
@@ -368,6 +404,15 @@ impl Expr {
                 }
                 Some(Captures::new())
             }
+            Expr::Items(list) => {
+                for (label, e) in list {
+                    cx.grammar
+                        .slots(node, label)
+                        .find(|item| e.matches_element(item, cx).is_some())?;
+                }
+                Some(Captures::new())
+            }
+            Expr::Single(field) => (cx.grammar.slots(node, field).count() == 1).then(Captures::new),
             Expr::Same(a, b) => {
                 let a = cx.grammar.slot(node, a)?;
                 let b = cx.grammar.slot(node, b)?;
@@ -386,6 +431,11 @@ impl Expr {
         };
         match self {
             Expr::Regex(re, _) => re.is_match(t.text()).then(Captures::new),
+            Expr::InOption(name) => cx
+                .options
+                .list(name)
+                .contains(&t.text())
+                .then(Captures::new),
             Expr::Role(names, _) => names
                 .iter()
                 .any(|n| cx.grammar.has_tag(t.kind(), n))
@@ -408,15 +458,17 @@ impl Expr {
             Expr::Inside(_) | Expr::Has(_) => true,
             Expr::All(list) | Expr::Any(list) => list.iter().any(Expr::superlinear),
             Expr::Not(e) | Expr::Parent(e) | Expr::Child(e) | Expr::Inner(e) => e.superlinear(),
-            Expr::Fields(list) => list.iter().any(|(_, e)| e.superlinear()),
+            Expr::Fields(list) | Expr::Items(list) => list.iter().any(|(_, e)| e.superlinear()),
             Expr::Kind(_)
             | Expr::Regex(..)
             | Expr::Path(_)
             | Expr::Nth(_)
             | Expr::Option(_)
+            | Expr::InOption(_)
             | Expr::Role(..)
             | Expr::Operator(_)
             | Expr::Same(..)
+            | Expr::Single(_)
             | Expr::Empty => false,
         }
     }
@@ -458,12 +510,15 @@ impl Expr {
             | Expr::Path(_)
             | Expr::Nth(_)
             | Expr::Option(_)
+            | Expr::InOption(_)
             | Expr::Has(_)
             | Expr::Child(_)
             | Expr::Not(_)
             | Expr::Role(..)
             | Expr::Operator(_)
             | Expr::Fields(_)
+            | Expr::Items(_)
+            | Expr::Single(_)
             | Expr::Same(..)
             | Expr::Empty
             | Expr::Inner(_) => {}

@@ -61,24 +61,6 @@ example: "class A < B\n  def initialize; end\nend"
 severity: off
 category: suspicious
 ---
-id: rescue-exception
-family: check
-params: { check: rescue-exception }
-message: "rescuing `Exception` also catches the exit and out-of-memory signals: rescue `StandardError`"
-description: "A `rescue` that names `Exception` (RuboCop Lint/RescueException)."
-example: "begin\n  f\nrescue Exception\n  g\nend"
-severity: warn
-category: suspicious
----
-id: suppressed-exception
-family: check
-params: { check: suppressed-exception }
-message: "do not suppress exceptions: an empty `rescue` hides the error"
-description: "A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException)."
-example: "begin\n  f\nrescue\nend"
-severity: off
-category: suspicious
----
 id: unknown-cop-name
 family: check
 params: { check: unknown-cop-name }
@@ -166,15 +148,6 @@ params: { check: mixed-regexp-capture-types }
 message: "a regexp with named captures does not capture the numbered groups"
 description: "A regexp literal that has both `(?<name>...)` and plain `(...)` groups (RuboCop Lint/MixedRegexpCaptureTypes)."
 example: "/(?<a>x)(y)/"
-severity: warn
-category: suspicious
----
-id: self-assignment
-family: check
-params: { check: self-assignment }
-message: "a variable is assigned to itself"
-description: "`a = a`, `@a ||= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment)."
-example: "a = a"
 severity: warn
 category: suspicious
 ---

@@ -9,15 +9,6 @@ rule:
   any: [{ kind: VariableDeclarator }, { kind: FormalParameter }, { kind: SpreadParameter }]
   child: { kind: Dimension }
 ---
-id: avoid-star-import
-message: 'import the classes by name, not `.*`'
-description: >-
-  An import with `*` (Checkstyle AvoidStarImport).
-example: 'import java.util.*;'
-severity: off
-category: style
-rule: { kind: ImportDeclaration, regex: '\*\s*;$' }
----
 id: need-braces
 message: 'the body is not in braces'
 description: >-

@@ -310,6 +310,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let mut requires_roles = false;
     let mut operators: HashMap<String, String> = HashMap::new();
     let mut hoisted: Vec<String> = Vec::new();
+    let mut rule_rows: Vec<RuleRow> = Vec::new();
     let mut precedence_rows: Vec<PrecedenceRow> = Vec::new();
     let mut keys = KeySyntax::default();
     let mut strings: Vec<StringSyntax> = Vec::new();
@@ -375,6 +376,26 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                         other => return err(d.line, format!("unknown keys option `{other}`")),
                     }
                 }
+            }
+            "rule" => {
+                let mut row = RuleRow {
+                    id: c.ident("a rule id")?.to_string(),
+                    level: None,
+                    options: Vec::new(),
+                };
+                while c.peek().is_some() {
+                    let key = c.ident("`level` or an option name")?;
+                    if key == "level" {
+                        row.level = Some(c.ident("off, warn or error")?.to_string());
+                        continue;
+                    }
+                    let mut values = Vec::new();
+                    while let Some(Lexeme::Str(_)) = c.peek() {
+                        values.push(c.string("an option value")?.to_string());
+                    }
+                    row.options.push((key.to_string(), values));
+                }
+                rule_rows.push(row);
             }
             "hoisted" => {
                 while c.peek().is_some() {
@@ -482,6 +503,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
         requires_roles,
         operators,
         hoisted,
+        rule_rows,
         precedence_rows,
         keys,
         raw,
@@ -663,6 +685,7 @@ fn resolve(
     requires_roles: bool,
     operators: HashMap<String, String>,
     hoisted: Vec<String>,
+    rule_rows: Vec<RuleRow>,
     precedence_rows: Vec<PrecedenceRow>,
     keys: KeySyntax,
     raw: Vec<RawKind>,
@@ -759,6 +782,7 @@ fn resolve(
         requires_roles,
         operators,
         hoisted,
+        rule_rows,
         precedence_rows,
         keys,
         strings: Vec::new(),

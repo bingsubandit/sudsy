@@ -1,0 +1,13 @@
+id: no-self-assign
+message: a variable is assigned to itself
+description: >-
+  A plain or logical assignment whose two sides are the same tokens, `a = a`, `a.b = a.b` or
+  `@a ||= @a` (ESLint no-self-assign, RuboCop Lint/SelfAssignment).
+example: 'a = a'
+severity: warn
+category: suspicious
+rule:
+  role: assignment
+  fields:
+    operator: { regex: '^(?:=|\|\|=|&&=|\?\?=)$' }
+  same: [left, right]

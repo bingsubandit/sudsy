@@ -185,7 +185,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `unused-declarations` | hcl | suspicious | off | none | A variable, local value or data source that nothing in the same file refers to (tflint terraform_unused_declarations, within one file: a module that uses its variables in other files needs the rule off or those files in one). |
 | `empty-section` | ini | suspicious | off | none | A `[section]` header with nothing under it, usually left behind by a removed setting. Comments do not count as settings. |
 | `array-type-style` | java | style | off | none | A declarator or parameter with C-style brackets after the name (Checkstyle ArrayTypeStyle). |
-| `avoid-star-import` | java | style | off | none | An import with `*` (Checkstyle AvoidStarImport). |
+| `no-wildcard-imports` | java | style | off | none | An import with `*` (Checkstyle AvoidStarImport). |
 | `boolean-literal-comparison` | java | cleanup | warn | none | `x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression). |
 | `empty-statement` | java | suspicious | warn | none | A `;` that is the body of an `if` or a loop, such as `while (x);` (Checkstyle EmptyStatement). |
 | `equals-hash-code` | java | correctness | warn | none | A class body that declares `boolean equals(Object)` and no `hashCode()`: equal objects get different hash codes (Checkstyle EqualsHashCode). |
@@ -416,14 +416,14 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `string-dot-format-missing-arguments` | python | correctness | warn | none | A `.format` call without an argument for a field. |
 | `string-dot-format-mixing-automatic` | python | correctness | warn | none | A `.format` string with both `{}` and `{0}`. |
 | `subprocess-run-without-check` | python | suspicious | off | none | A call of `subprocess.run` with no `check` keyword (and no `**kwargs`). |
-| `true-false-comparison` | python | style | off | none | A comparison of a value to `True` or `False` with `==` or `!=`. |
+| `boolean-literal-comparison` | python | style | off | none | A comparison of a value to `True` or `False` with `==` or `!=`. |
 | `try-except-pass` | python | suspicious | off | none | A handler for everything (`except:`, `except Exception`) whose only statement is `pass`. |
 | `type-alias-annotation` | python | style | off | none | `X: TypeAlias = ...`, for a target version with the `type` statement (3.12). |
 | `type-check-without-type-error` | python | style | off | none | A branch tested with `isinstance`, `issubclass` or `callable` that raises a builtin exception other than `TypeError` (and `NotImplementedError`). |
 | `type-comparison` | python | suspicious | warn | none | A comparison with `==` or `!=` where a side is `type(x)` or a builtin class (the builtin, not a name that shadows it). |
 | `type-var-name-variance` | python | style | off | none | A `TypeVar` with `covariant=True` whose name does not end with `_co`, or with `contravariant=True` and a name that does not end with `_contra`. |
 | `undefined-export` | python | correctness | warn | none | A name in `__all__` that the module does not bind. |
-| `undefined-local-with-import-star` | python | suspicious | off | none | A star import. |
+| `no-wildcard-imports` | python | suspicious | off | none | A star import. |
 | `undefined-local-with-import-star-usage` | python | suspicious | off | none | A name that no scope binds in a file that has a star import. |
 | `undefined-local-with-nested-import-star-usage` | python | correctness | warn | none | A star import in a function or class. |
 | `unicode-literal` | python | style | off | none | A string with the `u` prefix. |
@@ -462,7 +462,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `redundant-string-coercion` | ruby | suspicious | off | none | `to_s` on the last expression of a `#{...}` and on an argument of `puts`, `print` or `warn` (RuboCop Lint/RedundantStringCoercion). |
 | `rescue-exception` | ruby | suspicious | warn | none | A `rescue` that names `Exception` (RuboCop Lint/RescueException). |
 | `return-in-void-context` | ruby | suspicious | warn | none | `return value` in `initialize` or a setter method, whose result is ignored (RuboCop Lint/ReturnInVoidContext). |
-| `self-assignment` | ruby | suspicious | warn | none | `a = a`, `@a \|\|= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment). |
+| `no-self-assign` | ruby | suspicious | warn | none | `a = a`, `@a \|\|= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment). |
 | `struct-new-override` | ruby | suspicious | warn | none | A `Struct.new` member that has the name of a method of `Struct` (`:hash`, `:size`, `:count`) (RuboCop Lint/StructNewOverride). |
 | `suppressed-exception` | ruby | suspicious | off | none | A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException). |
 | `underscore-prefixed-variable-used` | ruby | style | off | none | A variable whose name starts with `_`, which says it is unused, is read (RuboCop Lint/UnderscorePrefixedVariableName). No fix. |

@@ -641,9 +641,9 @@ node DiscardDesignation #variable-designation #opaque =
     underscore:UnderscoreToken
 node ParenthesizedVariableDesignation #variable-designation #opaque =
     open_paren:OpenParenToken variables:#variable-designation* close_paren:CloseParenToken
-node ExpressionStatement #statement #opaque =
+node ExpressionStatement #statement #expression-statement =
     attribute_lists:AttributeList* expression:#expression semicolon:SemicolonToken
-node EmptyStatement #statement #opaque #inert =
+node EmptyStatement #statement #inert #empty-statement =
     attribute_lists:AttributeList* semicolon:SemicolonToken
 node LabeledStatement #statement #statements #inert =
     attribute_lists:AttributeList* identifier:IdentifierToken colon:ColonToken statement=items:#statement
