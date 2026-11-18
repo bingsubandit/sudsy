@@ -497,13 +497,9 @@ fn paren_list_in(cx: &FormatCtx<'_>, node: &SyntaxNode, extra: bool) -> R {
         parts.push(doc::group(doc::concat(rest)));
     }
     let hug = items.len() == 1
-        && items[0].as_node().is_some_and(|n| match n.kind() {
-            k::LAMBDA_EXPRESSION => n.children().any(|c| c.kind() == k::BLOCK),
-            k::ELEMENT_VALUE_ARRAY_INITIALIZER | k::ARRAY_INITIALIZER => {
-                node.kind() == k::ANNOTATION_ARGUMENT_LIST
-            }
-            _ => false,
-        });
+        && items[0]
+            .as_node()
+            .is_some_and(|n| shapes::hugs_last(cx, &shapes::CallStyle::of(cx.options), n, 1));
     if hug {
         return Ok(doc::group(doc::concat(vec![
             el(cx, open)?,

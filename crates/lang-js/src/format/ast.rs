@@ -19,10 +19,6 @@ pub(crate) fn is_binaryish(kind: SyntaxKind) -> bool {
     matches!(kind, k::BINARY_EXPRESSION | k::LOGICAL_EXPRESSION)
 }
 
-pub(crate) fn is_function(kind: SyntaxKind) -> bool {
-    matches!(kind, k::FUNCTION | k::ARROW_FUNCTION_EXPRESSION)
-}
-
 pub(crate) fn is_jsx(kind: SyntaxKind) -> bool {
     matches!(kind, k::JSX_ELEMENT | k::JSX_FRAGMENT)
 }
@@ -109,10 +105,6 @@ fn is_prefix(n: &SyntaxNode, arg: &SyntaxNode) -> bool {
     n.children_with_tokens().next().is_some_and(|e| {
         e.as_token().is_some() && e.text_range().start() < arg.text_range().start()
     })
-}
-
-pub(crate) fn nodes(n: &SyntaxNode) -> Vec<SyntaxNode> {
-    n.children().collect()
 }
 
 /// Does any of the tokens of `n` (its own, not its children's) have a comment next to it?

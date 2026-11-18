@@ -2,12 +2,12 @@
 //! `return` / `throw` with their argument.
 
 use super::ast::{
-    has_leading_comment_in_parens, has_leading_own_line_comment, is_binaryish, is_member, outer,
-    parent, starts_with, un,
+    has_leading_comment_in_parens, has_leading_own_line_comment, is_member, outer, parent,
+    starts_with, un,
 };
 use super::util::{R, elem, keyword, kids, node_of, semi, shape_error, token_of};
 use crate::generated::kind as k;
-use core_format::doc::{Doc, concat, group, hardline, if_break, indent, line, lit, softline};
+use core_format::doc::{Doc, concat, group, hardline, indent, line, lit, softline};
 use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
@@ -235,27 +235,8 @@ fn return_or_throw(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             hardline(),
             lit(")"),
         ])
-    } else if is_binaryish(arg_u.kind()) || arg_u.kind() == k::SEQUENCE_EXPRESSION {
-        // A sequence keeps its parentheses on one line.
-        let seq = arg_u.kind() == k::SEQUENCE_EXPRESSION;
-        group(concat(vec![
-            lit(" "),
-            shapes::between(
-                if seq {
-                    lit("(")
-                } else {
-                    if_break(lit("("), Doc::Nil)
-                },
-                printed,
-                if seq {
-                    lit(")")
-                } else {
-                    if_break(lit(")"), Doc::Nil)
-                },
-            ),
-        ]))
     } else {
-        concat(vec![lit(" "), printed])
+        shapes::keyword_argument(cx, &arg_u, printed)
     };
     let end = super::util::reattach_asi(cx, asi);
     Ok(concat(vec![lead, kw, body, semi(cx, node), end]))

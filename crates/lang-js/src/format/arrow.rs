@@ -240,7 +240,11 @@ fn arrow(node: &SyntaxNode, cx: &FormatCtx<'_>, flags: u32) -> R {
                 | k::JSX_ELEMENT
                 | k::JSX_FRAGMENT
                 | k::ARROW_FUNCTION_EXPRESSION
-        ) || super::call::template_on_own_line(cx, &body_u));
+        ) || (matches!(
+            body_u.kind(),
+            k::TEMPLATE_LITERAL | k::TAGGED_TEMPLATE_EXPRESSION
+        ) && template_literal(&body_u)
+            .is_some_and(|t| core_format::calls::template_on_own_line(cx, &body_u, &t))));
     let jsx_container = p
         .as_ref()
         .is_some_and(|p| p.kind() == k::JSX_EXPRESSION_CONTAINER);
@@ -378,4 +382,13 @@ fn signatures_doc(
         return wrap(join(&arrow_sep, sigs));
     }
     wrap(indent(join(&arrow_sep, sigs)))
+}
+
+/// The template literal of a template or a tagged template.
+fn template_literal(n: &SyntaxNode) -> Option<SyntaxNode> {
+    match n.kind() {
+        k::TEMPLATE_LITERAL => Some(n.clone()),
+        k::TAGGED_TEMPLATE_EXPRESSION => n.last_child().filter(|t| t.kind() == k::TEMPLATE_LITERAL),
+        _ => None,
+    }
 }
