@@ -77,7 +77,7 @@ node ArgumentList #child #opaque = #child*
 node ArrayAccess #child #expression #index = object:#expression? object_token=object:#operand? LBracket arguments:#expression? arguments_token=arguments:#operand? RBracket
 node ArrayCreationExpression #child #expression #opaque = #child*
 node ArrayCreationType #child #opaque = #child*
-node ArrayInitializer #child #expression #opaque = #child*
+node ArrayInitializer #child #expression #opaque #huggable = #child*
 node ArrayType #child #type #opaque = #child*
 node AssertStatement #child #statement #opaque = #child*
 node AssignmentExpression #child #expression #assignment = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand?
@@ -104,7 +104,7 @@ node DefaultValue #child #opaque = #child*
 node DimExpr #child #opaque = #child*
 node Dimension #child #opaque = #child*
 node DoStatement #child #statement #loop = Keyword body:#statement Keyword condition:ParenthesizedExpression Semi?
-node ElementValueArrayInitializer #child #opaque = #child*
+node ElementValueArrayInitializer #child #opaque #huggable = #child*
 node ElementValuePair #child #opaque = #child*
 node EnhancedForStatement #child #statement #scope #loop = Keyword ForSpec body:#statement
 node EnumBody #child #block = LBrace items:#member* RBrace
@@ -140,7 +140,7 @@ node InterfaceDeclarationCore #child #wrapper #type-declaration #declaration #sc
 node InterfaceTypeList #child #opaque = #child*
 node Label #child #opaque = #child*
 node LabeledStatement #child #statement #labeled = label:Label Colon body:#statement
-node LambdaExpression #child #expression #function #scope = parameters:#parameter-list? single=parameters:Identifier? Arrow body:Block? expression_body:#expression? expression_token=expression_body:#operand?
+node LambdaExpression #child #expression #function #huggable-function #scope = parameters:#parameter-list? single=parameters:Identifier? Arrow body:Block? expression_body:#expression? expression_token=expression_body:#operand?
 node LambdaFormalParameters #child #parameter-list = LParen? parameters:#parameter* RParen?
 node LocalTypeDeclaration #child #statement #opaque = #child*
 node LocalTypeModifiers #child #opaque = #child*

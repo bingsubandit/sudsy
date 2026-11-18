@@ -530,6 +530,23 @@ pub mod shared {
         )
     }
 
+    pub fn hug_first_argument(default: bool) -> OptionDef {
+        OptionDef::boolean(
+            "hug_first_argument",
+            default,
+            "A function that is the first of two arguments stays on the call's line while its body breaks (`setTimeout(() => {...}, 500)`), when the other argument is short.",
+        )
+    }
+
+    pub fn hug_last_argument(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "hug_last_argument",
+            &["never", "sole", "last"],
+            default,
+            "A function, object or array that is the last argument stays on the call's line while its body breaks: `last` for the last of any number of arguments, `sole` only for an argument that is alone, `never` not at all.",
+        )
+    }
+
     pub fn indent_nested_binary(default: bool) -> OptionDef {
         OptionDef::boolean(
             "indent_nested_binary",

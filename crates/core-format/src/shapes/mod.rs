@@ -5,6 +5,7 @@
 mod assignment;
 mod binary_chain;
 mod block;
+mod call_arguments;
 mod call_chain;
 mod chain;
 mod compound;
@@ -27,6 +28,10 @@ pub use block::{
     BlockStyle, annotation_line, blank_before, block, block_between, block_open_inside, braces,
     document, spread_cases_style, statement_sequence, statement_sequence_with,
 };
+pub use call_arguments::{
+    Args, CallStyle, Expanded, HugLast, Item, Plan, call_arguments, can_hug, expression_of,
+    hugs_last, is_long_curried, plan,
+};
 pub use call_chain::{
     CHAIN_LABEL, ChainHooks, ChainPolicy, NoHooks, is_flat as flat_chain,
     member_chain as call_chain,
@@ -39,7 +44,7 @@ pub use conditional::{
 pub use heritage::{HeritageLayout, heritage};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};
-pub use maybe_parenthesize::{between, enclosed, maybe_parenthesize};
+pub use maybe_parenthesize::{between, enclosed, head_test, keyword_argument, maybe_parenthesize};
 pub use parens::{
     Need, NoParenHooks, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, first_char,
     is_dropped_close, paren_group, parenthesized, unwrap, wrap,

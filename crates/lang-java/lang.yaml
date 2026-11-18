@@ -16,6 +16,8 @@ options:
   - binary_operator_line: ["start"]
   - binary_indent: [2]
   - binary_hug: ["never"]
+  - hug_first_argument: [false]
+  - hug_last_argument: ["sole"]
   - indent_nested_binary: [true]
   - assignment_layout: ["break"]
   - assignment_conditional: ["always"]

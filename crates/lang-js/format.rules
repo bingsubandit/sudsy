@@ -1,0 +1,44 @@
+# Call arguments as data (Prettier's printCallArguments; syntax: crates/core-format/src/calls.rs).
+[call]
+set test = it|it.only|it.skip|describe|describe.only|describe.skip|test|test.only|test.skip|test.step|test.describe|test.describe.only|test.describe.parallel|test.describe.parallel.only|test.describe.serial|test.describe.serial.only|skip|xit|xdescribe|xtest|fit|fdescribe|ftest
+set unit = beforeEach|beforeAll|afterEach|afterAll
+set wrapper = async|inject|fakeAsync|waitForAsync
+# `require("x")`, `define([...], function () {})`.
+node=CallExpression&callee=require / StringLiteral : flat
+node=CallExpression&callee=define&parent=ExpressionStatement / * : flat
+node=CallExpression&callee=define&parent=ExpressionStatement / *,ArrayExpression : flat
+node=CallExpression&callee=define&parent=ExpressionStatement / ArrayExpression,*+ : flat
+# A template literal that starts on the line of the call.
+* / TemplateLiteral&own-line : flat
+* / TaggedTemplateExpression&own-line=TemplateLiteral : flat
+# Test calls: `it("does x", () => {})` stay on one line whatever the width.
+node=CallExpression&callee=@unit / CallExpression&callee=@wrapper&arg=#function : test
+node=CallExpression&callee=@test / StringLiteral|TemplateLiteral,#function : test
+node=CallExpression&callee=@test / StringLiteral|TemplateLiteral,CallExpression&callee=@wrapper&arg=#function : test
+node=CallExpression&callee=@test / StringLiteral|TemplateLiteral,#function&block&params<=1,NumericLiteral : test
+node=CallExpression&callee=@test / StringLiteral|TemplateLiteral,CallExpression&callee=@wrapper&arg=#function,NumericLiteral : test
+# `useEffect(() => { ... }, [a, b])`.
+* / ArrowFunctionExpression&params=0&block&comments=none,ArrayExpression&comments=none-inside : hook
+
+[hug]
+composition = yes
+no_composition = Decorator
+short = RegExpLiteral
+short_binary = BinaryExpression|LogicalExpression
+cast = TSAsExpression:TSTypeParameterInstantiation|TSSatisfiesExpression:TSTypeParameterInstantiation
+not_last = ArrowFunctionExpression,ArrayExpression
+numeric = NumericLiteral
+signed_numeric = UnaryExpression
+concise = ArrayExpression
+
+[simple]
+leaf = #literal|#reference|ThisExpression|Super|PrivateIdentifier|IdentifierName
+regex = RegExpLiteral:5
+single_line = TemplateLiteral
+object = ObjectExpression
+array = ArrayExpression
+items = ImportExpression
+members = ComputedMemberExpression
+operand = StaticMemberExpression|PrivateFieldExpression|UpdateExpression|TSNonNullExpression|ChainExpression
+unary = UnaryExpression: ! - + ~
+call = CallExpression|NewExpression

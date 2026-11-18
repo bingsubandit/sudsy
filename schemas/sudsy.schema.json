@@ -7606,6 +7606,21 @@
               "description": "End the file with a newline.",
               "type": "boolean"
             },
+            "hug_first_argument": {
+              "default": false,
+              "description": "A function that is the first of two arguments stays on the call's line while its body breaks (`setTimeout(() => {...}, 500)`), when the other argument is short.",
+              "type": "boolean"
+            },
+            "hug_last_argument": {
+              "default": "sole",
+              "description": "A function, object or array that is the last argument stays on the call's line while its body breaks: `last` for the last of any number of arguments, `sole` only for an argument that is alone, `never` not at all.",
+              "enum": [
+                "never",
+                "sole",
+                "last"
+              ],
+              "type": "string"
+            },
             "indent_nested_binary": {
               "default": true,
               "description": "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
@@ -7822,6 +7837,21 @@
               "default": true,
               "description": "End the file with a newline.",
               "type": "boolean"
+            },
+            "hug_first_argument": {
+              "default": true,
+              "description": "A function that is the first of two arguments stays on the call's line while its body breaks (`setTimeout(() => {...}, 500)`), when the other argument is short.",
+              "type": "boolean"
+            },
+            "hug_last_argument": {
+              "default": "last",
+              "description": "A function, object or array that is the last argument stays on the call's line while its body breaks: `last` for the last of any number of arguments, `sole` only for an argument that is alone, `never` not at all.",
+              "enum": [
+                "never",
+                "sole",
+                "last"
+              ],
+              "type": "string"
             },
             "indent_nested_binary": {
               "default": true,
@@ -10150,6 +10180,21 @@
                     "description": "End the file with a newline.",
                     "type": "boolean"
                   },
+                  "hug_first_argument": {
+                    "default": false,
+                    "description": "A function that is the first of two arguments stays on the call's line while its body breaks (`setTimeout(() => {...}, 500)`), when the other argument is short.",
+                    "type": "boolean"
+                  },
+                  "hug_last_argument": {
+                    "default": "sole",
+                    "description": "A function, object or array that is the last argument stays on the call's line while its body breaks: `last` for the last of any number of arguments, `sole` only for an argument that is alone, `never` not at all.",
+                    "enum": [
+                      "never",
+                      "sole",
+                      "last"
+                    ],
+                    "type": "string"
+                  },
                   "indent_nested_binary": {
                     "default": true,
                     "description": "Indent the operands of a binary expression that is itself an operand of a binary expression with an operator of another precedence (`a && b || c`).",
@@ -10366,6 +10411,21 @@
                     "default": true,
                     "description": "End the file with a newline.",
                     "type": "boolean"
+                  },
+                  "hug_first_argument": {
+                    "default": true,
+                    "description": "A function that is the first of two arguments stays on the call's line while its body breaks (`setTimeout(() => {...}, 500)`), when the other argument is short.",
+                    "type": "boolean"
+                  },
+                  "hug_last_argument": {
+                    "default": "last",
+                    "description": "A function, object or array that is the last argument stays on the call's line while its body breaks: `last` for the last of any number of arguments, `sole` only for an argument that is alone, `never` not at all.",
+                    "enum": [
+                      "never",
+                      "sole",
+                      "last"
+                    ],
+                    "type": "string"
                   },
                   "indent_nested_binary": {
                     "default": true,

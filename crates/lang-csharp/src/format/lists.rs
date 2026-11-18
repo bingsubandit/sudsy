@@ -1,6 +1,7 @@
 //! Delimited lists: argument and parameter lists, initializers, collection expressions,
-//! attribute lists, and the hook that keeps a lambda as the last argument on the call's line.
+//! attribute lists.
 
+use super::ROWS;
 use super::options::{
     anonymous_type_brace_on_new_line, collection_blank_lines, creation_brace_on_new_line,
     empty_braces, expand_crowded_initializers, hug_closing_paren, hug_only_sole_lambda,
@@ -10,9 +11,10 @@ use super::seq::{R, Sep, direct_tokens, sep_doc, separator, seq_of};
 use crate::generated::kind as k;
 use core_format::seq::{children, el};
 use core_format::shapes::{
-    ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between,
+    self, CallStyle, HugLast, ListLayout, ListStyle, TrailingComma, delimited_list,
+    delimited_list_between,
 };
-use core_format::{Doc, FormatCtx, FormatError, comments, doc};
+use core_format::{FormatCtx, doc};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 /// `x is { A: 1 }` and `x is T { A: 1 }`: the braces of a property pattern start on their own
@@ -207,146 +209,15 @@ pub fn list_with_surroundings(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(doc::concat(parts))
 }
 
-fn has_comments(cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
-    !comments::leading_comments(cx.grammar, t).is_empty()
-        || !comments::trailing_comments(cx.grammar, t).is_empty()
-}
-
-/// Is this argument a lambda or anonymous method with a block body?
-fn block_lambda(arg: &SyntaxNode) -> bool {
-    arg.children().any(|e| {
-        matches!(
-            e.kind(),
-            k::SIMPLE_LAMBDA_EXPRESSION
-                | k::PARENTHESIZED_LAMBDA_EXPRESSION
-                | k::ANONYMOUS_METHOD_EXPRESSION
-        ) && e.children().any(|c| c.kind() == k::BLOCK)
-    })
-}
-
-fn is_lambda(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::SIMPLE_LAMBDA_EXPRESSION
-            | k::PARENTHESIZED_LAMBDA_EXPRESSION
-            | k::ANONYMOUS_METHOD_EXPRESSION
-    )
-}
-
-/// `lambda_argument_hug: sole`: a call whose one argument is a lambda with an expression body keeps the lambda's
-/// head on the call's line and puts the body on its own line when the call does not fit:
-/// `Foo(x =>` / `    body` / `)`. `None` when the argument is anything else.
-fn expression_lambda_hug(cx: &FormatCtx<'_>, arg: &SyntaxNode) -> Result<Option<Doc>, FormatError> {
-    let mut nodes = arg.children();
-    let (Some(lambda), None) = (nodes.next(), nodes.next()) else {
-        return Ok(None);
-    };
-    if !is_lambda(lambda.kind()) {
-        return Ok(None);
-    }
-    let els = children(cx, &lambda);
-    let Some((SyntaxElement::Node(body), head)) = els.split_last() else {
-        return Ok(None);
-    };
-    if body.kind() == k::BLOCK {
-        return Ok(None);
-    }
-    let head = doc::shared(seq_of(cx, &lambda, head)?);
-    let body = doc::shared(cx.format(body)?);
-    let flat = doc::concat(vec![
-        doc::lit("("),
-        head.clone(),
-        doc::lit(" "),
-        body.clone(),
-        doc::lit(")"),
-    ]);
-    let hugged = doc::concat(vec![
-        doc::lit("("),
-        head.clone(),
-        doc::indent(doc::concat(vec![doc::hardline(), body.clone()])),
-        doc::hardline(),
-        doc::lit(")"),
-    ]);
-    let expanded = doc::group(doc::concat(vec![
-        doc::lit("("),
-        doc::indent(doc::concat(vec![
-            doc::softline(),
-            head,
-            doc::lit(" "),
-            body,
-        ])),
-        doc::softline(),
-        doc::lit(")"),
-    ]));
-    Ok(Some(doc::conditional_group(vec![flat, hugged, expanded])))
-}
-
-/// `(a, b, x => { ... })`: when the arguments before the last one fit on the call's line, the
-/// lambda's body hangs from it; otherwise one argument per line.
+/// The argument list: the lambda that hugs the call (`lambda_argument_hug`), else the list.
 pub fn argument_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let args: Vec<SyntaxNode> = node
-        .children()
-        .filter(|c| c.kind() == k::ARGUMENT)
-        .collect();
-    let simple_tokens = node
-        .children_with_tokens()
-        .filter_map(SyntaxElement::into_token)
-        .filter(|t| !cx.grammar.is_trivia(t.kind()))
-        .all(|t| !has_comments(cx, &t));
-    if hug_only_sole_lambda(cx.options)
-        && args.len() == 1
-        && simple_tokens
-        && cx
-            .first_token(&args[0])
-            .is_some_and(|t| comments::leading_comments(cx.grammar, &t).is_empty())
-        && let Some(hugged) = expression_lambda_hug(cx, &args[0])?
-    {
-        return Ok(hugged);
-    }
-    // With `lambda_argument_hug: sole` a lambda hugs only when it is the one argument.
-    let hug = args.last().is_some_and(block_lambda)
-        && (args.len() == 1 || !hug_only_sole_lambda(cx.options))
-        && simple_tokens
-        && args.iter().all(|a| {
-            cx.first_token(a)
-                .is_some_and(|t| comments::leading_comments(cx.grammar, &t).is_empty())
-        });
-    if !hug {
-        return delimited_list(cx, node, &call_style(cx, node));
-    }
-    // The two candidates below are built from the same argument documents: share them.
-    let docs = args
-        .iter()
-        .map(|a| cx.format(a).map(doc::shared))
-        .collect::<Result<Vec<Doc>, _>>()?;
-    let (last, init) = docs.split_last().expect("at least one argument");
-    if init.iter().any(|d| d.clone().propagate_breaks()) {
-        return delimited_list(cx, node, &ListStyle::default());
-    }
-    let hugged = {
-        let mut parts = vec![doc::lit("(")];
-        for d in init {
-            parts.push(d.clone());
-            parts.push(doc::lit(", "));
-        }
-        parts.push(last.clone());
-        parts.push(doc::lit(")"));
-        doc::concat(parts)
+    let sole = hug_only_sole_lambda(cx.options);
+    let style = CallStyle {
+        first: false,
+        last: if sole { HugLast::Sole } else { HugLast::Last },
+        body: sole,
     };
-    let expanded = doc::group(doc::concat(vec![
-        doc::lit("("),
-        doc::indent(doc::concat(vec![
-            doc::softline(),
-            doc::join(&doc::concat(vec![doc::lit(","), doc::line()]), docs.clone()),
-        ])),
-        if hug_closing_paren(cx.options) {
-            Doc::Nil
-        } else {
-            doc::softline()
-        },
-        doc::lit(")"),
-    ]));
-    Ok(doc::conditional_group(vec![hugged, expanded]))
+    shapes::call_arguments(cx, node, ROWS.get(), &style, &call_style(cx, node))
 }
 
 /// `parameter_attribute_layout: hanging`: the attribute lists, then the rest of the parameter on

@@ -13,6 +13,7 @@
 //! being of kind `K`.
 
 use crate::FormatCtx;
+use crate::calls::CallRules;
 use crate::case::Cases;
 use crate::comments::CommentStyle;
 use crate::context::NodeFormatter;
@@ -29,8 +30,16 @@ use std::sync::OnceLock;
 
 /// The lines of a section: trimmed, without blank lines and `#` comments.
 pub fn section<'a>(text: &'a str, name: &str) -> impl Iterator<Item = &'a str> {
+    // (the scan starts at the first `[name]`; without one there is nothing to scan)
+    let from = text
+        .match_indices('[')
+        .find(|(i, _)| {
+            let rest = &text[i + 1..];
+            rest.starts_with(name) && rest[name.len()..].starts_with(']')
+        })
+        .map_or(text.len(), |(i, _)| i);
     let mut inside = false;
-    text.lines().map(str::trim).filter(move |l| {
+    text[from..].lines().map(str::trim).filter(move |l| {
         if let Some(n) = l.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
             inside = n == name;
             return false;
@@ -85,6 +94,9 @@ struct BlankRow {
 pub struct RuleFormatter {
     space: SpaceRules,
     cases: Cases,
+    /// The `[call]`, `[hug]` and `[simple]` text, parsed when a call asks for it.
+    call_text: String,
+    calls: OnceLock<CallRules>,
     rewrite: RewriteRules,
     layout: Layout,
     blank: Vec<BlankRow>,
@@ -125,6 +137,12 @@ impl RuleFormatter {
         RuleFormatter {
             space: SpaceRules::parse(g, text),
             cases: Cases::parse(g, section(text, "case")),
+            call_text: if ["[call]", "[hug]", "[simple]"].iter().any(|s| text.contains(s)) {
+                text.to_owned()
+            } else {
+                String::new()
+            },
+            calls: OnceLock::new(),
             rewrite: RewriteRules::parse(g, text),
             layout: Layout::parse(g, &layout),
             blank: section(text, "blank")
@@ -154,6 +172,12 @@ impl RuleFormatter {
                 None => 1,
             },
         }
+    }
+
+    /// The `[call]`, `[simple]` and `[hug]` rows.
+    pub fn calls(&self, g: &Grammar) -> &CallRules {
+        self.calls
+            .get_or_init(|| CallRules::parse(g, &self.call_text))
     }
 
     /// The `[case]` rows.
