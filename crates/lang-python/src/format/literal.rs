@@ -45,7 +45,9 @@ pub(crate) fn value(t: &core_syntax::SyntaxToken) -> Cow<'_, str> {
             t.text().trim_end_matches(['"', '\'']),
         )),
         k::F_STRING_END | k::T_STRING_END => Cow::Borrowed(""),
-        k::F_STRING_MIDDLE | k::T_STRING_MIDDLE => Cow::Owned(literals::unescape_quotes(t.text())),
+        k::F_STRING_MIDDLE | k::T_STRING_MIDDLE => {
+            Cow::Owned(literals::unescape_quotes(t.text(), syntax()))
+        }
         _ => Cow::Borrowed(t.text()),
     }
 }
@@ -72,7 +74,7 @@ pub(crate) fn node_value(n: &core_syntax::SyntaxNode) -> String {
                 if i == 0 {
                     out.push_str(&prefixed::prefix_value(p));
                 }
-                out.push_str(&literals::unescape_quotes(body));
+                out.push_str(&literals::unescape_quotes(body, syntax()));
             }
             None => out.push_str(&text),
         }

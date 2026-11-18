@@ -32,6 +32,9 @@ token Identifier #expression #member-name #operand-hint
 token Variable
 // A quoted string without interpolation.
 token String #literal #string
+string String quote "'" escape "\\" map "\\" 92 "'" 39
+string String quote "\"" escape "\\" unknown keep map "n" 10 "r" 13 "t" 9 "v" 11 "e" 27 "f" 12 "\\" 92 "$" 36 "\"" 34 octal 3 hex "x" 2
+regex-call flavor pcre delimited concat "." "preg_match" "preg_match_all" "preg_replace" "preg_replace_callback" "preg_split" "preg_grep"
 // The text of an interpolated string or a heredoc between its interpolations.
 token StringPart #literal
 token Number #literal
@@ -83,7 +86,7 @@ node PropertyAccess #expression #member-access =
     object:#expression Arrow member:#member-name
 node StaticPropertyAccess #expression #member-access =
     Keyword? object:#expression? ColonColon member:#member-name
-node ArgumentList #opaque
+node ArgumentList #opaque #arguments
 node PartialArgumentList #opaque
 node NamedArgument #opaque
 node NamedPlaceholderArgument #opaque

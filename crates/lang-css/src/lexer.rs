@@ -4,6 +4,7 @@
 use crate::Dialect;
 use crate::generated::kind as k;
 use core_syntax::SyntaxKind;
+use core_syntax::strings::StringSyntax;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Token {
@@ -26,6 +27,11 @@ pub fn lex(src: &str, dialect: Dialect) -> (Vec<Token>, Vec<LexError>) {
         text: src,
         pos: 0,
         dialect,
+        string: core_syntax::grammars::CSS
+            .get()
+            .string_rows(k::STRING)
+            .next()
+            .expect("the CSS grammar has a string row"),
         tokens: Vec::with_capacity(src.len() / 4),
         errors: Vec::new(),
     };
@@ -45,6 +51,7 @@ struct Lexer<'a> {
     text: &'a str,
     pos: usize,
     dialect: Dialect,
+    string: &'static StringSyntax,
     tokens: Vec<Token>,
     errors: Vec<LexError>,
 }
@@ -112,24 +119,7 @@ impl Lexer<'_> {
 
     /// After a backslash: up to six hex digits and one blank, or any one character.
     fn escape(&mut self) {
-        self.pos += 1;
-        if self.at(0).is_ascii_hexdigit() {
-            let mut n = 0;
-            while n < 6 && self.at(0).is_ascii_hexdigit() {
-                self.pos += 1;
-                n += 1;
-            }
-            if self.text[self.pos..].starts_with("\r\n") {
-                self.pos += 2;
-            } else if matches!(self.at(0), b' ' | b'\t' | b'\n' | b'\r' | 0x0c) {
-                self.pos += 1;
-            }
-        } else {
-            self.pos += self.text[self.pos..]
-                .chars()
-                .next()
-                .map_or(0, char::len_utf8);
-        }
+        self.pos += self.string.escape_len(self.text, self.pos, false);
     }
 
     fn name(&mut self) {
@@ -179,7 +169,7 @@ impl Lexer<'_> {
                 }
                 k::LINE_COMMENT
             }
-            b'"' | b'\'' => self.string(c),
+            b'"' | b'\'' => self.string(),
             b'#' if self.at(1) == b'{' && self.dialect == Dialect::Scss => {
                 self.pos += 2;
                 k::INTERP_OPEN
@@ -246,51 +236,13 @@ impl Lexer<'_> {
     }
 
     /// A quoted string; one that is not closed on its line is `Unknown` up to the line's end.
-    fn string(&mut self, quote: u8) -> SyntaxKind {
+    fn string(&mut self) -> SyntaxKind {
         let start = self.pos;
-        self.pos += 1;
-        loop {
-            match self.at(0) {
-                _ if self.pos >= self.src.len() => break,
-                b'\\' => {
-                    self.pos += 1;
-                    if self.text[self.pos..].starts_with("\r\n") {
-                        self.pos += 2;
-                    } else if self.pos < self.src.len() {
-                        self.pos += self.text[self.pos..]
-                            .chars()
-                            .next()
-                            .map_or(1, char::len_utf8);
-                    }
-                }
-                c if c == quote => {
-                    self.pos += 1;
-                    return k::STRING;
-                }
-                // SCSS `#{ }` inside a string nests: its own strings do not end this one.
-                b'#' if self.dialect == Dialect::Scss && self.at(1) == b'{' => {
-                    self.pos += 2;
-                    let mut depth = 1;
-                    while depth > 0 && self.pos < self.src.len() {
-                        match self.at(0) {
-                            b'{' => depth += 1,
-                            b'}' => depth -= 1,
-                            b'"' | b'\'' => {
-                                let q = self.at(0);
-                                if self.string(q) == k::UNKNOWN {
-                                    return k::UNKNOWN;
-                                }
-                                continue;
-                            }
-                            b'\n' | b'\r' => break,
-                            _ => {}
-                        }
-                        self.pos += 1;
-                    }
-                }
-                b'\n' | b'\r' => break,
-                _ => self.pos += 1,
-            }
+        let scss = self.dialect == Dialect::Scss;
+        let (end, closed) = self.string.scan(self.text, start, scss);
+        self.pos = end;
+        if closed {
+            return k::STRING;
         }
         self.error(start, "unterminated-string", "unterminated string");
         k::UNKNOWN

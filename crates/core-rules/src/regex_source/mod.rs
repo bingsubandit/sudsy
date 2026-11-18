@@ -24,8 +24,7 @@ use crate::tree::significant_range;
 use crate::{Family, Params, Rule, RuleContext, RuleMeta};
 use core_semantics::scopes::Flags;
 use core_syntax::regex::RegexCall;
-use core_syntax::roles::code_text;
-use core_syntax::{Grammar, SyntaxNode, SyntaxToken, TextRange, TextSize};
+use core_syntax::{Grammar, SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize};
 use std::sync::OnceLock;
 
 /// The family of a language with no scope table: names are not followed.
@@ -171,21 +170,40 @@ impl RegexRule {
         if self.check == Check::UselessEscape || g.regex_calls().is_empty() {
             return None;
         }
-        let callee = g.slot(node, "callee")?.into_node()?;
-        let first = first_code_token(&callee, g)?;
-        let row = g.regex_calls().iter().find(|r| {
+        // A method call's text starts with its object (`Pattern.compile`).
+        let callee = g.slot(node, "callee")?;
+        let object = g.slot(node, "object");
+        let head = object.clone().unwrap_or_else(|| callee.clone());
+        let first = element_tokens(&head, g).next()?;
+        if !g.regex_calls().iter().any(|r| {
             r.callees
                 .iter()
                 .any(|c| c.split('.').next() == Some(first.text()))
-        })?;
-        let text = code_text(&callee);
-        if !row.callees.contains(&text) {
+        }) {
             return None;
         }
-        let mut arg = g.slot(node, "arguments")?.into_node()?;
-        if g.has_tag(arg.kind(), "arguments") {
-            arg = arg.children().next()?;
+        let mut text: String = element_tokens(&head, g)
+            .map(|t| t.text().to_owned())
+            .collect();
+        if object.is_some() {
+            text.push('.');
+            text.extend(element_tokens(&callee, g).map(|t| t.text().to_owned()));
         }
+        let row = g.regex_calls().iter().find(|r| r.callees.contains(&text))?;
+        let args = g.slot(node, "arguments")?;
+        let list = args.as_node().filter(|n| g.has_tag(n.kind(), "arguments"));
+        let arg = match list {
+            Some(list) => list
+                .children_with_tokens()
+                .filter(|e| {
+                    e.as_token().is_none_or(|t| {
+                        !g.is_trivia(t.kind()) && !g.has_tag(t.kind(), "punctuation")
+                    })
+                })
+                .nth(row.arg)?,
+            None if row.arg == 0 => args,
+            None => return None,
+        };
         let follow = self.check != Check::Spaces;
         let eval = Eval {
             ctx,
@@ -193,8 +211,14 @@ impl RegexRule {
             lang: self.lang.filter(|_| follow),
             full: follow,
         };
+        let value = eval.constant(&arg, 0)?;
+        let pattern = if row.delimited {
+            core_syntax::regex::undelimit(&value)?.to_string()
+        } else {
+            value
+        };
         Some(Source {
-            pattern: eval.constant(&arg, 0)?,
+            pattern,
             flavor: flavor::named(&row.flavor)?,
             at: None,
         })
@@ -240,9 +264,19 @@ impl RegexRule {
 }
 
 fn first_code_token(n: &SyntaxNode, g: &Grammar) -> Option<SyntaxToken> {
-    n.descendants_with_tokens()
-        .filter_map(|e| e.into_token())
-        .find(|t| !g.is_trivia(t.kind()))
+    element_tokens(&n.clone().into(), g).next()
+}
+
+/// The code tokens of an element: the token itself, or those below a node.
+fn element_tokens(e: &SyntaxElement, g: &Grammar) -> impl Iterator<Item = SyntaxToken> {
+    let tokens: Vec<SyntaxToken> = match e {
+        SyntaxElement::Token(t) => vec![t.clone()],
+        SyntaxElement::Node(n) => n
+            .descendants_with_tokens()
+            .filter_map(|e| e.into_token())
+            .collect(),
+    };
+    tokens.into_iter().filter(|t| !g.is_trivia(t.kind()))
 }
 
 /// Reads an argument as the string it always is.
@@ -255,12 +289,19 @@ struct Eval<'a, 'b> {
 }
 
 impl Eval<'_, '_> {
-    fn constant(&self, n: &SyntaxNode, depth: u8) -> Option<String> {
+    fn constant(&self, e: &SyntaxElement, depth: u8) -> Option<String> {
         let file = self.ctx.file;
         let g = file.grammar;
         if depth > 16 {
             return None;
         }
+        let n = match e {
+            SyntaxElement::Token(t) if g.has_tag(t.kind(), "string") => {
+                return g.string_value(t.kind(), t.text()).map(|v| v.into_owned());
+            }
+            SyntaxElement::Token(_) => return None,
+            SyntaxElement::Node(n) => n,
+        };
         let mut tokens = n
             .children_with_tokens()
             .filter_map(|e| e.into_token())
@@ -274,22 +315,25 @@ impl Eval<'_, '_> {
         }
         // Strings written one after the other are one (`"a" "b"`).
         if first.is_none() && n.children().next().is_some() {
-            return n.children().map(|c| self.constant(&c, depth + 1)).collect();
+            return n
+                .children()
+                .map(|c| self.constant(&c.into(), depth + 1))
+                .collect();
         }
         if !self.full {
             return None;
         }
         let tag = |t: &str| g.has_tag(n.kind(), t);
         if tag("parenthesized") {
-            return self.constant(&n.children().next()?, depth + 1);
+            return self.constant(&n.children().next()?.into(), depth + 1);
         }
         if tag("binary") {
             let op = g.slot(n, "operator")?.into_token()?;
             if self.row.concat.as_deref() != Some(op.text()) {
                 return None;
             }
-            let left = self.constant(&g.slot(n, "left")?.into_node()?, depth + 1)?;
-            let right = self.constant(&g.slot(n, "right")?.into_node()?, depth + 1)?;
+            let left = self.constant(&g.slot(n, "left")?, depth + 1)?;
+            let right = self.constant(&g.slot(n, "right")?, depth + 1)?;
             return Some(left + &right);
         }
         if tag("reference") {
@@ -306,7 +350,7 @@ impl Eval<'_, '_> {
             let once = decl.flags.contains(Flags::CONST)
                 || (decl.flags.contains(Flags::VAR)
                     && !model.refs_of(symbol).any(|w| w.is_write()));
-            let init = g.slot(&decl.node(file.root), "init")?.into_node()?;
+            let init = g.slot(&decl.node(file.root), "init")?;
             return once.then(|| self.constant(&init, depth + 1))?;
         }
         None

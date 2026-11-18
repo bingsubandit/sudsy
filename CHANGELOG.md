@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Lint
+* `no-control-regex`, `no-regex-spaces` and `no-misleading-character-class` also exist for Java
+  (`Pattern.compile`, `Pattern.matches`), C# (`new Regex`, the static `Regex` methods) and PHP
+  (`preg_*`); they are off by default.
 * `no-unreachable` is renamed `unreachable-code` (JavaScript/TypeScript config keys and the
   `eslint-recommended` preset follow). It now runs in C#, Java, JavaScript/TypeScript, Kotlin, PHP,
   Python and Ruby, and is on by default (`warn`) in all of them; in C# it was off.

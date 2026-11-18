@@ -582,6 +582,12 @@ impl Grammar {
             .map(|(_, s)| s)
     }
 
+    /// The first `string` row of the token kind `kind`.
+    pub fn string_row(&self, kind: SyntaxKind) -> &StringSyntax {
+        let row = self.string_rows(kind).next();
+        row.expect("the grammar has a string row for the token")
+    }
+
     /// The `regex` row of the token kind `kind`.
     pub fn regex_row(&self, kind: SyntaxKind) -> Option<&RegexRow> {
         self.regex_rows.iter().find(|r| r.kind == Some(kind))

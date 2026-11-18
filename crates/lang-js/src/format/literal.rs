@@ -89,9 +89,14 @@ const STRING: StringStyle = StringStyle {
     interpolation: false,
 };
 
+/// The `string` row of the string token.
+fn syntax() -> &'static core_syntax::strings::StringSyntax {
+    core_syntax::grammars::JS.get().string_row(k::STRING)
+}
+
 /// A string with the preferred quote (see [`literals::string`]).
 pub(crate) fn string(raw: &str, single: bool) -> String {
-    literals::string(raw, StringStyle { single, ..STRING })
+    literals::string(raw, StringStyle { single, ..STRING }, syntax())
 }
 
 /// Lowercase, no `+` and no leading zeros in an exponent (none at all when it is zero), a zero
@@ -130,7 +135,10 @@ pub(crate) fn value(kind: SyntaxKind, raw: &str) -> String {
 }
 
 fn unquoted(raw: &str) -> String {
-    literals::unescape_quotes(raw.get(1..raw.len().saturating_sub(1)).unwrap_or(""))
+    literals::unescape_quotes(
+        raw.get(1..raw.len().saturating_sub(1)).unwrap_or(""),
+        syntax(),
+    )
 }
 
 fn canonical_number(raw: &str) -> String {

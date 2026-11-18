@@ -35,7 +35,12 @@ token PrimitiveType #type-token
 token Identifier #operand #type-token
 // A string or a text block: one token.
 token String #literal #string #operand
-token Char #literal #operand
+// A text block (`"""`) may span lines; a string may not.
+string String quote "\"" triple escape "\\" line unknown invalid surrogates
+  map "b" 8 "t" 9 "n" 10 "f" 12 "r" 13 "s" 32 "\"" 34 "'" 39 octal 3 hex "u" 4
+token Char #literal #operand #string
+string Char quote "'" escape "\\" line unknown invalid surrogates
+  map "b" 8 "t" 9 "n" 10 "f" 12 "r" 13 "s" 32 "\"" 34 "'" 39 octal 3 hex "u" 4
 // Integer and floating-point literals of every base.
 token Number #literal #operand
 token Boolean #literal #operand
@@ -73,7 +78,7 @@ node AnnotationTypeBody #child #block = LBrace items:#member* RBrace
 node AnnotationTypeDeclaration #child #member #opaque = #child*
 node AnnotationTypeDeclarationCore #child #wrapper #type-declaration #declaration #scope = Keyword name:Identifier members:AnnotationTypeBody
 node AnnotationTypeElementDeclaration #child #member #opaque = #child*
-node ArgumentList #child #opaque = #child*
+node ArgumentList #child #opaque #arguments = #child*
 node ArrayAccess #child #expression #index = object:#expression? object_token=object:#operand? LBracket arguments:#expression? arguments_token=arguments:#operand? RBracket
 node ArrayCreationExpression #child #expression #opaque = #child*
 node ArrayCreationType #child #opaque = #child*
@@ -147,6 +152,8 @@ node LocalTypeModifiers #child #opaque = #child*
 node LocalVariableDeclaration #child #statement #opaque = #child*
 node LocalVariableDeclarationCore #child #wrapper #declaration = Modifiers? #annotation* #type-token? #type? InferredLocalType? declarators:VariableDeclarator*
 node MarkerAnnotation #child #annotation #opaque = #child*
+// `new` creates no regex in Java; `Pattern` is a static factory.
+regex-call flavor java concat "+" "Pattern.compile" "Pattern.matches"
 node MethodDeclaration #child #member #declaration #function #scope = Modifiers? TypeParameters? #annotation* #type-token? #type? name:Identifier parameters:FormalParameters Dimension* Throws? body:Block? DefaultValue? Semi?
 node MethodInvocation #child #expression #call = object:#expression? object_token=object:#operand? Dot? TypeArguments? callee:MethodName arguments:ArgumentList
 node MethodName #child #opaque = #child*

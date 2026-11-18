@@ -6,5 +6,5 @@ core_syntax::include_generated!();
 
 #[rustfmt::skip]
 pub fn provider() -> ParserProvider {
-    ParserProvider::new(ParserSpec { crate_name: env!("CARGO_PKG_NAME"), grammar: grammars::JAVA, extensions: &["java"], file_names: &[], schema: option_schema(), formatter: &JavaFormatter, hooks: &core_rules::DEFAULT_HOOKS, rules: rules::RULES, pattern_files: provider_api::pattern_files!(), families: &[] }, parser::parse_file)
+    ParserProvider::new(ParserSpec { crate_name: env!("CARGO_PKG_NAME"), grammar: grammars::JAVA, extensions: &["java"], file_names: &[], schema: option_schema(), formatter: &JavaFormatter, hooks: &core_rules::DEFAULT_HOOKS, rules: rules::RULES, pattern_files: provider_api::pattern_files!(), families: &[core_rules::regex_source::FAMILY] }, parser::parse_file)
 }
