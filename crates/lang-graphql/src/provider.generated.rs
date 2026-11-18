@@ -7,7 +7,7 @@ core_syntax::include_generated!();
 
 #[rustfmt::skip]
 pub fn provider() -> ParserProvider {
-    provider_of(Spec { crate_name: env!("CARGO_PKG_NAME"), language: || core_packs::language!("graphql", tree_sitter_graphql::LANGUAGE), grammar: grammars::GRAPHQL, mapping: &MAPPING, extensions: &["graphql", "gql"], file_names: &[], schema: option_schema(), formatter: &GraphqlFormatter, hooks: &core_rules::DEFAULT_HOOKS, rules: rules::RULES, pattern_files: provider_api::pattern_files!(), families: &[core_rules::unique::FAMILY], validate: None })
+    provider_of(Spec { crate_name: env!("CARGO_PKG_NAME"), language: || core_packs::language!("graphql", tree_sitter_graphql::LANGUAGE), grammar: grammars::GRAPHQL, mapping: &MAPPING, extensions: &["graphql", "gql"], file_names: &[], schema: option_schema(), formatter: &GraphqlFormatter, hooks: &core_rules::DEFAULT_HOOKS, rules: rules::RULES, pattern_files: provider_api::pattern_files!(), families: &[core_rules::unique::FAMILY, core_rules::max::FAMILY, core_rules::naming::FAMILY], validate: None })
 }
 
 pub const MAPPING: Mapping = Mapping {

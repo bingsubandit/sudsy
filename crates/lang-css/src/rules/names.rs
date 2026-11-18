@@ -1,27 +1,19 @@
-//! The `names` family: a check on the names of one kind of thing (properties, units, functions,
-//! at-rules, parts of selectors, ...). Params:
-//! - `target`: what the names are, see [`Target`];
-//! - `mode`: `allowed` and `disallowed` (option `list`: names, or `/regex/`), `pattern` (each
-//!   name must match option `pattern`), `lower` (each name is written in lowercase), `unique`
-//!   (a name repeats within the node).
-//!
-//! The message has `{name}`.
+//! The CSS targets of the shared `names` family (`core_rules::listed`): what the names of a kind
+//! of thing are, read off the CSS tree.
 
 use super::model::{self, Part, plain, split_dimension};
 use crate::generated::kind as k;
+use core_rules::listed::{Mode, Targets};
 use core_rules::tree::significant_range;
-use core_rules::unique::Repeats;
-use core_rules::{Family, Params, Re, Rule, RuleContext, RuleMeta};
+use core_rules::{Family, RuleContext};
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxNodeExt, TextRange};
-use std::sync::Mutex;
 
-pub const FAMILY: Family = Family {
-    name: "names",
-    build,
-};
+pub const FAMILY: Family = core_rules::listed::family::<Css>();
+
+pub struct Css;
 
 #[derive(Clone, Copy, PartialEq)]
-enum Target {
+pub enum Target {
     Property,
     CustomProperty,
     Function,
@@ -39,90 +31,86 @@ enum Target {
     Part(Part),
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum Mode {
-    Allowed,
-    Disallowed,
-    Pattern,
-    Lower,
-    Unique,
+impl Targets for Css {
+    type Target = Target;
+    const ALL: &'static [(&'static str, Target)] = &[
+        ("property", Target::Property),
+        ("custom-property", Target::CustomProperty),
+        ("function", Target::Function),
+        ("unit", Target::Unit),
+        ("at-rule", Target::AtRule),
+        ("media-feature", Target::MediaFeature),
+        ("keyframes-name", Target::KeyframesName),
+        ("custom-media", Target::CustomMedia),
+        ("layer", Target::Layer),
+        ("container", Target::Container),
+        ("combinator", Target::Combinator),
+        ("selector", Target::Selector),
+        ("attribute-operator", Target::AttributeOperator),
+        ("font-family", Target::FontFamily),
+        ("class", Target::Part(Part::Class)),
+        ("id", Target::Part(Part::Id)),
+        ("attribute", Target::Part(Part::Attribute)),
+        ("pseudo-class", Target::Part(Part::PseudoClass)),
+        ("pseudo-element", Target::Part(Part::PseudoElement)),
+        ("type", Target::Part(Part::Type)),
+    ];
+
+    fn kinds(target: Target) -> &'static [SyntaxKind] {
+        use Target::*;
+        match target {
+            Property | FontFamily => &[k::DECLARATION],
+            CustomProperty => &[k::DECLARATION, k::AT_RULE],
+            Function => &[k::FUNCTION],
+            Unit => &[k::VALUE, k::PRELUDE],
+            AtRule | MediaFeature | KeyframesName | CustomMedia | Layer | Container => {
+                &[k::AT_RULE]
+            }
+            Combinator | Selector | AttributeOperator | Part(_) => &[k::RULE],
+        }
+    }
+
+    fn insensitive(target: Target) -> bool {
+        !matches!(
+            target,
+            Target::Part(Part::Class | Part::Id | Part::Attribute | Part::Type)
+                | Target::KeyframesName
+                | Target::Selector
+                | Target::FontFamily
+                | Target::Function
+        )
+    }
+
+    fn keep_case(target: Target) -> &'static [&'static str] {
+        if target == Target::Function {
+            CAMEL
+        } else {
+            &[]
+        }
+    }
+
+    fn collect(
+        target: Target,
+        mode: Mode,
+        node: &SyntaxNode,
+        ctx: &RuleContext<'_>,
+        out: &mut Vec<(String, TextRange)>,
+    ) {
+        collect(target, mode, node, ctx, out)
+    }
 }
 
-struct Names {
-    meta: &'static RuleMeta,
+/// The names in `node` with where each is.
+fn collect(
     target: Target,
     mode: Mode,
-    message: String,
-    kinds: &'static [SyntaxKind],
-    /// The compiled `pattern` option, by its source.
-    cache: Mutex<Option<(String, Option<Re>)>>,
-}
-
-fn build(meta: &'static RuleMeta, mut p: Params) -> Result<Box<dyn Rule>, String> {
-    use Target::*;
-    let target = p.choice(
-        "target",
-        true,
-        &[
-            ("property", Property),
-            ("custom-property", CustomProperty),
-            ("function", Function),
-            ("unit", Unit),
-            ("at-rule", AtRule),
-            ("media-feature", MediaFeature),
-            ("keyframes-name", KeyframesName),
-            ("custom-media", CustomMedia),
-            ("layer", Layer),
-            ("container", Container),
-            ("combinator", Combinator),
-            ("selector", Selector),
-            ("attribute-operator", AttributeOperator),
-            ("font-family", FontFamily),
-            ("class", Part(model::Part::Class)),
-            ("id", Part(model::Part::Id)),
-            ("attribute", Part(model::Part::Attribute)),
-            ("pseudo-class", Part(model::Part::PseudoClass)),
-            ("pseudo-element", Part(model::Part::PseudoElement)),
-            ("type", Part(model::Part::Type)),
-        ],
-    )?;
-    let mode = p.choice(
-        "mode",
-        true,
-        &[
-            ("allowed", Mode::Allowed),
-            ("disallowed", Mode::Disallowed),
-            ("pattern", Mode::Pattern),
-            ("lower", Mode::Lower),
-            ("unique", Mode::Unique),
-        ],
-    )?;
-    let kinds: &'static [SyntaxKind] = match target {
-        Property | FontFamily => &[k::DECLARATION],
-        CustomProperty => &[k::DECLARATION, k::AT_RULE],
-        Function => &[k::FUNCTION],
-        Unit => &[k::VALUE, k::PRELUDE],
-        AtRule | MediaFeature | KeyframesName | CustomMedia | Layer | Container => &[k::AT_RULE],
-        Combinator | Selector | AttributeOperator | Part(_) => &[k::RULE],
-    };
-    let rule = Names {
-        meta,
-        target,
-        mode,
-        message: p.text("message")?,
-        kinds,
-        cache: Mutex::new(None),
-    };
-    p.done()?;
-    Ok(Box::new(rule))
-}
-
-impl Names {
-    /// The names in `node` with where each is.
-    fn collect(&self, node: &SyntaxNode, ctx: &RuleContext<'_>) -> Vec<(String, TextRange)> {
+    node: &SyntaxNode,
+    ctx: &RuleContext<'_>,
+    out: &mut Vec<(String, TextRange)>,
+) {
+    {
         let range = |n: &SyntaxNode| significant_range(n, ctx.file.grammar);
-        let mut out = Vec::new();
-        match self.target {
+        match target {
             Target::Property => {
                 if let Some((name, at)) = model::property(node)
                     && !model::is_custom(&name)
@@ -163,7 +151,7 @@ impl Names {
             Target::Unit => {
                 if node.kind() == k::PRELUDE && node.parent().is_none_or(|p| p.kind() != k::AT_RULE)
                 {
-                    return out;
+                    return;
                 }
                 for t in model::tokens(node) {
                     match t.kind() {
@@ -252,23 +240,23 @@ impl Names {
             }
             Target::Combinator | Target::Selector | Target::AttributeOperator | Target::Part(_) => {
                 let Some(prelude) = node.child(k::PRELUDE) else {
-                    return out;
+                    return;
                 };
                 // Keyframe selectors are not selectors, except for their case.
-                if model::in_keyframes(node) && self.mode != Mode::Lower {
-                    return out;
+                if model::in_keyframes(node) && mode != Mode::Lower {
+                    return;
                 }
-                if self.target == Target::Selector {
+                if target == Target::Selector {
                     // The whole list, as stylelint reads it.
                     let list: Vec<String> = model::selectors(&prelude)
                         .into_iter()
                         .map(|s| s.text)
                         .collect();
                     out.push((list.join(", "), range(&prelude)));
-                    return out;
+                    return;
                 }
                 for sel in model::selectors(&prelude) {
-                    match self.target {
+                    match target {
                         Target::AttributeOperator => {
                             for p in sel.pieces().filter(|p| p.part == Part::Attribute) {
                                 let text = &ctx.file.text
@@ -298,29 +286,6 @@ impl Names {
                 }
             }
         }
-        out
-    }
-
-    fn insensitive(&self) -> bool {
-        !matches!(
-            self.target,
-            Target::Part(Part::Class | Part::Id | Part::Attribute | Part::Type)
-                | Target::KeyframesName
-                | Target::Selector
-                | Target::FontFamily
-                | Target::Function
-        )
-    }
-
-    fn pattern_match(&self, source: &str, name: &str) -> bool {
-        let mut cache = self.cache.lock().unwrap();
-        if cache.as_ref().is_none_or(|(s, _)| s != source) {
-            *cache = Some((source.to_string(), Re::lazy(source).ok()));
-        }
-        cache
-            .as_ref()
-            .and_then(|(_, re)| re.as_ref())
-            .is_none_or(|re| re.is_match(name))
     }
 }
 
@@ -343,15 +308,6 @@ fn prev_token(node: &SyntaxNode) -> Option<core_syntax::SyntaxToken> {
     None
 }
 
-/// Whether `entry` (a name, or `/regex/`) selects `name`.
-pub(super) fn selects(entry: &str, name: &str, insensitive: bool) -> bool {
-    match entry.strip_prefix('/').and_then(|e| e.strip_suffix('/')) {
-        Some(re) => Re::lazy(re).is_ok_and(|re| re.is_match(name)),
-        None if insensitive => entry.eq_ignore_ascii_case(name),
-        None => entry == name,
-    }
-}
-
 /// `translateX` and the like keep their capitals.
 const CAMEL: &[&str] = &[
     "translateX",
@@ -366,51 +322,3 @@ const CAMEL: &[&str] = &[
     "skewX",
     "skewY",
 ];
-
-impl Rule for Names {
-    fn meta(&self) -> &'static RuleMeta {
-        self.meta
-    }
-
-    fn kinds(&self) -> &[SyntaxKind] {
-        self.kinds
-    }
-
-    fn check(&self, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-        let names = self.collect(node, ctx);
-        if names.is_empty() {
-            return;
-        }
-        let list = ctx.options.list("list");
-        let pattern = ctx.options.string("pattern");
-        let insensitive = self.insensitive();
-        let mut seen = Repeats::default();
-        for (name, range) in names {
-            let hit = match self.mode {
-                Mode::Allowed => {
-                    !list.is_empty() && !list.iter().any(|e| selects(e, &name, insensitive))
-                }
-                Mode::Disallowed => list.iter().any(|e| selects(e, &name, insensitive)),
-                Mode::Pattern => !pattern.is_empty() && !self.pattern_match(pattern, &name),
-                Mode::Lower => {
-                    name.chars().any(|c| c.is_uppercase())
-                        && !(self.target == Target::Function && CAMEL.contains(&name.as_str()))
-                }
-                Mode::Unique => {
-                    let message = || self.message.replace("{name}", &name);
-                    seen.check(
-                        ctx,
-                        name.to_ascii_lowercase(),
-                        range,
-                        message,
-                        "first used here",
-                    );
-                    continue;
-                }
-            };
-            if hit {
-                ctx.report(range, self.message.replace("{name}", &name));
-            }
-        }
-    }
-}

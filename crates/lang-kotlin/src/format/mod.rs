@@ -11,13 +11,20 @@ mod space;
 
 use crate::generated::kind as k;
 use core_config::shared;
+use core_format::rules::LazyRules;
 use core_format::shapes::flow::Flow;
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, comments, doc};
+use core_syntax::grammars;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 include!("../schema.generated.rs");
 
 pub struct KotlinFormatter;
+
+static ROWS: LazyRules = LazyRules::new(
+    || grammars::KOTLIN.get(),
+    include_str!("../../format.rules"),
+);
 
 pub(super) use core_format::shapes::flow::{break_after, el, first, kids, last, multiline};
 
@@ -45,7 +52,9 @@ impl NodeFormatter for KotlinFormatter {
         cx: &FormatCtx<'_>,
     ) -> Result<Option<Doc>, FormatError> {
         let kind = node.kind();
-        decl::rule(cx, node, kind)
+        ROWS.get()
+            .layout_node(node, cx, &FLOW)
+            .or_else(|| decl::rule(cx, node, kind))
             .or_else(|| expr::rule(cx, node, kind))
             .unwrap_or_else(|| generic(cx, node))
             .map(Some)
@@ -69,11 +78,6 @@ const FLOW: Flow<'static> = Flow {
     keep_blank_lines: false,
     rules: None,
 };
-
-/// What stands between two neighbouring elements (see [`Flow::between`]).
-pub(super) fn between(cx: &FormatCtx<'_>, a: &SyntaxToken, b: &SyntaxToken) -> Option<Doc> {
-    FLOW.between(cx, a, b)
-}
 
 /// The elements one after the other (see the module comment).
 pub(super) fn seq(cx: &FormatCtx<'_>, els: &[SyntaxElement]) -> R {

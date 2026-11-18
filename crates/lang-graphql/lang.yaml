@@ -3,7 +3,7 @@ grammar-path: grammars/tree-sitter-graphql
 extensions: [graphql, gql]
 formatter: GraphqlFormatter
 dev-deps: [insta]
-families: "&[core_rules::unique::FAMILY]"
+families: "&[core_rules::unique::FAMILY, core_rules::max::FAMILY, core_rules::naming::FAMILY]"
 options:
   - indent_size: 2
   - indent_style

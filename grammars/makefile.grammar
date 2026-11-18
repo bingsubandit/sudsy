@@ -40,12 +40,12 @@ token Unknown #error
 
 node Document = items:#item* Eof
 // `targets: prerequisites` with its recipe; `; command` after the prerequisites starts the recipe on the rule line.
-node Rule #item = Targets Colon Targets? Colon? Prereqs? Pipe? Prereqs? Recipe?
-node Targets = Word*
+node Rule #item #rule = Targets Colon Targets? Colon? Prereqs? Pipe? Prereqs? Recipe?
+node Targets #head = Word*
 node Prereqs = Word*
 node Recipe = Semi? items:#item*
 // One command; the shell code is `ShellText`.
-node RecipeLine #item = Prefix* ShellText?
+node RecipeLine #item #command = Prefix* ShellText?
 node ShellText = MakeRef* MakeEscape* Word*
 node Assign #item = Targets? Colon? Word Op Value?
 node Define #item = Keyword Word Op? Raw? Keyword

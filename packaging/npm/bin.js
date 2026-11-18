@@ -6,7 +6,7 @@ const path = require("node:path");
 const platform = `${process.platform}-${process.arch}`;
 let exe;
 try {
-  const dir = path.dirname(require.resolve(`@sudsy/cli-${platform}/package.json`));
+  const dir = path.dirname(require.resolve(`@sudsylint/cli-${platform}/package.json`));
   exe = path.join(dir, process.platform === "win32" ? "sudsy.exe" : "sudsy");
 } catch {
   console.error(`sudsy: no binary package for ${platform} (are optionalDependencies disabled?)`);

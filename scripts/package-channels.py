@@ -26,7 +26,7 @@ WHEEL_TAG = {
     "darwin-x64": "macosx_10_12_x86_64", "darwin-arm64": "macosx_11_0_arm64",
     "win32-x64": "win_amd64", "win32-arm64": "win_arm64",
 }
-NPM_SCOPE = "@sudsy"
+NPM_SCOPE = "@sudsylint"
 DESC = "Formatter and linter for C#, JSON, YAML and more"
 
 

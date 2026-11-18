@@ -54,10 +54,11 @@ Options declared by more than one language, generated from the option schemas; p
 | `line_width` | int 20-1000 | json `80`, css `80`, scss `80`, less `80`, html `80`, cpp `80`, c `80`, graphql `80`, java `100`, js `80`, kotlin `140`, php `120`, python `88`, ruby `120`, sql `80`, toml `80`, xml `100`, yaml `80`, github-actions `80`, angular `80`, vue `80`, svelte `80`, csharp `120` |
 | `max_blank_lines` | int 0-10 | css `1`, scss `1`, less `1`, dockerfile `1`, editorconfig `1`, gitignore `1`, ini `1`, makefile `2`, powershell `10`, shell `1`, toml `1`, xml `1`, yaml `1`, github-actions `1` |
 | `member_chain_break_on_block` | `never`, `inner`, `any` | java `any`, csharp `never` |
-| `member_chain_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
+| `member_chain_indent` | int 1-4 | java `2`, js `1`, kotlin `1`, csharp `1` |
 | `member_chain_keep_accesses` | `never`, `head`, `always` | java `head`, csharp `never` |
-| `member_chain_min_calls` | int 1-1000 | java `2`, js `3`, csharp `3` |
+| `member_chain_min_calls` | int 1-1000 | java `2`, js `3`, kotlin `2`, csharp `3` |
 | `member_chain_short_head` | int 0-100 | java `4`, js `2`, csharp `4` |
+| `member_chain_style` | `fluent`, `grouped`, `wrapped` | js `grouped`, kotlin `wrapped` |
 | `quote_style` | js: `double`, `single`; python: `double`, `single`, `preserve`; yaml: `preserve`, `single`, `double`, `prefer_double`; github-actions: `preserve`, `single`, `double`, `prefer_double` | js `double`, python `double`, yaml `preserve`, github-actions `preserve` |
 | `sequence_indent` | `preserve`, `indented`, `flush` | yaml `preserve`, github-actions `preserve` |
 | `single_attribute_per_line` | bool | html `false`, angular `false`, vue `false`, svelte `false` |

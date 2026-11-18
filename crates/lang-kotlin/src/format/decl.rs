@@ -10,9 +10,9 @@ pub(super) fn rule(cx: &FormatCtx<'_>, node: &SyntaxNode, kind: SyntaxKind) -> O
         k::CLASS_BODY => body(cx, node),
         k::BLOCK => block(cx, node),
         k::VALUE_ARGUMENT_LIST | k::VALUE_PARAMETER_LIST => paren_list(cx, node),
-        k::PROPERTY | k::FUN | k::PROPERTY_ACCESSOR => with_value(cx, node),
+        k::PROPERTY | k::FUN | k::PROPERTY_ACCESSOR | k::VALUE_ARGUMENT => with_value(cx, node),
         k::STRING_TEMPLATE => Ok(shapes::verbatim(cx, node)),
-        k::MODIFIER_LIST | k::FILE_ANNOTATION_LIST => flat(cx, node),
+        k::MODIFIER_LIST | k::FILE_ANNOTATION_LIST => FLOW.flat(cx, node),
         _ => return None,
     })
 }
@@ -31,7 +31,10 @@ fn is_decl(kind: SyntaxKind) -> bool {
 }
 
 fn bodiless(n: &SyntaxNode) -> bool {
-    n.kind() == k::SECONDARY_CONSTRUCTOR && !n.children().any(|c| c.kind() == k::BLOCK)
+    n.kind() == k::SECONDARY_CONSTRUCTOR
+        && !n
+            .children()
+            .any(|c| matches!(c.kind(), k::BLOCK | k::CONSTRUCTOR_DELEGATION_CALL))
 }
 
 /// Must a blank line stand between `prev` and `node` (siblings in a file, class body or block)?
@@ -45,16 +48,20 @@ fn needs_blank(cx: &FormatCtx<'_>, prev: &SyntaxNode, node: &SyntaxNode) -> bool
         ]
         .contains(&prev.kind())
     {
-        return !(prev.kind() == k::PACKAGE_DIRECTIVE && node.kind() == k::IMPORT_LIST);
+        return !(prev.kind() == k::PACKAGE_DIRECTIVE && node.kind() == k::IMPORT_LIST
+            || prev.kind() == k::FILE_ANNOTATION_LIST && node.kind() == k::PACKAGE_DIRECTIVE);
     }
     let same = |kinds: &[SyntaxKind]| kinds.contains(&node.kind()) && prev.kind() == node.kind();
-    let commented = comments::node_leading(cx.grammar, node).has_comment;
+    let commented = cx
+        .first_token(node)
+        .is_some_and(|t| !comments::leading_comments(cx.grammar, &t).is_empty());
     match parent {
         k::KT_FILE | k::CLASS_BODY => {
-            is_decl(node.kind())
-                && (!same(&[k::PROPERTY, k::TYPEALIAS]) || commented)
-                && !(bodiless(node) && bodiless(prev))
-                && !(commented && blank_in_comments(cx, node))
+            (node.kind() == k::ENUM_ENTRY && prev.kind() == k::ENUM_ENTRY && commented)
+                || is_decl(node.kind())
+                    && (!same(&[k::PROPERTY, k::TYPEALIAS]) || commented)
+                    && !(bodiless(node) && bodiless(prev))
+                    && !(commented && blank_in_comments(cx, node))
         }
         k::BLOCK => is_decl(node.kind()) && node.kind() != k::PROPERTY,
         _ => false,
@@ -153,21 +160,6 @@ fn block(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     }
 }
 
-/// Modifiers and annotations: line breaks as written, no hanging indent.
-fn flat(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = kids(cx, node);
-    let mut parts = Vec::with_capacity(els.len() * 2);
-    for (i, e) in els.iter().enumerate() {
-        if i > 0
-            && let (Some(a), Some(b)) = (last(cx, &els[i - 1]), first(cx, e))
-        {
-            parts.extend(between(cx, &a, &b));
-        }
-        parts.push(el(cx, e)?);
-    }
-    Ok(doc::concat(parts))
-}
-
 /// A declaration with a value after `=` (a property, a function with an expression body, an
 /// accessor): the value moves below the operator when it does not fit or spans lines.
 fn with_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
@@ -181,20 +173,34 @@ fn with_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let SyntaxElement::Token(eq_tok) = &els[eq] else {
         return generic(cx, node);
     };
+    assign(cx, node, seq(cx, &els[..eq])?, eq_tok, &els[eq + 1])
+}
+
+/// `left = right` as the shared assignment layouts.
+pub(super) fn assign(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    left: Doc,
+    eq_tok: &SyntaxToken,
+    right: &SyntaxElement,
+) -> R {
     let op = doc::concat(vec![doc::lit(" "), cx.token(eq_tok)]);
-    shapes::assignment(
-        cx,
-        shapes::Assign {
-            node,
-            left: seq(cx, &els[..eq])?,
-            op,
-            op_token: Some(eq_tok),
-            right: Some(&els[eq + 1]),
-            short_key: false,
-        },
-        &shapes::AssignPolicy::of(cx.options),
-        &KeepOnLine,
-    )
+    // A comment at the end of the line stays there, it does not push the value below the `=`.
+    cx.trailing_after(last(cx, right).as_ref(), || {
+        shapes::assignment(
+            cx,
+            shapes::Assign {
+                node,
+                left,
+                op,
+                op_token: Some(eq_tok),
+                right: Some(right),
+                short_key: false,
+            },
+            &shapes::AssignPolicy::of(cx.options),
+            &KeepOnLine,
+        )
+    })
 }
 
 /// The call or the declaration whose parentheses `list` has.
@@ -205,7 +211,7 @@ fn paren_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         .filter(|c| !c.text_range().is_empty())
         .count();
     let (min, comma) = match parent {
-        k::FUN | k::SECONDARY_CONSTRUCTOR => (
+        k::FUN => (
             cx.options.int("function_signature_wrap_min_parameters") as usize,
             true,
         ),
@@ -267,7 +273,11 @@ impl shapes::AssignHooks for KeepOnLine {
         _: &shapes::AssignPolicy,
     ) -> Option<shapes::AssignLayout> {
         let n = right.as_node()?;
-        (n.kind() == k::STRING_TEMPLATE && multiline(cx, n))
-            .then_some(shapes::AssignLayout::NeverBreakAfterOperator)
+        let stays = match n.kind() {
+            k::STRING_TEMPLATE => multiline(cx, n),
+            k::LAMBDA_EXPRESSION => true,
+            _ => false,
+        };
+        stays.then_some(shapes::AssignLayout::NeverBreakAfterOperator)
     }
 }

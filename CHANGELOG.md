@@ -8,6 +8,9 @@
   Python and Ruby, and is on by default (`warn`) in all of them; in C# it was off.
 * `no-fallthrough` also runs in Java and PHP.
 
+### Changed
+* GraphQL `selection-set-depth`: the option `max_depth` is now `max`, as in every `max` rule.
+
 ## [0.0.2] - 2026-11-17
 
 ### Fixed

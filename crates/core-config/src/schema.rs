@@ -390,9 +390,18 @@ pub mod shared {
     pub fn member_chain_style(default: &'static str) -> OptionDef {
         OptionDef::choice(
             "member_chain_style",
-            &["fluent", "grouped"],
+            &["fluent", "grouped", "wrapped"],
             default,
-            "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line).",
+            "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line); `wrapped` keeps the accesses in front of the first call with the head and puts every later dot on a line of its own, a call after a block or argument list that ends on a line of its own staying on that line.",
+        )
+    }
+
+    pub fn member_chain_force_links(default: i64) -> OptionDef {
+        OptionDef::int(
+            "member_chain_force_links",
+            default,
+            (0, 1000),
+            "A chain of member accesses and calls with at least this many dots always breaks (`wrapped` style; 0: never).",
         )
     }
 

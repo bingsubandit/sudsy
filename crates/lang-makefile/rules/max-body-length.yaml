@@ -1,0 +1,10 @@
+id: max-body-length
+family: max
+params: { count: lines, tag: rule, of: command, report: head }
+message: "recipe has {count} lines, more than the {max} allowed"
+description: A rule whose recipe has more lines than allowed (checkmake `maxbodylength`). Every physical line counts, a continued command and a tab-indented comment included.
+example: "build:   # 6 lines with the default of 5"
+severity: off
+category: cleanup
+options:
+  - { name: max, type: int, default: 5, description: The most lines a recipe may have. }

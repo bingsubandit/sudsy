@@ -20,7 +20,7 @@ Layout follows Prettier's GraphQL printer (`scripts/parity.sh format prettier` c
 
 ## Rules
 Rules of graphql-eslint that need no schema and no other file (`docs/parity/graphql-eslint.yaml` lists every rule and its status):
-- `naming-convention` (options per kind of name), `no-anonymous-operations`, `no-typename-prefix`, `selection-set-depth` (`max_depth`), `unique-operation-name` and `unique-fragment-name` (within the file).
+- `naming-convention` (options per kind of name), `no-anonymous-operations`, `no-typename-prefix`, `selection-set-depth` (`max`), `unique-operation-name` and `unique-fragment-name` (within the file).
 - Shared rules through the grammar tags: `no-duplicate-keys` (graphql-eslint `no-duplicate-fields`, `unique-argument-names`, `unique-input-field-names`, `unique-variable-names`, `unique-enum-value-names`: duplicate fields, arguments, object fields, variables, enum values and definitions in a selection set or body; a field with an alias counts under the alias), `sorted-keys` (`alphabetize`, which graphql-eslint configures per kind: here the shared rule's options apply to every list) and `key-name-casing` (all lists at once; prefer `naming-convention`).
 
 ## Options

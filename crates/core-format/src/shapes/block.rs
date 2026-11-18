@@ -312,3 +312,59 @@ pub fn document(
     }
     Ok(doc::concat(parts))
 }
+
+/// Items between which a blank line stands when the block's items are `#case` nodes and one of
+/// them spans lines (or ends in a braced `#block`), and none otherwise.
+pub fn spread_cases_style(cx: &FormatCtx<'_>, node: &SyntaxNode) -> BlockStyle {
+    let g = cx.grammar;
+    let spans = |n: &SyntaxNode| match (cx.first_token(n), cx.last_token(n)) {
+        (Some(a), Some(b)) if a != b => cx.has_line_break(
+            n,
+            core_syntax::TextRange::new(a.text_range().start(), b.text_range().start()),
+        ),
+        _ => false,
+    };
+    let braced_body = |n: &SyntaxNode| {
+        n.children().last().is_some_and(|b| {
+            g.has_tag(b.kind(), "block")
+                && cx.first_token(&b).is_some_and(|t| t.text() == "{")
+                && b.children().any(|c| !c.text_range().is_empty())
+        })
+    };
+    let spread = node
+        .children()
+        .any(|n| g.has_tag(n.kind(), "case") && (spans(&n) || braced_body(&n)));
+    BlockStyle {
+        max_blank_lines: usize::from(spread),
+        force_blank: spread.then_some(case_blank as BlankRule),
+        ..BlockStyle::default()
+    }
+}
+
+fn case_blank(cx: &FormatCtx<'_>, _: &SyntaxNode, node: &SyntaxNode) -> bool {
+    cx.grammar.has_tag(node.kind(), "case")
+}
+
+/// Does `prev`, an element of a node, end in an annotation (tag `#annotation`) of a declaration
+/// (tags `#modifiers` and `#declaration`), which the style puts on a line of its own?
+pub fn annotation_line(cx: &FormatCtx<'_>, prev: &core_syntax::SyntaxElement) -> bool {
+    let g = cx.grammar;
+    let Some(n) = prev.as_node() else {
+        return false;
+    };
+    let declaration = |d: &SyntaxNode| g.has_tag(d.kind(), "declaration");
+    if g.has_tag(n.kind(), "modifiers") {
+        let annotation = |c: &core_syntax::SyntaxElement| g.has_tag(c.kind(), "annotation");
+        n.parent().is_some_and(|d| declaration(&d))
+            && n.children_with_tokens()
+                .filter(|e| !g.is_trivia(e.kind()) && !e.text_range().is_empty())
+                .last()
+                .is_some_and(|c| annotation(&c))
+    } else if g.has_tag(n.kind(), "annotation") {
+        n.parent().is_some_and(|m| {
+            g.has_tag(m.kind(), "modifiers") && m.parent().is_some_and(|d| declaration(&d))
+        })
+    } else {
+        false
+    }
+}

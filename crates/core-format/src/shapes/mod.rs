@@ -9,6 +9,7 @@ mod call_chain;
 mod chain;
 mod conditional;
 pub mod flow;
+mod heritage;
 mod key_value;
 mod list;
 mod parens;
@@ -20,14 +21,18 @@ pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
 };
 pub use block::{
-    BlockStyle, blank_before, block, block_between, block_open_inside, braces, document,
-    statement_sequence, statement_sequence_with,
+    BlockStyle, annotation_line, blank_before, block, block_between, block_open_inside, braces,
+    document, spread_cases_style, statement_sequence, statement_sequence_with,
 };
-pub use call_chain::{CHAIN_LABEL, ChainHooks, ChainPolicy, NoHooks, member_chain as call_chain};
+pub use call_chain::{
+    CHAIN_LABEL, ChainHooks, ChainPolicy, NoHooks, is_flat as flat_chain,
+    member_chain as call_chain,
+};
 pub use chain::{MemberChain, ends_in_line_comment, gap_after_operator, member_chain};
 pub use conditional::{
     Around, ConditionalHooks, ConditionalPolicy, NoConditionalHooks, conditional,
 };
+pub use heritage::{HeritageLayout, heritage};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};
 pub use parens::{

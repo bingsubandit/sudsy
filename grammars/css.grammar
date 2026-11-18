@@ -26,9 +26,9 @@ token Ident #operand #restyle
 token AtKeyword #operand #restyle
 token Hash #operand #restyle
 token String #operand #literal #string #restyle
-token Number #operand #literal #restyle
-token Percentage #operand #literal #restyle
-token Dimension #operand #literal #restyle
+token Number #operand #literal #restyle #number
+token Percentage #operand #literal #restyle #number
+token Dimension #operand #literal #restyle #number
 // `url(` + unquoted body + `)`.
 token Url #operand #literal #restyle
 token UnicodeRange #operand #literal
@@ -54,19 +54,19 @@ token Eof
 token Unknown #error
 
 node Stylesheet = items:#item* Eof
-node Rule #item = prelude:Prelude? block:Block
+node Rule #item #nest = prelude:Prelude? block:Block
 // `@else` after the block of an `@if` or `@else` is nested in it.
-node AtRule #item = AtKeyword prelude:Prelude? block:Block? else:AtRule? Semicolon?
-node Declaration #item = property:Property Colon value:Value? Semicolon?
+node AtRule #item #nest = AtKeyword prelude:Prelude? block:Block? else:AtRule? Semicolon?
+node Declaration #item #property-declaration = property:Property Colon value:Value? Semicolon?
 // A statement with no colon and no block: a Less mixin call, a stray value.
 // A stray `;` that has a comment on it (a bare one is only a token).
 node Empty #item = Semicolon
 node Statement #item = value:Value Semicolon?
-node Block = LBrace items:#item* RBrace
+node Block #declaration-block = LBrace items:#item* RBrace
 // Prelude, Property and Value hold tokens, Functions and Groups in source order.
 node Prelude = #operand* Function* Group*
 node Property = #operand* Function* Group*
-node Value #restyle = #operand* Function* Group*
+node Value #restyle #value = #operand* Function* Group*
 // A name directly followed by its parenthesized arguments.
 node Function = name:Ident args:Group
 // Any bracketed run: `( )`, `[ ]`, `#{ }`, or `{ }` inside one of them.

@@ -1,0 +1,10 @@
+id: selection-set-depth
+family: max
+params: { count: depth, tag: selection-set }
+message: "selection sets nest {count} levels deep; at most {max} are allowed"
+description: An operation or fragment nests selection sets deeper than allowed, which makes a query expensive to execute. Fragments that are spread are not followed.
+example: "{ a { b { c { d { e { f { g { h } } } } } } } }   # reported at the default depth"
+severity: off
+category: suspicious
+options:
+  - { name: max, type: int, default: 7, description: The deepest allowed nesting; the operation's own selection set is level 1. }

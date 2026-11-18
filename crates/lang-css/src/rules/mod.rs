@@ -10,4 +10,10 @@ mod values;
 
 use core_rules::Family;
 
-pub static FAMILIES: &[Family] = &[names::FAMILY, max::FAMILY, checks::FAMILY, table::FAMILY];
+pub static FAMILIES: &[Family] = &[
+    names::FAMILY,
+    core_rules::max::FAMILY,
+    max::FAMILY,
+    checks::FAMILY,
+    table::FAMILY,
+];

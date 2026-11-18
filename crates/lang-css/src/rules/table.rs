@@ -9,9 +9,9 @@
 //! in the tables `at-rule-scss` and `at-rule-less`, and their functions are not checked.
 
 use super::model::{self, Complex, Part, Piece, split_dimension};
-use super::names::selects;
 use crate::data;
 use crate::generated::kind as k;
+use core_rules::listed::selects;
 use core_rules::{Family, Params, Rule, RuleContext, RuleMeta};
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxNodeExt, TextRange};
 

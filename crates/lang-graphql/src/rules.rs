@@ -1,8 +1,6 @@
 //! The Rust rules of GraphQL; syntax rules that fit a pattern are files in `rules/`.
 
-mod naming_convention;
 mod no_typename_prefix;
-mod selection_set_depth;
 
 use crate::generated::kind;
 use core_rules::Rule;
@@ -19,8 +17,4 @@ fn name_of(def: &SyntaxNode) -> Option<SyntaxToken> {
         .find(|t| matches!(t.kind(), kind::NAME | kind::VARIABLE))
 }
 
-pub static RULES: &[&dyn Rule] = &[
-    &naming_convention::NamingConvention,
-    &no_typename_prefix::NoTypenamePrefix,
-    &selection_set_depth::SelectionSetDepth,
-];
+pub static RULES: &[&dyn Rule] = &[&no_typename_prefix::NoTypenamePrefix];

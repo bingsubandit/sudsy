@@ -19,15 +19,20 @@ pub const BREAK_ON_BLOCK: &str = "member_chain_break_on_block";
 pub const SHORT_HEAD: &str = "member_chain_short_head";
 pub const INDENT: &str = "member_chain_indent";
 pub const STYLE: &str = "member_chain_style";
+pub const FORCE_LINKS: &str = "member_chain_force_links";
+#[path = "call_chain_wrapped.rs"]
+mod wrapped;
 /// The label of the document of a chain printed in the `grouped` style.
 pub const CHAIN_LABEL: &str = "member-chain";
 
-/// The two algorithms of reference tools: `fluent` (C#, Java) groups the
-/// links at the dots; `grouped` (JS) cuts them into a first group and call groups.
+/// The algorithms of reference tools: `fluent` (C#, Java) groups the links at the dots;
+/// `grouped` (JS) cuts them into a first group and call groups; `wrapped` (Kotlin) puts every dot
+/// after the accesses of the head on a line of its own.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Style {
     Fluent,
     Grouped,
+    Wrapped,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -62,6 +67,11 @@ pub struct ChainPolicy {
     pub short_head: usize,
     /// Levels of indentation of the broken groups.
     pub indent: usize,
+    /// A chain with at least this many dots always breaks (`wrapped`; 0: never).
+    pub force_links: usize,
+    /// A chain of at most this many characters on one line of the source with fewer dots than
+    /// `force_links` is never broken (`wrapped`: a third of the line width; 0: none).
+    pub flat_below: usize,
 }
 
 impl ChainPolicy {
@@ -77,10 +87,16 @@ impl ChainPolicy {
             _ => default,
         };
         Self {
-            style: if text(STYLE) == "grouped" {
-                Style::Grouped
+            style: match text(STYLE) {
+                "grouped" => Style::Grouped,
+                "wrapped" => Style::Wrapped,
+                _ => Style::Fluent,
+            },
+            force_links: int(FORCE_LINKS, 0),
+            flat_below: if text(STYLE) == "wrapped" {
+                int("line_width", 0) / 3
             } else {
-                Style::Fluent
+                0
             },
             min_calls: int(MIN_CALLS, 1),
             keep_accesses: match text(KEEP_ACCESSES) {
@@ -133,6 +149,25 @@ pub trait ChainHooks {
     fn statement(&self, _chain: &SyntaxNode) -> bool {
         true
     }
+}
+
+/// Is the chain short, on one line and with few dots, so that no layout would change it
+/// (`wrapped` style)? Its parts are then laid out one after the other, without looking at links.
+pub fn is_flat(cx: &FormatCtx<'_>, node: &SyntaxNode, policy: &ChainPolicy) -> bool {
+    let range = node.text_range();
+    let (Some(first), Some(last)) = (cx.first_token(node), cx.last_token(node)) else {
+        return false;
+    };
+    let code = core_syntax::TextRange::new(first.text_range().start(), last.text_range().end());
+    usize::from(code.len()) <= policy.flat_below
+        && !cx.has_line_break(node, code)
+        && range.len() > 0.into()
+        && node
+            .descendants_with_tokens()
+            .filter_map(|e| e.into_token())
+            .filter(|t| matches!(t.text(), "." | "?."))
+            .count()
+            < policy.force_links
 }
 
 /// A language with nothing of its own.
@@ -248,8 +283,18 @@ impl<'a> Walk<'a> {
         let mut elems = all.clone();
         elems.retain(|e| Some(e) != receiver.as_ref());
         // A member whose name is itself a chain (`a?.b.c()`: the `?` and then the chain) continues it.
+        // A member that is a call on a plain name (`a.b(c)` as `a`, `.`, `b(c)`) is the call link itself.
+        let selector = match field("member") {
+            Some(SyntaxElement::Node(m)) if !call && self.tag(&m, "call") => {
+                let callee = self.cx.grammar.slot(&m, "callee");
+                !callee
+                    .and_then(|c| c.into_node())
+                    .is_some_and(|c| self.is_link(&c))
+            }
+            _ => false,
+        };
         let nested = match field("member") {
-            Some(SyntaxElement::Node(m)) if !call && self.is_link(&m) => Some(m),
+            Some(SyntaxElement::Node(m)) if !call && !selector && self.is_link(&m) => Some(m),
             _ => None,
         };
         if let Some(m) = &nested {
@@ -266,7 +311,7 @@ impl<'a> Walk<'a> {
             node: node.clone(),
             elems,
             dotted,
-            call,
+            call: call || selector,
             index,
             literal,
             postfix: self.tag(node, "unary"),
@@ -415,6 +460,9 @@ pub fn member_chain(
         .map(|t| cx.leading_comments_doc(t))
         .collect();
     let head_call = head.as_node().is_some_and(|n| w.tag(n, "call"));
+    if policy.style == Style::Wrapped {
+        return wrapped::wrapped(&w, node, &head, lead, &links, policy, hooks);
+    }
     let directives = cx.directives_of(node);
     let break_all = directives.has(&Directive::BreakAll);
     let force = has_line_comment(cx, &links) || break_all;

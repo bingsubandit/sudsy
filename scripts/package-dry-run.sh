@@ -27,8 +27,8 @@ for w in wheels:
 EOF
 host=$(node -p 'process.platform + "-" + process.arch')
 if [ -d "$out/packages/npm/cli-$host" ]; then
-  mkdir -p "$out/packages/npm/sudsy/node_modules/@sudsy"
-  ln -s "$out/packages/npm/cli-$host" "$out/packages/npm/sudsy/node_modules/@sudsy/cli-$host"
+  mkdir -p "$out/packages/npm/sudsy/node_modules/@sudsylint"
+  ln -s "$out/packages/npm/cli-$host" "$out/packages/npm/sudsy/node_modules/@sudsylintlint/cli-$host"
   node "$out/packages/npm/sudsy/bin/sudsy.js" --version
   rm -r "$out/packages/npm/sudsy/node_modules"
 fi

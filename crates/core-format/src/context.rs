@@ -586,6 +586,19 @@ impl<'a> FormatCtx<'a> {
             })
     }
 
+    /// `f` with the trailing comments of `tok` held back from what it prints and put after it, so
+    /// that they stay at the end of their line and do not break a group in `f`.
+    pub fn trailing_after(
+        &self,
+        tok: Option<&SyntaxToken>,
+        f: impl FnOnce() -> Result<Doc, FormatError>,
+    ) -> Result<Doc, FormatError> {
+        let Some(tok) = tok else { return f() };
+        self.detach_trailing(tok);
+        let doc = f()?;
+        Ok(doc::concat(vec![doc, self.reattach_trailing(tok)]))
+    }
+
     /// Source text from the node's first to its last token, plus those tokens' outer comments.
     pub fn verbatim_node(&self, node: &SyntaxNode) -> Doc {
         match (self.first_token(node), self.last_token(node)) {

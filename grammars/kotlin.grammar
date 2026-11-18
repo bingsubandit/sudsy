@@ -130,9 +130,9 @@ node FileAnnotationList #opaque
 node ImportDirective #import =
     Keyword path:#expression Dot? Mul? ImportAlias?
 node ImportAlias #opaque
-node ModifierList #opaque
-node Annotation #opaque
-node AnnotationEntry #opaque
+node ModifierList #modifiers #opaque
+node Annotation #annotation #opaque
+node AnnotationEntry #annotation #opaque
 node AnnotationTarget #opaque
 node TypeArgumentList #opaque
 node ValueArgumentList #opaque

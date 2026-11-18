@@ -19,7 +19,15 @@ options:
       range: [1, 1000]
       default: 1
       doc: "A class with at least this many primary-constructor parameters puts each on a line of its own, even when the signature fits."
+  - class_signature_wrap_min_supertypes:
+      range: [1, 1000]
+      default: 2
+      doc: "A class or object with at least this many supertypes puts each on a line of its own."
   - assignment_layout: ["break"]
   - assignment_conditional: ["always"]
   - assignment_indent: [1]
+  - member_chain_style: ["wrapped"]
+  - member_chain_min_calls: [2]
+  - member_chain_force_links: [4]
+  - member_chain_indent: [1]
 presets: [ktlint]

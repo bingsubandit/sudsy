@@ -1,7 +1,7 @@
 id: attr-pattern
-family: attr-pattern
-params: { attribute: attr-name }
-message: "the attribute name `{value}` does not match the pattern"
+family: names
+params: { target: attr-name, mode: pattern }
+message: "the attribute name `{name}` does not match the pattern"
 description: >-
   An attribute name that does not match the `pattern` option (a regex; by default letters, digits, `-` and `:`, in either case).
 example: '<p a_b="c">   <p a-b="c">'

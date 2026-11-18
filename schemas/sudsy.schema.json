@@ -2205,7 +2205,7 @@
                       "properties": {
                         "arguments": {
                           "default": "camelCase",
-                          "description": "Style of argument names in definitions: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of argument names in definitions.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2217,7 +2217,7 @@
                         },
                         "directives": {
                           "default": "camelCase",
-                          "description": "Style of directive names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of directive names.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2229,7 +2229,7 @@
                         },
                         "enum_values": {
                           "default": "UPPER_CASE",
-                          "description": "Style of enum values: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of enum values.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2241,7 +2241,7 @@
                         },
                         "fields": {
                           "default": "camelCase",
-                          "description": "Style of field and input field names in definitions: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of field and input field names in definitions.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2253,7 +2253,7 @@
                         },
                         "fragments": {
                           "default": "PascalCase",
-                          "description": "Style of fragment names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of fragment names.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2265,7 +2265,7 @@
                         },
                         "operations": {
                           "default": "PascalCase",
-                          "description": "Style of operation names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of operation names.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2277,7 +2277,7 @@
                         },
                         "types": {
                           "default": "PascalCase",
-                          "description": "Style of type names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of type names.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -2289,7 +2289,7 @@
                         },
                         "variables": {
                           "default": "camelCase",
-                          "description": "Style of variable names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+                          "description": "Style of variable names.",
                           "enum": [
                             "PascalCase",
                             "camelCase",
@@ -3907,7 +3907,7 @@
                     "options": {
                       "additionalProperties": false,
                       "properties": {
-                        "max_depth": {
+                        "max": {
                           "default": 7,
                           "description": "The deepest allowed nesting; the operation's own selection set is level 1.",
                           "type": "integer"
@@ -7783,10 +7783,11 @@
             },
             "member_chain_style": {
               "default": "grouped",
-              "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line).",
+              "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line); `wrapped` keeps the accesses in front of the first call with the head and puts every later dot on a line of its own, a call after a block or argument list that ends on a line of its own staying on that line.",
               "enum": [
                 "fluent",
-                "grouped"
+                "grouped",
+                "wrapped"
               ],
               "type": "string"
             },
@@ -8007,6 +8008,13 @@
               "minimum": 1,
               "type": "integer"
             },
+            "class_signature_wrap_min_supertypes": {
+              "default": 2,
+              "description": "A class or object with at least this many supertypes puts each on a line of its own.",
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -8051,6 +8059,37 @@
               "maximum": 1000,
               "minimum": 20,
               "type": "integer"
+            },
+            "member_chain_force_links": {
+              "default": 4,
+              "description": "A chain of member accesses and calls with at least this many dots always breaks (`wrapped` style; 0: never).",
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "member_chain_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the lines of a broken member chain.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_min_calls": {
+              "default": 2,
+              "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "member_chain_style": {
+              "default": "wrapped",
+              "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line); `wrapped` keeps the accesses in front of the first call with the head and puts every later dot on a line of its own, a call after a block or argument list that ends on a line of its own staying on that line.",
+              "enum": [
+                "fluent",
+                "grouped",
+                "wrapped"
+              ],
+              "type": "string"
             },
             "trailing_commas": {
               "default": "multiline",
@@ -10288,10 +10327,11 @@
                   },
                   "member_chain_style": {
                     "default": "grouped",
-                    "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line).",
+                    "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line); `wrapped` keeps the accesses in front of the first call with the head and puts every later dot on a line of its own, a call after a block or argument list that ends on a line of its own staying on that line.",
                     "enum": [
                       "fluent",
-                      "grouped"
+                      "grouped",
+                      "wrapped"
                     ],
                     "type": "string"
                   },
@@ -10512,6 +10552,13 @@
                     "minimum": 1,
                     "type": "integer"
                   },
+                  "class_signature_wrap_min_supertypes": {
+                    "default": 2,
+                    "description": "A class or object with at least this many supertypes puts each on a line of its own.",
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -10556,6 +10603,37 @@
                     "maximum": 1000,
                     "minimum": 20,
                     "type": "integer"
+                  },
+                  "member_chain_force_links": {
+                    "default": 4,
+                    "description": "A chain of member accesses and calls with at least this many dots always breaks (`wrapped` style; 0: never).",
+                    "maximum": 1000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "member_chain_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the lines of a broken member chain.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_min_calls": {
+                    "default": 2,
+                    "description": "A chain of member accesses and calls with at least this many calls is broken one call per line when it does not fit on a line (`fluent` style).",
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "member_chain_style": {
+                    "default": "wrapped",
+                    "description": "Layout of a chain of member accesses and calls that does not fit: `fluent` breaks before every dot once there are `member_chain_min_calls` calls; `grouped` keeps the head, its calls and indexes in the first group and puts a call group per line after it (a chain of up to two groups stays on one line); `wrapped` keeps the accesses in front of the first call with the head and puts every later dot on a line of its own, a call after a block or argument list that ends on a line of its own staying on that line.",
+                    "enum": [
+                      "fluent",
+                      "grouped",
+                      "wrapped"
+                    ],
+                    "type": "string"
                   },
                   "trailing_commas": {
                     "default": "multiline",

@@ -1,0 +1,5 @@
+# Kotlin layouts chosen by rows (syntax: crates/core-format/src/layout.rs); the rest is Rust.
+[layout]
+Class|ObjectDeclaration : heritage colon=Colon list=SuperTypeList ctor=PrimaryConstructor params=ValueParameterList min=option:class_signature_wrap_min_supertypes hug_min=option:class_signature_wrap_min_parameters
+DotQualifiedExpression|SafeAccessExpression&parent!=ImportDirective|PackageDirective : chain spaced=LambdaArgument
+When : cases open=Lbrace

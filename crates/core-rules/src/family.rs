@@ -61,6 +61,11 @@ impl Params {
         self.choice(key, false, &[("false", false), ("true", true)])
     }
 
+    /// Every param not read yet, in key order; a family whose param names are its data.
+    pub fn rest(&mut self) -> Vec<(String, String)> {
+        std::mem::take(&mut self.0).into_iter().collect()
+    }
+
     /// Fails on a param nothing read.
     pub fn done(self) -> Result<(), String> {
         match self.0.keys().next() {

@@ -9,7 +9,9 @@
 //! statements); `colon_body colon=K clauses=K` (the alternative syntax: `:` ... `end`); `list`
 //! (a parenthesized list, one item per line when the source breaks it); `array` (a list kept as
 //! written, with a trailing comma when its closing bracket is on a line of its own);
-//! `braced_list open=K` (`match (x) { ... }`).
+//! `braced_list open=K` (`match (x) { ... }`); `heritage colon=K list=K ctor=K params=K
+//! min=option:N hug_min=option:N` (supertypes one per line); `chain spaced=K` (a member chain);
+//! `cases open=K` (a `when` body, a blank between cases when one spans lines).
 //!
 //! Keys: `empty=expand` (an empty block is two lines, else `{}`), `gap=option:NAME|space` (what
 //! stands before a brace: a line break, or a blank when the option is `same_line`),
@@ -34,6 +36,9 @@ const KIND_KEYS: &[&str] = &[
     "colon",
     "clauses",
     "no_trailing_after",
+    "list",
+    "ctor",
+    "spaced",
 ];
 
 pub(crate) struct Row {
@@ -148,7 +153,12 @@ impl File {
 }
 
 /// The rows of a language.
-pub(crate) struct Layout(Vec<Row>);
+pub(crate) struct Layout {
+    rows: Vec<Row>,
+    /// For each node kind (by index) the rows that name it, in order: a node of a kind no row
+    /// names is found in one step.
+    by_kind: Vec<Vec<usize>>,
+}
 
 /// What stands before a `{`: a line break, or a blank when the row's option says `same_line`.
 fn brace_gap(cx: &FormatCtx<'_>, row: &Row) -> Doc {
@@ -193,7 +203,18 @@ fn statements(cx: &FormatCtx<'_>, items: &[SyntaxNode]) -> R {
 
 impl Layout {
     pub(crate) fn parse(g: &Grammar, lines: &[&str]) -> Layout {
-        Layout(lines.iter().map(|l| Row::parse(g, l)).collect())
+        let rows: Vec<Row> = lines.iter().map(|l| Row::parse(g, l)).collect();
+        let mut by_kind: Vec<Vec<usize>> = Vec::new();
+        for (i, r) in rows.iter().enumerate() {
+            for k in &r.kinds {
+                let at = k.index() as usize;
+                if by_kind.len() <= at {
+                    by_kind.resize(at + 1, Vec::new());
+                }
+                by_kind[at].push(i);
+            }
+        }
+        Layout { rows, by_kind }
     }
 
     /// The node laid out by the first row that matches it, `None` when no row does.
@@ -204,7 +225,12 @@ impl Layout {
         flows: (&Flow<'_>, &Flow<'_>),
         file: &File,
     ) -> Option<R> {
-        let row = self.0.iter().find(|r| r.matches(node))?;
+        let row = self
+            .by_kind
+            .get(node.kind().index() as usize)?
+            .iter()
+            .map(|&i| &self.rows[i])
+            .find(|r| r.matches(node))?;
         let (flow, level) = flows;
         let generic = || flow.seq(cx, &kids(cx, node));
         Some(match row.shape.as_str() {
@@ -225,6 +251,9 @@ impl Layout {
             "list" => list(cx, node, row).unwrap_or_else(generic),
             "array" => array(cx, node, row, level),
             "braced_list" => braced_list(cx, node, row, flow).unwrap_or_else(generic),
+            "heritage" => heritage(cx, node, row, flow).unwrap_or_else(generic),
+            "chain" => chain(cx, node, row).unwrap_or_else(generic),
+            "cases" => cases(cx, node, row, flow).unwrap_or_else(generic),
             other => panic!("layout: unknown shape `{other}`"),
         })
     }
@@ -463,6 +492,114 @@ fn braced_list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>
             flow.seq(cx, &els[..open])?,
             doc::lit(" "),
             list,
+        ]))
+    })())
+}
+
+/// An integer option named by the row's `key=option:NAME`.
+fn option_int(cx: &FormatCtx<'_>, row: &Row, key: &str) -> usize {
+    row.arg(key)
+        .and_then(|v| v.strip_prefix("option:"))
+        .map_or(usize::MAX, |name| cx.options.int(name) as usize)
+}
+
+/// `head : A, B body`: the supertypes (`list=K`) one per line from `min=option:NAME` of them on;
+/// after a parameter list (`ctor=K`, then `params=K`) of `hug_min=option:NAME` that breaks, the
+/// first stays on the line of the `)`.
+fn heritage(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -> Option<R> {
+    let els = kids(cx, node);
+    let colon = els
+        .iter()
+        .position(|e| row.kinds_arg("colon").contains(&e.kind()))?;
+    let list = els
+        .get(colon + 1)
+        .and_then(|e| e.as_node())
+        .filter(|n| row.kinds_arg("list").contains(&n.kind()))?;
+    let entries: Vec<SyntaxElement> = kids(cx, list)
+        .into_iter()
+        .filter(|e| !cx.grammar.has_tag(e.kind(), "separator"))
+        .collect();
+    let params = els[..colon]
+        .iter()
+        .filter_map(|e| e.as_node())
+        .find(|n| row.kinds_arg("ctor").contains(&n.kind()))
+        .and_then(|c| {
+            c.children()
+                .find(|c| row.kinds_arg("params").contains(&c.kind()))
+        })
+        .map_or(0, |l| {
+            l.children().filter(|c| !c.text_range().is_empty()).count()
+        });
+    let layout = if entries.len() < option_int(cx, row, "min") {
+        shapes::HeritageLayout::Inline
+    } else if params > 0 && params >= option_int(cx, row, "hug_min") {
+        shapes::HeritageLayout::Hugged
+    } else {
+        shapes::HeritageLayout::Wrapped
+    };
+    let items = entries
+        .iter()
+        .map(|e| el(cx, e))
+        .collect::<Result<Vec<_>, _>>();
+    let tail = (colon + 2 < els.len()).then(|| flow.seq(cx, &els[colon + 2..]));
+    Some((|| {
+        Ok(shapes::heritage(
+            flow.seq(cx, &els[..colon])?,
+            el(cx, &els[colon])?,
+            items?,
+            layout,
+            tail.transpose()?,
+        ))
+    })())
+}
+
+/// A member chain `a.b().c()` laid out by its outermost node (`spaced=K`: a link of that kind
+/// follows its call after a blank).
+fn chain(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
+    let policy = shapes::ChainPolicy::of(cx.options);
+    let inner = node
+        .parent()
+        .is_some_and(|p| row.kinds.contains(&p.kind()) && p.first_child().as_ref() == Some(node));
+    if inner || shapes::flat_chain(cx, node, &policy) {
+        return None;
+    }
+    Some(shapes::call_chain(
+        cx,
+        node,
+        &policy,
+        &SpacedLinks(cx, row.kinds_arg("spaced")),
+    ))
+}
+
+struct SpacedLinks<'a, 'b>(&'a FormatCtx<'b>, &'a [SyntaxKind]);
+
+impl shapes::ChainHooks for SpacedLinks<'_, '_> {
+    fn element(&self, e: &SyntaxElement, _: bool) -> Option<R> {
+        let n = e.as_node().filter(|n| self.1.contains(&n.kind()))?;
+        Some(
+            self.0
+                .format(n)
+                .map(|d| doc::concat(vec![doc::lit(" "), d])),
+        )
+    }
+}
+
+/// `when (x) { ... }`: the head, then the braces with a blank between cases when one spans lines.
+fn cases(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -> Option<R> {
+    let els = kids(cx, node);
+    let at = els
+        .iter()
+        .position(|e| row.kinds_arg("open").contains(&e.kind()))?;
+    let (SyntaxElement::Token(open), Some(SyntaxElement::Token(close))) = (&els[at], els.last())
+    else {
+        return None;
+    };
+    let body = shapes::block_between(cx, node, open, close, &shapes::spread_cases_style(cx, node));
+    Some((|| {
+        Ok(doc::concat(vec![
+            flow.seq(cx, &els[..at])?,
+            doc::lit(" "),
+            body?,
         ]))
     })())
 }

@@ -1,14 +1,12 @@
 //! Expressions and statements: control flow, lambdas, operators.
 
 use super::*;
-use core_format::shapes::{self, BlockStyle};
 
 pub(super) fn rule(cx: &FormatCtx<'_>, node: &SyntaxNode, kind: SyntaxKind) -> Option<R> {
     Some(match kind {
         k::IF | k::WHILE | k::FOR => control(cx, node),
-        k::DO_WHILE | k::TRY => joined(cx, node),
-        k::WHEN => when(cx, node),
-        k::FUNCTION_LITERAL => lambda(cx, node),
+        k::TRY => joined(cx, node),
+        k::FUNCTION_LITERAL => cx.trailing_after(cx.last_token(node).as_ref(), || lambda(cx, node)),
         k::BINARY_EXPRESSION => binary(cx, node),
         k::PARENTHESIZED => parenthesized(cx, node),
         _ => return None,
@@ -70,22 +68,6 @@ fn joined(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(doc::concat(parts))
 }
 
-fn when(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = kids(cx, node);
-    let (Some(open), Some(close)) = (
-        els.iter().find(|e| e.kind() == k::LBRACE),
-        els.iter().rfind(|e| e.kind() == k::RBRACE),
-    ) else {
-        return generic(cx, node);
-    };
-    let (SyntaxElement::Token(open), SyntaxElement::Token(close)) = (open, close) else {
-        return generic(cx, node);
-    };
-    let at = els.iter().position(|e| e.kind() == k::LBRACE).unwrap_or(0);
-    let body = shapes::block_between(cx, node, open, close, &BlockStyle::default())?;
-    Ok(doc::concat(vec![seq(cx, &els[..at])?, doc::lit(" "), body]))
-}
-
 /// `{ a, b -> body }`: the body below the head when the source spans lines.
 fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let els = kids(cx, node);
@@ -130,7 +112,11 @@ fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let [left, op, right] = &els[..] else {
         return generic(cx, node);
     };
-    let elvis = first(cx, op).is_some_and(|t| t.kind() == k::ELVIS);
+    let op_tok = first(cx, op);
+    if let Some(t) = op_tok.as_ref().filter(|t| t.kind() == k::EQ) {
+        return super::decl::assign(cx, node, el(cx, left)?, t, right);
+    }
+    let elvis = op_tok.is_some_and(|t| t.kind() == k::ELVIS);
     let wraps = break_after(cx, left) || break_after(cx, op);
     if !wraps {
         return generic(cx, node);

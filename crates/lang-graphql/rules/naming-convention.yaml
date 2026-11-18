@@ -1,0 +1,30 @@
+id: naming-convention
+family: naming-convention
+params:
+  operations: operation
+  fragments: fragment
+  variables: variable
+  fields: field|input-value
+  arguments: input-value<parameter-list
+  types: type-declaration
+  enum_values: enum-value
+  directives: directive-def
+message: "`{name}` must be {convention}"
+description: >-
+  A name does not follow the style set for what it names: operations, fragments, variables,
+  fields, arguments, types, enum values and directives. `PascalCase` and `camelCase` allow
+  letters and digits only, `snake_case` and `UPPER_CASE` forbid the other case; leading
+  underscores are ignored. No fix: renaming changes the schema or the queries that use it.
+  Equivalent: graphql-eslint naming-convention (styles only, no prefix or suffix lists).
+example: "type user_account {   # reported: PascalCase wanted\n  FirstName: String   # reported: camelCase wanted\n}"
+severity: off
+category: style
+options:
+  - { name: operations, type: string, default: PascalCase, choices: &styles [PascalCase, camelCase, snake_case, UPPER_CASE, "off"], description: "Style of operation names." }
+  - { name: fragments, type: string, default: PascalCase, choices: *styles, description: "Style of fragment names." }
+  - { name: variables, type: string, default: camelCase, choices: *styles, description: "Style of variable names." }
+  - { name: fields, type: string, default: camelCase, choices: *styles, description: "Style of field and input field names in definitions." }
+  - { name: arguments, type: string, default: camelCase, choices: *styles, description: "Style of argument names in definitions." }
+  - { name: types, type: string, default: PascalCase, choices: *styles, description: "Style of type names." }
+  - { name: enum_values, type: string, default: UPPER_CASE, choices: *styles, description: "Style of enum values." }
+  - { name: directives, type: string, default: camelCase, choices: *styles, description: "Style of directive names." }

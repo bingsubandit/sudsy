@@ -201,6 +201,27 @@ impl Flow<'_> {
         doc::concat((0..=blank).map(|_| doc::hardline()).collect())
     }
 
+    /// The children of `node` one after the other with the spacing of [`Flow::between`] and no
+    /// hanging part: a line break of the source stays, a declaration's annotation has a line
+    /// of its own (modifiers, attributes).
+    pub fn flat(&self, cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
+        let els = kids(cx, node);
+        let mut parts = Vec::with_capacity(els.len() * 2);
+        for (i, e) in els.iter().enumerate() {
+            if i > 0
+                && let (Some(a), Some(b)) = (last(cx, &els[i - 1]), first(cx, e))
+            {
+                if super::annotation_line(cx, &els[i - 1]) {
+                    parts.push(doc::hardline());
+                } else {
+                    parts.extend(self.between(cx, &a, &b));
+                }
+            }
+            parts.push(el(cx, e)?);
+        }
+        Ok(doc::concat(parts))
+    }
+
     /// The elements one after the other, each laid out by [`el`].
     pub fn seq(&self, cx: &FormatCtx<'_>, els: &[SyntaxElement]) -> Result<Doc, FormatError> {
         self.seq_with(cx, els, |e| el(cx, e))
@@ -225,7 +246,12 @@ impl Flow<'_> {
         for e in els {
             let mut d = doc(e)?;
             if let (Some((p, a)), Some(b)) = (prev.take(), first(cx, e)) {
-                let mut sep = self.between(cx, &a, &b);
+                // A declaration's annotation stands on a line of its own.
+                let mut sep = if super::annotation_line(cx, p) {
+                    Some(doc::hardline())
+                } else {
+                    self.between(cx, &a, &b)
+                };
                 // An operator that moves to the start of the next line leaves its comment on the
                 // line it comes from.
                 if let SyntaxElement::Token(t) = e

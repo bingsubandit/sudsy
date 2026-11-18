@@ -3,6 +3,7 @@ grammar-path: grammars/tree-sitter-make
 extensions: [mk, mak]
 file-names: [Makefile, GNUmakefile, makefile]
 formatter: MakefileFormatter
+families: "&[core_rules::max::FAMILY]"
 composite:
   text: Word
   continuation: true

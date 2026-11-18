@@ -6466,7 +6466,7 @@
             "off"
           ],
           "default": "PascalCase",
-          "description": "Style of operation names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of operation names.",
           "name": "operations",
           "type": "string"
         },
@@ -6479,7 +6479,7 @@
             "off"
           ],
           "default": "PascalCase",
-          "description": "Style of fragment names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of fragment names.",
           "name": "fragments",
           "type": "string"
         },
@@ -6492,7 +6492,7 @@
             "off"
           ],
           "default": "camelCase",
-          "description": "Style of variable names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of variable names.",
           "name": "variables",
           "type": "string"
         },
@@ -6505,7 +6505,7 @@
             "off"
           ],
           "default": "camelCase",
-          "description": "Style of field and input field names in definitions: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of field and input field names in definitions.",
           "name": "fields",
           "type": "string"
         },
@@ -6518,7 +6518,7 @@
             "off"
           ],
           "default": "camelCase",
-          "description": "Style of argument names in definitions: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of argument names in definitions.",
           "name": "arguments",
           "type": "string"
         },
@@ -6531,7 +6531,7 @@
             "off"
           ],
           "default": "PascalCase",
-          "description": "Style of type names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of type names.",
           "name": "types",
           "type": "string"
         },
@@ -6544,7 +6544,7 @@
             "off"
           ],
           "default": "UPPER_CASE",
-          "description": "Style of enum values: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of enum values.",
           "name": "enum_values",
           "type": "string"
         },
@@ -6557,7 +6557,7 @@
             "off"
           ],
           "default": "camelCase",
-          "description": "Style of directive names: `PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE` or `off`.",
+          "description": "Style of directive names.",
           "name": "directives",
           "type": "string"
         }
@@ -6639,7 +6639,7 @@
       "default_level": "off",
       "description": "An operation or fragment nests selection sets deeper than allowed, which makes a query expensive to execute. Fragments that are spread are not followed.",
       "example": {
-        "config": "selection-set-depth:\n  level: warn\n  options:\n    max_depth: 2\n",
+        "config": "selection-set-depth:\n  level: warn\n  options:\n    max: 2\n",
         "fixed": null,
         "input": "query Q { a { b { c } } }\nfragment F on T { a { b } }\n",
         "language": "graphql",
@@ -6660,7 +6660,7 @@
         {
           "default": 7,
           "description": "The deepest allowed nesting; the operation's own selection set is level 1.",
-          "name": "max_depth",
+          "name": "max",
           "type": "int"
         }
       ],

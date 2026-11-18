@@ -1,6 +1,7 @@
 name: Publish packages
 
-# Started by hand on a release tag (Run workflow, pick the tag), with one input ticked per channel.
+# Started by hand on a release tag (Run workflow, pick the tag), or on main with the `tag` input,
+# with one input ticked per channel.
 # It renders the packages from the assets of the published GitHub release of that tag
 # (scripts/package-channels.py), so publish the draft release first. Nothing runs on a tag push.
 # A channel whose secret is missing is skipped with a warning. Setup per channel:
@@ -9,8 +10,12 @@ name: Publish packages
 on:
   workflow_dispatch:
     inputs:
+      tag:
+        description: "Release tag to publish (empty: the tag the run was started on). Lets a run from main publish an older release with the current packaging scripts."
+        type: string
+        default: ""
       npm:
-        description: "npm: sudsy and @sudsy/cli-* (secret NPM_TOKEN)"
+        description: "npm: sudsy and @sudsylint/cli-* (secret NPM_TOKEN)"
         type: boolean
         default: false
       pypi:
@@ -35,11 +40,11 @@ permissions:
 
 env:
   GH_TOKEN: ${{ github.token }}
-  TAG: ${{ github.ref_name }}
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   npm:
-    if: inputs.npm && github.ref_type == 'tag'
+    if: inputs.npm && (inputs.tag != '' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -69,7 +74,7 @@ jobs:
           done
 
   pypi:
-    if: inputs.pypi && github.ref_type == 'tag'
+    if: inputs.pypi && (inputs.tag != '' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -82,7 +87,7 @@ jobs:
           packages-dir: out/pypi
 
   homebrew:
-    if: inputs.homebrew && github.ref_type == 'tag'
+    if: inputs.homebrew && (inputs.tag != '' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     env:
       TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
@@ -110,7 +115,7 @@ jobs:
           git push
 
   scoop:
-    if: inputs.scoop && github.ref_type == 'tag'
+    if: inputs.scoop && (inputs.tag != '' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     env:
       BUCKET_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
@@ -140,7 +145,7 @@ jobs:
   # Pushes the manifests to a fork of microsoft/winget-pkgs and opens the pull request. The fork
   # is made on the first run, by the owner of WINGET_TOKEN.
   winget:
-    if: inputs.winget && github.ref_type == 'tag'
+    if: inputs.winget && (inputs.tag != '' || github.ref_type == 'tag')
     runs-on: ubuntu-latest
     env:
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}

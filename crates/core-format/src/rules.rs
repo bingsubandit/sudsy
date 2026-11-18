@@ -189,6 +189,17 @@ impl RuleFormatter {
         }
     }
 
+    /// The node laid out by a `[layout]` row with the language's own `flow`, `None` when no row
+    /// matches (a language that formats most nodes in Rust and only some by rows).
+    pub fn layout_node(
+        &self,
+        node: &SyntaxNode,
+        cx: &FormatCtx<'_>,
+        flow: &Flow<'_>,
+    ) -> Option<Result<Doc, FormatError>> {
+        self.layout.format(cx, node, (flow, flow), &self.file)
+    }
+
     pub fn blank_between(&self, cx: &FormatCtx<'_>, prev: &SyntaxNode, next: &SyntaxNode) -> bool {
         self.blank.iter().any(|r| {
             r.prev.matches(prev.kind())
@@ -244,7 +255,7 @@ impl LazyRules {
         }
     }
 
-    fn get(&self) -> &RuleFormatter {
+    pub fn get(&self) -> &RuleFormatter {
         self.cell
             .get_or_init(|| RuleFormatter::parse((self.grammar)(), self.text))
     }

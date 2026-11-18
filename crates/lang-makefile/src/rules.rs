@@ -9,7 +9,6 @@ pub static RULES: &[&dyn Rule] = &[
     &MinPhony,
     &PhonyDeclared,
     &TimestampExpanded,
-    &MaxBodyLength,
     &UniqueTargets,
 ];
 
@@ -144,35 +143,6 @@ rule! {
                 name.text_range(),
                 format!("variable `{}` possibly contains a timestamp and should be simply expanded", name.text()),
             );
-        }
-    }
-}
-
-rule! {
-    pub MaxBodyLength {
-        id: "max-body-length",
-        category: Cleanup,
-        default: Off,
-        description: "A rule whose recipe has more lines than allowed (checkmake `maxbodylength`). \
-                  Every physical line counts, a continued command and a tab-indented comment \
-                  included.",
-        example: "build:   # 6 lines with the default of 5",
-        options: [OptionDecl {
-            name: "max",
-            default: Opt::Int(5),
-            check: Check::Any,
-            description: "The most lines a recipe may have.",
-        }],
-        kinds: &[k::RULE],
-    }
-
-    fn check(&self, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-        let lines: usize = body(node)
-            .map(|l| l.text().to_string().trim().matches('\n').count() + 1)
-            .sum();
-        let max = ctx.options.int("max") as usize;
-        if let (true, Some(at)) = (lines > max, head(node)) {
-            ctx.report(at, format!("recipe has {lines} lines, more than the {max} allowed"));
         }
     }
 }
