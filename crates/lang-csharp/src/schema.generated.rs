@@ -94,6 +94,10 @@ pub const BLANK_LINE_BEFORE_COMMENT: &str = "blank_line_before_comment";
 #[allow(dead_code)]
 pub const BLANK_LINE_AFTER_COMMENT: &str = "blank_line_after_comment";
 #[allow(dead_code)]
+pub const BLANK_DIRECTIVES_SKIP: &str = "blank_directives_skip";
+#[allow(dead_code)]
+pub const BLANK_DIRECTIVES_ATTACH: &str = "blank_directives_attach";
+#[allow(dead_code)]
 pub const SPACE_AFTER_DELEGATE: &str = "space_after_delegate";
 #[allow(dead_code)]
 pub const SPACE_BETWEEN_EMPTY_FOR_CLAUSES: &str = "space_between_empty_for_clauses";
@@ -463,6 +467,8 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice("blank_lines_after_block", &["preserve", "require"], "preserve", "Blank line after a statement, member or switch section that ends with a closing brace: `preserve` keeps the source's (at most one); `require` adds one before the next statement, member or section."),
         core_config::OptionDef::choice("blank_line_before_comment", &["preserve", "require"], "preserve", "Blank line between a statement, member or switch section and a `//` comment on the lines before the next one (not `////`): `preserve` keeps the source's; `require` adds one."),
         core_config::OptionDef::choice("blank_line_after_comment", &["preserve", "remove"], "preserve", "Blank line between the last `//` or `///` comment in front of code and that code: `preserve` keeps the source's (at most one); `remove` drops it. Comments at the start of a file and `////` comments keep theirs."),
+        core_config::OptionDef::words("blank_directives_skip", &["#if", "#el", "#endif", "#endregion"], "Preprocessor directives (by their first characters) in front of a member or statement after which the blank line before it is the source's: the item may start after the directive, so the blank line options add none."),
+        core_config::OptionDef::words("blank_directives_attach", &["#pragma"], "Preprocessor directives (by their first characters) that follow an item without a blank line and have one after them: they belong to that item, and the blank line options add none before them."),
         core_config::OptionDef::boolean("space_after_delegate", true, "A space between `delegate` and the parameter list of an anonymous method (`delegate (int x) { }`); when false `delegate(int x) { }`."),
         core_config::OptionDef::boolean("space_between_empty_for_clauses", false, "A space between the two semicolons of a `for` with an empty condition (`for (; ;)`); when false `for (;;)`."),
         core_config::OptionDef::boolean("space_after_empty_last_for_clause", false, "A space before the `)` of a `for` whose last clause is empty (`for (int i = 0; i < n; )`); when false `for (int i = 0; i < n;)`."),

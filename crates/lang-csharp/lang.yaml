@@ -148,6 +148,14 @@ options:
       values: ["preserve", "remove"]
       default: "preserve"
       doc: "Blank line between the last `//` or `///` comment in front of code and that code: `preserve` keeps the source's (at most one); `remove` drops it. Comments at the start of a file and `////` comments keep theirs."
+  - blank_directives_skip:
+      kind: "words"
+      default: ["#if", "#el", "#endif", "#endregion"]
+      doc: "Preprocessor directives (by their first characters) in front of a member or statement after which the blank line before it is the source's: the item may start after the directive, so the blank line options add none."
+  - blank_directives_attach:
+      kind: "words"
+      default: ["#pragma"]
+      doc: "Preprocessor directives (by their first characters) that follow an item without a blank line and have one after them: they belong to that item, and the blank line options add none before them."
   - space_after_delegate:
       default: true
       doc: "A space between `delegate` and the parameter list of an anonymous method (`delegate (int x) { }`); when false `delegate(int x) { }`."

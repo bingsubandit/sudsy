@@ -32,8 +32,8 @@ text={ / * : no
 # A blank line between two members unless both are fields without a doc comment or annotation
 # arguments (syntax: crates/core-format/src/blank.rs).
 [blank]
-kind!=FieldDeclaration|ConstantDeclaration / *
-* / kind!=FieldDeclaration|ConstantDeclaration
+* / * : prev.compact=no
+* / * : compact=no
 * / * : doc=yes
 * / * : prev.doc=yes
 * / * : annotation_args=yes

@@ -103,7 +103,7 @@ node ClassDeclarationCore #child #wrapper #type-declaration #declaration #scope 
 node ClassLiteral #child #expression #opaque = #child*
 node CompactConstructorDeclaration #child #member #opaque = #child*
 node CompilationUnit #child #wrapper #scope #block = items:#child*
-node ConstantDeclaration #child #member #opaque = #child*
+node ConstantDeclaration #child #member #compact #opaque = #child*
 node ConstructorBody #child #block = LBrace items:#statement* RBrace
 node ConstructorDeclaration #child #member #declaration #function #scope = Modifiers? TypeParameters? name:Identifier parameters:FormalParameters Throws? body:ConstructorBody
 node ContinueStatement #child #statement #continue = Keyword label:Label? Semi?
@@ -125,7 +125,7 @@ node ExplicitConstructorInvocation #child #statement #opaque = #child*
 node ExpressionStatement #child #statement #expression-statement = expression:#expression? expression_token=expression:#operand? Semi?
 node ExtendsInterfaces #child #opaque #heritage = #child*
 node FieldAccess #child #expression #member-access = object:#expression? object_token=object:#operand? Dot member:Identifier? this_member=member:ThisExpression?
-node FieldDeclaration #child #member #declaration = Modifiers? #annotation* #type-token? #type? declarators:VariableDeclarator* Semi
+node FieldDeclaration #child #member #declaration #compact = Modifiers? #annotation* #type-token? #type? declarators:VariableDeclarator* Semi
 node FinallyClause #child #statements = Keyword items:Block
 node ForCondition #child #opaque = #child*
 node ForInitializer #child #opaque = #child*

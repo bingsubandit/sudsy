@@ -24,11 +24,6 @@ pub fn label_outdent(options: &ResolvedOptions) -> usize {
     }
 }
 
-/// Members need a blank line between them when either has a body or something above it.
-pub fn separate_members(options: &ResolvedOptions) -> bool {
-    blank_lines_between_members(options) != BlankLinesBetweenMembers::Preserve
-}
-
 /// Every two members need a blank line between them (but two fields, two `using`s).
 pub fn separate_all_members(options: &ResolvedOptions) -> bool {
     blank_lines_between_members(options) == BlankLinesBetweenMembers::Always
@@ -110,14 +105,6 @@ pub fn hanging_base_list(options: &ResolvedOptions) -> bool {
 
 pub fn hug_closing_paren(options: &ResolvedOptions) -> bool {
     closing_paren_line(options) == ClosingParenLine::SameLine
-}
-
-pub fn blank_after_block(options: &ResolvedOptions) -> bool {
-    blank_lines_after_block(options) == BlankLinesAfterBlock::Require
-}
-
-pub fn blank_before_comment(options: &ResolvedOptions) -> bool {
-    blank_line_before_comment(options) == BlankLineBeforeComment::Require
 }
 
 pub fn attach_comments(options: &ResolvedOptions) -> bool {

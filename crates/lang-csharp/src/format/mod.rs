@@ -89,6 +89,10 @@ impl NodeFormatter for CSharpFormatter {
         branches::merge(tree, output, options, variants)
     }
 
+    fn blank_between(&self, cx: &FormatCtx<'_>, prev: &SyntaxNode, next: &SyntaxNode) -> bool {
+        core_format::blank::by_options(cx, prev, next)
+    }
+
     fn comment_style(&self, options: &ResolvedOptions) -> CommentStyle {
         CommentStyle {
             attach_comments: attach_comments(options),

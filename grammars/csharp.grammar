@@ -726,15 +726,15 @@ node FinallyClause #statements =
     finally_keyword:FinallyKeyword block=items:Block
 node CompilationUnit #scope =
     externs:ExternAliasDirective* usings:UsingDirective* attribute_lists:AttributeList* members:#member* end_of_file:EndOfFileToken
-node ExternAliasDirective #opaque =
+node ExternAliasDirective #compact #opaque =
     extern_keyword:ExternKeyword alias_keyword:AliasKeyword identifier:IdentifierToken semicolon:SemicolonToken
-node UsingDirective #import =
+node UsingDirective #import #compact =
     global_keyword:GlobalKeyword? using_keyword:UsingKeyword static_keyword:StaticKeyword? unsafe_keyword:UnsafeKeyword? alias:NameEquals? namespace_or_type=path:#type semicolon:SemicolonToken
 node NamespaceDeclaration #member #declaration #block #namespace #scope =
     attribute_lists:AttributeList* modifiers:#modifier* namespace_keyword:NamespaceKeyword name:#name open_brace:OpenBraceToken externs:ExternAliasDirective* usings:UsingDirective* members=items:#member* close_brace:CloseBraceToken semicolon:SemicolonToken?
 node FileScopedNamespaceDeclaration #member #declaration #namespace #scope =
     attribute_lists:AttributeList* modifiers:#modifier* namespace_keyword:NamespaceKeyword name:#name semicolon:SemicolonToken externs:ExternAliasDirective* usings:UsingDirective* members:#member*
-node AttributeList #delimited-list #opaque =
+node AttributeList #annotation #delimited-list #opaque =
     open_bracket:OpenBracketToken target:AttributeTargetSpecifier? attributes:Attribute* close_bracket:CloseBracketToken
 node AttributeTargetSpecifier #list-prefix #opaque =
     identifier:#attribute-target colon:ColonToken
@@ -766,7 +766,7 @@ node EnumDeclaration #member #declaration #type-declaration #delimited-list #sco
     attribute_lists:AttributeList* modifiers:#modifier* enum_keyword:EnumKeyword identifier=name:IdentifierToken base_list:BaseList? open_brace:OpenBraceToken? members:EnumMemberDeclaration* close_brace:CloseBraceToken? semicolon:SemicolonToken?
 node DelegateDeclaration #member #declaration =
     attribute_lists:AttributeList* modifiers:#modifier* delegate_keyword:DelegateKeyword return_type:#type identifier=name:IdentifierToken type_parameter_list:TypeParameterList? parameter_list:ParameterList constraint_clauses:TypeParameterConstraintClause* semicolon:SemicolonToken
-node EnumMemberDeclaration #member #declaration =
+node EnumMemberDeclaration #member #declaration #enum-constant =
     attribute_lists:AttributeList* modifiers:#modifier* identifier=name:IdentifierToken equals_value:EqualsValueClause?
 node ExtensionBlockDeclaration #member #declaration #type-declaration #scope =
     attribute_lists:AttributeList* modifiers:#modifier* keyword:ExtensionKeyword type_parameter_list:TypeParameterList? parameter_list:ParameterList? constraint_clauses:TypeParameterConstraintClause* open_brace:OpenBraceToken? members:#member* close_brace:CloseBraceToken? semicolon:SemicolonToken?
@@ -792,7 +792,7 @@ node AllowsConstraintClause #type-parameter-constraint #opaque =
     allows_keyword:AllowsKeyword constraints:#allows-constraint*
 node RefStructConstraint #allows-constraint #opaque =
     ref_keyword:RefKeyword struct_keyword:StructKeyword
-node FieldDeclaration #member #declaration =
+node FieldDeclaration #member #declaration #compact =
     attribute_lists:AttributeList* modifiers:#modifier* declaration:VariableDeclaration semicolon:SemicolonToken
 node EventFieldDeclaration #member #declaration =
     attribute_lists:AttributeList* modifiers:#modifier* event_keyword:EventKeyword declaration:VariableDeclaration semicolon:SemicolonToken
