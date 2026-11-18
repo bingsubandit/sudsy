@@ -7,6 +7,8 @@ use super::look::Paren;
 use crate::generated::kind as k;
 use crate::lexer::T;
 use core_format::deep;
+use core_syntax::Checkpoint;
+use core_syntax::parse::{Operator, Pratt, climb};
 
 impl P<'_> {
     /// An expression: assignment is the loosest operator.
@@ -23,7 +25,7 @@ impl P<'_> {
 
     pub(super) fn ternary(&mut self) {
         let cp = self.cp();
-        self.binary(1);
+        climb(self, 1);
         if self.at(T::Question) {
             self.wrap(cp, k::TERNARY_EXPRESSION, |p| {
                 p.bump_as(k::OPERATOR);
@@ -36,54 +38,29 @@ impl P<'_> {
         }
     }
 
-    /// The binary operator at the current token: its precedence, its number of tokens (`>>` and
-    /// `>>>` are joined from `>` tokens) and the kind of its token; `instanceof` has token count 0.
-    fn binary_op(&self) -> Option<(u8, usize, core_syntax::SyntaxKind)> {
-        let op = |prec, n| Some((prec, n, k::OPERATOR));
-        match self.cur() {
-            T::OrOr => op(1, 1),
-            T::AndAnd => op(2, 1),
-            T::Pipe => op(3, 1),
-            T::Caret => op(4, 1),
-            T::Amp => op(5, 1),
-            T::EqEq | T::Ne => op(6, 1),
-            T::Lt => Some((7, 1, k::LT)),
-            T::Gt => {
-                if self.nth(1) == T::Gt && self.adjacent(self.pos) {
-                    if self.nth(2) == T::Gt && self.adjacent(self.pos + 1) {
-                        op(8, 3)
-                    } else {
-                        op(8, 2)
-                    }
-                } else {
-                    Some((7, 1, k::GT))
-                }
-            }
-            T::Le | T::Ge => op(7, 1),
-            T::Instanceof => op(7, 0),
-            T::Shl => op(8, 1),
-            T::Plus | T::Minus => op(9, 1),
-            T::Star | T::Slash | T::Percent => op(10, 1),
-            _ => None,
+    /// The binary operator at the current token: its precedence (the grammar's `precedence`
+    /// lines), its number of tokens (`>>` and `>>>` are joined from adjacent `>` tokens) and the
+    /// kind of its token; `instanceof` has token count 0.
+    fn binary_op(&self) -> Option<(Operator, core_syntax::SyntaxKind)> {
+        let t = self.cur();
+        let grammar = core_syntax::grammars::JAVA.get();
+        if t == T::Instanceof {
+            let prec = grammar.precedence("instanceof")?;
+            return Some((Operator { prec, tokens: 0 }, k::OPERATOR));
         }
-    }
-
-    fn binary(&mut self, min: u8) {
-        let cp = self.cp();
-        self.unary();
-        while let Some((prec, n, kind)) = self.binary_op() {
-            if prec < min {
-                break;
-            }
-            if n == 0 {
-                self.wrap(cp, k::INSTANCEOF_EXPRESSION, |p| p.instanceof_rest());
-            } else {
-                self.wrap(cp, k::BINARY_EXPRESSION, |p| {
-                    p.emit(kind, n);
-                    p.binary(prec + 1);
-                });
-            }
+        let mut n = 1;
+        while t == T::Gt && n < 3 && self.nth(n) == T::Gt && self.adjacent(self.pos + n - 1) {
+            n += 1;
         }
+        let (first, last) = (self.toks.get(self.pos)?, self.toks.get(self.pos + n - 1)?);
+        let text = &self.src[first.start as usize..last.end as usize];
+        let prec = grammar.precedence(text)?;
+        let kind = match t {
+            T::Lt => k::LT,
+            T::Gt if n == 1 => k::GT,
+            _ => k::OPERATOR,
+        };
+        Some((Operator { prec, tokens: n }, kind))
     }
 
     /// After `expr instanceof`: a type or a pattern.
@@ -449,5 +426,33 @@ impl P<'_> {
             });
             p.no_lambda = lambda;
         });
+    }
+}
+
+impl Pratt for P<'_> {
+    type Mark = Checkpoint;
+
+    fn mark(&mut self) -> Checkpoint {
+        self.cp()
+    }
+
+    fn operand(&mut self) {
+        self.unary();
+    }
+
+    fn operator(&self) -> Option<Operator> {
+        self.binary_op().map(|(op, _)| op)
+    }
+
+    fn infix(&mut self, at: Checkpoint, op: Operator) {
+        if op.tokens == 0 {
+            self.wrap(at, k::INSTANCEOF_EXPRESSION, |p| p.instanceof_rest());
+        } else {
+            let kind = self.binary_op().map_or(k::OPERATOR, |(_, kind)| kind);
+            self.wrap(at, k::BINARY_EXPRESSION, |p| {
+                p.emit(kind, op.tokens);
+                climb(p, op.rhs_min());
+            });
+        }
     }
 }

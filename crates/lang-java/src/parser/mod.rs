@@ -16,17 +16,10 @@ mod types;
 
 use crate::generated::kind as k;
 use crate::lexer::{T, Token, lex};
+use core_syntax::grammars;
 use core_syntax::{Checkpoint, SyntaxKind, SyntaxNode, TreeBuilder};
-use provider_api::adapter::{Attach, Kinds, Lexer, Tok};
+use provider_api::adapter::{GrammarScan, Stream, Tok};
 use provider_api::{ParseError, ParseResult, SourceFile};
-
-const KINDS: Kinds = Kinds {
-    root: k::PROGRAM,
-    eof: k::EOF,
-    unknown: k::UNKNOWN,
-    whitespace: k::WHITESPACE,
-    newline: k::NEWLINE,
-};
 
 pub fn parse_file(file: &SourceFile) -> ParseResult {
     parse(&file.text)
@@ -34,14 +27,14 @@ pub fn parse_file(file: &SourceFile) -> ParseResult {
 
 pub fn parse(src: &str) -> ParseResult {
     let lexed = lex(src);
+    let first = lexed.tokens.first().map_or(src.len() as u32, |t| t.start);
     let mut p = P {
         src,
         toks: lexed.tokens,
         close: lexed.close,
         pos: 0,
         b: TreeBuilder::new(),
-        attach: Attach::new(src),
-        gap: Lexer::new(src, KINDS, comments),
+        stream: Stream::of(src, grammars::JAVA.get(), first),
         errors: lexed
             .errors
             .into_iter()
@@ -52,7 +45,7 @@ pub fn parse(src: &str) -> ParseResult {
     };
     p.run();
     let mut errors = p.errors;
-    errors.append(&mut p.gap.errors);
+    errors.append(&mut p.stream.gap.errors);
     errors.sort_by_key(|e| e.start);
     ParseResult {
         tree: SyntaxNode::new_root(p.b.finish()),
@@ -60,26 +53,13 @@ pub fn parse(src: &str) -> ParseResult {
     }
 }
 
-/// A comment at the start of the text between two tokens.
-fn comments(rest: &str, _: usize) -> Option<(SyntaxKind, usize)> {
-    if rest.starts_with("//") {
-        Some((k::COMMENT, rest.find(['\n', '\r']).unwrap_or(rest.len())))
-    } else {
-        let body = rest.strip_prefix("/*")?;
-        Some((k::COMMENT, body.find("*/").map_or(rest.len(), |i| i + 4)))
-    }
-}
-
-type Gap = fn(&str, usize) -> Option<(SyntaxKind, usize)>;
-
 pub(crate) struct P<'a> {
     src: &'a str,
     toks: Vec<Token>,
     close: Vec<u32>,
     pos: usize,
     b: TreeBuilder,
-    attach: Attach<'a>,
-    gap: Lexer<'a, Gap>,
+    stream: Stream<'a, GrammarScan<'a>>,
     errors: Vec<ParseError>,
     last_error: usize,
     /// `case X ->`: a name followed by `->` is not a lambda.
@@ -88,20 +68,9 @@ pub(crate) struct P<'a> {
 
 impl<'a> P<'a> {
     fn run(&mut self) {
-        let len = self.src.len() as u32;
-        self.b.start_node(KINDS.root);
-        let first = self.toks.first().map_or(len, |t| t.start);
-        let gap = &mut self.gap;
-        self.attach.begin(first, |a, b, out| gap.gap(a, b, out));
+        self.b.start_node(k::PROGRAM);
         self.compilation_unit();
-        let eof = Tok {
-            kind: KINDS.eof,
-            start: len,
-            end: len,
-        };
-        let gap = &mut self.gap;
-        self.attach
-            .token(&mut self.b, eof, None, |a, b, out| gap.gap(a, b, out));
+        self.stream.finish(&mut self.b);
         self.b.finish_node();
     }
 
@@ -210,9 +179,7 @@ impl<'a> P<'a> {
             .toks
             .get(last + 1)
             .map_or(self.src.len() as u32, |t| t.start);
-        let gap = &mut self.gap;
-        self.attach
-            .token(&mut self.b, tok, Some(next), |a, b, out| gap.gap(a, b, out));
+        self.stream.token(&mut self.b, tok, next);
         self.pos = last + 1;
     }
 

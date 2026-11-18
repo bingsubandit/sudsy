@@ -5,14 +5,11 @@
 //! theirs, inside the node that token belongs to. Unexpected tokens are wrapped in `ERROR` nodes.
 
 use crate::generated::kind as k;
-use crate::lexer::{LexError, Token, lex};
-use core_syntax::{SyntaxKind, SyntaxNode, TreeBuilder, trivia};
-use provider_api::ParseError;
-use std::ops::Range;
+use crate::lexer::lex;
+use core_syntax::SyntaxKind;
+use core_syntax::parse;
 
-/// Deeper nesting is an error: the rest of the input is kept as one `ERROR` node. This bounds
-/// recursion in the parser, the formatter and tree destruction.
-pub const MAX_DEPTH: usize = 256;
+pub use core_syntax::parse::{MAX_DEPTH, Parsed};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Dialect {
@@ -31,42 +28,13 @@ impl Dialect {
     }
 }
 
-pub struct Parsed {
-    pub tree: SyntaxNode,
-    pub errors: Vec<ParseError>,
-}
-
 pub fn parse(src: &str, dialect: Dialect) -> Parsed {
-    let (tokens, lex_errors) = lex(src);
-    let mut p = Parser::new(src, tokens, dialect);
-    p.errors
-        .extend(lex_errors.into_iter().map(|e: LexError| ParseError {
-            start: e.start as u32,
-            len: e.len as u32,
-            code: e.code.into(),
-            message: e.message,
-        }));
+    let mut p = Parser {
+        p: parse::Parser::new(src, lex(src, dialect == Dialect::Jsonc), is_trivia, k::EOF),
+        dialect,
+    };
     p.document();
-    p.errors.sort_by_key(|e| e.start);
-    Parsed {
-        tree: SyntaxNode::new_root(p.builder.finish()),
-        errors: p.errors,
-    }
-}
-
-struct Parser<'a> {
-    src: &'a str,
-    tokens: Vec<Token>,
-    /// Indices into `tokens` of the non-trivia tokens.
-    real: Vec<usize>,
-    /// Trivia token ranges owned by each real token.
-    leading: Vec<Range<usize>>,
-    trailing: Vec<Range<usize>>,
-    pos: usize,
-    depth: usize,
-    dialect: Dialect,
-    builder: TreeBuilder,
-    errors: Vec<ParseError>,
+    p.p.done()
 }
 
 fn is_trivia(kind: SyntaxKind) -> bool {
@@ -76,108 +44,29 @@ fn is_trivia(kind: SyntaxKind) -> bool {
     )
 }
 
-impl<'a> Parser<'a> {
-    fn new(src: &'a str, tokens: Vec<Token>, dialect: Dialect) -> Self {
-        let trivia::Attached {
-            real,
-            leading,
-            trailing,
-        } = trivia::attach(
-            tokens.len(),
-            |i| is_trivia(tokens[i].kind),
-            |i| &src[tokens[i].start..tokens[i].end],
-        );
-        Parser {
-            src,
-            tokens,
-            real,
-            leading,
-            trailing,
-            pos: 0,
-            depth: 0,
-            dialect,
-            builder: TreeBuilder::new(),
-            errors: Vec::new(),
-        }
-    }
+struct Parser<'a> {
+    p: parse::Parser<'a>,
+    dialect: Dialect,
+}
 
-    fn cur(&self) -> SyntaxKind {
-        self.tokens[self.real[self.pos]].kind
+impl<'a> std::ops::Deref for Parser<'a> {
+    type Target = parse::Parser<'a>;
+    fn deref(&self) -> &Self::Target {
+        &self.p
     }
+}
 
-    fn cur_range(&self) -> Range<usize> {
-        let t = &self.tokens[self.real[self.pos]];
-        t.start..t.end
+impl std::ops::DerefMut for Parser<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.p
     }
+}
 
-    fn at_eof(&self) -> bool {
-        self.cur() == k::EOF
-    }
-
-    fn error(&mut self, code: &str, message: impl Into<String>) {
-        let r = self.cur_range();
-        self.error_at(r, code, message);
-    }
-
-    /// One diagnostic per error site: a report that overlaps an earlier one (a lexer error on
-    /// the same token, or a second complaint about the same position) is dropped.
-    fn error_at(&mut self, r: Range<usize>, code: &str, message: impl Into<String>) {
-        let (start, end) = (r.start as u32, r.end as u32);
-        if self
-            .errors
-            .iter()
-            .any(|e| e.start == start || (e.start < end && start < e.start + e.len))
-        {
-            return;
-        }
-        self.errors.push(ParseError {
-            start: r.start as u32,
-            len: (r.end - r.start) as u32,
-            code: code.into(),
-            message: message.into(),
-        });
-    }
-
-    fn emit(&mut self, i: usize) {
-        let t = self.tokens[i];
-        if t.kind == k::LINE_COMMENT || t.kind == k::BLOCK_COMMENT {
-            self.comment_allowed(t);
-        }
-        self.builder.token(t.kind, &self.src[t.start..t.end]);
-    }
-
-    fn comment_allowed(&mut self, t: Token) {
-        if self.dialect == Dialect::Json {
-            self.error_at(
-                t.start..t.end,
-                "comment-in-json",
-                "comments are not allowed in JSON (use the jsonc dialect)",
-            );
-        }
-    }
-
-    /// Consumes the current token with its leading and trailing trivia.
-    fn bump(&mut self) {
-        let (lead, trail) = (
-            self.leading[self.pos].clone(),
-            self.trailing[self.pos].clone(),
-        );
-        for i in lead {
-            self.emit(i);
-        }
-        self.emit(self.real[self.pos]);
-        for i in trail {
-            self.emit(i);
-        }
-        if !self.at_eof() {
-            self.pos += 1;
-        }
-    }
-
+impl Parser<'_> {
     fn error_node(&mut self) {
-        self.builder.start_node(SyntaxKind::ERROR);
+        self.start(SyntaxKind::ERROR);
         self.bump();
-        self.builder.finish_node();
+        self.finish();
     }
 
     fn starts_value(&self) -> bool {
@@ -188,7 +77,7 @@ impl<'a> Parser<'a> {
     }
 
     fn document(&mut self) {
-        self.builder.start_node(k::DOCUMENT);
+        self.start(k::DOCUMENT);
         if self.starts_value() {
             self.value();
         } else if self.at_eof() {
@@ -202,36 +91,31 @@ impl<'a> Parser<'a> {
             };
             self.error("unexpected-token", message);
             // Everything after the first stray token is one error site.
-            self.builder.start_node(SyntaxKind::ERROR);
-            while !self.at_eof() {
-                self.bump();
-            }
-            self.builder.finish_node();
+            self.error_rest();
         }
         self.bump(); // Eof
-        self.builder.finish_node();
+        self.finish();
     }
 
     /// At a token that starts a value.
     fn value(&mut self) {
         match self.cur() {
             k::L_BRACE | k::L_BRACKET => {
-                if self.depth >= MAX_DEPTH {
+                if !self.enter(MAX_DEPTH) {
                     self.too_deep();
                 } else {
-                    self.depth += 1;
                     if self.cur() == k::L_BRACE {
                         self.object();
                     } else {
                         self.array();
                     }
-                    self.depth -= 1;
+                    self.leave();
                 }
             }
             _ => {
-                self.builder.start_node(k::LITERAL);
+                self.start(k::LITERAL);
                 self.bump();
-                self.builder.finish_node();
+                self.finish();
             }
         }
     }
@@ -241,15 +125,11 @@ impl<'a> Parser<'a> {
             "nesting-too-deep",
             format!("nesting is deeper than {MAX_DEPTH} levels"),
         );
-        self.builder.start_node(SyntaxKind::ERROR);
-        while !self.at_eof() {
-            self.bump();
-        }
-        self.builder.finish_node();
+        self.error_rest();
     }
 
     fn object(&mut self) {
-        self.builder.start_node(k::OBJECT);
+        self.start(k::OBJECT);
         self.bump(); // {
         loop {
             match self.cur() {
@@ -279,7 +159,7 @@ impl<'a> Parser<'a> {
         if self.cur() == k::R_BRACE {
             self.bump();
         }
-        self.builder.finish_node();
+        self.finish();
     }
 
     /// Consumes the `,` after an item.
@@ -293,7 +173,7 @@ impl<'a> Parser<'a> {
     /// Skips the rest of a bad item without further reports: everything up to the next `,` or
     /// the closing delimiter at this level (brackets in between are balanced).
     fn recover(&mut self, closer: SyntaxKind) {
-        self.builder.start_node(SyntaxKind::ERROR);
+        self.start(SyntaxKind::ERROR);
         let mut nesting = 0usize;
         while !self.at_eof() {
             match self.cur() {
@@ -305,14 +185,14 @@ impl<'a> Parser<'a> {
             }
             self.bump();
         }
-        self.builder.finish_node();
+        self.finish();
         if self.cur() == k::COMMA {
             self.comma(closer);
         }
     }
 
     fn member(&mut self) {
-        self.builder.start_node(k::MEMBER);
+        self.start(k::MEMBER);
         self.bump(); // key
         if self.cur() == k::COLON {
             self.bump();
@@ -324,11 +204,11 @@ impl<'a> Parser<'a> {
         } else {
             self.error("expected-value", "expected a value");
         }
-        self.builder.finish_node();
+        self.finish();
     }
 
     fn array(&mut self) {
-        self.builder.start_node(k::ARRAY);
+        self.start(k::ARRAY);
         self.bump(); // [
         loop {
             match self.cur() {
@@ -358,16 +238,16 @@ impl<'a> Parser<'a> {
         if self.cur() == k::R_BRACKET {
             self.bump();
         }
-        self.builder.finish_node();
+        self.finish();
     }
 
     /// Called after a comma that is followed by the closing delimiter. The comma is the previous
     /// real token.
     fn trailing_comma_allowed(&mut self) {
         if self.dialect == Dialect::Json {
-            let t = self.tokens[self.real[self.pos - 1]];
+            let comma = self.pos - 1;
             self.error_at(
-                t.start..t.end,
+                comma,
                 "trailing-comma",
                 "trailing commas are not allowed in JSON (use the jsonc dialect)",
             );

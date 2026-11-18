@@ -8,6 +8,11 @@
 language html 19 "HTML"
 roles
 comments block "<!--" "-->"
+// Comments, and the bogus comments `<!x>`, `<?x>` and `</x>` that sit between tokens; one that is not closed runs to the end of the file.
+trivia Comment block "<!--" "-->"
+trivia Comment block "<!" ">"
+trivia Comment block "<?" ">"
+trivia Comment block "</" ">"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"

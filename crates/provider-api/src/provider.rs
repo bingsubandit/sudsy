@@ -2,6 +2,7 @@ use core_config::OptionSchema;
 use core_format::NodeFormatter;
 use core_rules::{DEFAULT_HOOKS, Rule, RuleHooks};
 use core_semantics::{BehaviorSummaries, CompilerDiagnostic, FileSemantics, Layers};
+pub use core_syntax::parse::ParseError;
 use core_syntax::{Embedded, Grammar, LanguageId, SyntaxKind, SyntaxNode};
 use std::path::{Path, PathBuf};
 
@@ -242,31 +243,6 @@ impl SourceFile {
             language_version: None,
             preprocessor_symbols: Vec::new(),
         })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ParseError {
-    /// Byte range into the source text.
-    pub start: u32,
-    pub len: u32,
-    pub code: String,
-    pub message: String,
-}
-
-impl ParseError {
-    pub fn new(start: u32, len: u32, code: impl Into<String>, message: impl Into<String>) -> Self {
-        ParseError {
-            start,
-            len,
-            code: code.into(),
-            message: message.into(),
-        }
-    }
-
-    /// A syntax error of a parser that has no codes for them.
-    pub fn syntax(start: u32, len: u32, message: impl Into<String>) -> Self {
-        Self::new(start, len, "syntax-error", message)
     }
 }
 

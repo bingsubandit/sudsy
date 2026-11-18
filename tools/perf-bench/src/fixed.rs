@@ -196,6 +196,31 @@ fn startup(phase: &str) -> Result<()> {
     Ok(())
 }
 
+/// Wall clock of `parse` alone: the best of `passes` in-process passes over the inputs.
+pub fn parse_time(lang: &str, passes: usize, dir: &Path) -> Result<()> {
+    let provider = make_provider(lang)?;
+    let p = provider.as_ref();
+    p.grammar();
+    let texts = texts(lang, dir)?;
+    let bytes: usize = texts.iter().map(|t| t.1.len()).sum();
+    let sources: Vec<_> = texts.iter().map(|(n, t)| file(p, n, 1, t).0).collect();
+    let best = (0..passes)
+        .map(|_| {
+            let start = std::time::Instant::now();
+            for f in &sources {
+                std::hint::black_box(p.parse(f).ok());
+            }
+            start.elapsed()
+        })
+        .min()
+        .unwrap_or_default();
+    println!(
+        "{lang} parse-time: best of {passes} {:.3} ms, {bytes} bytes",
+        best.as_secs_f64() * 1e3
+    );
+    Ok(())
+}
+
 pub fn run(lang: &str, phase: &str, dir: &Path) -> Result<()> {
     if lang == "startup" {
         return startup(phase);

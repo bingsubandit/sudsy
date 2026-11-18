@@ -9,34 +9,20 @@
 
 use crate::Dialect;
 use crate::generated::kind as k;
-use crate::lexer::{Token, lex};
-use core_syntax::{SyntaxKind, SyntaxNode, TreeBuilder, trivia};
-use provider_api::ParseError;
-use std::ops::Range;
+use crate::lexer::lex;
+use core_syntax::SyntaxKind;
+use core_syntax::parse;
 
-/// Deeper nesting of blocks or groups is an error: the rest of the file is one `ERROR` node. This
-/// bounds recursion in the parser, the formatter and tree destruction.
-pub const MAX_DEPTH: usize = 256;
-
-pub struct Parsed {
-    pub tree: SyntaxNode,
-    pub errors: Vec<ParseError>,
-}
+pub use core_syntax::parse::{MAX_DEPTH, Parsed};
 
 pub fn parse(src: &str, dialect: Dialect) -> Parsed {
-    let (tokens, lex_errors) = lex(src, dialect);
-    let mut p = Parser::new(src, tokens);
-    p.errors.extend(
-        lex_errors
-            .into_iter()
-            .map(|e| ParseError::new(e.start as u32, e.len as u32, e.code, e.message)),
-    );
+    let mut p = Parser {
+        p: parse::Parser::new(src, lex(src, dialect), is_trivia, k::EOF),
+        call_at: None,
+        closers: Vec::new(),
+    };
     p.stylesheet();
-    p.errors.sort_by_key(|e| e.start);
-    Parsed {
-        tree: SyntaxNode::new_root(p.builder.finish()),
-        errors: p.errors,
-    }
+    p.p.done()
 }
 
 /// How the statement that a scan started at ends.
@@ -63,21 +49,25 @@ struct Scan {
 }
 
 struct Parser<'a> {
-    src: &'a str,
-    tokens: Vec<Token>,
-    /// Indices into `tokens` of the non-trivia tokens.
-    real: Vec<usize>,
-    leading: Vec<Range<usize>>,
-    trailing: Vec<Range<usize>>,
-    pos: usize,
-    depth: usize,
+    p: parse::Parser<'a>,
     /// The first token of the parameters of `@include`, `@mixin` and `@function`: a name there is a
     /// call even when blank space separates it from its `(`.
     call_at: Option<usize>,
     /// The closers that the scan waits for, innermost last.
     closers: Vec<SyntaxKind>,
-    builder: TreeBuilder,
-    errors: Vec<ParseError>,
+}
+
+impl<'a> std::ops::Deref for Parser<'a> {
+    type Target = parse::Parser<'a>;
+    fn deref(&self) -> &Self::Target {
+        &self.p
+    }
+}
+
+impl std::ops::DerefMut for Parser<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.p
+    }
 }
 
 fn is_trivia(kind: SyntaxKind) -> bool {
@@ -87,95 +77,23 @@ fn is_trivia(kind: SyntaxKind) -> bool {
     )
 }
 
-impl<'a> Parser<'a> {
-    fn new(src: &'a str, tokens: Vec<Token>) -> Self {
-        let trivia::Attached {
-            real,
-            leading,
-            trailing,
-        } = trivia::attach(
-            tokens.len(),
-            |i| is_trivia(tokens[i].kind),
-            |i| &src[tokens[i].start..tokens[i].end],
-        );
-        Parser {
-            src,
-            tokens,
-            real,
-            leading,
-            trailing,
-            pos: 0,
-            depth: 0,
-            call_at: None,
-            closers: Vec::new(),
-            builder: TreeBuilder::new(),
-            errors: Vec::new(),
-        }
-    }
+fn is_comment(kind: SyntaxKind) -> bool {
+    matches!(kind, k::COMMENT | k::LINE_COMMENT)
+}
 
-    fn kind_at(&self, i: usize) -> SyntaxKind {
-        self.tokens[self.real[i]].kind
-    }
-
-    fn cur(&self) -> SyntaxKind {
-        self.kind_at(self.pos)
-    }
-
-    fn error_at(&mut self, i: usize, code: &str, message: &str) {
-        let t = &self.tokens[self.real[i]];
-        let (start, end) = (t.start as u32, t.end as u32);
-        // One report per place: a lexer error on the same token already said it.
-        let end = end.max(start + 1);
-        if self
-            .errors
-            .iter()
-            .any(|e| e.start < end && start < e.start + e.len.max(1))
-        {
-            return;
-        }
-        self.errors.push(ParseError {
-            start,
-            len: end - start,
-            code: code.into(),
-            message: message.into(),
-        });
-    }
-
-    /// Consumes the current token with its leading and trailing trivia.
-    fn bump(&mut self) {
-        let (lead, trail) = (
-            self.leading[self.pos].clone(),
-            self.trailing[self.pos].clone(),
-        );
-        for i in lead.chain([self.real[self.pos]]).chain(trail) {
-            let t = self.tokens[i];
-            self.builder.token(t.kind, &self.src[t.start..t.end]);
-        }
-        if self.cur() != k::EOF {
-            self.pos += 1;
-        }
-    }
-
-    /// Consumes tokens up to (not including) real token `end` into an `ERROR` node.
-    fn error_until(&mut self, end: usize) {
-        self.builder.start_node(SyntaxKind::ERROR);
-        while self.pos < end {
-            self.bump();
-        }
-        self.builder.finish_node();
-    }
-
+impl Parser<'_> {
     fn stylesheet(&mut self) {
-        self.builder.start_node(k::STYLESHEET);
+        self.start(k::STYLESHEET);
         self.statements();
         // Only a `}` that closes nothing stops the loop before the end.
         while self.cur() != k::EOF {
-            self.error_at(self.pos, "unexpected-brace", "unexpected `}`");
-            self.error_until(self.pos + 1);
+            self.error("unexpected-brace", "unexpected `}`");
+            let end = self.pos + 1;
+            self.error_until(end);
             self.statements();
         }
         self.bump(); // Eof
-        self.builder.finish_node();
+        self.finish();
     }
 
     /// Statements up to a `}` or the end of the file.
@@ -184,9 +102,9 @@ impl<'a> Parser<'a> {
             match self.cur() {
                 k::R_BRACE | k::EOF => return,
                 k::SEMICOLON if self.has_comment() => {
-                    self.builder.start_node(k::EMPTY);
+                    self.start(k::EMPTY);
                     self.bump();
-                    self.builder.finish_node();
+                    self.finish();
                 }
                 k::SEMICOLON => self.bump(),
                 _ => self.statement(),
@@ -196,12 +114,8 @@ impl<'a> Parser<'a> {
 
     /// Does the current token own a comment?
     fn has_comment(&self) -> bool {
-        let (lead, trail) = (
-            self.leading[self.pos].clone(),
-            self.trailing[self.pos].clone(),
-        );
-        lead.chain(trail)
-            .any(|i| matches!(self.tokens[i].kind, k::COMMENT | k::LINE_COMMENT))
+        let owned = self.leading(self.pos).chain(self.trailing(self.pos));
+        owned.into_iter().any(|t| is_comment(t.kind))
     }
 
     fn statement(&mut self) {
@@ -214,7 +128,7 @@ impl<'a> Parser<'a> {
                 } else {
                     "unclosed bracket"
                 };
-                self.error_at(self.pos, "unclosed", message);
+                self.error("unclosed", message);
                 self.error_until(scan.end);
             }
             End::Unbalanced => {
@@ -225,26 +139,26 @@ impl<'a> Parser<'a> {
             }
             _ if self.cur() == k::AT_KEYWORD => self.at_rule(scan),
             End::Brace => {
-                self.builder.start_node(k::RULE);
+                self.start(k::RULE);
                 self.list(k::PRELUDE, scan.end);
                 self.finish_statement(End::Brace);
             }
             _ => match scan.colon {
                 Some(colon) => {
-                    self.builder.start_node(k::DECLARATION);
+                    self.start(k::DECLARATION);
                     self.list(k::PROPERTY, colon);
                     self.bump(); // :
                     if self.braced_value(start, scan.end) {
-                        self.builder.start_node(k::VALUE);
+                        self.start(k::VALUE);
                         self.block();
-                        self.builder.finish_node();
+                        self.finish();
                     } else {
                         self.list(k::VALUE, scan.end);
                     }
                     self.finish_statement(scan.kind);
                 }
                 None => {
-                    self.builder.start_node(k::STATEMENT);
+                    self.start(k::STATEMENT);
                     self.list(k::VALUE, scan.end);
                     self.finish_statement(scan.kind);
                 }
@@ -258,8 +172,8 @@ impl<'a> Parser<'a> {
     fn at_rule(&mut self, mut scan: Scan) {
         let mut links = 0;
         loop {
-            self.builder.start_node(k::AT_RULE);
-            let name = &self.tokens[self.real[self.pos]];
+            self.start(k::AT_RULE);
+            let name = self.tok(self.pos);
             let name = &self.src[name.start..name.end];
             let call = ["@include", "@mixin", "@function"]
                 .iter()
@@ -286,27 +200,23 @@ impl<'a> Parser<'a> {
             links += 1;
         }
         for _ in 0..=links {
-            self.builder.finish_node();
+            self.finish();
         }
     }
 
     /// Is the current token an `@else` with no comment between it and the `}` before it?
     fn else_follows(&self) -> bool {
-        let comment = |r: &Range<usize>| {
-            r.clone()
-                .any(|i| matches!(self.tokens[i].kind, k::COMMENT | k::LINE_COMMENT))
-        };
-        let t = &self.tokens[self.real[self.pos]];
+        let t = self.tok(self.pos);
         t.kind == k::AT_KEYWORD
             && self.src[t.start..t.end].eq_ignore_ascii_case("@else")
-            && !comment(&self.leading[self.pos])
-            && !comment(&self.trailing[self.pos - 1])
+            && !self.leading(self.pos).any(|t| is_comment(t.kind))
+            && !self.trailing(self.pos - 1).any(|t| is_comment(t.kind))
     }
 
     /// Is the value of the custom property that starts at real token `start` one `{ }` block,
     /// as in `--x: { color: red }` (it is a block of declarations)?
     fn braced_value(&self, start: usize, end: usize) -> bool {
-        let t = self.tokens[self.real[start]];
+        let t = self.tok(start);
         if t.kind != k::IDENT
             || !self.src[t.start..t.end].starts_with("--")
             || self.cur() != k::L_BRACE
@@ -336,30 +246,24 @@ impl<'a> Parser<'a> {
             End::Semi => self.bump(),
             _ => {}
         }
-        self.builder.finish_node();
+        self.finish();
     }
 
     fn block(&mut self) {
-        if self.depth >= MAX_DEPTH {
-            self.error_at(self.pos, "nesting-too-deep", "nesting is too deep");
-            let eof = self.real.len() - 1;
-            return self.error_until(eof);
+        if !self.enter(MAX_DEPTH) {
+            self.error("nesting-too-deep", "nesting is too deep");
+            return self.error_rest();
         }
-        self.depth += 1;
-        self.builder.start_node(k::BLOCK);
+        self.start(k::BLOCK);
         self.bump(); // {
         self.statements();
         if self.cur() == k::R_BRACE {
             self.bump();
         } else {
-            self.error_at(
-                self.pos,
-                "unclosed-block",
-                "expected `}` before the end of the file",
-            );
+            self.error("unclosed-block", "expected `}` before the end of the file");
         }
-        self.builder.finish_node();
-        self.depth -= 1;
+        self.finish();
+        self.leave();
     }
 
     /// A node of component values up to real token `end`; nothing if there are none.
@@ -367,11 +271,11 @@ impl<'a> Parser<'a> {
         if self.pos == end {
             return;
         }
-        self.builder.start_node(kind);
+        self.start(kind);
         while self.pos < end {
             self.component();
         }
-        self.builder.finish_node();
+        self.finish();
     }
 
     /// One token, or a group with what it holds. The scan found every group closed.
@@ -382,10 +286,10 @@ impl<'a> Parser<'a> {
                 if self.kind_at(self.pos + 1) == k::L_PAREN
                     && (self.adjacent() || self.call_at == Some(self.pos)) =>
             {
-                self.builder.start_node(k::FUNCTION);
+                self.start(k::FUNCTION);
                 self.bump();
                 self.group();
-                self.builder.finish_node();
+                self.finish();
             }
             _ => self.bump(),
         }
@@ -393,18 +297,18 @@ impl<'a> Parser<'a> {
 
     /// Whether the next token follows the current one with nothing in between.
     fn adjacent(&self) -> bool {
-        self.tokens[self.real[self.pos]].end == self.tokens[self.real[self.pos + 1]].start
+        self.tok(self.pos).end == self.tok(self.pos + 1).start
     }
 
     fn group(&mut self) {
         let closer = closer_of(self.cur()).expect("at an opener");
-        self.builder.start_node(k::GROUP);
+        self.start(k::GROUP);
         self.bump();
         while self.cur() != closer && self.cur() != k::EOF {
             self.component();
         }
         self.bump();
-        self.builder.finish_node();
+        self.finish();
     }
 
     /// Finds where the statement that starts at the current token ends, and checks that its
@@ -422,7 +326,7 @@ impl<'a> Parser<'a> {
                     self.closers.pop();
                 } else if let Some(c) = closer_of(kind) {
                     if self.closers.len() >= MAX_DEPTH {
-                        return done(self.real.len() - 1, End::Unclosed, colon);
+                        return done(self.eof_index(), End::Unclosed, colon);
                     }
                     self.closers.push(c);
                 } else if matches!(kind, k::R_PAREN | k::R_BRACKET | k::R_BRACE) {
@@ -438,7 +342,7 @@ impl<'a> Parser<'a> {
                     k::L_BRACE if !custom => return done(i, End::Brace, colon),
                     k::COLON if colon.is_none() => {
                         colon = Some(i);
-                        let t = self.tokens[self.real[start]];
+                        let t = self.tok(start);
                         custom = i == start + 1
                             && t.kind == k::IDENT
                             && self.src[t.start..t.end].starts_with("--");

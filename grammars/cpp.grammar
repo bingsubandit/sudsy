@@ -4,6 +4,8 @@
 
 language cpp 21 "C/C++"
 comments line "//" block "/*" "*/"
+trivia Comment line "//" block "/*" "*/"
+trivia Continuation continuation
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"

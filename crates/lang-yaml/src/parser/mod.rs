@@ -16,13 +16,10 @@ mod scan;
 
 use crate::generated::kind as k;
 use builder::{Ev, build};
-use core_syntax::{SyntaxKind, SyntaxNode};
+use core_syntax::SyntaxKind;
 use provider_api::ParseError;
 
-pub struct Parsed {
-    pub tree: SyntaxNode,
-    pub errors: Vec<ParseError>,
-}
+pub use core_syntax::parse::Parsed;
 
 pub fn parse(src: &str) -> Parsed {
     let mut p = Parser::new(src);

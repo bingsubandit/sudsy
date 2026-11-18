@@ -10,9 +10,8 @@ mod structure;
 
 pub use format::{CppFormatter, option_schema};
 
-use crate::generated::kind as k;
-use core_syntax::{SyntaxKind, grammars};
-use provider_api::adapter::{Kinds, Tok, replay};
+use core_syntax::grammars;
+use provider_api::adapter::{Tok, replay_with};
 use provider_api::{ParseError, ParseResult, ParserProvider, ParserSpec, SourceFile};
 
 /// The keywords a file is lexed with: C++ words such as `class`, `new` and `this` are names in C.
@@ -62,34 +61,9 @@ pub fn parse(src: &str, dialect: Dialect) -> ParseResult {
             end: t.end,
         })
         .collect();
-    let kinds = Kinds {
-        root: k::TRANSLATION_UNIT,
-        eof: k::END_OF_FILE,
-        unknown: k::UNKNOWN,
-        whitespace: k::WHITESPACE,
-        newline: k::NEWLINE,
-    };
-    let mut result = replay(src, kinds, &tokens, &nodes, trivia, |t, _| t);
+    let mut result = replay_with(src, grammars::CPP.get(), true, &tokens, &nodes, |t, _| t);
     let errors = (lexed.errors.iter()).map(|&(at, len, msg)| ParseError::syntax(at, len, msg));
     result.errors.extend(errors);
     result.errors.sort_by_key(|e| e.start);
     result
-}
-
-/// A comment or a backslash that ends a line, at the start of the text between two tokens.
-fn trivia(rest: &str, _: usize) -> Option<(SyntaxKind, usize)> {
-    let b = rest.as_bytes();
-    if b.starts_with(b"//") {
-        return Some((k::COMMENT, lexer::line_comment_len(b)));
-    }
-    if b.starts_with(b"/*") {
-        return Some((k::COMMENT, lexer::block_comment_len(b).0));
-    }
-    if b.first() == Some(&b'\\') {
-        let n = lexer::line_break(&b[1..]);
-        if n > 0 {
-            return Some((k::CONTINUATION, 1 + n));
-        }
-    }
-    None
 }

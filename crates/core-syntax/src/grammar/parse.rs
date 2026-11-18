@@ -679,6 +679,15 @@ fn embed_row(grammar: &Grammar, c: &mut Cursor<'_>) -> Result<EmbedRow, GrammarE
     Ok(row)
 }
 
+/// The bytes the operators of the `precedence` rows start with.
+fn operator_starts(rows: &[PrecedenceRow]) -> [bool; 256] {
+    let mut starts = [false; 256];
+    for o in rows.iter().flat_map(|r| &r.operators) {
+        starts[o.as_bytes()[0] as usize] = true;
+    }
+    starts
+}
+
 /// A `trivia <Token> attribute...` row (see [`TriviaRow`]): `line "p"...`, `not "p"...`,
 /// `first "p"...`, `block "open" "close"`, `nested`, `lines "open" "close"`, `continuation`,
 /// `unicode`.
@@ -991,6 +1000,7 @@ fn resolve(
         hoisted,
         case_insensitive,
         rule_rows,
+        precedence_starts: operator_starts(&precedence_rows),
         precedence_rows,
         keys,
         strings: Vec::new(),

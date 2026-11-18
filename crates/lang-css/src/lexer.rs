@@ -4,56 +4,42 @@
 use crate::Dialect;
 use crate::generated::kind as k;
 use core_syntax::SyntaxKind;
+use core_syntax::parse::{self, ParseError, Token};
 use core_syntax::strings::StringSyntax;
 
-#[derive(Clone, Copy, Debug)]
-pub struct Token {
-    pub kind: SyntaxKind,
-    pub start: usize,
-    pub end: usize,
-}
-
-/// A problem found while lexing.
-pub struct LexError {
-    pub start: usize,
-    pub len: usize,
-    pub code: &'static str,
-    pub message: &'static str,
-}
-
-pub fn lex(src: &str, dialect: Dialect) -> (Vec<Token>, Vec<LexError>) {
+pub fn lex(src: &str, dialect: Dialect) -> (Vec<Token>, Vec<ParseError>) {
     let mut lx = Lexer {
-        src: src.as_bytes(),
-        text: src,
-        pos: 0,
+        base: parse::Lexer::new(src, src.len() / 4),
         dialect,
         string: core_syntax::grammars::CSS
             .get()
             .string_rows(k::STRING)
             .next()
             .expect("the CSS grammar has a string row"),
-        tokens: Vec::with_capacity(src.len() / 4),
-        errors: Vec::new(),
     };
     while lx.pos < src.len() {
         lx.next();
     }
-    lx.tokens.push(Token {
-        kind: k::EOF,
-        start: src.len(),
-        end: src.len(),
-    });
-    (lx.tokens, lx.errors)
+    lx.base.finish(k::EOF)
 }
 
 struct Lexer<'a> {
-    src: &'a [u8],
-    text: &'a str,
-    pos: usize,
+    base: parse::Lexer<'a>,
     dialect: Dialect,
     string: &'static StringSyntax,
-    tokens: Vec<Token>,
-    errors: Vec<LexError>,
+}
+
+impl<'a> std::ops::Deref for Lexer<'a> {
+    type Target = parse::Lexer<'a>;
+    fn deref(&self) -> &Self::Target {
+        &self.base
+    }
+}
+
+impl std::ops::DerefMut for Lexer<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.base
+    }
 }
 
 fn is_name_start(b: u8) -> bool {
@@ -65,27 +51,6 @@ fn is_name(b: u8) -> bool {
 }
 
 impl Lexer<'_> {
-    fn at(&self, i: usize) -> u8 {
-        self.src.get(self.pos + i).copied().unwrap_or(0)
-    }
-
-    fn emit(&mut self, kind: SyntaxKind, start: usize) {
-        self.tokens.push(Token {
-            kind,
-            start,
-            end: self.pos,
-        });
-    }
-
-    fn error(&mut self, start: usize, code: &'static str, message: &'static str) {
-        self.errors.push(LexError {
-            start,
-            len: self.pos - start,
-            code,
-            message,
-        });
-    }
-
     /// Whether a backslash at `i` starts an escape (it is not followed by a line break or the end).
     fn escape_at(&self, i: usize) -> bool {
         self.at(i) == b'\\' && !matches!(self.at(i + 1), 0 | b'\n' | b'\r' | 0x0c)
@@ -119,7 +84,7 @@ impl Lexer<'_> {
 
     /// After a backslash: up to six hex digits and one blank, or any one character.
     fn escape(&mut self) {
-        self.pos += self.string.escape_len(self.text, self.pos, false);
+        self.pos += self.string.escape_len(self.src, self.pos, false);
     }
 
     fn name(&mut self) {
@@ -152,7 +117,7 @@ impl Lexer<'_> {
                 };
                 k::NEWLINE
             }
-            b'/' if self.at(1) == b'*' => match self.text[start + 2..].find("*/") {
+            b'/' if self.at(1) == b'*' => match self.src[start + 2..].find("*/") {
                 Some(i) => {
                     self.pos = start + 2 + i + 2;
                     k::COMMENT
@@ -207,7 +172,7 @@ impl Lexer<'_> {
             }
             _ if self.ident_at(0) => {
                 self.name();
-                if self.at(0) == b'(' && self.text[start..self.pos].eq_ignore_ascii_case("url") {
+                if self.at(0) == b'(' && self.src[start..self.pos].eq_ignore_ascii_case("url") {
                     self.url()
                 } else {
                     k::IDENT
@@ -223,7 +188,7 @@ impl Lexer<'_> {
             b'[' => self.one(k::L_BRACKET),
             b']' => self.one(k::R_BRACKET),
             _ => {
-                self.pos += self.text[start..].chars().next().map_or(1, char::len_utf8);
+                self.pos += self.src[start..].chars().next().map_or(1, char::len_utf8);
                 k::DELIM
             }
         };
@@ -239,7 +204,7 @@ impl Lexer<'_> {
     fn string(&mut self) -> SyntaxKind {
         let start = self.pos;
         let scss = self.dialect == Dialect::Scss;
-        let (end, closed) = self.string.scan(self.text, start, scss);
+        let (end, closed) = self.string.scan(self.src, start, scss);
         self.pos = end;
         if closed {
             return k::STRING;
@@ -270,11 +235,11 @@ impl Lexer<'_> {
         }
         let end = (self.pos + i).min(self.src.len());
         let mut depth = 0;
-        let spaced = self.text[self.pos + 1..end].trim().chars().any(|c| {
+        let spaced = self.src[self.pos + 1..end].trim().chars().any(|c| {
             depth += i32::from(c == '{') - i32::from(c == '}');
             depth == 0 && c.is_whitespace()
         });
-        if self.src.get(end) == Some(&b')') && self.at(1) != b'$' && !spaced {
+        if self.src.as_bytes().get(end) == Some(&b')') && self.at(1) != b'$' && !spaced {
             self.pos = end + 1;
             return k::URL;
         }

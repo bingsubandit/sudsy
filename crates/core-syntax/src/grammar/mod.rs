@@ -205,8 +205,9 @@ pub struct Grammar {
     case_insensitive: bool,
     /// The `rule` rows: a shared rule's level and option values for this language.
     rule_rows: Vec<RuleRow>,
-    /// The `precedence` lines (a handful of rows: scanned, no table).
+    /// The `precedence` lines (a handful of rows: scanned) and the bytes their operators start with.
     precedence_rows: Vec<PrecedenceRow>,
+    precedence_starts: [bool; 256],
     keys: KeySyntax,
     /// The `string` rows, grouped by token kind.
     strings: Vec<(SyntaxKind, StringSyntax)>,
@@ -612,6 +613,9 @@ impl Grammar {
     /// The precedence level and associativity of binary operator text (the grammar's `precedence`
     /// lines); `None` for text with no entry.
     pub fn precedence(&self, text: &str) -> Option<Precedence> {
+        if !self.precedence_starts[*text.as_bytes().first()? as usize] {
+            return None;
+        }
         self.precedence_rows
             .iter()
             .find(|r| r.operators.iter().any(|o| o == text))

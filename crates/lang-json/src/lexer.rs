@@ -1,85 +1,33 @@
 //! The lossless lexer: every byte of the input ends up in exactly one token.
 
 use crate::generated::kind as k;
-use core_syntax::SyntaxKind;
+use core_syntax::parse::{self, ParseError, Token};
 
-#[derive(Clone, Copy, Debug)]
-pub struct Token {
-    pub kind: SyntaxKind,
-    pub start: usize,
-    pub end: usize,
-}
-
-/// A problem found while lexing.
-#[derive(Clone, Debug)]
-pub struct LexError {
-    pub start: usize,
-    pub len: usize,
-    pub code: &'static str,
-    pub message: String,
-}
-
-pub fn lex(src: &str) -> (Vec<Token>, Vec<LexError>) {
-    let mut lx = Lexer {
-        src,
-        pos: 0,
-        tokens: Vec::new(),
-        errors: Vec::new(),
-    };
+/// `comments`: whether comments are allowed (JSONC); otherwise each is an error.
+pub fn lex(src: &str, comments: bool) -> (Vec<Token>, Vec<ParseError>) {
+    let mut lx = Lexer(parse::Lexer::new(src, 0), comments);
     while lx.pos < src.len() {
         lx.next();
     }
-    let end = src.len();
-    lx.tokens.push(Token {
-        kind: k::EOF,
-        start: end,
-        end,
-    });
-    (lx.tokens, lx.errors)
+    lx.0.finish(k::EOF)
 }
 
-struct Lexer<'a> {
-    src: &'a str,
-    pos: usize,
-    tokens: Vec<Token>,
-    errors: Vec<LexError>,
+struct Lexer<'a>(parse::Lexer<'a>, bool);
+
+impl<'a> std::ops::Deref for Lexer<'a> {
+    type Target = parse::Lexer<'a>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for Lexer<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 impl Lexer<'_> {
-    fn peek(&self) -> Option<char> {
-        self.src[self.pos..].chars().next()
-    }
-
-    fn peek_at(&self, offset: usize) -> Option<char> {
-        self.src[self.pos..].chars().nth(offset)
-    }
-
-    fn error(&mut self, start: usize, end: usize, code: &'static str, message: impl Into<String>) {
-        self.errors.push(LexError {
-            start,
-            len: end - start,
-            code,
-            message: message.into(),
-        });
-    }
-
-    fn emit(&mut self, kind: SyntaxKind, start: usize) {
-        self.tokens.push(Token {
-            kind,
-            start,
-            end: self.pos,
-        });
-    }
-
-    fn eat_while(&mut self, f: impl Fn(char) -> bool) {
-        while let Some(c) = self.peek() {
-            if !f(c) {
-                break;
-            }
-            self.pos += c.len_utf8();
-        }
-    }
-
     fn next(&mut self) {
         let start = self.pos;
         let c = self.peek().expect("not at the end");
@@ -114,6 +62,7 @@ impl Lexer<'_> {
             '/' if self.peek_at(1) == Some('/') => {
                 self.eat_while(|c| c != '\n' && c != '\r');
                 self.emit(k::LINE_COMMENT, start);
+                self.comment_error(start);
             }
             '/' if self.peek_at(1) == Some('*') => self.block_comment(),
             '-' | '0'..='9' => self.number(),
@@ -123,7 +72,6 @@ impl Lexer<'_> {
                 self.emit(k::UNKNOWN, start);
                 self.error(
                     start,
-                    self.pos,
                     "unexpected-character",
                     format!("unexpected character `{c}`"),
                 );
@@ -137,15 +85,20 @@ impl Lexer<'_> {
             Some(i) => self.pos = start + 2 + i + 2,
             None => {
                 self.pos = self.src.len();
-                self.error(
-                    start,
-                    self.pos,
-                    "unterminated-comment",
-                    "unterminated block comment",
-                );
+                self.error(start, "unterminated-comment", "unterminated block comment");
+                self.emit(k::BLOCK_COMMENT, start);
+                return;
             }
         }
         self.emit(k::BLOCK_COMMENT, start);
+        self.comment_error(start);
+    }
+
+    fn comment_error(&mut self, start: usize) {
+        if !self.1 {
+            let message = "comments are not allowed in JSON (use the jsonc dialect)";
+            self.error(start, "comment-in-json", message);
+        }
     }
 
     fn word(&mut self) {
@@ -157,7 +110,7 @@ impl Lexer<'_> {
             "null" => k::NULL,
             w => {
                 let message = format!("unexpected word `{w}`");
-                self.error(start, self.pos, "unexpected-word", message);
+                self.error(start, "unexpected-word", message);
                 k::UNKNOWN
             }
         };
@@ -169,7 +122,7 @@ impl Lexer<'_> {
         self.eat_while(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.' | '_'));
         if !is_valid_number(&self.src[start..self.pos]) {
             let message = format!("invalid number `{}`", &self.src[start..self.pos]);
-            self.error(start, self.pos, "invalid-number", message);
+            self.error(start, "invalid-number", message);
         }
         self.emit(k::NUMBER, start);
     }
@@ -179,12 +132,7 @@ impl Lexer<'_> {
         self.pos += 1;
         loop {
             let Some(c) = self.peek() else {
-                self.error(
-                    start,
-                    self.pos,
-                    "unterminated-string",
-                    "unterminated string",
-                );
+                self.error(start, "unterminated-string", "unterminated string");
                 break;
             };
             let at = self.pos;
@@ -194,12 +142,7 @@ impl Lexer<'_> {
                     break;
                 }
                 '\n' | '\r' => {
-                    self.error(
-                        start,
-                        self.pos,
-                        "unterminated-string",
-                        "unterminated string",
-                    );
+                    self.error(start, "unterminated-string", "unterminated string");
                     break;
                 }
                 '\\' => {
@@ -210,7 +153,6 @@ impl Lexer<'_> {
                     self.pos += 1;
                     self.error(
                         at,
-                        self.pos,
                         "invalid-string",
                         "control character in string must be escaped",
                     );
@@ -231,7 +173,7 @@ impl Lexer<'_> {
                     match self.peek() {
                         Some(h) if h.is_ascii_hexdigit() => self.pos += 1,
                         _ => {
-                            self.error(at, self.pos, "invalid-string", "invalid \\u escape");
+                            self.error(at, "invalid-string", "invalid \\u escape");
                             return;
                         }
                     }
@@ -241,12 +183,7 @@ impl Lexer<'_> {
             None | Some('\n' | '\r') => {}
             Some(c) => {
                 self.pos += c.len_utf8();
-                self.error(
-                    at,
-                    self.pos,
-                    "invalid-string",
-                    format!("invalid escape `\\{c}`"),
-                );
+                self.error(at, "invalid-string", format!("invalid escape `\\{c}`"));
             }
         }
     }
@@ -310,7 +247,7 @@ mod tests {
     #[test]
     fn every_byte_is_in_a_token() {
         let src = "{ \"a\\n\": [1, true] } // c\r\n/* d */ \u{ff}x";
-        let (tokens, _) = lex(src);
+        let (tokens, _) = lex(src, true);
         let joined: String = tokens.iter().map(|t| &src[t.start..t.end]).collect();
         assert_eq!(joined, src);
     }

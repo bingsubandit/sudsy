@@ -63,11 +63,23 @@ impl TriviaSyntax {
     /// The trivia token at the start of `rest`, the text of `src` from `pos` to the next token:
     /// its kind and length.
     pub fn scan(&self, src: &str, rest: &str, pos: usize) -> Option<(SyntaxKind, usize)> {
+        self.scan_with(src, rest, pos, false)
+    }
+
+    /// [`TriviaSyntax::scan`]; with `continued` a line comment goes on over a `\` that ends a
+    /// line (a language fact the parser passes, as C/C++ do).
+    pub fn scan_with(
+        &self,
+        src: &str,
+        rest: &str,
+        pos: usize,
+        continued: bool,
+    ) -> Option<(SyntaxKind, usize)> {
         if !self.starts[*rest.as_bytes().first()? as usize] {
             return None;
         }
         self.rows.iter().find_map(|r| {
-            let len = r.scan(src, rest, pos)?;
+            let len = r.scan(src, rest, pos, continued)?;
             Some((r.kind?, len))
         })
     }
@@ -80,8 +92,22 @@ impl TriviaSyntax {
 }
 
 impl TriviaRow {
-    fn scan(&self, src: &str, rest: &str, pos: usize) -> Option<usize> {
+    fn scan(&self, src: &str, rest: &str, pos: usize, continued: bool) -> Option<usize> {
         let line_end = |s: &str| {
+            if continued {
+                let b = s.as_bytes();
+                let mut i = 0;
+                while i < b.len() && b[i] != b'\n' {
+                    let n = match &b[i + 1..] {
+                        _ if b[i] != b'\\' => 0,
+                        [b'\n', ..] => 1,
+                        [b'\r', b'\n', ..] => 2,
+                        _ => 0,
+                    };
+                    i += 1 + n;
+                }
+                return i;
+            }
             let end = if self.unicode {
                 s.find(['\n', '\r', '\u{2028}', '\u{2029}'])
             } else {

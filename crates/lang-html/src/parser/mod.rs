@@ -13,8 +13,8 @@ mod svelte;
 mod tags;
 
 use crate::generated::kind as k;
-use core_syntax::SyntaxKind;
-use provider_api::adapter::{Kinds, Node, Tok, replay};
+use core_syntax::{SyntaxKind, grammars};
+use provider_api::adapter::{Node, Tok, replay_grammar};
 use provider_api::{ParseError, ParseResult};
 use std::borrow::Cow;
 
@@ -29,14 +29,6 @@ pub enum Mode {
     Svelte,
     Angular,
 }
-
-const KINDS: Kinds = Kinds {
-    root: k::DOCUMENT,
-    eof: k::EOF,
-    unknown: k::UNKNOWN,
-    whitespace: k::WHITESPACE,
-    newline: k::NEWLINE,
-};
 
 pub fn parse(src: &str, mode: Mode) -> ParseResult {
     let mut p = P {
@@ -54,23 +46,10 @@ pub fn parse(src: &str, mode: Mode) -> ParseResult {
         cdata: 0,
     };
     p.run();
-    let mut parsed = replay(src, KINDS, &p.toks, &p.nodes, scan, |t, _| t);
+    let mut parsed = replay_grammar(src, grammars::HTML.get(), &p.toks, &p.nodes, |t, _| t);
     parsed.errors.append(&mut p.errors);
     parsed.errors.sort_by_key(|e| e.start);
     parsed
-}
-
-/// Comments and bogus comments (`<!x>`, `<?x>`) sit between tokens; one that is not closed runs
-/// to the end of the file.
-fn scan(rest: &str, _pos: usize) -> Option<(SyntaxKind, usize)> {
-    let end = if rest.starts_with("<!--") {
-        rest.find("-->").map_or(rest.len(), |i| i + 3)
-    } else if rest.starts_with("<!") || rest.starts_with("<?") || rest.starts_with("</") {
-        rest.find('>').map_or(rest.len(), |i| i + 1)
-    } else {
-        return None;
-    };
-    Some((k::COMMENT, end))
 }
 
 /// The length of the start-tag comment at the start of `rest`: `//` up to the line break, its
