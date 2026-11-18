@@ -1,0 +1,49 @@
+# The Sudsy side of the comparison: the rules that the catalog maps.
+vue:
+  lint:
+    rules:
+      attr-delimiter: warn
+      attr-quotes: warn
+      attribute-hyphenation: warn
+      no-child-content: warn
+      no-deprecated-functional-template: warn
+      no-deprecated-html-element-is: warn
+      no-deprecated-inline-template: warn
+      no-deprecated-scope-attribute: warn
+      no-deprecated-slot-attribute: warn
+      no-deprecated-slot-scope-attribute: warn
+      no-deprecated-v-bind-sync: warn
+      no-deprecated-v-is: warn
+      no-deprecated-v-on-native-modifier: warn
+      no-deprecated-v-on-number-modifiers: warn
+      no-duplicate-keys: warn
+      no-implicit-button-type: warn
+      no-lone-template: warn
+      no-target-blank: warn
+      no-textarea-mustache: warn
+      no-use-v-if-with-v-for: warn
+      no-v-for-template-key-on-child: warn
+      no-v-html: warn
+      no-v-text: warn
+      require-component-is: warn
+      syntax-error: warn
+      v-bind-style: warn
+      v-for-key: warn
+      v-on-style: warn
+      v-slot-style: warn
+      valid-v-bind: warn
+      valid-v-cloak: warn
+      valid-v-else: warn
+      valid-v-else-if: warn
+      valid-v-for: warn
+      valid-v-html: warn
+      valid-v-if: warn
+      valid-v-is: warn
+      valid-v-memo: warn
+      valid-v-model: warn
+      valid-v-on: warn
+      valid-v-once: warn
+      valid-v-pre: warn
+      valid-v-show: warn
+      valid-v-slot: warn
+      valid-v-text: warn

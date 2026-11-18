@@ -1,0 +1,23 @@
+# The Sudsy side of the comparison: the rules that the catalog maps.
+svelte:
+  lint:
+    rules:
+      attr-delimiter: warn
+      attr-quotes: warn
+      no-at-debug-tags: warn
+      no-at-html-tags: warn
+      no-bind-value-on-checkable-inputs: warn
+      no-dupe-on-directives: warn
+      no-dupe-style-properties: warn
+      no-dupe-use-directives: warn
+      no-implicit-button-type: warn
+      no-inline-style: warn
+      no-nested-style-tag: warn
+      no-raw-special-elements: warn
+      no-target-blank: warn
+      no-useless-children-snippet: warn
+      no-useless-mustaches: warn
+      require-each-key: warn
+      shorthand-attribute: warn
+      shorthand-directive: warn
+      spaced-html-comment: warn

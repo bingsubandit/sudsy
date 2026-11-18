@@ -138,7 +138,27 @@ def corpus_sources(tool, suffixes=()):
         corpus = ROOT / "tests/conformance/corpus/python"
         roots = ("django/django/", "requests/src/", "flask/src/", "click/src/", "httpx/httpx/", "pytest/src/", "black/src/")
         return listing(corpus, [p for p in sorted(corpus.rglob("*.py")) if p.is_file() and p.relative_to(corpus).as_posix().startswith(roots)])
+    if tool in PLUGINS:  # the real-world part of the HTML corpus (tests/conformance/fetch-html-corpus.sh): Prettier's and the Svelte plugin's test inputs are left out
+        corpus = ROOT / "tests/conformance/corpus/html"
+        roots = {"eslint-plugin-vue": ("core/",), "eslint-plugin-svelte": ("realworld/",)}[tool]
+        return listing(corpus, [p for suffix in suffixes for p in sorted(corpus.rglob(f"*{suffix}")) if p.is_file() and p.relative_to(corpus).as_posix().startswith(roots)])
     return []
+
+
+PLUGINS = {  # ESLint plugin -> (language, file suffix, rule prefix, config setting the plugin's parser up, its recommended set); TypeScript in `<script lang="ts">` goes to typescript-eslint's parser
+    "eslint-plugin-vue": ("vue", ".vue", "vue/", 'vue.configs["flat/base"]', 'vue.configs["flat/recommended"]'),
+    "eslint-plugin-svelte": ("svelte", ".svelte", "svelte/", 'svelte.configs["flat/base"]', 'svelte.configs["flat/recommended"]'),
+}
+ESLINT_TOOLS = ("eslint", "typescript-eslint", *PLUGINS)
+
+
+def plugin_config(tool, rules=None):
+    """The flat config of a plugin tool: its recommended set, or its parser and the `rules` given."""
+    lang, suffix, _, base, recommended = PLUGINS[tool]
+    use = f"...{recommended}" if rules is None else f"...{base}, {{ rules: {json.dumps(rules)} }}"
+    return (f'import {lang} from "eslint-plugin-{lang}";\nimport tseslint from "typescript-eslint";\n'
+            f'export default [{{ linterOptions: {{ noInlineConfig: true }} }}, {use}, '
+            f'{{ files: ["**/*{suffix}"], languageOptions: {{ parserOptions: {{ parser: tseslint.parser }} }} }}];\n')
 
 
 def rule_fixtures(tool, sudsy, version, prefix, exe):
@@ -163,6 +183,9 @@ def rule_fixtures(tool, sudsy, version, prefix, exe):
         **{t: ("js", suffixes, ["node", f"{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "-f", "json", "--no-warn-ignored"],
                lambda d: (d["ruleId"], d["line"]), lambda out: [m for r in json.loads(out) for m in r["messages"] if m["ruleId"]])
            for t, suffixes in (("eslint", (".js",)), ("typescript-eslint", (".ts", ".tsx")))},
+        **{t: (lang, suffix, ["node", f"{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "-f", "json", "--no-warn-ignored"],
+               lambda d: (d["ruleId"], d["line"]), lambda out: [m for r in json.loads(out) for m in r["messages"] if m["ruleId"]])
+           for t, (lang, suffix, *_) in PLUGINS.items()},
         # stylelint writes its JSON report to stderr; the plugins and the dialect parser come from the config written below
         **{t: (lang, "." + lang, ["node", f"{prefix}/node_modules/stylelint/bin/stylelint.mjs", "--config", "stylelint.config.mjs", "-f", "json"],
                lambda d: (d["rule"], d["line"]), lambda out: [w for r in json.loads(out) for w in r["warnings"]])
@@ -184,6 +207,8 @@ def rule_fixtures(tool, sudsy, version, prefix, exe):
     columns = tool in ("eslint", "typescript-eslint")  # the other tools' columns are not compared
     if tool == "typescript-eslint":  # the plugin's rules are `@typescript-eslint/<name>`, the catalog's ids the names
         mapping = {f"@typescript-eslint/{r}": v for r, v in mapping.items()}
+    if tool in PLUGINS:
+        mapping = {PLUGINS[tool][2] + r: v for r, v in mapping.items()}
     folder = ROOT / "tests/parity" / tool
     work = prefix / "work"
     shutil.rmtree(work, ignore_errors=True)
@@ -196,6 +221,8 @@ def rule_fixtures(tool, sudsy, version, prefix, exe):
             'import tseslint from "typescript-eslint";\n'
             f'export default [{{ linterOptions: {{ noInlineConfig: true }}, files: ["**/*.ts", "**/*.tsx"], languageOptions: {{ parser: tseslint.parser }}, plugins: {{ "@typescript-eslint": tseslint.plugin }}, rules: {rules} }}];\n',
             encoding="utf-8")
+    if tool in PLUGINS:
+        (work / "eslint.config.mjs").write_text(plugin_config(tool, {r: "error" for r in mapping}), encoding="utf-8")
     if tool == "html-validate":
         (work / "htmlvalidate.json").write_text(json.dumps({"root": True, "rules": {r: "error" for r in mapping}}), encoding="utf-8")
     if tool.startswith("stylelint"):
@@ -238,7 +265,7 @@ def rule_fixtures(tool, sudsy, version, prefix, exe):
         batch = {name: [] for _, name, _ in sources}
         for d in json.loads(run.stdout):
             batch.setdefault(Path(d["filename"]).name, []).append(d)
-    if tool in ("eslint", "typescript-eslint"):  # one ESLint run on every file: its start-up costs more than the files
+    if tool in ESLINT_TOOLS:  # one ESLint run on every file: its start-up costs more than the files
         for label, name, source in sources:
             name, text = read(name, source)
             (where / name).write_text(text, encoding="utf-8", newline="")
@@ -447,6 +474,7 @@ COVERAGE = {  # tool -> (language, file suffixes, flat config or command line fo
     "ruff": ("python", (".py",)),
     "eslint": ("js", (".js",)),
     "typescript-eslint": ("js", (".ts", ".tsx")),
+    **{t: (lang, (suffix,)) for t, (lang, suffix, *_) in PLUGINS.items()},
 }
 
 
@@ -468,6 +496,8 @@ def coverage(tool, sudsy, version, prefix, exe):
     mapping = rule_map(tool)
     if tool == "typescript-eslint":  # its recommended set also sets ESLint core rules (`no-var`), mapped by the eslint catalog
         mapping = {**rule_map("eslint"), **{f"@typescript-eslint/{r}": v for r, v in mapping.items()}}
+    if tool in PLUGINS:
+        mapping = {PLUGINS[tool][2] + r: v for r, v in mapping.items()}
     folder = ROOT / "tests/parity" / tool
     work = prefix / "coverage"
     shutil.rmtree(work, ignore_errors=True)
@@ -487,7 +517,7 @@ def coverage(tool, sudsy, version, prefix, exe):
         found = [(Path(d["filename"]).name, d["code"], d["message"]) for d in json.loads(run.stdout) if d["code"]]
         fatal = set()
     else:
-        config = ('import js from "@eslint/js";\nexport default [{ linterOptions: { noInlineConfig: true } }, js.configs.recommended];\n' if tool == "eslint" else
+        config = plugin_config(tool) if tool in PLUGINS else ('import js from "@eslint/js";\nexport default [{ linterOptions: { noInlineConfig: true } }, js.configs.recommended];\n' if tool == "eslint" else
                   'import tseslint from "typescript-eslint";\nexport default [{ linterOptions: { noInlineConfig: true } }, ...tseslint.configs.recommended];\n')
         (work / "eslint.config.mjs").write_text(config, encoding="utf-8")
         run = subprocess.run(["node", f"{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "-f", "json", "--no-warn-ignored", "."],
@@ -516,6 +546,16 @@ def coverage(tool, sudsy, version, prefix, exe):
     share = round(1000 * hit / total) / 10 if total else 100.0
     for rule, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:15]:
         print(f"  {rule}: {c} of {n} covered" + ("" if rule in mapping else " (no Sudsy rule)"))
+    if tool in ESLINT_TOOLS:  # the other side: Sudsy findings of a rule of the set in a file where the tool has none of it
+        shown = subprocess.run(["node", f"{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "--print-config", next(iter(names))],
+                               cwd=work, capture_output=True, text=True, encoding="utf-8", check=False).stdout
+        active = {mapping[r] for r, v in json.loads(shown)["rules"].items() if r in mapping and (v[0] if isinstance(v, list) else v) not in (0, "off")}
+        theirs = {(f, mapping[r]) for f, r, _ in found if r in mapping}
+        extra = {k: len(ms) for k, ms in ours.items() if k[1] in active and k not in theirs and k[0] not in fatal}
+        by_rule = {}
+        for (_, rule), n in extra.items():
+            by_rule[rule] = by_rule.get(rule, 0) + n
+        print(f"  Sudsy findings of the set's rules in files where the tool has none: {sum(by_rule.values())}" + "".join(f" {r} {n}," for r, n in sorted(by_rule.items(), key=lambda kv: -kv[1])[:10]))
     print(f"{tool} {version}: {hit} of {total} findings of {len(per)} rules in {len(names) - len(fatal)} files covered = {share}%")
     floor = (yaml.safe_load((folder / "differences.yaml").read_text(encoding="utf-8")) or {}).get("coverage")
     if floor is None or share < floor:
@@ -536,7 +576,7 @@ def main():
         return stylecop(sudsy, version)
     if tool == "psscriptanalyzer":
         return psscriptanalyzer(sudsy, version, prefix)
-    if tool in ("hadolint", "shellcheck", "checkmake", "actionlint", "buf", "eslint", "typescript-eslint", "stylelint", "stylelint-scss", "stylelint-less", "html-validate", "ruff"):
+    if tool in ("hadolint", "shellcheck", "checkmake", "actionlint", "buf", "eslint", "typescript-eslint", "stylelint", "stylelint-scss", "stylelint-less", "html-validate", "ruff", *PLUGINS):
         exe = parity_format.tools()["format"][config["install"]] if isinstance(config["install"], str) else config
         return rule_fixtures(tool, sudsy, version, prefix, str(parity_format.executable(prefix, exe["install"].get("exe", ""))))
     mapping = rule_map(tool)

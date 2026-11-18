@@ -308,6 +308,8 @@
     "stylelint-scss": {"catalog": "stylelint-scss", "install": {"npm": "stylelint-scss", "with": ["stylelint@17.16.0", "postcss-scss@4.0.9"]}},
     "stylelint-less": {"catalog": "stylelint-less", "install": {"npm": "stylelint-less", "with": ["stylelint@17.16.0", "postcss-less@7.0.1"]}},
     "html-validate": {"catalog": "html-validate", "install": {"npm": "html-validate"}},
+    "eslint-plugin-vue": {"catalog": "eslint-plugin-vue", "install": {"npm": "eslint-plugin-vue", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
+    "eslint-plugin-svelte": {"catalog": "eslint-plugin-svelte", "install": {"npm": "eslint-plugin-svelte", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2", "svelte@5.57.3"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
     "markdownlint": {"catalog": "markdownlint", "install": {"npm": "markdownlint-cli2"}},
     "hadolint": {
       "catalog": "hadolint",
