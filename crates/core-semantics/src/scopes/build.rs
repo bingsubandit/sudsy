@@ -132,7 +132,9 @@ impl Binder<'_> {
             frame.scope = true;
         }
         let Some(row) = row else {
-            self.tokens(node, None, state);
+            if self.table.is_bare() {
+                self.tokens(node, None, state);
+            }
             return frame;
         };
         if row.inert {
@@ -162,7 +164,9 @@ impl Binder<'_> {
                 scope: self.current(),
             });
         }
-        self.tokens(node, Some(row), state);
+        if !row.tokens.is_empty() || self.table.is_bare() {
+            self.tokens(node, Some(row), state);
+        }
         if !row.children.is_empty() {
             self.flows(node, row, state);
             frame.len = self.arena.len() - frame.start;
@@ -203,12 +207,14 @@ impl Binder<'_> {
         }
     }
 
+    #[cold]
     fn mark_dynamic(&mut self) {
         let scope = self.model.var_scope(self.current());
         self.model.scopes[scope.0 as usize].dynamic = true;
     }
 
     /// The last token under `node` that is code, when its kind is one of the table's names.
+    #[inline(never)]
     fn last_name(&mut self, node: &SyntaxNode) -> Option<(Rc<str>, TextRange)> {
         let green = node.green();
         let (kind, text, at) = self.last_code(&green, node.text_range().end())?;
@@ -542,11 +548,9 @@ impl Binder<'_> {
 
     /// What the own name tokens of `node` do: a row's `tokens` say, else (bare names) they are
     /// read, or take the state of the parent.
+    #[inline(never)]
     fn tokens(&mut self, node: &SyntaxNode, row: Option<&Row>, state: State) {
         let uses = row.map_or(&[][..], |r| r.tokens);
-        if uses.is_empty() && !self.table.is_bare() {
-            return;
-        }
         let table = self.table;
         let green = node.green();
         let base = node.text_range().start();
@@ -715,9 +719,9 @@ impl Binder<'_> {
                         .is_some_and(|(_, r)| r.end() <= start),
                 });
             index += 1;
-            self.arena.push(
-                hit.map(|(_, (_, flow))| access(self.grammar, flow, node, state, op_text, &mut conds)),
-            );
+            self.arena.push(hit.map(|(_, (_, flow))| {
+                access(self.grammar, flow, node, state, op_text, &mut conds)
+            }));
         }
     }
 
@@ -835,7 +839,14 @@ fn access(
                 conds.push((key, v));
                 v
             });
-            access(grammar, if hit { yes } else { no }, node, state, op_text, conds)
+            access(
+                grammar,
+                if hit { yes } else { no },
+                node,
+                state,
+                op_text,
+                conds,
+            )
         }
     }
 }
