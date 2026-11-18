@@ -218,12 +218,11 @@ fn chained(
     let mut out = Vec::new();
     if wrap_mode {
         let wrap = |d: Doc| {
-            concat(vec![
+            super::between(
                 if_break(lit("("), Doc::Nil),
-                indent(concat(vec![softline(), d])),
-                softline(),
+                d,
                 if_break(lit(")"), Doc::Nil),
-            ])
+            )
         };
         let bare = |n: &Option<SyntaxNode>| n.as_ref().is_some_and(|n| hooks.bare_branch(cx, n));
         out.extend([lit(" "), q, lit(" ")]);
@@ -305,10 +304,7 @@ fn chained(
         body
     };
     Ok(if is_parent_test || around.indent {
-        group(concat(vec![
-            indent(concat(vec![softline(), result])),
-            softline(),
-        ]))
+        super::enclosed(Doc::Nil, result, Doc::Nil)
     } else {
         result
     })

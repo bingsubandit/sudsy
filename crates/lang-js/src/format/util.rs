@@ -3,7 +3,7 @@
 
 use crate::generated::kind as k;
 use core_config::OptionValue;
-use core_format::doc::{self, Doc, concat, hardline, if_break, indent, line, lit};
+use core_format::doc::{self, Doc, concat, hardline, if_break, lit};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, TextRange};
 
@@ -207,17 +207,6 @@ pub(crate) fn semi(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
             cx.trailing_comments_doc(&t),
         ]),
         None => text,
-    }
-}
-
-/// The body of a control statement after its `)`: a block follows after a space, an empty
-/// statement is `;`, any other statement goes on the next line when it does not fit.
-pub(crate) fn clause(body: &SyntaxNode, printed: Doc, force_space: bool) -> Doc {
-    match body.kind() {
-        k::EMPTY_STATEMENT => printed,
-        k::BLOCK_STATEMENT => concat(vec![lit(" "), printed]),
-        _ if force_space => concat(vec![lit(" "), printed]),
-        _ => indent(concat(vec![line(), printed])),
     }
 }
 

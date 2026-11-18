@@ -1,8 +1,8 @@
 //! Statement sequences, blocks and control flow.
 
 use super::util::{
-    R, clause, elem, inline, inline_split, is_tok, keyword, kids, node_at, node_of, semi,
-    shape_error, style, token_of,
+    R, elem, inline, inline_split, is_tok, keyword, kids, node_at, node_of, semi, shape_error,
+    style, token_of,
 };
 use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, group, hardline, indent, line, lit, softline};
@@ -140,51 +140,34 @@ fn if_statement(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         elem(cx, open)?,
         parenthesized(cx.format(test)?, !negated_chain(test)),
         elem(cx, close)?,
-        clause(body, cx.format(body)?, false),
+        clause(cx, body, false)?,
     ]));
     let mut parts = vec![lead, opening];
     if let [els, alt] = rest
         && let Some(alt) = node_of(alt)
     {
-        let line_comment = cx.last_token(body).is_some_and(|t| {
-            core_format::comments::trailing_comments(cx.grammar, &t)
-                .iter()
-                .any(|c| c.kind == core_format::comments::CommentKind::Line)
-        });
-        parts.push(if body.kind() == k::BLOCK_STATEMENT && !line_comment {
-            lit(" ")
-        } else {
-            hardline()
-        });
-        // A blank line before the comment in front of `else` stays.
-        if let Some(t) = token_of(els)
-            && !core_format::comments::leading_comments(cx.grammar, t).is_empty()
-            && blank_before_first_comment(cx, t)
-        {
-            parts.extend([hardline(), hardline()]);
+        if let Some(t) = token_of(els) {
+            parts.push(shapes::compound_continuation(cx, &body.clone().into(), t));
         }
         parts.push(elem(cx, els)?);
         let printed = cx.format(alt)?;
-        parts.push(group(clause(alt, printed, alt.kind() == k::IF_STATEMENT)));
+        parts.push(group(clause_of(
+            cx,
+            alt,
+            printed,
+            alt.kind() == k::IF_STATEMENT,
+        )));
     }
     Ok(concat(parts))
 }
 
-/// Do two line breaks come before the first comment in front of `tok`?
-fn blank_before_first_comment(cx: &FormatCtx<'_>, tok: &core_syntax::SyntaxToken) -> bool {
-    let mut run = Vec::new();
-    let mut cur = tok.prev_token();
-    while let Some(t) = cur.filter(|t| cx.grammar.is_trivia(t.kind())) {
-        cur = t.prev_token();
-        run.push(t);
-    }
-    let breaks = run
-        .iter()
-        .rev()
-        .take_while(|t| !cx.grammar.has_tag(t.kind(), "comment"))
-        .map(|t| core_format::comments::count_breaks(t.text()))
-        .sum::<usize>();
-    breaks > 1
+/// The body of a compound statement after its head, printed.
+fn clause(cx: &FormatCtx<'_>, body: &SyntaxNode, force_space: bool) -> Result<Doc, FormatError> {
+    Ok(clause_of(cx, body, cx.format(body)?, force_space))
+}
+
+fn clause_of(cx: &FormatCtx<'_>, body: &SyntaxNode, printed: Doc, force_space: bool) -> Doc {
+    shapes::compound_body(cx, &body.clone().into(), printed, force_space, false)
 }
 
 /// `while (test) body` and `with (object) body`; `soft` lets the parenthesis content break.
@@ -203,7 +186,7 @@ fn condition_clause(node: &SyntaxNode, cx: &FormatCtx<'_>, soft: bool) -> R {
             elem(cx, open)?,
             parenthesized(cx.format(test)?, soft && !negated_chain(test)),
             elem(cx, close)?,
-            clause(body, cx.format(body)?, false),
+            clause(cx, body, false)?,
         ])),
     ]))
 }
@@ -222,10 +205,7 @@ fn negated_chain(test: &SyntaxNode) -> bool {
 /// The content between parentheses, indented on its own lines when it does not fit.
 fn parenthesized(inner: Doc, soft: bool) -> Doc {
     if soft {
-        group(concat(vec![
-            indent(concat(vec![softline(), inner])),
-            softline(),
-        ]))
+        shapes::enclosed(Doc::Nil, inner, Doc::Nil)
     } else {
         inner
     }
@@ -240,11 +220,10 @@ fn do_while(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let (lead, kw) = keyword(cx, kw)?;
     Ok(concat(vec![
         lead,
-        group(concat(vec![kw, clause(body, cx.format(body)?, false)])),
-        if body.kind() == k::BLOCK_STATEMENT {
-            lit(" ")
-        } else {
-            hardline()
+        group(concat(vec![kw, clause(cx, body, false)?])),
+        match token_of(wh) {
+            Some(t) => shapes::compound_continuation(cx, &body.clone().into(), t),
+            None => hardline(),
         },
         elem(cx, wh)?,
         lit(" "),
@@ -265,7 +244,7 @@ fn for_statement(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     // (the `)` is printed first: an empty body takes the comments after it)
     let close_doc = elem(cx, &kids[close])?;
     let body = node_at(&kids, close + 1)?;
-    let body = clause(body, cx.format(body)?, false);
+    let body = clause(cx, body, false)?;
     let (lead, kw) = keyword(cx, &kids[0])?;
     let open = elem(cx, &kids[1])?;
     // The three parts, told apart by the `;` before them.
@@ -333,7 +312,7 @@ fn for_in_of(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             elem(cx, &kids[open])?,
             inline(cx, &kids[open + 1..close])?,
             elem(cx, &kids[close])?,
-            clause(body, cx.format(body)?, false),
+            clause(cx, body, false)?,
         ])),
     ]))
 }
@@ -351,10 +330,7 @@ fn switch(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let head = group(concat(vec![
         kw,
         lit(" "),
-        elem(cx, open)?,
-        indent(concat(vec![softline(), elem(cx, disc)?])),
-        softline(),
-        elem(cx, close)?,
+        shapes::enclosed(elem(cx, open)?, elem(cx, disc)?, elem(cx, close)?),
     ]));
     let style = BlockStyle {
         expand_empty: true,

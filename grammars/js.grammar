@@ -126,7 +126,7 @@ node Directive #statement #opaque
 node BlockStatement #statement #block #scope = LBrace items:#statement* RBrace
 node VariableDeclaration #statement #declaration #inert-bare = Identifier* Keyword? Identifier* declarators:VariableDeclarator*
 node VariableDeclarator #declaration = name:#pattern Operator? type:TSTypeAnnotation? Operator? init:#expression?
-node EmptyStatement #statement #opaque #inert
+node EmptyStatement #statement #opaque #inert #empty-statement
 node ExpressionStatement #statement #opaque #expression-statement
 node IfStatement #statement #conditional = Keyword LParen condition:#expression RParen then:#statement Keyword? else:#statement?
 node DoWhileStatement #statement #loop = Keyword body:#statement Keyword LParen condition:#expression RParen Semicolon?
