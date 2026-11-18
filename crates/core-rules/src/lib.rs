@@ -25,6 +25,7 @@ pub mod fixes;
 pub mod flow_rules;
 pub mod format_strings;
 pub mod hooks;
+pub mod imports;
 pub mod keys;
 pub mod layout;
 pub mod lines;

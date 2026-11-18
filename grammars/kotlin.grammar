@@ -3,6 +3,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language kotlin 22 "Kotlin"
+imports keywords "import" alias-after "as"
 roles
 rule no-wildcard-imports level warn
 operators coalesce "?:"

@@ -9,12 +9,21 @@ use crate::sort;
 use core_config::shared;
 use core_format::shapes::{BlockStyle, block_between, dangling_comments};
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, comments, doc};
+use core_rules::imports::{Compare, Order};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 use std::borrow::Cow;
 
 include!("schema.generated.rs");
 
 pub struct ProtoFormatter;
+
+/// buf: `import public`, plain, `import weak`, `import option`, each by path; the comments above
+/// a statement move with it.
+static IMPORT_ORDER: std::sync::LazyLock<Order> = std::sync::LazyLock::new(|| Order {
+    keep_comments: true,
+    first_comment_moves: true,
+    ..Order::new(Compare::Ordinal, &["public", "*", "weak", "option"])
+});
 
 const BLOCK: BlockStyle = BlockStyle {
     max_blank_lines: 1,
@@ -34,14 +43,20 @@ impl NodeFormatter for ProtoFormatter {
         }
     }
 
+    /// The header statements move in the first round, the imports sort in the second.
+    fn rewrite_rounds(&self) -> usize {
+        2
+    }
+
     fn rewrite_source(
         &self,
         tree: &SyntaxNode,
         text: &str,
-        _: &core_syntax::Grammar,
+        grammar: &core_syntax::Grammar,
         _: &core_config::ResolvedOptions,
     ) -> Option<String> {
         crate::sort::sort_header(tree, text)
+            .or_else(|| core_rules::imports::sort_source(tree, text, grammar, &IMPORT_ORDER))
     }
 
     fn format_node(

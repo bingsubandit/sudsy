@@ -316,6 +316,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let mut rule_rows: Vec<RuleRow> = Vec::new();
     let mut precedence_rows: Vec<PrecedenceRow> = Vec::new();
     let mut keys = KeySyntax::default();
+    let mut imports = ImportSyntax::default();
     let mut strings: Vec<StringSyntax> = Vec::new();
     let mut regex_rows: Vec<RegexRow> = Vec::new();
     let mut regex_calls: Vec<RegexCall> = Vec::new();
@@ -382,6 +383,22 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                             }
                         }
                         other => return err(d.line, format!("unknown keys option `{other}`")),
+                    }
+                }
+            }
+            "imports" => {
+                while let Some(Lexeme::Ident(key)) = c.next() {
+                    let words = match *key {
+                        "keywords" => &mut imports.keywords,
+                        "modifiers" => &mut imports.modifiers,
+                        "alias-after" => &mut imports.alias_after,
+                        "alias-before" => &mut imports.alias_before,
+                        "members" => &mut imports.members,
+                        other => return err(d.line, format!("unknown imports option `{other}`")),
+                    };
+                    while let Some(Lexeme::Str(w)) = c.peek() {
+                        words.push(w.to_string());
+                        c.next();
                     }
                 }
             }
@@ -535,6 +552,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
         rule_rows,
         precedence_rows,
         keys,
+        imports,
         raw,
         source,
     )?;
@@ -897,6 +915,7 @@ fn resolve(
     rule_rows: Vec<RuleRow>,
     precedence_rows: Vec<PrecedenceRow>,
     keys: KeySyntax,
+    imports: ImportSyntax,
     raw: Vec<RawKind>,
     source: &str,
 ) -> Result<Grammar, GrammarError> {
@@ -995,6 +1014,7 @@ fn resolve(
         rule_rows,
         precedence_rows,
         keys,
+        imports,
         strings: Vec::new(),
         regex_rows: Vec::new(),
         regex_calls: Vec::new(),

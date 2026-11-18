@@ -1,0 +1,13 @@
+id: using-order
+family: imports
+params: { report: misplaced, roots: System, fixed: global unsafe, alias_by_name: "true" }
+description: "`using` directives of a file or namespace are out of order: System first (`system_first`), names in alphabetical order (`compare`), and with the options `static_position` and `alias_position` set to `after`, `using static` directives after the plain ones and aliases after those, each group sorted. `global using` and `using unsafe` stay where they are, and a list restarts at a directive that has a preprocessor directive in front of it (the fix leaves such lists alone). Comments on lines of their own stay where they are; a comment after a directive moves with it. Overlaps the SDK analyzers' `dotnet_sort_system_directives_first` .editorconfig key."
+example: "using Zeta;\nusing Alpha;   // Alpha goes first"
+severity: off
+category: cleanup
+fix-kind: safe
+options:
+  - { name: system_first, type: bool, default: true, description: "Put `System` and `System.*` before the other namespaces." }
+  - { name: compare, type: string, default: ordinal, choices: [ordinal, culture, culture_ignore_case], description: "`ordinal` compares code points; `culture` ignores case (and puts punctuation before digits before letters, a lower-case name before an upper-case one that is otherwise equal); `culture_ignore_case` leaves names that differ only in case in their order." }
+  - { name: static_position, type: string, default: keep, choices: [keep, after], description: "`after`: `using static` directives come after the plain usings, sorted (System ones first with `system_first`); `keep`: they stay where they are." }
+  - { name: alias_position, type: string, default: keep, choices: [keep, after], description: "`after`: alias directives come after all other usings, sorted by alias name; `keep`: they stay where they are." }

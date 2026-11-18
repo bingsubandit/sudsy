@@ -265,7 +265,7 @@ fn run(s: &[u8], from: usize) -> (usize, &[u8]) {
 }
 
 /// Digit runs compare as numbers, everything else by code point.
-fn natural(a: &str, b: &str) -> Ordering {
+pub fn natural(a: &str, b: &str) -> Ordering {
     let (x, y) = (a.as_bytes(), b.as_bytes());
     let (mut i, mut j) = (0, 0);
     while i < x.len() && j < y.len() {

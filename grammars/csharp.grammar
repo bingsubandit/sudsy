@@ -9,6 +9,7 @@
 // end-of-line stay trivia tokens. Missing and skipped tokens are ERROR nodes (core kind).
 
 language csharp 2 "C#"
+imports keywords "using" modifiers "global" "static" "unsafe" alias-before "="
 roles
 // Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).
 precedence 1 right "??"

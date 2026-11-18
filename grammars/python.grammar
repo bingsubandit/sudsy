@@ -3,6 +3,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language python 20 "Python"
+imports keywords "import" "from" alias-after "as" members "import"
 roles
 rule no-useless-expression level warn
 rule boolean-literal-comparison not_operators "is" "is not"

@@ -10,6 +10,7 @@
 use crate::generated::kind as k;
 use core_config::{ResolvedOptions, shared};
 use core_format::shapes::{ListLayout, TrailingComma};
+use core_rules::imports::{Compare, Order, Separate, words};
 use core_syntax::SyntaxKind;
 
 include!("../schema.generated.rs");
@@ -123,11 +124,25 @@ pub fn attach_comments(options: &ResolvedOptions) -> bool {
     blank_line_after_comment(options) == BlankLineAfterComment::Remove
 }
 
-pub fn using_order(options: &ResolvedOptions) -> (crate::using_sort::Order, bool) {
-    (
-        crate::using_sort::Order::formatter(sort_usings_system_first(options)),
-        separate_using_groups(options),
-    )
+/// The order of `sort_usings`: System usings (with `sort_usings_system_first`), the other plain
+/// usings, `using static`, aliases by alias name; `global using` first, `using global::X` behind
+/// the System usings, `using unsafe` in place.
+pub fn using_order(options: &ResolvedOptions) -> Order {
+    let system_first = sort_usings_system_first(options);
+    Order {
+        fixed: words(&["global", "unsafe"]),
+        roots_first: if system_first { words(&["System"]) } else { Vec::new() },
+        behind: Some("global::".into()),
+        behind_except: words(&["System"]),
+        alias_by_name: true,
+        separate: if separate_using_groups(options) && system_first {
+            Separate::Root
+        } else {
+            Separate::None
+        },
+        keep_comments: true,
+        ..Order::new(Compare::CultureIgnoreCase, &["global", "*", "static", "alias"])
+    }
 }
 
 pub fn do_while_on_closing_line(options: &ResolvedOptions) -> bool {

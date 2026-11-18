@@ -2,6 +2,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language protobuf 13 "Protobuf"
+imports keywords "import" modifiers "public" "weak" "option"
 comments line "//" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
@@ -45,7 +46,7 @@ node Document = items:#item* Eof
 node EmptyStatement #item = Semi
 node Syntax #item = Keyword Punct version:String Semi
 node Edition #item = Keyword Punct year:String Semi
-node Import #item = Keyword Keyword? path:String Semi
+node Import #item #import = Keyword Keyword? path:String Semi
 node Package #item = Keyword FullIdent Semi
 // `option <name> = <constant>;`; the name tokens (`(a.b).c`) are children.
 node OptionDecl #item = Keyword Punct* Ident* FullIdent* Constant Semi

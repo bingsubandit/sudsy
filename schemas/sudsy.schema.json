@@ -5679,8 +5679,54 @@
               "description": "A `__slots__` list or tuple of strings out of natural order."
             },
             "unsorted-imports": {
-              "$ref": "#/definitions/rule",
-              "description": "A block of imports that differs from the isort layout (ruff's defaults): sections of future, standard library, third-party, first-party and relative imports, `import x` before `from x import y`, names in natural order without regard to case, members as constants, classes, then variables, one statement for each module, lines over 88 columns in parentheses, one blank line between sections and after the block (two before a definition at module level). A folder or file next to the file, in the project root or in its `src` folder, is first-party."
+              "description": "A block of imports that differs from the isort layout (ruff's defaults): sections of future, standard library, third-party, first-party and relative imports, `import x` before `from x import y`, names in natural order without regard to case, members as constants, classes, then variables, one statement for each module, lines over 88 columns in parentheses, one blank line between sections and after the block (two before a definition at module level). A folder or file next to the file, in the project root or in its `src` folder, is first-party.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "force_sort_within_sections": {
+                          "default": false,
+                          "description": "Sort `import x` and `from x import y` together by module instead of the plain imports first.",
+                          "type": "boolean"
+                        },
+                        "line_width": {
+                          "default": 88,
+                          "description": "A `from` import over this many columns is wrapped in parentheses, one member to a line.",
+                          "type": "integer"
+                        },
+                        "sections": {
+                          "default": [
+                            "future",
+                            "standard-library",
+                            "third-party",
+                            "first-party",
+                            "local-folder"
+                          ],
+                          "description": "The sections of the block in the order they are written; a section left out comes last.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "untagged-base-image": {
               "$ref": "#/definitions/rule",
@@ -5936,7 +5982,7 @@
                         },
                         "compare": {
                           "default": "ordinal",
-                          "description": "`ordinal` compares code points; `culture` ignores case (and puts                           punctuation before digits before letters, a lower-case name before                           an upper-case one that is otherwise equal); `culture_ignore_case`                           leaves names that differ only in case in their order.",
+                          "description": "`ordinal` compares code points; `culture` ignores case (and puts punctuation before digits before letters, a lower-case name before an upper-case one that is otherwise equal); `culture_ignore_case` leaves names that differ only in case in their order.",
                           "enum": [
                             "ordinal",
                             "culture",

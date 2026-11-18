@@ -17,12 +17,21 @@ use core_format::comments::{self, CommentKind};
 use core_format::doc::{self, Doc};
 use core_format::rules::LazyRules;
 use core_format::{FormatCtx, FormatError, NodeFormatter};
+use core_rules::imports::{Compare, Order, Separate};
 use core_syntax::grammars;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 include!("../schema.generated.rs");
 
 pub struct JavaFormatter;
+
+/// google-java-format: `import static` first, then the others, each in ASCII order without
+/// duplicates, one blank line between the two; the list is left alone when it holds a comment.
+static IMPORT_ORDER: std::sync::LazyLock<Order> = std::sync::LazyLock::new(|| Order {
+    dedup: true,
+    separate: Separate::Category,
+    ..Order::new(Compare::Ordinal, &["static", "*"])
+});
 
 static ROWS: LazyRules =
     LazyRules::new(|| grammars::JAVA.get(), include_str!("../../format.rules"));
@@ -39,10 +48,10 @@ impl NodeFormatter for JavaFormatter {
         &self,
         tree: &SyntaxNode,
         text: &str,
-        _: &core_syntax::Grammar,
+        grammar: &core_syntax::Grammar,
         _: &core_config::ResolvedOptions,
     ) -> Option<String> {
-        crate::imports::sort_imports(tree, text)
+        core_rules::imports::sort_source(tree, text, grammar, &IMPORT_ORDER)
     }
 
     fn blank_between(&self, cx: &FormatCtx<'_>, prev: &SyntaxNode, next: &SyntaxNode) -> bool {

@@ -333,8 +333,6 @@ local lang-csharp/format/braces.rs declaration-kit # lang: csharp
 local lang-csharp/rules/async_suffix.rs naming-convention # lang: csharp
 local lang-csharp/rules/binding.rs unused-import # lang: csharp
 local lang-csharp/rules/flow.rs unused-variable # lang: csharp
-local lang-csharp/rules/usings.rs sorted-imports # lang: csharp
-local lang-csharp/using_sort.rs sorted-imports # lang: csharp
 local lang-css/format/mod.rs key-value-layout # lang: css
 local lang-css/format/mod.rs token-case # lang: css
 local lang-css/format/text.rs token-case # lang: css
@@ -359,7 +357,6 @@ local lang-html/parser/mod.rs recursive-descent-parser # lang: html
 local lang-html/parser/svelte.rs recursive-descent-parser # lang: html
 local lang-html/script/js.rs role-accessors # lang: html
 local lang-java/format/stmt.rs compound-statement # lang: java
-local lang-java/imports.rs sorted-imports # lang: java
 local lang-java/lexer.rs source-lexer # lang: java
 local lang-java/parser/decl.rs recursive-descent-parser # lang: java
 local lang-java/parser/expr.rs precedence-expression-parser # lang: java
@@ -380,7 +377,6 @@ local lang-json/lexer.rs source-lexer # lang: json
 local lang-json/parser.rs recursive-descent-parser # lang: json
 local lang-kotlin/format/decl.rs signature-layout # lang: kotlin
 local lang-kotlin/format/expr.rs binary-chain-layout # lang: kotlin
-local lang-kotlin/rewrite.rs sorted-imports # lang: kotlin
 local lang-kotlin/rewrite.rs source-rewrite # lang: kotlin
 local lang-makefile/format.rs key-value-layout # lang: makefile
 local lang-makefile/format.rs line-continuation-layout # lang: makefile
@@ -391,7 +387,6 @@ local lang-markdown/format/keep.rs verbatim-formatter # lang: markdown
 local lang-powershell/format.rs block-and-statements # lang: powershell
 local lang-powershell/format.rs token-case # lang: powershell
 local lang-protobuf/format.rs key-value-layout # lang: protobuf
-local lang-protobuf/sort.rs sorted-imports # lang: protobuf
 local lang-python/format/block.rs blank-lines-between-members # lang: python
 local lang-python/format/comment.rs source-rewrite # lang: python
 local lang-python/format/expr.rs member-chain # lang: python
@@ -400,7 +395,6 @@ local lang-python/format/op.rs binary-chain-layout # lang: python
 local lang-python/format/paren.rs parenthesized-expression # lang: python
 local lang-python/format/util.rs node-sequence # lang: python
 local lang-python/forward.rs embedded-code # lang: python
-local lang-python/rules/isort.rs sorted-imports # lang: python
 local lang-python/rules/lints.rs call-shape-checks # lang: python
 local lang-python/rules/misc.rs call-shape-checks # lang: python
 local lang-python/rules/stmts.rs statement-shape-checks # lang: python

@@ -2,6 +2,7 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs. Bodies are loose: they name the parts, not every order.
 
 language java 23 "Java"
+imports keywords "import" modifiers "static"
 roles
 rule boolean-literal-comparison level warn
 // Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).

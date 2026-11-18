@@ -1,9 +1,10 @@
-//! The file header order of `buf format`: syntax or edition, package, imports (`public` first,
-//! `option` last, by path), file options (built-in before custom, by name), then everything else
-//! as written. Each statement moves with its comments (the trivia in front of it and a comment on
-//! its last line); inside the import and option groups the blank lines of the source go.
+//! The file header order of `buf format`: syntax or edition, package, imports, file options
+//! (built-in before custom, by name), then everything else as written. Each statement moves with
+//! its comments (the trivia in front of it and a comment on its last line); inside the import and
+//! option groups the blank lines of the source go. The imports keep their order here; the sort of
+//! the import group is `core_rules::imports` (the formatter's next rewrite round).
 //!
-//! concept: new file-header-order, sorted-imports
+//! concept: new file-header-order
 //! what: The order of the header statements of a file: syntax, package, imports, options.
 //! tools: buf format
 
@@ -33,16 +34,7 @@ fn words(item: &SyntaxNode) -> Vec<String> {
 fn key(item: &SyntaxNode) -> (u8, u8, String) {
     let words = words(item);
     match group(item) {
-        2 => {
-            let rank = match words.get(1).map(String::as_str) {
-                Some("public") => 0,
-                Some("weak") => 2,
-                Some("option") => 3,
-                _ => 1,
-            };
-            let path = words.iter().find(|w| w.starts_with(['"', '\'']));
-            (2, rank, path.cloned().unwrap_or_default())
-        }
+        2 => (2, 0, String::new()),
         3 => {
             let name: String = words
                 .iter()

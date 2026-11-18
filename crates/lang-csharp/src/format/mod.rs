@@ -75,10 +75,7 @@ impl NodeFormatter for CSharpFormatter {
         options: &ResolvedOptions,
     ) -> Option<String> {
         sort_usings(options)
-            .then(|| {
-                let (order, separate) = using_order(options);
-                crate::using_sort::sort_all(tree, text, grammar, &order, separate)
-            })
+            .then(|| core_rules::imports::sort_source(tree, text, grammar, &using_order(options)))
             .flatten()
     }
 

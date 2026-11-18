@@ -23,7 +23,6 @@ mod member_order;
 mod statements;
 mod symbol_checks;
 mod syntax_forms;
-mod usings;
 
 use crate::generated::kind;
 use core_rules::{Family, Rule};
@@ -34,11 +33,11 @@ pub static FAMILIES: &[Family] = &[
     doc_element::FAMILY,
     finding::FAMILY,
     core_rules::regex_source::FAMILY,
+    core_rules::imports::family::<core_rules::imports::Plain>(),
 ];
 
 pub static RULES: &[&dyn Rule] = &[
     &async_suffix::AsyncSuffix,
-    &usings::UsingOrder,
     &member_order::MemberOrder,
     &member_order::AccessorOrder,
     &flow::UnusedVariable,

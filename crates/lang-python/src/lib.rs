@@ -7,6 +7,7 @@ mod adapter;
 mod format;
 mod forward;
 mod hooks;
+mod imports;
 mod names;
 mod rules;
 mod semantic;

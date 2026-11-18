@@ -6,7 +6,6 @@
 
 mod branch;
 mod decl;
-mod isort;
 mod lints;
 mod literal;
 mod misc;
@@ -31,6 +30,7 @@ pub static FAMILIES: &[Family] = &[
     },
     core_rules::regex_source::FAMILY,
     core_rules::simplify::FAMILY,
+    core_rules::imports::family::<crate::imports::Python>(),
 ];
 
 pub(super) use core_rules::checks::{Entry, NodeCheck as Check};
@@ -119,7 +119,6 @@ const CHECKS: &[Entry] = &[
         &[k::STMT_IF, k::ELIF_ELSE_CLAUSE],
         types::outdated_version_block,
     ),
-    ("unsorted-imports", lints::BODIES, isort::unsorted_imports),
     (
         "cached-method",
         &[k::STMT_FUNCTION_DEF],

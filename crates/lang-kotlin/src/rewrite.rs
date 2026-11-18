@@ -1,62 +1,21 @@
 //! What ktlint rewrites rather than lays out, done on the source before it is formatted (the
-//! formatter's `rewrite_source`): the import order. Each rewrite is a list of edits of the text,
+//! formatter's `rewrite_source`). Each rewrite is a list of edits of the text,
 //! so what stays is untouched; the result is parsed again.
 //!
-//! concept: source-rewrite, sorted-imports
+//! concept: source-rewrite
 
 use crate::generated::kind as k;
-use core_syntax::SyntaxNode;
+use core_rules::imports::{Compare, Order, sort_edits, words};
+use core_syntax::{Grammar, SyntaxNode};
 
-/// The order of `ktlint_official`: all imports in ASCII order of their path, `java.`, `javax.`
-/// and `kotlin.` imports after the others, aliased imports last; no duplicates.
-fn import_group(path: &str, alias: bool) -> u8 {
-    if alias {
-        return 4;
-    }
-    ["java.", "javax.", "kotlin."]
-        .iter()
-        .position(|p| path.starts_with(p))
-        .map_or(0, |i| i as u8 + 1)
-}
-
-fn sort_imports(tree: &SyntaxNode, text: &str, edits: &mut Vec<(usize, usize, String)>) {
-    let Some(list) = tree.children().find(|n| n.kind() == k::IMPORT_LIST) else {
-        return;
-    };
-    let mut items: Vec<(u8, String, &str)> = Vec::new();
-    let mut span: Option<(usize, usize)> = None;
-    let mut gap_from = 0;
-    for n in list.children().filter(|n| n.kind() == k::IMPORT_DIRECTIVE) {
-        let r = n.text_range();
-        let (s, e) = (usize::from(r.start()), usize::from(r.end()));
-        let piece = text[s..e].trim();
-        let start = s + (text[s..e].len() - text[s..e].trim_start().len());
-        // Comments between or inside imports belong to them: leave the list as written.
-        if piece.contains("//")
-            || piece.contains("/*")
-            || (span.is_some() && !text[gap_from..start].trim().is_empty())
-        {
-            return;
-        }
-        gap_from = start + piece.len();
-        span = Some((span.map_or(start, |(a, _)| a), gap_from));
-        let alias = n.children().any(|c| c.kind() == k::IMPORT_ALIAS);
-        let path: String = piece
-            .strip_prefix("import")
-            .unwrap_or(piece)
-            .split_whitespace()
-            .take_while(|w| *w != "as")
-            .collect();
-        items.push((import_group(&path, alias), path, piece));
-    }
-    let Some((from, to)) = span else { return };
-    items.sort_by(|a, b| (a.0, &a.1).cmp(&(b.0, &b.1)));
-    items.dedup_by(|a, b| a.2 == b.2);
-    let sorted = items.iter().map(|i| i.2).collect::<Vec<_>>().join("\n");
-    if sorted != text[from..to] {
-        edits.push((from, to, sorted));
-    }
-}
+/// The import order of `ktlint_official`: all imports in ASCII order of their path, `java.`,
+/// `javax.` and `kotlin.` imports after the others, aliased imports last; no duplicates. A list
+/// with a comment is left alone.
+static IMPORT_ORDER: std::sync::LazyLock<Order> = std::sync::LazyLock::new(|| Order {
+    dedup: true,
+    last_prefixes: words(&["java.", "javax.", "kotlin."]),
+    ..Order::new(Compare::Ordinal, &["*", "alias"])
+});
 
 /// A blank line between a `//` comment and a documentation comment that follows it directly.
 fn blank_before_kdoc(tree: &SyntaxNode, text: &str, edits: &mut Vec<(usize, usize, String)>) {
@@ -312,9 +271,11 @@ fn bracing(tree: &SyntaxNode, text: &str, width: usize, edits: &mut Vec<(usize, 
 }
 
 /// The source with the rewrites applied, or `None` when there is nothing to rewrite.
-pub fn rewrite(tree: &SyntaxNode, text: &str, width: usize) -> Option<String> {
-    let mut edits = Vec::new();
-    sort_imports(tree, text, &mut edits);
+pub fn rewrite(tree: &SyntaxNode, text: &str, g: &Grammar, width: usize) -> Option<String> {
+    let mut edits: Vec<(usize, usize, String)> = sort_edits(tree, text, g, &IMPORT_ORDER)
+        .into_iter()
+        .map(|(r, new)| (r.start().into(), r.end().into(), new))
+        .collect();
     blank_before_kdoc(tree, text, &mut edits);
     enum_trailing_comma(tree, text, &mut edits);
     expression_body(tree, &mut edits);
