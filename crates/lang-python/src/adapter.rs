@@ -15,8 +15,8 @@
 //! - ruff's errors cascade: a file reports the first error of each statement.
 
 use crate::generated::kind as k;
-use core_syntax::{SyntaxKind, grammars};
-use provider_api::adapter::{KindNames, Kinds, Node, Tok, replay};
+use core_syntax::grammars;
+use provider_api::adapter::{KindNames, Node, Tok, replay_grammar};
 use provider_api::{ParseError, ParseResult, SourceFile};
 use ruff_python_ast::token::TokenKind;
 use ruff_python_ast::visitor::source_order::{SourceOrderVisitor, TraversalSignal};
@@ -84,14 +84,7 @@ fn tree(src: &str, target: PythonVersion) -> ParseResult {
             .chain((parsed.unsupported_syntax_errors().iter()).map(|e| (e.range(), e.to_string()))),
         &stmts,
     );
-    let kinds = Kinds {
-        root: k::MOD_MODULE,
-        eof: k::END_OF_FILE,
-        unknown: k::UNKNOWN,
-        whitespace: k::WHITESPACE,
-        newline: k::NEWLINE,
-    };
-    let mut result = replay(src, kinds, &tokens, &nodes, comments, |t, _| t);
+    let mut result = replay_grammar(src, grammar, &tokens, &nodes, |t, _| t);
     errors.append(&mut result.errors);
     errors.sort_by_key(|e| e.start);
     result.errors = errors;
@@ -101,19 +94,6 @@ fn tree(src: &str, target: PythonVersion) -> ParseResult {
 /// The parse of a piece of code found in a string (a quoted annotation), for the newest version.
 pub fn parse_snippet(src: &str) -> ParseResult {
     tree(src, PythonVersion::latest())
-}
-
-/// A comment or a backslash that ends a line, at the start of the text between two tokens.
-fn comments(rest: &str, _: usize) -> Option<(SyntaxKind, usize)> {
-    if rest.starts_with('#') {
-        Some((k::COMMENT, rest.find(['\n', '\r']).unwrap_or(rest.len())))
-    } else {
-        let after = rest.strip_prefix('\\')?;
-        let len = if after.starts_with("\r\n") { 3 } else { 2 };
-        after
-            .starts_with(['\n', '\r'])
-            .then_some((k::CONTINUATION, len))
-    }
 }
 
 /// The errors of the parse, one per statement (the innermost one that contains it): the first

@@ -7,7 +7,7 @@ mod rewrite;
 mod rules;
 mod scope;
 
-pub use adapter::{MAX_BYTES, parse};
+pub use adapter::parse;
 pub use format::{KotlinFormatter, option_schema};
 
 include!("provider.generated.rs");

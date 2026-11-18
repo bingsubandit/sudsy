@@ -19,11 +19,6 @@ fn words(v: &Value) -> Vec<String> {
     }
 }
 
-fn pascal(snake: &str) -> String {
-    let up = |w: &str| w[..1].to_uppercase() + &w[1..];
-    snake.split('_').filter(|w| !w.is_empty()).map(up).collect()
-}
-
 fn pairs(rows: &[(String, String)]) -> String {
     rows.iter()
         .map(|(a, b)| format!("        ({a:?}, {b:?}),\n"))
@@ -50,7 +45,10 @@ pub fn consts(name: &str, l: &Lang) -> Result<String> {
             kind => kinds.extend(words(v).into_iter().map(|from| (from, kind.to_string()))),
         }
     }
-    kinds.extend(same.into_iter().map(|n| (n.clone(), pascal(&n))));
+    kinds.extend(
+        same.into_iter()
+            .map(|n| (n.clone(), core_syntax::codegen::pascal(&n))),
+    );
     let path = crate::repo_root().join(format!("grammars/{name}.grammar"));
     let src = std::fs::read_to_string(&path).with_context(|| format!("reading {path:?}"))?;
     let grammar = Grammar::parse(&src).map_err(|e| anyhow::anyhow!("{path:?}: {e}"))?;

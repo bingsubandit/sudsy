@@ -4,6 +4,8 @@
 language ruby 25 "Ruby"
 roles
 comments line "#"
+trivia Comment line "#" lines "=begin" "=end"
+trivia Whitespace continuation
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"

@@ -6,6 +6,7 @@ roles
 operators equality "<>"
 operators logical "AND" "OR" "XOR"
 comments line "//" block "/*" "*/"
+trivia Comment line "//" "#" not "#[" block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"

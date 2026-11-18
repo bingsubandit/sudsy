@@ -6,6 +6,8 @@ language kotlin 22 "Kotlin"
 roles
 operators coalesce "?:"
 comments line "//" block "/*" "*/"
+trivia Comment line "//" first "#!" block "/*" "*/" nested
+limits stack 256 bytes 16 depth 2000 run "!-+@" tagged "@" 12
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"

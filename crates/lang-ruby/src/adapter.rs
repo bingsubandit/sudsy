@@ -2,7 +2,7 @@
 //!
 //! `ffi` parses once and returns the tokens of the lex callback and the node spans (the C visitor).
 //! Newlines, comments and the separators of `%w[]` are not tokens here: they are the text between
-//! tokens, which `replay` splits (`comments` knows `#` and `=begin` blocks and `\` line
+//! tokens, which `replay` splits (the grammar's `trivia` rows know `#` and `=begin` blocks and `\` line
 //! continuations). The text after `__END__` is one `Data` token. A node kind of Prism
 //! (`PM_CALL_NODE`) is the row `Call` of `grammars/ruby.grammar`. A heredoc's body is lexed after
 //! the rest of its opening line and Prism ends the nodes of that line before it: the body (text,
@@ -12,17 +12,10 @@
 mod ffi;
 
 use crate::generated::kind as k;
+use core_syntax::codegen::from_screaming;
 use core_syntax::{SyntaxKind, grammars};
-use provider_api::adapter::{KindNames, Kinds, Node, Tok, replay};
+use provider_api::adapter::{KindNames, Node, Tok, replay_grammar};
 use provider_api::{ParseError, ParseResult, SourceFile};
-
-const KINDS: Kinds = Kinds {
-    root: k::PROGRAM,
-    eof: k::EOF,
-    unknown: k::UNKNOWN,
-    whitespace: k::WHITESPACE,
-    newline: k::NEWLINE,
-};
 
 /// Prism node types with no row: the root (`replay` makes it), and the implicit parameters of a
 /// block (`it`, `_1`), which Prism spans over the whole block.
@@ -53,7 +46,7 @@ pub fn parse(src: &str) -> ParseResult {
     // The visitor goes by field, not by position (`a if b` visits `b` first); a stable sort keeps a
     // parent before a child of the same span.
     nodes.sort_by_key(|n| (n.start, std::cmp::Reverse(n.end)));
-    let mut result = replay(src, KINDS, &tokens, &nodes, comments(src), |t, _| t);
+    let mut result = replay_grammar(src, grammars::RUBY.get(), &tokens, &nodes, |t, _| t);
     let mut errors: Vec<ParseError> = parsed
         .errors
         .iter()
@@ -72,9 +65,7 @@ fn node_kind_name(kind: u16) -> String {
     if name == "SELF" {
         return "This".into(); // `Self` is not a Rust type name
     }
-    name.split('_')
-        .map(|w| format!("{}{}", &w[..1], w[1..].to_lowercase()))
-        .collect()
+    from_screaming(name)
 }
 
 /// Our tokens of the lexer's: the ones that are real text, in source order, and the data after
@@ -219,32 +210,4 @@ fn token_kind(name: &str) -> Option<SyntaxKind> {
         _ if name.starts_with("PERCENT_") && name != "PERCENT_EQUAL" => k::QUOTE,
         _ => k::OPERATOR,
     })
-}
-
-/// What the text between two tokens holds besides whitespace: a `#` comment, a `=begin` block and
-/// a `\` that continues the line.
-fn comments(src: &str) -> impl Fn(&str, usize) -> Option<(SyntaxKind, usize)> + '_ {
-    move |rest, pos| {
-        let line_end = |s: &str| s.find(['\n', '\r']).unwrap_or(s.len());
-        if rest.starts_with('#') {
-            Some((k::COMMENT, line_end(rest)))
-        } else if rest.starts_with("=begin") && (pos == 0 || src.as_bytes()[pos - 1] == b'\n') {
-            let end = rest.find("\n=end").map_or(rest.len(), |i| {
-                let from = i + 1;
-                from + line_end(&rest[from..])
-            });
-            Some((k::COMMENT, end))
-        } else if let Some(after) = rest.strip_prefix('\\') {
-            let n = if after.starts_with("\r\n") {
-                2
-            } else if after.starts_with('\n') {
-                1
-            } else {
-                return None;
-            };
-            Some((k::WHITESPACE, 1 + n))
-        } else {
-            None
-        }
-    }
 }

@@ -4,6 +4,7 @@
 //! // comment
 //! language json 1 "JSON"              // name, LanguageId (1..=31), display name (optional)
 //! comments line "//" block "/*" "*/"   // either part optional
+//! trivia Comment line "#" block "/*" "*/"   // text between tokens: see `trivia_row`; `limits stack 256 bytes 16 depth 2000`
 //! hoisted "var"                        // declaration keywords whose bare declarations hoist (optional)
 //! suppress disable-next-line "sudsy-disable-next-line"   // role, marker; roles: disable-next-line,
 //!                                                        // disable-line, disable, enable, disable-file, ignore*
@@ -30,6 +31,7 @@
 mod parse;
 
 use crate::kind::{LanguageId, SyntaxKind};
+use crate::scan::{Limits, TriviaRow, TriviaSyntax};
 use crate::strings::{StringSyntax, Unknown};
 use crate::tree::{SyntaxElement, SyntaxNode};
 use std::borrow::Cow;
@@ -169,6 +171,10 @@ pub struct Grammar {
     strings: Vec<(SyntaxKind, StringSyntax)>,
     /// Per token index, where its rows start in `strings` (`u32::MAX`: none).
     string_first: Vec<u32>,
+    /// The `trivia` rows.
+    pub trivia: TriviaSyntax,
+    /// The `limits` row.
+    pub limits: Limits,
     nodes: Vec<KindDef>,
     tokens: Vec<KindDef>,
     by_name: HashMap<String, SyntaxKind>,
@@ -619,6 +625,11 @@ impl Grammar {
 
     pub fn nodes(&self) -> &[KindDef] {
         &self.nodes
+    }
+
+    /// The root node of the language: the first node of the grammar.
+    pub fn root(&self) -> SyntaxKind {
+        self.nodes[0].kind
     }
 
     pub fn tokens(&self) -> &[KindDef] {

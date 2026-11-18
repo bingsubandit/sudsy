@@ -11,7 +11,7 @@
 
 What ktrs needs from its caller, done in the adapter:
 - it requires `\n` line breaks: the text is normalized and every offset mapped back (`crs`, a binary search), so a CRLF file keeps its line breaks;
-- it recurses once per nesting level and aborts the process on overflow, so the parse and the walk run on a thread with a 256 MB stack, and a scan refuses text nested deeper than 2,000 brackets or 2,000 prefix operators; it is exponential in nested annotation arguments (`@A(@A(...))`, 4 s at 22 levels), so more than 12 are refused; a panic is caught; a file over 16 MB is not parsed. All of these leave the file as one `Unknown` token and one error, which the formatter and the linter refuse.
+- it recurses once per nesting level and aborts the process on overflow, so the parse and the walk run on a thread with a 256 MB stack, and a scan refuses text nested deeper than 2,000 brackets or 2,000 prefix operators; it is exponential in nested annotation arguments (`@A(@A(...))`, 4 s at 22 levels), so more than 12 are refused; a panic is caught; a file over 16 MB is not parsed (all declared in the grammar's `limits` row). All of these leave the file as one `Unknown` token and one error, which the formatter and the linter refuse.
 
 Failure modes of the parser itself: it follows the compiler of Kotlin 2.4.20 and rejects the newest experimental syntax of the compiler's master (union types, `error` as a modifier); it is quadratic on a chain of tens of thousands of binary operators.
 

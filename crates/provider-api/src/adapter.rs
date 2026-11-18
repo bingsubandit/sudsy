@@ -12,6 +12,8 @@
 use crate::provider::{ParseError, ParseResult};
 use core_syntax::trivia::is_line_break;
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, TreeBuilder};
+use std::borrow::Cow;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 /// A token of the parser: our kind and its span.
 #[derive(Clone, Copy)]
@@ -37,6 +39,24 @@ pub struct Kinds {
     pub unknown: SyntaxKind,
     pub whitespace: SyntaxKind,
     pub newline: SyntaxKind,
+}
+
+impl Kinds {
+    /// The kinds of a grammar: its first node is the root, and its tokens are called `Eof` (or
+    /// `EndOfFile`), `Unknown`, `Whitespace` and `Newline`.
+    pub fn of(grammar: &Grammar) -> Kinds {
+        let named = |names: &[&str]| {
+            (names.iter().find_map(|n| grammar.kind_by_name(n)))
+                .unwrap_or_else(|| panic!("grammar {} has no token {}", grammar.language, names[0]))
+        };
+        Kinds {
+            root: grammar.root(),
+            eof: named(&["Eof", "EndOfFile"]),
+            unknown: named(&["Unknown"]),
+            whitespace: named(&["Whitespace"]),
+            newline: named(&["Newline"]),
+        }
+    }
 }
 
 /// Our kinds for the parser's, found by name in the grammar on first use. `index` is the parser's
@@ -172,6 +192,111 @@ pub fn replay(
     ParseResult {
         tree: SyntaxNode::new_root(builder.finish()),
         errors: lex.errors,
+    }
+}
+
+/// [`replay`] with the kinds and the trivia rows (`trivia`) of the grammar.
+pub fn replay_grammar(
+    src: &str,
+    grammar: &Grammar,
+    tokens: &[Tok],
+    nodes: &[Node],
+    retag: impl Fn(Tok, Option<SyntaxKind>) -> Tok,
+) -> ParseResult {
+    let scan = |rest: &str, pos: usize| grammar.trivia.scan(src, rest, pos);
+    replay(src, Kinds::of(grammar), tokens, nodes, scan, retag)
+}
+
+/// Runs `parse` as the grammar's `limits` row allows: a file over the size limit or nested deeper
+/// than the depth limit is refused, a panic is a refusal, and a row with a `stack` runs the parser
+/// on a thread with it (`parse` returns what the parser found, to be replayed). A refused file is
+/// one `Unknown` token and one error.
+pub fn guarded<R: Send>(
+    src: &str,
+    grammar: &Grammar,
+    parse: impl FnOnce() -> R + Send,
+) -> Result<R, ParseResult> {
+    let stack = grammar.limits.stack_mb;
+    let thread = |parse| {
+        std::thread::scope(|s| {
+            let thread = std::thread::Builder::new().stack_size(stack << 20);
+            thread
+                .spawn_scoped(s, || catch_unwind(AssertUnwindSafe(parse)))
+                .ok()?
+                .join()
+                .ok()?
+                .ok()
+        })
+    };
+    refusing(src, grammar, parse, |parse| {
+        if stack == 0 {
+            catch(parse)
+        } else {
+            thread(parse)
+        }
+    })
+}
+
+/// [`guarded`] on the caller's thread, for a result that cannot cross threads (the limits row
+/// has no `stack`).
+pub fn guarded_local<R>(
+    src: &str,
+    grammar: &Grammar,
+    parse: impl FnOnce() -> R,
+) -> Result<R, ParseResult> {
+    refusing(src, grammar, parse, catch)
+}
+
+fn catch<R>(parse: impl FnOnce() -> R) -> Option<R> {
+    catch_unwind(AssertUnwindSafe(parse)).ok()
+}
+
+fn refusing<P, R>(
+    src: &str,
+    grammar: &Grammar,
+    parse: P,
+    exec: impl FnOnce(P) -> Option<R>,
+) -> Result<R, ParseResult> {
+    let refuse = |why: String| whole_file(src, Kinds::of(grammar), why);
+    if let Some(why) = grammar.limits.refuse(src) {
+        return Err(refuse(why));
+    }
+    exec(parse).ok_or_else(|| refuse(format!("the {} parser failed on this file", grammar.title)))
+}
+
+/// The text with `\r\n` as `\n`, for a parser that wants no `\r`, and the way back to offsets in
+/// the original.
+pub struct Lf<'a> {
+    pub text: Cow<'a, str>,
+    /// The offsets in `text` where a `\r` was removed.
+    crs: Vec<u32>,
+}
+
+impl<'a> Lf<'a> {
+    pub fn new(src: &'a str) -> Self {
+        if !src.contains("\r\n") {
+            return Lf {
+                text: src.into(),
+                crs: Vec::new(),
+            };
+        }
+        let (mut out, mut crs) = (String::with_capacity(src.len()), Vec::new());
+        let mut rest = src;
+        while let Some(i) = rest.find("\r\n") {
+            out.push_str(&rest[..i]);
+            crs.push(out.len() as u32);
+            rest = &rest[i + 1..];
+        }
+        out.push_str(rest);
+        Lf {
+            text: out.into(),
+            crs,
+        }
+    }
+
+    /// The offset in the original of the offset `n` in `text`.
+    pub fn to_src(&self, n: usize) -> u32 {
+        (n + self.crs.partition_point(|&p| (p as usize) < n)) as u32
     }
 }
 

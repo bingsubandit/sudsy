@@ -34,8 +34,9 @@ pub fn screaming(name: &str) -> String {
     out
 }
 
-fn pascal(tag: &str) -> String {
-    tag.split('-')
+/// `foo-bar` or `foo_bar` as `FooBar` (the rest of each word as written).
+pub fn pascal(name: &str) -> String {
+    name.split(['-', '_'])
         .map(|p| {
             let mut c = p.chars();
             c.next()
@@ -43,6 +44,17 @@ fn pascal(tag: &str) -> String {
                 .unwrap_or_default()
         })
         .collect()
+}
+
+/// `VALUE_PARAMETER_LIST` as `ValueParameterList`: the grammar's name for a parser's kind.
+pub fn from_screaming(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for w in name.split('_') {
+        let mut chars = w.chars();
+        out.extend(chars.next());
+        out.extend(chars.flat_map(char::to_lowercase));
+    }
+    out
 }
 
 fn check_ident(what: &str, name: &str) -> Result<(), CodegenError> {

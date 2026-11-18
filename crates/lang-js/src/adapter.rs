@@ -1,8 +1,7 @@
 //! oxc's AST and tokens as our lossless tree.
 //!
 //! The lexer's tokens and the AST nodes' spans (one `Visit` walk over every `AstKind`) go to
-//! `provider_api::adapter::replay`, which builds the tree; this file knows oxc's kinds and the
-//! comments between tokens. Nodes with no token (`JSXEmptyExpression`) and kinds without a
+//! `provider_api::adapter::replay`, which builds the tree; this file knows oxc's kinds. Nodes with no token (`JSXEmptyExpression`) and kinds without a
 //! grammar node (`Program`, which is the root node of the tree, and `Hashbang`, a comment) are
 //! left out.
 
@@ -15,7 +14,7 @@ use oxc_ast_visit::Visit;
 use oxc_parser::config::TokensParserConfig;
 use oxc_parser::{Kind, ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType};
-use provider_api::adapter::{KindNames, Kinds, Node, Tok, replay};
+use provider_api::adapter::{KindNames, Node, Tok, replay_grammar};
 use provider_api::{ParseError, ParseResult, SourceFile};
 
 /// The source type of a file name; JavaScript has JSX whatever its extension (as in Babel), and
@@ -114,35 +113,11 @@ fn parse_as(src: &str, source_type: SourceType) -> ParseResult {
             .collect();
         (tokens, collector.nodes)
     };
-    let kinds = Kinds {
-        root: k::PROGRAM,
-        eof: k::EOF,
-        unknown: k::UNKNOWN,
-        whitespace: k::WHITESPACE,
-        newline: k::NEWLINE,
-    };
-    let mut result = replay(src, kinds, &tokens, &nodes, comments, union_bars);
+    let mut result = replay_grammar(src, grammars::JS.get(), &tokens, &nodes, union_bars);
     errors.append(&mut result.errors);
     errors.sort_by_key(|e| e.start);
     result.errors = errors;
     result
-}
-
-/// A comment at the start of the text between two tokens.
-fn comments(rest: &str, pos: usize) -> Option<(SyntaxKind, usize)> {
-    if rest.starts_with("//")
-        || rest.starts_with("<!--")
-        || rest.starts_with("-->")
-        || pos == 0 && rest.starts_with("#!")
-    {
-        let end = rest.find(['\n', '\r', '\u{2028}', '\u{2029}']);
-        Some((k::LINE_COMMENT, end.unwrap_or(rest.len())))
-    } else if let Some(body) = rest.strip_prefix("/*") {
-        let end = body.find("*/").map_or(rest.len(), |i| i + 4);
-        Some((k::BLOCK_COMMENT, end))
-    } else {
-        None
-    }
 }
 
 /// The bars of a union type are separators, a bitwise `|` an operator.

@@ -313,6 +313,8 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let mut precedence_rows: Vec<PrecedenceRow> = Vec::new();
     let mut keys = KeySyntax::default();
     let mut strings: Vec<StringSyntax> = Vec::new();
+    let mut trivia: Vec<TriviaRow> = Vec::new();
+    let mut limits = Limits::default();
     let mut raw: Vec<RawKind> = Vec::with_capacity(lexed.decls.len());
 
     for d in &lexed.decls {
@@ -425,6 +427,8 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                 });
             }
             "string" => strings.extend(string_row(&mut c)?),
+            "trivia" => trivia.push(trivia_row(&mut c)?),
+            "limits" => limits = limits_row(&mut c)?,
             "suppress" => {
                 let role = c.ident("suppression role")?;
                 let marker = c.string("suppression marker")?;
@@ -496,7 +500,74 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
         grammar.string_first[kind.index() as usize] = i as u32;
     }
     grammar.strings = rows;
+    for row in &mut trivia {
+        row.kind = grammar.by_name.get(&row.token).copied();
+        if row.kind.is_none() {
+            return err(1, format!("trivia row of unknown token `{}`", row.token));
+        }
+    }
+    grammar.trivia = TriviaSyntax::new(trivia);
+    grammar.limits = limits;
     Ok(grammar)
+}
+
+/// A `trivia <Token> attribute...` row (see [`TriviaRow`]): `line "p"...`, `not "p"...`,
+/// `first "p"...`, `block "open" "close"`, `nested`, `lines "open" "close"`, `continuation`,
+/// `unicode`.
+fn trivia_row(c: &mut Cursor<'_>) -> Result<TriviaRow, GrammarError> {
+    let mut row = TriviaRow {
+        token: c.ident("a token kind")?.to_string(),
+        ..TriviaRow::default()
+    };
+    let strings = |c: &mut Cursor<'_>| {
+        let mut out = Vec::new();
+        while let Some(Lexeme::Str(s)) = c.peek() {
+            out.push(s.to_string());
+            c.next();
+        }
+        out
+    };
+    while c.peek().is_some() {
+        match c.ident("a trivia attribute")? {
+            "line" => row.line = strings(c),
+            "not" => row.not = strings(c),
+            "first" => row.first = strings(c),
+            "block" => row.block = Some((c.string("open")?.into(), c.string("close")?.into())),
+            "lines" => row.lines = Some((c.string("open")?.into(), c.string("close")?.into())),
+            "nested" => row.nested = true,
+            "continuation" => row.continuation = true,
+            "unicode" => row.unicode = true,
+            other => return err(c.line, format!("unknown trivia attribute `{other}`")),
+        }
+    }
+    Ok(row)
+}
+
+/// A `limits` row: `stack <MB>`, `bytes <MB>`, `depth <n>`, `run "chars"`, `tagged "c" <n>`.
+fn limits_row(c: &mut Cursor<'_>) -> Result<Limits, GrammarError> {
+    let mut l = Limits::default();
+    let line = c.line;
+    let int = |c: &mut Cursor<'_>| match c.next() {
+        Some(Lexeme::Int(n)) => Ok(*n as usize),
+        _ => err(line, "expected a number"),
+    };
+    while c.peek().is_some() {
+        match c.ident("a limit")? {
+            "stack" => l.stack_mb = int(c)?,
+            "bytes" => l.bytes_mb = int(c)?,
+            "depth" => l.depth = int(c)?,
+            "run" => c
+                .string("characters")?
+                .bytes()
+                .for_each(|b| l.run[b as usize] = true),
+            "tagged" => {
+                let mark = c.string("a mark")?.as_bytes()[0];
+                l.tagged = Some((mark, int(c)?));
+            }
+            other => return err(line, format!("unknown limit `{other}`")),
+        }
+    }
+    Ok(l)
 }
 
 /// A `string <Token>... attribute...` row (one entry per token) (see [`StringSyntax`] for the meaning of each attribute):
@@ -692,6 +763,8 @@ fn resolve(
         keys,
         strings: Vec::new(),
         string_first: Vec::new(),
+        trivia: TriviaSyntax::default(),
+        limits: Limits::default(),
         token_flags: super::hot_flags(&tokens),
         node_flags: super::hot_flags(&nodes),
         nodes,

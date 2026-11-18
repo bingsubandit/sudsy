@@ -9,7 +9,7 @@
 //! written.
 
 use crate::generated::kind as k;
-use core_syntax::{SyntaxKind, grammars};
+use core_syntax::{Grammar, SyntaxKind, grammars};
 use mago_allocator::LocalArena;
 use mago_database::file::FileId;
 use mago_span::HasSpan;
@@ -20,17 +20,8 @@ use mago_syntax::parser::parse_file_content;
 use mago_syntax::settings::LexerSettings;
 use mago_syntax::token::TokenKind as T;
 use mago_syntax_core::input::Input;
-use provider_api::adapter::{KindNames, Kinds, Node, Tok, replay, whole_file};
+use provider_api::adapter::{KindNames, Node, Tok, guarded_local, replay_grammar};
 use provider_api::{ParseError, ParseResult, SourceFile};
-use std::panic::catch_unwind;
-
-const KINDS: Kinds = Kinds {
-    root: k::PROGRAM,
-    eof: k::EOF,
-    unknown: k::UNKNOWN,
-    whitespace: k::WHITESPACE,
-    newline: k::NEWLINE,
-};
 
 /// CST kinds with no node of ours: enum wrappers around the struct that follows them, and
 /// single-token nodes (their token is in the parent).
@@ -101,17 +92,15 @@ pub fn parse_file(file: &SourceFile) -> ParseResult {
 }
 
 pub fn parse(src: &str) -> ParseResult {
-    match catch_unwind(|| build(src)) {
-        Ok(result) => result,
-        Err(_) => whole_file(src, KINDS, "the PHP parser failed on this file"),
-    }
+    let grammar = grammars::PHP.get();
+    guarded_local(src, grammar, || build(src, grammar)).unwrap_or_else(|refused| refused)
 }
 
-fn build(src: &str) -> ParseResult {
+fn build(src: &str, grammar: &'static Grammar) -> ParseResult {
     let arena = LocalArena::new();
     let program = parse_file_content(&arena, FileId::zero(), src.as_bytes());
     let mut walk = Walk {
-        names: KindNames::new(grammars::PHP.get(), 256, |n| UNMAPPED.contains(&n)),
+        names: KindNames::new(grammar, 256, |n| UNMAPPED.contains(&n)),
         nodes: Vec::with_capacity(src.len() / 8),
     };
     for statement in program.statements.iter() {
@@ -121,7 +110,7 @@ fn build(src: &str) -> ParseResult {
     // child of the same start.
     walk.nodes
         .sort_by_key(|n| (n.start, std::cmp::Reverse(n.end)));
-    let mut result = replay(src, KINDS, &tokens(src), &walk.nodes, comments, |t, _| t);
+    let mut result = replay_grammar(src, grammar, &tokens(src), &walk.nodes, |t, _| t);
     let mut errors = syntax_errors(program);
     errors.append(&mut result.errors);
     errors.sort_by_key(|e| e.start);
@@ -231,16 +220,5 @@ fn token_kind(kind: T, first: u8) -> SyntaxKind {
         _ if first == b'(' => k::CAST,
         _ if first.is_ascii_alphabetic() || first == b'_' => k::KEYWORD,
         _ => k::OPERATOR,
-    }
-}
-
-/// A comment at the start of the text between two tokens. A line comment ends at the line break
-/// or before `?>`, which is the next token and so the end of `rest`.
-fn comments(rest: &str, _: usize) -> Option<(SyntaxKind, usize)> {
-    if rest.starts_with("//") || (rest.starts_with('#') && !rest.starts_with("#[")) {
-        Some((k::COMMENT, rest.find(['\n', '\r']).unwrap_or(rest.len())))
-    } else {
-        let body = rest.strip_prefix("/*")?;
-        Some((k::COMMENT, body.find("*/").map_or(rest.len(), |i| i + 4)))
     }
 }

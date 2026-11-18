@@ -51,12 +51,6 @@ fn starter(krate: &Path) -> Result<Starter> {
     })
 }
 
-fn pascal(id: &str) -> String {
-    id.split('-')
-        .map(|w| w[..1].to_uppercase() + &w[1..])
-        .collect()
-}
-
 /// The text as an anchored regex.
 fn regex(text: &str) -> String {
     let escaped: String = text
@@ -93,7 +87,7 @@ fn rust_rule(id: &str, starter: &Starter) -> String {
          let range = core_rules::tree::significant_range(node, ctx.file.grammar);\n        \
          if ctx.file.text[std::ops::Range::<usize>::from(range)] != *{reported} {{\n            return;\n        }}\n        \
          ctx.report(range, \"TODO what the diagnostic says\");\n    }}\n}}\n",
-        name = pascal(id)
+        name = core_syntax::codegen::pascal(id)
     )
 }
 
@@ -192,7 +186,7 @@ pub fn new_rule(root: &Path, language: &str, id: &str, rust: bool) -> Result<Str
         } else {
             krate.join("src/rules.rs")
         };
-        register(&registry, &snake, &pascal(id))?;
+        register(&registry, &snake, &core_syntax::codegen::pascal(id))?;
         file
     } else {
         let file = krate.join("rules").join(format!("{id}.yaml"));

@@ -20,6 +20,8 @@ precedence 11 same "*" "/"
 precedence 11 none "%"
 precedence 12 none "**"
 comments line "//" block "/*" "*/"
+trivia LineComment line "//" "<!--" "-->" first "#!" unicode
+trivia BlockComment block "/*" "*/"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"
