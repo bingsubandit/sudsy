@@ -93,7 +93,7 @@ pub fn format_parsed_with(
     let mut current: Option<(SourceFile, ParseResult)> = None;
     // The rules that rewrite the source take a round of their own: the language's rewrite follows.
     let rounds = provider.formatter().rewrite_rounds()
-        + usize::from(!provider.formatter().rows().is_empty());
+        + usize::from(!format_rules(provider.formatter().rows()).is_empty());
     for _ in 0..rounds {
         let (text, tree) = match &current {
             Some((f, p)) => (&f.text, &p.tree),
