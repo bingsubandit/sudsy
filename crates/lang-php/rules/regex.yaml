@@ -1,0 +1,26 @@
+id: no-control-regex
+family: regex
+params: { check: control }
+message: "Unexpected control character(s) in regular expression: {name}."
+description: "A control character (below U+0020) in the constant string given to `preg_match` and the other `preg_` functions, written raw or as an escape."
+example: "preg_match('/\\x1f/', $s);   // reported"
+severity: off
+category: suspicious
+---
+id: no-regex-spaces
+family: regex
+params: { check: spaces }
+message: "Spaces are hard to count. Use {{name}}."
+description: "Two or more spaces outside a character class in the string given to `preg_match` and the other `preg_` functions."
+example: "preg_match('/a  b/', $s);   // reported"
+severity: off
+category: suspicious
+---
+id: no-misleading-character-class
+family: regex
+params: { check: misleading-class }
+message: "Unexpected combined character in character class."
+description: "A character class in the constant string given to `preg_match` and the other `preg_` functions, in which a combining mark follows another character."
+example: "preg_match(\"/[a\\u{301}]/u\", $s);   // reported"
+severity: off
+category: suspicious

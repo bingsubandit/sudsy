@@ -1,6 +1,7 @@
 extensions: [java]
 formatter: JavaFormatter
 parse: parser::parse_file
+families: "&[core_rules::regex_source::FAMILY]"
 options:
   - indent_size: 2
   - line_width: 100

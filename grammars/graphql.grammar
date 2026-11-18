@@ -33,6 +33,7 @@ token Variable
 token Location
 // Block strings are re-indented: GraphqlFormatter::extra_check compares their values.
 token String #literal #string #restyle
+string String quote "\"" triple dedent
 token Int #literal
 token Float #literal
 token Bool #literal

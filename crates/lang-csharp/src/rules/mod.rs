@@ -28,7 +28,11 @@ use core_rules::{Family, Rule};
 use core_syntax::{SyntaxKind, SyntaxNode};
 
 /// The families the rule files of `rules/` name.
-pub static FAMILIES: &[Family] = &[doc_element::FAMILY, finding::FAMILY];
+pub static FAMILIES: &[Family] = &[
+    doc_element::FAMILY,
+    finding::FAMILY,
+    core_rules::regex_source::FAMILY,
+];
 
 pub static RULES: &[&dyn Rule] = &[
     &async_suffix::AsyncSuffix,

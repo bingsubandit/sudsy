@@ -32,6 +32,8 @@ token Type
 token KeyType
 // Adjacent literals (`"a" "b"`) may change the blanks between them: ProtoFormatter::extra_check compares the literals.
 token String #literal #string #restyle
+string String quote "\"" "'" escape "\\" short-hex octal 3 hex "x" 2 "u" 4 "U" 8
+  map "a" 7 "b" 8 "f" 12 "n" 10 "r" 13 "t" 9 "v" 11 "\\" 92 "'" 39 "\"" 34 "?" 63
 token Int #literal
 token Float #literal
 token Bool #literal

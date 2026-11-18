@@ -40,6 +40,8 @@ pub struct StringSyntax {
     pub map: Vec<(char, char)>,
     /// Escape letter to the number of hex digits that follow.
     pub hex: Vec<(char, usize)>,
+    /// A hex escape may have fewer digits than its count (`\\x1f` and `\\x1fff` in C#).
+    pub short_hex: bool,
     /// Octal escapes of up to this many digits (0: none).
     pub octal: usize,
     /// `\N{name}` (the letter): no name is looked up, the replacement stands in.
@@ -50,6 +52,16 @@ pub struct StringSyntax {
     pub continuation: bool,
     /// Line breaks fold into spaces and line feeds (YAML flow scalars).
     pub fold: bool,
+    /// A triple-delimited string is a block string: its value is its lines without their common
+    /// indentation ([`dedent`]) and nothing in it is an escape.
+    pub dedent: bool,
+    /// A line break outside a triple-delimited string ends the string unclosed.
+    pub line: bool,
+    /// An escape may be `1` to this many hex digits and one blank after them (CSS).
+    pub hexrun: usize,
+    /// ASCII text that opens a code part inside the string and the one that closes it
+    /// (`#{`, `}`); a part nests braces and strings (only [`StringSyntax::scan`] reads it).
+    pub nest: Option<(String, String)>,
     pub unknown: Unknown,
     /// What a malformed hex or named escape becomes; none: the string has no value.
     pub replacement: Option<char>,
@@ -79,7 +91,7 @@ impl StringSyntax {
         if self.prefix.is_empty() {
             return 0;
         }
-        text.find(|c: char| !(c.is_ascii_alphabetic() && self.prefix.contains(c)))
+        text.find(|c: char| !self.prefix.contains(c))
             .unwrap_or(text.len())
     }
 
@@ -143,6 +155,9 @@ impl StringSyntax {
 
     /// The value of a token already split by this row.
     pub fn value_of<'a>(&self, lit: Literal<'a>) -> Option<Cow<'a, str>> {
+        if self.dedent && lit.open.len() >= 3 {
+            return Some(Cow::Owned(dedent(lit.inner).join("\n")));
+        }
         if !self.raw.is_empty() && lit.prefix.chars().any(|c| self.raw.contains(c)) {
             return Some(Cow::Borrowed(lit.inner));
         }
@@ -171,12 +186,109 @@ impl StringSyntax {
                 || self.map.iter().any(|m| m.0 == e)
                 || self.hex.iter().any(|h| h.0 == e)
                 || self.named == Some(e)
+                || (self.hexrun > 0 && e.is_ascii_hexdigit())
                 || (self.octal > 0 && e.is_digit(8))
                 || (self.continuation && matches!(e, '\n' | '\r' | '\u{2028}' | '\u{2029}'));
             if !known {
                 found(i, e);
             }
         }
+    }
+
+    /// Where the string that opens at `src[at]` ends: the end offset and whether the closing
+    /// delimiter was found. Delimiters and the escape character are ASCII. An unclosed string
+    /// ends at the line break (a row with `line`) or at the end of `src`. With `interpolate`,
+    /// the row's `nest` parts are read.
+    pub fn scan(&self, src: &str, at: usize, interpolate: bool) -> (usize, bool) {
+        let b = src.as_bytes();
+        let q = b[at];
+        let triple = self.triple && b[at..].starts_with(&[q; 3]);
+        let mut i = at + if triple { 3 } else { 1 };
+        let nest = self.nest.as_ref().filter(|_| interpolate);
+        while i < b.len() {
+            let c = b[i];
+            if c == q {
+                if triple {
+                    if b[i..].starts_with(&[q; 3]) {
+                        return (i + 3, true);
+                    }
+                    i += 1;
+                } else if self.doubled && b.get(i + 1) == Some(&q) {
+                    i += 2;
+                } else {
+                    return (i + 1, true);
+                }
+            } else if Some(c as char) == self.escape {
+                i += self.escape_len(src, i, triple);
+            } else if self.line && !triple && matches!(c, b'\n' | b'\r') {
+                return (i, false);
+            } else if let Some((open, close)) = nest.filter(|n| b[i..].starts_with(n.0.as_bytes()))
+            {
+                i += open.len();
+                let mut depth = 1;
+                while depth > 0 && i < b.len() && !matches!(b[i], b'\n' | b'\r') {
+                    if b[i..].starts_with(close.as_bytes()) {
+                        depth -= 1;
+                        i += close.len();
+                        continue;
+                    } else if b[i] == b'{' {
+                        depth += 1;
+                    } else if self.quotes.contains(&(b[i] as char)) {
+                        let (end, closed) = self.scan(src, i, interpolate);
+                        if !closed {
+                            return (end, false);
+                        }
+                        i = end;
+                        continue;
+                    }
+                    i += 1;
+                }
+            } else {
+                i += 1;
+            }
+        }
+        (b.len(), false)
+    }
+
+    /// The closed literals written one after the other in a token (`"a" 'b'` is two).
+    pub fn pieces<'a>(&self, text: &'a str) -> Vec<&'a str> {
+        let (mut out, mut i) = (Vec::new(), 0);
+        while let Some(at) = text[i..].find(|c| self.quotes.contains(&c)) {
+            let (end, closed) = self.scan(text, i + at, false);
+            out.extend(closed.then(|| &text[i + at..end]));
+            i = end;
+        }
+        out
+    }
+
+    /// The length of the escape that starts with the escape character at `src[at]`: the
+    /// character, then a hex run (`hexrun`), or a line break (when `continuation` or `triple`
+    /// lets it continue the string), or any one character.
+    pub fn escape_len(&self, src: &str, at: usize, triple: bool) -> usize {
+        let rest = &src.as_bytes()[at + 1..];
+        let Some(&e) = rest.first() else { return 1 };
+        let crlf = usize::from(rest.starts_with(b"\r\n"));
+        if matches!(e, b'\n' | b'\r') {
+            return if self.continuation || triple {
+                2 + crlf
+            } else {
+                1
+            };
+        }
+        if self.hexrun > 0 && e.is_ascii_hexdigit() {
+            let digits = rest
+                .iter()
+                .take(self.hexrun)
+                .take_while(|c| c.is_ascii_hexdigit())
+                .count();
+            let blank = match rest.get(digits) {
+                Some(b'\r') if rest.get(digits + 1) == Some(&b'\n') => 2,
+                Some(b' ' | b'\t' | b'\n' | b'\r' | 0x0c) => 1,
+                _ => 0,
+            };
+            return 1 + digits + blank;
+        }
+        1 + src[at + 1..].chars().next().map_or(0, char::len_utf8)
     }
 
     /// The content of a string with the escapes and doubled delimiters resolved; `quote` is the
@@ -241,7 +353,8 @@ impl StringSyntax {
                 .take(n)
                 .take_while(|c| c.is_ascii_hexdigit())
                 .count();
-            let code = (digits == n).then(|| hex_value(&chars[at..at + n]));
+            let code = (digits >= if self.short_hex { 1 } else { n })
+                .then(|| hex_value(&chars[at..at + digits]));
             let (code, end) = match code {
                 Some(hi @ 0xD800..=0xDBFF) if self.surrogates => {
                     let low = (chars.get(at + 4..at + 6) == Some(&[esc, e][..]))
@@ -264,6 +377,25 @@ impl StringSyntax {
                 Some(ch) => out.push(ch),
                 None => bad(out)?,
             }
+            return Some(end);
+        } else if self.hexrun > 0 && e.is_ascii_hexdigit() {
+            let digits = chars[i + 1..]
+                .iter()
+                .take(self.hexrun)
+                .take_while(|c| c.is_ascii_hexdigit())
+                .count();
+            let mut end = i + 1 + digits;
+            match (chars.get(end), chars.get(end + 1)) {
+                (Some('\r'), Some('\n')) => end += 2,
+                (Some(' ' | '\t' | '\n' | '\r' | '\u{c}'), _) => end += 1,
+                _ => {}
+            }
+            let code = hex_value(&chars[i + 1..i + 1 + digits]);
+            out.push(
+                char::from_u32(code)
+                    .filter(|c| *c != '\0')
+                    .unwrap_or('\u{FFFD}'),
+            );
             return Some(end);
         } else if self.named == Some(e) {
             let mut j = at;
@@ -326,6 +458,30 @@ impl StringSyntax {
         out.push(quote);
         Some(out)
     }
+}
+
+/// The lines of a block string without the indentation they all share (the first line does not
+/// count) and without the blank lines around them, as the GraphQL spec reads it.
+pub fn dedent(inner: &str) -> Vec<&str> {
+    let lines: Vec<&str> = inner.lines().collect();
+    let blank = |l: &&str| l.trim_matches([' ', '\t']).is_empty();
+    let common = (lines.iter().skip(1).filter(|l| !blank(l)))
+        .map(|l| l.len() - l.trim_start_matches([' ', '\t']).len())
+        .min()
+        .unwrap_or(0);
+    let start = lines.iter().position(|l| !blank(l)).unwrap_or(0);
+    let end = lines.iter().rposition(|l| !blank(l)).map_or(0, |i| i + 1);
+    (lines.iter().enumerate())
+        .map(|(i, l)| {
+            if i == 0 {
+                *l
+            } else {
+                l.get(common..).unwrap_or("")
+            }
+        })
+        .skip(start)
+        .take(end.saturating_sub(start))
+        .collect()
 }
 
 fn hex_value(digits: &[char]) -> u32 {
@@ -415,6 +571,22 @@ mod tests {
         assert_eq!(value(sql, "'it''s'").unwrap(), "it's");
         let strict = r#"string S quote "\"" escape "\\" unknown invalid"#;
         assert_eq!(value(strict, r#""\q""#), None);
+    }
+
+    #[test]
+    fn scan_ends_at_the_closing_delimiter_or_the_line() {
+        let row = r##"string S quote "\"" "'" triple escape "\\" line hexrun 6 nest "#{" "}""##;
+        let g = Grammar::parse(&format!("language t 1\ntoken S\n{row}")).unwrap();
+        let row = g.string_rows(g.kind_by_name("S").unwrap()).next().unwrap();
+        assert_eq!(row.scan(r#"x"a\"b" y"#, 1, false), (7, true));
+        assert_eq!(row.scan("\"ab\ncd\"", 0, false), (3, false));
+        assert_eq!(row.scan("\"\"\"ab\ncd\"\"\" e", 0, false), (11, true));
+        assert_eq!(row.scan(r##""a#{"}"}b" c"##, 0, true), (10, true));
+        assert_eq!(row.scan(r##""a#{"}"}b" c"##, 0, false), (5, true));
+        assert_eq!(row.escape_len(r"\26 x", 0, false), 4);
+        assert_eq!(row.value(r"'\26 x'").unwrap(), "&x");
+        assert_eq!(row.pieces(r#"x "a" 'b\'' "c"#), [r#""a""#, r"'b\''"]);
+        assert_eq!(super::dedent("\n  a\n    b\n  "), ["a", "  b"]);
     }
 
     #[test]

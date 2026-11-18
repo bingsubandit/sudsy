@@ -260,8 +260,16 @@ token EndOfFileToken
 token BadToken #error
 token IdentifierToken #identifier #name-identifier #attribute-target #accessor-declaration-keyword #parameter-identifier
 token NumericLiteralToken #literal #literal-token #line-directive-trivia-line
-token CharacterLiteralToken #literal #literal-token
+token CharacterLiteralToken #literal #literal-token #string
+string CharacterLiteralToken quote "'" escape "\\" line short-hex unknown invalid
+  map "0" 0 "a" 7 "b" 8 "t" 9 "n" 10 "v" 11 "f" 12 "r" 13 "\"" 34 "'" 39 hex "x" 4 "u" 4 "U" 8
 token StringLiteralToken #literal #string #literal-token
+// A verbatim string (`@"`) has no escapes and doubles its quote.
+string StringLiteralToken quote "\"" escape "\\" line short-hex unknown invalid
+  map "0" 0 "a" 7 "b" 8 "t" 9 "n" 10 "v" 11 "f" 12 "r" 13 "\"" 34 "'" 39 hex "x" 4 "u" 4 "U" 8
+string StringLiteralToken quote "\"" prefix "@" double
+regex-call flavor dotnet concat "+" "Regex"
+regex-call flavor dotnet arg 1 concat "+" "Regex.IsMatch" "Regex.Match" "Regex.Matches" "Regex.Replace" "Regex.Split" "Regex.Count" "Regex.EnumerateMatches"
 token XmlEntityLiteralToken #literal #xml-text-token
 token XmlTextLiteralToken #literal #xml-text-token
 token XmlTextLiteralNewLineToken #xml-text-token
@@ -487,7 +495,7 @@ node InvocationExpression #expression #member-chain #call =
     expression=callee:#expression argument_list=arguments:ArgumentList
 node ElementAccessExpression #expression #member-chain #index =
     expression=object:#expression argument_list=arguments:BracketedArgumentList
-node ArgumentList #delimited-list #opaque =
+node ArgumentList #delimited-list #opaque #arguments =
     open_paren:OpenParenToken arguments:Argument* close_paren:CloseParenToken
 node BracketedArgumentList #delimited-list #opaque =
     open_bracket:OpenBracketToken arguments:Argument* close_bracket:CloseBracketToken
@@ -521,8 +529,8 @@ node WithInitializerExpression #expression #initializer-expression #delimited-li
     open_brace:OpenBraceToken expressions:#expression* close_brace:CloseBraceToken
 node ImplicitObjectCreationExpression #expression #opaque =
     new_keyword:NewKeyword argument_list:ArgumentList initializer:#initializer-expression?
-node ObjectCreationExpression #expression #opaque =
-    new_keyword:NewKeyword type:#type argument_list:ArgumentList? initializer:#initializer-expression?
+node ObjectCreationExpression #expression #call =
+    new_keyword:NewKeyword type=callee:#type argument_list=arguments:ArgumentList? initializer:#initializer-expression?
 node WithExpression #expression #opaque =
     expression:#expression with_keyword:WithKeyword initializer:#initializer-expression
 node AnonymousObjectMemberDeclarator #key-value =
