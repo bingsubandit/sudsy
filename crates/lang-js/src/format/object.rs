@@ -167,7 +167,7 @@ fn array(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     if empty {
         return Ok(empty_with_comments(cx, &open, &close));
     }
-    let concise = node.kind() == k::ARRAY_EXPRESSION && super::call::is_concise_array(cx, node);
+    let concise = super::call::rules().is_concise_array(cx, node);
     let mut list = list_style(
         cx,
         false,

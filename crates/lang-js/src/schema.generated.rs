@@ -22,6 +22,10 @@ pub const BINARY_INDENT: &str = "binary_indent";
 #[allow(dead_code)]
 pub const BINARY_HUG: &str = "binary_hug";
 #[allow(dead_code)]
+pub const HUG_FIRST_ARGUMENT: &str = "hug_first_argument";
+#[allow(dead_code)]
+pub const HUG_LAST_ARGUMENT: &str = "hug_last_argument";
+#[allow(dead_code)]
 pub const INDENT_NESTED_BINARY: &str = "indent_nested_binary";
 #[allow(dead_code)]
 pub const ASSIGNMENT_LAYOUT: &str = "assignment_layout";
@@ -59,6 +63,8 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::binary_operator_line("end"),
         core_config::shared::binary_indent(1),
         core_config::shared::binary_hug("statement"),
+        core_config::shared::hug_first_argument(true),
+        core_config::shared::hug_last_argument("last"),
         core_config::shared::indent_nested_binary(true),
         core_config::shared::assignment_layout("fluid"),
         core_config::shared::assignment_conditional("binary_test"),

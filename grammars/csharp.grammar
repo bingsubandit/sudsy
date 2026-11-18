@@ -491,7 +491,7 @@ node ArgumentList #delimited-list #opaque =
     open_paren:OpenParenToken arguments:Argument* close_paren:CloseParenToken
 node BracketedArgumentList #delimited-list #opaque =
     open_bracket:OpenBracketToken arguments:Argument* close_bracket:CloseBracketToken
-node Argument #opaque =
+node Argument #opaque #argument =
     name_colon:NameColon? ref_kind_keyword:#argument-ref-kind-keyword? expression:#expression
 node ExpressionColon #base-expression-colon #key-value =
     expression=key:#expression colon:ColonToken
@@ -501,13 +501,13 @@ node DeclarationExpression #expression #opaque =
     type:#type designation:#variable-designation
 node CastExpression #expression #opaque =
     open_paren:OpenParenToken type:#type close_paren:CloseParenToken expression:#expression
-node AnonymousMethodExpression #expression #function #scope =
+node AnonymousMethodExpression #expression #function #huggable-function #scope =
     modifiers:#modifier* delegate_keyword:DelegateKeyword parameter_list=parameters:ParameterList? block=body:Block expression_body:#expression?
-node SimpleLambdaExpression #expression #function #scope =
+node SimpleLambdaExpression #expression #function #huggable-function #scope =
     attribute_lists:AttributeList* modifiers:#modifier* parameter=parameters:Parameter arrow:EqualsGreaterThanToken block=body:Block? expression_body:#expression?
 node RefExpression #expression #opaque =
     ref_keyword:RefKeyword expression:#expression
-node ParenthesizedLambdaExpression #expression #function #scope =
+node ParenthesizedLambdaExpression #expression #function #huggable-function #scope =
     attribute_lists:AttributeList* modifiers:#modifier* return_type:#type? parameter_list=parameters:ParameterList arrow:EqualsGreaterThanToken block=body:Block? expression_body:#expression?
 node ObjectInitializerExpression #expression #initializer-expression #delimited-list #opaque =
     open_brace:OpenBraceToken expressions:#expression* close_brace:CloseBraceToken

@@ -16,6 +16,7 @@ pub(crate) struct Style {
     /// `trailing_commas`: 0 none, 1 es5, 2 all.
     pub commas: u8,
     pub bracket_spacing: bool,
+    pub call: core_format::shapes::CallStyle,
     /// Is the code one expression of a host (no statements, no comments to place)?
     pub embedded: bool,
     /// Where the tokens that follow a comment start (found on first use, see `comment_before`).
@@ -39,6 +40,7 @@ pub(crate) fn style<'a>(cx: &'a FormatCtx<'_>) -> &'a Style {
             _ => 2,
         },
         bracket_spacing: cx.options.bool("bracket_spacing"),
+        call: core_format::shapes::CallStyle::of(cx.options),
         embedded: super::embed::is_expression(cx.options),
         after_comment: std::sync::OnceLock::new(),
     })

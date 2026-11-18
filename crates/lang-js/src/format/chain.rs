@@ -126,7 +126,7 @@ impl ChainHooks for Hooks<'_> {
     }
 
     fn simple_argument(&self, arg: &SyntaxNode) -> bool {
-        super::call::is_simple_call_argument(self.cx, arg, 0)
+        super::call::rules().is_simple(self.cx, arg, 0)
     }
 
     fn statement(&self, chain: &SyntaxNode) -> bool {

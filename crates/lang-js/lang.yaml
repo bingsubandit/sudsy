@@ -31,6 +31,8 @@ options:
   - binary_operator_line: ["end"]
   - binary_indent: [1]
   - binary_hug: ["statement"]
+  - hug_first_argument: [true]
+  - hug_last_argument: ["last"]
   - indent_nested_binary: [true]
   - assignment_layout: ["fluid"]
   - assignment_conditional: ["binary_test"]
