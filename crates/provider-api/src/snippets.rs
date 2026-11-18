@@ -132,6 +132,16 @@ impl LazyRules {
             if core_rules::flow_rules::has_fallthrough(g) {
                 rules.push(&core_rules::flow_rules::NoFallthrough);
             }
+            if core_rules::escapes::applies(g) {
+                rules.push(&core_rules::escapes::InvalidEscapeSequence);
+            }
+            if core_rules::format_strings::applies(g) {
+                rules.extend(
+                    core_rules::format_strings::RULES
+                        .iter()
+                        .map(|r| r as &dyn Rule),
+                );
+            }
             for source in files.sources {
                 let loaded = core_patterns::load_lazy(
                     source,

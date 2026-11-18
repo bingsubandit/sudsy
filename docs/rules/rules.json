@@ -14820,7 +14820,7 @@
     {
       "category": "correctness",
       "default_level": "warn",
-      "description": "A `%` format with a conversion character Python does not know.",
+      "description": "A `%` format with a conversion character the language does not know.",
       "example": {
         "config": null,
         "fixed": null,

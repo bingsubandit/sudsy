@@ -304,132 +304,6 @@ example: 'f = lambda x: x'
 severity: off
 category: style
 ---
-id: percent-format-invalid-format
-family: check
-params: { check: percent-format-invalid-format }
-message: '`%`-format string is invalid: {name}'
-description: 'A `"..." % x` whose format string does not parse.'
-example: '"%" % x'
-severity: warn
-category: correctness
----
-id: percent-format-unsupported-format-character
-family: check
-params: { check: percent-format-unsupported-format-character }
-message: '`%`-format string has an unsupported format character `{name}`'
-description: 'A `%` format with a conversion character Python does not know.'
-example: '"%z" % x'
-severity: warn
-category: correctness
----
-id: percent-format-mixed-positional-and-named
-family: check
-params: { check: percent-format-mixed-positional-and-named }
-message: '`%`-format string mixes positional and named placeholders'
-description: 'A `%` format with both `%s` and `%(name)s`.'
-example: '"%s %(a)s" % x'
-severity: warn
-category: correctness
----
-id: percent-format-expected-mapping
-family: check
-params: { check: percent-format-expected-mapping }
-message: '`%`-format string has named placeholders but the right side is a sequence'
-description: 'A `%` format with `%(name)s` placeholders applied to a tuple, list or set.'
-example: '"%(a)s" % (1,)'
-severity: warn
-category: correctness
----
-id: percent-format-expected-sequence
-family: check
-params: { check: percent-format-expected-sequence }
-message: '`%`-format string has several placeholders but the right side is a mapping'
-description: 'A `%` format with several positional placeholders applied to a dict.'
-example: '"%s %s" % {"a": 1}'
-severity: warn
-category: correctness
----
-id: percent-format-extra-named-arguments
-family: check
-params: { check: percent-format-extra-named-arguments }
-message: '`%`-format string has unused named argument(s): {name}'
-description: 'A `%` format applied to a dict with keys no placeholder names.'
-example: '"%(a)s" % {"a": 1, "b": 2}'
-severity: warn
-category: correctness
----
-id: percent-format-missing-argument
-family: check
-params: { check: percent-format-missing-argument }
-message: '`%`-format string is missing argument(s) for placeholder(s): {name}'
-description: 'A `%` format with named placeholders the dict does not have.'
-example: '"%(a)s" % {"b": 1}'
-severity: warn
-category: correctness
----
-id: percent-format-positional-count-mismatch
-family: check
-params: { check: percent-format-positional-count-mismatch }
-message: '`%`-format string has {name}'
-description: 'A `%` format whose placeholders and values differ in number.'
-example: '"%s %s" % (1,)'
-severity: warn
-category: correctness
----
-id: percent-format-star-requires-sequence
-family: check
-params: { check: percent-format-star-requires-sequence }
-message: '`%`-format string `*` specifier requires a sequence'
-description: 'A `%` format with a `*` width or precision applied to a dict.'
-example: '"%*s" % {"a": 1}'
-severity: warn
-category: correctness
----
-id: string-dot-format-invalid-format
-family: check
-params: { check: string-dot-format-invalid-format }
-message: '`.format` call has an invalid format string: {name}'
-description: 'A `"...".format(...)` whose string does not parse.'
-example: '"{".format(1)'
-severity: warn
-category: correctness
----
-id: string-dot-format-extra-named-arguments
-family: check
-params: { check: string-dot-format-extra-named-arguments }
-message: '`.format` call has unused named argument(s): {name}'
-description: 'A `.format` call with keywords no field names.'
-example: '"{}".format(1, a=2)'
-severity: warn
-category: correctness
----
-id: string-dot-format-extra-positional-arguments
-family: check
-params: { check: string-dot-format-extra-positional-arguments }
-message: '`.format` call has unused arguments at position(s): {name}'
-description: 'A `.format` call with positional arguments no field uses.'
-example: '"{}".format(1, 2)'
-severity: warn
-category: correctness
----
-id: string-dot-format-missing-arguments
-family: check
-params: { check: string-dot-format-missing-arguments }
-message: '`.format` call is missing argument(s) for placeholder(s): {name}'
-description: 'A `.format` call without an argument for a field.'
-example: '"{} {}".format(1)'
-severity: warn
-category: correctness
----
-id: string-dot-format-mixing-automatic
-family: check
-params: { check: string-dot-format-mixing-automatic }
-message: '`.format` string mixes automatic and manual numbering'
-description: 'A `.format` string with both `{}` and `{0}`.'
-example: '"{} {0}".format(1)'
-severity: warn
-category: correctness
----
 id: mutable-argument-default
 family: check
 params: { check: mutable-argument-default }
@@ -628,15 +502,6 @@ example: "x = list()"
 severity: off
 category: style
 ---
-id: invalid-escape-sequence
-family: check
-params: { check: invalid-escape-sequence }
-message: "invalid escape sequence `{name}`: use a raw string or double the backslash"
-description: "A backslash in a string that is not raw and does not start an escape sequence (`\\d`, `\\_`), also in the pieces of an f-string."
-example: "x = \"\\d\""
-severity: warn
-category: suspicious
----
 id: unused-unpacked-variable
 family: scope
 params: { check: unused-variable, mode: unpacked }
@@ -699,24 +564,6 @@ description: "An import of `pdb`, `ipdb`, `pudb`, `wdb`, `rpdb` or `bpdb`, or a 
 example: "import pdb"
 severity: warn
 category: suspicious
----
-id: printf-string-formatting
-family: check
-params: { check: printf-string-formatting }
-message: "use format specifiers or an f-string instead of `%` formatting"
-description: "A `\"...\" % x` whose format string and values pair up (a tuple of as many values, a dict for named fields, or one value for one field)."
-example: "x = \"%s\" % y"
-severity: off
-category: style
----
-id: f-string
-family: check
-params: { check: f-string }
-message: "use an f-string instead of a `.format` call"
-description: "A `\"...\".format(...)` on a string literal whose fields all name an argument."
-example: "x = \"{}\".format(y)"
-severity: off
-category: style
 ---
 id: needless-bool
 family: check

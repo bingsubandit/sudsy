@@ -9,6 +9,8 @@ operators arithmetic "//" "@"
 comments line "#"
 trivia Comment line "#"
 trivia Continuation continuation
+format percent operator "%"
+format brace method "format"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"
@@ -38,7 +40,7 @@ token Lpar "(" #punctuation #glue #optional
 token Rpar ")" #punctuation #close #optional
 token Lsqb "[" #punctuation #glue
 token Rsqb "]" #punctuation #close
-token Colon ":" #punctuation #glue #part
+token Colon ":" #punctuation #glue #part #key-separator
 token Comma "," #punctuation #separator #glue
 token Semi ";" #punctuation #separator
 token Plus "+" #punctuation #operator #part
@@ -62,7 +64,7 @@ token Tilde "~" #punctuation #operator #part
 token CircumFlex "^" #punctuation #operator #part
 token LeftShift "<<" #punctuation #operator #part
 token RightShift ">>" #punctuation #operator #part
-token DoubleStar "**" #punctuation #operator #part
+token DoubleStar "**" #punctuation #operator #part #rest
 token DoubleStarEqual "**=" #punctuation #operator #part
 token PlusEqual "+=" #punctuation #operator #part
 token MinusEqual "-=" #punctuation #operator #part
@@ -128,7 +130,7 @@ token Int #restyle #number
 token Float #restyle #number
 token Complex #restyle #number
 token String #string #restyle
-string String quote "\"" "'" triple prefix "rRbBuUfFtT" raw "rR" escape "\\" continuation named "N" octal 3
+string String FStringMiddle TStringMiddle quote "\"" "'" triple prefix "rRbBuUfFtT" raw "rR" escape "\\" continuation named "N" octal 3
   replace 63 map "a" 7 "b" 8 "f" 12 "n" 10 "r" 13 "t" 9 "v" 11 "\\" 92 "'" 39 "\"" 34 hex "x" 2 "u" 4 "U" 8
 // An f-string's or t-string's start (prefix and opening quote), end (closing quote) and the literal text between its replacement fields.
 regex-call flavor python concat "+" "re.compile" "re.match" "re.search" "re.fullmatch" "re.split" "re.findall" "re.finditer" "re.sub" "re.subn"
@@ -195,12 +197,12 @@ node ExprLambda #expression #part #function #scope =
     Lambda parameters:Parameters? Colon expression_body:#expression
 node ExprIf #expression #part #conditional =
     body=then:#expression If condition:#expression Else orelse=else:#expression
-node ExprDict #expression #part #opaque #mapping
-node ExprSet #expression #part #opaque
-node ExprListComp #expression #part #scope
-node ExprSetComp #expression #part #scope
-node ExprDictComp #expression #part #scope
-node ExprGenerator #expression #part #scope
+node ExprDict #expression #part #opaque #mapping #dict #display
+node ExprSet #expression #part #opaque #display
+node ExprListComp #expression #part #scope #display
+node ExprSetComp #expression #part #scope #display
+node ExprDictComp #expression #part #scope #dict #display
+node ExprGenerator #expression #part #scope #display
 node ExprAwait #expression #part #unary =
     operator:Await operand:#expression
 node ExprYield #expression #part #opaque
@@ -232,8 +234,8 @@ node ExprSubscript #expression #part #index =
 node ExprStarred #expression #part #opaque #rest
 node ExprName #expression #part #reference =
     name:Name
-node ExprList #expression #part #opaque #collection
-node ExprTuple #expression #part #opaque #collection
+node ExprList #expression #part #opaque #collection #display
+node ExprTuple #expression #part #opaque #collection #tuple
 node ExprSlice #expression #part #opaque
 node ExceptHandlerExceptHandler #catch #branch =
     Except Star? parameter=type:#expression? As? name:Identifier? Colon body:#statement*
@@ -264,7 +266,7 @@ node Parameters #parameter-list =
 node Parameter #declaration #parameter =
     Star? DoubleStar? name:Identifier Colon? annotation:#expression?
 node ParameterWithDefault #parameter #opaque
-node Keyword #opaque
+node Keyword #key-value = key:Identifier? Equal? DoubleStar? value:#expression
 node Alias #opaque = name:Identifier As? asname:Identifier?
 node WithItem #opaque #with-item
 node MatchCase #case #branch =
@@ -273,8 +275,8 @@ node Decorator #opaque #decorator
 node ElifElseClause #conditional #branch =
     Elif? Else? condition=test:#expression? Colon then=body:#statement*
 node TypeParams #opaque
-node FString #string-part #opaque
-node TString #opaque
-node StringLiteral #string-part #opaque
-node BytesLiteral #opaque
+node FString #string-part #string-escapes #opaque
+node TString #string-escapes #opaque
+node StringLiteral #string-part #string-escapes #opaque
+node BytesLiteral #string-escapes #opaque
 node Identifier #opaque

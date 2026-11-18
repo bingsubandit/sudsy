@@ -397,7 +397,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `percent-format-mixed-positional-and-named` | python | correctness | warn | none | A `%` format with both `%s` and `%(name)s`. |
 | `percent-format-positional-count-mismatch` | python | correctness | warn | none | A `%` format whose placeholders and values differ in number. |
 | `percent-format-star-requires-sequence` | python | correctness | warn | none | A `%` format with a `*` width or precision applied to a dict. |
-| `percent-format-unsupported-format-character` | python | correctness | warn | none | A `%` format with a conversion character Python does not know. |
+| `percent-format-unsupported-format-character` | python | correctness | warn | none | A `%` format with a conversion character the language does not know. |
 | `pprint` | python | style | off | none | A call of `pprint.pprint`. |
 | `print` | python | style | off | none | A call of the builtin `print` without a `file` argument (or with `file=None`). |
 | `printf-string-formatting` | python | style | off | none | A `"..." % x` whose format string and values pair up (a tuple of as many values, a dict for named fields, or one value for one field). |

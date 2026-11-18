@@ -317,6 +317,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let mut regex_calls: Vec<RegexCall> = Vec::new();
     let mut trivia: Vec<TriviaRow> = Vec::new();
     let mut limits = Limits::default();
+    let mut formats: Vec<FormatRow> = Vec::new();
     let mut raw: Vec<RawKind> = Vec::with_capacity(lexed.decls.len());
 
     for d in &lexed.decls {
@@ -433,6 +434,16 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
             "regex-call" => regex_calls.push(regex_call_row(&mut c)?),
             "trivia" => trivia.push(trivia_row(&mut c)?),
             "limits" => limits = limits_row(&mut c)?,
+            "format" => {
+                let flavor = c.ident("a format flavor")?.to_string();
+                let via = match c.ident("`operator` or `method`")? {
+                    "operator" => FormatVia::Operator,
+                    "method" => FormatVia::Method,
+                    other => return err(d.line, format!("unknown format way `{other}`")),
+                };
+                let name = c.string("the operator or method name")?.to_string();
+                formats.push(FormatRow { flavor, via, name });
+            }
             "suppress" => {
                 let role = c.ident("suppression role")?;
                 let marker = c.string("suppression marker")?;
@@ -520,6 +531,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     }
     grammar.trivia = TriviaSyntax::new(trivia);
     grammar.limits = limits;
+    grammar.formats = formats;
     Ok(grammar)
 }
 
@@ -826,6 +838,7 @@ fn resolve(
         string_first: Vec::new(),
         trivia: TriviaSyntax::default(),
         limits: Limits::default(),
+        formats: Vec::new(),
         token_flags: super::hot_flags(&tokens),
         node_flags: super::hot_flags(&nodes),
         nodes,
