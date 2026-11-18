@@ -2428,7 +2428,7 @@
             },
             "no-control-regex": {
               "$ref": "#/definitions/rule",
-              "description": "A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\\x00`, `\\u0000` or `\\u{0}`."
+              "description": "A control character (below U+0020) in the constant string given to `new Regex(...)` and the static methods of `Regex`, written raw or as an escape."
             },
             "no-copy-whole-stage": {
               "$ref": "#/definitions/rule",
@@ -2894,7 +2894,7 @@
             },
             "no-misleading-character-class": {
               "$ref": "#/definitions/rule",
-              "description": "A character class of a regex (a literal or the constant string given to `RegExp`; names of variables written once are followed) in which a combining mark follows another character. The surrogate pair, emoji modifier, flag and joined-sequence checks are not made."
+              "description": "A character class in the constant string given to `new Regex(...)` and the static methods of `Regex`, in which a combining mark follows another character."
             },
             "no-missing-references": {
               "$ref": "#/definitions/rule",
@@ -3014,7 +3014,7 @@
             },
             "no-regex-spaces": {
               "$ref": "#/definitions/rule",
-              "description": "Two or more spaces in a regex literal or in the string of `new RegExp(...)`, outside a character class."
+              "description": "Two or more spaces outside a character class in the string given to `new Regex(...)` and the static methods of `Regex`."
             },
             "no-region-in-body": {
               "$ref": "#/definitions/rule",

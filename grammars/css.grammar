@@ -26,6 +26,8 @@ token Ident #operand #restyle
 token AtKeyword #operand #restyle
 token Hash #operand #restyle
 token String #operand #literal #string #restyle
+// An unclosed string ends at the line break; `#{ }` (SCSS and Less) holds code.
+string String quote "\"" "'" escape "\\" continuation line hexrun 6 nest "#{" "}" unknown drop replace 65533
 token Number #operand #literal #restyle #number
 token Percentage #operand #literal #restyle #number
 token Dimension #operand #literal #restyle #number

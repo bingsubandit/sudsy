@@ -8068,46 +8068,6 @@
     {
       "category": "suspicious",
       "default_level": "warn",
-      "description": "A control character (below U+0020) in a regex literal or in the constant string given to `RegExp`, written raw or as `\\x00`, `\\u0000` or `\\u{0}`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "const a = /\\x1f/;\nconst b = new RegExp(\"\\\\u0001\");\nconst c = /[a\\u0301]/;\nconst d = /[a-z]/;\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 11,
-            "length": 6,
-            "line": 1
-          },
-          {
-            "column": 11,
-            "length": 21,
-            "line": 2
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-control-regex",
-      "languages": [
-        "js",
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-control-regex",
-          "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
       "description": "A `debugger` statement.",
       "example": {
         "config": null,
@@ -8834,41 +8794,6 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
-      "description": "A character class of a regex (a literal or the constant string given to `RegExp`; names of variables written once are followed) in which a combining mark follows another character. The surrogate pair, emoji modifier, flag and joined-sequence checks are not made.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "const a = /\\x1f/;\nconst b = new RegExp(\"\\\\u0001\");\nconst c = /[a\\u0301]/;\nconst d = /[a-z]/;\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 11,
-            "length": 11,
-            "line": 3
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-misleading-character-class",
-      "languages": [
-        "js",
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-misleading-character-class",
-          "partial": true,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
       "default_level": "error",
       "description": "A class method `new(): C` that returns the class, an interface `new (): I` that returns the interface, and an interface method `constructor()`.",
       "example": {
@@ -9139,56 +9064,6 @@
       "upstream": [
         {
           "id": "no-prototype-builtins",
-          "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "Two or more spaces in a regex literal or in the string of `new RegExp(...)`, outside a character class.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "var a = /a  b/, b = /a {2}b/, c = /[  ]/, d = /a  +/, e = /a   +/, f = new RegExp(\"a  b\"), g = RegExp(\"a b\"), h = /a\\  b/;\nvar i = 017, j = 08, k = 0, l = 0.5, m = 0o17;\nvar p = 9007199254740993, q = 0.1, r = 5123000000000000000000000000001, s = 0x20000000000001, t = 0x1fffffffffffff;\nvar u = 12345678901234567890, v = 0.30000000000000004, w = 1_000, x = 0.1000000000000000055511151231257827, y = 1e3;\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 9,
-            "length": 6,
-            "line": 1
-          },
-          {
-            "column": 59,
-            "length": 7,
-            "line": 1
-          },
-          {
-            "column": 72,
-            "length": 18,
-            "line": 1
-          },
-          {
-            "column": 115,
-            "length": 7,
-            "line": 1
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-regex-spaces",
-      "languages": [
-        "js",
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-regex-spaces",
           "partial": false,
           "tool": "eslint"
         }
@@ -25816,6 +25691,44 @@
       ]
     },
     {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A control character (below U+0020) in the constant string given to `new Regex(...)` and the static methods of `Regex`, written raw or as an escape.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(String s) {\n    Pattern.compile(\"\\u001f\");\n    Pattern.compile(\"a  b\");\n    Pattern.matches(\"[a\" + \"\\u0301]\", s);\n    Pattern.compile(\"a b\");\n    Other.compile(\"a  b\");\n    Pattern.compile(s);\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 5,
+            "length": 25,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-control-regex",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "php",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-control-regex",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
       "category": "style",
       "default_level": "off",
       "description": "A `<summary>` that starts with the text Visual Studio generates, \"Summary description for ...\". Skipped when the comment has `<inheritdoc />`. No fix.",
@@ -26310,6 +26223,82 @@
           "id": "SA1106",
           "partial": false,
           "tool": "StyleCop"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A character class in the constant string given to `new Regex(...)` and the static methods of `Regex`, in which a combining mark follows another character.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(String s) {\n    Pattern.compile(\"\\u001f\");\n    Pattern.compile(\"a  b\");\n    Pattern.matches(\"[a\" + \"\\u0301]\", s);\n    Pattern.compile(\"a b\");\n    Other.compile(\"a  b\");\n    Pattern.compile(s);\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 5,
+            "length": 36,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-misleading-character-class",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "php",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-misleading-character-class",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Two or more spaces outside a character class in the string given to `new Regex(...)` and the static methods of `Regex`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  void f(String s) {\n    Pattern.compile(\"\\u001f\");\n    Pattern.compile(\"a  b\");\n    Pattern.matches(\"[a\" + \"\\u0301]\", s);\n    Pattern.compile(\"a b\");\n    Other.compile(\"a  b\");\n    Pattern.compile(s);\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 5,
+            "length": 23,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-regex-spaces",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "php",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-regex-spaces",
+          "partial": false,
+          "tool": "eslint"
         }
       ]
     },

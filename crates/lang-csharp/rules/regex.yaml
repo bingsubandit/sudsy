@@ -1,0 +1,26 @@
+id: no-control-regex
+family: regex
+params: { check: control }
+message: "Unexpected control character(s) in regular expression: {name}."
+description: "A control character (below U+0020) in the constant string given to `new Regex(...)` and the static methods of `Regex`, written raw or as an escape."
+example: "new Regex(\"\\x1f\");   // reported"
+severity: off
+category: suspicious
+---
+id: no-regex-spaces
+family: regex
+params: { check: spaces }
+message: "Spaces are hard to count. Use {{name}}."
+description: "Two or more spaces outside a character class in the string given to `new Regex(...)` and the static methods of `Regex`."
+example: "new Regex(\"a  b\");   // reported"
+severity: off
+category: suspicious
+---
+id: no-misleading-character-class
+family: regex
+params: { check: misleading-class }
+message: "Unexpected combined character in character class."
+description: "A character class in the constant string given to `new Regex(...)` and the static methods of `Regex`, in which a combining mark follows another character."
+example: "new Regex(\"[a\\u0301]\");   // reported"
+severity: off
+category: suspicious

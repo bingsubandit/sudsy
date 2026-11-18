@@ -59,7 +59,10 @@ pub fn string(raw: &str, single: bool) -> String {
         keep_quoted: true,
         interpolation: true,
     };
-    literals::string(raw, style)
+    let row = core_syntax::grammars::CSS
+        .get()
+        .string_row(crate::generated::kind::STRING);
+    literals::string(raw, style, row)
 }
 
 /// `#FFF` is `#fff`; other hashes (ids, odd lengths) keep their case.

@@ -591,6 +591,11 @@ fn regex_call_row(c: &mut Cursor<'_>) -> Result<RegexCall, GrammarError> {
         match c.ident("a regex-call attribute")? {
             "flavor" => row.flavor = c.ident("a flavor")?.to_string(),
             "concat" => row.concat = Some(c.string("an operator")?.to_string()),
+            "delimited" => row.delimited = true,
+            "arg" => match c.next() {
+                Some(Lexeme::Int(n)) => row.arg = *n as usize,
+                _ => return err(c.line, "`arg` needs the index of the argument"),
+            },
             other => return err(c.line, format!("unknown regex-call attribute `{other}`")),
         }
     }
@@ -672,6 +677,14 @@ fn string_row(c: &mut Cursor<'_>) -> Result<Vec<StringSyntax>, GrammarError> {
             "surrogates" => s.surrogates = true,
             "continuation" => s.continuation = true,
             "fold" => s.fold = true,
+            "line" => s.line = true,
+            "dedent" => s.dedent = true,
+            "short-hex" => s.short_hex = true,
+            "hexrun" => s.hexrun = int(c.next()).ok_or_else(bad)?,
+            "nest" => {
+                let open = c.string("an opener")?.to_string();
+                s.nest = Some((open, c.string("a closer")?.to_string()));
+            }
             "escape" => s.escape = Some(ch(c.next()).ok_or_else(bad)?),
             "named" => s.named = Some(ch(c.next()).ok_or_else(bad)?),
             "octal" => s.octal = int(c.next()).ok_or_else(bad)?,

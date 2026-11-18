@@ -22,37 +22,14 @@ const BLOCK: BlockStyle = BlockStyle {
     keep_leading_blank: false,
 };
 
-/// The value of a block string (`"""`): its lines without the common indentation and the blank
-/// lines around them, as graphql-js reads it.
+/// The lines of a block string (`"""`), as the `dedent` row of the grammar reads them.
 fn block_lines(text: &str) -> Vec<&str> {
-    let raw = text
-        .strip_prefix("\"\"\"")
-        .and_then(|t| t.strip_suffix("\"\"\""))
-        .unwrap_or(text);
-    let lines: Vec<&str> = raw.lines().collect();
-    let blank = |l: &&str| l.trim_matches([' ', '\t']).is_empty();
-    let common = lines
-        .iter()
-        .skip(1)
-        .filter(|l| !blank(l))
-        .map(|l| l.len() - l.trim_start_matches([' ', '\t']).len())
-        .min()
-        .unwrap_or(0);
-    let start = lines.iter().position(|l| !blank(l)).unwrap_or(0);
-    let end = lines.iter().rposition(|l| !blank(l)).map_or(0, |i| i + 1);
-    lines
-        .iter()
-        .enumerate()
-        .map(|(i, l)| {
-            if i == 0 {
-                *l
-            } else {
-                l.get(common..).unwrap_or("")
-            }
-        })
-        .skip(start)
-        .take(end.saturating_sub(start))
-        .collect()
+    let row = core_syntax::grammars::GRAPHQL.get().string_rows(k::STRING);
+    let inner = row
+        .filter_map(|r| r.split(text))
+        .next()
+        .map_or(text, |l| l.inner);
+    core_syntax::strings::dedent(inner)
 }
 
 impl NodeFormatter for GraphqlFormatter {
