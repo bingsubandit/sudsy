@@ -3,9 +3,9 @@
 //!
 //! concept: scope-tables
 
-use super::tree::child;
 use crate::generated::kind as k;
 use core_rules::{ScopeLang, ScopeRule};
+use core_syntax::SyntaxNodeExt;
 use core_syntax::{SyntaxKind, SyntaxNode};
 
 /// Parameters that are left alone: those of an empty method or block, of a method that raises
@@ -18,7 +18,7 @@ fn skip_unused(scope: &SyntaxNode, param: SyntaxKind, name: &str) -> bool {
     if scope.descendants().any(|d| uses_name_dynamically(&d, name)) {
         return true;
     }
-    let Some(body) = child(scope, k::STATEMENTS).or_else(|| child(scope, k::BEGIN)) else {
+    let Some(body) = scope.child(k::STATEMENTS).or_else(|| scope.child(k::BEGIN)) else {
         return true;
     };
     if scope.kind() == k::DEF && body.descendants().any(|d| d.kind() == k::FORWARDING_SUPER) {
@@ -36,11 +36,11 @@ fn skip_unused(scope: &SyntaxNode, param: SyntaxKind, name: &str) -> bool {
 fn uses_name_dynamically(n: &SyntaxNode, name: &str) -> bool {
     match n.kind() {
         k::CALL => {
-            !super::tree::has_token(n, k::DOT)
+            !n.token(k::DOT).is_some()
                 && super::tree::method_name(n).is_some_and(|m| m.text() == "binding")
         }
         k::DEF => {
-            super::tree::has_token(n, k::DOT)
+            n.token(k::DOT).is_some()
                 && n.children()
                     .next()
                     .is_some_and(|r| r.text().to_string().trim() == name)
@@ -61,7 +61,8 @@ fn raises_not_implemented(call: &SyntaxNode) -> bool {
     let name = super::tree::method_name(call);
     match name.as_ref().map(|n| n.text()) {
         Some("fail") => true,
-        Some("raise") => child(call, k::ARGUMENTS)
+        Some("raise") => call
+            .child(k::ARGUMENTS)
             .and_then(|a| a.children().next())
             .is_some_and(|first| {
                 first.kind() == k::CONSTANT_READ

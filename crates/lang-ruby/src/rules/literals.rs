@@ -5,11 +5,13 @@
 //! what: Checks on literals: float comparison, boolean symbols, interpolation in strings.
 //! tools: RuboCop Lint
 
-use super::tree::{child, method_name, span, tokens};
+use super::tree::{method_name, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_rules::checks::NodeCheck;
 use core_syntax::SyntaxNode;
+use core_syntax::SyntaxNodeExt;
+use core_syntax::roles::code_tokens;
 
 /// Whether `n` is a number that is zero, or `nil`, however many parentheses are around it.
 fn literal_safe(n: &SyntaxNode) -> bool {
@@ -19,12 +21,14 @@ fn literal_safe(n: &SyntaxNode) -> bool {
             .find(|d| d.kind() != k::PARENTHESES && d.kind() != k::STATEMENTS)
             .is_some_and(|d| literal_safe(&d)),
         k::NIL => true,
-        k::INTEGER | k::FLOAT => tokens(n).find(|t| t.kind() == k::NUMBER).is_some_and(|t| {
-            t.text()
-                .replace('_', "")
-                .parse::<f64>()
-                .is_ok_and(|v| v == 0.0)
-        }),
+        k::INTEGER | k::FLOAT => code_tokens(n)
+            .find(|t| t.kind() == k::NUMBER)
+            .is_some_and(|t| {
+                t.text()
+                    .replace('_', "")
+                    .parse::<f64>()
+                    .is_ok_and(|v| v == 0.0)
+            }),
         _ => false,
     }
 }
@@ -47,7 +51,7 @@ fn float_call(call: &SyntaxNode) -> bool {
         return false;
     };
     let receiver = call.children().next().filter(|c| c.kind() != k::ARGUMENTS);
-    let argument = child(call, k::ARGUMENTS).and_then(|a| a.children().next());
+    let argument = call.child(k::ARGUMENTS).and_then(|a| a.children().next());
     match name.text() {
         "+" | "-" | "*" | "/" | "%" | "**" if name.kind() == k::OPERATOR => {
             receiver.as_ref().is_some_and(float) || argument.as_ref().is_some_and(float)
@@ -83,7 +87,7 @@ pub fn float_comparison(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleCont
     if !matches!(name.text(), "==" | "!=" | "eql?" | "equal?") {
         return;
     }
-    let Some(args) = child(node, k::ARGUMENTS) else {
+    let Some(args) = node.child(k::ARGUMENTS) else {
         return;
     };
     let mut arguments = args.children();
@@ -111,7 +115,7 @@ pub fn boolean_symbol(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContex
 
 /// A single-quoted string with `#{...}` in it, which would interpolate in double quotes.
 pub fn interpolation_check(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if !tokens(node)
+    if !code_tokens(node)
         .next()
         .is_some_and(|t| t.kind() == k::QUOTE && t.text() == "'")
     {
@@ -148,7 +152,7 @@ pub fn interpolation_check(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleC
 
 /// `"#{1}"`: a literal in an interpolation.
 pub fn literal_in_interpolation(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(statements) = child(node, k::STATEMENTS) else {
+    let Some(statements) = node.child(k::STATEMENTS) else {
         return;
     };
     let mut all = statements.children();
@@ -217,7 +221,7 @@ pub fn identical_operands(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleCo
         let (Some(l), Some(r)) = (parts.next(), parts.next()) else {
             return;
         };
-        let Some(op) = tokens(node).find(|t| t.kind() == k::OPERATOR) else {
+        let Some(op) = code_tokens(node).find(|t| t.kind() == k::OPERATOR) else {
             return;
         };
         (l, r, op)
@@ -234,7 +238,7 @@ pub fn identical_operands(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleCo
         let Some(l) = node.children().next().filter(|c| c.kind() != k::ARGUMENTS) else {
             return;
         };
-        let Some(args) = child(node, k::ARGUMENTS) else {
+        let Some(args) = node.child(k::ARGUMENTS) else {
             return;
         };
         let mut all = args.children();

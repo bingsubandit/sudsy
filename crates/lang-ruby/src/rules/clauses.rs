@@ -4,11 +4,13 @@
 //! what: Checks on case and rescue clauses and loop conditions.
 //! tools: RuboCop Lint
 
-use super::tree::{child, span, tokens};
+use super::tree::span;
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_rules::checks::NodeCheck;
 use core_syntax::SyntaxNode;
+use core_syntax::SyntaxNodeExt;
+use core_syntax::roles::code_tokens;
 
 /// A `when` with no body and no comment on its own lines.
 pub fn empty_when(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
@@ -26,7 +28,7 @@ pub fn empty_when(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_
             None => false,
         });
     let commented = own || next;
-    if child(node, k::STATEMENTS).is_none() && !commented {
+    if node.child(k::STATEMENTS).is_none() && !commented {
         let range = span(ctx, node);
         check.hit(ctx, range, "");
     }
@@ -41,8 +43,10 @@ pub fn post_condition_loop(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleC
     else {
         return;
     };
-    if tokens(&body).next().is_some_and(|t| t.text() == "begin")
-        && let Some(keyword) = tokens(node).find(|t| t.kind() == k::KEYWORD)
+    if code_tokens(&body)
+        .next()
+        .is_some_and(|t| t.text() == "begin")
+        && let Some(keyword) = code_tokens(node).find(|t| t.kind() == k::KEYWORD)
     {
         check.hit(ctx, keyword.text_range(), keyword.text());
     }

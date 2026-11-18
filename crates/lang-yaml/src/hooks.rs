@@ -9,14 +9,10 @@ use crate::model::{Value, resolve_plain};
 use crate::scalar::flow_value;
 use core_rules::{RuleHooks, Scalar};
 use core_syntax::ast::AstNode;
-use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use core_syntax::{Grammar, SyntaxElement, SyntaxNode, SyntaxToken, code_span};
 use std::borrow::Cow;
 
 pub struct YamlHooks;
-
-fn is_trivia(kind: SyntaxKind) -> bool {
-    matches!(kind, kind::WHITESPACE | kind::NEWLINE | kind::COMMENT)
-}
 
 /// The value of a scalar node: `None` for a quoted scalar with an invalid escape.
 fn scalar_value<'a>(token: &SyntaxToken, text: &'a str) -> Option<Cow<'a, str>> {
@@ -30,7 +26,7 @@ fn scalar_value<'a>(token: &SyntaxToken, text: &'a str) -> Option<Cow<'a, str>> 
 }
 
 impl RuleHooks for YamlHooks {
-    fn key_name<'a>(&self, _g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, str> {
+    fn key_name<'a>(&self, g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, str> {
         let SyntaxElement::Node(node) = key else {
             return Cow::Borrowed("");
         };
@@ -41,16 +37,7 @@ impl RuleHooks for YamlHooks {
         }
         // Any other key (a collection, an anchored or tagged scalar): its text without the
         // comments and blank space around it.
-        let mut code = node
-            .descendants_with_tokens()
-            .filter_map(|e| e.into_token())
-            .filter(|t| !is_trivia(t.kind()) && !t.text_range().is_empty());
-        let Some(first) = code.next() else {
-            return Cow::Borrowed("");
-        };
-        let last = code.last().unwrap_or_else(|| first.clone());
-        let (start, end) = (first.text_range().start(), last.text_range().end());
-        Cow::Borrowed(&text[usize::from(start)..usize::from(end)])
+        code_span(node, g).map_or(Cow::Borrowed(""), |r| Cow::Borrowed(&text[r]))
     }
 
     fn inline_mapping_line(&self, line: &str) -> bool {

@@ -4,18 +4,20 @@
 //! what: Checks on class and module bodies: access modifiers, constants, constructors.
 //! tools: RuboCop Lint
 
-use super::tree::{child, has_token, method_name, span, tokens};
+use super::tree::{method_name, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_rules::checks::NodeCheck;
+use core_syntax::SyntaxNodeExt;
+use core_syntax::roles::code_tokens;
 use core_syntax::{SyntaxNode, SyntaxToken};
 
 /// A receiver-less call with no arguments: its name.
 fn bare_call(call: &SyntaxNode) -> Option<SyntaxToken> {
     if call.kind() != k::CALL
-        || child(call, k::ARGUMENTS).is_some()
-        || has_token(call, k::L_PAREN)
-        || has_token(call, k::DOT)
+        || call.child(k::ARGUMENTS).is_some()
+        || call.token(k::L_PAREN).is_some()
+        || call.token(k::DOT).is_some()
     {
         return None;
     }
@@ -29,7 +31,7 @@ fn bare_modifier(call: &SyntaxNode) -> Option<SyntaxToken> {
 
 /// The name of a method definition.
 fn def_name(def: &SyntaxNode) -> Option<SyntaxToken> {
-    tokens(def)
+    code_tokens(def)
         .skip(1)
         .find(|t| matches!(t.kind(), k::IDENTIFIER | k::CONSTANT | k::OPERATOR))
 }
@@ -39,7 +41,7 @@ fn private_class_methods(body: &SyntaxNode) -> Vec<String> {
     let mut names = Vec::new();
     for call in body.descendants().filter(|d| d.kind() == k::CALL) {
         if method_name(&call).is_some_and(|n| n.text() == "private_class_method")
-            && let Some(args) = child(&call, k::ARGUMENTS)
+            && let Some(args) = call.child(k::ARGUMENTS)
         {
             for a in args.children().filter(|a| a.kind() == k::SYMBOL) {
                 let text = a.text().to_string();
@@ -61,7 +63,7 @@ pub fn ineffective_access_modifier(
     node: &SyntaxNode,
     ctx: &mut RuleContext<'_>,
 ) {
-    let Some(body) = child(node, k::STATEMENTS) else {
+    let Some(body) = node.child(k::STATEMENTS) else {
         return;
     };
     let mut modifier: Option<SyntaxToken> = None;
@@ -75,7 +77,7 @@ pub fn ineffective_access_modifier(
                         modifier = Some(m);
                     }
                 }
-                k::DEF if has_token(&stmt, k::DOT) => {
+                k::DEF if stmt.token(k::DOT).is_some() => {
                     let Some(m) = modifier.as_ref().filter(|m| m.text() != "public") else {
                         continue;
                     };
@@ -84,12 +86,12 @@ pub fn ineffective_access_modifier(
                     if name.is_some_and(|n| ignored.iter().any(|i| i == n.text())) {
                         continue;
                     }
-                    if let Some(def) = tokens(&stmt).next() {
+                    if let Some(def) = code_tokens(&stmt).next() {
                         let range = def.text_range();
                         check.hit(ctx, range, m.text());
                     }
                 }
-                k::BEGIN => scan.extend(child(&stmt, k::STATEMENTS)),
+                k::BEGIN => scan.extend(stmt.child(k::STATEMENTS)),
                 _ => {}
             }
         }
@@ -125,7 +127,7 @@ pub fn constant_definition_in_block(
 
 /// The superclass of a `class` node.
 fn superclass(class: &SyntaxNode) -> Option<SyntaxNode> {
-    if !tokens(class).any(|t| t.text() == "<") {
+    if !code_tokens(class).any(|t| t.text() == "<") {
         return None;
     }
     class
@@ -155,7 +157,7 @@ const CALLBACKS: &[&str] = &[
 /// A constructor of a subclass, or a lifecycle callback, that does not call `super`.
 pub fn missing_super(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let Some(name) = def_name(node) else { return };
-    let singleton = has_token(node, k::DOT);
+    let singleton = node.token(k::DOT).is_some();
     let constructor = name.text() == "initialize" && !singleton;
     let callback = CALLBACKS.contains(&name.text())
         && node
@@ -194,7 +196,7 @@ pub fn missing_super(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext
 fn class_new_parent(block: &SyntaxNode) -> Option<SyntaxNode> {
     let call = block.parent().filter(|c| c.kind() == k::CALL)?;
     let object = call.children().next()?;
-    let args = child(&call, k::ARGUMENTS)?;
+    let args = call.child(k::ARGUMENTS)?;
     let mut parents = args.children();
     let (parent, None) = (parents.next()?, parents.next()) else {
         return None;
@@ -209,11 +211,11 @@ type Scan = (Visibility, Option<SyntaxNode>);
 /// An access modifier that changes nothing: the same visibility again, or no method after it.
 pub fn useless_access_modifier(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let body = match node.kind() {
-        k::CALL if is_eval_call(node) => child(node, k::BLOCK),
+        k::CALL if is_eval_call(node) => node.child(k::BLOCK),
         k::CALL => None,
         _ => Some(node.clone()),
     };
-    let Some(statements) = body.and_then(|b| child(&b, k::STATEMENTS)) else {
+    let Some(statements) = body.and_then(|b| b.child(k::STATEMENTS)) else {
         return;
     };
     let mut stmts = statements.children();
@@ -265,7 +267,7 @@ fn is_access(name: &str) -> bool {
 
 /// `class_eval`, `Class.new`, `Struct.new` and the like with a block: a scope of its own.
 fn is_eval_call(call: &SyntaxNode) -> bool {
-    if call.kind() != k::CALL || child(call, k::BLOCK).is_none() {
+    if call.kind() != k::CALL || call.child(k::BLOCK).is_none() {
         return false;
     }
     let Some(name) = method_name(call) else {
@@ -288,9 +290,9 @@ fn is_eval_call(call: &SyntaxNode) -> bool {
 /// A method the following modifier applies to: `def` (not `def self.x`), `attr_*`, `define_method`.
 fn defines_method(n: &SyntaxNode) -> bool {
     match n.kind() {
-        k::DEF => !has_token(n, k::DOT),
+        k::DEF => !n.token(k::DOT).is_some(),
         k::CALL => {
-            !has_token(n, k::DOT)
+            !n.token(k::DOT).is_some()
                 && method_name(n).is_some_and(|m| {
                     matches!(
                         m.text(),
@@ -329,7 +331,7 @@ fn scan_scope(check: &NodeCheck, node: &SyntaxNode, state: &mut Scan, ctx: &mut 
             state.1 = None;
         } else if matches!(c.kind(), k::CLASS | k::MODULE | k::SINGLETON_CLASS)
             || is_eval_call(&c)
-            || (c.kind() == k::DEF && has_token(&c, k::DOT))
+            || (c.kind() == k::DEF && c.token(k::DOT).is_some())
         {
             continue;
         } else {
@@ -348,7 +350,7 @@ pub fn inherit_exception(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleCon
             .next()
             .is_some_and(|o| o.text().to_string().trim() == "Class")
     {
-        child(node, k::ARGUMENTS).and_then(|a| a.children().next())
+        node.child(k::ARGUMENTS).and_then(|a| a.children().next())
     } else {
         None
     };
@@ -363,7 +365,7 @@ pub fn inherit_exception(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleCon
 
 /// A method whose body is a bare `super`.
 pub fn useless_method_definition(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(body) = child(node, k::STATEMENTS) else {
+    let Some(body) = node.child(k::STATEMENTS) else {
         return;
     };
     let mut all = body.children();
@@ -381,25 +383,28 @@ pub fn useless_method_definition(check: &NodeCheck, node: &SyntaxNode, ctx: &mut
     });
     let modified = node.parent().is_some_and(|p| p.kind() == k::ARGUMENTS);
     let delegating = match only.kind() {
-        k::FORWARDING_SUPER => child(&only, k::BLOCK).is_none(),
+        k::FORWARDING_SUPER => only.child(k::BLOCK).is_none(),
         k::SUPER => {
-            let params = child(node, k::PARAMETERS)
+            let params = node
+                .child(k::PARAMETERS)
                 .map(|p| {
                     p.children()
                         .map(|c| c.text().to_string().trim().to_owned())
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
-            let args = child(&only, k::ARGUMENTS)
+            let args = only
+                .child(k::ARGUMENTS)
                 .map(|a| {
                     a.children()
                         .map(|c| c.text().to_string().trim().to_owned())
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
-            child(&only, k::BLOCK).is_none()
+            only.child(k::BLOCK).is_none()
                 && params == args
-                && child(node, k::PARAMETERS)
+                && node
+                    .child(k::PARAMETERS)
                     .is_some_and(|p| p.children().all(|c| c.kind() == k::REQUIRED_PARAMETER))
         }
         _ => false,
@@ -412,7 +417,7 @@ pub fn useless_method_definition(check: &NodeCheck, node: &SyntaxNode, ctx: &mut
 
 /// `return value` in `initialize` or a setter, which ignore the value.
 pub fn return_in_void_context(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if child(node, k::ARGUMENTS).is_none() {
+    if node.child(k::ARGUMENTS).is_none() {
         return;
     }
     let mut scopes = node.ancestors().skip(1);
@@ -439,7 +444,7 @@ pub fn return_in_void_context(check: &NodeCheck, node: &SyntaxNode, ctx: &mut Ru
                         )
                     })
         });
-    if !scoped && let Some(keyword) = tokens(node).next() {
+    if !scoped && let Some(keyword) = code_tokens(node).next() {
         check.hit(ctx, keyword.text_range(), &def);
     }
 }

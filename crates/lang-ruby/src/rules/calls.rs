@@ -2,11 +2,13 @@
 //!
 //! concept: call-shape-checks
 
-use super::tree::{child, has_token, last_node, method_name, span, tokens};
+use super::tree::{method_name, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_rules::checks::NodeCheck;
 use core_syntax::SyntaxNode;
+use core_syntax::SyntaxNodeExt;
+use core_syntax::roles::code_tokens;
 
 fn text_of<'a>(ctx: &RuleContext<'a>, n: &SyntaxNode) -> &'a str {
     &ctx.file.text[span(ctx, n)]
@@ -14,7 +16,7 @@ fn text_of<'a>(ctx: &RuleContext<'a>, n: &SyntaxNode) -> &'a str {
 
 /// The first argument of a call.
 fn first_argument(call: &SyntaxNode) -> Option<SyntaxNode> {
-    child(call, k::ARGUMENTS).and_then(|a| a.children().next())
+    call.child(k::ARGUMENTS).and_then(|a| a.children().next())
 }
 
 fn is_constant(ctx: &RuleContext<'_>, n: &SyntaxNode, name: &str) -> bool {
@@ -57,24 +59,24 @@ pub fn ambiguous_block_association(
     node: &SyntaxNode,
     ctx: &mut RuleContext<'_>,
 ) {
-    let Some(args) = child(node, k::ARGUMENTS) else {
+    let Some(args) = node.child(k::ARGUMENTS) else {
         return;
     };
-    if has_token(node, k::L_PAREN) {
+    if node.token(k::L_PAREN).is_some() {
         return;
     }
-    let Some(last) = last_node(&args).filter(|l| l.kind() == k::CALL) else {
+    let Some(last) = args.children().last().filter(|l| l.kind() == k::CALL) else {
         return;
     };
-    if let Some(block) = child(node, k::BLOCK) {
-        let first = tokens(&block).next();
+    if let Some(block) = node.child(k::BLOCK) {
+        let first = code_tokens(&block).next();
         if first.is_some_and(|t| t.text() == "do") {
             let end = span(ctx, &args).end();
             let found = last
                 .descendants()
                 .filter(|d| d.kind() == k::CALL)
                 .find(|d| {
-                    child(d, k::ARGUMENTS).is_none()
+                    d.child(k::ARGUMENTS).is_none()
                         && method_name(d).is_some_and(|n| BLOCK_METHODS.contains(&n.text()))
                         && span(ctx, d).end() == end
                 });
@@ -88,12 +90,12 @@ pub fn ambiguous_block_association(
         }
         return;
     }
-    if child(&last, k::BLOCK).is_none()
-        || child(&last, k::ARGUMENTS).is_some()
-        || has_token(&last, k::L_PAREN)
+    if last.child(k::BLOCK).is_none()
+        || last.child(k::ARGUMENTS).is_some()
+        || last.token(k::L_PAREN).is_some()
         || is_lambda_or_proc(&last)
-        || has_token(node, k::L_BRACKET)
-        || has_token(node, k::ASSIGN)
+        || node.token(k::L_BRACKET).is_some()
+        || node.token(k::ASSIGN).is_some()
         || method_name(node).is_some_and(|n| n.kind() == k::OPERATOR)
     {
         return;
@@ -106,7 +108,7 @@ pub fn ambiguous_block_association(
 
 /// `raise Exception`: it is rescued by nothing but `rescue Exception`.
 pub fn raise_exception(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if has_token(node, k::DOT)
+    if node.token(k::DOT).is_some()
         || !method_name(node).is_some_and(|n| matches!(n.text(), "raise" | "fail"))
     {
         return;
@@ -131,7 +133,7 @@ pub fn parentheses_as_grouped_expression(
     node: &SyntaxNode,
     ctx: &mut RuleContext<'_>,
 ) {
-    let Some(args) = child(node, k::ARGUMENTS) else {
+    let Some(args) = node.child(k::ARGUMENTS) else {
         return;
     };
     let mut all = args.children();
@@ -144,9 +146,9 @@ pub fn parentheses_as_grouped_expression(
     let spaced = args
         .prev_sibling_or_token()
         .is_some_and(|p| p.kind() == k::WHITESPACE);
-    let setter = has_token(node, k::ASSIGN) || has_token(node, k::L_BRACKET);
+    let setter = node.token(k::ASSIGN).is_some() || node.token(k::L_BRACKET).is_some();
     let operator = method_name(node).is_some_and(|n| n.kind() == k::OPERATOR);
-    if has_token(node, k::L_PAREN) || !spaced || setter || operator {
+    if node.token(k::L_PAREN).is_some() || !spaced || setter || operator {
         return;
     }
     let mut inner = group.children().filter(|c| c.kind() == k::STATEMENTS);
@@ -178,23 +180,23 @@ pub fn parentheses_as_grouped_expression(
 /// `a.b c`: a call with arguments and no parentheses.
 fn command_call(n: &SyntaxNode) -> bool {
     n.kind() == k::CALL
-        && child(n, k::ARGUMENTS).is_some()
-        && !has_token(n, k::L_PAREN)
-        && !has_token(n, k::L_BRACKET)
+        && n.child(k::ARGUMENTS).is_some()
+        && !n.token(k::L_PAREN).is_some()
+        && !n.token(k::L_BRACKET).is_some()
         && method_name(n).is_some_and(|m| m.kind() != k::OPERATOR)
 }
 
 /// `hash[x.object_id]`, `hash.key?(x.object_id)`: `compare_by_identity` does that.
 pub fn hash_compare_by_identity(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let method = has_token(node, k::DOT)
+    let method = node.token(k::DOT).is_some()
         && method_name(node).is_some_and(|n| matches!(n.text(), "key?" | "has_key?" | "fetch"));
-    if !(method || has_token(node, k::L_BRACKET)) {
+    if !(method || node.token(k::L_BRACKET).is_some()) {
         return;
     }
     let by_id = first_argument(node).is_some_and(|a| {
         a.kind() == k::CALL
-            && has_token(&a, k::DOT)
-            && child(&a, k::ARGUMENTS).is_none()
+            && a.token(k::DOT).is_some()
+            && a.child(k::ARGUMENTS).is_none()
             && method_name(&a).is_some_and(|n| n.text() == "object_id")
     });
     if by_id {
@@ -210,10 +212,10 @@ pub fn useless_times(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext
         let text = text_of(ctx, &r).replace('_', "");
         text.parse::<i64>().is_ok_and(|v| v <= 1)
     });
-    let block = child(node, k::BLOCK).is_some() || child(node, k::BLOCK_ARGUMENT).is_some();
+    let block = node.child(k::BLOCK).is_some() || node.child(k::BLOCK_ARGUMENT).is_some();
     if small
         && block
-        && has_token(node, k::DOT)
+        && node.token(k::DOT).is_some()
         && method_name(node).is_some_and(|n| n.text() == "times")
     {
         let range = span(ctx, node);
@@ -237,7 +239,7 @@ pub fn struct_new_override(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleC
     if !method_name(node).is_some_and(|n| n.text() == "new") {
         return;
     }
-    let Some(args) = child(node, k::ARGUMENTS) else {
+    let Some(args) = node.child(k::ARGUMENTS) else {
         return;
     };
     for symbol in args.children().filter(|a| a.kind() == k::SYMBOL) {
@@ -252,23 +254,24 @@ pub fn struct_new_override(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleC
 /// `"#{x.to_s}"`, `puts x.to_s`: the conversion happens anyway.
 pub fn redundant_string_coercion(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     let to_s = |c: &SyntaxNode| {
-        let plain =
-            c.kind() == k::CALL && child(c, k::ARGUMENTS).is_none() && !has_token(c, k::L_PAREN);
+        let plain = c.kind() == k::CALL
+            && c.child(k::ARGUMENTS).is_none()
+            && !c.token(k::L_PAREN).is_some();
         method_name(c).filter(|n| plain && n.text() == "to_s")
     };
     let hits: Vec<_> = if node.kind() == k::EMBEDDED_STATEMENTS {
-        child(node, k::STATEMENTS)
-            .and_then(|s| last_node(&s))
+        node.child(k::STATEMENTS)
+            .and_then(|s| s.children().last())
             .and_then(|c| to_s(&c))
             .into_iter()
             .collect()
     } else {
-        if has_token(node, k::DOT)
+        if node.token(k::DOT).is_some()
             || !method_name(node).is_some_and(|n| matches!(n.text(), "print" | "puts" | "warn"))
         {
             return;
         }
-        child(node, k::ARGUMENTS)
+        node.child(k::ARGUMENTS)
             .into_iter()
             .flat_map(|a| a.children().collect::<Vec<_>>())
             .filter_map(|c| to_s(&c))
