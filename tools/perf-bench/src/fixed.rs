@@ -228,6 +228,15 @@ pub fn run(lang: &str, phase: &str, dir: &Path) -> Result<()> {
                     .filter_map(|(f, o)| provider_api::format_file(p, f, o, &table).ok())
                     .count()
             });
+            let mut best = u128::MAX;
+            for _ in 0..150 {
+                let t = std::time::Instant::now();
+                for (f, o) in &sources {
+                    let _ = provider_api::format_file(p, f, o, &table);
+                }
+                best = best.min(t.elapsed().as_nanos());
+            }
+            eprintln!("LOOPMIN_US {}", best / 1000);
             (texts.len(), w, a)
         }
         "format-query" | "lint-query" => {
