@@ -76,6 +76,7 @@ pub const MAPPING: Mapping = Mapping {
         ("type", "TypeRef"),
         ("union_type_definition", "UnionType"),
         ("union_type_extension", "UnionType"),
+        ("value", "Value"),
         ("variable_definition", "VarDef"),
         ("variable_definitions", "VarDefs"),
         ("comma", "Whitespace"),

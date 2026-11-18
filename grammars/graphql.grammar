@@ -51,17 +51,19 @@ node FragmentName = Name
 node TypeCondition = Keyword Name
 node VarDefs #mapping = Punct VarDef* Punct
 node VarDef #key-value #variable = Description? key:Variable Punct TypeRef DefaultValue? Directive*
-node DefaultValue = Punct String? Int? Float? Bool? Null? Name? Variable? ListValue? ObjectValue?
+node DefaultValue = Punct Value
 node SelectionSet #mapping #selection-set = LBrace items:#item* RBrace
 node Field #item #key-value = alias:Alias? key:Name Arguments? Directive* SelectionSet?
 node Alias = Name Punct
 node InlineFragment #item = Punct TypeCondition? Directive* SelectionSet
 node FragmentSpread #item = Punct FragmentName Arguments? Directive*
 node Arguments #mapping = Punct Argument* Punct
-node Argument #key-value = key:Name Punct String? Int? Float? Bool? Null? Name? Variable? ListValue? ObjectValue?
-node ListValue = Punct String* Int* Float* Bool* Null* Name* Variable* ListValue* ObjectValue* Punct
+node Argument #key-value = key:Name Punct Value
+// A value: a literal, a name, a variable, a list or an object.
+node Value = String? Int? Float? Bool? Null? Name? Variable? ListValue? ObjectValue?
+node ListValue = Punct Value* Punct
 node ObjectValue #mapping = LBrace ObjectField* RBrace
-node ObjectField #key-value = key:Name Punct String? Int? Float? Bool? Null? Name? Variable? ListValue? ObjectValue?
+node ObjectField #key-value = key:Name Punct Value
 node Directive = Punct name:Name Arguments?
 // A type reference: `[Name!]!` (the brackets and bangs are tokens).
 node TypeRef = Punct* Name Punct*

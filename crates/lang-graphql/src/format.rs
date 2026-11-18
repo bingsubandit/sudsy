@@ -7,7 +7,7 @@
 use crate::generated::kind as k;
 use core_config::shared;
 use core_format::shapes::{
-    BlockStyle, ListStyle, block, block_between, dangling_comments, delimited_list, document,
+    BlockStyle, ListStyle, block, block_between, delimited_list, document,
 };
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, comments, doc};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxNodeExt, SyntaxToken};
@@ -69,8 +69,9 @@ impl NodeFormatter for GraphqlFormatter {
             k::SELECTION_SET | k::FIELDS_DEF | k::ENUM_VALUES | k::INPUT_FIELDS => {
                 block(cx, node, &BLOCK)?
             }
-            k::VAR_DEFS | k::ARGUMENTS | k::ARGS_DEF | k::OBJECT_VALUE => list(cx, node)?,
-            k::LIST_VALUE => list_value(cx, node)?,
+            k::VAR_DEFS | k::ARGUMENTS | k::ARGS_DEF | k::OBJECT_VALUE | k::LIST_VALUE => {
+                list(cx, node)?
+            }
             k::FIELD => field(cx, node)?,
             k::ALIAS | k::ARGUMENT | k::OBJECT_FIELD | k::ROOT_OP => colon_spaced(cx, node)?,
             k::FIELD_DEF
@@ -79,7 +80,9 @@ impl NodeFormatter for GraphqlFormatter {
             | k::ENUM_VALUE_DEF
             | k::FRAGMENT_SPREAD => with_type(cx, node)?,
             k::DEFAULT_VALUE => default_value(cx, node)?,
-            k::DESCRIPTION | k::DIRECTIVE | k::TYPE_REF | k::FRAGMENT_NAME => concat(cx, node)?,
+            k::DESCRIPTION | k::DIRECTIVE | k::TYPE_REF | k::FRAGMENT_NAME | k::VALUE => {
+                concat(cx, node)?
+            },
             k::TYPE_CONDITION => words(cx, node)?,
             k::SCHEMA => schema(cx, node)?,
             k::UNION_TYPE => union_type(cx, node)?,
@@ -241,45 +244,6 @@ fn list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
     delimited_list(cx, node, &style)
 }
 
-/// `open`, the items one per line (separated by `, ` when it all fits one line), `close`. A
-/// comment before `close` goes on its own line inside, which breaks the list.
-fn delimited(
-    cx: &FormatCtx<'_>,
-    open: &SyntaxToken,
-    close: &SyntaxToken,
-    items: Vec<Doc>,
-    space: &'static str,
-) -> Doc {
-    let sep = doc::concat(vec![
-        doc::if_break(doc::nil(), doc::lit(", ")),
-        doc::softline(),
-    ]);
-    let dangling = comments::leading_comments(cx.grammar, close);
-    if dangling.is_empty() {
-        return doc::group(doc::concat(vec![
-            cx.token(open),
-            doc::lit(space),
-            doc::indent(doc::concat(vec![doc::softline(), doc::join(&sep, items)])),
-            doc::softline(),
-            doc::if_break(doc::nil(), doc::lit(space)),
-            cx.token(close),
-        ]));
-    }
-    let mut inner = Vec::new();
-    if !items.is_empty() {
-        inner.push(doc::hardline());
-        inner.push(doc::join(&sep, items));
-    }
-    inner.push(dangling_comments(&dangling, false));
-    doc::group(doc::concat(vec![
-        cx.token(open),
-        doc::indent(doc::concat(inner)),
-        doc::hardline(),
-        cx.token_text(close),
-        cx.trailing_comments_doc(close),
-    ]))
-}
-
 fn selection_sets(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Vec<Doc>, FormatError> {
     nodes_of(node, k::SELECTION_SET)
         .iter()
@@ -379,17 +343,6 @@ fn default_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatErr
         }
     }
     Ok(doc::concat(parts))
-}
-
-fn list_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
-    let els = elements(cx, node);
-    let (Some(SyntaxElement::Token(open)), Some(SyntaxElement::Token(close))) =
-        (els.first(), els.last())
-    else {
-        return Err(FormatError::Shape("list without brackets".into()));
-    };
-    let items = docs_of(cx, &els[1..els.len() - 1])?;
-    Ok(delimited(cx, open, close, items, ""))
 }
 
 /// `schema { query: Q }`, `extend schema @a`.

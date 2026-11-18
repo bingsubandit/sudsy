@@ -37,6 +37,7 @@ mapping:
   InputFields: input_fields_definition
   EnumValues: enum_values_definition
   EnumValueDef: enum_value_definition
+  Value: value
   String: string_value
   Int: int_value
   Float: float_value
