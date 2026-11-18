@@ -9,10 +9,10 @@ use super::options::{
 };
 use super::seq::{
     R, Sep, block_is_empty, braced_element, direct_tokens, is_empty_braces, keeps_empty_inline,
-    sep_doc, separator, seq_of, sig,
+    sep_doc, separator, seq_of,
 };
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
+use core_format::seq::{children, el};
 use core_format::shapes::{
     BlankRule, BlockStyle, ListLayout, ListStyle, block_between, delimited_list_between,
     statement_sequence_with,
@@ -36,7 +36,7 @@ fn position(els: &[SyntaxElement], t: &SyntaxToken) -> Option<usize> {
 
 /// The members, then the comments that end the file.
 pub fn compilation_unit(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let items: Vec<SyntaxNode> = nodes_of(&els);
     let mut parts = vec![statement_sequence_with(
         cx,
@@ -62,7 +62,7 @@ pub fn compilation_unit(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 /// `namespace N;` and then the members, which are not indented.
 pub fn file_scoped_namespace(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let semi = direct_tokens(node, k::SEMICOLON_TOKEN)
         .into_iter()
         .next()
@@ -94,7 +94,7 @@ fn with_braces(
     node: &SyntaxNode,
     body: impl FnOnce(&SyntaxToken, &SyntaxToken) -> R,
 ) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let open = direct_tokens(node, k::OPEN_BRACE_TOKEN).into_iter().next();
     let close = direct_tokens(node, k::CLOSE_BRACE_TOKEN).into_iter().last();
     let (Some(open), Some(close)) = (open, close) else {
@@ -177,8 +177,8 @@ fn in_member_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         let kind = p.kind();
         kind == k::COMPILATION_UNIT
             || kind == k::FILE_SCOPED_NAMESPACE_DECLARATION
-            || tags::has(cx.grammar, kind, Tag::Namespace)
-            || tags::has(cx.grammar, kind, Tag::TypeDeclaration)
+            || cx.grammar.has_tag(kind, "namespace")
+            || cx.grammar.has_tag(kind, "type-declaration")
     })
 }
 
@@ -298,7 +298,7 @@ pub fn accessors_inline(cx: &FormatCtx<'_>, list: &SyntaxNode) -> bool {
 }
 
 pub fn accessor_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     if !accessors_inline(cx, node) {
         // `accessor_blank_lines: remove` drops the blank lines between accessors.
         let style = BlockStyle {
@@ -319,7 +319,7 @@ pub fn accessor_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         if i > 0 {
             parts.push(doc::lit(" "));
         }
-        parts.push(super::seq::element_doc(cx, e)?);
+        parts.push(el(cx, e)?);
     }
     Ok(doc::concat(parts))
 }
@@ -329,11 +329,11 @@ pub fn accessor_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 /// braces get their own lines. `None` for any accessor this does not apply to.
 pub fn accessor_declaration(cx: &FormatCtx<'_>, accessor: &SyntaxNode) -> Option<R> {
     let g = cx.grammar;
-    let els = sig(cx, accessor);
+    let els = children(cx, accessor);
     let (SyntaxElement::Node(block), head) = els.split_last()? else {
         return None;
     };
-    let body = sig(cx, block);
+    let body = children(cx, block);
     let [
         SyntaxElement::Token(open),
         SyntaxElement::Node(statement),
@@ -386,7 +386,7 @@ pub fn accessor_declaration(cx: &FormatCtx<'_>, accessor: &SyntaxNode) -> Option
 /// `: A, B` after a type: on the line of the type when it fits, else on the next line, one
 /// further type per line (`base_list_layout: hanging`).
 pub fn base_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let mut els = sig(cx, node).into_iter();
+    let mut els = children(cx, node).into_iter();
     let Some(SyntaxElement::Token(colon)) = els.next() else {
         return Err(FormatError::Shape("base list without `:`".into()));
     };
@@ -413,7 +413,7 @@ pub fn base_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 /// `: base(args)` of a constructor, on its own line below the signature.
 pub fn constructor_initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     Ok(doc::indent(doc::concat(vec![
         doc::hardline(),
         seq_of(cx, node, &els)?,
@@ -423,9 +423,9 @@ pub fn constructor_initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 /// Labels one per line, then the statements indented below them.
 pub fn switch_section(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let g = cx.grammar;
-    let (labels, statements): (Vec<_>, Vec<_>) = nodes_of(&sig(cx, node))
+    let (labels, statements): (Vec<_>, Vec<_>) = nodes_of(&children(cx, node))
         .into_iter()
-        .partition(|n| tags::has(g, n.kind(), Tag::SwitchLabel));
+        .partition(|n| g.has_tag(n.kind(), "switch-label"));
     if flat::inside(cx, node) {
         let mut parts = Vec::new();
         for n in labels.iter().chain(&statements) {

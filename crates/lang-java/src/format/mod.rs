@@ -1,25 +1,34 @@
 //! Java formatting: google-java-format's layout on our tree.
 //!
 //! Every node becomes a `Doc` by `node`; a node without a rule of its own prints its tokens one
-//! after the other with the spacing of `space::between`. A rule wraps the parts that may break in
+//! after the other with the spacing of the `[space]` rows. A rule wraps the parts that may break in
 //! groups: `list` (the parenthesised lists), `body` (braces with one member per line), `binary`
 //! and the rest of `expr.rs`.
 
 mod decl;
 mod expr;
-mod space;
 mod stmt;
 
 use crate::generated::kind as k;
 use core_config::shared;
 use core_format::comments::{self, CommentKind};
 use core_format::doc::{self, Doc};
+use core_format::rules::LazyRules;
 use core_format::{FormatCtx, FormatError, NodeFormatter};
+use core_syntax::grammars;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 include!("../schema.generated.rs");
 
 pub struct JavaFormatter;
+
+static ROWS: LazyRules =
+    LazyRules::new(|| grammars::JAVA.get(), include_str!("../../format.rules"));
+
+/// Does a blank stand between the two tokens?
+pub(super) fn spaced(a: &SyntaxToken, b: &SyntaxToken) -> bool {
+    ROWS.get().space().spaced(a, b)
+}
 
 pub(super) type R = Result<Doc, FormatError>;
 
@@ -93,59 +102,7 @@ fn starts_group(kind: core_syntax::SyntaxKind) -> bool {
     )
 }
 
-/// The children that are not trivia.
-pub(super) fn kids(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxElement> {
-    node.children_with_tokens()
-        .filter(|e| !cx.grammar.is_trivia(e.kind()) && !e.text_range().is_empty())
-        .collect()
-}
-
-/// The children, with the wrapper nodes of the grammar (`...Core`, the entry points) replaced
-/// by their own children.
-pub(super) fn flat(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxElement> {
-    let mut out = Vec::new();
-    for e in kids(cx, node) {
-        match &e {
-            SyntaxElement::Node(n) if is_wrapper(n.kind()) => out.extend(flat(cx, n)),
-            _ => out.push(e),
-        }
-    }
-    out
-}
-
-fn is_wrapper(kind: core_syntax::SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::CLASS_DECLARATION_CORE
-            | k::INTERFACE_DECLARATION_CORE
-            | k::ENUM_DECLARATION_CORE
-            | k::RECORD_DECLARATION_CORE
-            | k::ANNOTATION_TYPE_DECLARATION_CORE
-            | k::LOCAL_VARIABLE_DECLARATION_CORE
-            | k::TYPE_OR_STATIC_IMPORT_DECLARATION
-            | k::STATEMENT_EXPRESSION
-            | k::TOP_LEVEL_DECLARATION
-            | k::COMPILATION_UNIT
-            | k::UNNAMED_COMPILATION_UNIT
-            | k::UNIT_BEFORE_FIRST_METHOD
-            | k::SWITCH_BLOCK_STATEMENT_GROUP_BODY
-            | k::SWITCH_GROUP_STATEMENTS
-    )
-}
-
-pub(super) fn first(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Option<SyntaxToken> {
-    match e {
-        SyntaxElement::Token(t) => Some(t.clone()),
-        SyntaxElement::Node(n) => cx.first_token(n),
-    }
-}
-
-pub(super) fn last(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Option<SyntaxToken> {
-    match e {
-        SyntaxElement::Token(t) => Some(t.clone()),
-        SyntaxElement::Node(n) => cx.last_token(n),
-    }
-}
+pub(super) use core_format::seq::{first, flat, gap, kids, last, line_comment_after};
 
 pub(super) fn el(cx: &FormatCtx<'_>, e: &SyntaxElement) -> R {
     match e {
@@ -182,23 +139,6 @@ fn tok(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
     doc::concat(parts)
 }
 
-/// Whether a line comment follows the token on its line, so what comes next starts a new one.
-pub(super) fn line_comment_after(cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
-    !matches!(t.text(), ")" | ";" | "]" | "}")
-        && comments::trailing_comments(cx.grammar, t)
-            .iter()
-            .any(|c| c.kind != CommentKind::Block)
-}
-
-/// The space after a token: a line break when a line comment follows it on its line.
-pub(super) fn gap(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
-    if line_comment_after(cx, t) {
-        doc::hardline()
-    } else {
-        doc::lit(" ")
-    }
-}
-
 /// [`gap`] after the last token of an element.
 pub(super) fn gap_after(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Doc {
     last(cx, e).map_or_else(|| doc::lit(" "), |t| gap(cx, &t))
@@ -221,7 +161,7 @@ pub(super) fn is_tok(e: &SyntaxElement, text: &str) -> bool {
     matches!(e, SyntaxElement::Token(t) if t.text() == text)
 }
 
-/// The elements one after the other with the spacing of `space::between`.
+/// The elements one after the other with the spacing of the `[space]` rows.
 pub(super) fn seq(cx: &FormatCtx<'_>, els: &[SyntaxElement]) -> R {
     seq_with(cx, els, |e| el(cx, e))
 }
@@ -232,21 +172,7 @@ pub(super) fn seq_with(
     els: &[SyntaxElement],
     doc: impl Fn(&SyntaxElement) -> R,
 ) -> R {
-    let mut parts = Vec::with_capacity(els.len() * 2);
-    let mut prev: Option<SyntaxToken> = None;
-    for e in els {
-        let (Some(a), Some(b)) = (prev.take(), first(cx, e)) else {
-            prev = last(cx, e).or(prev);
-            parts.push(doc(e)?);
-            continue;
-        };
-        if space::between(&a, &b) {
-            parts.push(gap(cx, &a));
-        }
-        parts.push(doc(e)?);
-        prev = last(cx, e);
-    }
-    Ok(doc::concat(parts))
+    core_format::seq::plain(cx, ROWS.get().space(), els, doc)
 }
 
 pub(super) fn generic(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

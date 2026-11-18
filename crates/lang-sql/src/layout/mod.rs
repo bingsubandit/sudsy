@@ -4,16 +4,18 @@
 
 mod blocks;
 mod breaks;
-mod case;
 mod indent;
 mod seq;
 mod space;
 mod wrap;
 
 use core_config::{OptionValue, ResolvedOptions, shared};
+use core_format::rules::LazyRules;
 use core_format::{Doc, doc};
-use core_syntax::{Grammar, SyntaxNode};
+use core_syntax::{Grammar, SyntaxNode, grammars};
 use seq::Seq;
+
+static ROWS: LazyRules = LazyRules::new(|| grammars::SQL.get(), include_str!("../../format.rules"));
 
 /// One level of indentation.
 fn unit(options: &ResolvedOptions) -> String {
@@ -42,7 +44,12 @@ pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -
         Some(OptionValue::String(d)) if d == "tsql" => blocks::add_tsql_indents(&mut seq),
         _ => {}
     }
-    case::recase(&mut seq, options);
+    let mut recase = ROWS.get().cases().recaser(options);
+    for block in &mut seq.blocks {
+        if let Some(fixed) = recase.word(block.kind, &block.text) {
+            block.text = fixed;
+        }
+    }
     let unit = unit(options);
     let tab = unit.chars().count().max(1);
     let width = match options.get(shared::LINE_WIDTH) {

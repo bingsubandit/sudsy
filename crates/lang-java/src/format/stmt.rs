@@ -122,7 +122,7 @@ fn control(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
             parts.push(el(cx, e)?);
         } else {
             if let (Some(a), Some(b)) = (&prev, first(cx, e))
-                && space::between(a, &b)
+                && spaced(a, &b)
             {
                 parts.push(gap(cx, a));
             }

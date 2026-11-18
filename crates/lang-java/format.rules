@@ -1,0 +1,30 @@
+# Blanks between two neighbouring tokens (syntax: crates/core-format/src/spacing.rs); the first row
+# that matches decides, the last row says yes.
+[space]
+parent=MarkerAnnotation|Annotation / text=... : yes
+text=; / text=;|)&parent=ForSpec : yes
+* / text=;|,|)|]|.|::|... : no
+text=(|[|.|::|@ / * : no
+text=) / text=( : yes
+parent=MarkerAnnotation|Annotation / text=[ : yes
+* / text=[ : no
+* / text=<> : no
+# Angle brackets of type arguments and type parameters (the other `<` and `>` compare).
+kind!=Identifier / kind=Lt&parent=TypeParameters : yes
+* / kind=Lt|Gt&parent=TypeArguments|TypeParameters : no
+kind=Lt&parent=TypeArguments|TypeParameters / * : no
+kind=Gt&parent=TypeArguments|TypeParameters&grand=MethodInvocation|ExplicitConstructorInvocation / * : no
+kind=Gt&parent=TypeArguments|TypeParameters / text=( : no
+kind=Gt&parent=TypeArguments|TypeParameters / * : yes
+text=<> / text={ : yes
+text=<> / * : no
+kind=Identifier / text=( : no
+text=this|super / text=( : no
+* / text=( : yes
+text={ / text={ : no
+* / text={ : yes
+* / text=:&parent=ForSpec|TernaryExpression|AssertStatement : yes
+* / text=: : no
+* / text=} : no
+text={ / * : no
+* / * : yes

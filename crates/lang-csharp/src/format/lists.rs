@@ -6,8 +6,9 @@ use super::options::{
     empty_braces, expand_crowded_initializers, hug_closing_paren, hug_only_sole_lambda,
     initializer_layout, nested_brace_on_new_line, trailing_comma,
 };
-use super::seq::{R, Sep, direct_tokens, element_doc, sep_doc, separator, seq_of, sig};
+use super::seq::{R, Sep, direct_tokens, sep_doc, separator, seq_of};
 use crate::generated::kind as k;
+use core_format::seq::{children, el};
 use core_format::shapes::{
     ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between,
 };
@@ -163,7 +164,7 @@ pub fn list_with_surroundings(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     } else {
         (k::OPEN_BRACE_TOKEN, k::CLOSE_BRACE_TOKEN)
     };
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let open = direct_tokens(node, open_kind).into_iter().next();
     let close = direct_tokens(node, close_kind).into_iter().last();
     let (Some(open), Some(close)) = (open, close) else {
@@ -236,14 +237,14 @@ fn is_lambda(kind: SyntaxKind) -> bool {
 /// head on the call's line and puts the body on its own line when the call does not fit:
 /// `Foo(x =>` / `    body` / `)`. `None` when the argument is anything else.
 fn expression_lambda_hug(cx: &FormatCtx<'_>, arg: &SyntaxNode) -> Result<Option<Doc>, FormatError> {
-    let mut children = arg.children();
-    let (Some(lambda), None) = (children.next(), children.next()) else {
+    let mut nodes = arg.children();
+    let (Some(lambda), None) = (nodes.next(), nodes.next()) else {
         return Ok(None);
     };
     if !is_lambda(lambda.kind()) {
         return Ok(None);
     }
-    let els = sig(cx, &lambda);
+    let els = children(cx, &lambda);
     let Some((SyntaxElement::Node(body), head)) = els.split_last() else {
         return Ok(None);
     };
@@ -351,7 +352,7 @@ pub fn argument_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 /// `parameter_attribute_layout: hanging`: the attribute lists, then the rest of the parameter on
 /// an indented line below them when the whole parameter does not fit.
 pub fn parameter_with_attributes(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let split = els
         .iter()
         .position(|e| !matches!(e, SyntaxElement::Node(n) if n.kind() == k::ATTRIBUTE_LIST))
@@ -362,7 +363,7 @@ pub fn parameter_with_attributes(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     }
     let lists = lists
         .iter()
-        .map(|e| element_doc(cx, e))
+        .map(|e| el(cx, e))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(doc::group(doc::concat(vec![
         doc::join(&doc::lit(" "), lists),

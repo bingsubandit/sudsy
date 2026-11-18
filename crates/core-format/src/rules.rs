@@ -1,6 +1,6 @@
 //! A formatter that is only data: one rules file per language with the sections `[space]`,
 //! `[joined]`, `[at_least_one]`, `[op_first]` and `[flow]` ([`crate::spacing`]), `[rewrite]`
-//! ([`crate::rewrite`]), `[layout]` ([`crate::layout`]), `[blank]`, `[file]` and `[comments]`
+//! ([`crate::rewrite`]), `[case]` ([`crate::case`]), `[layout]` ([`crate::layout`]), `[blank]`, `[file]` and `[comments]`
 //! (here). [`LazyRules`] turns the file into the language's `NodeFormatter`.
 //!
 //! `[flow]`: `exact`, `source_hang` and `keep_blank_lines` (`yes`/`no`, see
@@ -13,13 +13,15 @@
 //! being of kind `K`.
 
 use crate::FormatCtx;
+use crate::case::Cases;
 use crate::comments::CommentStyle;
 use crate::context::NodeFormatter;
 use crate::doc::Doc;
 use crate::error::FormatError;
 use crate::layout::{File, Layout};
 use crate::rewrite::RewriteRules;
-use crate::shapes::flow::{Flow, first, kids};
+use crate::seq::{first, kids};
+use crate::shapes::flow::Flow;
 use crate::spacing::SpaceRules;
 use core_config::ResolvedOptions;
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode};
@@ -82,6 +84,7 @@ struct BlankRow {
 
 pub struct RuleFormatter {
     space: SpaceRules,
+    cases: Cases,
     rewrite: RewriteRules,
     layout: Layout,
     blank: Vec<BlankRow>,
@@ -121,6 +124,7 @@ impl RuleFormatter {
         let layout: Vec<&str> = section(text, "layout").collect();
         RuleFormatter {
             space: SpaceRules::parse(g, text),
+            cases: Cases::parse(g, section(text, "case")),
             rewrite: RewriteRules::parse(g, text),
             layout: Layout::parse(g, &layout),
             blank: section(text, "blank")
@@ -152,7 +156,17 @@ impl RuleFormatter {
         }
     }
 
-    fn flow(&self, source_hang: bool) -> Flow<'_> {
+    /// The `[case]` rows.
+    pub fn cases(&self) -> &Cases {
+        &self.cases
+    }
+
+    /// The token spacing rows.
+    pub fn space(&self) -> &SpaceRules {
+        &self.space
+    }
+
+    pub fn flow(&self, source_hang: bool) -> Flow<'_> {
         Flow {
             want: |_, _| None,
             flat_after: |_| false,

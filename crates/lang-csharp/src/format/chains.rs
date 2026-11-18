@@ -2,9 +2,10 @@
 //! and the conditional operator.
 
 use super::options::fluid_assignments;
-use super::seq::{R, seq_of, sig};
+use super::seq::{R, seq_of};
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
+use core_format::seq::children;
 use core_format::shapes::{self, ChainPolicy, ends_in_line_comment};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
@@ -81,7 +82,7 @@ fn with_rhs(
 }
 
 pub fn assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let [
         SyntaxElement::Node(left),
         SyntaxElement::Token(op),
@@ -95,7 +96,7 @@ pub fn assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 }
 
 fn operator_and_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let [SyntaxElement::Token(op), SyntaxElement::Node(value)] = els.as_slice() else {
         return Err(shape("expected an operator token and a value"));
     };
@@ -107,7 +108,7 @@ pub fn equals_value_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 }
 
 pub fn arrow_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let [SyntaxElement::Token(op), SyntaxElement::Node(value)] = els.as_slice() else {
         return Err(shape("expected an operator token and a value"));
     };
@@ -131,7 +132,7 @@ pub fn arrow_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 /// A lambda with an expression body for `assignment_layout: fluid`: the body moves to its own
 /// line when the lambda does not fit (always after a comment after `=>`). `None` for a block body.
 pub fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Option<Doc>, FormatError> {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let Some((SyntaxElement::Node(body), head)) = els.split_last() else {
         return Ok(None);
     };
@@ -152,7 +153,7 @@ pub fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Option<Doc>, Form
 
 /// `pattern => expr` in a switch expression, laid out like an assignment (`switch_arm_layout`).
 pub fn switch_arm(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let Some((SyntaxElement::Node(value), head)) = els.split_last() else {
         return Err(shape("switch expression arm: expected a value"));
     };

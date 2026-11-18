@@ -1,7 +1,7 @@
 //! C# formatting.
 //!
 //! Nodes are laid out by kind: statements, declarations and lists have their own code; everything
-//! else is a sequence of its children with the spacing of [`spacing`]. The hooks of the plan
+//! else is a sequence of its children with the spacing of the `[space]` rows. The hooks of the plan
 //! (member chains, lambda as last argument, LINQ queries, binary expression trees, attribute
 //! lists) are in [`chains`], [`lists`] and [`query`].
 
@@ -13,8 +13,6 @@ mod lists;
 mod options;
 mod query;
 mod seq;
-mod spacing;
-mod tags;
 
 pub use options::{
     BRACE_NEWLINE, MEMBER_CHAIN_MIN_CALLS, PREPROCESSOR_SYMBOLS, TRAILING_COMMAS, option_schema,
@@ -25,14 +23,24 @@ use self::options::{
     hanging_parameter_attributes, inline_accessor_bodies, label_outdent, sort_usings,
     switch_arm_as_assignment, unbreakable_single_item_lists, using_order,
 };
-use self::tags::Tag;
 use crate::generated::kind as k;
 use core_config::ResolvedOptions;
 use core_format::comments::CommentStyle;
+use core_format::rules::LazyRules;
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, Variants};
-use core_syntax::SyntaxNode;
+use core_syntax::{SyntaxNode, SyntaxToken, grammars};
 
 pub struct CSharpFormatter;
+
+static ROWS: LazyRules = LazyRules::new(
+    || grammars::CSHARP.get(),
+    include_str!("../../format.rules"),
+);
+
+/// Does a blank stand between the two tokens?
+fn spaced(a: &SyntaxToken, b: &SyntaxToken) -> bool {
+    ROWS.get().space().spaced(a, b)
+}
 
 /// Does the list have exactly one child node, of one of these kinds?
 fn single_child(cx: &FormatCtx<'_>, list: &SyntaxNode, kinds: &[core_syntax::SyntaxKind]) -> bool {
@@ -181,23 +189,23 @@ impl NodeFormatter for CSharpFormatter {
             k::QUERY_BODY => query::query_body(cx, node)?,
             k::QUERY_CONTINUATION => query::query_continuation(cx, node)?,
             _ => {
-                if tags::has(g, kind, Tag::BinaryChain) {
+                if g.has_tag(kind, "binary-chain") {
                     chains::binary_chain(cx, node)?
-                } else if tags::has(g, kind, Tag::MemberChain) {
+                } else if g.has_tag(kind, "member-chain") {
                     chains::member_chain(cx, node)?
-                } else if tags::has(g, kind, Tag::Assignment) {
+                } else if g.has_tag(kind, "assignment") {
                     chains::assignment(cx, node)?
-                } else if tags::has(g, kind, Tag::InitializerExpression) {
+                } else if g.has_tag(kind, "initializer-expression") {
                     lists::initializer(cx, node)?
                 } else if kind == k::COLLECTION_EXPRESSION {
                     lists::collection_expression(cx, node)?
                 } else if kind == k::BLOCK
-                    || tags::has(g, kind, Tag::Namespace)
-                    || tags::has(g, kind, Tag::TypeDeclaration)
+                    || g.has_tag(kind, "namespace")
+                    || g.has_tag(kind, "type-declaration")
                     || kind == k::SWITCH_STATEMENT
                 {
                     braces::braced(cx, node)?
-                } else if tags::has(g, kind, Tag::DelimitedList) {
+                } else if g.has_tag(kind, "delimited-list") {
                     lists::plain_list(cx, node)?
                 } else if let Some(prefix) = seq::prefix_unary(cx, node)? {
                     prefix

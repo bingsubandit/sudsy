@@ -5,13 +5,27 @@
 
 use crate::generated::kind as k;
 use core_config::shared;
+use core_format::rules::LazyRules;
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, comments, doc};
-use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
+use core_syntax::{SyntaxElement, SyntaxNode, grammars};
 use std::borrow::Cow;
 
 include!("schema.generated.rs");
 
 pub struct DockerfileFormatter;
+
+/// A keyword in the case the `[case]` row names.
+fn keyword(text: &str) -> String {
+    let cases = ROWS.get().cases();
+    cases
+        .fixed(k::KEYWORD, text)
+        .unwrap_or_else(|| text.to_string())
+}
+
+static ROWS: LazyRules = LazyRules::new(
+    || grammars::DOCKERFILE.get(),
+    include_str!("../format.rules"),
+);
 
 impl NodeFormatter for DockerfileFormatter {
     /// Only case and blanks may change; heredocs without CR.
@@ -19,7 +33,7 @@ impl NodeFormatter for DockerfileFormatter {
         match item {
             SyntaxElement::Token(t) => match t.kind() {
                 k::HEREDOC => t.text().replace('\r', "").into(),
-                k::KEYWORD => t.text().to_ascii_uppercase().into(),
+                k::KEYWORD => keyword(t.text()).into(),
                 // The instruction name of a raw instruction is upper-cased as well.
                 k::RAW => t
                     .text()
@@ -74,7 +88,7 @@ impl Lines {
 /// JSON arrays included.
 fn instruction(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
     let mut out = Lines::default();
-    let mut prev = None::<SyntaxKind>;
+    let mut prev = None::<core_syntax::SyntaxToken>;
     let mut blank = false;
     for t in node
         .descendants_with_tokens()
@@ -102,18 +116,15 @@ fn instruction(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
             blank = false;
             continue;
         }
-        let space = match (prev, kind) {
-            (None, _) => false,
-            (_, k::COMMA | k::R_BRACKET) | (Some(k::L_BRACKET), _) => false,
-            (Some(k::COMMA), _) => true,
-            _ => blank,
-        };
-        if space {
+        if prev
+            .as_ref()
+            .is_some_and(|p| ROWS.get().space().want(p, &t).unwrap_or(blank))
+        {
             out.push(doc::lit(" "));
         }
         out.push(leading);
         match kind {
-            k::KEYWORD => out.push(doc::text(text.to_ascii_uppercase())),
+            k::KEYWORD => out.push(doc::text(keyword(text))),
             k::RAW => {
                 let (word, rest) = text.split_once([' ', '\t']).unwrap_or((text, ""));
                 let text = format!("{} {}", word.to_ascii_uppercase(), rest.trim_start());
@@ -124,7 +135,7 @@ fn instruction(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
             _ => out.push(cx.token_text(&t)),
         }
         out.push(cx.trailing_comments_doc(&t));
-        prev = Some(kind);
+        prev = Some(t.clone());
         blank = false;
     }
     doc::concat(vec![

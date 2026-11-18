@@ -1,0 +1,25 @@
+# The blank (or none) between two neighbouring tokens that no other rule decides (syntax:
+# crates/core-format/src/spacing.rs); the first row that matches decides, the last row says yes.
+[space]
+* / text=)|]|,|;|.|?.|::|->|.. : no
+* / text=++|--&parent=PostIncrementExpression|PostDecrementExpression : no
+# `[.. items]`
+text=..&parent=SpreadElement / * : yes
+text=(|[|.|?.|::|->|~|.. / * : no
+text=,|; / * : yes
+# `operator ==(`
+parent=OperatorDeclaration / text=( : no
+# Words that take a blank before an opening parenthesis or bracket (`if (`, `return (`, `var (`).
+exact=if|while|for|foreach|switch|lock|using|catch|fixed|when|return|throw|await|in|is|and|or|not|case|yield|else|do|var|delegate|select|where|equals|by|on|group|orderby|let|from|join|into|ref|out|with|async|static / text=(|[ : yes
+ends=word / text=(&parent=TupleType : yes
+ends=word / text=(|[ : no
+text=)|]|>|!|? / text=(|[ : no
+* / text=(|[ : yes
+* / text=<&parent=TypeArgumentList|TypeParameterList|FunctionPointerParameterList : no
+* / text=:&parent=BaseList|TypeParameterConstraintClause|BaseConstructorInitializer|ThisConstructorInitializer : yes
+* / text=: : no
+* / text=?&parent=NullableType|ClassConstraint|StructConstraint : no
+* / text=? : yes
+* / text=*&parent=PointerType|FunctionPointerType : no
+text=)&parent=CastExpression / * : no
+* / * : yes

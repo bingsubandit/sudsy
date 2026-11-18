@@ -22,7 +22,8 @@ use crate::FormatCtx;
 use crate::comments;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use crate::shapes::flow::{Flow, break_after, el, first, kids, last};
+use crate::seq::{break_after, el, first, kids, last};
+use crate::shapes::flow::Flow;
 use crate::shapes::{self, BlockStyle, ListLayout, ListStyle, TrailingComma};
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
 

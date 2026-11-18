@@ -3,3 +3,61 @@
 Class|ObjectDeclaration : heritage colon=Colon list=SuperTypeList ctor=PrimaryConstructor params=ValueParameterList min=option:class_signature_wrap_min_supertypes hug_min=option:class_signature_wrap_min_parameters
 DotQualifiedExpression|SafeAccessExpression&parent!=ImportDirective|PackageDirective : chain spaced=LambdaArgument
 When : cases open=Lbrace
+
+# Blanks between two tokens of a line (ktlint's spacing rules); no row: the source's blanks (none
+# stay none, any become one).
+[flow]
+flat_after = ModifierList|AnnotationEntry
+closers = Rpar|Rbracket
+
+[space]
+* / kind=Comma|Semicolon : no
+kind=Comma / kind=Rpar|Rbracket|Gt : no
+kind=Comma / * : yes
+kind=Semicolon / kind!=Rbrace : yes
+kind=Lpar|Lbracket|At / * : no
+* / kind=Rpar|Rbracket : no
+kind=Rpar&parent=If|While|For / * : yes
+# A colon has a blank on both sides in a supertype list, a type parameter bound or a constructor
+# delegation, none before it and a blank after it elsewhere, none around it in an annotation.
+* / kind=Colon&parent=Class|ObjectDeclaration|SecondaryConstructor|TypeParameter|TypeConstraint : yes
+* / kind=Colon : no
+kind=Colon&parent=Annotation|AnnotationEntry|AnnotationTarget|FileAnnotationList / * : no
+kind=Colon / * : yes
+kind=Arrow / * : yes
+* / kind=Arrow : yes
+# Operators (a range has no blank around it).
+* / kind!=Range|RangeUntil&parent=OperationReference&grand=BinaryExpression|IsExpression|BinaryWithType : yes
+kind=Range|RangeUntil&parent=OperationReference&grand=BinaryExpression|IsExpression|BinaryWithType / * : no
+kind!=Range|RangeUntil&parent=OperationReference&grand=BinaryExpression|IsExpression|BinaryWithType / * : yes
+text=+|++ / text=+|++|+= : yes
+text=-|-- / text=-|--|-=|-> : yes
+* / parent=OperationReference&grand=BinaryExpression|IsExpression|BinaryWithType : no
+parent=OperationReference&grand=PrefixExpression / * : no
+* / parent=OperationReference&grand=PostfixExpression : no
+kind=Eq / * : yes
+* / kind=Eq : yes
+# Member access.
+* / kind=Dot|SafeAccess : no
+kind=Dot|SafeAccess|ColonColon / * : no
+kind=Identifier|Rpar|Gt|Quest / kind=ColonColon : no
+* / kind=ExclExcl : no
+* / kind=Quest&parent=NullableType : no
+# Braces.
+kind=Lbrace / kind=Rbrace : keep
+kind=Lbrace / * : yes
+* / kind=Rbrace : yes
+* / kind=Lbrace : yes
+# Labels, spread, keywords, calls and declarations.
+* / kind=At&parent=Label|LabelQualifier : no
+kind=Mul&parent=ValueArgument / * : no
+kind=Keyword&text=if|for|while|when|catch / kind=Lpar : yes
+kind=Rbrace / kind=Keyword&text=else|catch|finally : yes
+kind=Identifier|Gt / kind=Lpar&parent=ValueArgumentList|ValueParameterList&grand!=FunctionType : no
+# Angle brackets.
+kind=Lt&parent=TypeArgumentList|TypeParameterList / * : no
+* / kind=Gt&parent=TypeArgumentList|TypeParameterList : no
+kind=Keyword&text=fun|val|var / kind=Lt&parent=TypeArgumentList|TypeParameterList : yes
+* / kind=Lt&parent=TypeArgumentList|TypeParameterList : no
+kind=Gt&parent=TypeParameterList&grand=Fun|Property / * : yes
+* / kind=Lbracket&parent=Indices : no

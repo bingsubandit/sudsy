@@ -8,43 +8,14 @@ use super::options::{
     keeps_attribute_line, label_outdent, nested_brace_on_new_line, space_after_delegate,
     space_after_empty_last_for_clause, space_between_empty_for_clauses,
 };
-use super::spacing;
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
+use core_format::seq::{children, el, first, last};
 use core_format::shapes::paren_group;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 pub type R = Result<Doc, FormatError>;
-
-/// The non-trivia children of a node.
-pub fn sig(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxElement> {
-    node.children_with_tokens()
-        .by_kind(|kind| !cx.grammar.is_trivia(kind))
-        .collect()
-}
-
-pub fn element_doc(cx: &FormatCtx<'_>, e: &SyntaxElement) -> R {
-    match e {
-        SyntaxElement::Node(n) => cx.format(n),
-        SyntaxElement::Token(t) => Ok(cx.token(t)),
-    }
-}
-
-pub fn first_tok(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Option<SyntaxToken> {
-    match e {
-        SyntaxElement::Token(t) => Some(t.clone()),
-        SyntaxElement::Node(n) => cx.first_token(n),
-    }
-}
-
-pub fn last_tok(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Option<SyntaxToken> {
-    match e {
-        SyntaxElement::Token(t) => Some(t.clone()),
-        SyntaxElement::Node(n) => cx.last_token(n),
-    }
-}
 
 /// What separates two elements.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -225,7 +196,7 @@ fn separator_raw(
                 Sep::Brace(block_element(pk))
             };
         }
-        if tags::has(cx.grammar, nk, Tag::InitializerExpression) {
+        if cx.grammar.has_tag(nk, "initializer-expression") {
             return match pk {
                 k::OBJECT_CREATION_EXPRESSION
                 | k::IMPLICIT_OBJECT_CREATION_EXPRESSION
@@ -251,7 +222,7 @@ fn separator_raw(
             };
         }
         if has_embedded_body(pk)
-            && tags::has(cx.grammar, nk, Tag::Statement)
+            && cx.grammar.has_tag(nk, "statement")
             && !(pk == k::ELSE_CLAUSE && nk == k::IF_STATEMENT)
         {
             return Sep::Embedded;
@@ -276,7 +247,7 @@ fn separator_raw(
         {
             return Sep::HardIndented;
         }
-        if pk == k::LABELED_STATEMENT && tags::has(cx.grammar, nk, Tag::Statement) {
+        if pk == k::LABELED_STATEMENT && cx.grammar.has_tag(nk, "statement") {
             return Sep::Hard;
         }
     }
@@ -332,9 +303,9 @@ fn separator_raw(
     {
         return Sep::Space;
     }
-    match (last_tok(cx, prev), first_tok(cx, next)) {
+    match (last(cx, prev), first(cx, next)) {
         (Some(a), Some(b)) => {
-            if spacing::space(&a, &b, pk) {
+            if super::spaced(&a, &b) {
                 Sep::Space
             } else {
                 Sep::None
@@ -374,7 +345,7 @@ fn has_paren_condition(kind: SyntaxKind) -> bool {
 
 /// `label:` moved out by `label_indent`, then the labeled statement on the next line.
 pub fn labeled_statement(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     if els.len() < 3 {
         return seq_of(cx, node, &els);
     }
@@ -386,14 +357,14 @@ pub fn labeled_statement(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 }
 
 pub fn seq(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
+    let els = children(cx, node);
     seq_of(cx, node, &els)
 }
 
 /// `els`, children of `node`, laid out in order.
 pub fn seq_of(cx: &FormatCtx<'_>, node: &SyntaxNode, els: &[SyntaxElement]) -> R {
     if let [only] = els {
-        return element_doc(cx, only);
+        return el(cx, only);
     }
     let pk = node.kind();
     let paren_condition = has_paren_condition(pk);
@@ -439,7 +410,7 @@ pub fn seq_of(cx: &FormatCtx<'_>, node: &SyntaxNode, els: &[SyntaxElement]) -> R
                 };
                 paren_group(cx, open, || seq_of(cx, node, &els[i + 1..i + n]), close)?
             }
-            (None, None) => element_doc(cx, e)?,
+            (None, None) => el(cx, e)?,
         };
         if sep == Sep::Embedded {
             parts.push(doc::indent(doc::concat(vec![doc::hardline(), body])));
@@ -475,7 +446,7 @@ pub fn prefix_unary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Option<Doc>
     if !is_unary {
         return Ok(None);
     }
-    let els = sig(cx, node);
+    let els = children(cx, node);
     let [SyntaxElement::Token(op), SyntaxElement::Node(operand)] = els.as_slice() else {
         return Ok(None);
     };
@@ -502,7 +473,7 @@ fn clause_can_cuddle(cx: &FormatCtx<'_>, prev: &SyntaxElement, clause: &SyntaxNo
         SyntaxElement::Node(n) => n.kind() == k::BLOCK || n.kind() == k::CATCH_CLAUSE,
         SyntaxElement::Token(_) => false,
     };
-    let (Some(last), Some(first)) = (last_tok(cx, prev), cx.first_token(clause)) else {
+    let (Some(last), Some(first)) = (last(cx, prev), cx.first_token(clause)) else {
         return false;
     };
     ends_in_block

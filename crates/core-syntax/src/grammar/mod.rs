@@ -191,7 +191,7 @@ pub struct Grammar {
 
 /// Tags that formatting code asks about for every token or node: answered from a bit set
 /// instead of scanning the tag strings.
-const HOT_TAGS: [&str; 21] = [
+const HOT_TAGS: [&str; 30] = [
     "trivia",
     "separator",
     "optional",
@@ -213,6 +213,15 @@ const HOT_TAGS: [&str; 21] = [
     "number",
     "hole",
     "final",
+    "wrapper",
+    "binary-chain",
+    "member-chain",
+    "assignment",
+    "initializer-expression",
+    "statement",
+    "type-declaration",
+    "namespace",
+    "switch-label",
 ];
 
 /// The index of a hot tag in [`HOT_TAGS`]: a `match`, which compiles to a length switch where a scan
@@ -241,6 +250,15 @@ fn hot_index(tag: &str) -> Option<usize> {
         "number" => 18,
         "hole" => 19,
         "final" => 20,
+        "wrapper" => 21,
+        "binary-chain" => 22,
+        "member-chain" => 23,
+        "assignment" => 24,
+        "initializer-expression" => 25,
+        "statement" => 26,
+        "type-declaration" => 27,
+        "namespace" => 28,
+        "switch-label" => 29,
         _ => return None,
     })
 }

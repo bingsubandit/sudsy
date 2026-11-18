@@ -1,0 +1,7 @@
+# Capitalisation (sqlfluff CP01 to CP05; syntax: crates/core-format/src/case.rs).
+[case]
+Keyword|BinaryKeyword|BinaryOperator : keyword_case
+Identifier : identifier_case
+FunctionIdentifier : function_case
+WordLiteral : literal_case
+TypeIdentifier : type_case

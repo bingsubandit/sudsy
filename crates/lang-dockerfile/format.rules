@@ -1,0 +1,10 @@
+# Instruction names are upper case (syntax: crates/core-format/src/{case,spacing}.rs).
+[case]
+Keyword : upper
+
+# Between the tokens of an instruction: a JSON array has no blank inside its brackets or before a
+# comma and one after it; anywhere else the blanks of the source become one.
+[space]
+* / kind=Comma|RBracket : no
+kind=LBracket / * : no
+kind=Comma / * : yes

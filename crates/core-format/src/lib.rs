@@ -8,6 +8,7 @@
 //!
 //! A provider's formatter turns a node into a [`Doc`]; [`format_tree`] prints it.
 
+pub mod case;
 pub mod comments;
 pub mod context;
 pub mod directives;
@@ -22,6 +23,7 @@ pub mod printer;
 pub mod rewrite;
 pub mod rules;
 pub mod safety;
+pub mod seq;
 pub mod shapes;
 pub mod spacing;
 pub mod testing;

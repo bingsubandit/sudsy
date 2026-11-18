@@ -6,8 +6,9 @@ use crate::FormatCtx;
 use crate::comments;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
+use crate::seq::{el, first, kids, last};
 use crate::spacing::SpaceRules;
-use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 /// The language's part of [`Flow::seq`].
 pub struct Flow<'a> {
@@ -37,51 +38,6 @@ pub struct Flow<'a> {
     /// Rows that decide `want`, `joined`, `at_least_one`, `op_first`, `flat_after`, `closers`
     /// and `unhang` instead of the fields of those names.
     pub rules: Option<&'a SpaceRules>,
-}
-
-/// The children that are not trivia (and not empty: parsers leave zero-width nodes).
-pub fn kids(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Vec<SyntaxElement> {
-    node.children_with_tokens()
-        .filter(|e| !cx.grammar.is_trivia(e.kind()) && !e.text_range().is_empty())
-        .collect()
-}
-
-pub fn first(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Option<SyntaxToken> {
-    match e {
-        SyntaxElement::Token(t) => Some(t.clone()),
-        SyntaxElement::Node(n) => cx.first_token(n),
-    }
-}
-
-pub fn last(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Option<SyntaxToken> {
-    match e {
-        SyntaxElement::Token(t) => Some(t.clone()),
-        SyntaxElement::Node(n) => cx.last_token(n),
-    }
-}
-
-/// The element as a document: a node formatted, a token with its comments.
-pub fn el(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Result<Doc, FormatError> {
-    match e {
-        SyntaxElement::Node(n) => cx.format(n),
-        SyntaxElement::Token(t) => Ok(cx.token(t)),
-    }
-}
-
-/// Does the source have a line break after the element?
-pub fn break_after(cx: &FormatCtx<'_>, e: &SyntaxElement) -> bool {
-    last(cx, e).is_some_and(|t| comments::break_after(cx.grammar, &t))
-}
-
-/// Does the source have a line break between the first and the last token of the node?
-pub fn multiline(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
-    match (cx.first_token(node), cx.last_token(node)) {
-        (Some(a), Some(b)) if a != b => cx.has_line_break(
-            node,
-            TextRange::new(a.text_range().start(), b.text_range().start()),
-        ),
-        _ => false,
-    }
 }
 
 /// Columns of blanks in front of the first token on the source line of `t` (a tab is `tab`).

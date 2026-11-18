@@ -12,7 +12,7 @@ pub(super) fn rule(cx: &FormatCtx<'_>, node: &SyntaxNode, kind: SyntaxKind) -> O
         k::VALUE_ARGUMENT_LIST | k::VALUE_PARAMETER_LIST => paren_list(cx, node),
         k::PROPERTY | k::FUN | k::PROPERTY_ACCESSOR | k::VALUE_ARGUMENT => with_value(cx, node),
         k::STRING_TEMPLATE => Ok(shapes::verbatim(cx, node)),
-        k::MODIFIER_LIST | k::FILE_ANNOTATION_LIST => FLOW.flat(cx, node),
+        k::MODIFIER_LIST | k::FILE_ANNOTATION_LIST => super::ROWS.get().flow(false).flat(cx, node),
         _ => return None,
     })
 }
