@@ -3,10 +3,9 @@
 
 use super::options::fluid_assignments;
 use super::seq::{R, paren_group, seq_of, sig};
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
-use core_format::shapes::{self, ChainPolicy, ends_in_line_comment, gap_after_operator};
+use core_format::shapes::{self, ChainPolicy, ends_in_line_comment};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
@@ -16,73 +15,69 @@ fn shape(msg: &str) -> FormatError {
 
 // ---------------------------------------------------------------- assignment
 
-/// Does the right-hand side of `=` move to its own line when it does not fit?
-fn breaks_after_operator(cx: &FormatCtx<'_>, rhs: &SyntaxNode) -> bool {
-    // A comment on its own line before the value keeps the value on the next line.
-    core_format::comments::node_leading(cx.grammar, rhs).has_comment
-        || tags::has(cx.grammar, rhs.kind(), Tag::BinaryChain)
-        || matches!(rhs.kind(), k::CONDITIONAL_EXPRESSION | k::QUERY_EXPRESSION)
+/// What only C# judges about a value: under `fluid`, strings, collection expressions and the
+/// initializer of a property move below the operator (a string that spans lines does not); under
+/// `compact`, a query does.
+struct AssignHooks;
+
+impl shapes::AssignHooks for AssignHooks {
+    fn layout(
+        &self,
+        _cx: &FormatCtx<'_>,
+        _a: &shapes::Assign<'_>,
+        right: &SyntaxElement,
+        policy: &shapes::AssignPolicy,
+    ) -> Option<shapes::AssignLayout> {
+        use shapes::AssignLayout::*;
+        let rhs = right.as_node()?;
+        match policy.style {
+            shapes::AssignStyle::Compact => {
+                (rhs.kind() == k::QUERY_EXPRESSION).then_some(BreakAfterOperator)
+            }
+            shapes::AssignStyle::Fluid => {
+                let string = matches!(
+                    rhs.kind(),
+                    k::STRING_LITERAL_EXPRESSION | k::INTERPOLATED_STRING_EXPRESSION
+                );
+                if string && rhs.text().contains_char('\n') {
+                    return Some(NeverBreakAfterOperator);
+                }
+                // The initializer of a property moves as a whole.
+                let property_initializer = rhs
+                    .parent()
+                    .and_then(|clause| clause.parent())
+                    .is_some_and(|decl| decl.kind() == k::PROPERTY_DECLARATION);
+                (string || property_initializer || rhs.kind() == k::COLLECTION_EXPRESSION)
+                    .then_some(BreakAfterOperator)
+            }
+            shapes::AssignStyle::Break => None,
+        }
+    }
 }
 
-/// The layout of `lead rhs` for `assignment_layout: fluid`: a string, a binary expression or the
-/// initializer of a property moves to its own line when it does not fit, and anything else moves
-/// only when its first line (up to its first possible break) does not fit after the operator.
-fn fluid_rhs(cx: &FormatCtx<'_>, lead: Doc, rhs: &SyntaxNode, rhs_doc: Doc) -> Doc {
-    let has_comment = core_format::comments::node_leading(cx.grammar, rhs).has_comment;
-    // The initializer of a property moves as a whole.
-    let property_initializer = rhs
-        .parent()
-        .and_then(|clause| clause.parent())
-        .is_some_and(|decl| decl.kind() == k::PROPERTY_DECLARATION);
-    let string = matches!(
-        rhs.kind(),
-        k::STRING_LITERAL_EXPRESSION | k::INTERPOLATED_STRING_EXPRESSION
-    );
-    // A string that spans lines starts on the line of the operator.
-    if string && !has_comment && rhs.text().contains_char('\n') {
-        return doc::concat(vec![lead, doc::lit(" "), rhs_doc]);
-    }
-    if has_comment
-        || property_initializer
-        || string
-        || matches!(
-            rhs.kind(),
-            k::COLLECTION_EXPRESSION | k::CONDITIONAL_EXPRESSION
-        )
-        || tags::has(cx.grammar, rhs.kind(), Tag::BinaryChain)
-    {
-        return doc::concat(vec![
-            lead,
-            doc::group(doc::indent(doc::concat(vec![doc::line(), rhs_doc]))),
-        ]);
-    }
-    let id = doc::new_group_id();
-    doc::concat(vec![
-        lead,
-        doc::group_with_id(id, doc::indent(doc::line())),
-        doc::indent_if_break(id, rhs_doc),
-    ])
-}
-
-/// `lead rhs`, where `lead` ends with the operator.
-fn with_rhs(cx: &FormatCtx<'_>, lead: Doc, op: &SyntaxToken, rhs: &SyntaxNode) -> R {
-    let rhs_doc = cx.format(rhs)?;
-    if fluid_assignments(cx.options) && !ends_in_line_comment(cx, op) {
-        return Ok(fluid_rhs(cx, lead, rhs, rhs_doc));
-    }
-    Ok(if ends_in_line_comment(cx, op) {
-        doc::concat(vec![
-            lead,
-            doc::indent(doc::concat(vec![doc::hardline(), rhs_doc])),
-        ])
-    } else if breaks_after_operator(cx, rhs) {
-        doc::concat(vec![
-            lead,
-            doc::group(doc::indent(doc::concat(vec![doc::line(), rhs_doc]))),
-        ])
-    } else {
-        doc::concat(vec![lead, doc::lit(" "), rhs_doc])
-    })
+/// `left op right` as the shared assignment layouts.
+fn with_rhs(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    left: Doc,
+    op: Doc,
+    op_token: &SyntaxToken,
+    rhs: &SyntaxNode,
+) -> R {
+    let right = SyntaxElement::Node(rhs.clone());
+    shapes::assignment(
+        cx,
+        shapes::Assign {
+            node,
+            left,
+            op,
+            op_token: Some(op_token),
+            right: Some(&right),
+            short_key: false,
+        },
+        &shapes::AssignPolicy::of(cx.options),
+        &AssignHooks,
+    )
 }
 
 pub fn assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
@@ -95,8 +90,8 @@ pub fn assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     else {
         return Err(shape("assignment: expected left, operator and right"));
     };
-    let lead = doc::concat(vec![cx.format(left)?, doc::lit(" "), cx.token(op)]);
-    with_rhs(cx, lead, op, right)
+    let op_doc = doc::concat(vec![doc::lit(" "), cx.token(op)]);
+    with_rhs(cx, node, cx.format(left)?, op_doc, op, right)
 }
 
 fn operator_and_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
@@ -104,7 +99,7 @@ fn operator_and_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let [SyntaxElement::Token(op), SyntaxElement::Node(value)] = els.as_slice() else {
         return Err(shape("expected an operator token and a value"));
     };
-    with_rhs(cx, cx.token(op), op, value)
+    with_rhs(cx, node, Doc::Nil, cx.token(op), op, value)
 }
 
 pub fn equals_value_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
@@ -130,7 +125,7 @@ pub fn arrow_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
             doc::indent(doc::concat(vec![doc::line(), cx.format(value)?])),
         ])));
     }
-    with_rhs(cx, lead, op, value)
+    with_rhs(cx, node, Doc::Nil, lead, op, value)
 }
 
 /// A lambda with an expression body for `assignment_layout: fluid`: the body moves to its own
@@ -164,36 +159,19 @@ pub fn switch_arm(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let Some(SyntaxElement::Token(arrow)) = head.last() else {
         return Err(shape("switch expression arm: expected `=>`"));
     };
-    with_rhs(cx, super::seq::seq_of(cx, node, head)?, arrow, value)
+    with_rhs(cx, node, seq_of(cx, node, head)?, Doc::Nil, arrow, value)
 }
 
 // --------------------------------------------------------------- conditional
 
+/// `a ? b : c`: the shared conditional layout under `conditional_layout`.
 pub fn conditional(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = sig(cx, node);
-    let [
-        SyntaxElement::Node(cond),
-        SyntaxElement::Token(q),
-        SyntaxElement::Node(yes),
-        SyntaxElement::Token(c),
-        SyntaxElement::Node(no),
-    ] = els.as_slice()
-    else {
-        return Err(shape("conditional expression: unexpected children"));
-    };
-    Ok(doc::group(doc::concat(vec![
-        cx.format(cond)?,
-        doc::indent(doc::concat(vec![
-            doc::line(),
-            cx.token(q),
-            gap_after_operator(cx, q),
-            cx.format(yes)?,
-            doc::line(),
-            cx.token(c),
-            gap_after_operator(cx, c),
-            cx.format(no)?,
-        ])),
-    ])))
+    shapes::conditional(
+        cx,
+        node,
+        &shapes::ConditionalPolicy::of(cx.options),
+        &shapes::NoConditionalHooks,
+    )
 }
 
 pub fn parenthesized(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

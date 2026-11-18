@@ -2,13 +2,18 @@
 //! structure generically (delimiter tokens at both ends, child nodes in between, tokens tagged
 //! `#separator`), merges its style with the node's layout directives, and returns a [`Doc`].
 
+mod assignment;
 mod binary_chain;
 mod block;
 mod call_chain;
 mod chain;
+mod conditional;
 mod key_value;
 mod list;
 
+pub use assignment::{
+    Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
+};
 pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
 };
@@ -18,6 +23,9 @@ pub use block::{
 };
 pub use call_chain::{CHAIN_LABEL, ChainHooks, ChainPolicy, NoHooks, member_chain as call_chain};
 pub use chain::{MemberChain, ends_in_line_comment, gap_after_operator, member_chain};
+pub use conditional::{
+    Around, ConditionalHooks, ConditionalPolicy, NoConditionalHooks, conditional,
+};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};
 

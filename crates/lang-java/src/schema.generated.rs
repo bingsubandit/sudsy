@@ -19,6 +19,16 @@ pub const BINARY_INDENT: &str = "binary_indent";
 pub const BINARY_HUG: &str = "binary_hug";
 #[allow(dead_code)]
 pub const INDENT_NESTED_BINARY: &str = "indent_nested_binary";
+#[allow(dead_code)]
+pub const ASSIGNMENT_LAYOUT: &str = "assignment_layout";
+#[allow(dead_code)]
+pub const ASSIGNMENT_CONDITIONAL: &str = "assignment_conditional";
+#[allow(dead_code)]
+pub const ASSIGNMENT_INDENT: &str = "assignment_indent";
+#[allow(dead_code)]
+pub const CONDITIONAL_INDENT: &str = "conditional_indent";
+#[allow(dead_code)]
+pub const CONDITIONAL_LAYOUT: &str = "conditional_layout";
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
@@ -38,6 +48,11 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::binary_indent(2),
         core_config::shared::binary_hug("never"),
         core_config::shared::indent_nested_binary(true),
+        core_config::shared::assignment_layout("break"),
+        core_config::shared::assignment_conditional("always"),
+        core_config::shared::assignment_indent(2),
+        core_config::shared::conditional_indent(2),
+        core_config::shared::conditional_layout("indented"),
     ])
     .with_presets(vec![
         core_config::Preset::new("java/google", include_str!("../presets/google.yaml")),

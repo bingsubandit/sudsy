@@ -24,6 +24,16 @@ pub const BINARY_HUG: &str = "binary_hug";
 #[allow(dead_code)]
 pub const INDENT_NESTED_BINARY: &str = "indent_nested_binary";
 #[allow(dead_code)]
+pub const ASSIGNMENT_LAYOUT: &str = "assignment_layout";
+#[allow(dead_code)]
+pub const ASSIGNMENT_CONDITIONAL: &str = "assignment_conditional";
+#[allow(dead_code)]
+pub const ASSIGNMENT_INDENT: &str = "assignment_indent";
+#[allow(dead_code)]
+pub const CONDITIONAL_INDENT: &str = "conditional_indent";
+#[allow(dead_code)]
+pub const CONDITIONAL_LAYOUT: &str = "conditional_layout";
+#[allow(dead_code)]
 pub const ARROW_PARENS: &str = "arrow_parens";
 #[allow(dead_code)]
 pub const BRACKET_SAME_LINE: &str = "bracket_same_line";
@@ -50,6 +60,11 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::binary_indent(1),
         core_config::shared::binary_hug("statement"),
         core_config::shared::indent_nested_binary(true),
+        core_config::shared::assignment_layout("fluid"),
+        core_config::shared::assignment_conditional("binary_test"),
+        core_config::shared::assignment_indent(1),
+        core_config::shared::conditional_indent(1),
+        core_config::shared::conditional_layout("chained"),
         core_config::shared::bracket_spacing(true),
         core_config::OptionDef::choice("arrow_parens", &["always", "avoid"], "always", "Parentheses around the lone parameter of an arrow function: `always` writes `(x) => x`, `avoid` writes `x => x` when the parameter is a plain name (no type, default, rest or destructuring)."),
         core_config::OptionDef::boolean("bracket_same_line", false, "JSX: put the `>` of a multi-line element on the line of its last attribute instead of on a line of its own."),

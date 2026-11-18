@@ -111,7 +111,8 @@ impl<'a> FileInput<'a> {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Resolved {
     pub options: ResolvedOptions,
-    /// One entry per option the provider declares.
+    /// An entry for each option that a file, preset or `.editorconfig` set; the others come from
+    /// the default (so no entry is built per declared option on every format call).
     pub sources: BTreeMap<String, Source>,
 }
 
@@ -190,11 +191,7 @@ impl ConfigChain {
         schema: &OptionSchema,
     ) -> Result<Resolved, ConfigError> {
         let mut options = schema.defaults();
-        let mut sources: BTreeMap<String, Source> = schema
-            .defs()
-            .iter()
-            .map(|d| (d.name.to_string(), Source::Default))
-            .collect();
+        let mut sources: BTreeMap<String, Source> = BTreeMap::new();
 
         if let Some(editorconfig) = input.editorconfig {
             for v in &editorconfig.values {

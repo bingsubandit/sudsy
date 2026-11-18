@@ -5734,12 +5734,29 @@
               ],
               "type": "string"
             },
+            "assignment_conditional": {
+              "default": "always",
+              "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+              "enum": [
+                "always",
+                "binary_test"
+              ],
+              "type": "string"
+            },
+            "assignment_indent": {
+              "default": 1,
+              "description": "Levels of indentation of a value that moves below the operator of an assignment.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
             "assignment_layout": {
               "default": "compact",
-              "description": "Where the value after `=` or the body after `=>` goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator; a string that spans lines stays on the operator's              line, and the body of an expression lambda moves below `=>` when the lambda does              not fit.",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
               "enum": [
                 "compact",
-                "fluid"
+                "fluid",
+                "break"
               ],
               "type": "string"
             },
@@ -5866,6 +5883,22 @@
               "enum": [
                 "preserve",
                 "remove"
+              ],
+              "type": "string"
+            },
+            "conditional_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "conditional_layout": {
+              "default": "indented",
+              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+              "enum": [
+                "indented",
+                "chained"
               ],
               "type": "string"
             },
@@ -7033,6 +7066,32 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "assignment_conditional": {
+              "default": "always",
+              "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+              "enum": [
+                "always",
+                "binary_test"
+              ],
+              "type": "string"
+            },
+            "assignment_indent": {
+              "default": 2,
+              "description": "Levels of indentation of a value that moves below the operator of an assignment.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "assignment_layout": {
+              "default": "break",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+              "enum": [
+                "compact",
+                "fluid",
+                "break"
+              ],
+              "type": "string"
+            },
             "binary_hug": {
               "default": "never",
               "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
@@ -7056,6 +7115,22 @@
               "enum": [
                 "start",
                 "end"
+              ],
+              "type": "string"
+            },
+            "conditional_indent": {
+              "default": 2,
+              "description": "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "conditional_layout": {
+              "default": "indented",
+              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+              "enum": [
+                "indented",
+                "chained"
               ],
               "type": "string"
             },
@@ -7198,6 +7273,32 @@
               ],
               "type": "string"
             },
+            "assignment_conditional": {
+              "default": "binary_test",
+              "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+              "enum": [
+                "always",
+                "binary_test"
+              ],
+              "type": "string"
+            },
+            "assignment_indent": {
+              "default": 1,
+              "description": "Levels of indentation of a value that moves below the operator of an assignment.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "assignment_layout": {
+              "default": "fluid",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+              "enum": [
+                "compact",
+                "fluid",
+                "break"
+              ],
+              "type": "string"
+            },
             "binary_hug": {
               "default": "statement",
               "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
@@ -7233,6 +7334,22 @@
               "default": true,
               "description": "Spaces inside the braces of a one-line mapping or object: `{ a: 1 }` or `{a: 1}`.",
               "type": "boolean"
+            },
+            "conditional_indent": {
+              "default": 1,
+              "description": "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+              "maximum": 4,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "conditional_layout": {
+              "default": "chained",
+              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+              "enum": [
+                "indented",
+                "chained"
+              ],
+              "type": "string"
             },
             "end_of_line": {
               "default": "auto",
@@ -8121,12 +8238,29 @@
                     ],
                     "type": "string"
                   },
+                  "assignment_conditional": {
+                    "default": "always",
+                    "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+                    "enum": [
+                      "always",
+                      "binary_test"
+                    ],
+                    "type": "string"
+                  },
+                  "assignment_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of a value that moves below the operator of an assignment.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
                   "assignment_layout": {
                     "default": "compact",
-                    "description": "Where the value after `=` or the body after `=>` goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator; a string that spans lines stays on the operator's              line, and the body of an expression lambda moves below `=>` when the lambda does              not fit.",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
                     "enum": [
                       "compact",
-                      "fluid"
+                      "fluid",
+                      "break"
                     ],
                     "type": "string"
                   },
@@ -8253,6 +8387,22 @@
                     "enum": [
                       "preserve",
                       "remove"
+                    ],
+                    "type": "string"
+                  },
+                  "conditional_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "conditional_layout": {
+                    "default": "indented",
+                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+                    "enum": [
+                      "indented",
+                      "chained"
                     ],
                     "type": "string"
                   },
@@ -9372,6 +9522,32 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "assignment_conditional": {
+                    "default": "always",
+                    "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+                    "enum": [
+                      "always",
+                      "binary_test"
+                    ],
+                    "type": "string"
+                  },
+                  "assignment_indent": {
+                    "default": 2,
+                    "description": "Levels of indentation of a value that moves below the operator of an assignment.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "assignment_layout": {
+                    "default": "break",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+                    "enum": [
+                      "compact",
+                      "fluid",
+                      "break"
+                    ],
+                    "type": "string"
+                  },
                   "binary_hug": {
                     "default": "never",
                     "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
@@ -9395,6 +9571,22 @@
                     "enum": [
                       "start",
                       "end"
+                    ],
+                    "type": "string"
+                  },
+                  "conditional_indent": {
+                    "default": 2,
+                    "description": "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "conditional_layout": {
+                    "default": "indented",
+                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+                    "enum": [
+                      "indented",
+                      "chained"
                     ],
                     "type": "string"
                   },
@@ -9537,6 +9729,32 @@
                     ],
                     "type": "string"
                   },
+                  "assignment_conditional": {
+                    "default": "binary_test",
+                    "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+                    "enum": [
+                      "always",
+                      "binary_test"
+                    ],
+                    "type": "string"
+                  },
+                  "assignment_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of a value that moves below the operator of an assignment.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "assignment_layout": {
+                    "default": "fluid",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+                    "enum": [
+                      "compact",
+                      "fluid",
+                      "break"
+                    ],
+                    "type": "string"
+                  },
                   "binary_hug": {
                     "default": "statement",
                     "description": "A broken operator chain leaves the indentation of its continuation lines to the layout around it: `assignment` for the value of an assignment, declaration or entry, `statement` also for the value of `return` and `throw`.",
@@ -9572,6 +9790,22 @@
                     "default": true,
                     "description": "Spaces inside the braces of a one-line mapping or object: `{ a: 1 }` or `{a: 1}`.",
                     "type": "boolean"
+                  },
+                  "conditional_indent": {
+                    "default": 1,
+                    "description": "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "conditional_layout": {
+                    "default": "chained",
+                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+                    "enum": [
+                      "indented",
+                      "chained"
+                    ],
+                    "type": "string"
                   },
                   "end_of_line": {
                     "default": "auto",

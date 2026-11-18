@@ -31,6 +31,11 @@ options:
   - binary_indent: [1]
   - binary_hug: ["statement"]
   - indent_nested_binary: [true]
+  - assignment_layout: ["fluid"]
+  - assignment_conditional: ["binary_test"]
+  - assignment_indent: [1]
+  - conditional_indent: [1]
+  - conditional_layout: ["chained"]
   - bracket_spacing: true
   - arrow_parens:
       values: ["always", "avoid"]

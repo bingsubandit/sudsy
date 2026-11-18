@@ -199,21 +199,6 @@ pub(super) fn gap(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
     }
 }
 
-/// A line break before an operator when a line comment follows the operand before it, else a
-/// `line`.
-pub(super) fn line_after(cx: &FormatCtx<'_>, operand: &SyntaxElement) -> Doc {
-    let comment = last(cx, operand).is_some_and(|t| {
-        comments::trailing_comments(cx.grammar, &t)
-            .iter()
-            .any(|c| c.kind != CommentKind::Block)
-    });
-    if comment {
-        doc::hardline()
-    } else {
-        doc::line()
-    }
-}
-
 /// [`gap`] after the last token of an element.
 pub(super) fn gap_after(cx: &FormatCtx<'_>, e: &SyntaxElement) -> Doc {
     last(cx, e).map_or_else(|| doc::lit(" "), |t| gap(cx, &t))

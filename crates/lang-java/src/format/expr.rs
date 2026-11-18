@@ -1,6 +1,7 @@
 //! Expressions: operator chains, method chains, lambdas, assignments and initializers.
 
 use super::*;
+use core_format::FormatError;
 use core_format::shapes::{self, ChainPolicy};
 
 pub(super) fn rule(
@@ -43,24 +44,29 @@ fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     )
 }
 
-fn ternary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = kids(cx, node);
-    if els.len() != 5 {
-        return generic(cx, node);
+/// Tokens and comments print with the rules of the language.
+struct TernaryHooks;
+
+impl shapes::ConditionalHooks for TernaryHooks {
+    fn token(&self, cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
+        tok(cx, t)
     }
-    Ok(doc::group(doc::concat(vec![
-        el(cx, &els[0])?,
-        cont(doc::concat(vec![
-            line_after(cx, &els[0]),
-            el(cx, &els[1])?,
-            gap_after(cx, &els[1]),
-            el(cx, &els[2])?,
-            line_after(cx, &els[2]),
-            el(cx, &els[3])?,
-            gap_after(cx, &els[3]),
-            el(cx, &els[4])?,
-        ])),
-    ])))
+
+    fn comment_ends_line(&self, cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
+        line_comment_after(cx, t)
+    }
+}
+
+fn ternary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    match shapes::conditional(
+        cx,
+        node,
+        &shapes::ConditionalPolicy::of(cx.options),
+        &TernaryHooks,
+    ) {
+        Err(FormatError::Shape(_)) => generic(cx, node),
+        r => r,
+    }
 }
 
 fn assign_op(e: &SyntaxElement) -> bool {
@@ -68,30 +74,66 @@ fn assign_op(e: &SyntaxElement) -> bool {
         if t.text().ends_with('=') && !matches!(t.text(), "==" | "!=" | "<=" | ">="))
 }
 
-/// `lhs = rhs`: the right side moves to the next line when it does not fit.
-pub(super) fn assign_split(cx: &FormatCtx<'_>, els: &[SyntaxElement]) -> Option<R> {
-    let eq = els.iter().position(assign_op)?;
-    let lhs = match seq(cx, &els[..=eq]) {
-        Ok(d) => d,
-        Err(e) => return Some(Err(e)),
-    };
-    let rhs = &els[eq + 1..];
-    if rhs
-        .first()
-        .is_some_and(|e| matches!(e.kind(), k::ARRAY_INITIALIZER | k::LAMBDA_EXPRESSION))
-    {
-        return Some(seq(cx, rhs).map(|r| doc::concat(vec![lhs, doc::lit(" "), r])));
+/// An array initializer or the value of an assignment that is a lambda stays on the operator's
+/// line.
+struct AssignHooks;
+
+impl shapes::AssignHooks for AssignHooks {
+    fn layout(
+        &self,
+        _cx: &FormatCtx<'_>,
+        a: &shapes::Assign<'_>,
+        right: &SyntaxElement,
+        _policy: &shapes::AssignPolicy,
+    ) -> Option<shapes::AssignLayout> {
+        // (the lambda that is the value of a declarator moves below the `=`)
+        (right.kind() == k::ARRAY_INITIALIZER
+            || (right.kind() == k::LAMBDA_EXPRESSION && a.node.kind() != k::VARIABLE_DECLARATOR))
+            .then_some(shapes::AssignLayout::NeverBreakAfterOperator)
     }
-    Some(seq(cx, rhs).map(|r| {
-        doc::group(doc::concat(vec![
-            lhs,
-            cont(doc::group(doc::concat(vec![doc::line(), r]))),
-        ]))
-    }))
+
+    fn right_doc(
+        &self,
+        cx: &FormatCtx<'_>,
+        right: &SyntaxElement,
+        _layout: shapes::AssignLayout,
+    ) -> R {
+        el(cx, right)
+    }
+}
+
+/// `lhs = rhs` (`els`: the elements of the node, `eq` the operator's position): the right side
+/// moves to the next line when it does not fit.
+pub(super) fn assign_at(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    els: &[SyntaxElement],
+    eq: usize,
+) -> R {
+    let [right] = &els[eq + 1..] else {
+        return generic(cx, node);
+    };
+    shapes::assignment(
+        cx,
+        shapes::Assign {
+            node,
+            left: seq(cx, &els[..=eq])?,
+            op: Doc::Nil,
+            op_token: None,
+            right: Some(right),
+            short_key: false,
+        },
+        &shapes::AssignPolicy::of(cx.options),
+        &AssignHooks,
+    )
 }
 
 fn assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    assign_split(cx, &kids(cx, node)).unwrap_or_else(|| generic(cx, node))
+    let els = kids(cx, node);
+    match els.iter().position(assign_op) {
+        Some(eq) => assign_at(cx, node, &els, eq),
+        None => generic(cx, node),
+    }
 }
 
 fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

@@ -170,7 +170,10 @@ fn options_table(out: &mut String, project: &Project, schema: &OptionSchema, res
         .iter()
         .filter_map(|def| {
             let value = resolved.options.get(def.name)?;
-            let source = resolved.sources.get(def.name)?;
+            let source = resolved
+                .sources
+                .get(def.name)
+                .unwrap_or(&core_config::Source::Default);
             Some((
                 def.name.to_string(),
                 show_value(value),

@@ -8,6 +8,12 @@ One layout for `a.b().c().d()` in every language with roles. It walks the node t
 ## Operator chains (`shapes::binary_chain`)
 One layout for `a + b + c` and `a && b || c` in every language with `#binary-chain` kinds (fields `left`, `operator`, `right`). Operands of one precedence level (the grammar's `precedence` lines) flatten into one chain, down the left side or, for a `right` operator (C# `??`), the right side. `BinaryPolicy::of(options)`: `binary_operator_line` (`start`: operator first, one operand per line; `end`: operator ends the line, each step its own group unless the chain mixes node kinds), `binary_indent` (levels of the continuation lines), `indent_nested_binary` (a chain inside a chain of another precedence indents), `binary_hug` (`assignment`, `statement`: the chain leaves its indentation to an assignment, declaration, entry or `return`/`throw` around it, found through roles). What a language decides itself goes through `BinaryHooks` (`place`: bare inside parentheses it prints, flush, wrapped below an opening line, or indented; `inline_right`, `tail_outside`, `outer`/`inner` for transparent parentheses, `flattens`, `token`, `comment_ends_line`, `reattach_comments`): JS places a chain by its parent kind, C# lists the layouts that indent their own value.
 
+## Assignments (`shapes::assignment`)
+One layout for `left = right`, declarators and entries: Prettier's set (break-after-operator, never-break, fluid, break-lhs, chain, chain-tail, plus break-always after a line comment on the operator). `AssignPolicy::of(options)`: `assignment_layout` (`compact`: the right side stays on the operator's line; `fluid`: it moves when its first line does not fit, and the chain layouts of `a = b = c` apply; `break`: it moves when the whole does not fit), `assignment_conditional` (a conditional on the right always moves, or only one whose test is an operator chain), `assignment_indent`. Roles choose first: a line comment on the operator, a chain, a comment on a line of its own in front of the right side, a `#binary-chain` right side, a `#conditional`. What the language judges comes through `AssignHooks` (`layout`: its own rules before the style's default, `right_doc`, `chain_parent`, `chain_tail`, `inline_binary`, `outer`/`inner`): JS keeps Prettier's predicates (strings, short member chains, templates, `require`, arrow chains, destructuring), C# its strings, collection expressions and property initializers, Java an array initializer or lambda that stays on the line.
+
+## Conditionals (`shapes::conditional`)
+One layout for `test ? a : b` (`#conditional` with `condition`, `then`, `else`; the `?` and `:` are the tokens in front of the last two). `conditional_layout`: `indented` (the test, then both branches `conditional_indent` levels below, each conditional a group of its own) or `chained` (Prettier's: branches align after `? ` and `: `, a chain in the `else` branch breaks as one, a conditional in a `then` branch is parenthesized when broken). `ConditionalHooks`: `wrap_branches`/`bare_branch` (JSX branches in parentheses), `around` (the places that indent the whole), `token`, `comment_ends_line`, `outer`/`inner`.
+
 ## Layout document and printer
 - Primitives: `text`, `line`, `softline`, `hardline`, `group`, `indent`, `align`, `if_break`, `fill`, `conditional_group`, `line_suffix`, `break_parent`, `Verbatim`, `Shared(Arc)` (O(1) clone, so conditional candidates do not copy), `LineStart`, `NewlineIfNeeded`, group ids with `indent_if_break` and `if_break_in(id, ..)` (tests another group; a group not yet printed counts as flat), `label(tag, doc)` (prints as its contents; a parent reads it with `Doc::label_of`, through `shared`), `line_suffix_boundary` (a hard line only when a line suffix is pending; does not break groups).
 - Group fits flat if the rest of the line up to the next possible break fits. `conditional_group` takes the first candidate that fits (flat, forced breaks allowed); a candidate with a forced break is printed in break mode, so its groups are measured one by one; one whose every candidate has a forced break forces its parents. Line suffixes flush at the next newline; trailing whitespace is trimmed except protected verbatim output.
@@ -22,6 +28,9 @@ Options declared by more than one language, generated from the option schemas; p
 | Option | Values | Defaults |
 |---|---|---|
 | `array_bracket_spacing` | bool | json `false`, toml `false`, yaml `false`, github-actions `false` |
+| `assignment_conditional` | `always`, `binary_test` | java `always`, js `binary_test`, csharp `always` |
+| `assignment_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
+| `assignment_layout` | `compact`, `fluid`, `break` | java `break`, js `fluid`, csharp `compact` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
 | `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
 | `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |
@@ -30,6 +39,8 @@ Options declared by more than one language, generated from the option schemas; p
 | `bracket_spacing` | bool | json `true`, graphql `true`, js `true`, toml `true`, yaml `true`, github-actions `true` |
 | `collapse` | json: `preserve`, `always`, `never`, `opening_break`; toml: `preserve`, `always`, `never` | json `preserve`, toml `preserve` |
 | `comment_spacing` | int 1-10 | yaml `1`, github-actions `1` |
+| `conditional_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
+| `conditional_layout` | `indented`, `chained` | java `indented`, js `chained`, csharp `indented` |
 | `dialect` | json: `auto`, `json`, `jsonc`; sql: `ansi`, `postgres`, `mysql`, `tsql` | json `auto`, sql `ansi` |
 | `document_end` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |
 | `document_start` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |

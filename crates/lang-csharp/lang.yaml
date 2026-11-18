@@ -24,6 +24,11 @@ options:
   - binary_indent: [1]
   - binary_hug: ["assignment"]
   - indent_nested_binary: [false]
+  - assignment_layout: ["compact"]
+  - assignment_conditional: ["always"]
+  - assignment_indent: [1]
+  - conditional_indent: [1]
+  - conditional_layout: ["indented"]
   - preprocessor_symbols:
       kind: "words"
       doc: "Conditional compilation symbols (`DEBUG`, `NET8_0`) defined when parsing, which decide the active branch of `#if`. Branches that are inactive under these symbols stay as they are unless `preprocessor_symbol_sets` or `derive_symbol_sets` format them."
@@ -57,10 +62,6 @@ options:
   - indent_switch_section_block:
       default: true
       doc: "Indent a block that is the only statement of a `case` section below its label; when false the block starts at the label's indentation."
-  - assignment_layout:
-      values: ["compact", "fluid"]
-      default: "compact"
-      doc: "Where the value after `=` or the body after `=>` goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator; a string that spans lines stays on the operator's              line, and the body of an expression lambda moves below `=>` when the lambda does              not fit."
   - switch_arm_layout:
       values: ["inline", "assignment"]
       default: "inline"

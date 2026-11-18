@@ -2,17 +2,13 @@
 //! left side, the operator and the right side (Prettier's assignment layouts).
 
 use super::arrow::{self, Flags};
-use super::ast::{
-    Call, has_comment, is_binaryish, is_literal, name_of, operator, parent, text_of, un,
-};
+use super::ast::{Call, has_comment, is_literal, name_of, operator, text_of, un};
 use super::binary::should_inline_logical;
 use super::chain::is_chain_label;
 use super::util::{R, inline, is_tok, kids, shape_error, token_of};
 use crate::generated::kind as k;
-use core_format::doc::{
-    Doc, concat, group, group_with_id, indent, indent_if_break, line, line_suffix_boundary, lit,
-    new_group_id,
-};
+use core_format::doc::{Doc, concat, lit};
+use core_format::shapes::{self, Assign, AssignHooks, AssignLayout, AssignPolicy};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode};
 
@@ -82,20 +78,101 @@ fn assignment(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     ]))
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
-enum Layout {
-    BreakAfterOperator,
-    NeverBreakAfterOperator,
-    Fluid,
-    BreakLhs,
-    Chain,
-    ChainTail,
-    ChainTailArrowChain,
-    OnlyLeft,
-}
+/// What only JS judges about a right side (Prettier's `chooseLayout` after the chain, comment,
+/// operator-chain and conditional rules of the shared layout).
+struct Hooks;
 
-fn is_assignment(n: &SyntaxNode) -> bool {
-    n.kind() == k::ASSIGNMENT_EXPRESSION
+impl AssignHooks for Hooks {
+    fn outer(&self, n: &SyntaxNode) -> SyntaxNode {
+        super::ast::outer(n)
+    }
+
+    fn inner(&self, n: &SyntaxNode) -> SyntaxNode {
+        un(n)
+    }
+
+    fn chain_parent(&self, _cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
+        matches!(n.kind(), k::ASSIGNMENT_EXPRESSION | k::VARIABLE_DECLARATOR)
+    }
+
+    fn chain_tail(&self, cx: &FormatCtx<'_>, right: &SyntaxNode) -> AssignLayout {
+        if right.kind() == k::ARROW_FUNCTION_EXPRESSION
+            && right
+                .last_child()
+                .is_some_and(|b| super::arrow::arrow_body(cx, &b).is_some())
+        {
+            AssignLayout::ChainTailArrowChain
+        } else {
+            AssignLayout::ChainTail
+        }
+    }
+
+    fn inline_binary(&self, _cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
+        n.kind() == k::PRIVATE_IN_EXPRESSION || should_inline_logical(n)
+    }
+
+    fn layout(
+        &self,
+        cx: &FormatCtx<'_>,
+        a: &Assign<'_>,
+        right: &SyntaxElement,
+        _policy: &AssignPolicy,
+    ) -> Option<AssignLayout> {
+        let right_u = un(right.as_node()?);
+        if should_break_after_operator(cx, &right_u, a.short_key).ok()? {
+            return Some(AssignLayout::BreakAfterOperator);
+        }
+        if should_never_break_after_operator(cx, &right_u, a.short_key) {
+            return Some(AssignLayout::NeverBreakAfterOperator);
+        }
+        if is_complex_destructuring(a.node)
+            || (a.node.kind() == k::VARIABLE_DECLARATOR
+                && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
+                && right_u
+                    .children()
+                    .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
+                && can_break(&a.left))
+        {
+            return Some(AssignLayout::BreakLhs);
+        }
+        (right_u.kind() == k::STRING_LITERAL || is_member_expression_chain(&right_u))
+            .then_some(AssignLayout::BreakAfterOperator)
+    }
+
+    fn right_doc(
+        &self,
+        cx: &FormatCtx<'_>,
+        right: &SyntaxElement,
+        layout: AssignLayout,
+    ) -> Result<Doc, FormatError> {
+        let Some(right) = right.as_node() else {
+            return Err(shape_error("assignment"));
+        };
+        let right_u = un(right);
+        if right_u.kind() != k::ARROW_FUNCTION_EXPRESSION || *right != right_u {
+            return cx.format(right);
+        }
+        // Comments on lines of their own in front of the arrow go in front of its layout (a chain
+        // then lays out as it does anywhere but at the end of an assignment).
+        let lead = cx.first_token(right).filter(|t| {
+            core_format::comments::leading_comments(cx.grammar, t)
+                .iter()
+                .any(|c| c.kind != core_format::comments::CommentKind::Block || c.breaks_after > 0)
+        });
+        let flags = match (&lead, layout) {
+            (Some(_), _) => 0,
+            (None, AssignLayout::ChainTailArrowChain) => Flags::RHS | Flags::CHAIN_TAIL,
+            (None, _) => Flags::RHS,
+        };
+        if let Some(t) = &lead {
+            cx.hold_leading(t);
+        }
+        let arrow = arrow::print_fn(cx, right, flags)?.ok_or_else(|| shape_error("arrow"))?;
+        Ok(match &lead {
+            Some(t) => concat(vec![cx.held_leading(t), arrow]),
+            None => arrow,
+        })
+    }
 }
 
 /// The assignment `node` (or declarator, class property, property of an object: `short_key`
@@ -108,131 +185,20 @@ pub(crate) fn assign_like(
     right: Option<&SyntaxNode>,
     short_key: bool,
 ) -> R {
-    let layout = choose_layout(cx, node, &left, right, short_key)?;
-    let Some(right) = right else {
-        return Ok(left);
-    };
-    let right_u = un(right);
-    let right_doc = if right_u.kind() == k::ARROW_FUNCTION_EXPRESSION && *right == right_u {
-        // Comments on lines of their own in front of the arrow go in front of its layout (a chain
-        // then lays out as it does anywhere but at the end of an assignment).
-        let lead = cx.first_token(right).filter(|t| {
-            core_format::comments::leading_comments(cx.grammar, t)
-                .iter()
-                .any(|c| c.kind != core_format::comments::CommentKind::Block || c.breaks_after > 0)
-        });
-        let flags = match (&lead, layout) {
-            (Some(_), _) => 0,
-            (None, Layout::ChainTailArrowChain) => Flags::RHS | Flags::CHAIN_TAIL,
-            (None, _) => Flags::RHS,
-        };
-        if let Some(t) = &lead {
-            cx.hold_leading(t);
-        }
-        let arrow = arrow::print_fn(cx, right, flags)?.ok_or_else(|| shape_error("arrow"))?;
-        match &lead {
-            Some(t) => concat(vec![cx.held_leading(t), arrow]),
-            None => arrow,
-        }
-    } else {
-        cx.format(right)?
-    };
-    Ok(match layout {
-        Layout::BreakAfterOperator => group(concat(vec![
-            group(left),
+    let right = right.map(|r| SyntaxElement::Node(r.clone()));
+    shapes::assignment(
+        cx,
+        Assign {
+            node,
+            left,
             op,
-            group(indent(concat(vec![line(), right_doc]))),
-        ])),
-        Layout::NeverBreakAfterOperator => {
-            group(concat(vec![group(left), op, lit(" "), right_doc]))
-        }
-        Layout::Fluid => {
-            let id = new_group_id();
-            group(concat(vec![
-                group(left),
-                op,
-                group_with_id(id, indent(line())),
-                line_suffix_boundary(),
-                indent_if_break(id, right_doc),
-            ]))
-        }
-        Layout::BreakLhs => group(concat(vec![left, op, lit(" "), group(right_doc)])),
-        Layout::Chain => concat(vec![group(left), op, line(), right_doc]),
-        Layout::ChainTail => concat(vec![
-            group(left),
-            op,
-            indent(concat(vec![line(), right_doc])),
-        ]),
-        Layout::ChainTailArrowChain => concat(vec![group(left), op, group(right_doc)]),
-        Layout::OnlyLeft => left,
-    })
-}
-
-fn choose_layout(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-    left: &Doc,
-    right: Option<&SyntaxNode>,
-    short_key: bool,
-) -> Result<Layout, FormatError> {
-    let Some(right) = right else {
-        return Ok(Layout::OnlyLeft);
-    };
-    let right_u = un(right);
-    let is_tail = !is_assignment(&right_u);
-    let p = parent(node);
-    let chained = is_assignment(node)
-        && p.as_ref()
-            .is_some_and(|p| matches!(p.kind(), k::ASSIGNMENT_EXPRESSION | k::VARIABLE_DECLARATOR))
-        && p.as_ref().and_then(parent).is_some_and(|g| {
-            !is_tail || !matches!(g.kind(), k::EXPRESSION_STATEMENT | k::VARIABLE_DECLARATION)
-        });
-    if chained {
-        return Ok(if !is_tail {
-            Layout::Chain
-        } else if right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
-            && right_u
-                .last_child()
-                .is_some_and(|b| super::arrow::arrow_body(cx, &b).is_some())
-        {
-            Layout::ChainTailArrowChain
-        } else {
-            Layout::ChainTail
-        });
-    }
-    let head_of_long_chain =
-        is_assignment(&right_u) && right_u.last_child().is_some_and(|r| is_assignment(&un(&r)));
-    if head_of_long_chain || has_leading_own_line_comment(cx, right) {
-        return Ok(Layout::BreakAfterOperator);
-    }
-    if should_break_after_operator(cx, &right_u, short_key)? {
-        return Ok(Layout::BreakAfterOperator);
-    }
-    if should_never_break_after_operator(cx, &right_u, short_key) {
-        return Ok(Layout::NeverBreakAfterOperator);
-    }
-    if is_complex_destructuring(node)
-        || (node.kind() == k::VARIABLE_DECLARATOR
-            && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
-            && right_u
-                .children()
-                .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
-            && can_break(left))
-    {
-        return Ok(Layout::BreakLhs);
-    }
-    if right_u.kind() == k::STRING_LITERAL || is_member_expression_chain(&right_u) {
-        return Ok(Layout::BreakAfterOperator);
-    }
-    Ok(Layout::Fluid)
-}
-
-fn has_leading_own_line_comment(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
-    cx.first_token(n).is_some_and(|t| {
-        core_format::comments::leading_comments(cx.grammar, &t)
-            .iter()
-            .any(|c| c.breaks_after > 0)
-    })
+            op_token: None,
+            right: right.as_ref(),
+            short_key,
+        },
+        &AssignPolicy::of(cx.options),
+        &Hooks,
+    )
 }
 
 fn can_break(d: &Doc) -> bool {
@@ -320,17 +286,8 @@ fn should_break_after_operator(
     right: &SyntaxNode,
     short_key: bool,
 ) -> Result<bool, FormatError> {
-    if is_binaryish(right.kind()) && !should_inline_logical(right) {
-        return Ok(true);
-    }
     match right.kind() {
         k::SEQUENCE_EXPRESSION => return Ok(true),
-        k::CONDITIONAL_EXPRESSION => {
-            return Ok(right.first_child().is_some_and(|t| {
-                let t = un(&t);
-                is_binaryish(t.kind()) && !should_inline_logical(&t)
-            }));
-        }
         k::CLASS => return Ok(right.children().any(|c| c.kind() == k::DECORATOR)),
         _ => {}
     }

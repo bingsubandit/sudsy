@@ -456,21 +456,10 @@ fn variables(cx: &FormatCtx<'_>, node: &SyntaxNode, _field: bool) -> R {
 /// `name = init`: break after the `=` when the initializer does not fit on the line.
 fn declarator(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let els = flat(cx, node);
-    let Some(eq) = els.iter().position(|e| e.kind() == k::ASSIGN) else {
-        return seq(cx, &els);
-    };
-    let lhs = seq(cx, &els[..=eq])?;
-    let rhs = &els[eq + 1..];
-    let array = rhs
-        .first()
-        .is_some_and(|e| e.kind() == k::ARRAY_INITIALIZER);
-    if array {
-        return Ok(doc::concat(vec![lhs, doc::lit(" "), seq(cx, rhs)?]));
+    match els.iter().position(|e| e.kind() == k::ASSIGN) {
+        Some(eq) => expr::assign_at(cx, node, &els, eq),
+        None => seq(cx, &els),
     }
-    Ok(doc::group(doc::concat(vec![
-        lhs,
-        cont(doc::group(doc::concat(vec![doc::line(), seq(cx, rhs)?]))),
-    ])))
 }
 
 /// `( a, b )`: all on one line, else after the opening parenthesis on one continuation line,

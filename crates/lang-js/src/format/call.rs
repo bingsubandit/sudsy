@@ -6,7 +6,6 @@ use super::ast::{Call, has_comment, is_function, is_literal, nodes, parent, toke
 use super::chain;
 use super::util::{R, kids, shape_error, token_of, will_break};
 use crate::generated::kind as k;
-use core_config::OptionValue;
 use core_format::doc::{
     self, Doc, break_parent, concat, conditional_group, group, group_broken, hardline, indent,
     line, lit, shared, softline,
@@ -710,13 +709,5 @@ fn callee_path(cx: &FormatCtx<'_>, n: &SyntaxNode) -> Option<String> {
             Some(format!("{obj}.{prop}"))
         }
         _ => None,
-    }
-}
-
-/// The tab width, for the short-name check of member chains.
-pub(crate) fn tab_width(cx: &FormatCtx<'_>) -> usize {
-    match cx.options.get("indent_size") {
-        Some(OptionValue::Int(n)) => usize::try_from(*n).unwrap_or(2),
-        _ => 2,
     }
 }

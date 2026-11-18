@@ -449,6 +449,51 @@ pub mod shared {
         )
     }
 
+    pub fn assignment_layout(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "assignment_layout",
+            &["compact", "fluid", "break"],
+            default,
+            "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+        )
+    }
+
+    pub fn assignment_conditional(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "assignment_conditional",
+            &["always", "binary_test"],
+            default,
+            "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+        )
+    }
+
+    pub fn assignment_indent(default: i64) -> OptionDef {
+        OptionDef::int(
+            "assignment_indent",
+            default,
+            (1, 4),
+            "Levels of indentation of a value that moves below the operator of an assignment.",
+        )
+    }
+
+    pub fn conditional_layout(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "conditional_layout",
+            &["indented", "chained"],
+            default,
+            "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+        )
+    }
+
+    pub fn conditional_indent(default: i64) -> OptionDef {
+        OptionDef::int(
+            "conditional_indent",
+            default,
+            (1, 4),
+            "Levels of indentation of the branches of a broken conditional in the `indented` layout.",
+        )
+    }
+
     pub fn binary_operator_line(default: &'static str) -> OptionDef {
         OptionDef::choice(
             "binary_operator_line",
