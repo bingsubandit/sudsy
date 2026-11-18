@@ -15,6 +15,7 @@ mod microsyntax;
 pub type Embed<'a> = &'a dyn Fn(&str, EmbedMode, &str, usize, bool) -> Option<String>;
 
 pub struct Opts<'a> {
+    pub grammar: &'a core_syntax::Grammar,
     pub dialect: Dialect,
     /// Vue and Svelte: the content of `<script>` and `<style>` is indented.
     pub indent_blocks: bool,
@@ -148,7 +149,7 @@ impl P<'_> {
     fn has_ignore(&self, id: usize) -> bool {
         self.n(id).prev.is_some_and(|p| {
             self.n(p).t == T::Comment
-                && matches!(self.n(p).value.trim(), "prettier-ignore" | "sudsy-ignore")
+                && core_format::ignore::is_marker(self.o.grammar, "ignore", &self.n(p).value)
         })
     }
 

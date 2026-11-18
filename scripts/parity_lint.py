@@ -44,6 +44,17 @@ def rule_map(tool):
     }
 
 
+def rule_aliases(tool):
+    """Sudsy rule id -> the first id of its catalog entry, for the entries that name several ids (an upstream
+    rule that Sudsy reports under more than one id: ESLint's `no-unused-vars`)."""
+    out = {}
+    for e in catalog_entries(tool, sub=True):
+        if e["sudsy"].startswith("rule: "):
+            ids = e["sudsy"][len("rule: "):].split(", ")
+            out.update({i: ids[0] for i in ids[1:]})
+    return out
+
+
 def formatter_ids(tool):
     """`(covered, partial)`: upstream rule names the formatter handles, from the catalog: status
     `formatter`, or `option: csharp.format.<name>` for an option the stylecop preset sets (the
@@ -199,6 +210,7 @@ def rule_fixtures(tool, sudsy, version, prefix, exe):
     }[tool]
     suffixes = (suffix,) if isinstance(suffix, str) else suffix
     mapping = rule_map(tool)
+    aliases = rule_aliases(tool)
     if tool == "ruff":
         command = command + ["--select", ",".join(c for c in mapping if c != "E999")]  # E999 is gone: ruff reports a syntax error without a code
     columns = tool in ("eslint", "typescript-eslint")  # the other tools' columns are not compared
@@ -292,7 +304,7 @@ def rule_fixtures(tool, sudsy, version, prefix, exe):
         # ESLint reports a column; the other tools' columns are not compared
         found = [(parse(d), d) for d in (load(out) if batch is None else [m for m in batch.get(name, []) if m.get("ruleId", m.get("code"))])]
         upstream = {(mapping[c], l - (c in late), d["column"] if columns else 0) for (c, l), d in found if c in mapping}
-        ours = {(r, l, c if columns else 0) for r, l, c in sudsy_lint(sudsy, fixture, work, set(mapping.values()))}
+        ours = {(aliases.get(r, r), l, c if columns else 0) for r, l, c in sudsy_lint(sudsy, fixture, work, set(mapping.values()) | set(aliases))}
         if tool == "checkmake":
             upstream, ours = ({row for row in side if row[0] == source.parent.name} for side in (upstream, ours))
         if batch is None:
@@ -499,8 +511,10 @@ def coverage(tool, sudsy, version, prefix, exe):
         return 0
     lang, suffixes = COVERAGE.get(tool, (None, ()))
     mapping = rule_map(tool)
+    aliases = rule_aliases(tool)
     if tool == "typescript-eslint":  # its recommended set also sets ESLint core rules (`no-var`), mapped by the eslint catalog
         mapping = {**rule_map("eslint"), **{f"@typescript-eslint/{r}": v for r, v in mapping.items()}}
+        aliases = {**rule_aliases("eslint"), **aliases}
     if spec:
         for other in spec.get("map_also", []):  # the tool runs another tool's checks too (hadolint: shellcheck's on `RUN`)
             mapping = {**rule_map(other), **mapping}
@@ -513,7 +527,7 @@ def coverage(tool, sudsy, version, prefix, exe):
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
     preset = parity_format.tools()["lint"][tool]["preset"]  # the preset that mirrors the tool's own default set: the headline
-    own = sorted({v for v in rule_map(tool).values() if v != "syntax-error"})  # every Sudsy rule the catalog maps, with default options
+    own = sorted({v for v in rule_map(tool).values() if v != "syntax-error"} | set(aliases))  # every Sudsy rule the catalog maps, with default options
     full = json.dumps({"extends": [f"preset:{preset}"], {"eslint-plugin-vue": "vue", "eslint-plugin-svelte": "svelte"}.get(tool, preset.split("/")[0]): {"lint": {"rules": {r: "warn" for r in own}}}})
     names = {}
     for _, name, source in ([] if spec else corpus_sources(tool, suffixes)):
@@ -561,7 +575,7 @@ def coverage(tool, sudsy, version, prefix, exe):
         out = subprocess.run([sudsy, "lint", "--format", "json", "."], cwd=work, capture_output=True, text=True, encoding="utf-8", check=False).stdout
         result = {}  # (file, sudsy rule) -> messages
         for d in json.loads(out)["diagnostics"]:
-            result.setdefault((parity_coverage.norm(d["path"], work) if spec else Path(d["path"]).name, d["rule"]), []).append(d["message"])
+            result.setdefault((parity_coverage.norm(d["path"], work) if spec else Path(d["path"]).name, aliases.get(d["rule"], d["rule"])), []).append(d["message"])
         return result
 
     def score(ours):

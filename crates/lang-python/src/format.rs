@@ -13,6 +13,7 @@ mod op;
 mod paren;
 mod stmt;
 mod util;
+pub(crate) use util::syntax;
 
 use crate::generated::kind as k;
 use core_config::shared;

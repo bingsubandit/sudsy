@@ -1,6 +1,7 @@
 //! What the shared rules ask of Python: the keys of a dict, which has no entry nodes, and the name
 //! of a literal or variable key.
 
+use crate::format::syntax;
 use crate::generated::kind as k;
 use core_rules::RuleHooks;
 use core_syntax::{Grammar, SyntaxElement, SyntaxNode};
@@ -55,18 +56,14 @@ impl RuleHooks for PythonHooks {
 }
 
 fn string_key(raw: &str) -> Cow<'_, str> {
-    let body = raw.trim_start_matches(|c: char| c.is_ascii_alphabetic());
-    let quote = body.chars().next().filter(|c| matches!(c, '"' | '\''));
-    match quote {
-        Some(q) => {
-            let n = if body.starts_with(&q.to_string().repeat(3)) && body.len() >= 6 {
-                3
+    match syntax().split(raw) {
+        Some(lit) => {
+            let bytes = if lit.prefix.contains(['b', 'B']) {
+                "b"
             } else {
-                1
+                ""
             };
-            let inner = &body[n..body.len().saturating_sub(n)];
-            let bytes = raw[..raw.len() - body.len()].contains(['b', 'B']);
-            Cow::Owned(format!("{}'{inner}", if bytes { "b" } else { "" }))
+            Cow::Owned(format!("{bytes}'{}", lit.inner))
         }
         None => Cow::Borrowed(raw),
     }

@@ -178,6 +178,8 @@ pub struct FormatCtx<'a> {
     held: Mutex<HashMap<TextSize, Option<Vec<Comment>>>>,
     /// Tokens whose leading comments a shape prints itself (see [`FormatCtx::hold_leading`]).
     held_leading: Mutex<std::collections::HashSet<TextSize>>,
+    /// How many leading comments of a token the layouts before it have printed (`placement`).
+    pub(crate) consumed: Mutex<HashMap<TextSize, usize>>,
     /// Is any token in `held_leading`? Asked for every token, so without the lock.
     any_held_leading: std::sync::atomic::AtomicBool,
     /// A provider's per-run data derived from the options (see [`FormatCtx::cached`]).
@@ -204,6 +206,7 @@ impl<'a> FormatCtx<'a> {
             detached: Mutex::new(Vec::new()),
             held: Mutex::new(HashMap::new()),
             held_leading: Mutex::new(std::collections::HashSet::new()),
+            consumed: Mutex::new(HashMap::new()),
             any_held_leading: std::sync::atomic::AtomicBool::new(false),
             cache: std::sync::OnceLock::new(),
             layouts: Mutex::new(HashMap::new()),
@@ -414,9 +417,21 @@ impl<'a> FormatCtx<'a> {
         if leading.is_empty() && trailing.is_empty() {
             return self.token_text(tok);
         }
-        // Inline comments in front of a closing token (tag `#close`) sit tight against it.
-        let lead = if self.grammar.has_tag(tok.kind(), "close")
-            && !leading.is_empty()
+        let lead = if self.grammar.has_tag(tok.kind(), "close") {
+            self.close_leading(tok, &leading)
+        } else {
+            leading_comments_doc_with(&leading, self.comment_style.max_blank_after)
+        };
+        doc::concat(vec![
+            lead,
+            self.token_text(tok),
+            trailing_comments_doc(&self.comment_style, &trailing),
+        ])
+    }
+
+    /// The comments in front of a closing token: inline block comments sit tight against it.
+    fn close_leading(&self, tok: &SyntaxToken, leading: &[Comment]) -> Doc {
+        if !leading.is_empty()
             && leading
                 .iter()
                 .all(|c| c.kind == CommentKind::Block && c.breaks_after == 0)
@@ -432,12 +447,16 @@ impl<'a> FormatCtx<'a> {
                 doc::concat(leading.iter().map(comment_doc).collect()),
             ])
         } else {
-            leading_comments_doc_with(&leading, self.comment_style.max_blank_after)
-        };
+            leading_comments_doc_with(leading, self.comment_style.max_blank_after)
+        }
+    }
+
+    /// A closing token with the comments in front of it only (those after it belong to the
+    /// caller): the tight form of [`FormatCtx::token`].
+    pub fn close_token(&self, tok: &SyntaxToken) -> Doc {
         doc::concat(vec![
-            lead,
+            self.close_leading(tok, &self.leading(tok)),
             self.token_text(tok),
-            trailing_comments_doc(&self.comment_style, &trailing),
         ])
     }
 

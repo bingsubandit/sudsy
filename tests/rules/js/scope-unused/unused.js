@@ -1,39 +1,39 @@
 import { a, b } from "m";
-//       ^ no-unused-vars
+//       ^ unused-variable
 import c from "c";
 export const exported = 1;
 const unused = 1, used = 2; let assigned = 1; assigned = 2;
-//    ^^^^^^ no-unused-vars
-//                                            ^^^^^^^^ no-unused-vars
+//    ^^^^^^ unused-variable
+//                                            ^^^^^^^^ unused-variable
 function f(x, y, z) { return y; }
-//       ^ no-unused-vars
-//               ^ no-unused-vars
+//       ^ unused-variable
+//               ^ unused-parameter
 function g(p, q) { return p; }
-//       ^ no-unused-vars
-//            ^ no-unused-vars
+//       ^ unused-variable
+//            ^ unused-parameter
 function h({ d }, e = 1, ...rest) {}
-//       ^ no-unused-vars
-//           ^ no-unused-vars
-//                ^ no-unused-vars
-//                          ^^^^ no-unused-vars
+//       ^ unused-variable
+//           ^ unused-parameter
+//                ^ unused-parameter
+//                          ^^^^ unused-parameter
 const fn = function self() { self(); };
 function recursive() { recursive(); }
-//       ^^^^^^^^^ no-unused-vars
+//       ^^^^^^^^^ unused-variable
 let counter = 0; counter++; counter += 1;
-//                          ^^^^^^^ no-unused-vars
+//                          ^^^^^^^ unused-variable
 let w = 0; w = w + 1; let v; v = () => v;
-//         ^ no-unused-vars
-//                           ^ no-unused-vars
+//         ^ unused-variable
+//                           ^ unused-variable
 try {} catch (err) {}
 //  ^^ no-empty-block
-//            ^^^ no-unused-vars
+//            ^^^ unused-variable
 //                 ^^ no-empty-block
 class Cls { static self = Cls; }
-//    ^^^ no-unused-vars
+//    ^^^ unused-variable
 const o = { set s(value) {} };
 export function loop() { for (const k in o) { return; } }
 var dup = 1; var dup = 2;
-//               ^^^ no-unused-vars
+//               ^^^ unused-variable
 export const nested = function nested() { var nested = 1; };
-//                                            ^^^^^^ no-unused-vars
+//                                            ^^^^^^ unused-variable
 console.log(used, b, fn, c);

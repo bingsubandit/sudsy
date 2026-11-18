@@ -28,6 +28,9 @@ token Colon ":" #punctuation
 token Comma "," #punctuation #separator
 
 token String #literal #string
+// 65533 is U+FFFD, the stand-in for a lone surrogate.
+string String quote "\"" escape "\\" unknown drop replace 65533 surrogates
+  map "n" 10 "t" 9 "r" 13 "b" 8 "f" 12 hex "u" 4
 token Number #literal #number
 token True "true" #literal
 token False "false" #literal

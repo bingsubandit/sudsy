@@ -1,5 +1,6 @@
 //! Strings and numbers: quote and prefix normalization, number spelling, docstrings.
 
+use super::util::syntax;
 use core_format::literals::{self, FracZeros, NumberStyle, prefixed};
 use std::borrow::Cow;
 
@@ -22,7 +23,7 @@ pub(crate) fn value(t: &core_syntax::SyntaxToken) -> Cow<'_, str> {
     match t.kind() {
         k::INT | k::FLOAT | k::COMPLEX => Cow::Owned(number(t.text()).replace('_', "")),
         k::STRING => {
-            let v = prefixed::string_value(t.text());
+            let v = prefixed::string_value(syntax(), t.text());
             let statement = t
                 .parent_ancestors()
                 .nth(2)
@@ -66,7 +67,7 @@ pub(crate) fn node_value(n: &core_syntax::SyntaxNode) -> String {
             })
             .map(|t| t.text().to_string())
             .collect();
-        match prefixed::split(&text) {
+        match prefixed::split(syntax(), &text) {
             Some((p, _, body)) => {
                 if i == 0 {
                     out.push_str(&prefixed::prefix_value(p));

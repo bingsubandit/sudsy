@@ -6,7 +6,7 @@ use super::comments::{
 };
 use super::{SequenceIndent, Style, scalars};
 use crate::generated::kind as k;
-use crate::tree::{column, first_token, is_trivia, last_token, line_break_between};
+use crate::tree::{first_token, is_trivia, last_token, line_break_between};
 use core_format::comments;
 use core_format::ignore::{self, IgnoreMark};
 use core_format::shapes::{ListLayout, ListStyle, TrailingComma, delimited_list};
@@ -82,10 +82,8 @@ pub(crate) fn collection(cx: &FormatCtx<'_>, st: &Style, node: &SyntaxNode) -> R
             out.push(gap(cx, st, &first));
         }
         if mark(&entries[i]) == Some(IgnoreMark::Start) {
-            let mut j = i + 1;
-            while j < entries.len() && mark(&entries[j]) != Some(IgnoreMark::End) {
-                j += 1;
-            }
+            let j = ignore::region_end(entries.len(), i, |n| Ok::<_, ()>(mark(&entries[n])))
+                .unwrap_or(entries.len());
             let last = last_token(&entries[j - 1]).ok_or_else(|| shape("an empty entry"))?;
             out.push(cx.verbatim_range(&first, &last));
             i = j;
@@ -120,7 +118,7 @@ pub(crate) fn mapping_entry(cx: &FormatCtx<'_>, st: &Style, node: &SyntaxNode) -
         .colon
         .as_ref()
         .ok_or_else(|| shape("a mapping entry without `:`"))?;
-    let key_col = first_token(node).map_or(0, |t| column(&t));
+    let key_col = first_token(node).map_or(0, |t| comments::column(&t));
     let mut out = Vec::new();
     if let Some(key) = &p.key {
         out.push(key_doc(cx, key)?);
@@ -225,7 +223,7 @@ pub(crate) fn node_after(
                         && match st.sequence {
                             SequenceIndent::Flush => true,
                             SequenceIndent::Indented => false,
-                            SequenceIndent::Preserve => column(&first) == key_col,
+                            SequenceIndent::Preserve => comments::column(&first) == key_col,
                         };
                     let inner = doc::concat(vec![lead, body]);
                     if flush { inner } else { doc::indent(inner) }

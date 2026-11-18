@@ -467,3 +467,14 @@ fn chains_and_parameters_that_hugged_at_a_second_format_reach_a_fixed_point() {
         "x = glimseGlyphsHazardNoopsTieTie?.averredBathersBoxroomBuggyNurl\n  ?.anodyneCondosMalateOverateRetinol!?.annularCooeedSplicesWalksWayWay.annularCooeedSplicesWalksWayWay(\n    annularCooeedSplicesWalksWayWay,\n  )\n  .annularCooeedSplicesWalksWayWay();\n"
     );
 }
+
+#[test]
+fn a_template_body_is_not_on_its_own_line_for_trivia_after_it() {
+    // (the trailing line break of the file is not a line break inside the template)
+    assert_eq!(
+        fmt(
+            "const f = (level) => `calc(var(--spacing) * ${(level - 1) * config.perLevel + cfg.base})`\n"
+        ),
+        "const f = (level) =>\n  `calc(var(--spacing) * ${(level - 1) * config.perLevel + cfg.base})`;\n"
+    );
+}

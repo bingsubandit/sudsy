@@ -312,6 +312,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let mut hoisted: Vec<String> = Vec::new();
     let mut precedence_rows: Vec<PrecedenceRow> = Vec::new();
     let mut keys = KeySyntax::default();
+    let mut strings: Vec<StringSyntax> = Vec::new();
     let mut raw: Vec<RawKind> = Vec::with_capacity(lexed.decls.len());
 
     for d in &lexed.decls {
@@ -423,6 +424,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                     operators: ops,
                 });
             }
+            "string" => strings.extend(string_row(&mut c)?),
             "suppress" => {
                 let role = c.ident("suppression role")?;
                 let marker = c.string("suppression marker")?;
@@ -467,7 +469,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
     let Some((language, language_id, title)) = language else {
         return err(1, "missing `language` declaration");
     };
-    resolve(
+    let mut grammar = resolve(
         language,
         language_id,
         title,
@@ -480,7 +482,104 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
         keys,
         raw,
         source,
-    )
+    )?;
+    let mut rows = Vec::with_capacity(strings.len());
+    for row in strings {
+        match grammar.by_name.get(&row.token) {
+            Some(kind) => rows.push((*kind, row)),
+            None => return err(1, format!("string row of unknown token `{}`", row.token)),
+        }
+    }
+    rows.sort_by_key(|(kind, _)| kind.index());
+    grammar.string_first = vec![u32::MAX; grammar.tokens.len()];
+    for (i, (kind, _)) in rows.iter().enumerate().rev() {
+        grammar.string_first[kind.index() as usize] = i as u32;
+    }
+    grammar.strings = rows;
+    Ok(grammar)
+}
+
+/// A `string <Token>... attribute...` row (one entry per token) (see [`StringSyntax`] for the meaning of each attribute):
+/// `quote "c"...`, `triple`, `prefix "letters"`, `raw "letters"`, `double`, `escape "c"`,
+/// `map <"c"|code> <code>...`, `hex "c" <digits>...`, `octal <digits>`, `named "c"`, `surrogates`,
+/// `continuation`, `fold`, `unknown keep|drop|invalid`, `replace <code>`.
+fn string_row(c: &mut Cursor<'_>) -> Result<Vec<StringSyntax>, GrammarError> {
+    let line = c.line;
+    let mut tokens = vec![c.ident("a token kind")?];
+    while let Some(Lexeme::Ident(t)) = c.peek() {
+        if !t.starts_with(char::is_uppercase) {
+            break;
+        }
+        tokens.push(t);
+        c.next();
+    }
+    let mut s = StringSyntax::default();
+    let ch = |l: Option<&Lexeme<'_>>| match l {
+        Some(Lexeme::Str(t)) if t.chars().count() == 1 => t.chars().next(),
+        Some(Lexeme::Int(n)) => char::from_u32(*n),
+        _ => None,
+    };
+    let int = |l: Option<&Lexeme<'_>>| match l {
+        Some(Lexeme::Int(n)) => Some(*n as usize),
+        _ => None,
+    };
+    while c.peek().is_some() {
+        let key = c.ident("a string attribute")?;
+        let bad = || GrammarError {
+            line,
+            message: format!("bad `{key}` in a string row"),
+        };
+        match key {
+            "quote" => {
+                while let Some(Lexeme::Str(_)) = c.peek() {
+                    s.quotes.extend(ch(c.next()));
+                }
+            }
+            "prefix" => s.prefix = c.string("prefix letters")?.to_string(),
+            "raw" => s.raw = c.string("raw prefix letters")?.to_string(),
+            "triple" => s.triple = true,
+            "double" => s.doubled = true,
+            "surrogates" => s.surrogates = true,
+            "continuation" => s.continuation = true,
+            "fold" => s.fold = true,
+            "escape" => s.escape = Some(ch(c.next()).ok_or_else(bad)?),
+            "named" => s.named = Some(ch(c.next()).ok_or_else(bad)?),
+            "octal" => s.octal = int(c.next()).ok_or_else(bad)?,
+            "replace" => s.replacement = Some(ch(c.next()).ok_or_else(bad)?),
+            "unknown" => {
+                s.unknown = match c.ident("keep, drop or invalid")? {
+                    "keep" => Unknown::Keep,
+                    "drop" => Unknown::Drop,
+                    "invalid" => Unknown::Invalid,
+                    _ => return Err(bad()),
+                }
+            }
+            "map" | "hex" => {
+                while matches!(c.peek(), Some(Lexeme::Str(_) | Lexeme::Int(_))) {
+                    let from = ch(c.next()).ok_or_else(bad)?;
+                    let to = c.next();
+                    if key == "hex" {
+                        s.hex.push((from, int(to).ok_or_else(bad)?));
+                    } else {
+                        s.map.push((from, ch(to).ok_or_else(bad)?));
+                    }
+                }
+            }
+            other => return err(line, format!("unknown string attribute `{other}`")),
+        }
+    }
+    s.simple = s.prefix.is_empty()
+        && !(s.triple || s.doubled || s.fold || !s.raw.is_empty())
+        && !s.quotes.is_empty()
+        && s.quotes.iter().all(char::is_ascii)
+        && s.escape.is_none_or(|e| e.is_ascii());
+    Ok(tokens
+        .into_iter()
+        .map(|t| StringSyntax {
+            token: t.to_string(),
+            ..s.clone()
+        })
+        .collect())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -591,6 +690,8 @@ fn resolve(
         hoisted,
         precedence_rows,
         keys,
+        strings: Vec::new(),
+        string_first: Vec::new(),
         token_flags: super::hot_flags(&tokens),
         node_flags: super::hot_flags(&nodes),
         nodes,

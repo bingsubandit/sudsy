@@ -156,29 +156,11 @@ fn breaks(cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
     false
 }
 
-/// The column of a token (bytes since the start of its line).
-fn column(t: &SyntaxToken) -> usize {
-    let mut col = 0;
-    let mut prev = t.prev_token();
-    while let Some(p) = prev {
-        let text = p.text();
-        if let Some(i) = text.rfind('\n') {
-            return col + text.len() - i - 1;
-        }
-        col += text.len();
-        prev = p.prev_token();
-    }
-    col
-}
-
 /// How many of the comments in front of a keyword that ends a body stand deeper than the
 /// keyword: those belong to the body, the others to the keyword.
 fn deeper_comments(cx: &FormatCtx<'_>, t: &SyntaxToken) -> usize {
-    let at = column(t);
-    comments::leading_comments(cx.grammar, t)
-        .iter()
-        .take_while(|c| column(c.token()) > at)
-        .count()
+    let cs = comments::leading_comments(cx.grammar, t);
+    comments::indented_run(&cs, comments::column(t) + 1)
 }
 
 /// A keyword that ends a body (`fi`, `}`, `;;`, `else`): with the comments in front of it that
@@ -198,17 +180,6 @@ fn kw_lead(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
 
 fn max_blank(cx: &FormatCtx<'_>) -> usize {
     cx.options.max_blank_lines()
-}
-
-fn next_significant(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Option<SyntaxToken> {
-    let mut cur = t.next_token();
-    while let Some(n) = cur {
-        if !cx.grammar.is_trivia(n.kind()) {
-            return Some(n);
-        }
-        cur = n.next_token();
-    }
-    None
 }
 
 /// Does the node span a line break, from its first to its last token?
@@ -557,7 +528,7 @@ fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
             .first()
             .and_then(|c| c.first(cx))
             .or_else(|| closer.and_then(|c| c.tok().cloned()))
-            .or_else(|| next_significant(cx, &mid_last(cx, mid)));
+            .or_else(|| comments::next_significant(cx.grammar, &mid_last(cx, mid)));
         let mut inner = Vec::new();
         if !body.is_empty() {
             inner.extend([
@@ -581,7 +552,8 @@ fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
         let first = body.iter().find_map(|e| e.first(cx));
         let first_lparen = first.as_ref().is_some_and(|t| {
             t.text() == "("
-                || t.text() == "!" && next_significant(cx, t).is_some_and(|n| n.text() == "(")
+                || t.text() == "!"
+                    && comments::next_significant(cx.grammar, t).is_some_and(|n| n.text() == "(")
         });
         let last_rparen = body
             .iter()

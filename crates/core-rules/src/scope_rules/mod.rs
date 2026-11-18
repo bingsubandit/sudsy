@@ -3,14 +3,22 @@
 //! and the rules it wants, and the checks below read the model the binder builds, once per file.
 //! A construct the table cannot decide turns a rule off for its scope, never guesses.
 
-use crate::FileContext;
+mod cx;
+mod ordering;
+mod shadowed;
+mod undefined;
+mod unused;
+
 use crate::checks::FileCache;
 use crate::diagnostic::Category;
 use crate::rule::{Level, Rule, RuleContext, RuleMeta};
 use crate::tree::significant_range;
+use crate::{FileContext, Params, Re};
 use core_semantics::scopes::{Access, Flags, Model, Row, ScopeId, Table, bind};
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode};
+use cx::Cx;
 use std::collections::HashSet;
+use std::path::Path;
 use std::rc::Rc;
 use std::sync::OnceLock;
 
@@ -23,7 +31,15 @@ pub struct ScopeLang {
     dynamic: &'static [&'static str],
     docs: &'static str,
     conventions: &'static [&'static str],
-    globals: &'static [&'static str],
+    globals: &'static str,
+    conditional_globals: &'static [(&'static str, &'static str)],
+    flavors: &'static [(&'static str, &'static [&'static str])],
+    scope_names: &'static [(&'static str, &'static str)],
+    redeclared_in: &'static [&'static str],
+    parameter_properties: &'static str,
+    markup: &'static str,
+    top_unchecked: bool,
+    sets: OnceLock<GlobalSets>,
     labels: &'static [&'static str],
     methods: &'static [&'static str],
     blocks: &'static [&'static str],
@@ -44,7 +60,15 @@ impl ScopeLang {
             dynamic: &[],
             docs: "",
             conventions: &[],
-            globals: &[],
+            globals: "",
+            conditional_globals: &[],
+            flavors: &[],
+            scope_names: &[],
+            redeclared_in: &[],
+            parameter_properties: "",
+            markup: "",
+            top_unchecked: false,
+            sets: OnceLock::new(),
             labels: &[],
             methods: &[],
             blocks: &[],
@@ -79,9 +103,63 @@ impl ScopeLang {
         self
     }
 
-    /// Names defined everywhere (`$this`, superglobals).
-    pub const fn globals(mut self, names: &'static [&'static str]) -> Self {
+    /// Names defined everywhere, separated by spaces (`$this`, superglobals, `Array`).
+    pub const fn globals(mut self, names: &'static str) -> Self {
         self.globals = names;
+        self
+    }
+
+    /// Names defined in the files of a flavor only (`commonjs`: `require module exports`).
+    pub const fn globals_if(mut self, names: &'static [(&'static str, &'static str)]) -> Self {
+        self.conditional_globals = names;
+        self
+    }
+
+    /// Flavors of files by name suffix. `typed` files declare types (declaration merging,
+    /// ambient names, type-only uses), `definition` files are ambient; any other flavor only
+    /// selects `globals_if`.
+    pub const fn flavors(
+        mut self,
+        flavors: &'static [(&'static str, &'static [&'static str])],
+    ) -> Self {
+        self.flavors = flavors;
+        self
+    }
+
+    /// Names that the scopes of these node kinds bind (`arguments` in a function).
+    pub const fn scope_names(mut self, names: &'static [(&'static str, &'static str)]) -> Self {
+        self.scope_names = names;
+        self
+    }
+
+    /// The node kinds of the scopes whose names `redeclared-variable` checks.
+    pub const fn redeclared_in(mut self, kinds: &'static [&'static str]) -> Self {
+        self.redeclared_in = kinds;
+        self
+    }
+
+    /// Own tokens (separated by spaces) that make a parameter a property, which is used by being
+    /// declared (`public`, `readonly`).
+    pub const fn parameter_properties(mut self, tokens: &'static str) -> Self {
+        self.parameter_properties = tokens;
+        self
+    }
+
+    /// The import that the nodes tagged `#markup` use (the JSX pragma `React`), in typed files.
+    pub const fn markup(mut self, import: &'static str) -> Self {
+        self.markup = import;
+        self
+    }
+
+    /// `undefined-variable` leaves the top scope alone: another file can define its names.
+    pub const fn top_unchecked(mut self) -> Self {
+        self.top_unchecked = true;
+        self
+    }
+
+    /// The node kinds besides blocks whose child declarations are statements.
+    pub const fn hosts(mut self, hosts: &'static [&'static str]) -> Self {
+        self.hosts = hosts;
         self
     }
 
@@ -129,12 +207,73 @@ impl ScopeLang {
     }
 }
 
+struct GlobalSets {
+    base: HashSet<&'static str>,
+    conditional: Vec<(&'static str, HashSet<&'static str>)>,
+}
+
+impl ScopeLang {
+    /// The model of the tree under `root` (an embedded script, for its host's rules).
+    pub fn bind(&self, root: &SyntaxNode, grammar: &Grammar) -> Model {
+        bind(root, grammar, self.table(grammar))
+    }
+
+    fn flavor(&self, name: &str, path: &Path) -> bool {
+        let path = path.to_string_lossy();
+        self.flavors
+            .iter()
+            .any(|(n, suffixes)| *n == name && suffixes.iter().any(|s| path.ends_with(s)))
+    }
+
+    fn is_global(&self, name: &str, path: &Path) -> bool {
+        let sets = self.sets.get_or_init(|| GlobalSets {
+            base: self.globals.split_whitespace().collect(),
+            conditional: self
+                .conditional_globals
+                .iter()
+                .map(|(f, names)| (*f, names.split_whitespace().collect()))
+                .collect(),
+        });
+        sets.base.contains(name)
+            || sets
+                .conditional
+                .iter()
+                .any(|(f, names)| names.contains(name) && self.flavor(f, path))
+    }
+
+    fn scope_name(&self, kind: &str, name: &str) -> bool {
+        self.scope_names.contains(&(kind, name))
+    }
+
+    fn checks_redeclared(&self, kind: &str) -> bool {
+        self.redeclared_in.contains(&kind)
+    }
+
+    fn skips_top(&self) -> bool {
+        self.top_unchecked
+    }
+
+    fn property_tokens(&self) -> impl Iterator<Item = &'static str> {
+        self.parameter_properties.split_whitespace()
+    }
+
+    /// Is `name` the import that the markup elements of the tree use (the JSX pragma)?
+    pub fn markup_import(&self, name: &str, root: &SyntaxNode, grammar: &Grammar) -> bool {
+        !self.markup.is_empty()
+            && name == self.markup
+            && root
+                .descendants()
+                .any(|n| grammar.has_tag(n.kind(), "markup"))
+    }
+}
+
 thread_local! {
     static CACHE: FileCache<Model> = const { FileCache::new() };
 }
 
-/// The model of the file, built by the first scope rule that runs on it.
-fn model(lang: &ScopeLang, file: &FileContext<'_>) -> Rc<Model> {
+/// The model of the file, built by the first scope rule that runs on it (and shared with the
+/// rules of the language that read it).
+pub fn model(lang: &ScopeLang, file: &FileContext<'_>) -> Rc<Model> {
     CACHE.with(|c| {
         c.get(file, || {
             let mut model = bind(file.root, file.grammar, lang.table(file.grammar));
@@ -155,12 +294,44 @@ enum Check {
     UnusedMethodArgument,
     UnusedBlockArgument,
     UnderscorePrefixed,
+    UnusedVariable,
+    UnusedParameter,
+    UseBeforeDefine,
+    RedeclaredVariable,
+    ShadowedVariable,
 }
 
 /// One scope rule of a language.
 pub struct ScopeRule {
     check: Check,
     lang: &'static ScopeLang,
+    /// The rule's metadata and message when it is a row of the language's rule files.
+    row: Option<(&'static RuleMeta, String)>,
+}
+
+/// The `build` of a `scope` family over `lang`: the rule's params are `check` (the rule's id) and
+/// `message`, which may use `{name}`, `{line}` (`shadowed-variable`) and `{action}` (`unused-*`).
+pub fn build(
+    lang: &'static ScopeLang,
+    meta: &'static RuleMeta,
+    mut p: Params,
+) -> Result<Box<dyn Rule>, String> {
+    let check = match p.text("check")?.as_str() {
+        "undefined-variable" => Check::UndefinedVariable,
+        "unused-variable" => Check::UnusedVariable,
+        "unused-parameter" => Check::UnusedParameter,
+        "use-before-define" => Check::UseBeforeDefine,
+        "redeclared-variable" => Check::RedeclaredVariable,
+        "shadowed-variable" => Check::ShadowedVariable,
+        other => return Err(format!("param `check`: unknown check `{other}`")),
+    };
+    let message = p.text("message")?;
+    p.done()?;
+    Ok(Box::new(ScopeRule {
+        check,
+        lang,
+        row: Some((meta, message)),
+    }))
 }
 
 macro_rules! meta {
@@ -186,6 +357,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::UnusedImport,
             lang,
+            row: None,
         }
     }
 
@@ -194,6 +366,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::UnusedLocal,
             lang,
+            row: None,
         }
     }
 
@@ -202,6 +375,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::ParameterAssignment,
             lang,
+            row: None,
         }
     }
 
@@ -210,6 +384,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::UnusedMethodArgument,
             lang,
+            row: None,
         }
     }
 
@@ -218,6 +393,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::UnusedBlockArgument,
             lang,
+            row: None,
         }
     }
 
@@ -226,6 +402,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::UnderscorePrefixed,
             lang,
+            row: None,
         }
     }
 
@@ -234,6 +411,7 @@ impl ScopeRule {
         ScopeRule {
             check: Check::UndefinedVariable,
             lang,
+            row: None,
         }
     }
 }
@@ -246,9 +424,26 @@ fn mentions(text: &str, name: &str) -> bool {
     })
 }
 
+impl ScopeRule {
+    /// The rule's message: the row's, or the `default` of a rule a language lists in Rust.
+    fn template(&self, default: &str) -> String {
+        self.row
+            .as_ref()
+            .map_or_else(|| default.to_string(), |(_, m)| m.clone())
+    }
+}
+
 impl Rule for ScopeRule {
     fn meta(&self) -> &'static RuleMeta {
+        if let Some((meta, _)) = &self.row {
+            return meta;
+        }
         match self.check {
+            Check::UnusedVariable
+            | Check::UnusedParameter
+            | Check::UseBeforeDefine
+            | Check::RedeclaredVariable
+            | Check::ShadowedVariable => unreachable!("a row of the rule files gives its metadata"),
             Check::UnusedImport => meta!(
                 "unused-import",
                 Cleanup,
@@ -423,17 +618,68 @@ impl Rule for ScopeRule {
                 }
             }
             Check::UndefinedVariable => {
-                for r in m.unresolved() {
-                    let top = m.scope(m.var_scope(r.scope)).parent.is_none();
-                    if r.is_write()
-                        || !r.is_read()
-                        || top
-                        || lang.globals.contains(&&*r.name)
-                        || dynamic(r.scope)
-                    {
-                        continue;
-                    }
-                    ctx.report(r.range, format!("the variable `{}` is not defined", r.name));
+                let extra = ctx.options.list("globals");
+                let template = self.template("the variable `{name}` is not defined");
+                for (range, name) in undefined::run(&Cx::new(&m, file, lang), &extra) {
+                    ctx.report(range, template.replace("{name}", &name));
+                }
+            }
+            Check::UnusedVariable | Check::UnusedParameter => {
+                let o = &ctx.options;
+                let ignore = o.string("ignore_pattern");
+                let parameters = matches!(self.check, Check::UnusedParameter);
+                let opts = unused::Opts {
+                    parameters,
+                    args: match o.string("args") {
+                        "all" => unused::Args::All,
+                        "none" => unused::Args::None,
+                        _ => unused::Args::AfterUsed,
+                    },
+                    caught_errors: o.string("caught_errors") != "none",
+                    ignore_rest_siblings: o.bool("ignore_rest_siblings"),
+                    ignore: (!ignore.is_empty())
+                        .then(|| Re::lazy(ignore).ok())
+                        .flatten(),
+                };
+                let template = self.template("'{name}' is {action}.");
+                for h in unused::run(&Cx::new(&m, file, lang), &opts) {
+                    let text = template
+                        .replace("{name}", &h.name)
+                        .replace("{action}", h.action);
+                    ctx.report(h.range, text);
+                }
+            }
+            Check::UseBeforeDefine => {
+                let o = &ctx.options;
+                let on = ordering::Kinds {
+                    functions: o.bool("functions"),
+                    classes: o.bool("classes"),
+                    variables: o.bool("variables"),
+                };
+                let template = self.template("'{name}' was used before it was defined.");
+                for (range, name) in ordering::use_before_define(&Cx::new(&m, file, lang), &on) {
+                    ctx.report(range, template.replace("{name}", &name));
+                }
+            }
+            Check::RedeclaredVariable => {
+                let template = self.template("'{name}' is already defined.");
+                for (range, name) in ordering::redeclared(&Cx::new(&m, file, lang)) {
+                    ctx.report(range, template.replace("{name}", &name));
+                }
+            }
+            Check::ShadowedVariable => {
+                let o = &ctx.options;
+                let opts = shadowed::Opts {
+                    allow: o.list("allow"),
+                    kinds: o.list("kinds"),
+                };
+                let template = self
+                    .template("'{name}' is already declared in the upper scope on line {line}.");
+                for h in shadowed::run(&Cx::new(&m, file, lang), &opts) {
+                    let text = template
+                        .replace("{name}", &h.name)
+                        .replace("{line}", &h.line.to_string());
+                    ctx.report(h.range, text);
                 }
             }
         }

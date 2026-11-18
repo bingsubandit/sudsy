@@ -221,6 +221,7 @@ pub fn statement_sequence_with(
         .map(|n| Slot {
             node: n.clone(),
             sep: None,
+            hole: false,
         })
         .collect();
     Ok(sequence_items(
@@ -251,6 +252,7 @@ fn sequence_items(
                 doc::hardline(),
                 max_blank,
                 force_blank,
+                false,
             ));
         }
         parts.push(std::mem::replace(&mut items[i].doc, Doc::Nil));

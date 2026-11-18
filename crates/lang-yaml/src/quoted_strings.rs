@@ -4,7 +4,7 @@ use crate::format::{Quotes, restyle};
 use crate::generated::{Scalar, kind};
 use crate::resolve::{plain_round_trips, resolves_to_str};
 use crate::rules::is_key;
-use crate::scalar::{double_quoted_value, plain_value, single_quoted_value};
+use crate::scalar::flow_value;
 use core_rules::Re;
 use core_rules::rule;
 use core_rules::sorting::cached_regex;
@@ -152,11 +152,7 @@ rule! {
                 continue;
             }
             let text = token.text();
-            let Some(value) = (match token.kind() {
-                kind::PLAIN => Some(plain_value(text)),
-                kind::SINGLE_QUOTED => Some(single_quoted_value(text)),
-                _ => double_quoted_value(text),
-            }) else {
+            let Some(value) = flow_value(token.kind(), text) else {
                 continue;
             };
             let style = style_of(token.kind());

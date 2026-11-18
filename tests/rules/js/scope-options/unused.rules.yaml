@@ -1,0 +1,6 @@
+unused-variable:
+  level: warn
+  options: { caught_errors: none, ignore_pattern: "^_", ignore_rest_siblings: true }
+unused-parameter:
+  level: warn
+  options: { args: all, ignore_pattern: "^_" }

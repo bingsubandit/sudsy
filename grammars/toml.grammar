@@ -28,6 +28,9 @@ token BareKey #key-part
 token QuotedKey #key-part #string
 // A multi-line string may change its line breaks (`end_of_line`): TomlFormatter::extra_check compares the text.
 token String #literal #string #restyle
+string String QuotedKey quote "\"" escape "\\" unknown drop replace 65533
+  map "b" 8 "t" 9 "n" 10 "f" 12 "r" 13 hex "u" 4 "U" 8
+string String QuotedKey quote "'"
 token Integer #literal #number
 token Float #literal #number
 token Boolean #literal

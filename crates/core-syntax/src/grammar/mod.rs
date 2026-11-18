@@ -9,6 +9,7 @@
 //!                                                        // disable-line, disable, enable, disable-file, ignore*
 //! token Whitespace #trivia #whitespace // variable-text token with tags
 //! token LBrace "{" #punctuation        // fixed-text token
+//! string String quote "\"" escape "\\" map "n" 10 hex "u" 4   // a string kind: see `string_row`
 //! node Member #key-value = key:String Colon value:#value
 //! node Array #value #delimited-list = LBracket elements:#value* RBracket
 //! roles                                // opt in: every node kind has a role tag or #opaque
@@ -29,7 +30,9 @@
 mod parse;
 
 use crate::kind::{LanguageId, SyntaxKind};
+use crate::strings::{StringSyntax, Unknown};
 use crate::tree::{SyntaxElement, SyntaxNode};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
@@ -162,6 +165,10 @@ pub struct Grammar {
     /// The `precedence` lines (a handful of rows: scanned, no table).
     precedence_rows: Vec<PrecedenceRow>,
     keys: KeySyntax,
+    /// The `string` rows, grouped by token kind.
+    strings: Vec<(SyntaxKind, StringSyntax)>,
+    /// Per token index, where its rows start in `strings` (`u32::MAX`: none).
+    string_first: Vec<u32>,
     nodes: Vec<KindDef>,
     tokens: Vec<KindDef>,
     by_name: HashMap<String, SyntaxKind>,
@@ -184,7 +191,7 @@ pub struct Grammar {
 
 /// Tags that formatting code asks about for every token or node: answered from a bit set
 /// instead of scanning the tag strings.
-const HOT_TAGS: [&str; 19] = [
+const HOT_TAGS: [&str; 21] = [
     "trivia",
     "separator",
     "optional",
@@ -204,6 +211,8 @@ const HOT_TAGS: [&str; 19] = [
     "transparent",
     "key-part",
     "number",
+    "hole",
+    "final",
 ];
 
 /// The index of a hot tag in [`HOT_TAGS`]: a `match`, which compiles to a length switch where a scan
@@ -230,6 +239,8 @@ fn hot_index(tag: &str) -> Option<usize> {
         "transparent" => 16,
         "key-part" => 17,
         "number" => 18,
+        "hole" => 19,
+        "final" => 20,
         _ => return None,
     })
 }
@@ -524,6 +535,40 @@ impl Grammar {
                 level: r.level,
                 assoc: r.assoc,
             })
+    }
+
+    /// The first of the `string` rows of the token kind `kind`.
+    fn first_string(&self, kind: SyntaxKind) -> usize {
+        match self.string_first.get(kind.index() as usize) {
+            Some(&i) if i != u32::MAX && kind.is_token() && kind.lang() == self.language_id => {
+                i as usize
+            }
+            _ => self.strings.len(),
+        }
+    }
+
+    /// The `string` rows of the token kind `kind`.
+    pub fn string_rows(&self, kind: SyntaxKind) -> impl Iterator<Item = &StringSyntax> {
+        (self.strings[self.first_string(kind)..].iter())
+            .take_while(move |(k, _)| *k == kind)
+            .map(|(_, s)| s)
+    }
+
+    /// The value of a string token of kind `kind`: [`StringSyntax::value_of`] of the first of its
+    /// rows whose delimiter the text starts with (`None`: no row, or an invalid escape).
+    pub fn string_value<'a>(&self, kind: SyntaxKind, text: &'a str) -> Option<Cow<'a, str>> {
+        for (k, row) in &self.strings[self.first_string(kind)..] {
+            if *k != kind {
+                break;
+            }
+            if let Some(inner) = row.unescaped(text) {
+                return Some(Cow::Borrowed(inner));
+            }
+            if let Some(lit) = row.split(text) {
+                return row.value_of(lit);
+            }
+        }
+        None
     }
 
     /// What is wrong with the roles of a grammar that declared `roles`: a node kind with no role

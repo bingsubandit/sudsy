@@ -47,10 +47,10 @@ pub fn migrate(config: &Value, out: &mut Out) -> Result<()> {
     for pattern in strings(root.get("ignorePatterns")) {
         out.exclude(pattern);
     }
-    // `globals` are the names `no-undef` accepts (its `globals` option).
+    // `globals` are the names `undefined-variable` accepts (its `globals` option).
     if let Some(globals) = root.get("globals").and_then(Value::as_object) {
         let names: Vec<Value> = globals.keys().map(|k| Value::from(k.as_str())).collect();
-        out.rule_opt_free("js", "no-undef", "globals", names.into());
+        out.rule_opt_free("js", "undefined-variable", "globals", names.into());
     }
     if let Some(rules) = root.get("rules").and_then(Value::as_object) {
         let all = Files {

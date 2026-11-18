@@ -245,14 +245,9 @@ impl Loader {
             .by_kind(|kind| kind.is_token() && !is_trivia(kind))
             .find_map(|e| e.into_token())
             .ok_or("scalar without a token")?;
-        let (text, plain) = match t.kind() {
-            k::PLAIN => (scalar::plain_value(t.text()), true),
-            k::SINGLE_QUOTED => (scalar::single_quoted_value(t.text()), false),
-            _ => (
-                scalar::double_quoted_value(t.text()).ok_or("invalid escape")?,
-                false,
-            ),
-        };
+        let kind = t.kind();
+        let text = scalar::flow_value(kind, t.text()).ok_or("invalid escape")?;
+        let (text, plain) = (text.into_owned(), kind == k::PLAIN);
         Ok(resolve_scalar(text, plain, tag.as_deref()))
     }
 

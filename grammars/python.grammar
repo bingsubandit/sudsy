@@ -15,6 +15,14 @@ suppress disable-file "sudsy-disable-file"
 suppress ignore "sudsy-ignore"
 suppress ignore-start "sudsy-ignore-start"
 suppress ignore-end "sudsy-ignore-end"
+suppress ignore-start "fmt: off"
+suppress ignore-start "fmt:off"
+suppress ignore-start "yapf: disable"
+suppress ignore-end "fmt: on"
+suppress ignore-end "fmt:on"
+suppress ignore-end "yapf: enable"
+suppress ignore-line "fmt: skip"
+suppress ignore-line "fmt:skip"
 
 token Whitespace #trivia #whitespace
 token Newline #trivia #newline
@@ -118,6 +126,8 @@ token Int #restyle #number
 token Float #restyle #number
 token Complex #restyle #number
 token String #string #restyle
+string String quote "\"" "'" triple prefix "rRbBuUfFtT" raw "rR" escape "\\" continuation named "N" octal 3
+  replace 63 map "a" 7 "b" 8 "f" 12 "n" 10 "r" 13 "t" 9 "v" 11 "\\" 92 "'" 39 "\"" 34 hex "x" 2 "u" 4 "U" 8
 // An f-string's or t-string's start (prefix and opening quote), end (closing quote) and the literal text between its replacement fields.
 token FStringStart #string #restyle
 token FStringMiddle #string #restyle

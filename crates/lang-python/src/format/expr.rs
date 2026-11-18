@@ -127,7 +127,11 @@ fn number(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 /// The restyled text of a string-like token.
 pub(crate) fn string_token(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
-    restyled(cx, t, &prefixed::string(t.text(), style(cx).quote))
+    restyled(
+        cx,
+        t,
+        &prefixed::string(syntax(), t.text(), style(cx).quote),
+    )
 }
 
 /// Strings of an implicit concatenation, one per line when they do not fit.
@@ -226,8 +230,8 @@ pub(crate) fn joined_with(
         {
             return None;
         }
-        let text = prefixed::string(t.text(), style(cx).quote);
-        let (p, q, b) = prefixed::split(&text)?;
+        let text = prefixed::string(syntax(), t.text(), style(cx).quote);
+        let (p, q, b) = prefixed::split(syntax(), &text)?;
         if q.len() != 1 || p.contains(['r', 'R']) || *prefix.get_or_insert(p.to_string()) != p {
             return None;
         }
@@ -259,7 +263,7 @@ fn fstring(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
         .collect();
     concat(vec![
         cx.leading_comments_doc(first),
-        doc::text(prefixed::fstring(&text, style(cx).quote).into_owned()),
+        doc::text(prefixed::fstring(syntax(), &text, style(cx).quote).into_owned()),
         cx.trailing_comments_doc(last),
     ])
 }

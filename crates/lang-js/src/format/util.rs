@@ -3,7 +3,7 @@
 
 use crate::generated::kind as k;
 use core_config::OptionValue;
-use core_format::doc::{self, Doc, concat, group, hardline, if_break, indent, line, lit, softline};
+use core_format::doc::{self, Doc, concat, hardline, if_break, indent, line, lit};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, TextRange};
 
@@ -221,36 +221,6 @@ pub(crate) fn clause(body: &SyntaxNode, printed: Doc, force_space: bool) -> Doc 
     }
 }
 
-/// `{ a, b }`; with `can_break` the items go one per line when the line is too long, with a
-/// trailing comma. An empty list is `{}`.
-pub(crate) fn braces(
-    cx: &FormatCtx<'_>,
-    open: &SyntaxToken,
-    items: Vec<Doc>,
-    close: &SyntaxToken,
-    can_break: bool,
-) -> Doc {
-    let (open, close) = (cx.token(open), cx.token(close));
-    if items.is_empty() {
-        return concat(vec![open, close]);
-    }
-    let comma = concat(vec![lit(","), line()]);
-    let spaced = style(cx).bracket_spacing;
-    if !can_break {
-        let all = doc::join(&lit(", "), items);
-        let pad = if spaced { lit(" ") } else { Doc::Nil };
-        return concat(vec![open, pad.clone(), all, pad, close]);
-    }
-    let edge = if spaced { line() } else { softline() };
-    group(concat(vec![
-        open,
-        indent(concat(vec![edge.clone(), doc::join(&comma, items)])),
-        trailing_comma(cx, false),
-        edge,
-        close,
-    ]))
-}
-
 /// Where the comments of the tree of `anchor` are: (start of the trivia in front of a token, start
 /// of the token) of each token with a comment in front, found on first use.
 pub(crate) fn comment_spans<'a>(cx: &'a FormatCtx<'_>, anchor: &SyntaxNode) -> &'a [(u32, u32)] {
@@ -280,19 +250,7 @@ pub(crate) fn dangling(cx: &FormatCtx<'_>, close: &SyntaxToken) -> Doc {
     }
     cx.hold_leading(close);
     let blank = comments::blank_lines_before(cx.grammar, close) > 0;
-    concat(
-        cs.iter()
-            .enumerate()
-            .flat_map(|(i, c)| {
-                let gap = if i == 0 && blank {
-                    hardline()
-                } else {
-                    Doc::Nil
-                };
-                [gap, hardline(), core_format::context::comment_doc(c)]
-            })
-            .collect(),
-    )
+    core_format::shapes::dangling_comments(&cs, blank)
 }
 
 /// `()` that may hold block comments: they sit against the parentheses, `(/* c */)`.

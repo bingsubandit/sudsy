@@ -82,6 +82,10 @@ pub enum Flow {
     Declare,
     /// They are not references (a name in a position no scope looks up).
     Skip,
+    /// They are read to test that the name exists (`typeof x`): never undefined.
+    Probe,
+    /// They name a markup element (`<Tag />`).
+    Tag,
     /// They declare their name in the scope of the node and assign the one of the scope around it
     /// (`use (&$x)` of a closure).
     Capture,
@@ -121,6 +125,9 @@ pub struct Declares {
     pub skip_token: &'static str,
     /// The flags when the parent node has one of these kinds (a property in a class is a member).
     pub parent_flags: &'static [(&'static str, Flags)],
+    /// The declaration is unchecked (`Flags::UNCHECKED`) when its parent or one of its children
+    /// has one of these kinds (`namespace A.B {}` declares `A` for `B`'s sake).
+    pub unchecked: &'static [&'static str],
 }
 
 impl Declares {
@@ -136,6 +143,7 @@ impl Declares {
         name_last: false,
         skip_token: "",
         parent_flags: &[],
+        unchecked: &[],
     };
 }
 

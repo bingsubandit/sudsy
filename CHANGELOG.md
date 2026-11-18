@@ -7,6 +7,14 @@
   `eslint-recommended` preset follow). It now runs in C#, Java, JavaScript/TypeScript, Kotlin, PHP,
   Python and Ruby, and is on by default (`warn`) in all of them; in C# it was off.
 * `no-fallthrough` also runs in Java and PHP.
+* JavaScript/TypeScript scope rules are the shared ones and are renamed (config keys and the
+  `eslint-recommended` and `typescript-eslint-recommended` presets follow, no aliases):
+  `no-undef` is `undefined-variable`, `no-redeclare` is `redeclared-variable`,
+  `no-use-before-define` is `use-before-define`, `no-shadow` is `shadowed-variable`, and
+  `no-unused-vars` is split into `unused-variable` and the new `unused-parameter`. ESLint's
+  options become rule options: `unused-variable` has `caught_errors`, `ignore_pattern` and
+  `ignore_rest_siblings`, `unused-parameter` has `args` and `ignore_pattern`, `use-before-define`
+  has `functions`, `classes` and `variables`, `shadowed-variable` has `allow` and `kinds`.
 
 ### Changed
 * GraphQL `selection-set-depth`: the option `max_depth` is now `max`, as in every `max` rule.

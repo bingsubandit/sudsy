@@ -133,7 +133,7 @@ fn bracketed_inner(
     let end_doc = if end.is_empty() {
         Doc::Nil
     } else {
-        concat(vec![hardline(), super::comment::comments_block(&end)])
+        concat(vec![hardline(), core_format::comment_lines(&end)])
     };
     if p.runs.is_empty() {
         if end.is_empty() {
@@ -297,11 +297,7 @@ fn import_names_inner(cx: &FormatCtx<'_>, p: &Parts) -> R {
     let magic = (has_magic(cx, p) && p.open.is_some()) || open_comment || !end.is_empty();
     let mut inner = items(cx, p, false, false, true)?;
     if !end.is_empty() {
-        inner = concat(vec![
-            inner,
-            hardline(),
-            super::comment::comments_block(&end),
-        ]);
+        inner = concat(vec![inner, hardline(), core_format::comment_lines(&end)]);
     }
     let open = match &p.open {
         Some(o) if open_comment => cx.token(o),

@@ -5,17 +5,14 @@
 
 use crate::adapter::source_type;
 use crate::generated::kind as k;
-use core_rules::FileContext;
 use core_rules::checks::FileCache;
 use core_rules::tree::significant_range;
-use core_semantics::scopes::{
-    Decl, Declares, Flags, Flow, Model, Place, Row, Sel, Symbol, SymbolId, Table, bind,
-};
+use core_rules::{FileContext, ScopeLang};
+use core_semantics::scopes::{Declares, Flags, Flow, Model, Place, Row, Sel, SymbolId};
 use core_syntax::{Grammar, SyntaxNode, SyntaxNodeExt, TextRange, grammars};
 use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::OnceLock;
 
 const V: Flags = Flags::VALUE;
 const T: Flags = Flags::TYPE;
@@ -128,11 +125,15 @@ const ROWS: &[Row] = &[
         T.union(Flags::TYPE_ALIAS),
         Place::Parent,
     ),
-    names(
-        "TSNamespaceDeclaration",
-        V.union(T).union(Flags::NAMESPACE),
-        Place::Scope,
-    ),
+    Row {
+        kind: "TSNamespaceDeclaration",
+        declares: Some(Declares {
+            flags: V.union(T).union(Flags::NAMESPACE),
+            unchecked: &["TSNamespaceDeclaration"],
+            ..Declares::NONE
+        }),
+        ..Row::NONE
+    },
     Row {
         kind: "TSTypeParameter",
         declares: Some(Declares {
@@ -142,7 +143,11 @@ const ROWS: &[Row] = &[
         }),
         ..Row::NONE
     },
-    names("TSMappedType", T.union(Flags::TYPE_PARAMETER), Place::Scope),
+    names(
+        "TSMappedType",
+        T.union(Flags::TYPE_PARAMETER).union(Flags::UNCHECKED),
+        Place::Scope,
+    ),
     names("ImportSpecifier", IMPORTED, Place::Scope),
     names("ImportDefaultSpecifier", IMPORTED, Place::Scope),
     names("ImportNamespaceSpecifier", IMPORTED, Place::Scope),
@@ -180,6 +185,13 @@ const ROWS: &[Row] = &[
         &[(Sel::AfterText(":"), Flow::Through)],
     ),
     flows("ParenthesizedExpression", &[(Sel::All, Flow::Through)]),
+    flows(
+        "UnaryExpression",
+        &[(Sel::WithToken("typeof"), Flow::Probe)],
+    ),
+    flows("JSXOpeningElement", &[(Sel::All, Flow::Tag)]),
+    flows("JSXClosingElement", &[(Sel::All, Flow::Tag)]),
+    flows("JSXMemberExpression", &[(Sel::All, Flow::Tag)]),
     flows("TSNonNullExpression", &[(Sel::All, Flow::Through)]),
     flows("TSAsExpression", &[(Sel::First, Flow::Through)]),
     flows("TSSatisfiesExpression", &[(Sel::First, Flow::Through)]),
@@ -219,27 +231,42 @@ const HOSTS: &[&str] = &[
     "WithStatement",
 ];
 
-fn table() -> &'static Table {
-    static TABLE: OnceLock<Table> = OnceLock::new();
-    TABLE.get_or_init(|| Table::new(grammars::JS.get(), ROWS, HOSTS, &["Identifier"]))
-}
+/// The scope rules' view of the language: the table above and the facts the shared rules ask for.
+pub static LANG: ScopeLang = ScopeLang::new(ROWS, &["Identifier"])
+    .hosts(HOSTS)
+    .globals(include_str!("../globals/es2026.txt"))
+    .globals_if(&[("commonjs", include_str!("../globals/commonjs.txt"))])
+    .flavors(&[
+        ("typed", &[".ts", ".tsx", ".mts", ".cts"]),
+        ("definition", &[".d.ts", ".d.cts", ".d.mts"]),
+        ("commonjs", &[".cjs"]),
+    ])
+    .scope_names(&[("Function", "arguments")])
+    .redeclared_in(&[
+        "Program",
+        "Function",
+        "ArrowFunctionExpression",
+        "BlockStatement",
+        "ForStatement",
+        "ForInStatement",
+        "ForOfStatement",
+        "SwitchStatement",
+        "StaticBlock",
+    ])
+    .parameter_properties("public private protected readonly override")
+    .markup("React");
 
 /// The model of a script that another file embeds (a Vue `<script>`), for the host's rules.
 pub fn bind_embedded(root: &SyntaxNode) -> Model {
-    bind(root, grammars::JS.get(), table())
+    LANG.bind(root, grammars::JS.get())
 }
 
 /// What a scope rule reads: the model and the file's kind.
 pub struct Cx {
-    pub s: Model,
+    pub s: Rc<Model>,
     pub root: SyntaxNode,
     pub g: &'static Grammar,
-    /// `.cjs`: the top scope is a function scope with `require`, `module` and `exports`.
-    pub commonjs: bool,
     pub ts: bool,
-    /// `.d.ts`, `.d.cts`, `.d.mts`: every declaration is ambient.
-    pub definition: bool,
-    jsx: OnceCell<bool>,
     by_binding: OnceCell<HashMap<u32, SymbolId>>,
 }
 
@@ -263,17 +290,9 @@ impl Cx {
         significant_range(n, self.g)
     }
 
-    /// Does the file have a JSX element? typescript-eslint reads that as a use of `React`.
-    pub fn has_jsx(&self) -> bool {
-        *self.jsx.get_or_init(|| {
-            let kind = self.g.kind_by_name("JSXOpeningElement");
-            self.root.descendants().any(|n| Some(n.kind()) == kind)
-        })
-    }
-
     /// Is the import `name` the JSX pragma that the elements of the file use (TypeScript files only)?
     pub fn jsx_pragma(&self, name: &str) -> bool {
-        self.ts && name == "React" && self.has_jsx()
+        self.ts && LANG.markup_import(name, &self.root, self.g)
     }
 
     /// The symbol a binding node declares.
@@ -289,25 +308,6 @@ impl Cx {
         });
         map.get(&u32::from(self.range(binding).start())).copied()
     }
-
-    /// Is the declaration an import of a type only (`import type`, `{ type A }`)?
-    pub fn is_type_import(&self, d: &Decl) -> bool {
-        d.flags.contains(Flags::IMPORT)
-            && (self.has_own(&d.node(&self.root), "type")
-                || d.node(&self.root)
-                    .parent()
-                    .is_some_and(|p| p.kind() == k::IMPORT_DECLARATION && self.has_own(&p, "type")))
-    }
-
-    /// Does the symbol name a value (a variable, function, class, enum, value import)?
-    pub fn is_value(&self, s: &Symbol) -> bool {
-        s.flags.contains(Flags::VALUE) && !s.decls.iter().all(|d| self.is_type_import(d))
-    }
-
-    /// The name of a kind.
-    pub fn kind_name(&self, n: &SyntaxNode) -> &str {
-        self.g.name(n.kind())
-    }
 }
 
 thread_local! {
@@ -321,15 +321,10 @@ pub fn model(file: &FileContext<'_>) -> Option<Rc<Cx>> {
         cache.get(file, || {
             let name = file.path.to_string_lossy();
             Cx {
-                s: bind(file.root, file.grammar, table()),
+                s: core_rules::scope_rules::model(&LANG, file),
                 root: file.root.clone(),
                 g: grammars::JS.get(),
-                commonjs: name.ends_with(".cjs"),
                 ts: source_type(&name).is_typescript(),
-                definition: [".d.ts", ".d.cts", ".d.mts"]
-                    .iter()
-                    .any(|e| name.ends_with(e)),
-                jsx: OnceCell::new(),
                 by_binding: OnceCell::new(),
             }
         })

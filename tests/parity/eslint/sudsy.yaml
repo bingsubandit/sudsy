@@ -3,5 +3,5 @@ extends: [preset:js/eslint-recommended]
 js:
   lint:
     rules:
-      no-shadow: error
-      no-use-before-define: error
+      shadowed-variable: error
+      use-before-define: error

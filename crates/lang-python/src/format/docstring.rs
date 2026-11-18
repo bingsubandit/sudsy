@@ -18,7 +18,7 @@ pub(crate) fn statement(cx: &FormatCtx<'_>, stmt: &SyntaxNode) -> R {
         return Err(shape_error("docstring"));
     };
     let text = if tokens.len() == 1 {
-        prefixed::string(token.text(), style(cx).quote).into_owned()
+        prefixed::string(syntax(), token.text(), style(cx).quote).into_owned()
     } else {
         // An implicit concatenation is the docstring when its parts join; else a plain string.
         let strings = stmt
@@ -30,7 +30,7 @@ pub(crate) fn statement(cx: &FormatCtx<'_>, stmt: &SyntaxNode) -> R {
             None => return super::stmt::statement(cx, stmt),
         }
     };
-    let Some((prefix, quote, body)) = prefixed::split(&text) else {
+    let Some((prefix, quote, body)) = prefixed::split(syntax(), &text) else {
         return Ok(cx.verbatim_node(stmt));
     };
     let body = clean(body);

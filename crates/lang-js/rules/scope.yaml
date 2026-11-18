@@ -1,6 +1,6 @@
-id: no-undef
-family: check
-params: { check: undef }
+id: undefined-variable
+family: scope
+params: { check: undefined-variable }
 message: "'{name}' is not defined."
 description: A name that no scope declares, that is not a global of ES2026 (or, in a `.cjs` file, `require`, `module`, `exports` and `global`) and that is not in the `globals` option. `typeof x` and JSX tags are left alone.
 example: "foo();   # reported"
@@ -44,41 +44,64 @@ example: "import a from 'a'; a = 1;   # reported"
 severity: error
 category: suspicious
 ---
-id: no-redeclare
-family: check
-params: { check: redeclare }
+id: redeclared-variable
+family: scope
+params: { check: redeclared-variable }
 message: "'{name}' is already defined."
 description: A name declared again in the same scope (`var` twice, a `var` and a parameter, two functions). In TypeScript files declaration merging (interfaces, namespaces, a class with an interface) is allowed. Built-in globals are not checked.
 example: "var a = 1; var a = 2;   # the second a is reported"
 severity: off
 category: suspicious
 ---
-id: no-use-before-define
-family: check
+id: use-before-define
+family: scope
 params: { check: use-before-define }
 message: "'{name}' was used before it was defined."
 description: A reference that comes before the declaration of what it names in the source (function declarations included), or runs while the variable is being initialized. References in types are left alone.
 example: "a(); function a() {}   # the first a is reported"
 severity: off
 category: suspicious
+options:
+  - { name: functions, type: bool, default: true, description: Check function declarations. }
+  - { name: classes, type: bool, default: true, description: Check class declarations. }
+  - { name: variables, type: bool, default: true, description: "Check `var`, `let` and `const` variables." }
 ---
-id: no-shadow
-family: check
-params: { check: shadow }
+id: shadowed-variable
+family: scope
+params: { check: shadowed-variable }
 message: "'{name}' is already declared in the upper scope on line {line}."
 description: A variable, parameter or function with the name of one declared in a scope around it. A function declared later in the outer scope still counts (it is hoisted), a variable declared later does not, and `var a = function a() {}` is not a shadow. In TypeScript files a type and a value of one name, and the parameters of function types, are left alone.
 example: "var a = 1; function f() { var a = 2; }   # the inner a is reported"
 severity: off
 category: suspicious
+options:
+  - { name: allow, type: list, default: [], description: Names that may shadow. }
+  - { name: kinds, type: list, choices: [variable, parameter, function, class, import, type], default: [], description: "The declarations that are checked for shadowing something (empty: all)." }
 ---
-id: no-unused-vars
-family: check
-params: { check: unused-vars }
+id: unused-variable
+family: scope
+params: { check: unused-variable }
 message: "'{name}' is {action}."
-description: "A variable, function, class, import, caught error or parameter that is never read. Parameters count only when no later parameter is read, `a = a + 1` and `a++` as statements are no read, exported names and the parameters of setters are used. In TypeScript files types, interfaces and enums count the same, and a name that only appears in `typeof` of a type is not read."
+description: "A variable, function, class, import or caught error that is never read. `a = a + 1` and `a++` as statements are no read, and exported names are used. In TypeScript files types, interfaces and enums count the same, and a name that only appears in `typeof` of a type is not read."
 example: "const a = 1;   # reported"
 severity: off
 category: suspicious
+options:
+  - { name: caught_errors, type: string, choices: [all, none], default: all, description: "Whether the variable of a `catch` clause is checked." }
+  - { name: ignore_pattern, type: regex, default: "", description: "A regex for the names that are not checked (ESLint's `varsIgnorePattern`)." }
+  - { name: ignore_rest_siblings, type: bool, default: false, description: "Leave the names of an object pattern that has a rest element alone (`const { a, ...rest } = o`)." }
+---
+id: unused-parameter
+family: scope
+params: { check: unused-parameter }
+message: "'{name}' is {action}."
+description: "A parameter that is never read. By default only the parameters after the last one that is read are reported; the parameters of setters and signatures and the properties a constructor declares are used."
+example: "function f(a, b) { return a; }   # b is reported"
+severity: off
+category: suspicious
+options:
+  - { name: args, type: string, choices: [after-used, all, none], default: after-used, description: "Which parameters are checked: those after the last one that is read, all of them, or none." }
+  - { name: ignore_pattern, type: regex, default: "", description: "A regex for the names that are not checked (ESLint's `argsIgnorePattern`)." }
 ---
 id: no-require-imports
 family: check

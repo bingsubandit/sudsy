@@ -8,6 +8,7 @@
 //! * [`codegen`]: generates those wrappers (driven by `cargo xtask codegen`).
 //! * [`roles`]: the role vocabulary grammars tag their node kinds with.
 //! * [`shape`]: checks trees against the bodies of a grammar.
+//! * [`strings`]: the string-literal model every language's `string` rows describe.
 //! * [`wire`]: the versioned tree encoding used across process boundaries.
 
 pub mod ast;

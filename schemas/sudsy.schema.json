@@ -3004,10 +3004,6 @@
               "$ref": "#/definitions/rule",
               "description": "Svelte's `no-raw-special-elements` (eslint-plugin-svelte). `<head>`, `<body>`, `<window>`, `<document>`, `<element>` and `<options>` are plain elements in Svelte; the special ones are `<svelte:head>` and so on."
             },
-            "no-redeclare": {
-              "$ref": "#/definitions/rule",
-              "description": "A name declared again in the same scope (`var` twice, a `var` and a parameter, two functions). In TypeScript files declaration merging (interfaces, namespaces, a class with an interface) is allowed. Built-in globals are not checked."
-            },
             "no-redundant-for": {
               "$ref": "#/definitions/rule",
               "description": "A `<label>` has a `for` that names a control inside it, which the label already labels."
@@ -3064,10 +3060,6 @@
               "$ref": "#/definitions/rule",
               "description": "An equality or comparison whose two sides are the same tokens: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too."
             },
-            "no-shadow": {
-              "$ref": "#/definitions/rule",
-              "description": "A variable, parameter or function with the name of one declared in a scope around it. A function declared later in the outer scope still counts (it is hoisted), a variable declared later does not, and `var a = function a() {}` is not a shadow. In TypeScript files a type and a value of one name, and the parameters of function types, are left alone."
-            },
             "no-shadow-restricted-names": {
               "$ref": "#/definitions/rule",
               "description": "A variable, function, parameter or class named `NaN`, `Infinity`, `undefined`, `eval` or `arguments` (`var undefined;` without a value is left alone)."
@@ -3120,40 +3112,6 @@
               "$ref": "#/definitions/rule",
               "description": "A field of an object or interface type starts with the name of the type (`type User { userId: ID }`); the type already says it (case ignored). No fix: renaming a field changes the schema."
             },
-            "no-undef": {
-              "description": "A name that no scope declares, that is not a global of ES2026 (or, in a `.cjs` file, `require`, `module`, `exports` and `global`) and that is not in the `globals` option. `typeof x` and JSX tags are left alone.",
-              "oneOf": [
-                {
-                  "$ref": "#/definitions/level"
-                },
-                {
-                  "additionalProperties": false,
-                  "properties": {
-                    "level": {
-                      "$ref": "#/definitions/level"
-                    },
-                    "options": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "globals": {
-                          "default": [],
-                          "description": "Names the environment declares (ESLint's `languageOptions.globals`), such as `window` or `console`.",
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "level"
-                  ],
-                  "type": "object"
-                }
-              ]
-            },
             "no-undefined-alias": {
               "$ref": "#/definitions/rule",
               "description": "An alias names an anchor that is not defined earlier in the same document."
@@ -3201,14 +3159,6 @@
             "no-unused-expressions": {
               "$ref": "#/definitions/rule",
               "description": "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them."
-            },
-            "no-unused-vars": {
-              "$ref": "#/definitions/rule",
-              "description": "A variable, function, class, import, caught error or parameter that is never read. Parameters count only when no later parameter is read, `a = a + 1` and `a++` as statements are no read, exported names and the parameters of setters are used. In TypeScript files types, interfaces and enums count the same, and a name that only appears in `typeof` of a type is not read."
-            },
-            "no-use-before-define": {
-              "$ref": "#/definitions/rule",
-              "description": "A reference that comes before the declaration of what it names in the source (function declarations included), or runs while the variable is being initialized. References in types are left alone."
             },
             "no-use-v-else-with-v-for": {
               "$ref": "#/definitions/rule",
@@ -3787,6 +3737,10 @@
             "read-without-raw": {
               "$ref": "#/definitions/rule",
               "description": "A `read` without the `-r` flag."
+            },
+            "redeclared-variable": {
+              "$ref": "#/definitions/rule",
+              "description": "A name declared again in the same scope (`var` twice, a `var` and a parameter, two functions). In TypeScript files declaration merging (interfaces, namespaces, a class with an interface) is allowed. Built-in globals are not checked."
             },
             "redefined-argument-from-local": {
               "$ref": "#/definitions/rule",
@@ -4791,6 +4745,56 @@
               "$ref": "#/definitions/rule",
               "description": "A statement `setattr(x, \"name\", v)` with a literal name that is an identifier."
             },
+            "shadowed-variable": {
+              "description": "A variable, parameter or function with the name of one declared in a scope around it. A function declared later in the outer scope still counts (it is hoisted), a variable declared later does not, and `var a = function a() {}` is not a shadow. In TypeScript files a type and a value of one name, and the parameters of function types, are left alone.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "allow": {
+                          "default": [],
+                          "description": "Names that may shadow.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "kinds": {
+                          "default": [],
+                          "description": "The declarations that are checked for shadowing something (empty: all).",
+                          "items": {
+                            "enum": [
+                              "variable",
+                              "parameter",
+                              "function",
+                              "class",
+                              "import",
+                              "type"
+                            ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
             "shorthand-attribute": {
               "$ref": "#/definitions/rule",
               "description": "Svelte's `shorthand-attribute` (eslint-plugin-svelte)."
@@ -5127,8 +5131,38 @@
               "description": "A name that no scope around the read binds and that is not a builtin (not when a `try` handles `NameError`)."
             },
             "undefined-variable": {
-              "$ref": "#/definitions/rule",
-              "description": "A variable is read in a function that never assigns it, takes it as a parameter, imports it with `use` or declares it with `global` or `static` (PHPStan level 0, always undefined variables). A variable passed to a call counts as assigned, since the call can take it by reference; a function that uses `extract`, `parse_str`, `include` or `$$name` is not checked."
+              "description": "A name that no scope declares, that is not a global of ES2026 (or, in a `.cjs` file, `require`, `module`, `exports` and `global`) and that is not in the `globals` option. `typeof x` and JSX tags are left alone.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "globals": {
+                          "default": [],
+                          "description": "Names the environment declares (ESLint's `languageOptions.globals`), such as `window` or `console`.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "underscore-prefixed-variable-used": {
               "$ref": "#/definitions/rule",
@@ -5428,6 +5462,47 @@
               "$ref": "#/definitions/rule",
               "description": "A method parameter that the method never reads (RuboCop Lint/UnusedMethodArgument). Names that start with `_`, empty methods and methods that only raise NotImplementedError are left alone. No fix."
             },
+            "unused-parameter": {
+              "description": "A parameter that is never read. By default only the parameters after the last one that is read are reported; the parameters of setters and signatures and the properties a constructor declares are used.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "args": {
+                          "default": "after-used",
+                          "description": "Which parameters are checked: those after the last one that is read, all of them, or none.",
+                          "enum": [
+                            "after-used",
+                            "all",
+                            "none"
+                          ],
+                          "type": "string"
+                        },
+                        "ignore_pattern": {
+                          "default": "",
+                          "description": "A regex for the names that are not checked (ESLint's `argsIgnorePattern`).",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
             "unused-private-member": {
               "description": "A private field, method, property or event that no file of the project uses (`analysis: deep`). Members with attributes, overrides, interface implementations, `extern` and `partial` methods are left alone, and so are the private                   methods named in `reflection_methods` of a type derived from one of                   `reflection_base_types` (a framework calls them by reflection; the `csharp/unity`                   preset lists Unity's). Overlaps the SDK analyzers IDE0051 (unused private member) and IDE0052 (unread private member).",
               "oneOf": [
@@ -5481,6 +5556,47 @@
             "upper-ell": {
               "$ref": "#/definitions/rule",
               "description": "An integer literal that ends in a lower case `l` (Checkstyle UpperEll)."
+            },
+            "use-before-define": {
+              "description": "A reference that comes before the declaration of what it names in the source (function declarations included), or runs while the variable is being initialized. References in types are left alone.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "classes": {
+                          "default": true,
+                          "description": "Check class declarations.",
+                          "type": "boolean"
+                        },
+                        "functions": {
+                          "default": true,
+                          "description": "Check function declarations.",
+                          "type": "boolean"
+                        },
+                        "variables": {
+                          "default": true,
+                          "description": "Check `var`, `let` and `const` variables.",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "use-isnan": {
               "$ref": "#/definitions/rule",

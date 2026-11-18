@@ -14,6 +14,8 @@ pub enum TrailingComma {
     Never,
     /// Only when the list is laid out on several lines.
     WhenBroken,
+    /// `WhenBroken` when the source has a separator after the last item, else `Never`.
+    AsSource,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -24,8 +26,14 @@ pub enum ListLayout {
     /// (nested items included) stays expanded.
     PreserveBreak,
     /// Like `Fit`, but a line break between the opening delimiter and the first item keeps the
-    /// list expanded.
-    PreserveOpenBreak,
+    /// list expanded (Prettier's objects).
+    PreserveFirstBreak,
+    /// Like `Fit`, but a separator after the last item in the source keeps the list expanded
+    /// (Black's and ruff's magic trailing comma).
+    MagicTrailingComma,
+    /// Items packed onto lines as they fit (Prettier's arrays of numbers); the list breaks, with
+    /// a trailing comma, only when it does not fit on one line.
+    Fill,
     /// Like `Fit`, but a list stays expanded when a line break separates two items in the source,
     /// or stands both after the opening and before the closing delimiter.
     PreserveItemBreak,
@@ -65,6 +73,21 @@ pub struct ListStyle {
     /// The separator when the list breaks, if not `separator` (TypeScript members: `;` on one
     /// line, none or `;` per the `semi` option on several).
     pub broken_separator: Option<&'static str>,
+    /// A blank line between two items in the source keeps the list expanded (Prettier's
+    /// objects and parameters), instead of vanishing when the list fits.
+    pub blank_breaks: bool,
+    /// The list is expanded whatever its layout (the caller found a reason in the tree).
+    pub force_break: bool,
+    /// The items sit in a group of their own, inside the one of the delimiters: when they do not
+    /// fit on the opening line they go together onto the next, and only when they do not fit
+    /// there one per line (google-java-format's parameters).
+    pub hang: bool,
+    /// The group of the whole list, for a caller that asks later whether it broke.
+    pub id: Option<doc::GroupId>,
+    /// The group of the items (implies `hang`), for a caller that asks later whether they broke.
+    pub inner_id: Option<doc::GroupId>,
+    /// Indentation levels of the items; 0 counts as 1 (a continuation indent is 2).
+    pub indent_levels: usize,
 }
 
 impl Default for ListStyle {
@@ -82,6 +105,12 @@ impl Default for ListStyle {
             hug_close: false,
             shared: false,
             broken_separator: None,
+            blank_breaks: false,
+            force_break: false,
+            hang: false,
+            id: None,
+            inner_id: None,
+            indent_levels: 1,
         }
     }
 }
@@ -124,15 +153,24 @@ fn list_of(
     // The separator goes right after an item and its trailing comments after the separator:
     // `b, // c` and `b, /* c */` whether or not the source had a comma.
     let count = c.slots.len();
+    let trailing = match style.trailing_comma {
+        // (a list that never breaks has no place for it)
+        _ if style.layout == ListLayout::Flat => TrailingComma::Never,
+        TrailingComma::AsSource if c.slots.last().is_some_and(|s| s.sep.is_some()) => {
+            TrailingComma::WhenBroken
+        }
+        TrailingComma::AsSource => TrailingComma::Never,
+        t => t,
+    };
     // Sparse (no allocation for a list without such comments): the slot and its last token.
     let mut tails: Vec<(usize, SyntaxToken)> = Vec::new();
     for (i, s) in c.slots.iter().enumerate() {
         let keeps = if i + 1 < count {
             s.sep.is_none()
         } else {
-            style.trailing_comma != TrailingComma::Never
+            trailing != TrailingComma::Never
         };
-        if let Some(t) = keeps
+        if let Some(t) = (keeps && !s.hole)
             .then(|| cx.last_token(&s.node))
             .flatten()
             .filter(|t| comments::has_trailing_comment(g, t))
@@ -146,7 +184,17 @@ fn list_of(
         .iter()
         .map(|(i, t)| (*i, cx.reattach_trailing(t)))
         .collect();
-    let dangling = comments::leading_comments(g, &c.close);
+    // Inline block comments in front of the closing delimiter stay against it; the others stand
+    // on lines of their own inside the list.
+    let mut dangling = comments::leading_comments(g, &c.close);
+    let inline_close = !items.is_empty()
+        && !dangling.is_empty()
+        && dangling
+            .iter()
+            .all(|c| c.kind == comments::CommentKind::Block && c.breaks_after == 0);
+    if inline_close {
+        dangling.clear();
+    }
     let open_comments = !comments::trailing_comments(g, &c.open).is_empty();
     // Comments before the opening and after the closing delimiter belong outside the group: a
     // comment must not force the list itself to break.
@@ -158,9 +206,14 @@ fn list_of(
             cx,
             &comments::trailing_comments(g, &c.open),
             !items.is_empty(),
+            style.padding && !items.is_empty(),
         ),
     ]);
-    let closing = cx.token_text(&c.close);
+    let closing = if inline_close {
+        cx.close_token(&c.close)
+    } else {
+        cx.token_text(&c.close)
+    };
 
     if items.is_empty() && dangling.is_empty() && !open_comments && c.prefix.is_none() {
         return Ok(doc::concat(vec![
@@ -194,24 +247,47 @@ fn list_of(
         None => doc::lit(style.separator),
     };
     let last = items.len().saturating_sub(1);
-    let mut inner = Vec::new();
+    // A hole (`[a, , b]`) is its separator: after the last item that comma is part of the list;
+    // after a `#final` item (a rest element) no trailing comma is allowed.
+    let (last_hole, last_final) = items.last().map_or((false, false), |i| {
+        (i.hole, g.has_tag(i.last.kind(), "final"))
+    });
+    let fill = style.layout == ListLayout::Fill;
+    // (a fill measures its contents flat: its trailing comma asks the group of the whole list)
+    let fill_id = fill.then(doc::new_group_id);
+    let mut fill_parts: Vec<Doc> = Vec::new();
+    let mut lead = Vec::new();
     if !items.is_empty() || c.prefix.is_some() {
-        inner.push(pad.clone());
+        lead.push(pad.clone());
     }
     if let Some(prefix) = &c.prefix {
-        inner.push(cx.format(prefix)?);
-        inner.push(doc::lit(" "));
+        lead.push(cx.format(prefix)?);
+        lead.push(doc::lit(" "));
     }
+    let mut inner = Vec::new();
     for i in 0..items.len() {
         if i > 0 {
-            inner.push(gap(
+            // (a blank line in a fill is a hard break: the fill must not print `, ` before it)
+            let base = if fill && items[i].blank_before > 0 {
+                doc::hardline()
+            } else {
+                line.clone()
+            };
+            let between = gap(
                 cx,
                 &items[i - 1],
                 &items[i],
-                line.clone(),
+                base,
                 if flat { 0 } else { style.max_blank_lines },
                 style.force_blank,
-            ));
+                style.blank_breaks,
+            );
+            if fill {
+                fill_parts.push(doc::concat(std::mem::take(&mut inner)));
+                fill_parts.push(between);
+            } else {
+                inner.push(between);
+            }
         }
         inner.push(std::mem::replace(&mut items[i].doc, Doc::Nil));
         // (`x: y,` kept as written in a list of `;` members ends with its separator too)
@@ -221,11 +297,16 @@ fn list_of(
                 t.text() == style.separator
                     || (matches!(t.text(), ";" | ",") && matches!(style.separator, ";" | ","))
             });
-        inner.push(match (i == last, style.trailing_comma) {
+        inner.push(match (i == last, trailing) {
             _ if own_sep => Doc::Nil,
             (false, _) => sep.clone(),
+            (true, _) if last_hole => doc::lit(style.separator),
+            (true, _) if last_final => Doc::Nil,
             (true, TrailingComma::Never) => Doc::Nil,
-            (true, TrailingComma::WhenBroken) => doc::if_break(doc::lit(broken), Doc::Nil),
+            (true, _) => match fill_id {
+                Some(id) => doc::if_break_in(id, doc::lit(broken), Doc::Nil),
+                None => doc::if_break(doc::lit(broken), Doc::Nil),
+            },
         });
         if let Some((_, d)) = tail_comments
             .iter_mut()
@@ -235,7 +316,25 @@ fn list_of(
         }
         inner.push(separator_comments(cx, &items[i]));
     }
-    inner.push(dangling_comments(&dangling, false));
+    let blank_before_close = !dangling.is_empty() && comments::blank_lines_before(g, &c.close) > 0;
+    inner.push(dangling_comments(&dangling, blank_before_close));
+    let inner = if fill {
+        fill_parts.push(doc::concat(inner));
+        doc::fill(fill_parts)
+    } else {
+        doc::concat(inner)
+    };
+    // The items in a group of their own, after the opening delimiter and its line break.
+    let inner = if style.hang || style.inner_id.is_some() {
+        match style.inner_id {
+            Some(id) => doc::group_with_id(id, inner),
+            None => doc::group(inner),
+        }
+    } else {
+        inner
+    };
+    lead.push(inner);
+    let inner = doc::concat(lead);
     let mut body_parts = Vec::new();
     if style.leading_line {
         body_parts.push(doc::line());
@@ -246,32 +345,43 @@ fn list_of(
         pad
     };
     // A flat list has no line breaks of its own to indent; a list nested in it indents itself.
-    let inner = doc::concat(inner);
-    let inner = if flat { inner } else { doc::indent(inner) };
+    let inner = if flat {
+        inner
+    } else {
+        (0..style.indent_levels.max(1)).fold(inner, |d, _| doc::indent(d))
+    };
     body_parts.extend([opening, inner, close_pad, closing]);
     let body = doc::concat(body_parts);
 
     let d = cx.directives_of(node);
     let broken = if flat {
         false
-    } else if d.has(&Directive::BreakAll) {
+    } else if style.force_break || d.has(&Directive::BreakAll) {
         true
     } else if d.has(&Directive::KeepTogether) {
         false
     } else {
         match style.layout {
-            ListLayout::Fit | ListLayout::Flat => false,
+            ListLayout::Fit | ListLayout::Flat | ListLayout::Fill => false,
+            ListLayout::MagicTrailingComma => c.slots.last().is_some_and(|s| s.sep.is_some()),
             ListLayout::Break => !items.is_empty(),
             ListLayout::PreserveBreak => {
                 !items.is_empty() && spans_lines(cx, node, &c.open, &c.close)
             }
-            ListLayout::PreserveOpenBreak => {
+            ListLayout::PreserveFirstBreak => {
                 !items.is_empty() && breaks_after_open(cx, node, &c.open)
             }
             ListLayout::PreserveItemBreak => !items.is_empty() && item_breaks(cx, node, &c),
         }
     };
-    let list = if broken {
+    let list = if let Some(id) = fill_id.or(style.id) {
+        let body = if broken {
+            doc::concat(vec![body, doc::break_parent()])
+        } else {
+            body
+        };
+        doc::group_with_id(id, body)
+    } else if broken {
         doc::group_broken(body)
     } else if style.shared {
         body
@@ -283,12 +393,20 @@ fn list_of(
 
 /// Comments after the opening delimiter. A block comment sits against the delimiter and is
 /// followed by a space when items follow it on the same line: `(/* a */ 1)`.
-fn open_comments_doc(cx: &FormatCtx<'_>, cs: &[comments::Comment], items_follow: bool) -> Doc {
+fn open_comments_doc(
+    cx: &FormatCtx<'_>,
+    cs: &[comments::Comment],
+    items_follow: bool,
+    padded: bool,
+) -> Doc {
     let mut parts = Vec::new();
     for c in cs {
         if c.kind == comments::CommentKind::Block {
+            if padded {
+                parts.push(doc::lit(" "));
+            }
             parts.push(crate::context::verbatim_text(&c.text()));
-            if items_follow {
+            if items_follow && !padded {
                 parts.push(doc::if_break(Doc::Nil, doc::lit(" ")));
             }
         } else {

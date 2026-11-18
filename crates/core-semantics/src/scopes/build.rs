@@ -318,6 +318,16 @@ impl Binder<'_> {
         {
             flags = *f;
         }
+        if !d.unchecked.is_empty()
+            && (node
+                .parent()
+                .is_some_and(|p| d.unchecked.contains(&self.grammar.name(p.kind())))
+                || node
+                    .children()
+                    .any(|c| d.unchecked.contains(&self.grammar.name(c.kind()))))
+        {
+            flags = flags | Flags::UNCHECKED;
+        }
         if let Some((extra, p)) = d.expression
             && !node.parent().is_some_and(|p| self.table.is_host(p.kind()))
         {
@@ -802,6 +812,8 @@ fn access(
         Flow::ThroughType if state.contains(Access::TYPE) => (state, false),
         Flow::ThroughType => (Access::NONE, false),
         Flow::Outside | Flow::Skip => (Access::NONE, matches!(flow, Flow::Outside)),
+        Flow::Probe => (Access::READ.union(Access::PROBE), false),
+        Flow::Tag => (Access::READ.union(Access::TAG), false),
         Flow::Assigns => (
             match op_text {
                 Some("++" | "--") => rw,

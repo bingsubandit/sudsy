@@ -47,6 +47,14 @@ pub(crate) fn soft_brk() -> Doc {
     if OPEN.get() { softline() } else { Doc::Nil }
 }
 
+/// The `string` row of Python's string token.
+pub(crate) fn syntax() -> &'static core_syntax::strings::StringSyntax {
+    let g = core_syntax::grammars::PYTHON.get();
+    g.string_rows(crate::generated::kind::STRING)
+        .next()
+        .expect("the Python grammar has a string row")
+}
+
 pub(crate) struct Style {
     pub quote: core_format::literals::prefixed::Quote,
     pub magic_comma: bool,
@@ -120,7 +128,7 @@ pub(crate) fn bracketed_by(
         return parenthesized(cx.token(open), inner, cx.token(close));
     }
     cx.hold_leading(close);
-    let end = concat(vec![doc::hardline(), super::comment::comments_block(&end)]);
+    let end = concat(vec![doc::hardline(), core_format::comment_lines(&end)]);
     parenthesized(cx.token(open), concat(vec![inner, end]), cx.token(close))
 }
 

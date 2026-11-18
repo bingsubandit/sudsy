@@ -1,7 +1,7 @@
 # Semantic analysis
 
 ## Capability layers (`core-semantics`)
-Providers declare layers, rules require them; JSON and YAML declare none. JavaScript, TypeScript and Python declare none either: their scope rules (`no-undef`, `no-unused-vars`, `F821`, `F841`, ...) read the model of `core-semantics::scopes`, which the language builds in process on the first of them that runs on a file and shares between them ([../formatting/js.md](../formatting/js.md#scope-layer), [../formatting/python.md](../formatting/python.md#scope-layer)); the layers below describe what a provider answers across a process boundary (C#).
+Providers declare layers, rules require them; JSON and YAML declare none. JavaScript, TypeScript and Python declare none either: their scope rules (`undefined-variable`, `unused-variable`, `F821`, `F841`, ...) read the model of `core-semantics::scopes`, which the language builds in process on the first of them that runs on a file and shares between them ([../formatting/js.md](../formatting/js.md#scope-layer), [../formatting/python.md](../formatting/python.md#scope-layer)); the layers below describe what a provider answers across a process boundary (C#).
 
 | Layer | Answered in C# by |
 |---|---|
@@ -34,6 +34,18 @@ One rule family on the binder of `core_semantics::scopes` for the languages that
 | `unused-local-variable` | on | | | Checkstyle UnusedLocalVariable: never read (assigned only counts as unused; `x++` reads) |
 | `parameter-assignment` | off | | | Checkstyle ParameterAssignment |
 | `undefined-variable` | | | on | PHPStan level 0 |
+
+Rule rows of a language's rule files use the same checks as `family: scope` (`params: { check: <id> }`, `message` with `{name}`, `{line}` and `{action}`), so a row carries its options, description and default level as data; JavaScript and TypeScript do ([../formatting/js.md](../formatting/js.md#scope-layer)):
+
+| Check | Reads | Options |
+|---|---|---|
+| `undefined-variable` | a read or write no scope binds, minus the language's `globals` (`globals_if` by file flavor, `scope_names`), probes (`typeof x`) and tags (`<Tag />`); `top_unchecked` leaves the top scope alone | `globals` |
+| `unused-variable`, `unused-parameter` | symbols never read, after ESLint's `no-unused-vars` and typescript-eslint (a read in its own `a = a + 1` or `a++` statement is none; exported, ambient, merged and property declarations are used; parameters after the last used one with `args: after-used`) | `caught_errors`, `ignore_pattern`, `ignore_rest_siblings`; `args`, `ignore_pattern` |
+| `use-before-define` | a reference before its declaration, or evaluated while its variable is initialized | `functions`, `classes`, `variables` |
+| `redeclared-variable` | a name declared again in a scope kind of `redeclared_in`; in typed files declaration merging is allowed | |
+| `shadowed-variable` | a declaration that hides one of a scope around it (functions hoist, `var a = function a() {}` does not count) | `allow`, `kinds` |
+
+The shared code names no node kind: it reads the grammar's role tags (`#function`, `#loop`, `#parameter-list`, `#assignment`, `#call`, `#block`, ...) and the tags a grammar adds for these rules (`#export`, `#export-list`, `#module`, `#module-body`, `#signature`, `#field`, `#sequence`, `#escapes`, `#default-value`, `#expression-statement`, `#markup`, `#decorator`, `#rest`, `#global-scope`), the fields of kinds (`init`, `body`, `left`, `right`, `iterable`, `callee`, `value`), the flags the table gives a declaration (`Flags`: `CONST`, `PARAMETER`, `IMPORT`, `EXPRESSION_NAME`, `UNCHECKED`, ...) and `ScopeLang`'s facts: `flavors` (`typed`, `definition` and others by file suffix), `globals`, `globals_if`, `scope_names`, `redeclared_in`, `parameter_properties` and `markup`.
 
 Ruby (RuboCop Lint, [../formatting/ruby.md](../formatting/ruby.md#lint)) uses `unused-local-variable` for Lint/UselessAssignment and adds `unused-method-argument`, `unused-block-argument` (a parameter that nothing reads, in the scope kinds `ScopeLang::arguments` names, minus what its skip predicate allows) and `underscore-prefixed-variable-used` (an `_x` that is read).
 

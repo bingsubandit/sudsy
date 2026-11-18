@@ -2,11 +2,12 @@
 
 use super::arrow::Flags;
 use super::util::{
-    R, braces, elem, inline, inline_split, kids, node_of, remove_lines, semi, shape_error,
-    token_of, will_break,
+    R, elem, inline, inline_split, kids, node_of, remove_lines, semi, shape_error, token_of,
+    will_break,
 };
 use crate::generated::kind as k;
-use core_format::doc::{self, Doc, concat, group, indent, line, lit, softline};
+use core_format::doc::{self, Doc, concat, group, indent, line, lit};
+use core_format::shapes::{self, ListLayout};
 use core_format::{FormatCtx, FormatError, comments};
 use core_syntax::{SyntaxElement, SyntaxNode};
 
@@ -237,91 +238,35 @@ pub(crate) fn parameters_in(
     ) else {
         return Err(shape_error("parameters"));
     };
-    // The comments of each comma stay after it.
-    let mut items: Vec<&SyntaxNode> = Vec::new();
-    let mut commas: Vec<Doc> = Vec::new();
-    for e in &elems[1..elems.len() - 1] {
-        match e {
-            SyntaxElement::Node(n) => {
-                items.push(n);
-                commas.push(Doc::Nil);
-            }
-            SyntaxElement::Token(t) if t.text() == "," => {
-                if let Some(c) = commas.last_mut() {
-                    *c = concat(vec![
-                        cx.leading_comments_doc(t),
-                        cx.trailing_comments_doc(t),
-                    ]);
-                }
-            }
-            SyntaxElement::Token(_) => {}
-        }
-    }
-    // A comment on the parameter (before the `)` or at its comma) keeps the parentheses apart.
-    let commented = commas.iter().any(|c| !matches!(c, Doc::Nil))
-        || !comments::leading_comments(cx.grammar, close).is_empty();
-    let hugs = !commented && matches!(&items[..], [only] if hugs_parentheses(only));
-    let ends_in_rest = items
-        .last()
-        .is_some_and(|n| n.kind() == k::FORMAL_PARAMETER_REST);
-    let docs = items
-        .iter()
-        .map(|n| cx.format(n))
-        .collect::<Result<Vec<_>, _>>()?;
-    if docs.is_empty() {
+    let items: Vec<&SyntaxNode> = elems.iter().filter_map(node_of).collect();
+    if items.is_empty() {
         return Ok(super::util::empty_pair(cx, open, close));
     }
-    if hugs {
+    // A comment on the parameter (before the `)` or at its comma) keeps the parentheses apart.
+    let commented = elems
+        .iter()
+        .filter_map(token_of)
+        .any(|t| t.text() == "," && super::ast::token_comments(cx, t))
+        || !comments::leading_comments(cx.grammar, close).is_empty();
+    if !commented && matches!(&items[..], [only] if hugs_parentheses(only)) {
         return Ok(concat(vec![
             cx.token(open),
-            concat(docs),
-            concat(commas),
+            cx.format(items[0])?,
             cx.token(close),
         ]));
     }
     // Several parameters, one a parameter property (`private a: A`): one per line.
-    let property = items.len() > 1
+    let mut style = super::object::list_style(cx, true, ListLayout::Fit);
+    style.force_break = items.len() > 1
         && items.iter().any(|p| {
             p.children_with_tokens().any(|e| {
                 matches!(&e, SyntaxElement::Token(t) if matches!(t.text(),
                 "public" | "private" | "protected" | "readonly" | "override"))
             })
         });
-    let grouped = ungrouped.is_none_or(|object_return| object_return && items.len() == 1);
-    let last = docs.len() - 1;
-    let mut list = Vec::new();
-    for (i, (d, c)) in docs.into_iter().zip(commas).enumerate() {
-        list.push(d);
-        if i < last {
-            // A blank line between two parameters stays (and breaks the list).
-            let blank = cx
-                .first_token(items[i + 1])
-                .is_some_and(|t| comments::blank_lines_before(cx.grammar, &t) > 0);
-            if blank {
-                list.extend([lit(","), c, doc::hardline(), doc::hardline()]);
-            } else {
-                list.extend([lit(","), c, line()]);
-            }
-        } else {
-            if !ends_in_rest {
-                list.push(super::util::trailing_comma(cx, true));
-            }
-            list.push(c);
-        }
-    }
-    let dangling = super::util::dangling(cx, close);
-    let body = concat(vec![
-        if property {
-            doc::break_parent()
-        } else {
-            Doc::Nil
-        },
-        cx.token(open),
-        indent(concat(vec![softline(), concat(list), dangling])),
-        softline(),
-        cx.token(close),
-    ]);
-    Ok(if grouped { group(body) } else { body })
+    style.shared = !ungrouped.is_none_or(|object_return| object_return && items.len() == 1);
+    let owner = open.parent().ok_or_else(|| shape_error("parameters"))?;
+    shapes::delimited_list_between(cx, &owner, open, close, &style)
 }
 
 /// `import a, { b } from "x" with { type: "json" };`, `export { a } from "x";`, `export * ...`.
@@ -334,44 +279,34 @@ fn module_declaration(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let (Some(open), Some(close)) = (find(k::L_BRACE), find(k::R_BRACE)) else {
         return Ok(concat(vec![inline(cx, &kids)?, semi(cx, node)]));
     };
-    // A blank line in front of a specifier stays when the list breaks.
-    let mut specifiers = Vec::new();
-    for e in &kids[open + 1..close] {
-        // The comments of a comma stay after the specifier before it.
-        if let SyntaxElement::Token(t) = e {
-            if let Some(prev) = specifiers.last_mut() {
-                let with = concat(vec![
-                    std::mem::replace(prev, Doc::Nil),
-                    cx.leading_comments_doc(t),
-                    cx.trailing_comments_doc(t),
-                ]);
-                *prev = with;
-            }
-            continue;
-        }
-        let Some(n) = node_of(e) else { continue };
-        let blank = !specifiers.is_empty()
-            && cx
-                .first_token(n)
-                .is_some_and(|t| comments::blank_lines_before(cx.grammar, &t) > 0);
-        let printed = cx.format(n)?;
-        specifiers.push(if blank {
-            concat(vec![softline(), printed])
-        } else {
-            printed
-        });
-    }
     // A default or namespace import in front of the braces keeps the braces from breaking alone.
     let standalone = kids[..open].iter().any(|e| node_of(e).is_some());
-    let can_break = specifiers.len() > 1 || standalone;
     let (Some(o), Some(c)) = (token_of(&kids[open]), token_of(&kids[close])) else {
         return Err(shape_error("module declaration"));
     };
-    let mut parts = vec![
-        inline(cx, &kids[..open])?,
-        lit(" "),
-        braces(cx, o, specifiers, c, can_break),
-    ];
+    let can_break = kids[open + 1..close]
+        .iter()
+        .filter(|e| node_of(e).is_some())
+        .count()
+        > 1
+        || standalone;
+    let mut list = super::object::list_style(
+        cx,
+        false,
+        if can_break {
+            ListLayout::Fit
+        } else {
+            ListLayout::Flat
+        },
+    );
+    list.blank_breaks = false;
+    list.padding = super::util::style(cx).bracket_spacing;
+    let list = if close == open + 1 {
+        concat(vec![cx.token(o), cx.token(c)])
+    } else {
+        shapes::delimited_list_between(cx, node, o, c, &list)?
+    };
+    let mut parts = vec![inline(cx, &kids[..open])?, lit(" "), list];
     if kids[close + 1..]
         .iter()
         .any(|e| !super::util::is_tok(e, ";"))
@@ -401,17 +336,15 @@ fn export_default(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
 
 /// `{ type: "json" }` of an import attribute list.
 fn with_clause(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
-    let kids = kids(cx, node);
-    let (Some(open), Some(close)) = (
-        kids.first().and_then(token_of),
-        kids.last().and_then(token_of),
-    ) else {
-        return Err(shape_error("import attributes"));
-    };
-    let attributes = kids
-        .iter()
-        .filter_map(node_of)
-        .map(|n| cx.format(n))
-        .collect::<Result<Vec<_>, _>>()?;
-    Ok(braces(cx, open, attributes, close, false))
+    if node.children().next().is_none() {
+        return Ok(concat(
+            kids(cx, node)
+                .iter()
+                .map(|e| elem(cx, e))
+                .collect::<Result<_, _>>()?,
+        ));
+    }
+    let mut list = super::object::list_style(cx, false, ListLayout::Flat);
+    list.padding = super::util::style(cx).bracket_spacing;
+    shapes::delimited_list(cx, node, &list)
 }

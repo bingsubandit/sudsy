@@ -30,18 +30,19 @@ js:
       no-misleading-character-class: error
       no-octal: error
       no-prototype-builtins: error
-      no-redeclare: error
+      redeclared-variable: error
       no-regex-spaces: error
       no-self-assign: error
       no-shadow-restricted-names: error
       no-sparse-arrays: error
-      no-undef: error
+      undefined-variable: error
       no-unexpected-multiline: error
       unreachable-code: error
       no-unsafe-finally: error
       no-unsafe-negation: error
       no-unused-expressions: error
-      no-unused-vars: error
+      unused-variable: error
+      unused-parameter: error
       no-useless-catch: error
       no-useless-escape: error
       no-with: error

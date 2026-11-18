@@ -13,6 +13,7 @@ mod heritage;
 mod key_value;
 mod list;
 mod parens;
+mod signature;
 
 pub use assignment::{
     Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
@@ -39,6 +40,7 @@ pub use parens::{
     Need, NoParenHooks, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, first_char,
     is_dropped_close, paren_group, parenthesized, unwrap, wrap,
 };
+pub use signature::{Signature, parameter_list, signature};
 
 use crate::FormatCtx;
 use crate::comments::{self, Comment, CommentKind};
@@ -61,6 +63,9 @@ pub type BlankRule = fn(&FormatCtx<'_>, &SyntaxNode, &SyntaxNode) -> bool;
 pub(crate) struct Slot {
     node: SyntaxNode,
     sep: Option<SyntaxToken>,
+    /// An empty item that is only its separator (`[a, , b]`); `node` is then the node of the
+    /// separator.
+    hole: bool,
 }
 
 /// A node with open and close delimiter tokens and items between them.
@@ -152,10 +157,35 @@ fn place(g: &Grammar, slots: &mut Vec<Slot>, e: SyntaxElement) -> Result<(), Str
     match e {
         // (a zero-width node, which some parsers leave in a list, holds nothing to print)
         SyntaxElement::Node(node) if node.text_range().is_empty() => {}
-        SyntaxElement::Node(node) => slots.push(Slot { node, sep: None }),
+        // A hole (`#hole`: JS `[a, , b]`) is an item that is only its own separator.
+        SyntaxElement::Node(node) if g.has_tag(node.kind(), "hole") => {
+            let sep = node
+                .children_with_tokens()
+                .filter_map(SyntaxElement::into_token)
+                .find(|t| !g.is_trivia(t.kind()));
+            slots.push(Slot {
+                node,
+                sep,
+                hole: true,
+            })
+        }
+        SyntaxElement::Node(node) => slots.push(Slot {
+            node,
+            sep: None,
+            hole: false,
+        }),
         SyntaxElement::Token(t) if g.has_tag(t.kind(), "separator") => {
             match slots.last_mut().filter(|s| s.sep.is_none()) {
                 Some(slot) => slot.sep = Some(t),
+                // (a `#hole` separator with no item before it is an empty item)
+                None if g.has_tag(t.kind(), "hole") => {
+                    let node = t.parent().ok_or("separator without a parent")?;
+                    slots.push(Slot {
+                        node,
+                        sep: Some(t),
+                        hole: true,
+                    });
+                }
                 None => return Err("separator without a preceding item".into()),
             }
         }
@@ -179,6 +209,8 @@ pub(crate) struct Rendered {
     verbatim: bool,
     /// Separator after the last item of the run.
     sep: Option<SyntaxToken>,
+    /// An empty item (see [`Slot::hole`]).
+    hole: bool,
 }
 
 fn no_tokens() -> FormatError {
@@ -216,14 +248,28 @@ pub(crate) fn render_slots(
     let mut out = Vec::with_capacity(slots.len());
     let mut i = 0;
     while i < slots.len() {
+        if slots[i].hole {
+            out.push(Rendered {
+                first: slots[i].node.clone(),
+                last: slots[i].node.clone(),
+                blank_before: 0,
+                // (the comments in front of its separator stand in front of the hole)
+                doc: slots[i]
+                    .sep
+                    .as_ref()
+                    .map_or(Doc::Nil, |t| cx.leading_comments_doc(t)),
+                verbatim: false,
+                sep: slots[i].sep.clone(),
+                hole: true,
+            });
+            i += 1;
+            continue;
+        }
         let (blank_before, mark, commented) = leading_info(cx, &slots[i].node)?;
         if mark == Some(IgnoreMark::Start) {
-            let mut j = i;
-            while j + 1 < slots.len()
-                && leading_info(cx, &slots[j + 1].node)?.1 != Some(IgnoreMark::End)
-            {
-                j += 1;
-            }
+            let j = ignore::region_end(slots.len(), i, |n| {
+                Ok::<_, FormatError>(leading_info(cx, &slots[n].node)?.1)
+            })? - 1;
             let tok = cx.first_token(&slots[i].node).ok_or_else(no_tokens)?;
             let last = cx.last_token(&slots[j].node).ok_or_else(no_tokens)?;
             out.push(Rendered {
@@ -233,6 +279,7 @@ pub(crate) fn render_slots(
                 doc: cx.verbatim_range(&tok, &last),
                 verbatim: true,
                 sep: slots[j].sep.clone(),
+                hole: false,
             });
             i = j + 1;
         } else {
@@ -243,6 +290,7 @@ pub(crate) fn render_slots(
                 doc: cx.format_known(&slots[i].node, commented)?,
                 verbatim: mark == Some(IgnoreMark::Ignore),
                 sep: slots[i].sep.clone(),
+                hole: false,
             });
             i += 1;
         }
@@ -260,8 +308,9 @@ pub(crate) fn gap(
     base: Doc,
     max_blank: usize,
     force_blank: Option<BlankRule>,
+    blank_hard: bool,
 ) -> Doc {
-    let has_directives = !cx.directives.is_empty();
+    let has_directives = !cx.directives.is_empty() && !prev.hole && !next.hole;
     let (prev_d, next_d) = (
         has_directives.then(|| cx.directives_of(&prev.first)),
         has_directives.then(|| cx.directives_of(&next.first)),
@@ -277,12 +326,16 @@ pub(crate) fn gap(
     let hard_base = matches!(base, Doc::HardLine);
     let blank = required.unwrap_or_else(|| next.blank_before.min(max_blank));
     // Blank lines the source had vanish when a list fits on one line; required ones do not.
-    let blank_line = if hard_base || required.is_some() {
+    let blank_line = if hard_base || blank_hard || required.is_some() {
         doc::hardline()
     } else {
         doc::softline()
     };
-    let first = if forced { doc::hardline() } else { base };
+    let first = if forced || (blank_hard && blank > 0) {
+        doc::hardline()
+    } else {
+        base
+    };
     if blank == 0 {
         return first;
     }
@@ -299,7 +352,12 @@ pub(crate) fn separator_comments(cx: &FormatCtx<'_>, item: &Rendered) -> Doc {
         return Doc::Nil;
     };
     let g = cx.grammar;
-    let own: Vec<Comment> = comments::leading_comments(g, sep)
+    let leading = if item.hole {
+        Vec::new()
+    } else {
+        comments::leading_comments(g, sep)
+    };
+    let own: Vec<Comment> = leading
         .into_iter()
         .chain(comments::trailing_comments(g, sep))
         .collect();

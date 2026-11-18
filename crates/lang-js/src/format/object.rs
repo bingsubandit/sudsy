@@ -4,16 +4,13 @@
 //! names (`quote_props`) are decided before formatting, in [`KeyEdits`].
 
 use super::ast::{parent, un};
-use super::util::{R, inline, is_tok, kids, node_of, shape_error, style, token_of, trailing_comma};
+use super::util::{R, inline, is_tok, kids, node_of, shape_error, style, token_of};
 use crate::generated::kind as k;
 use core_config::{OptionValue, ResolvedOptions};
-use core_format::comments;
-use core_format::doc::{
-    Doc, break_parent, concat, fill, group, group_broken, group_with_id, hardline, if_break_in,
-    indent, line, lit, new_group_id, softline,
-};
+use core_format::doc::{Doc, concat, hardline, indent, lit};
+use core_format::shapes::{self, ListLayout, ListStyle, TrailingComma};
 use core_format::{FormatCtx, FormatError};
-use core_syntax::{Grammar, SyntaxElement, SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{Grammar, SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
     let doc = match node.kind() {
@@ -33,17 +30,11 @@ pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc
     Ok(Some(doc))
 }
 
-/// One element of a list: `None` for a hole (`[a, , b]`), and the comma after it.
-struct Item {
-    node: Option<SyntaxNode>,
-    comma: Option<SyntaxToken>,
-}
-
-/// The elements between the brackets of `node`, each with its comma.
-fn items(
+/// The delimiters of a list node and whether it holds nothing else.
+fn brackets(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
-) -> Result<(SyntaxToken, Vec<Item>, SyntaxToken), FormatError> {
+) -> Result<(SyntaxToken, SyntaxToken, bool), FormatError> {
     let elems = kids(cx, node);
     let (Some(open), Some(close)) = (
         elems.first().and_then(token_of),
@@ -51,104 +42,39 @@ fn items(
     ) else {
         return Err(shape_error("list without brackets"));
     };
-    let mut items: Vec<Item> = Vec::new();
-    // The last item still waits for its comma.
-    let mut open_item = false;
-    for e in &elems[1..elems.len() - 1] {
-        match e {
-            // A hole of an array expression holds its own comma.
-            SyntaxElement::Node(n) if n.kind() == k::ELISION => {
-                items.push(Item {
-                    node: None,
-                    comma: n
-                        .children_with_tokens()
-                        .filter_map(|c| c.into_token())
-                        .find(|t| !cx.grammar.is_trivia(t.kind())),
-                });
-                open_item = false;
-            }
-            SyntaxElement::Node(n) => {
-                items.push(Item {
-                    node: Some(n.clone()),
-                    comma: None,
-                });
-                open_item = true;
-            }
-            SyntaxElement::Token(t) if open_item => {
-                if let Some(last) = items.last_mut() {
-                    last.comma = Some(t.clone());
-                }
-                open_item = false;
-            }
-            SyntaxElement::Token(t) => items.push(Item {
-                node: None,
-                comma: Some(t.clone()),
-            }),
-        }
-    }
-    Ok((open.clone(), items, close.clone()))
+    Ok((open.clone(), close.clone(), elems.len() == 2))
 }
 
-/// The printed items, each with the comments of its comma, and whether a blank line follows.
-fn printed(cx: &FormatCtx<'_>, items: &[Item]) -> Result<Vec<(Doc, bool)>, FormatError> {
-    let mut out = Vec::with_capacity(items.len());
-    for (i, item) in items.iter().enumerate() {
-        let mut d = match &item.node {
-            Some(n) => cx.format(n)?,
-            None => Doc::Nil,
-        };
-        if let Some(c) = &item.comma {
-            d = concat(vec![
-                d,
-                cx.leading_comments_doc(c),
-                cx.trailing_comments_doc(c),
-            ]);
-        }
-        let blank = items
-            .get(i + 1)
-            .and_then(|n| n.node.as_ref())
-            .and_then(|n| cx.first_token(n))
-            .is_some_and(|t| comments::blank_lines_before(cx.grammar, &t) > 0);
-        out.push((d, blank));
+/// The list style Prettier gives objects, arrays and parameters: a blank line between items
+/// breaks the list, the comma per `trailing_comma` (`all_only`: only at `all`).
+pub(crate) fn list_style(cx: &FormatCtx<'_>, all_only: bool, layout: ListLayout) -> ListStyle {
+    ListStyle {
+        trailing_comma: if style(cx).commas >= if all_only { 2 } else { 1 } {
+            TrailingComma::WhenBroken
+        } else {
+            TrailingComma::Never
+        },
+        layout,
+        blank_breaks: true,
+        ..ListStyle::default()
     }
-    Ok(out)
-}
-
-fn is_rest(item: &Item) -> bool {
-    item.node.as_ref().is_some_and(|n| {
-        matches!(
-            n.kind(),
-            k::BINDING_REST_ELEMENT | k::ASSIGNMENT_TARGET_REST
-        )
-    })
 }
 
 /// `{ a, b }` of an object, an object pattern or an assignment target.
 fn object(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
-    let (open, items, close) = items(cx, node)?;
-    if items.is_empty() {
+    let (open, close, empty) = brackets(cx, node)?;
+    if empty {
         return Ok(empty_with_comments(cx, &open, &close));
     }
     let is_pattern = node.kind() != k::OBJECT_EXPRESSION;
     let p = parent(node);
     let pk = p.as_ref().map(SyntaxNode::kind);
-    let first_line_break = !is_pattern
-        && items[0]
-            .node
-            .as_ref()
-            .and_then(|n| cx.first_token(n))
-            .is_some_and(|t| {
-                cx.has_line_break(
-                    node,
-                    TextRange::new(open.text_range().start(), t.text_range().start()),
-                )
-            });
     let nested_pattern = is_pattern
         && !matches!(
             pk,
             Some(k::FORMAL_PARAMETER | k::CATCH_PARAMETER | k::ASSIGNMENT_PATTERN)
         )
-        && items.iter().filter_map(|i| i.node.as_ref()).any(|prop| {
+        && node.children().any(|prop| {
             prop.children_with_tokens()
                 .any(|e| e.as_token().is_some_and(|t| t.kind() == k::COLON))
                 && prop.last_child().is_some_and(|v| {
@@ -161,38 +87,6 @@ fn object(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
                     )
                 })
         });
-    let must_break = first_line_break || nested_pattern;
-    let docs = printed(cx, &items)?;
-    let mut parts = Vec::new();
-    for (i, (d, _)) in docs.iter().enumerate() {
-        if i > 0 {
-            parts.extend([lit(","), line()]);
-            if docs[i - 1].1 {
-                parts.push(hardline());
-            }
-        }
-        parts.push(d.clone());
-    }
-    let edge = if style(cx).bracket_spacing {
-        line()
-    } else {
-        softline()
-    };
-    let comma = if items.last().is_some_and(is_rest) {
-        Doc::Nil
-    } else {
-        trailing_comma(cx, false)
-    };
-    // The comments in front of the `{` belong to the whole object, not to its group.
-    let lead = cx.leading_comments_doc(&open);
-    let dangling = super::util::dangling(cx, &close);
-    let body = concat(vec![
-        cx.token_text(&open),
-        cx.trailing_comments_doc(&open),
-        indent(concat(vec![edge.clone(), concat(parts), comma, dangling])),
-        edge,
-        cx.token(&close),
-    ]);
     // A lone pattern parameter hugs the parentheses and a pattern on the left of `=` shares the
     // group of the assignment.
     let shared = is_pattern
@@ -203,17 +97,22 @@ fn object(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
                         && hugs_only_param(p)
                         && p.parent().is_some_and(|fp| fp.children().count() == 1))
             }
-            (_, Some(k::VARIABLE_DECLARATOR | k::ASSIGNMENT_EXPRESSION)) => !must_break,
+            (_, Some(k::VARIABLE_DECLARATOR | k::ASSIGNMENT_EXPRESSION)) => !nested_pattern,
             _ => false,
         };
-    Ok(concat(vec![
-        lead,
-        match (shared, must_break) {
-            (true, _) => body,
-            (false, true) => group_broken(body),
-            (false, false) => group(body),
+    let mut list = list_style(
+        cx,
+        false,
+        if is_pattern {
+            ListLayout::Fit
+        } else {
+            ListLayout::PreserveFirstBreak
         },
-    ]))
+    );
+    list.padding = style(cx).bracket_spacing;
+    list.force_break = nested_pattern;
+    list.shared = shared;
+    shapes::delimited_list(cx, node, &list)
 }
 
 /// A parameter `{ a, b }: { a: A; b: B }`: the pattern and the type literal break together,
@@ -264,81 +163,32 @@ pub(crate) fn hugs_only_param(param: &SyntaxNode) -> bool {
 
 /// `[a, b]`: a group, or a fill when it holds only numbers.
 fn array(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
-    let (open, items, close) = items(cx, node)?;
-    if items.is_empty() {
+    let (open, close, empty) = brackets(cx, node)?;
+    if empty {
         return Ok(empty_with_comments(cx, &open, &close));
     }
     let concise = node.kind() == k::ARRAY_EXPRESSION && super::call::is_concise_array(cx, node);
-    let id = new_group_id();
-    let comma = if items.last().is_some_and(|i| i.node.is_none()) {
-        lit(",")
-    } else if items.last().is_some_and(is_rest) {
-        Doc::Nil
-    } else if concise {
-        if_break_in(id, lit(","), Doc::Nil)
-    } else {
-        trailing_comma(cx, false)
-    };
-    let docs = printed(cx, &items)?;
-    let last = docs.len() - 1;
-    let dangling = super::util::dangling(cx, &close);
-    let body = if concise {
-        let mut parts = Vec::new();
-        for (i, (d, blank)) in docs.into_iter().enumerate() {
-            if i == last {
-                parts.push(concat(vec![d, comma.clone(), dangling.clone()]));
-            } else {
-                parts.push(concat(vec![d, lit(",")]));
-                parts.push(if blank {
-                    concat(vec![hardline(), hardline()])
-                } else {
-                    line()
-                });
-            }
-        }
-        fill(parts)
-    } else {
-        let mut parts = Vec::new();
-        for (i, (d, blank)) in docs.into_iter().enumerate() {
-            parts.push(d);
-            if i != last {
-                parts.extend([lit(","), line()]);
-                if blank {
-                    parts.push(softline());
-                }
-            }
-        }
-        parts.push(comma);
-        parts.push(dangling);
-        concat(parts)
-    };
-    let must_break = node.kind() == k::ARRAY_EXPRESSION && items.len() > 1 && {
-        let elems: Vec<SyntaxNode> = items
-            .iter()
-            .filter_map(|i| i.node.as_ref().map(un))
-            .collect();
-        elems.len() == items.len()
+    let mut list = list_style(
+        cx,
+        false,
+        if concise {
+            ListLayout::Fill
+        } else {
+            ListLayout::Fit
+        },
+    );
+    list.blank_breaks = false;
+    // Several arrays or objects of several entries each break the outer array.
+    list.force_break = node.kind() == k::ARRAY_EXPRESSION && {
+        let elems: Vec<SyntaxNode> = node.children().map(|n| un(&n)).collect();
+        elems.len() > 1
             && elems.iter().enumerate().all(|(i, e)| {
                 matches!(e.kind(), k::OBJECT_EXPRESSION | k::ARRAY_EXPRESSION)
                     && elems.get(i + 1).is_none_or(|n| n.kind() == e.kind())
                     && e.children().count() > 1
             })
     };
-    // The comments in front of the `[` belong to the whole array, not to its group.
-    Ok(concat(vec![
-        cx.leading_comments_doc(&open),
-        group_with_id(
-            id,
-            concat(vec![
-                cx.token_text(&open),
-                cx.trailing_comments_doc(&open),
-                indent(concat(vec![softline(), body])),
-                softline(),
-                cx.token(&close),
-                if must_break { break_parent() } else { Doc::Nil },
-            ]),
-        ),
-    ]))
+    shapes::delimited_list(cx, node, &list)
 }
 
 /// `key: value` laid out as an assignment; a shorthand property or a method is printed as it

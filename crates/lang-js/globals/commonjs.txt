@@ -1,0 +1,5 @@
+arguments
+exports
+global
+module
+require

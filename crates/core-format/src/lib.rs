@@ -17,6 +17,7 @@ pub mod ignore;
 mod layout;
 mod lines;
 pub mod literals;
+mod placement;
 pub mod printer;
 pub mod rewrite;
 pub mod rules;
@@ -29,6 +30,7 @@ pub use context::{DefaultFormatter, EmbedMode, Embedder, FormatCtx, NodeFormatte
 pub use directives::{DIRECTIVES_VERSION, Directive, DirectiveConflict, DirectiveTable, NodeKey};
 pub use doc::Doc;
 pub use error::FormatError;
+pub use placement::comment_lines;
 pub use printer::PrintOptions;
 
 use core_config::ResolvedOptions;

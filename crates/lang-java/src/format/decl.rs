@@ -1,7 +1,7 @@
 //! Declarations: the file, types and their bodies, members, modifiers, annotations, parameters.
 
 use super::*;
-use core_format::shapes;
+use core_format::shapes::{self, ListStyle};
 
 pub(super) fn rule(
     cx: &FormatCtx<'_>,
@@ -27,12 +27,10 @@ pub(super) fn rule(
         k::THROWS => throws(cx, node),
         k::FORMAL_PARAMETER | k::SPREAD_PARAMETER => parameter(cx, node),
         k::RESOURCE_SPECIFICATION => resources(cx, node),
-        k::FORMAL_PARAMETERS
-        | k::RECORD_HEADER
-        | k::ARGUMENT_LIST
-        | k::ANNOTATION_ARGUMENT_LIST => paren_list(cx, node),
+        k::FORMAL_PARAMETERS | k::RECORD_HEADER => hanging_list(cx, node, None),
+        k::ARGUMENT_LIST | k::ANNOTATION_ARGUMENT_LIST => paren_list(cx, node),
         k::PACKAGE_DECLARATION => package(cx, node),
-        k::TYPE_PARAMETERS | k::TYPE_ARGUMENTS => angle_list(cx, node),
+        k::TYPE_PARAMETERS | k::TYPE_ARGUMENTS => angle_list(cx, node, None),
         k::VARIABLE_DECLARATOR => declarator(cx, node),
         k::ENUM_CONSTANT => enum_constant(cx, node),
         _ => return None,
@@ -115,7 +113,7 @@ fn type_decl(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         .unwrap_or(rest.len());
     let id = doc::new_group_id();
     let mut header = vec![seq_with(cx, &rest[..split], |e| match e.as_node() {
-        Some(n) if e.kind() == k::TYPE_PARAMETERS => angle_list_id(cx, n, Some(id)),
+        Some(n) if e.kind() == k::TYPE_PARAMETERS => angle_list(cx, n, Some(id)),
         _ => el(cx, e),
     })?];
     let mut tail = Vec::new();
@@ -332,38 +330,35 @@ fn method(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let (sig, thr) = head.split_at(throws.unwrap_or(head.len()));
     let params = sig.iter().position(|e| e.kind() == k::FORMAL_PARAMETERS);
     let (pre, post) = sig.split_at(params.unwrap_or(sig.len()));
-    let mut line = Vec::new();
-    let moved = doc::new_group_id();
-    // A long return type moves below the type parameters.
-    if pre.len() > 1 && pre[0].kind() == k::TYPE_PARAMETERS {
-        line.push(el(cx, &pre[0])?);
-        line.push(doc::group_with_id(
-            moved,
-            cont(doc::concat(vec![doc::line(), seq(cx, &pre[1..])?])),
-        ));
-    } else {
-        line.push(seq(cx, pre)?);
-    }
-    // The throws clause moves to its own line when the parameters are one per line, or when it
-    // does not fit after them.
+    // A long return type moves below the type parameters; the throws clause moves to its own
+    // line when the parameters are one per line, or when it does not fit after them.
     let id = doc::new_group_id();
+    let (type_params, head) = match pre {
+        [tp, rest @ ..] if !rest.is_empty() && tp.kind() == k::TYPE_PARAMETERS => {
+            (Some(el(cx, tp)?), Some(seq(cx, rest)?))
+        }
+        _ => (None, Some(seq(cx, pre)?)),
+    };
+    let mut params_doc = Vec::new();
     for e in post {
-        line.push(match e.as_node() {
-            Some(n) if e.kind() == k::FORMAL_PARAMETERS => {
-                let p = doc::shared(paren_list_id(cx, n, Some(id), false)?);
-                doc::if_break_in(moved, cont(p.clone()), p)
-            }
+        params_doc.push(match e.as_node() {
+            Some(n) if e.kind() == k::FORMAL_PARAMETERS => hanging_list(cx, n, Some(id))?,
             _ => el(cx, e)?,
         });
     }
-    for e in thr {
-        let t = doc::shared(el(cx, e)?);
-        let broken = doc::concat(vec![doc::hardline(), t.clone()]);
-        let fill = doc::group(doc::concat(vec![doc::line(), t]));
-        line.push(cont(doc::if_break_in(id, broken, fill)));
-    }
-    if !line.is_empty() {
-        parts.push(doc::group(doc::concat(line)));
+    let clauses = thr
+        .iter()
+        .map(|e| el(cx, e))
+        .collect::<Result<Vec<_>, _>>()?;
+    if !pre.is_empty() || !post.is_empty() || !clauses.is_empty() {
+        parts.push(shapes::signature(shapes::Signature {
+            type_params,
+            head,
+            params: doc::concat(params_doc),
+            params_id: Some(id),
+            tail: clauses,
+            continuation: 2,
+        }));
     }
     if let Some(s) = semi {
         parts.push(el(cx, s)?);
@@ -457,21 +452,15 @@ fn declarator(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 /// `( a, b )`: all on one line, else after the opening parenthesis on one continuation line,
 /// else one per line.
 pub(super) fn paren_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    paren_list_id(cx, node, None, false)
+    paren_list_in(cx, node, false)
 }
 
 /// [`paren_list`] inside a method chain: one more continuation level.
 pub(super) fn paren_list_extra(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    paren_list_id(cx, node, None, true)
+    paren_list_in(cx, node, true)
 }
 
-/// [`paren_list`] with the group of the items named `id` (to ask later whether they broke).
-fn paren_list_id(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-    id: Option<doc::GroupId>,
-    extra: bool,
-) -> R {
+fn paren_list_in(cx: &FormatCtx<'_>, node: &SyntaxNode, extra: bool) -> R {
     let els = kids(cx, node);
     let (Some(open), Some(close)) = (els.first(), els.last()) else {
         return generic(cx, node);
@@ -526,8 +515,6 @@ fn paren_list_id(
     // Annotation arguments break all or none.
     let body = if node.kind() == k::ANNOTATION_ARGUMENT_LIST {
         body
-    } else if let Some(id) = id {
-        doc::group_with_id(id, body)
     } else {
         doc::group(body)
     };
@@ -558,12 +545,9 @@ fn package(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(doc::concat(parts))
 }
 
-/// `<A, B>`: on one line, else after the `<` two continuation levels in.
-fn angle_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    angle_list_id(cx, node, None)
-}
-
-fn angle_list_id(cx: &FormatCtx<'_>, node: &SyntaxNode, id: Option<doc::GroupId>) -> R {
+/// `<A, B>`: on one line, else after the `<` two continuation levels in. `id`: the group of the
+/// whole list.
+fn angle_list(cx: &FormatCtx<'_>, node: &SyntaxNode, id: Option<doc::GroupId>) -> R {
     let els = kids(cx, node);
     if els.len() < 3 {
         return generic(cx, node);
@@ -587,6 +571,19 @@ fn angle_list_id(cx: &FormatCtx<'_>, node: &SyntaxNode, id: Option<doc::GroupId>
         Some(id) => doc::group_with_id(id, d),
         None => doc::group(d),
     })
+}
+
+/// `(A a, B b)`: on one line, else on the line after the `(`, else one per line. `id`: the
+/// group of the items (to ask whether they broke).
+fn hanging_list(cx: &FormatCtx<'_>, node: &SyntaxNode, id: Option<doc::GroupId>) -> R {
+    let style = ListStyle {
+        hug_close: true,
+        indent_levels: 2,
+        inner_id: id,
+        hang: true,
+        ..ListStyle::default()
+    };
+    shapes::delimited_list(cx, node, &style).or_else(|_| generic(cx, node))
 }
 
 /// Is the annotation one the file imports from a package of type-use annotations? Those belong

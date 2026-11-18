@@ -53,6 +53,8 @@ impl Flags {
     pub const REDIRECT: Flags = Flags(1 << 17);
     /// Declared with no value (`x: int`): no read finds a value.
     pub const BARE: Flags = Flags(1 << 18);
+    /// Not checked by the rules that look for names nothing uses (a mapped type's key, an enum member).
+    pub const UNCHECKED: Flags = Flags(1 << 19);
 
     pub const fn union(self, o: Flags) -> Flags {
         Flags(self.0 | o.0)
@@ -81,7 +83,7 @@ impl std::ops::BitOr for Flags {
 
 /// How a reference uses its name.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct Access(u8);
+pub struct Access(u16);
 
 impl Access {
     pub const NONE: Access = Access(0);
@@ -97,6 +99,10 @@ impl Access {
     pub const BARE: Access = Access(32);
     /// Declares its name (a parameter) instead of referring to it.
     pub const DECLARE: Access = Access(64);
+    /// Tests that the name exists (`typeof x`): a name nothing binds is no finding.
+    pub const PROBE: Access = Access(128);
+    /// Names a markup element (`<Tag />`).
+    pub const TAG: Access = Access(256);
 
     pub const fn union(self, o: Access) -> Access {
         Access(self.0 | o.0)
@@ -210,6 +216,16 @@ impl Reference {
 
     pub fn is_type(&self) -> bool {
         self.access.contains(Access::TYPE)
+    }
+
+    /// Tests that the name exists (`typeof x`).
+    pub fn is_probe(&self) -> bool {
+        self.access.contains(Access::PROBE)
+    }
+
+    /// Names a markup element.
+    pub fn is_tag(&self) -> bool {
+        self.access.contains(Access::TAG)
     }
 
     /// A read of the value (a type reference is none).

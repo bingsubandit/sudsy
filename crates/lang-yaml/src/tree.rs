@@ -7,21 +7,6 @@ pub fn is_trivia(kind: SyntaxKind) -> bool {
     matches!(kind, k::WHITESPACE | k::NEWLINE | k::COMMENT)
 }
 
-/// Column of a token in its line, in characters.
-pub fn column(tok: &SyntaxToken) -> usize {
-    let mut col = 0;
-    let mut prev = tok.prev_token();
-    while let Some(t) = prev {
-        let text = t.text();
-        if let Some(i) = text.rfind(['\n', '\r']) {
-            return col + text[i + 1..].chars().count();
-        }
-        col += text.chars().count();
-        prev = t.prev_token();
-    }
-    col
-}
-
 pub fn first_token(node: &SyntaxNode) -> Option<SyntaxToken> {
     let mut t = node.first_token();
     while let Some(tok) = t {
@@ -56,18 +41,6 @@ pub fn prev_significant(tok: &SyntaxToken) -> Option<SyntaxToken> {
     None
 }
 
-/// The significant token after `tok`.
-pub fn next_significant(tok: &SyntaxToken) -> Option<SyntaxToken> {
-    let mut t = tok.next_token();
-    while let Some(n) = t {
-        if !is_trivia(n.kind()) {
-            return Some(n);
-        }
-        t = n.next_token();
-    }
-    None
-}
-
 /// Is there a line break between the end of `a` and the start of `b`?
 pub fn line_break_between(a: &SyntaxToken, b: &SyntaxToken) -> bool {
     let mut t = a.next_token();
@@ -89,7 +62,7 @@ pub fn block_parent_indent(node: &SyntaxNode) -> i64 {
     for a in node.ancestors().skip(1) {
         match a.kind() {
             k::BLOCK_MAPPING_ENTRY | k::BLOCK_SEQUENCE_ENTRY => {
-                return first_token(&a).map_or(0, |t| column(&t) as i64);
+                return first_token(&a).map_or(0, |t| core_format::comments::column(&t) as i64);
             }
             k::DOCUMENT => return -1,
             _ => {}

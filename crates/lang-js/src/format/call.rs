@@ -579,12 +579,14 @@ pub(crate) fn template_on_own_line(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
         },
         _ => return false,
     };
-    if !template.text().to_string().contains('\n') {
-        return false;
-    }
-    let Some(first) = cx.first_token(n) else {
+    let (Some(first), Some(last)) = (cx.first_token(n), cx.last_token(n)) else {
         return false;
     };
+    // (the node may own trivia after its last token: a line break there is not in the template)
+    let from = cx.first_token(&template).unwrap_or_else(|| first.clone());
+    if !cx.has_line_break(&template, from.text_range().cover(last.text_range())) {
+        return false;
+    }
     let mut prev = first.prev_token();
     while let Some(t) = prev {
         if t.kind() == k::NEWLINE {

@@ -462,7 +462,8 @@ impl<'a> P<'a> {
                 );
             }
             self.close(element);
-            self.last_void = Some((element, self.toks.len(), lower));
+            // (only a void element owns a stray end tag: `<br></br>`, not `<slot /></slot>`)
+            self.last_void = tags::is_void(&lower).then_some((element, self.toks.len(), lower));
             return;
         }
         self.stack

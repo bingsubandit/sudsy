@@ -130,24 +130,12 @@ const ROWS: &[Row] = &[
     dynamic("EvalConstruct"),
 ];
 
-const GLOBALS: &[&str] = &[
-    "$this",
-    "$GLOBALS",
-    "$_SERVER",
-    "$_GET",
-    "$_POST",
-    "$_FILES",
-    "$_COOKIE",
-    "$_SESSION",
-    "$_REQUEST",
-    "$_ENV",
-    "$argc",
-    "$argv",
-    "$http_response_header",
-];
+const GLOBALS: &str = "$this $GLOBALS $_SERVER $_GET $_POST $_FILES $_COOKIE $_SESSION $_REQUEST $_ENV \
+    $argc $argv $http_response_header";
 
 static LANG: ScopeLang = ScopeLang::new(ROWS, &["Variable", "Identifier"])
     .dynamic(&["extract", "parse_str", "mb_parse_str"])
-    .globals(GLOBALS);
+    .globals(GLOBALS)
+    .top_unchecked();
 
 pub static UNDEFINED_VARIABLE: ScopeRule = ScopeRule::undefined_variable(&LANG);

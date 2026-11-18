@@ -10,10 +10,8 @@ mod misc;
 mod reach;
 mod regexp;
 mod scope;
-mod shadow;
 mod stmts;
 mod ts;
-mod unused;
 
 use crate::generated::kind as k;
 use core_rules::tree::significant_range;
@@ -23,7 +21,13 @@ use core_syntax::{Grammar, SyntaxElement, SyntaxNode, SyntaxToken, TextRange};
 
 pub static RULES: &[&dyn Rule] = &[];
 
-pub static FAMILIES: &[Family] = &[FAMILY];
+pub static FAMILIES: &[Family] = &[FAMILY, SCOPE];
+
+/// The scope rules, shared with the other languages (`core_rules::scope_rules`).
+const SCOPE: Family = Family {
+    name: "scope",
+    build: |meta, p| core_rules::scope_rules::build(&crate::semantic::LANG, meta, p),
+};
 
 const FAMILY: Family = Family {
     name: "check",
@@ -127,14 +131,10 @@ const CHECKS: &[Entry] = &[
         &[k::REG_EXP_LITERAL, k::NEW_EXPRESSION, k::CALL_EXPRESSION],
         regexp::misleading_class,
     ),
-    ("undef", &[k::PROGRAM], scope::undef),
     ("const-assign", &[k::PROGRAM], scope::const_assign),
     ("class-assign", &[k::PROGRAM], scope::class_assign),
     ("func-assign", &[k::PROGRAM], scope::func_assign),
     ("import-assign", &[k::PROGRAM], scope::import_assign),
-    ("redeclare", &[k::PROGRAM], scope::redeclare),
-    ("use-before-define", &[k::PROGRAM], scope::use_before_define),
-    ("shadow", &[k::PROGRAM], shadow::shadow),
     ("prefer-const", &[k::PROGRAM], binder::prefer_const),
     (
         "prefer-rest-params",
@@ -147,7 +147,6 @@ const CHECKS: &[Entry] = &[
         binder::unsafe_function,
     ),
     ("wrapper-object-types", &[k::PROGRAM], binder::wrapper_types),
-    ("unused-vars", &[k::PROGRAM], unused::unused_vars),
     (
         "require-imports",
         &[k::CALL_EXPRESSION, k::TS_EXTERNAL_MODULE_REFERENCE],

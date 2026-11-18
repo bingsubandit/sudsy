@@ -3,7 +3,7 @@
 use super::comments;
 use super::{Quotes, Style};
 use crate::generated::kind as k;
-use crate::scalar::{block_header, double_quoted_value, single_quoted_value};
+use crate::scalar::{block_header, flow_value, quoted};
 use crate::tree::{block_parent_indent, is_trivia};
 use core_format::{Doc, FormatCtx, FormatError, doc};
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
@@ -92,34 +92,24 @@ pub(crate) fn restyle(text: &str, kind: SyntaxKind, quotes: Quotes) -> Option<St
     if quotes == Quotes::PreferDouble {
         return prefer_double_restyle(text, kind);
     }
+    let value = flow_value(kind, text)?;
+    if value.chars().any(|c| c.is_control()) {
+        return None;
+    }
     match (kind, quotes) {
         (k::DOUBLE_QUOTED, Quotes::Single) => {
-            let value = double_quoted_value(text)?;
-            if value.chars().any(|c| c.is_control()) {
-                return None;
-            }
             let escapes_before = text.matches('\\').count();
             let escapes_after = value.matches('\'').count();
-            (escapes_after <= escapes_before).then(|| format!("'{}'", value.replace('\'', "''")))
+            (escapes_after <= escapes_before)
+                .then(|| quoted(k::SINGLE_QUOTED, &value))
+                .flatten()
         }
         (k::SINGLE_QUOTED, Quotes::Double) => {
-            let value = single_quoted_value(text);
-            if value.chars().any(|c| c.is_control()) {
-                return None;
-            }
             let escapes_before = text.matches("''").count();
             let escapes_after = value.matches(['"', '\\']).count();
-            (escapes_after == 0 || escapes_after <= escapes_before).then(|| {
-                let mut out = String::from('"');
-                for c in value.chars() {
-                    if matches!(c, '"' | '\\') {
-                        out.push('\\');
-                    }
-                    out.push(c);
-                }
-                out.push('"');
-                out
-            })
+            (escapes_after == 0 || escapes_after <= escapes_before)
+                .then(|| quoted(k::DOUBLE_QUOTED, &value))
+                .flatten()
         }
         _ => None,
     }
@@ -131,31 +121,22 @@ pub(crate) fn restyle(text: &str, kind: SyntaxKind, quotes: Quotes) -> Option<St
 fn prefer_double_restyle(text: &str, kind: SyntaxKind) -> Option<String> {
     let raw = text.get(1..text.len().checked_sub(1)?)?;
     let double = kind == k::DOUBLE_QUOTED;
-    let single = kind == k::SINGLE_QUOTED;
-    if !double && !single {
+    if !double && kind != k::SINGLE_QUOTED {
         return None;
     }
     let other_escapes = raw.replace("\\\"", "").contains('\\');
-    if (single && raw.contains('\\')) || (double && other_escapes) {
+    if (!double && raw.contains('\\')) || (double && other_escapes) {
         return None;
     }
-    let body = if raw.contains('"') {
-        let content = if double {
-            raw.replace("\\\"", "\"").replace('\'', "''")
+    let value = flow_value(kind, text)?;
+    let body = quoted(
+        if value.contains('"') {
+            k::SINGLE_QUOTED
         } else {
-            raw.to_string()
-        };
-        format!("'{content}'")
-    } else if raw.contains('\'') {
-        let content = if single {
-            raw.replace("''", "'")
-        } else {
-            raw.to_string()
-        };
-        format!("\"{content}\"")
-    } else {
-        format!("\"{raw}\"")
-    };
+            k::DOUBLE_QUOTED
+        },
+        &value,
+    )?;
     (body != text).then_some(body)
 }
 

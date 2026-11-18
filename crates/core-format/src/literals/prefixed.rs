@@ -1,6 +1,7 @@
 //! Prefixed strings (`r".."`, `f".."`, `"""..""""`): quote choice by escapes, prefix spelling and
 //! f-string fields (the rule of Black and ruff).
 
+use core_syntax::strings::StringSyntax;
 use std::borrow::Cow;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -11,18 +12,9 @@ pub enum Quote {
 }
 
 /// A string token's pieces: prefix, quote (1 or 3 characters) and body.
-pub fn split(text: &str) -> Option<(&str, &str, &str)> {
-    let start = text.find(['"', '\''])?;
-    let (prefix, rest) = text.split_at(start);
-    let q = if rest.len() >= 6 && (rest.starts_with("\"\"\"") || rest.starts_with("'''")) {
-        3
-    } else {
-        1
-    };
-    if rest.len() < 2 * q {
-        return None;
-    }
-    Some((prefix, &rest[..q], &rest[q..rest.len() - q]))
+pub fn split<'a>(syntax: &StringSyntax, text: &'a str) -> Option<(&'a str, &'a str, &'a str)> {
+    let lit = syntax.split(text)?;
+    Some((lit.prefix, lit.open, lit.inner))
 }
 
 /// The prefix as ruff writes it: lowercase, `u` dropped, except `R`.
@@ -37,8 +29,8 @@ fn prefix_of(prefix: &str) -> String {
 }
 
 /// A string literal with normalized prefix and quotes (Black's `normalize_string_quotes`).
-pub fn string(text: &str, quote: Quote) -> Cow<'_, str> {
-    let Some((prefix, q, body)) = split(text) else {
+pub fn string<'a>(syn: &StringSyntax, text: &'a str, quote: Quote) -> Cow<'a, str> {
+    let Some((prefix, q, body)) = split(syn, text) else {
         return Cow::Borrowed(text);
     };
     let new_prefix = prefix_of(prefix);
@@ -176,12 +168,12 @@ fn has_backslash_in_field(body: &str) -> bool {
 
 /// An f-string's or t-string's text as one string: Black's rule on its source, refused when a
 /// replacement field holds a quote (a nested string).
-pub fn fstring(text: &str, quote: Quote) -> Cow<'_, str> {
-    let Some((_, _, body)) = split(text) else {
+pub fn fstring<'a>(syn: &StringSyntax, text: &'a str, quote: Quote) -> Cow<'a, str> {
+    let Some((_, _, body)) = split(syn, text) else {
         return Cow::Borrowed(text);
     };
     if fields_hold_quotes(body) {
-        let Some((prefix, q, body)) = split(text) else {
+        let Some((prefix, q, body)) = split(syn, text) else {
             return Cow::Borrowed(text);
         };
         let p = prefix_of(prefix);
@@ -191,7 +183,7 @@ pub fn fstring(text: &str, quote: Quote) -> Cow<'_, str> {
             Cow::Owned(format!("{p}{q}{body}{q}"))
         };
     }
-    string(text, quote)
+    string(syn, text, quote)
 }
 
 fn fields_hold_quotes(body: &str) -> bool {
@@ -224,8 +216,8 @@ fn fields_hold_quotes(body: &str) -> bool {
 
 /// The comparison value of a string: prefix lowercased, outer quotes removed, escaped quotes
 /// unescaped, so a quote change keeps it.
-pub fn string_value(text: &str) -> String {
-    match split(text) {
+pub fn string_value(syn: &StringSyntax, text: &str) -> String {
+    match split(syn, text) {
         Some((p, _, body)) => format!("{}{}", prefix_value(p), super::unescape_quotes(body)),
         None => text.to_string(),
     }

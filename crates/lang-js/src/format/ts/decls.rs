@@ -17,7 +17,7 @@ pub(super) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc
         k::TS_INTERFACE_DECLARATION => interface(node, cx)?,
         k::TS_TYPE_ALIAS_DECLARATION => type_alias(node, cx)?,
         k::TS_INTERFACE_BODY => members(node, cx, ListLayout::Break)?,
-        k::TS_TYPE_LITERAL => members(node, cx, ListLayout::PreserveOpenBreak)?,
+        k::TS_TYPE_LITERAL => members(node, cx, ListLayout::PreserveFirstBreak)?,
         k::TS_ENUM_BODY => {
             let style = ListStyle {
                 padding: false,

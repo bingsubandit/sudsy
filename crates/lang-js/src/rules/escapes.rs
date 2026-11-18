@@ -13,46 +13,23 @@ fn at(start: TextSize, offset: usize, len: usize) -> TextRange {
 }
 
 /// Calls `found(byte offset, escaped char)` for each `\x` of a string or template chunk that
-/// escapes nothing special.
+/// escapes nothing special (the grammar's `string` row says what does).
 fn string_escapes(content: &str, template: bool, quote: char, mut found: impl FnMut(usize, char)) {
-    let chars: Vec<(usize, char)> = content.char_indices().collect();
-    let mut i = 0;
-    while i < chars.len() {
-        let (pos, ch) = chars[i];
-        let Some(&(after, next)) = chars.get(i + 1).filter(|_| ch == '\\') else {
-            i += 1;
-            continue;
-        };
-        if next.is_ascii_digit() {
-            i += 1;
-            continue;
+    let Some(row) = (core_syntax::grammars::JS.get())
+        .string_rows(k::STRING)
+        .next()
+    else {
+        return;
+    };
+    row.unknown_escapes(content, quote, |pos, ch| {
+        // In a template `\${` and `$\{` stay: they keep the text from starting a substitution.
+        let after = &content[pos + 1 + ch.len_utf8()..];
+        if !(template
+            && (ch == '$' && after.starts_with('{') || ch == '{' && content[..pos].ends_with('$')))
+        {
+            found(pos, ch);
         }
-        let mut unnecessary = !matches!(
-            next,
-            '\\' | 'n'
-                | 'r'
-                | 'v'
-                | 't'
-                | 'b'
-                | 'f'
-                | 'u'
-                | 'x'
-                | '\n'
-                | '\r'
-                | '\u{2028}'
-                | '\u{2029}'
-        );
-        let is_quote = next == if template { '`' } else { quote };
-        if template && next == '$' {
-            unnecessary = !content[after + 1..].starts_with('{');
-        } else if template && next == '{' {
-            unnecessary = !content[..pos].ends_with('$');
-        }
-        if unnecessary && !is_quote {
-            found(pos, next);
-        }
-        i += 2;
-    }
+    });
 }
 
 const GENERAL: &str = "\\bcdDfnpPrsStvwWxu0123456789]";

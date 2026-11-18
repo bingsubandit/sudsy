@@ -161,7 +161,7 @@ entries:
   no-promise-executor-return: planned
   no-proto: planned
   no-prototype-builtins: rule no-prototype-builtins
-  no-redeclare: rule no-redeclare | the `builtinGlobals` option and `/*global*/` comments are not supported (the files are modules, whose top scope is not the global scope)
+  no-redeclare: rule redeclared-variable | the `builtinGlobals` option and `/*global*/` comments are not supported (the files are modules, whose top scope is not the global scope)
   no-regex-spaces: rule no-regex-spaces
   no-restricted-exports: planned
   no-restricted-imports: planned
@@ -175,7 +175,7 @@ entries:
   no-self-compare: rule no-self-compare
   no-sequences: planned
   no-setter-return: planned
-  no-shadow: "rule no-shadow | the options keep their defaults (`builtinGlobals` off, `hoist` functions, `allow` empty, `ignoreOnInitialization` off)"
+  no-shadow: "rule shadowed-variable | the options keep their defaults (`builtinGlobals` off, `hoist` functions, `allow` empty, `ignoreOnInitialization` off)"
   no-shadow-restricted-names: rule no-shadow-restricted-names | without scope analysis `var undefined;` is accepted whatever is assigned to it later
   no-spaced-func: formatter
   no-sparse-arrays: rule no-sparse-arrays
@@ -186,7 +186,7 @@ entries:
   no-throw-literal: planned
   no-trailing-spaces: formatter
   no-unassigned-vars: planned
-  no-undef: rule no-undef | the `typeof` option keeps its default; `languageOptions.globals` is the rule's `globals` option, and `/*global*/` comments are not read; JSX tags are not references
+  no-undef: rule undefined-variable | the `typeof` option keeps its default; `languageOptions.globals` is the rule's `globals` option, and `/*global*/` comments are not read; JSX tags are not references
   no-undefined: planned
   no-underscore-dangle: planned
   no-unexpected-multiline: rule no-unexpected-multiline
@@ -195,8 +195,8 @@ entries:
   no-unsafe-negation: rule no-unsafe-negation | the `enforceForOrderingRelations` option is not supported
   no-unsafe-optional-chaining: planned
   no-unused-expressions: rule no-unused-expressions | the options keep their defaults
-  no-unused-vars: rule no-unused-vars | the options keep their defaults; `/*exported*/` and `/*global*/` comments are not read; a JSX tag counts as a use
-  no-use-before-define: rule no-use-before-define | the options keep their defaults; JSX tags are not references
+  no-unused-vars: rule unused-variable, unused-parameter | the options keep their defaults; `/*exported*/` and `/*global*/` comments are not read; a JSX tag counts as a use
+  no-use-before-define: rule use-before-define | the options keep their defaults; JSX tags are not references
   no-useless-backreference: planned
   no-useless-call: planned
   no-useless-catch: rule no-useless-catch

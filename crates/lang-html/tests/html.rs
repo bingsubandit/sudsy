@@ -60,6 +60,16 @@ fn syntax_errors_are_reported() {
 }
 
 #[test]
+fn a_component_end_tag_is_not_the_end_of_a_self_closing_slot() {
+    let out = assert_formats(
+        lang_html::vue_provider(),
+        "a.vue",
+        "<template>\n<Slot><slot />\n</Slot>\n</template>\n",
+    );
+    assert!(out.contains("<slot /> </Slot>"), "{out}");
+}
+
+#[test]
 fn blocks_inlines_and_implied_end_tags() {
     assert_eq!(
         fmt(

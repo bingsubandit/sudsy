@@ -15,7 +15,8 @@ js:
       no-unnecessary-type-constraint: error
       no-unsafe-function-type: error
       no-unused-expressions: error
-      no-unused-vars: error
+      unused-variable: error
+      unused-parameter: error
       no-var: error
       no-wrapper-object-types: error
       prefer-as-const: error

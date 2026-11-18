@@ -763,6 +763,35 @@ pub fn blank_lines_before(g: &Grammar, tok: &SyntaxToken) -> usize {
         .sum()
 }
 
+/// The column of a token in its line, in characters.
+pub fn column(tok: &SyntaxToken) -> usize {
+    let mut col = 0;
+    let mut prev = tok.prev_token();
+    while let Some(t) = prev {
+        let text = t.text();
+        if let Some(i) = text.rfind(['\n', '\r']) {
+            return col + text[i + 1..].chars().count();
+        }
+        col += text.chars().count();
+        prev = t.prev_token();
+    }
+    col
+}
+
+/// The first token after `tok` that is not trivia.
+pub fn next_significant(g: &Grammar, tok: &SyntaxToken) -> Option<SyntaxToken> {
+    std::iter::successors(tok.next_token(), SyntaxToken::next_token)
+        .find(|t| !g.is_trivia(t.kind()))
+}
+
+/// How many of the leading comments `cs` stand at `min_col` or deeper before the first that
+/// does not: those belong to the block that ends before the token, the others to the token.
+pub fn indented_run(cs: &[Comment], min_col: usize) -> usize {
+    cs.iter()
+        .take_while(|c| column(c.token()) >= min_col)
+        .count()
+}
+
 /// Does no non-trivia token come before `tok`?
 pub fn starts_file(g: &Grammar, tok: &SyntaxToken) -> bool {
     run_before(g, tok).1.is_none()

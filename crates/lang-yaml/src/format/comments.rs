@@ -9,7 +9,7 @@
 
 use super::Style;
 use crate::generated::kind as k;
-use crate::tree::{column, first_token, last_token, next_significant, prev_significant};
+use crate::tree::{first_token, last_token, prev_significant};
 use core_format::comments::{self, Comment};
 use core_format::context::leading_comments_doc;
 use core_format::{Doc, FormatCtx, doc};
@@ -99,11 +99,8 @@ fn takers(cs: &[Comment], t: &SyntaxToken) -> Vec<(SyntaxNode, usize, usize)> {
             break;
         }
         if matches!(a.kind(), k::BLOCK_MAPPING | k::BLOCK_SEQUENCE) {
-            let col = first_token(&a).map_or(0, |f| column(&f));
-            let take = cs[start..]
-                .iter()
-                .take_while(|c| column(c.token()) >= col)
-                .count();
+            let col = first_token(&a).map_or(0, |f| comments::column(&f));
+            let take = comments::indented_run(&cs[start..], col);
             out.push((a, start, start + take));
             start += take;
         }
@@ -121,7 +118,9 @@ fn taken_before(cs: &[Comment], t: &SyntaxToken) -> usize {
 
 /// The comments a block collection takes from the token after it, printed after its last entry.
 pub(crate) fn dangling(cx: &FormatCtx<'_>, st: &Style, collection: &SyntaxNode) -> Doc {
-    let Some(next) = last_token(collection).and_then(|l| next_significant(&l)) else {
+    let Some(next) =
+        last_token(collection).and_then(|l| comments::next_significant(cx.grammar, &l))
+    else {
         return Doc::Nil;
     };
     let cs = comments::leading_comments(cx.grammar, &next);

@@ -1,7 +1,7 @@
 //! Files, bodies, declarations and the lists of parameters and arguments.
 
 use super::*;
-use core_format::shapes::{self, ListLayout, ListStyle, TrailingComma};
+use core_format::shapes::{self, ListLayout, TrailingComma};
 
 pub(super) fn rule(cx: &FormatCtx<'_>, node: &SyntaxNode, kind: SyntaxKind) -> Option<R> {
     Some(match kind {
@@ -206,10 +206,6 @@ pub(super) fn assign(
 /// The call or the declaration whose parentheses `list` has.
 fn paren_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let parent = parent_kind(node);
-    let count = node
-        .children()
-        .filter(|c| !c.text_range().is_empty())
-        .count();
     let (min, comma) = match parent {
         k::FUN => (
             cx.options.int("function_signature_wrap_min_parameters") as usize,
@@ -223,22 +219,17 @@ fn paren_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         _ => (usize::MAX, true),
     };
     let multiline = cx.options.str("trailing_commas") == "multiline";
-    let style = ListStyle {
-        trailing_comma: if comma && multiline {
-            TrailingComma::WhenBroken
-        } else {
-            TrailingComma::Never
-        },
-        layout: if count >= min {
-            ListLayout::Break
-        } else if min == usize::MAX && comma {
-            ListLayout::PreserveItemBreak
-        } else {
-            ListLayout::Fit
-        },
-        ..ListStyle::default()
+    let trailing = if comma && multiline {
+        TrailingComma::WhenBroken
+    } else {
+        TrailingComma::Never
     };
-    shapes::delimited_list(cx, node, &style).or_else(|_| generic(cx, node))
+    let otherwise = if min == usize::MAX && comma {
+        ListLayout::PreserveItemBreak
+    } else {
+        ListLayout::Fit
+    };
+    shapes::parameter_list(cx, node, min, trailing, otherwise).or_else(|_| generic(cx, node))
 }
 
 /// Does a blank line stand between the last code and the first comment before the token?

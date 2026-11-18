@@ -1,7 +1,6 @@
 //! Compound statements and clauses: header, `:` and the block, decorators, `with` items.
 
 use super::block::{Seq, block as block_doc, joins_header};
-use super::comment::*;
 use super::expr;
 use super::list;
 use super::paren;
@@ -48,8 +47,10 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                         inner.push(compound(cx, c)?);
                     }
                     if let Some(last) = cases.last() {
-                        let col = cx.first_token(&cases[0]).map_or(0, |t| column(&t));
-                        inner.push(end_comments(cx, last, col));
+                        let col = cx
+                            .first_token(&cases[0])
+                            .map_or(0, |t| comments::column(&t));
+                        inner.push(cx.end_comments(last, col));
                     }
                     parts.push(indent(concat(inner)));
                     break;
@@ -170,7 +171,7 @@ fn clause_break(cx: &FormatCtx<'_>, tok: &SyntaxToken, top: bool) -> Doc {
     for _ in 0..comments::blank_lines_before(cx.grammar, tok).min(cap) {
         parts.push(hardline());
     }
-    parts.push(lead(cx, tok));
+    parts.push(cx.lead(tok));
     concat(parts)
 }
 
@@ -326,7 +327,7 @@ fn with_items_doc(
     }
     if !end.is_empty() {
         parts.push(hardline());
-        parts.push(comments_block(&end));
+        parts.push(core_format::comment_lines(&end));
     }
     let open_doc = match &open {
         Some(o) if open_comment => cx.token(o),

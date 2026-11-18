@@ -44,6 +44,13 @@ token Tag #property
 // carries `#restyle`: the formatter may change quote style and re-indent continuation lines,
 // which the data-model check verifies instead of the token text.
 token Plain #literal #string #restyle
+string Plain fold
+string SingleQuoted quote "'" double fold
+// The escapes of YAML 1.2: 9 is the tab, 133 NEL, 160 NBSP, 8232/8233 the Unicode separators.
+string DoubleQuoted quote "\"" escape "\\" continuation fold unknown invalid
+  map "0" 0 "a" 7 "b" 8 "t" 9 9 9 "n" 10 "v" 11 "f" 12 "r" 13 "e" 27 " " 32 "\"" 34 "/" 47 "\\" 92
+      "N" 133 "_" 160 "L" 8232 "P" 8233
+  hex "x" 2 "u" 4 "U" 8
 token SingleQuoted #literal #string #restyle
 token DoubleQuoted #literal #string #restyle
 // `|` or `>` with its indentation and chomping indicators, then the lines of the scalar

@@ -4,7 +4,7 @@
 
 use crate::generated::{Scalar as ScalarNode, kind};
 use crate::model::{Value, resolve_plain};
-use crate::scalar::{double_quoted_value, plain_value, single_quoted_value};
+use crate::scalar::flow_value;
 use core_rules::{RuleHooks, Scalar};
 use core_syntax::ast::AstNode;
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
@@ -22,9 +22,7 @@ fn scalar_value<'a>(token: &SyntaxToken, text: &'a str) -> Option<Cow<'a, str>> 
     let raw = &text[range];
     match token.kind() {
         kind::PLAIN if !raw.contains(['\n', '\r']) => Some(Cow::Borrowed(raw)),
-        kind::PLAIN => Some(Cow::Owned(plain_value(raw))),
-        kind::SINGLE_QUOTED => Some(Cow::Owned(single_quoted_value(raw))),
-        kind::DOUBLE_QUOTED => double_quoted_value(raw).map(Cow::Owned),
+        kind::PLAIN | kind::SINGLE_QUOTED | kind::DOUBLE_QUOTED => flow_value(token.kind(), raw),
         _ => None,
     }
 }

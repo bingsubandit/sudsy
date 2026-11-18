@@ -9,6 +9,6 @@ js:
       consistent-type-imports: error
       no-inferrable-types: error
       no-non-null-assertion: error
-      no-redeclare: error
-      no-shadow: error
-      no-use-before-define: error
+      redeclared-variable: error
+      shadowed-variable: error
+      use-before-define: error

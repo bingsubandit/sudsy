@@ -9144,60 +9144,6 @@
     },
     {
       "category": "suspicious",
-      "default_level": "off",
-      "description": "A name declared again in the same scope (`var` twice, a `var` and a parameter, two functions). In TypeScript files declaration merging (interfaces, namespaces, a class with an interface) is allowed. Built-in globals are not checked.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "use(undefinedThing, typeof maybe, typeof maybe.x, arguments);\nfunction f(a, a2) { var a; return arguments; }\nvar x = 1; var x = 2; function x() {}\nfunction f2() {} function f2() {}\ntry {} catch (e) { var e; }\nbefore(); function before() {} before2(); var before2 = 1;\nconst s = s + 1; let t = () => t; class C { static p = C; q = C; } class D extends D {}\nfor (var i of i) {} const { u = u } = {};\nPromise.all([globalThis, hasOwnProperty]);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 25,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 16,
-            "length": 1,
-            "line": 3
-          },
-          {
-            "column": 32,
-            "length": 1,
-            "line": 3
-          },
-          {
-            "column": 27,
-            "length": 2,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-redeclare",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-redeclare",
-          "partial": true,
-          "tool": "eslint"
-        },
-        {
-          "id": "no-redeclare",
-          "partial": true,
-          "tool": "typescript-eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
       "default_level": "warn",
       "description": "Two or more spaces in a regex literal or in the string of `new RegExp(...)`, outside a character class.",
       "example": {
@@ -9375,73 +9321,6 @@
     },
     {
       "category": "suspicious",
-      "default_level": "off",
-      "description": "A variable, parameter or function with the name of one declared in a scope around it. A function declared later in the outer scope still counts (it is hoisted), a variable declared later does not, and `var a = function a() {}` is not a shadow. In TypeScript files a type and a value of one name, and the parameters of function types, are left alone.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "var a = 1; let b = 2;\nfunction f(a) { let b = 3; { const a = 4; } }\nvar c = function c() {}; var d = function (d) {};\nfunction outer() { var e = 1; function inner() { var e = 2; } }\nfunction hoist() { var h = 1; } function h() {}\nconst t = () => { const late = 1; }; const late = 2;\nclass K { m() { var K = 1; } }\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 12,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 21,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 36,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 44,
-            "length": 1,
-            "line": 3
-          },
-          {
-            "column": 54,
-            "length": 1,
-            "line": 4
-          },
-          {
-            "column": 24,
-            "length": 1,
-            "line": 5
-          },
-          {
-            "column": 21,
-            "length": 1,
-            "line": 7
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-shadow",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": [
-        {
-          "id": "no-shadow",
-          "partial": true,
-          "tool": "eslint"
-        },
-        {
-          "id": "no-shadow",
-          "partial": true,
-          "tool": "typescript-eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
       "default_level": "error",
       "description": "A variable, function, parameter or class named `NaN`, `Infinity`, `undefined`, `eval` or `arguments` (`var undefined;` without a value is left alone).",
       "example": {
@@ -9569,62 +9448,6 @@
           "id": "no-this-alias",
           "partial": true,
           "tool": "typescript-eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A name that no scope declares, that is not a global of ES2026 (or, in a `.cjs` file, `require`, `module`, `exports` and `global`) and that is not in the `globals` option. `typeof x` and JSX tags are left alone.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "use(undefinedThing, typeof maybe, typeof maybe.x, arguments);\nfunction f(a, a2) { var a; return arguments; }\nvar x = 1; var x = 2; function x() {}\nfunction f2() {} function f2() {}\ntry {} catch (e) { var e; }\nbefore(); function before() {} before2(); var before2 = 1;\nconst s = s + 1; let t = () => t; class C { static p = C; q = C; } class D extends D {}\nfor (var i of i) {} const { u = u } = {};\nPromise.all([globalThis, hasOwnProperty]);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 1,
-            "length": 3,
-            "line": 1
-          },
-          {
-            "column": 5,
-            "length": 14,
-            "line": 1
-          },
-          {
-            "column": 42,
-            "length": 5,
-            "line": 1
-          },
-          {
-            "column": 51,
-            "length": 9,
-            "line": 1
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-undef",
-      "languages": [
-        "js"
-      ],
-      "options": [
-        {
-          "default": [],
-          "description": "Names the environment declares (ESLint's `languageOptions.globals`), such as `window` or `console`.",
-          "name": "globals",
-          "type": "list"
-        }
-      ],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-undef",
-          "partial": true,
-          "tool": "eslint"
         }
       ]
     },
@@ -9858,113 +9681,6 @@
         },
         {
           "id": "no-unused-expressions",
-          "partial": true,
-          "tool": "typescript-eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A variable, function, class, import, caught error or parameter that is never read. Parameters count only when no later parameter is read, `a = a + 1` and `a++` as statements are no read, exported names and the parameters of setters are used. In TypeScript files types, interfaces and enums count the same, and a name that only appears in `typeof` of a type is not read.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import React, { useState } from \"react\";\nimport type { FC } from \"react\";\nexport const A: FC = () => <div />;\ntype Mapped = { [K in \"a\"]: 1 };\nnamespace B.C {}\ndeclare module \"m\" { interface Ambient {} var ambient: number; }\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 17,
-            "length": 8,
-            "line": 1
-          },
-          {
-            "column": 6,
-            "length": 6,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-unused-vars",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended",
-        "js/typescript-eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-unused-vars",
-          "partial": true,
-          "tool": "eslint"
-        },
-        {
-          "id": "no-unused-vars",
-          "partial": true,
-          "tool": "typescript-eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A reference that comes before the declaration of what it names in the source (function declarations included), or runs while the variable is being initialized. References in types are left alone.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "use(undefinedThing, typeof maybe, typeof maybe.x, arguments);\nfunction f(a, a2) { var a; return arguments; }\nvar x = 1; var x = 2; function x() {}\nfunction f2() {} function f2() {}\ntry {} catch (e) { var e; }\nbefore(); function before() {} before2(); var before2 = 1;\nconst s = s + 1; let t = () => t; class C { static p = C; q = C; } class D extends D {}\nfor (var i of i) {} const { u = u } = {};\nPromise.all([globalThis, hasOwnProperty]);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 1,
-            "length": 6,
-            "line": 6
-          },
-          {
-            "column": 32,
-            "length": 7,
-            "line": 6
-          },
-          {
-            "column": 11,
-            "length": 1,
-            "line": 7
-          },
-          {
-            "column": 84,
-            "length": 1,
-            "line": 7
-          },
-          {
-            "column": 15,
-            "length": 1,
-            "line": 8
-          },
-          {
-            "column": 33,
-            "length": 1,
-            "line": 8
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-use-before-define",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": [
-        {
-          "id": "no-use-before-define",
-          "partial": true,
-          "tool": "eslint"
-        },
-        {
-          "id": "no-use-before-define",
           "partial": true,
           "tool": "typescript-eslint"
         }
@@ -10308,6 +10024,60 @@
     },
     {
       "category": "suspicious",
+      "default_level": "off",
+      "description": "A name declared again in the same scope (`var` twice, a `var` and a parameter, two functions). In TypeScript files declaration merging (interfaces, namespaces, a class with an interface) is allowed. Built-in globals are not checked.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "use(undefinedThing, typeof maybe, typeof maybe.x, arguments);\nfunction f(a, a2) { var a; return arguments; }\nvar x = 1; var x = 2; function x() {}\nfunction f2() {} function f2() {}\ntry {} catch (e) { var e; }\nbefore(); function before() {} before2(); var before2 = 1;\nconst s = s + 1; let t = () => t; class C { static p = C; q = C; } class D extends D {}\nfor (var i of i) {} const { u = u } = {};\nPromise.all([globalThis, hasOwnProperty]);\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 25,
+            "length": 1,
+            "line": 2
+          },
+          {
+            "column": 16,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 32,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 27,
+            "length": 2,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "redeclared-variable",
+      "languages": [
+        "js"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-redeclare",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-redeclare",
+          "partial": true,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
       "default_level": "error",
       "description": "A generator function with a body and no `yield`.",
       "example": {
@@ -10356,6 +10126,94 @@
       ]
     },
     {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A variable, parameter or function with the name of one declared in a scope around it. A function declared later in the outer scope still counts (it is hoisted), a variable declared later does not, and `var a = function a() {}` is not a shadow. In TypeScript files a type and a value of one name, and the parameters of function types, are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "var a = 1; let b = 2;\nfunction f(a) { let b = 3; { const a = 4; } }\nvar c = function c() {}; var d = function (d) {};\nfunction outer() { var e = 1; function inner() { var e = 2; } }\nfunction hoist() { var h = 1; } function h() {}\nconst t = () => { const late = 1; }; const late = 2;\nclass K { m() { var K = 1; } }\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 12,
+            "length": 1,
+            "line": 2
+          },
+          {
+            "column": 21,
+            "length": 1,
+            "line": 2
+          },
+          {
+            "column": 36,
+            "length": 1,
+            "line": 2
+          },
+          {
+            "column": 44,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 54,
+            "length": 1,
+            "line": 4
+          },
+          {
+            "column": 24,
+            "length": 1,
+            "line": 5
+          },
+          {
+            "column": 21,
+            "length": 1,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "shadowed-variable",
+      "languages": [
+        "js"
+      ],
+      "options": [
+        {
+          "default": [],
+          "description": "Names that may shadow.",
+          "name": "allow",
+          "type": "list"
+        },
+        {
+          "choices": [
+            "variable",
+            "parameter",
+            "function",
+            "class",
+            "import",
+            "type"
+          ],
+          "default": [],
+          "description": "The declarations that are checked for shadowing something (empty: all).",
+          "name": "kinds",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": [
+        {
+          "id": "no-shadow",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-shadow",
+          "partial": true,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
       "category": "style",
       "default_level": "off",
       "description": "A `/// <reference path=\"x\" />` before the first statement, and a `/// <reference types=\"x\" />` for a module the file imports.",
@@ -10389,6 +10247,203 @@
       "upstream": [
         {
           "id": "triple-slash-reference",
+          "partial": true,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A name that no scope declares, that is not a global of ES2026 (or, in a `.cjs` file, `require`, `module`, `exports` and `global`) and that is not in the `globals` option. `typeof x` and JSX tags are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<?php\n\nfunction f(int $a, $b = 1) {\n    $x = $a + $b;\n    [$p, $q] = g();\n    foreach ($arr as $k => $v) {\n        echo $k . $v . $p . $q . $x;\n    }\n    try {\n        h($m);\n    } catch (Exception $e) {\n        echo $e;\n    }\n    $r = function () use ($x) {\n        return $x + $undefined;\n    };\n    $s = fn($z) => $z + $x;\n    global $gg;\n    static $st = 0;\n    $x++;\n    preg_match('/a/', $a, $m2);\n    $list[] = 1;\n    echo $gg . $st . $m2 . $list . Foo::$bar . $this->z . $_GET['a'];\n    echo isset($maybe) ? \"$x {$y}\" : '';\n    return $s;\n}\n\nfunction g() {\n    return $top;\n}\n\nfunction h() {\n    extract($data);\n    return $name;\n}\n\n$top = 1;\necho $top . $nowhere;\n",
+        "language": "php",
+        "spans": [
+          {
+            "column": 14,
+            "length": 4,
+            "line": 6
+          },
+          {
+            "column": 21,
+            "length": 10,
+            "line": 15
+          },
+          {
+            "column": 31,
+            "length": 2,
+            "line": 24
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 29
+          }
+        ]
+      },
+      "fix": null,
+      "id": "undefined-variable",
+      "languages": [
+        "js",
+        "php"
+      ],
+      "options": [
+        {
+          "default": [],
+          "description": "Names the environment declares (ESLint's `languageOptions.globals`), such as `window` or `console`.",
+          "name": "globals",
+          "type": "list"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended",
+        "php/phpstan"
+      ],
+      "upstream": [
+        {
+          "id": "no-undef",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A parameter that is never read. By default only the parameters after the last one that is read are reported; the parameters of setters and signatures and the properties a constructor declares are used.",
+      "example": {
+        "config": "unused-variable:\n  level: warn\n  options: { caught_errors: none, ignore_pattern: \"^_\", ignore_rest_siblings: true }\nunused-parameter:\n  level: warn\n  options: { args: all, ignore_pattern: \"^_\" }\n",
+        "fixed": null,
+        "input": "export function f(o, _skip, a, b) {\n  const { x, ...rest } = o;\n  const _hidden = 1;\n  try { g(); } catch (err) { g(); }\n  return a;\n}\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 32,
+            "length": 1,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-parameter",
+      "languages": [
+        "js"
+      ],
+      "options": [
+        {
+          "choices": [
+            "after-used",
+            "all",
+            "none"
+          ],
+          "default": "after-used",
+          "description": "Which parameters are checked: those after the last one that is read, all of them, or none.",
+          "name": "args",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "A regex for the names that are not checked (ESLint's `argsIgnorePattern`).",
+          "name": "ignore_pattern",
+          "type": "string"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended",
+        "js/typescript-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-unused-vars",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-unused-vars",
+          "partial": true,
+          "tool": "typescript-eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "A reference that comes before the declaration of what it names in the source (function declarations included), or runs while the variable is being initialized. References in types are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "use(undefinedThing, typeof maybe, typeof maybe.x, arguments);\nfunction f(a, a2) { var a; return arguments; }\nvar x = 1; var x = 2; function x() {}\nfunction f2() {} function f2() {}\ntry {} catch (e) { var e; }\nbefore(); function before() {} before2(); var before2 = 1;\nconst s = s + 1; let t = () => t; class C { static p = C; q = C; } class D extends D {}\nfor (var i of i) {} const { u = u } = {};\nPromise.all([globalThis, hasOwnProperty]);\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 6,
+            "line": 6
+          },
+          {
+            "column": 32,
+            "length": 7,
+            "line": 6
+          },
+          {
+            "column": 11,
+            "length": 1,
+            "line": 7
+          },
+          {
+            "column": 84,
+            "length": 1,
+            "line": 7
+          },
+          {
+            "column": 15,
+            "length": 1,
+            "line": 8
+          },
+          {
+            "column": 33,
+            "length": 1,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "use-before-define",
+      "languages": [
+        "js"
+      ],
+      "options": [
+        {
+          "default": true,
+          "description": "Check function declarations.",
+          "name": "functions",
+          "type": "bool"
+        },
+        {
+          "default": true,
+          "description": "Check class declarations.",
+          "name": "classes",
+          "type": "bool"
+        },
+        {
+          "default": true,
+          "description": "Check `var`, `let` and `const` variables.",
+          "name": "variables",
+          "type": "bool"
+        }
+      ],
+      "presets": [],
+      "upstream": [
+        {
+          "id": "no-use-before-define",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-use-before-define",
           "partial": true,
           "tool": "typescript-eslint"
         }
@@ -11428,49 +11483,6 @@
       "options": [],
       "presets": [
         "markdown/markdownlint"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "correctness",
-      "default_level": "warn",
-      "description": "A variable is read in a function that never assigns it, takes it as a parameter, imports it with `use` or declares it with `global` or `static` (PHPStan level 0, always undefined variables). A variable passed to a call counts as assigned, since the call can take it by reference; a function that uses `extract`, `parse_str`, `include` or `$$name` is not checked.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "<?php\n\nfunction f(int $a, $b = 1) {\n    $x = $a + $b;\n    [$p, $q] = g();\n    foreach ($arr as $k => $v) {\n        echo $k . $v . $p . $q . $x;\n    }\n    try {\n        h($m);\n    } catch (Exception $e) {\n        echo $e;\n    }\n    $r = function () use ($x) {\n        return $x + $undefined;\n    };\n    $s = fn($z) => $z + $x;\n    global $gg;\n    static $st = 0;\n    $x++;\n    preg_match('/a/', $a, $m2);\n    $list[] = 1;\n    echo $gg . $st . $m2 . $list . Foo::$bar . $this->z . $_GET['a'];\n    echo isset($maybe) ? \"$x {$y}\" : '';\n    return $s;\n}\n\nfunction g() {\n    return $top;\n}\n\nfunction h() {\n    extract($data);\n    return $name;\n}\n\n$top = 1;\necho $top . $nowhere;\n",
-        "language": "php",
-        "spans": [
-          {
-            "column": 14,
-            "length": 4,
-            "line": 6
-          },
-          {
-            "column": 21,
-            "length": 10,
-            "line": 15
-          },
-          {
-            "column": 31,
-            "length": 2,
-            "line": 24
-          },
-          {
-            "column": 12,
-            "length": 4,
-            "line": 29
-          }
-        ]
-      },
-      "fix": null,
-      "id": "undefined-variable",
-      "languages": [
-        "php"
-      ],
-      "options": [],
-      "presets": [
-        "php/phpstan"
       ],
       "upstream": []
     },
@@ -27228,13 +27240,27 @@
       "id": "unused-variable",
       "languages": [
         "csharp",
+        "js",
         "python"
       ],
       "options": [],
       "presets": [
+        "js/eslint-recommended",
+        "js/typescript-eslint-recommended",
         "python/ruff"
       ],
-      "upstream": []
+      "upstream": [
+        {
+          "id": "no-unused-vars",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-unused-vars",
+          "partial": true,
+          "tool": "typescript-eslint"
+        }
+      ]
     },
     {
       "category": "style",

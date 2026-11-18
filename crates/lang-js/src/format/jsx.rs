@@ -331,10 +331,10 @@ fn split_words(t: &str) -> Vec<String> {
 }
 
 /// `{/* prettier-ignore */}`: a container with a comment and no expression.
-fn is_ignore_marker(n: &SyntaxNode) -> bool {
+fn is_ignore_marker(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
     n.kind() == k::JSX_EXPRESSION_CONTAINER
         && n.children().next().is_none()
-        && n.text().to_string().contains("prettier-ignore")
+        && core_format::ignore::holds_mark(cx.grammar, n)
 }
 
 fn is_self_closing(n: &SyntaxNode) -> bool {
@@ -413,7 +413,7 @@ fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, Form
                 // `{/* prettier-ignore */}` keeps the next element as written.
                 let ignored = children[..i].iter().rev().find_map(|c| match c {
                     Child::Text(t) if !meaningful(t) => None,
-                    Child::Node(p) => Some(is_ignore_marker(p)),
+                    Child::Node(p) => Some(is_ignore_marker(cx, p)),
                     Child::Text(_) => Some(false),
                 });
                 parts.push(P::Doc(if ignored == Some(true) && is_jsx(n.kind()) {

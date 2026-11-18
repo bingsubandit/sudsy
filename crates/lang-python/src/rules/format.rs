@@ -7,6 +7,7 @@
 
 use super::Check;
 use super::tree::{callee, inner, keyword, span, tokens};
+use crate::format::syntax;
 use crate::generated::kind as k;
 use crate::text::string_value;
 use core_rules::RuleContext;
@@ -557,23 +558,17 @@ pub(super) fn invalid_escape(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
                 .is_none_or(|a| a == *n)
         });
     for t in pieces.filter(|t| !raw(t)) {
-        let text = t.text();
-        let mut chars = text.char_indices();
-        while let Some((i, ch)) = chars.next() {
-            if ch != '\\' {
-                continue;
-            }
-            // The backslash ends the piece of an f-string: the replacement field's brace follows.
-            let next = chars.next().map_or('{', |(_, n)| n);
-            if !matches!(
-                next,
-                '\n' | '\r' | '\\' | '\'' | '"' | 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '0'
-                    ..='7' | 'x' | 'N' | 'u' | 'U'
-            ) {
-                let at = t.text_range().start() + TextSize::try_from(i).unwrap_or_default();
-                let len = TextSize::try_from(1 + next.len_utf8()).unwrap_or_default();
-                c.hit(ctx, TextRange::at(at, len), &format!("\\{next}"));
-            }
-        }
+        // The backslash ending the piece of an f-string escapes the replacement field's brace.
+        let text = if t.kind() == k::STRING {
+            t.text().to_owned()
+        } else {
+            format!("{}{{", t.text())
+        };
+        let start = t.text_range().start();
+        syntax().unknown_escapes(&text, '"', |i, next| {
+            let at = start + TextSize::try_from(i).unwrap_or_default();
+            let len = TextSize::try_from(1 + next.len_utf8()).unwrap_or_default();
+            c.hit(ctx, TextRange::at(at, len), &format!("\\{next}"));
+        });
     }
 }

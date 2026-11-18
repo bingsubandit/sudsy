@@ -27,7 +27,7 @@ fn list_style(options: &ResolvedOptions, is_object: bool) -> ListStyle {
         layout: match options.str(COLLAPSE) {
             "always" => ListLayout::Fit,
             "never" => ListLayout::Break,
-            "opening_break" if is_object => ListLayout::PreserveOpenBreak,
+            "opening_break" if is_object => ListLayout::PreserveFirstBreak,
             "opening_break" => ListLayout::Fit,
             _ => ListLayout::PreserveBreak,
         },

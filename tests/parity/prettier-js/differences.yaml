@@ -4,7 +4,7 @@ files:
   real-world: project-options
 ratchet:
   prettier-tests: 1115
-  real-world: 2287
+  real-world: 2288
 second-format:
   prettier-tests: 0
   real-world: 0

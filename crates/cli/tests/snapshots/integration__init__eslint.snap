@@ -12,11 +12,12 @@ js:
     rules:
       no-debugger: "off"
       no-explicit-any: warn
-      no-undef:
+      undefined-variable:
         level: error
         options:
           globals: [jQuery]
-      no-unused-vars: warn
+      unused-parameter: warn
+      unused-variable: warn
 json:
   format:
     array_bracket_spacing: true

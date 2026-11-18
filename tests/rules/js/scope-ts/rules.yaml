@@ -1,4 +1,4 @@
 no-import-assign: warn
-no-redeclare: warn
-no-shadow: warn
-no-use-before-define: warn
+redeclared-variable: warn
+shadowed-variable: warn
+use-before-define: warn

@@ -2,7 +2,7 @@
 
 use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange};
 use lang_yaml::generated::kind;
-use lang_yaml::scalar::{double_quoted_value, plain_value, single_quoted_value};
+use lang_yaml::scalar::flow_value;
 
 pub struct Entry {
     pub key: String,
@@ -31,12 +31,7 @@ pub fn scalar(node: &SyntaxNode, text: &str) -> Option<(String, TextRange)> {
         )
     })?;
     let raw = &text[token.text_range()];
-    let value = match token.kind() {
-        kind::PLAIN => plain_value(raw),
-        kind::SINGLE_QUOTED => single_quoted_value(raw),
-        kind::DOUBLE_QUOTED => double_quoted_value(raw)?,
-        _ => return None,
-    };
+    let value = flow_value(token.kind(), raw)?.into_owned();
     Some((value, token.text_range()))
 }
 

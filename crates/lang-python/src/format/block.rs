@@ -1,7 +1,7 @@
 //! Blocks: the statements of a module or a suite one per line with ruff's blank lines, each with
 //! its comments.
 
-use super::comment::{self, *};
+use super::comment::*;
 use super::docstring;
 use super::stmt;
 use super::util::*;
@@ -30,7 +30,6 @@ pub(crate) enum Seq {
 }
 
 pub(crate) fn module(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    comment::reset();
     DEPTH.set(0);
     let stmts: Vec<SyntaxNode> = node.children().filter(|n| is_stmt(n.kind())).collect();
     let body = sequence(cx, &stmts, true, Seq::Module)?;
@@ -40,7 +39,7 @@ pub(crate) fn module(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         .filter_map(|e| e.into_token())
         .find(|t| t.kind() == k::END_OF_FILE)
     {
-        let cs = remaining_comments(cx, &eof);
+        let cs = cx.remaining_comments(&eof);
         if !cs.is_empty() {
             if !stmts.is_empty() {
                 parts.push(hardline());
@@ -49,7 +48,7 @@ pub(crate) fn module(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                     parts.push(hardline());
                 }
             }
-            parts.push(comments_block(&cs));
+            parts.push(core_format::comment_lines(&cs));
         }
     }
     Ok(concat(parts))
@@ -118,14 +117,14 @@ fn is_docstring(n: &SyntaxNode) -> bool {
 pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq: Seq) -> R {
     let cap = if top { 2 } else { 1 };
     let mut parts: Vec<Doc> = Vec::new();
-    let (mut off, mut ignoring) = (false, false);
+    let mut region = core_format::ignore::IgnoreRun::default();
     for (i, s) in stmts.iter().enumerate() {
         let Some(first) = cx.first_token(s) else {
             continue;
         };
         let mut src = comments::blank_lines_before(cx.grammar, &first);
         // Comments a block before has printed: the blank lines after them count.
-        let consumed = consumed_of(&first);
+        let consumed = cx.consumed(&first);
         if consumed > 0 {
             let all = comments::leading_comments(cx.grammar, &first);
             if let Some(c) = all.get(consumed - 1) {
@@ -135,7 +134,7 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
         // Comments followed by a blank line stay with the statement before.
         let mut own_doc = Doc::Nil;
         {
-            let cs = remaining_comments(cx, &first);
+            let cs = cx.remaining_comments(&first);
             if let Some(j) = cs.iter().rposition(|c| c.breaks_after >= 2) {
                 if i > 0 {
                     parts.push(hardline());
@@ -148,9 +147,9 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
                         parts.push(hardline());
                     }
                 }
-                own_doc = comments_block(&cs[..=j]);
+                own_doc = core_format::comment_lines(&cs[..=j]);
                 parts.push(own_doc.clone());
-                consume(&first, j + 1);
+                cx.consume(&first, j + 1);
                 src = cs[j].breaks_after - 1;
             }
         }
@@ -190,24 +189,9 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
         for _ in 0..blank {
             parts.push(hardline());
         }
-        // `# fmt: off` ... `# fmt: on`, `sudsy-ignore`: statements kept as written.
-        let marks = comments::leading_comments(cx.grammar, &first);
-        let marks = marks.get(consumed_of(&first)..).unwrap_or_default();
-        for c in marks {
-            match mark(cx, c) {
-                Some(Mark::Off) => off = true,
-                Some(Mark::On) => off = false,
-                _ => {}
-            }
-        }
-        let ignore = core_format::ignore::mark_in(cx.grammar, marks);
-        match ignore {
-            Some(core_format::ignore::IgnoreMark::Start) => ignoring = true,
-            Some(core_format::ignore::IgnoreMark::End) => ignoring = false,
-            _ => {}
-        }
-        let skip = (off || ignoring || ignore == Some(core_format::ignore::IgnoreMark::Ignore))
-            || is_fmt_skip(cx, s);
+        // `# fmt: off` ... `# fmt: on`, `sudsy-ignore`: statements kept as written (ignore rows).
+        let mark = core_format::ignore::mark_in(cx.grammar, &cx.remaining_comments(&first));
+        let skip = region.skips(mark) || is_fmt_skip(cx, s);
         parts.push(if skip {
             verbatim_item(cx, s)?
         } else {
@@ -220,7 +204,7 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
 /// A statement as written (its comments around it as in the source).
 pub(crate) fn verbatim_item(cx: &FormatCtx<'_>, s: &SyntaxNode) -> R {
     let first = cx.first_token(s).ok_or_else(|| shape_error("statement"))?;
-    let leading = lead(cx, &first);
+    let leading = cx.lead(&first);
     let last = semicolon(cx, s)
         .or_else(|| cx.last_token(s))
         .ok_or_else(|| shape_error("statement"))?;
@@ -230,7 +214,7 @@ pub(crate) fn verbatim_item(cx: &FormatCtx<'_>, s: &SyntaxNode) -> R {
 /// One statement with its leading comments and trailing comment.
 pub(crate) fn item(cx: &FormatCtx<'_>, s: &SyntaxNode, docstring: bool) -> R {
     let first = cx.first_token(s).ok_or_else(|| shape_error("statement"))?;
-    let leading = lead(cx, &first);
+    let leading = cx.lead(&first);
     let compound = is_compound(s.kind());
     let last = (!compound).then(|| cx.last_token(s)).flatten();
     if let Some(l) = &last {
@@ -257,7 +241,10 @@ pub(crate) fn block(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], seq: Seq) -> R {
     let body = sequence(cx, stmts, false, seq);
     DEPTH.set(DEPTH.get() - 1);
     let body = body?;
-    let col = cx.first_token(&stmts[0]).map(|t| column(&t)).unwrap_or(0);
-    let end = end_comments(cx, &stmts[stmts.len() - 1], col);
+    let col = cx
+        .first_token(&stmts[0])
+        .map(|t| comments::column(&t))
+        .unwrap_or(0);
+    let end = cx.end_comments(&stmts[stmts.len() - 1], col);
     Ok(indent(concat(vec![hardline(), body, end])))
 }

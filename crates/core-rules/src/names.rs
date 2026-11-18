@@ -4,10 +4,15 @@
 //! overrides the methods of [`RuleHooks`](crate::hooks::RuleHooks).
 
 use crate::hooks::{Accessor, Scalar};
-use core_syntax::strings::{decode, integer};
+use core_syntax::strings::integer;
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
 use rowan::{GreenNodeData, NodeOrToken};
 use std::borrow::Cow;
+
+/// The value of a string token (the grammar's `string` row); the text itself without a row.
+fn decode<'a>(g: &Grammar, kind: SyntaxKind, raw: &'a str) -> Cow<'a, str> {
+    g.string_value(kind, raw).unwrap_or(Cow::Borrowed(raw))
+}
 
 /// The identity of a key. A key written as a path of `#key-part` tokens (TOML's `a."b.c"`) is its
 /// parts joined with `.`; any other key is its text, a `#string` one decoded or stripped of its
@@ -33,7 +38,7 @@ pub fn key_name<'a>(g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, 
         SyntaxElement::Token(t) => {
             let raw = &text[t.text_range()];
             if row.decode && raw.starts_with(['"', '\'']) {
-                decode(raw)
+                decode(g, t.kind(), raw)
             } else {
                 Cow::Borrowed(strip_quotes(raw.trim()))
             }
@@ -177,7 +182,7 @@ fn push_parts<'a>(
                 }
                 let raw = &text[from as usize..*at as usize];
                 out.push(if g.has_tag(kind, "string") {
-                    decode(raw)
+                    decode(g, kind, raw)
                 } else {
                     Cow::Borrowed(raw)
                 });
@@ -198,7 +203,7 @@ pub fn scalar<'a>(g: &Grammar, item: &SyntaxNode, text: &'a str) -> Option<Scala
     let raw = &text[token.text_range()];
     if g.has_tag(token.kind(), "string") {
         return (!raw.starts_with("\"\"\"") && !raw.starts_with("'''"))
-            .then(|| Scalar::String(decode(raw)));
+            .then(|| Scalar::String(decode(g, token.kind(), raw)));
     }
     if g.has_tag(token.kind(), "number") {
         let number = integer(raw)

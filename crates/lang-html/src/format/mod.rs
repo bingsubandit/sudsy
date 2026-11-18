@@ -300,6 +300,7 @@ impl NodeFormatter for MarkupFormatter {
         Ok(Some(print::block(
             &tree,
             print::Opts {
+                grammar: cx.grammar,
                 dialect: self.dialect,
                 indent_blocks: cx
                     .options

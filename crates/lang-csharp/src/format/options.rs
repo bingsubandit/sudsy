@@ -206,12 +206,11 @@ pub fn empty_braces(options: &ResolvedOptions) -> &'static str {
     }
 }
 
-/// How a list that may carry a trailing comma is printed, given whether its source had one.
-pub fn trailing_comma(options: &ResolvedOptions, source_has_one: bool) -> TrailingComma {
+/// How a list that may carry a trailing comma is printed.
+pub fn trailing_comma(options: &ResolvedOptions) -> TrailingComma {
     match options.str(TRAILING_COMMAS) {
         "never" => TrailingComma::Never,
         "multiline" => TrailingComma::WhenBroken,
-        _ if source_has_one => TrailingComma::WhenBroken,
-        _ => TrailingComma::Never,
+        _ => TrailingComma::AsSource,
     }
 }

@@ -2,11 +2,10 @@
 //! statements and expressions, enums, accessor lists.
 
 use super::flat;
-use super::lists::list_trailing_comma;
 use super::options::{
     blank_after_block, blank_before_comment, empty_braces, expand_empty_bodies,
     indent_switch_section_block, preserve_single_line_blocks, preserve_single_line_statements,
-    remove_accessor_blank_lines, separate_all_members, separate_members,
+    remove_accessor_blank_lines, separate_all_members, separate_members, trailing_comma,
 };
 use super::seq::{
     R, Sep, block_is_empty, braced_element, direct_tokens, is_empty_braces, keeps_empty_inline,
@@ -481,7 +480,7 @@ pub fn switch_section(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(doc::concat(parts))
 }
 
-fn arms_style(cx: &FormatCtx<'_>, node: &SyntaxNode, close: &SyntaxToken) -> ListStyle {
+fn arms_style(cx: &FormatCtx<'_>, node: &SyntaxNode) -> ListStyle {
     let enum_in_line = node.kind() == k::ENUM_DECLARATION && flat::inside(cx, node);
     ListStyle {
         layout: if enum_in_line {
@@ -490,7 +489,7 @@ fn arms_style(cx: &FormatCtx<'_>, node: &SyntaxNode, close: &SyntaxToken) -> Lis
             ListLayout::Break
         },
         padding: enum_in_line,
-        trailing_comma: list_trailing_comma(cx, node, close),
+        trailing_comma: trailing_comma(cx.options),
         empty: empty_braces(cx.options),
         expand_empty: node.kind() == k::ENUM_DECLARATION && !keeps_empty_inline(cx, node),
         force_blank: blank_rule(cx).filter(|_| node.kind() == k::ENUM_DECLARATION),
@@ -501,12 +500,12 @@ fn arms_style(cx: &FormatCtx<'_>, node: &SyntaxNode, close: &SyntaxToken) -> Lis
 /// `x switch`, then the arms between braces on their own lines.
 pub fn switch_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     with_braces(cx, node, |open, close| {
-        delimited_list_between(cx, node, open, close, &arms_style(cx, node, close))
+        delimited_list_between(cx, node, open, close, &arms_style(cx, node))
     })
 }
 
 pub fn enum_declaration(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     with_braces(cx, node, |open, close| {
-        delimited_list_between(cx, node, open, close, &arms_style(cx, node, close))
+        delimited_list_between(cx, node, open, close, &arms_style(cx, node))
     })
 }

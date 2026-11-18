@@ -1,0 +1,3 @@
+use-before-define:
+  level: warn
+  options: { functions: false }

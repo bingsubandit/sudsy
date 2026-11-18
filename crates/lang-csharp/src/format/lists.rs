@@ -14,15 +14,6 @@ use core_format::shapes::{
 use core_format::{Doc, FormatCtx, FormatError, comments, doc};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
-/// Did the source put a comma after the last element, before `close`?
-pub fn source_trailing_comma(cx: &FormatCtx<'_>, node: &SyntaxNode, close: &SyntaxToken) -> bool {
-    let els = sig(cx, node);
-    els.iter()
-        .position(|e| matches!(e, SyntaxElement::Token(t) if t == close))
-        .and_then(|i| i.checked_sub(1))
-        .is_some_and(|i| matches!(&els[i], SyntaxElement::Token(t) if t.kind() == k::COMMA_TOKEN))
-}
-
 /// `x is { A: 1 }` and `x is T { A: 1 }`: the braces of a property pattern start on their own
 /// line when the pattern breaks, but not in `{ A: 1 } => ...`, where nothing precedes them.
 fn property_pattern_follows_something(clause: &SyntaxNode) -> bool {
@@ -31,15 +22,6 @@ fn property_pattern_follows_something(clause: &SyntaxNode) -> bool {
     };
     clause.prev_sibling().is_some()
         || pattern.parent().map(|p| p.kind()) == Some(k::IS_PATTERN_EXPRESSION)
-}
-
-/// The trailing comma of a list, as `trailing_commas` says.
-pub fn list_trailing_comma(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-    close: &SyntaxToken,
-) -> TrailingComma {
-    trailing_comma(cx.options, source_trailing_comma(cx, node, close))
 }
 
 /// Parameters, arguments, type arguments, attributes, tuples, patterns: one line if it fits,
@@ -72,18 +54,11 @@ fn call_style(cx: &FormatCtx<'_>, node: &SyntaxNode) -> ListStyle {
 
 /// A delimited list that is never broken: the items separated by `, ` between the delimiters.
 pub fn unbreakable_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let mut parts = Vec::new();
-    for e in sig(cx, node) {
-        match &e {
-            SyntaxElement::Token(t) if t.kind() == k::COMMA_TOKEN => {
-                parts.push(cx.token(t));
-                parts.push(doc::lit(" "));
-            }
-            SyntaxElement::Token(t) => parts.push(cx.token(t)),
-            SyntaxElement::Node(n) => parts.push(cx.format(n)?),
-        }
-    }
-    Ok(doc::concat(parts))
+    let style = ListStyle {
+        layout: ListLayout::Flat,
+        ..ListStyle::default()
+    };
+    delimited_list(cx, node, &style)
 }
 
 fn creation_parent(kind: Option<SyntaxKind>) -> bool {
@@ -133,14 +108,14 @@ fn crowded(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         || (items.len() >= 2 && items.iter().any(creates_with_initializer))
 }
 
-fn brace_style(cx: &FormatCtx<'_>, node: &SyntaxNode, close: &SyntaxToken) -> ListStyle {
+fn brace_style(cx: &FormatCtx<'_>, node: &SyntaxNode) -> ListStyle {
     ListStyle {
         padding: true,
         // `{ key, value }` as an element of a collection initializer takes no trailing comma.
         trailing_comma: if node.kind() == k::COMPLEX_ELEMENT_INITIALIZER_EXPRESSION {
             TrailingComma::Never
         } else {
-            list_trailing_comma(cx, node, close)
+            trailing_comma(cx.options)
         },
         layout: if expand_crowded_initializers(cx.options) && crowded(cx, node) {
             ListLayout::Break
@@ -162,10 +137,7 @@ fn brace_style(cx: &FormatCtx<'_>, node: &SyntaxNode, close: &SyntaxToken) -> Li
 
 /// `{ a, b }`, or when it does not fit (or the source broke it) the braces on their own lines.
 pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let close = direct_tokens(node, k::CLOSE_BRACE_TOKEN)
-        .pop()
-        .ok_or_else(|| core_format::FormatError::Shape("initializer without `}`".into()))?;
-    let mut style = brace_style(cx, node, &close);
+    let mut style = brace_style(cx, node);
     style.leading_line = (creation_parent(node.parent().map(|p| p.kind()))
         && creation_brace_on_new_line(cx.options))
         || (nested_brace_on_new_line(cx.options)
@@ -174,12 +146,9 @@ pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 }
 
 pub fn collection_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let close = direct_tokens(node, k::CLOSE_BRACKET_TOKEN)
-        .pop()
-        .ok_or_else(|| core_format::FormatError::Shape("collection without `]`".into()))?;
     let style = ListStyle {
         padding: false,
-        trailing_comma: list_trailing_comma(cx, node, &close),
+        trailing_comma: trailing_comma(cx.options),
         layout: initializer_layout(cx.options),
         max_blank_lines: collection_blank_lines(cx.options),
         ..ListStyle::default()
@@ -210,7 +179,7 @@ pub fn list_with_surroundings(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let mut style = if node.kind() == k::LIST_PATTERN {
         ListStyle::default()
     } else {
-        brace_style(cx, node, &close)
+        brace_style(cx, node)
     };
     style.trailing_comma = if node.kind() == k::LIST_PATTERN {
         TrailingComma::Never
