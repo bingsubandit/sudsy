@@ -39,7 +39,7 @@ pub use kind::{LanguageId, SyntaxKind};
 pub use rowan::{Checkpoint, GreenNode, TextRange, TextSize, WalkEvent};
 pub use tree::{
     SudsyLang, SyntaxElement, SyntaxNode, SyntaxNodeExt, SyntaxToken, TreeBuilder, code_span,
-    dump_tree, print,
+    dump_tree, first_code_token, print,
 };
 
 /// The typed wrappers the crate's build script generates from its grammar (`build/lang-crate.rs`).

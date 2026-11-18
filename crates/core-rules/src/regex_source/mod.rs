@@ -28,6 +28,7 @@ use crate::scope_rules::{self, ScopeLang};
 use crate::tree::significant_range;
 use crate::{Family, Params, Rule, RuleContext, RuleMeta};
 use core_semantics::scopes::Flags;
+use core_syntax::first_code_token;
 use core_syntax::regex::RegexCall;
 use core_syntax::{Grammar, SyntaxElement, SyntaxNode, SyntaxToken, TextRange, TextSize};
 use std::sync::OnceLock;
@@ -266,12 +267,6 @@ impl RegexRule {
             }
         }
     }
-}
-
-fn first_code_token(n: &SyntaxNode, g: &Grammar) -> Option<SyntaxToken> {
-    n.descendants_with_tokens()
-        .filter_map(|e| e.into_token())
-        .find(|t| !g.is_trivia(t.kind()))
 }
 
 /// The first code token of an element, without collecting the others.

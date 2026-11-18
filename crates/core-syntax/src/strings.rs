@@ -533,7 +533,9 @@ pub fn digits(raw: &str) -> Cow<'_, str> {
 pub fn integer(raw: &str) -> Option<i128> {
     let digits = digits(raw);
     let radix = |p: [&str; 2], base| {
-        let rest = digits.strip_prefix(p[0]).or_else(|| digits.strip_prefix(p[1]))?;
+        let rest = digits
+            .strip_prefix(p[0])
+            .or_else(|| digits.strip_prefix(p[1]))?;
         i128::from_str_radix(rest, base).ok()
     };
     radix(["0x", "0X"], 16)

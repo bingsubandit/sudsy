@@ -3,8 +3,8 @@
 //!
 //! concept: role-accessors
 
-use core_rules::names;
-use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange, code_span, grammars};
+use core_rules::{Accessor, names};
+use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange, code_span, first_code_token, grammars};
 use lang_js::generated::kind as j;
 
 /// The node without the trivia around it.
@@ -24,15 +24,7 @@ pub(super) fn unwrap(mut n: SyntaxNode) -> SyntaxNode {
 
 /// The text of the first token: an identifier, or a string with its quotes.
 pub(super) fn first(n: &SyntaxNode) -> Option<String> {
-    n.descendants_with_tokens()
-        .filter_map(|e| e.into_token())
-        .find(|t| {
-            !matches!(
-                t.kind(),
-                j::WHITESPACE | j::NEWLINE | j::LINE_COMMENT | j::BLOCK_COMMENT
-            )
-        })
-        .map(|t| t.text().to_string())
+    first_code_token(n, grammars::JS.get()).map(|t| t.text().to_string())
 }
 
 /// The name of an identifier reference node.
@@ -60,9 +52,10 @@ pub(super) fn key_name(key: &SyntaxNode) -> Option<String> {
 
 /// The arguments of a call.
 pub(super) fn args(call: &SyntaxNode) -> impl Iterator<Item = SyntaxNode> {
-    call.children()
-        .skip(1)
-        .filter(|c| c.kind() != j::TS_TYPE_PARAMETER_INSTANTIATION)
+    grammars::JS
+        .get()
+        .slots(call, "arguments")
+        .filter_map(|e| e.into_node())
 }
 
 /// The first type argument of a call.
@@ -85,8 +78,7 @@ pub(super) fn calls(n: &SyntaxNode, name: &str) -> bool {
 pub(super) struct Member {
     pub key: SyntaxNode,
     pub value: Option<SyntaxNode>,
-    /// `get` or `set`.
-    pub accessor: Option<&'static str>,
+    pub accessor: Option<Accessor>,
     pub shorthand: bool,
 }
 
@@ -97,11 +89,7 @@ pub(super) fn member(p: &SyntaxNode) -> Option<Member> {
     }
     let mut nodes = p.children();
     let key = nodes.next()?;
-    let accessor = p.tokens().find_map(|t| match t.text() {
-        "get" => Some("get"),
-        "set" => Some("set"),
-        _ => None,
-    });
+    let accessor = names::accessor(grammars::JS.get(), p);
     let shorthand = key.child(j::IDENTIFIER_REFERENCE).is_some();
     Some(Member {
         key,

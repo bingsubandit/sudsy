@@ -45,6 +45,13 @@ impl SyntaxNodeExt for SyntaxNode {
     }
 }
 
+/// The first token below `node` that is not trivia.
+pub fn first_code_token(node: &SyntaxNode, grammar: &crate::Grammar) -> Option<SyntaxToken> {
+    node.descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .find(|t| !grammar.is_trivia(t.kind()))
+}
+
 /// The span from the first to the last token of `node` that is neither trivia nor empty, `None`
 /// without one. Walks the green tree, so no red element is allocated.
 pub fn code_span(node: &SyntaxNode, grammar: &crate::Grammar) -> Option<rowan::TextRange> {
