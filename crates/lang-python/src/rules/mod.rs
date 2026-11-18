@@ -166,7 +166,11 @@ const CHECKS: &[Entry] = &[
         &[k::STMT_IF, k::ELIF_ELSE_CLAUSE],
         types::outdated_version_block,
     ),
-    ("unsorted-imports", lints::BODIES, isort::unsorted_imports),
+    (
+        "unsorted-imports",
+        &[k::STMT_IMPORT, k::STMT_IMPORT_FROM],
+        isort::unsorted_imports,
+    ),
     (
         "cached-method",
         &[k::STMT_FUNCTION_DEF],
@@ -366,7 +370,7 @@ const CHECKS: &[Entry] = &[
     ),
     (
         "unnecessary-placeholder",
-        lints::BODIES,
+        &[k::STMT_PASS, k::STMT_EXPR],
         lints::unnecessary_placeholder,
     ),
     (

@@ -86,6 +86,31 @@ pub fn statements<'a>(n: &'a SyntaxNode) -> impl Iterator<Item = SyntaxNode> + '
     n.children().filter(|c| is_statement(c.kind()))
 }
 
+/// The statement after (`forward`) or before `n` in the same body: an `else` or `finally` ends it.
+pub fn adjacent_statement(n: &SyntaxNode, forward: bool) -> Option<SyntaxNode> {
+    let step = |e: &core_syntax::SyntaxElement| {
+        if forward {
+            e.next_sibling_or_token()
+        } else {
+            e.prev_sibling_or_token()
+        }
+    };
+    let mut e = step(&n.clone().into());
+    while let Some(x) = e {
+        match &x {
+            core_syntax::SyntaxElement::Token(t) if matches!(t.kind(), k::ELSE | k::FINALLY) => {
+                return None;
+            }
+            core_syntax::SyntaxElement::Node(s) if is_statement(s.kind()) => {
+                return Some(s.clone());
+            }
+            _ => {}
+        }
+        e = step(&x);
+    }
+    None
+}
+
 pub fn is_statement(kind: core_syntax::SyntaxKind) -> bool {
     STATEMENTS.contains(&kind)
 }

@@ -4,7 +4,8 @@
 
 use super::Check;
 use super::tree::{
-    call_arguments, callee, compare_ops, inner, is_statement, keyword, span, statements, tokens,
+    adjacent_statement, call_arguments, callee, compare_ops, inner, is_statement, keyword, span,
+    statements, tokens,
 };
 use crate::generated::kind as k;
 use crate::semantic::{Cx, model};
@@ -524,23 +525,25 @@ fn ellipsis_ok(cx: &Cx, n: &SyntaxNode) -> bool {
 
 /// PIE790: a `pass` or `...` in a body that has other statements.
 pub(super) fn unnecessary_placeholder(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(cx) = model(ctx.file) else { return };
-    for body in bodies(n).iter().filter(|b| b.len() > 1) {
-        for s in body {
-            match s.kind() {
-                k::STMT_PASS => c.hit(ctx, span(ctx, s), "pass"),
-                k::STMT_EXPR
-                    if s.children()
-                        .next()
-                        .is_some_and(|e| e.kind() == k::EXPR_ELLIPSIS_LITERAL)
-                        && !ellipsis_ok(&cx, n) =>
-                {
-                    c.hit(ctx, span(ctx, s), "...")
-                }
-                _ => continue,
-            };
+    let word = match n.kind() {
+        k::STMT_PASS => "pass",
+        _ if n
+            .children()
+            .next()
+            .is_some_and(|e| e.kind() == k::EXPR_ELLIPSIS_LITERAL) =>
+        {
+            "..."
         }
+        _ => return,
+    };
+    if adjacent_statement(n, true).is_none() && adjacent_statement(n, false).is_none() {
+        return;
     }
+    let Some(cx) = model(ctx.file) else { return };
+    if word == "..." && n.parent().is_some_and(|p| ellipsis_ok(&cx, &p)) {
+        return;
+    }
+    c.hit(ctx, span(ctx, n), word);
 }
 
 /// UP004: `class A(object)`.

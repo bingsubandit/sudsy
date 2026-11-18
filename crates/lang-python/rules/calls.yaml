@@ -5,8 +5,9 @@ example: "import re\nx = re.compile(\"a\", re.I)"
 severity: warn
 category: style
 rule:
-  kind: ExprAttribute
-  regex: '^re\.(?<FLAG>[AILMSUX])$'
+  pattern: 're.$FLAG'
+constraints:
+  FLAG: { regex: '^[AILMSUX]$' }
 ---
 id: exec-call
 message: "use of `exec` detected"
@@ -25,7 +26,7 @@ severity: warn
 category: suspicious
 rule:
   any:
-    - { pattern: 'hasattr($OBJ, "__call__")' }
-    - { pattern: "hasattr($OBJ, '__call__')" }
-    - { pattern: 'getattr($OBJ, "__call__", $$$D)' }
-    - { pattern: "getattr($OBJ, '__call__', $$$D)" }
+    - { pattern: 'hasattr($OBJ, $NAME)' }
+    - { pattern: 'getattr($OBJ, $NAME, $$$D)' }
+constraints:
+  NAME: { regex: '^(?:"__call__"|''__call__'')$' }

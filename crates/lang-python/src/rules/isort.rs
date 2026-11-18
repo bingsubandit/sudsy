@@ -8,9 +8,8 @@
 //! parentheses. The rule writes the block that way and compares it with the text.
 
 use super::Check;
-use super::lints::bodies;
 use super::literal::natural;
-use super::tree::{span, tokens};
+use super::tree::{adjacent_statement, span, tokens};
 use crate::generated::kind as k;
 use crate::semantic::model;
 use crate::text::code_text;
@@ -690,23 +689,26 @@ fn check_block(
     }
 }
 
-/// I001.
+fn is_import(n: &SyntaxNode) -> bool {
+    matches!(n.kind(), k::STMT_IMPORT | k::STMT_IMPORT_FROM)
+}
+
+/// Does an import come right before `n` in its body?
+fn follows_import(n: &SyntaxNode) -> bool {
+    adjacent_statement(n, false).is_some_and(|s| is_import(&s))
+}
+
+/// I001, run on each import that starts a block.
 pub(super) fn unsorted_imports(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    for body in bodies(n) {
-        let mut at = 0;
-        while at < body.len() {
-            if !matches!(body[at].kind(), k::STMT_IMPORT | k::STMT_IMPORT_FROM) {
-                at += 1;
-                continue;
-            }
-            let mut end = at + 1;
-            while end < body.len()
-                && matches!(body[end].kind(), k::STMT_IMPORT | k::STMT_IMPORT_FROM)
-            {
-                end += 1;
-            }
-            check_block(c, n, &body[at..end], body.get(end), ctx);
-            at = end;
-        }
+    if follows_import(n) {
+        return;
     }
+    let mut block = vec![n.clone()];
+    let mut next = adjacent_statement(n, true);
+    while let Some(s) = next.take().filter(is_import) {
+        next = adjacent_statement(&s, true);
+        block.push(s);
+    }
+    let Some(parent) = n.parent() else { return };
+    check_block(c, &parent, &block, next.as_ref(), ctx);
 }

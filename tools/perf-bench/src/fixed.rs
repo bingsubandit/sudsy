@@ -267,6 +267,25 @@ pub fn run(lang: &str, phase: &str, dir: &Path) -> Result<()> {
             let (w, a) = measured(&mut || diagnostics(p, &files, &rules));
             (files.len(), w, a)
         }
+        "lint-each" => {
+            let files = parsed();
+            let rules = activate(own_and_shared(p), &BTreeMap::new(), |_| false)?;
+            let full = (0..30).map(|_| { let t = std::time::Instant::now(); let (_, a) = measured(&mut || diagnostics(p, &files, &rules)); (t.elapsed().as_micros(), a) }).min().unwrap();
+            println!("FULL {}us {} allocs", full.0, full.1);
+            for i in 0..rules.len() {
+                let skip = rules[i].rule.meta().id; let rest = activate(own_and_shared(p).filter(|r| r.meta().id != skip), &BTreeMap::new(), |_| false)?;
+                let mut best = u128::MAX;
+                let mut al = 0;
+                for _ in 0..30 {
+                    let t = std::time::Instant::now();
+                    let (_, a) = measured(&mut || diagnostics(p, &files, &rest));
+                    best = best.min(t.elapsed().as_micros());
+                    al = a;
+                }
+                println!("LOO {:>6}us {:>6} allocs {}", full.0 as i128 - best as i128, full.1 as i64 - al as i64, rules[i].rule.meta().id);
+            }
+            (files.len(), 0, 0)
+        }
         "lint-all" => {
             // Every rule of the language on at its default options, opt-in rules included.
             let files = parsed();
