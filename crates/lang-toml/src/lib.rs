@@ -3,6 +3,7 @@
 //!
 //! concept: none (glue: provider entry)
 
+mod align;
 mod format;
 mod rules;
 mod validate;

@@ -1,27 +1,28 @@
-//! `align_comments`: the trailing comments of consecutive `#key-value` entries start in one
-//! column. A run is the entries of one parent with no blank line or comment line between them; the
-//! column is one past the widest entry of the run (entries without a comment count). A run with an
-//! entry on several lines is not aligned.
+//! `align_comments`: the trailing comments of consecutive entries start in one column. A run is
+//! the entries of one table with no blank line or comment line between them; the column is one
+//! past the widest entry of the run (entries without a comment count). A run with an entry on
+//! several lines is not aligned.
 //!
 //! The widths come from formatting the entries once in a context of their own (only for runs
-//! that have a comment); the entry shape then pads the comment of each entry.
+//! that have a comment); the formatter then pads the comment of each entry.
 //!
-//! concept: trailing-comment-alignment
+//! concept: new trailing-comment-alignment
 //! what: Trailing comments of consecutive entries start in one column.
 //! tools: taplo align_comments
-//! reads: option:align_comments
 
-use crate::comments;
-use crate::doc::{self, Doc};
-use crate::printer;
-use crate::{FormatCtx, print_options};
+use crate::format::TomlFormatter;
+use crate::generated::kind as k;
+use core_format::comments;
+use core_format::doc::{self, Doc};
+use core_format::printer;
+use core_format::{FormatCtx, print_options};
 use core_syntax::SyntaxNode;
 use std::collections::HashMap;
 use unicode_width::UnicodeWidthStr;
 
 /// Extra spaces in front of the trailing comment of an entry, by the entry's start offset.
 #[derive(Default)]
-pub(crate) struct AlignTable(HashMap<u32, usize>);
+pub struct AlignTable(HashMap<u32, usize>);
 
 impl AlignTable {
     pub fn extra(&self, entry: &SyntaxNode) -> usize {
@@ -31,30 +32,23 @@ impl AlignTable {
             .unwrap_or(0)
     }
 
-    /// The runs of the whole tree `node` belongs to.
-    pub fn build(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Self {
-        let measure = cx.measuring();
+    /// The runs of the whole document.
+    pub fn build(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Self {
+        let measure = FormatCtx::new(cx.grammar, cx.options, cx.directives, &TomlFormatter);
         let mut table = AlignTable::default();
-        let Some(root) = node.ancestors().last() else {
-            return table;
-        };
-        for parent in root.descendants() {
-            if parent
-                .children()
-                .any(|n| cx.grammar.has_tag(n.kind(), "key-value"))
-            {
-                table.container(&measure, &parent);
-            }
+        table.container(&measure, root);
+        for t in root
+            .children()
+            .filter(|n| matches!(n.kind(), k::TABLE | k::ARRAY_TABLE))
+        {
+            table.container(&measure, &t);
         }
         table
     }
 
     fn container(&mut self, cx: &FormatCtx<'_>, parent: &SyntaxNode) {
         let mut run: Vec<SyntaxNode> = Vec::new();
-        for pair in parent
-            .children()
-            .filter(|n| cx.grammar.has_tag(n.kind(), "key-value"))
-        {
+        for pair in parent.children().filter(|n| n.kind() == k::PAIR) {
             let apart = cx.first_token(&pair).is_some_and(|t| {
                 !comments::leading_comments(cx.grammar, &t).is_empty()
                     || comments::blank_lines_before(cx.grammar, &t) > 0
@@ -118,7 +112,7 @@ fn width(cx: &FormatCtx<'_>, pair: &SyntaxNode) -> Option<usize> {
 }
 
 /// Puts `extra` spaces in front of the last trailing comment in `d`.
-pub(crate) fn pad_comment(d: &mut Doc, extra: usize) -> bool {
+pub fn pad_comment(d: &mut Doc, extra: usize) -> bool {
     match d {
         Doc::LineSuffix(body) => {
             let inner = std::mem::replace(&mut **body, Doc::Nil);

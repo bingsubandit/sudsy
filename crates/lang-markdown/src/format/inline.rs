@@ -155,6 +155,20 @@ impl Render<'_> {
         if text.contains('`') {
             return text.to_string();
         }
-        core_format::shapes::fill::collapse_blanks(text, |c| matches!(c, ' ' | '\t'))
+        let mut out = String::with_capacity(text.len());
+        for (i, w) in text
+            .split([' ', '\t'])
+            .filter(|w| !w.is_empty())
+            .enumerate()
+        {
+            if i > 0 || text.starts_with([' ', '\t']) {
+                out.push(' ');
+            }
+            out.push_str(w);
+        }
+        if text.ends_with([' ', '\t']) && !out.is_empty() {
+            out.push(' ');
+        }
+        out
     }
 }

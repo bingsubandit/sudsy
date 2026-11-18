@@ -10,7 +10,6 @@
 //!
 //! concept: none (glue: crate root and format entry)
 
-mod align;
 mod blank;
 pub mod calls;
 pub mod case;

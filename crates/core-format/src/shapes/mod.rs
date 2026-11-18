@@ -15,16 +15,13 @@ mod call_chain;
 mod chain;
 mod compound;
 mod conditional;
-pub mod continuation;
 mod declaration;
-pub mod fill;
 pub mod flow;
 mod heritage;
 mod key_value;
 mod list;
 mod maybe_parenthesize;
 mod parens;
-mod section;
 mod signature;
 
 pub use assignment::{
@@ -62,7 +59,6 @@ pub use parens::{
     Need, NoParenHooks, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, first_char,
     is_dropped_close, paren_group, parenthesized, unwrap, wrap,
 };
-pub use section::section;
 pub use signature::{Signature, parameter_list, signature};
 
 use crate::FormatCtx;
@@ -71,7 +67,7 @@ use crate::directives::Directive;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
 use crate::ignore::{self, IgnoreMark};
-use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use core_syntax::{Grammar, SyntaxElement, SyntaxNode, SyntaxToken};
 
 /// Source text of a node exactly as written (plus its outer comments).
 pub fn verbatim(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
@@ -102,7 +98,7 @@ pub(crate) struct Container {
 
 /// The container of a node whose first and last significant elements are its delimiters.
 pub(crate) fn container(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Container, FormatError> {
-    container_between(cx, node, None, &[])
+    container_between(cx, node, None)
 }
 
 /// The container formed by the elements of `node` from the delimiter token `open` to the
@@ -112,7 +108,6 @@ pub(crate) fn container_between(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
     bounds: Option<(&SyntaxToken, &SyntaxToken)>,
-    unwrap: &[SyntaxKind],
 ) -> Result<Container, FormatError> {
     let g = cx.grammar;
     let name = g.name(node.kind());
@@ -128,7 +123,7 @@ pub(crate) fn container_between(
             prefix = Some(n.clone());
             return Ok(());
         }
-        place(g, unwrap, &mut slots, e).map_err(|m| shape(&m))
+        place(g, &mut slots, e).map_err(|m| shape(&m))
     };
     let mut children = node.children_with_tokens().by_kind(|k| !g.is_trivia(k));
     let (open, close) = match bounds {
@@ -177,24 +172,10 @@ pub(crate) fn container_between(
 }
 
 /// Adds a child between the delimiters: a node starts a slot, a separator ends the last one.
-fn place(
-    g: &Grammar,
-    unwrap: &[SyntaxKind],
-    slots: &mut Vec<Slot>,
-    e: SyntaxElement,
-) -> Result<(), String> {
+fn place(g: &Grammar, slots: &mut Vec<Slot>, e: SyntaxElement) -> Result<(), String> {
     match e {
         // (a zero-width node, which some parsers leave in a list, holds nothing to print)
         SyntaxElement::Node(node) if node.text_range().is_empty() => {}
-        // A wrapper of the items (`ListStyle::unwrap`: Protobuf's field options) holds items of the list.
-        SyntaxElement::Node(node) if unwrap.contains(&node.kind()) => {
-            for c in node
-                .children_with_tokens()
-                .filter(|c| !g.is_trivia(c.kind()))
-            {
-                place(g, unwrap, slots, c)?;
-            }
-        }
         // A hole (`#hole`: JS `[a, , b]`) is an item that is only its own separator.
         SyntaxElement::Node(node) if g.has_tag(node.kind(), "hole") => {
             let sep = node

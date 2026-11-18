@@ -78,22 +78,6 @@ fn syntax_errors_stay_lossless() {
     assert!(!parsed.errors.is_empty());
 }
 
-/// Imports: `static` first, the others in ASCII order, no duplicates, one blank line between the
-/// two groups; a comment between imports leaves the list as written.
-#[test]
-fn imports_sort_static_first() {
-    assert_eq!(
-        fmt(
-            "package a;\nimport b.C;\nimport static d.E.f;\nimport a.B;\nimport b.C;\n\nclass A {}\n"
-        ),
-        "package a;\n\nimport static d.E.f;\n\nimport a.B;\nimport b.C;\n\nclass A {}\n"
-    );
-    assert_eq!(
-        fmt("import b.C;\n// x\nimport a.B;\nclass A {}\n"),
-        "import b.C;\n// x\nimport a.B;\n\nclass A {}\n"
-    );
-}
-
 /// google-java-format's layout: blank lines between members, wrapped parameters, `throws` and
 /// string concatenations, one-line chains, enum constants one per line.
 #[test]

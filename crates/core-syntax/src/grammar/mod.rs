@@ -6,7 +6,6 @@
 //! comments line "//" block "/*" "*/"   // either part optional
 //! trivia Comment line "#" block "/*" "*/"   // text between tokens: see `trivia_row`; `limits stack 256 bytes 16 depth 2000`
 //! rule no-print level off calls "print" // a rule's level and option values in this language (optional rows)
-//! imports keywords "import" modifiers "static" alias-after "as"   // the words of an import statement (optional)
 //! case-insensitive                    // command and function names compare without case (PowerShell; optional)
 //! hoisted "var"                        // declaration keywords whose bare declarations hoist (optional)
 //! suppress disable-next-line "sudsy-disable-next-line"   // role, marker; roles: disable-next-line,
@@ -163,21 +162,6 @@ pub struct KeySyntax {
     pub plain: bool,
 }
 
-/// The `imports` line: the words an import statement is made of (see `core_rules::imports`).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct ImportSyntax {
-    /// Words that open a statement (`import`, `using`, `from`).
-    pub keywords: Vec<String>,
-    /// Words in front of the path that are not part of it (`static`, `global`, `public`).
-    pub modifiers: Vec<String>,
-    /// A word between the path and the alias (`as`).
-    pub alias_after: Vec<String>,
-    /// A word between the alias and the path (`=`).
-    pub alias_before: Vec<String>,
-    /// A word after the path that starts a list of members (`from m import a, b`).
-    pub members: Vec<String>,
-}
-
 /// One `precedence <level> <assoc> "op"...` line.
 #[derive(Clone, Debug)]
 pub struct PrecedenceRow {
@@ -227,7 +211,6 @@ pub struct Grammar {
     precedence_rows: Vec<PrecedenceRow>,
     precedence_starts: [bool; 256],
     keys: KeySyntax,
-    imports: ImportSyntax,
     /// The `string` rows, grouped by token kind.
     strings: Vec<(SyntaxKind, StringSyntax)>,
     /// The `regex` and `regex-call` rows.
@@ -627,11 +610,6 @@ impl Grammar {
     /// The grammar's `keys` line (all defaults without one).
     pub fn keys(&self) -> &KeySyntax {
         &self.keys
-    }
-
-    /// The grammar's `imports` line (empty without one).
-    pub fn imports(&self) -> &ImportSyntax {
-        &self.imports
     }
 
     /// The precedence level and associativity of binary operator text (the grammar's `precedence`

@@ -7,7 +7,6 @@
 
 use crate::generated::kind as k;
 use core_config::shared;
-use core_format::shapes::continuation::{self, Continued};
 use core_format::shapes::statement_sequence;
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, comments, doc};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxNodeExt, SyntaxToken, TextRange};
@@ -74,22 +73,31 @@ fn document(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
 /// One logical line: the tokens up to the first line continuation, then the indented rest.
 #[derive(Default)]
 struct Line {
-    out: Continued,
+    head: Vec<Doc>,
+    tail: Vec<Doc>,
     prev: Option<SyntaxKind>,
     /// The last character of the previous token's text.
     prev_end: char,
     blank: bool,
+    broken: bool,
     /// The grammar reads `A+=b` as the name `A+` and `=`: such an operator is left as written.
     glued: bool,
 }
 
 impl Line {
     fn push(&mut self, d: Doc) {
-        self.out.push(d);
+        if self.tail.is_empty() && !self.broken {
+            self.head.push(d);
+        } else {
+            self.tail.push(d);
+        }
     }
 
     fn finish(self) -> Doc {
-        self.out.finish()
+        doc::concat(vec![
+            doc::concat(self.head),
+            doc::indent(doc::concat(self.tail)),
+        ])
     }
 }
 
@@ -113,7 +121,8 @@ fn relay(cx: &FormatCtx<'_>, elements: impl Iterator<Item = SyntaxElement>, line
         };
         match t.kind() {
             k::WHITESPACE if t.text().starts_with('\\') => {
-                line.out.end_line("\\");
+                line.push(doc::lit(" \\"));
+                line.broken = true;
                 line.blank = false;
             }
             k::WHITESPACE | k::NEWLINE => line.blank = true,
@@ -132,8 +141,11 @@ fn relay(cx: &FormatCtx<'_>, elements: impl Iterator<Item = SyntaxElement>, line
                     (_, k::OP) | (Some(k::OP), _) => cx.options.bool(SPACE_AROUND_ASSIGNMENT),
                     _ => line.blank,
                 };
-                if space {
-                    line.out.space();
+                if line.broken {
+                    line.tail.push(doc::hardline());
+                    line.broken = false;
+                } else if space {
+                    line.push(doc::lit(" "));
                 }
                 let d = match kind {
                     k::VALUE => value(cx, &t, line.prev == Some(k::OP)),
@@ -169,9 +181,36 @@ fn value(cx: &FormatCtx<'_>, t: &core_syntax::SyntaxToken, assignment: bool) -> 
     };
     doc::concat(vec![
         cx.leading_comments_doc(t),
-        continuation::as_written(text, false),
+        lines(text, false),
         cx.trailing_comments_doc(t),
     ])
+}
+
+/// Text of several lines as written, with no trailing blanks (but after a `\`, which they would
+/// turn into a continuation) and no carriage returns; after the first line each starts at column 0.
+fn lines(text: &str, tab: bool) -> Doc {
+    let mut parts = Vec::new();
+    let all: Vec<&str> = text.split('\n').collect();
+    for (i, raw) in all.iter().enumerate() {
+        let raw = raw.trim_end_matches('\r');
+        let trimmed = raw.trim_end_matches([' ', '\t']);
+        let line = if trimmed.ends_with('\\') {
+            raw
+        } else {
+            trimmed
+        };
+        parts.push(match (i, tab) {
+            (0, false) => doc::text(line),
+            (0, true) => doc::line_start(format!("\t{line}")),
+            _ => doc::line_start(line),
+        });
+    }
+    // A last line that ends in `\` continues onto the next line, which stays empty: without it the
+    // next statement would be swallowed.
+    if text.ends_with('\\') {
+        parts.push(doc::line_start(""));
+    }
+    doc::concat(parts)
 }
 
 /// `targets: prerequisites | order-only ; command`, then one command per line.
@@ -214,7 +253,7 @@ fn recipe_line(cx: &FormatCtx<'_>, node: &SyntaxNode, inline: bool) -> Doc {
         .first_token(node)
         .map_or(doc::nil(), |t| cx.leading_comments_doc(&t));
     let text = text.trim_start_matches([' ', '\t']);
-    doc::concat(vec![leading, continuation::as_written(text, !inline)])
+    doc::concat(vec![leading, lines(text, !inline)])
 }
 
 /// The source text of a node from its first to its last token that is not trivia, and its range.

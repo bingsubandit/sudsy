@@ -4,6 +4,7 @@
 //! concept: none (glue: provider entry)
 
 mod format;
+mod imports;
 mod lexer;
 mod parser;
 mod rules;

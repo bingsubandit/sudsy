@@ -6,9 +6,7 @@
 
 use crate::generated::kind as k;
 use core_config::shared;
-use core_format::shapes::{
-    BlockStyle, ListStyle, block, block_between, dangling_comments, delimited_list, document,
-};
+use core_format::shapes::{BlockStyle, block, block_between, dangling_comments, document};
 use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, comments, doc};
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxNodeExt, SyntaxToken};
 use std::borrow::Cow;
@@ -69,8 +67,7 @@ impl NodeFormatter for GraphqlFormatter {
             k::SELECTION_SET | k::FIELDS_DEF | k::ENUM_VALUES | k::INPUT_FIELDS => {
                 block(cx, node, &BLOCK)?
             }
-            k::VAR_DEFS | k::ARGUMENTS | k::ARGS_DEF | k::OBJECT_VALUE => list(cx, node)?,
-            k::LIST_VALUE => list_value(cx, node)?,
+            k::VAR_DEFS | k::ARGUMENTS | k::ARGS_DEF => paren_list(cx, node)?,
             k::FIELD => field(cx, node)?,
             k::ALIAS | k::ARGUMENT | k::OBJECT_FIELD | k::ROOT_OP => colon_spaced(cx, node)?,
             k::FIELD_DEF
@@ -79,6 +76,8 @@ impl NodeFormatter for GraphqlFormatter {
             | k::ENUM_VALUE_DEF
             | k::FRAGMENT_SPREAD => with_type(cx, node)?,
             k::DEFAULT_VALUE => default_value(cx, node)?,
+            k::LIST_VALUE => list_value(cx, node)?,
+            k::OBJECT_VALUE => object_value(cx, node)?,
             k::DESCRIPTION | k::DIRECTIVE | k::TYPE_REF | k::FRAGMENT_NAME => concat(cx, node)?,
             k::TYPE_CONDITION => words(cx, node)?,
             k::SCHEMA => schema(cx, node)?,
@@ -229,16 +228,24 @@ fn with_type(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> 
     Ok(doc::concat(parts))
 }
 
-/// Arguments, variables, list and object values: on one line (`, ` between items) when they fit,
-/// else one per line without separators; a blank line after an item stays.
-fn list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
-    let style = ListStyle {
-        broken_separator: Some(""),
-        blank_breaks: true,
-        padding: node.kind() == k::OBJECT_VALUE && cx.options.bool("bracket_spacing"),
-        ..ListStyle::default()
+/// A list of nodes between parentheses: on one line, or one per line without commas.
+fn paren_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
+    let items: Vec<SyntaxNode> = node.children().collect();
+    let (Some(open), Some(close)) = (cx.first_token(node), cx.last_token(node)) else {
+        return Err(FormatError::Shape("list without parentheses".into()));
     };
-    delimited_list(cx, node, &style)
+    let mut docs = Vec::new();
+    for (i, item) in items.iter().enumerate() {
+        let mut d = vec![cx.format(item)?];
+        // A blank line after an item stays.
+        if let Some(next) = items.get(i + 1).and_then(|n| cx.first_token(n))
+            && comments::blank_lines_before(cx.grammar, &next) > 0
+        {
+            d.push(doc::hardline());
+        }
+        docs.push(doc::concat(d));
+    }
+    Ok(delimited(cx, &open, &close, docs, ""))
 }
 
 /// `open`, the items one per line (separated by `, ` when it all fits one line), `close`. A
@@ -390,6 +397,23 @@ fn list_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError>
     };
     let items = docs_of(cx, &els[1..els.len() - 1])?;
     Ok(delimited(cx, open, close, items, ""))
+}
+
+fn object_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
+    let fields: Result<Vec<_>, _> = nodes_of(node, k::OBJECT_FIELD)
+        .iter()
+        .map(|f| cx.format(f))
+        .collect();
+    let fields = fields?;
+    let (Some(open), Some(close)) = (cx.first_token(node), cx.last_token(node)) else {
+        return Err(FormatError::Shape("object without braces".into()));
+    };
+    let space = if cx.options.bool("bracket_spacing") && !fields.is_empty() {
+        " "
+    } else {
+        ""
+    };
+    Ok(delimited(cx, &open, &close, fields, space))
 }
 
 /// `schema { query: Q }`, `extend schema @a`.

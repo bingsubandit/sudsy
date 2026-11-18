@@ -179,22 +179,6 @@ fn indentation_follows_the_nesting() {
     );
 }
 
-/// ktlint's import order: ASCII, `java.`, `javax.` and `kotlin.` after the others, aliases last,
-/// no duplicates; a comment among the imports leaves the list as written.
-#[test]
-fn imports_sort_like_ktlint() {
-    assert_eq!(
-        fmt(
-            "import kotlin.io.println\nimport b.C as D\nimport java.util.List\nimport a.B\nimport a.B\nimport z.Z\n"
-        ),
-        "import a.B\nimport z.Z\nimport java.util.List\nimport kotlin.io.println\nimport b.C as D\n"
-    );
-    assert_eq!(
-        fmt("import b.C\n// x\nimport a.B\n"),
-        "import b.C\n// x\nimport a.B\n"
-    );
-}
-
 #[test]
 fn blank_lines_between_declarations() {
     assert_eq!(

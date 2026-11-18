@@ -18,7 +18,7 @@ The layout of google-java-format (Google style) in `crates/lang-java/src/format/
 - Binary operators break before the operator, all of one precedence together; a ternary breaks before `?` and `:` (core-format's `conditional`, `indented`); an assignment or a declarator moves its right side below `=` first (core-format's `assignment`, `break`), except an array initializer or a lambda.
 - A line comment keeps its line: when it follows an operator, `else`, `->`, `=` or a comma, what comes next starts a new line below it (so the output is a fixed point); after `;`, `)`, `]`, `}` or just before a closing bracket it moves to the end of the line without breaking the group.
 
-Imports are sorted before the layout (`core_rules::imports`, a source rewrite): static first, then the others, ASCII order, no duplicates, one blank line between the groups; a block with a comment between imports is left as written.
+Imports are sorted before the layout (`imports.rs`, a source rewrite): static first, then the others, ASCII order, no duplicates, one blank line between the groups; a block with a comment between imports is left as written.
 
 Not done (named gaps in `tests/parity/google-java-format/differences.yaml`): re-wrapping long comments and `//x` to `// x`, dropping `()` from `@A()`, the extra indent of a chain inside a ternary condition. Javadoc, unused imports and long strings are kept as written (the flags of the parity run: `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`).
 

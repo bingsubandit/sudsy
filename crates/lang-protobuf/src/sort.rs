@@ -1,20 +1,14 @@
-//! The file header order of `buf format`: syntax or edition, package, imports, file options
-//! (built-in before custom, by name), then everything else as written. Each statement moves with
-//! its comments (the trivia in front of it and a comment on its last line); inside the import and
-//! option groups the blank lines of the source go. The import order is `core_rules::imports`: buf's
-//! `public`, plain, `weak`, `option`, each by path.
+//! The file header order of `buf format`: syntax or edition, package, imports (`public` first,
+//! `option` last, by path), file options (built-in before custom, by name), then everything else
+//! as written. Each statement moves with its comments (the trivia in front of it and a comment on
+//! its last line); inside the import and option groups the blank lines of the source go.
 //!
-//! concept: new file-header-order
+//! concept: new file-header-order, sorted-imports
 //! what: The order of the header statements of a file: syntax, package, imports, options.
 //! tools: buf format
 
 use crate::generated::kind as k;
-use core_rules::imports::{Compare, Order, entry};
-use core_syntax::{Grammar, SyntaxNode};
-
-/// buf: `import public`, plain, `import weak`, `import option`, each by path.
-static IMPORT_ORDER: std::sync::LazyLock<Order> =
-    std::sync::LazyLock::new(|| Order::new(Compare::Ordinal, &["public", "*", "weak", "option"]));
+use core_syntax::SyntaxNode;
 
 /// The group of a top-level statement: syntax or edition 0, package 1, import 2, option 3, rest 4.
 pub fn group(item: &SyntaxNode) -> u8 {
@@ -36,10 +30,19 @@ fn words(item: &SyntaxNode) -> Vec<String> {
         .collect()
 }
 
-fn key(item: &SyntaxNode, import_rank: usize) -> (u8, usize, String) {
+fn key(item: &SyntaxNode) -> (u8, u8, String) {
     let words = words(item);
     match group(item) {
-        2 => (2, import_rank, String::new()),
+        2 => {
+            let rank = match words.get(1).map(String::as_str) {
+                Some("public") => 0,
+                Some("weak") => 2,
+                Some("option") => 3,
+                _ => 1,
+            };
+            let path = words.iter().find(|w| w.starts_with(['"', '\'']));
+            (2, rank, path.cloned().unwrap_or_default())
+        }
         3 => {
             let name: String = words
                 .iter()
@@ -47,7 +50,7 @@ fn key(item: &SyntaxNode, import_rank: usize) -> (u8, usize, String) {
                 .take_while(|w| *w != "=")
                 .cloned()
                 .collect();
-            (3, usize::from(name.starts_with('(')), name)
+            (3, u8::from(name.starts_with('(')), name)
         }
         g => (g, 0, String::new()),
     }
@@ -55,28 +58,9 @@ fn key(item: &SyntaxNode, import_rank: usize) -> (u8, usize, String) {
 
 /// The source with the statements of the file header in buf's order and the blank lines inside
 /// the import and option groups gone, or `None` when it is already so.
-pub fn sort_header(tree: &SyntaxNode, text: &str, grammar: &Grammar) -> Option<String> {
+pub fn sort_header(tree: &SyntaxNode, text: &str) -> Option<String> {
     let items: Vec<SyntaxNode> = tree.children().collect();
-    let imports: Vec<usize> = (0..items.len())
-        .filter(|&i| group(&items[i]) == 2)
-        .collect();
-    let entries: Vec<_> = imports
-        .iter()
-        .flat_map(|&i| entry::read(&items[i], text, grammar))
-        .collect();
-    // The place of each import in buf's order (the statements stay as written when a statement
-    // reads as other than one import).
-    let mut rank = vec![0; items.len()];
-    if entries.len() == imports.len() {
-        for (place, from) in IMPORT_ORDER.sorted(&entries).into_iter().enumerate() {
-            rank[imports[from]] = place;
-        }
-    }
-    let keys: Vec<_> = items
-        .iter()
-        .enumerate()
-        .map(|(i, n)| key(n, rank[i]))
-        .collect();
+    let keys: Vec<_> = items.iter().map(key).collect();
     let mut order: Vec<usize> = (0..items.len()).collect();
     // Stable: statements with the same key (all the rest) keep their order.
     order.sort_by(|&a, &b| keys[a].cmp(&keys[b]));
@@ -126,7 +110,7 @@ mod tests {
             .unwrap()
             .tree;
         assert_eq!(
-            super::sort_header(&tree, src, crate::provider().grammar()).unwrap(),
+            super::sort_header(&tree, src).unwrap(),
             "syntax = \"proto3\";\n// p\npackage p;\nimport \"a\";\nimport \"z\";\nimport option \"o\";\noption a = 1; // t\noption b = 1;\noption (c) = 1;\n\nmessage M {}\n"
         );
     }

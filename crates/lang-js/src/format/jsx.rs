@@ -291,7 +291,18 @@ enum Child {
     Node(SyntaxNode),
 }
 
-use shapes::fill::Part as P;
+/// A part of the children list: a word or printed node (content), or what separates them.
+#[derive(Clone)]
+enum P {
+    Empty,
+    Hard,
+    Soft,
+    Line,
+    /// Jsx whitespace: a space, or `{" "}` and a line when the line breaks.
+    Ws,
+    Word(String),
+    Doc(Doc),
+}
 
 fn is_space(c: char) -> bool {
     matches!(c, ' ' | '\n' | '\r' | '\t')
@@ -300,6 +311,23 @@ fn is_space(c: char) -> bool {
 /// Text with a word or a newline-free space in it: whitespace between lines is not.
 fn meaningful(t: &str) -> bool {
     t.contains(|c| !is_space(c)) || !t.contains('\n')
+}
+
+/// The text split at runs of whitespace, the runs kept: words at even places.
+fn split_words(t: &str) -> Vec<String> {
+    let mut out = vec![String::new()];
+    let mut in_space = false;
+    for c in t.chars() {
+        if is_space(c) != in_space {
+            in_space = !in_space;
+            out.push(String::new());
+        }
+        out.last_mut().expect("never empty").push(c);
+    }
+    if in_space {
+        out.push(String::new());
+    }
+    out
 }
 
 /// `{/* prettier-ignore */}`: a container with a comment and no expression.
@@ -346,14 +374,14 @@ fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, Form
         let next = children.get(i + 1);
         match child {
             Child::Text(t) if meaningful(t) => {
-                let mut words = shapes::fill::runs(t, is_space);
+                let mut words = split_words(t);
                 if words[0].is_empty() {
                     parts.push(P::Empty);
                     words.remove(0);
                     if words[0].contains('\n') {
                         parts.push(sep_with_ws(words.get(1).map_or("", |w| w), child));
                     } else {
-                        parts.push(P::Space);
+                        parts.push(P::Ws);
                     }
                     words.remove(0);
                 }
@@ -371,7 +399,7 @@ fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, Form
                 }
                 parts.push(match end_ws {
                     Some(e) if e.contains('\n') => sep_with_ws(&last, child),
-                    Some(_) => P::Space,
+                    Some(_) => P::Ws,
                     None => sep_no_ws(&last, child, next),
                 });
             }
@@ -380,7 +408,7 @@ fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, Form
                     parts.extend([P::Empty, P::Hard]);
                 }
             }
-            Child::Text(_) => parts.extend([P::Empty, P::Space]),
+            Child::Text(_) => parts.extend([P::Empty, P::Ws]),
             Child::Node(n) => {
                 // `{/* prettier-ignore */}` keeps the next element as written.
                 let ignored = children[..i].iter().rev().find_map(|c| match c {
@@ -408,6 +436,36 @@ fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, Form
         }
     }
     Ok(parts)
+}
+
+/// Removes the doubled and misplaced separators `children_parts` leaves between text and nodes.
+fn clean(parts: &mut Vec<P>, contains_text: bool) {
+    use P::{Empty as E, Hard as H, Soft as S, Ws as W};
+    let mut i = parts.len() as isize - 2;
+    while i >= 0 {
+        let u = i as usize;
+        let at = |j: usize| parts.get(j);
+        let (a, b, c) = (at(u), at(u + 1), at(u + 2));
+        let b_empty = matches!(b, Some(E));
+        let pair_hard = matches!((a, c), (Some(H), Some(H))) && b_empty;
+        let pair_empty = matches!(a, Some(E)) && b_empty;
+        let line_ws = matches!(a, Some(H | S)) && b_empty && matches!(c, Some(W));
+        let ws_line = matches!(a, Some(W)) && b_empty && matches!(c, Some(H | S));
+        let double_ws = matches!(a, Some(W)) && b_empty && matches!(c, Some(W));
+        // The hard line wins over a soft one.
+        let soft_hard = b_empty && matches!((a, c), (Some(S), Some(H)));
+        let hard_soft = b_empty && matches!((a, c), (Some(H), Some(S)));
+        if (pair_hard && contains_text) || pair_empty || line_ws || double_ws || soft_hard {
+            parts.drain(u..u + 2);
+        } else if ws_line || hard_soft {
+            parts.drain(u + 1..u + 3);
+        }
+        i -= 1;
+    }
+}
+
+fn is_blank(p: &P) -> bool {
+    matches!(p, P::Empty | P::Hard | P::Soft | P::Line)
 }
 
 fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
@@ -478,9 +536,58 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let contains_text = children
         .iter()
         .any(|c| matches!(c, Child::Text(t) if meaningful(t)));
-    let kids = shapes::fill::fill_children(children_parts(cx, &children)?, raw_ws, contains_text);
-    let (multiline, forced) = kids.filled();
-    forced_break |= forced;
+    let mut parts = children_parts(cx, &children)?;
+    clean(&mut parts, contains_text);
+    while parts.last().is_some_and(is_blank) {
+        parts.pop();
+    }
+    while parts.len() > 1 && is_blank(&parts[0]) && is_blank(&parts[1]) {
+        parts.drain(..2);
+    }
+    let ws_doc = || if_break(concat(vec![lit(raw_ws), softline()]), lit(" "));
+    let to_doc = |p: &P| match p {
+        P::Empty => Doc::Nil,
+        P::Hard => hardline(),
+        P::Soft => softline(),
+        P::Line => line(),
+        P::Ws => ws_doc(),
+        P::Word(w) => text(w.clone()),
+        P::Doc(d) => d.clone(),
+    };
+    let mut multiline = Vec::new();
+    for (i, p) in parts.iter().enumerate() {
+        if matches!(p, P::Ws) {
+            let before_empty = i == 1 && matches!(parts[0], P::Empty);
+            if before_empty && parts.len() == 2 {
+                multiline.push(lit(raw_ws));
+                continue;
+            }
+            if before_empty {
+                multiline.push(concat(vec![lit(raw_ws), hardline()]));
+                continue;
+            }
+            if i + 1 == parts.len() {
+                // Trailing: measured with the content before it.
+                let last = multiline.pop().unwrap_or(Doc::Nil);
+                multiline.push(concat(vec![last, lit(raw_ws)]));
+                continue;
+            }
+            if i + 2 == parts.len()
+                && matches!(parts[i + 1], P::Empty)
+                && i > 0
+                && matches!(parts[i - 1], P::Hard)
+            {
+                multiline.push(lit(raw_ws));
+                continue;
+            }
+        }
+        multiline.push(to_doc(p));
+        forced_break |= match p {
+            P::Hard => true,
+            P::Doc(d) => will_break(d),
+            _ => false,
+        };
+    }
     let content = if contains_text {
         fill(multiline)
     } else {
@@ -497,7 +604,7 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         return Ok(multi_line);
     }
     let mut flat = vec![opening_doc];
-    flat.extend(kids.flat());
+    flat.extend(parts.iter().map(to_doc));
     flat.push(closing_doc);
     Ok(conditional_group(vec![group(concat(flat)), multi_line]))
 }

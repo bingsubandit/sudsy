@@ -71,7 +71,7 @@ pub fn block_between(
 ) -> Result<Doc, FormatError> {
     block_of(
         cx,
-        container_between(cx, node, Some((open, close)), &[])?,
+        container_between(cx, node, Some((open, close)))?,
         style,
         false,
     )

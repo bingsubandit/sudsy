@@ -12,7 +12,7 @@ use crate::comments;
 use crate::directives::Directive;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{SyntaxNode, SyntaxToken, TextRange};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TrailingComma {
@@ -83,13 +83,6 @@ pub struct ListStyle {
     pub blank_breaks: bool,
     /// The list is expanded whatever its layout (the caller found a reason in the tree).
     pub force_break: bool,
-    /// Fewer items than this stay on the line however long it gets, this many or more are one
-    /// per line (0: off): Protobuf options.
-    pub break_from: usize,
-    /// Kinds of wrapper nodes whose children are items of the list (Protobuf's field options).
-    pub unwrap: &'static [SyntaxKind],
-    /// Comments after the opening delimiter stand on lines of their own inside the list.
-    pub open_comments_own_line: bool,
     /// The items sit in a group of their own, inside the one of the delimiters: when they do not
     /// fit on the opening line they go together onto the next, and only when they do not fit
     /// there one per line (google-java-format's parameters).
@@ -119,9 +112,6 @@ impl Default for ListStyle {
             broken_separator: None,
             blank_breaks: false,
             force_break: false,
-            break_from: 0,
-            unwrap: &[],
-            open_comments_own_line: false,
             hang: false,
             id: None,
             inner_id: None,
@@ -153,7 +143,7 @@ pub fn delimited_list_between(
     list_of(
         cx,
         node,
-        container_between(cx, node, Some((open, close)), style.unwrap)?,
+        container_between(cx, node, Some((open, close)))?,
         style,
     )
 }
@@ -217,19 +207,12 @@ fn list_of(
     let after = cx.trailing_comments_doc(&c.close);
     let opening = doc::concat(vec![
         cx.token_text(&c.open),
-        if style.open_comments_own_line && open_comments {
-            doc::indent(dangling_comments(
-                &comments::trailing_comments(g, &c.open),
-                false,
-            ))
-        } else {
-            open_comments_doc(
-                cx,
-                &comments::trailing_comments(g, &c.open),
-                !items.is_empty(),
-                style.padding && !items.is_empty(),
-            )
-        },
+        open_comments_doc(
+            cx,
+            &comments::trailing_comments(g, &c.open),
+            !items.is_empty(),
+            style.padding && !items.is_empty(),
+        ),
     ]);
     let closing = if inline_close {
         cx.close_token(&c.close)
@@ -256,10 +239,7 @@ fn list_of(
         ]));
     }
 
-    let flat = style.layout == ListLayout::Flat
-        || (style.break_from > 0
-            && c.slots.len() < style.break_from
-            && !commented(cx, node, &c.open, &c.close));
+    let flat = style.layout == ListLayout::Flat;
     let (line, soft) = if flat {
         (doc::lit(" "), Doc::Nil)
     } else {
@@ -381,11 +361,7 @@ fn list_of(
     let d = cx.directives_of(node);
     let broken = if flat {
         false
-    } else if style.force_break
-        || (style.break_from > 0
-            && (c.slots.len() >= style.break_from || commented(cx, node, &c.open, &c.close)))
-        || d.has(&Directive::BreakAll)
-    {
+    } else if style.force_break || d.has(&Directive::BreakAll) {
         true
     } else if d.has(&Directive::KeepTogether) {
         false
@@ -450,18 +426,6 @@ fn open_comments_doc(
 
 /// Does the source between the opening and the closing delimiter contain a line break? Trivia
 /// outside the delimiters (the node's own leading and trailing trivia) do not count.
-/// Does a comment stand between the delimiters?
-fn commented(
-    cx: &FormatCtx<'_>,
-    node: &SyntaxNode,
-    open: &SyntaxToken,
-    close: &SyntaxToken,
-) -> bool {
-    let range = TextRange::new(open.text_range().end(), close.text_range().start());
-    node.descendants_with_tokens()
-        .any(|e| cx.grammar.has_tag(e.kind(), "comment") && range.contains_range(e.text_range()))
-}
-
 fn spans_lines(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,

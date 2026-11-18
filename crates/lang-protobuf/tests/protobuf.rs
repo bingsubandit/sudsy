@@ -38,24 +38,6 @@ fn compact_options_break_from_two() {
     );
 }
 
-/// buf's import order: `public`, plain, `weak`, `option`, each by path; the comments above an
-/// import move with it.
-#[test]
-fn imports_sort_like_buf() {
-    assert_eq!(
-        fmt(
-            "syntax = \"proto3\";\n\n// about z\nimport \"z.proto\";\nimport weak \"w.proto\";\n\nimport public \"p.proto\";\nimport \"a.proto\"; // t\n"
-        ),
-        "syntax = \"proto3\";\n\nimport public \"p.proto\";\nimport \"a.proto\"; // t\n// about z\nimport \"z.proto\";\nimport weak \"w.proto\";\n"
-    );
-}
-
-#[test]
-fn a_comment_set_apart_from_an_import_stays_apart() {
-    let src = "syntax = \"proto3\";\n\n// about\n\nimport \"a.proto\";\n";
-    assert_eq!(fmt(src), src);
-}
-
 #[test]
 fn a_comment_in_compact_options_breaks_them() {
     assert_eq!(

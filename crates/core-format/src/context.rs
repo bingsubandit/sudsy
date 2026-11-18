@@ -192,8 +192,6 @@ pub struct FormatCtx<'a> {
     any_held_leading: std::sync::atomic::AtomicBool,
     /// A provider's per-run data derived from the options (see [`FormatCtx::cached`]).
     cache: std::sync::OnceLock<Box<dyn std::any::Any + Send + Sync>>,
-    /// The widths for `align_comments` (see [`crate::align`]), measured when first asked for.
-    comment_align: std::sync::OnceLock<crate::align::AlignTable>,
     /// Documents of nodes formatted for a layout, by node and flags (see [`FormatCtx::layout`]).
     layouts: Mutex<HashMap<(TextRange, u32, u32), Doc>>,
     embedder: Option<&'a dyn Embedder>,
@@ -219,24 +217,9 @@ impl<'a> FormatCtx<'a> {
             consumed: Mutex::new(HashMap::new()),
             any_held_leading: std::sync::atomic::AtomicBool::new(false),
             cache: std::sync::OnceLock::new(),
-            comment_align: std::sync::OnceLock::new(),
             layouts: Mutex::new(HashMap::new()),
             embedder: None,
         }
-    }
-
-    /// A context of the same run that pads no comments: the entries are measured in it.
-    pub(crate) fn measuring(&self) -> FormatCtx<'a> {
-        let cx = FormatCtx::new(self.grammar, self.options, self.directives, self.formatter);
-        let _ = cx.comment_align.set(Default::default());
-        cx
-    }
-
-    /// Extra blanks in front of the trailing comment of a `#key-value` entry (`align_comments`).
-    pub(crate) fn comment_pad(&self, entry: &SyntaxNode) -> usize {
-        self.comment_align
-            .get_or_init(|| crate::align::AlignTable::build(self, entry))
-            .extra(entry)
     }
 
     /// The engine's formatter of other languages' code, when the host runs under one.
