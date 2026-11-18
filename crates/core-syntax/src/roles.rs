@@ -249,6 +249,12 @@ pub fn has(kind: SyntaxKind, tag: &str) -> bool {
     crate::grammars::of(kind.lang()).is_some_and(|g| g.has_tag(kind, tag))
 }
 
+/// Does the kind carry any of the tags?
+#[inline]
+pub fn has_any(kind: SyntaxKind, tags: &[&str]) -> bool {
+    crate::grammars::of(kind.lang()).is_some_and(|g| tags.iter().any(|t| g.has_tag(kind, t)))
+}
+
 /// The node without the `#transparent` wrappers around it (parentheses): the expression inside
 /// any number of them.
 pub fn un(node: &SyntaxNode) -> SyntaxNode {

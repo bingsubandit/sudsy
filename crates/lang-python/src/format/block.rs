@@ -11,7 +11,8 @@ use crate::generated::kind as k;
 use core_format::FormatCtx;
 use core_format::comments;
 use core_format::doc::{Doc, concat, hardline, indent};
-use core_syntax::{SyntaxKind, SyntaxNode};
+use core_syntax::SyntaxNode;
+use core_syntax::roles::{has, has_any};
 use std::cell::Cell;
 
 thread_local! {
@@ -33,7 +34,10 @@ pub(crate) enum Seq {
 
 pub(crate) fn module(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     DEPTH.set(0);
-    let stmts: Vec<SyntaxNode> = node.children().filter(|n| is_stmt(n.kind())).collect();
+    let stmts: Vec<SyntaxNode> = node
+        .children()
+        .filter(|n| has(n.kind(), "statement"))
+        .collect();
     let body = sequence(cx, &stmts, true, Seq::Module)?;
     let mut parts = vec![body];
     if let Some(eof) = node
@@ -56,9 +60,8 @@ pub(crate) fn module(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(concat(parts))
 }
 
-pub(crate) fn is_def(kind: SyntaxKind) -> bool {
-    matches!(kind, k::STMT_FUNCTION_DEF | k::STMT_CLASS_DEF)
-}
+/// The tags of a function or class definition.
+pub(crate) const DEF: &[&str] = &["function", "type-declaration"];
 
 /// `...` alone, without comments in front of it: a body that stays on the header line.
 pub(crate) fn is_ellipsis(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
@@ -86,24 +89,23 @@ pub(crate) fn joins_header(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
 /// A function whose body is `...` on the header line.
 pub(crate) fn is_stub(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
     n.kind() == k::STMT_FUNCTION_DEF && {
-        let body: Vec<SyntaxNode> = n.children().filter(|c| is_stmt(c.kind())).collect();
+        let body: Vec<SyntaxNode> = n
+            .children()
+            .filter(|c| has(c.kind(), "statement"))
+            .collect();
         matches!(body.as_slice(), [only] if is_ellipsis(cx, only))
     }
 }
 
 /// Does the statement end with a function or class (at any depth)?
 fn ends_with_def(n: &SyntaxNode) -> bool {
-    if is_def(n.kind()) {
+    if has_any(n.kind(), DEF) {
         return true;
     }
     n.children()
-        .filter(|c| is_stmt(c.kind()) || is_clause(c.kind()))
+        .filter(|c| has(c.kind(), "statement") || has(c.kind(), "branch"))
         .last()
         .is_some_and(|c| ends_with_def(&c))
-}
-
-fn is_import(kind: SyntaxKind) -> bool {
-    matches!(kind, k::STMT_IMPORT | k::STMT_IMPORT_FROM)
 }
 
 /// A string-only expression statement (an implicit concatenation of plain strings too).
@@ -161,26 +163,26 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
             let prev = &stmts[i - 1];
             let prev_doc = i == 1 && seq != Seq::Other && is_docstring(prev);
             let after_def = own_doc == Doc::Nil && ends_with_def(prev);
-            if is_def(s.kind()) && src == 0 && is_stub(cx, prev) && own_doc == Doc::Nil {
+            if has_any(s.kind(), DEF) && src == 0 && is_stub(cx, prev) && own_doc == Doc::Nil {
                 blank = 0;
-            } else if is_def(s.kind()) || after_def {
+            } else if has_any(s.kind(), DEF) || after_def {
                 blank = cap;
-            } else if is_import(prev.kind()) && !is_import(s.kind()) {
+            } else if has(prev.kind(), "import") && !has(s.kind(), "import") {
                 blank = blank.max(1);
             } else if prev_doc && matches!(seq, Seq::Module | Seq::Class) {
                 blank = 1;
             }
             parts.push(hardline());
         } else if own_doc != Doc::Nil {
-            blank = if is_def(s.kind()) { cap } else { blank };
+            blank = if has_any(s.kind(), DEF) { cap } else { blank };
             parts.push(hardline());
         } else if docstring || matches!(seq, Seq::Class | Seq::Module) {
             blank = 0;
-        } else if is_def(s.kind()) && seq == Seq::Other {
+        } else if has_any(s.kind(), DEF) && seq == Seq::Other {
             // A function or class in the block of `if`, `for`, ...: a blank line before it.
             let comments_first = !comments::leading_comments(cx.grammar, &first).is_empty();
             blank = if comments_first { blank.min(1) } else { 1 };
-        } else if matches!(seq, Seq::Function) || is_def(s.kind()) {
+        } else if matches!(seq, Seq::Function) || has_any(s.kind(), DEF) {
             blank = blank.min(1);
         } else {
             blank = 0;
@@ -217,7 +219,7 @@ pub(crate) fn verbatim_item(cx: &FormatCtx<'_>, s: &SyntaxNode) -> R {
 pub(crate) fn item(cx: &FormatCtx<'_>, s: &SyntaxNode, docstring: bool) -> R {
     let first = cx.first_token(s).ok_or_else(|| shape_error("statement"))?;
     let leading = cx.lead(&first);
-    let compound = is_compound(s.kind());
+    let compound = has_any(s.kind(), COMPOUND);
     let last = (!compound).then(|| cx.last_token(s)).flatten();
     if let Some(l) = &last {
         cx.hold_trailing(l);

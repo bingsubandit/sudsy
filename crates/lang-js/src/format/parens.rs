@@ -5,13 +5,14 @@
 //!
 //! concept: parenthesized-expression
 
-use super::ast::{is_binaryish, is_member, operator_text, outer, parent, starts_with, un};
+use super::ast::{is_member, operator_text, outer, parent, starts_with, un};
 use crate::generated::kind as k;
 use core_format::doc::Doc;
 use core_format::shapes::{
     self, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, is_dropped_close as dropped,
 };
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles::has;
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 
 pub(crate) use shapes::Need;
@@ -279,7 +280,7 @@ pub(crate) fn needs_parens(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Need {
                     if kind == k::TS_TYPE_ASSERTION {
                         return Need::Keep;
                     }
-                    if is_cast(kind) || !is_binaryish(kind) {
+                    if is_cast(kind) || !has(kind, "binary") {
                         return Need::Yes;
                     }
                     let pop = operator_text(cx, &p);

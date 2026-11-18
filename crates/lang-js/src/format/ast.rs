@@ -8,33 +8,14 @@ use crate::generated::kind as k;
 use core_format::FormatCtx;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
-pub(crate) use core_syntax::roles::{outer, parent, un};
+pub(crate) use core_syntax::roles::{has_any, outer, parent, un};
 
 pub(crate) fn is_member(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::STATIC_MEMBER_EXPRESSION | k::COMPUTED_MEMBER_EXPRESSION | k::PRIVATE_FIELD_EXPRESSION
-    )
-}
-
-pub(crate) fn is_binaryish(kind: SyntaxKind) -> bool {
-    matches!(kind, k::BINARY_EXPRESSION | k::LOGICAL_EXPRESSION)
+    has_any(kind, &["member-access", "index"])
 }
 
 pub(crate) fn is_jsx(kind: SyntaxKind) -> bool {
     matches!(kind, k::JSX_ELEMENT | k::JSX_FRAGMENT)
-}
-
-pub(crate) fn is_literal(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::NUMERIC_LITERAL
-            | k::STRING_LITERAL
-            | k::BOOLEAN_LITERAL
-            | k::NULL_LITERAL
-            | k::BIG_INT_LITERAL
-            | k::REG_EXP_LITERAL
-    )
 }
 
 /// The first direct token that is not trivia: the operator of a binary, logical, assignment,

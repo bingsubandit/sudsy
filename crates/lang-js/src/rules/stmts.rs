@@ -9,7 +9,7 @@
 use super::{Check, code_text, has_own, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
-use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{Grammar, SyntaxNode, SyntaxToken, TextRange};
 use std::collections::HashSet;
 
 /// The last code token before `t`.
@@ -108,21 +108,6 @@ pub(super) fn duplicate_enum_values(c: &Check, n: &SyntaxNode, ctx: &mut RuleCon
     }
 }
 
-fn is_loop(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::WHILE_STATEMENT
-            | k::DO_WHILE_STATEMENT
-            | k::FOR_STATEMENT
-            | k::FOR_IN_STATEMENT
-            | k::FOR_OF_STATEMENT
-    )
-}
-
-fn is_function(kind: SyntaxKind) -> bool {
-    matches!(kind, k::FUNCTION | k::ARROW_FUNCTION_EXPRESSION | k::CLASS)
-}
-
 fn label_of(n: &SyntaxNode) -> Option<String> {
     n.children()
         .find(|l| l.kind() == k::LABEL_IDENTIFIER)
@@ -146,8 +131,8 @@ pub(super) fn unsafe_finally(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
     let mut current = n.clone();
     while let Some(p) = current.parent() {
         match p.kind() {
-            kind if is_function(kind) => return,
-            kind if is_loop(kind)
+            kind if g.has_tag(kind, "function") || kind == k::CLASS => return,
+            kind if g.has_tag(kind, "loop")
                 && label.is_none()
                 && matches!(jump, k::BREAK_STATEMENT | k::CONTINUE_STATEMENT) =>
             {

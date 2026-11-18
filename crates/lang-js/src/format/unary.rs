@@ -14,6 +14,7 @@ use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, group, hardline, indent, line, lit, softline};
 use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles::has;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -121,7 +122,7 @@ fn commented_parenthesized(
     // (the content keeps the parentheses it needs of its own)
     parts.push(
         if super::parens::needs_parens(cx, &inner) == super::parens::Need::Yes
-            && !super::ast::is_binaryish(inner.kind())
+            && !has(inner.kind(), "binary")
         {
             concat(vec![lit("("), content, lit(")")])
         } else {

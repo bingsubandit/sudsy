@@ -5,7 +5,7 @@
 //! what: Arrow functions: parameters, body placement and chains.
 //! tools: Prettier arrow chains
 
-use super::ast::{has_comment, is_binaryish, outer, parent, starts_with, un};
+use super::ast::{has_comment, outer, parent, starts_with, un};
 use super::util::{R, kids, node_of, remove_lines, shape_error, token_of, will_break};
 use crate::generated::kind as k;
 use core_format::doc::{
@@ -15,6 +15,7 @@ use core_format::doc::{
 use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
 use core_syntax::SyntaxNode;
+use core_syntax::roles::has;
 
 /// The layouts of one function the callers ask for (bits of the `layout` cache flags).
 pub(crate) struct Flags;
@@ -374,7 +375,7 @@ fn signatures_doc(
         }
     };
     let p_kind_call = p.as_ref().is_some_and(call_like);
-    if (!is_callee && p_kind_call) || p.as_ref().is_some_and(|p| is_binaryish(p.kind())) {
+    if (!is_callee && p_kind_call) || p.as_ref().is_some_and(|p| has(p.kind(), "binary")) {
         let mut it = sigs.into_iter();
         let head = it.next().unwrap_or(Doc::Nil);
         return wrap(concat(vec![

@@ -12,6 +12,7 @@ use core_format::FormatCtx;
 use core_format::comments;
 use core_format::doc::{self, Doc, concat, group, hardline, indent, lit};
 use core_format::shapes;
+use core_syntax::roles::has;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 pub(crate) fn seq_of(kind: SyntaxKind) -> Seq {
@@ -66,7 +67,9 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                 let mut body = Vec::new();
                 while j < ks.len() {
                     match &ks[j] {
-                        SyntaxElement::Node(n) if is_stmt(n.kind()) => body.push(n.clone()),
+                        SyntaxElement::Node(n) if has(n.kind(), "statement") => {
+                            body.push(n.clone())
+                        }
                         SyntaxElement::Token(s) if s.kind() == k::SEMI => {}
                         _ => break,
                     }
@@ -103,7 +106,7 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                 }
                 parts.push(cx.token(t));
             }
-            SyntaxElement::Node(n) if is_clause(n.kind()) => {
+            SyntaxElement::Node(n) if has(n.kind(), "branch") => {
                 let first = cx.first_token(n).ok_or_else(|| shape_error("clause"))?;
                 parts.push(clause_break(cx, &first, top));
                 parts.push(compound(cx, n)?);
@@ -155,7 +158,7 @@ fn first_with_item(ks: &[SyntaxElement]) -> usize {
 
 /// Is the statement (or the compound statement a clause belongs to) at module level?
 fn at_top(node: &SyntaxNode) -> bool {
-    let n = if is_clause(node.kind()) {
+    let n = if has(node.kind(), "branch") {
         node.parent()
     } else {
         Some(node.clone())

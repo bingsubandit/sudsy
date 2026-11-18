@@ -8,7 +8,7 @@
 //! what: JSX elements, attributes and children.
 //! tools: Prettier printJsxElement
 
-use super::ast::{has_trailing_comment, is_binaryish, is_jsx, parent, un};
+use super::ast::{has_trailing_comment, is_jsx, parent, un};
 use super::parens::{Need, needs_parens};
 use super::util::{R, kids, node_of, shape_error, token_of, will_break};
 use crate::generated::kind as k;
@@ -18,6 +18,7 @@ use core_format::doc::{
 };
 use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles::has;
 use core_syntax::{SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -81,7 +82,7 @@ fn container(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let inline = !super::ast::has_comment(cx, expr)
         && (hugs(&held)
             || (in_element
-                && (held.kind() == k::CONDITIONAL_EXPRESSION || is_binaryish(held.kind()))));
+                && (held.kind() == k::CONDITIONAL_EXPRESSION || has(held.kind(), "binary"))));
     let body = cx.format(expr)?;
     Ok(group(if inline {
         concat(vec![

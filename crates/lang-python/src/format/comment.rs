@@ -6,6 +6,7 @@
 use super::util::*;
 use crate::generated::kind as k;
 use core_format::FormatCtx;
+use core_syntax::roles::has_any;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 /// The `;` right after the statement's last token, if there is one (for a compound statement,
@@ -25,7 +26,7 @@ pub(crate) fn semicolon(cx: &FormatCtx<'_>, s: &SyntaxNode) -> Option<SyntaxToke
 
 /// A simple statement with a trailing `# fmt: skip` (after its `;` when it has one).
 pub(crate) fn is_fmt_skip(cx: &FormatCtx<'_>, s: &SyntaxNode) -> bool {
-    !is_compound(s.kind())
+    !has_any(s.kind(), COMPOUND)
         && semicolon(cx, s)
             .or_else(|| cx.last_token(s))
             .is_some_and(|l| core_format::ignore::line_ignored(cx.grammar, &l))

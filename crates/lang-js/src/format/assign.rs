@@ -4,7 +4,7 @@
 //! concept: assignment-layout
 
 use super::arrow::{self, Flags};
-use super::ast::{Call, has_comment, is_literal, name_of, operator, text_of, un};
+use super::ast::{Call, has_comment, name_of, operator, text_of, un};
 use super::binary::should_inline_logical;
 use super::chain::is_chain_label;
 use super::util::{R, inline, is_tok, kids, shape_error, token_of};
@@ -12,6 +12,7 @@ use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, lit};
 use core_format::shapes::{self, Assign, AssignHooks, AssignLayout, AssignPolicy};
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles::has;
 use core_syntax::{SyntaxElement, SyntaxNode};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -369,7 +370,7 @@ fn is_lone_short_argument(cx: &FormatCtx<'_>, arg: &SyntaxNode) -> bool {
         k::TS_NON_NULL_EXPRESSION => arg
             .first_child()
             .is_some_and(|a| is_lone_short_argument(cx, &un(&a))),
-        kind => is_literal(kind),
+        kind => has(kind, "literal"),
     }
 }
 

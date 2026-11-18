@@ -126,36 +126,6 @@ pub(crate) fn is_open(kind: SyntaxKind) -> bool {
     matches!(kind, k::LPAR | k::LSQB | k::LBRACE)
 }
 
-pub(crate) fn is_stmt(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::STMT_FUNCTION_DEF
-            | k::STMT_CLASS_DEF
-            | k::STMT_RETURN
-            | k::STMT_DELETE
-            | k::STMT_TYPE_ALIAS
-            | k::STMT_ASSIGN
-            | k::STMT_AUG_ASSIGN
-            | k::STMT_ANN_ASSIGN
-            | k::STMT_FOR
-            | k::STMT_WHILE
-            | k::STMT_IF
-            | k::STMT_WITH
-            | k::STMT_MATCH
-            | k::STMT_RAISE
-            | k::STMT_TRY
-            | k::STMT_ASSERT
-            | k::STMT_IMPORT
-            | k::STMT_IMPORT_FROM
-            | k::STMT_GLOBAL
-            | k::STMT_NONLOCAL
-            | k::STMT_EXPR
-            | k::STMT_PASS
-            | k::STMT_BREAK
-            | k::STMT_CONTINUE
-    )
-}
-
 /// An `if_break` that adds the trailing comma of a broken list.
 pub(crate) fn trailing_comma() -> Doc {
     if_break(lit(","), Doc::Nil)
@@ -220,25 +190,11 @@ pub(crate) fn flatten(d: Doc) -> Doc {
     }
 }
 
-/// `elif`, `else`, `except` and `case` clauses: nodes that belong to a compound statement.
-pub(crate) fn is_clause(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::ELIF_ELSE_CLAUSE | k::EXCEPT_HANDLER_EXCEPT_HANDLER | k::MATCH_CASE
-    )
-}
-
-/// Statements with a block.
-pub(crate) fn is_compound(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::STMT_FUNCTION_DEF
-            | k::STMT_CLASS_DEF
-            | k::STMT_FOR
-            | k::STMT_WHILE
-            | k::STMT_IF
-            | k::STMT_WITH
-            | k::STMT_MATCH
-            | k::STMT_TRY
-    )
-}
+/// The tags of a statement with a block.
+pub(crate) const COMPOUND: &[&str] = &[
+    "function",
+    "type-declaration",
+    "loop",
+    "branching",
+    "switch",
+];
