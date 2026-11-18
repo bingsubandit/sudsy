@@ -200,17 +200,11 @@ impl Binder<'_> {
         if !self.table.is_name_token(kind) {
             return None;
         }
-        let name = if trim {
-            text.trim_matches(['"', '\''])
-        } else if self.table.has_labels() && self.table.is_label(kind) {
-            text.strip_suffix(':').unwrap_or(text)
+        let (name, len) = if trim {
+            (text.trim_matches(['"', '\'']), text)
         } else {
-            text
-        };
-        let len = if !trim && self.table.has_labels() && self.table.is_label(kind) {
-            name
-        } else {
-            text
+            let name = self.table.unlabel(kind, text);
+            (name, name)
         };
         let range = TextRange::at(at, TextSize::of(len));
         Some((self.intern(name), range))
@@ -618,16 +612,12 @@ impl Binder<'_> {
                 Sel::WithToken(text) => text_at(text).is_some(),
                 Sel::Field(_) | Sel::Kind(_) | Sel::ExceptLast => false,
             });
-            // A label is written `key:`: the name is `key`.
-            let (text, range) = match if labels {
-                t.text().strip_suffix(':')
-            } else {
-                None
-            } {
-                Some(name) if table.is_label(SyntaxKind(t.kind().0)) => {
+            let (text, range) = match labels {
+                true => {
+                    let name = table.unlabel(SyntaxKind(t.kind().0), t.text());
                     (name, TextRange::at(range.start(), TextSize::of(name)))
                 }
-                _ => (t.text(), range),
+                false => (t.text(), range),
             };
             let access = match hit.map(|(_, f)| *f) {
                 Some(Flow::Skip) => continue,

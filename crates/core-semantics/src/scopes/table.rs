@@ -284,8 +284,13 @@ impl Table {
         !self.labels.is_empty()
     }
 
-    pub(crate) fn is_label(&self, kind: SyntaxKind) -> bool {
-        self.labels.contains(&kind)
+    /// The name of a token and the text that it takes in the source: a label `key:` is named
+    /// `key`.
+    pub(crate) fn unlabel<'t>(&self, kind: SyntaxKind, text: &'t str) -> &'t str {
+        match text.strip_suffix(':') {
+            Some(name) if self.labels.contains(&kind) => name,
+            _ => text,
+        }
     }
 
     pub(crate) fn is_bare(&self) -> bool {
