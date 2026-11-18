@@ -64,11 +64,28 @@ rule! {
             .filter(|_| ctx.options.string("merge_keys") == "allow");
         // Ranges are found only for the keys that are reported (finding one reads the tree), so
         // the first occurrence is kept as its index and looked up again on a duplicate.
-        let mut seen = Seen::default();
         let accessors = hooks.has_accessors();
+        let flat = hooks.flat_keys(node);
+        if !accessors && flat.is_none() {
+            let mut seen = Seen::default();
+            for (index, (_, key)) in entries(node, grammar).enumerate() {
+                let name = hooks.key_name(&key, text);
+                if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
+                    continue;
+                }
+                if let Some((first, name)) = seen.first(name, index) {
+                    let first = entries(node, grammar)
+                        .nth(first)
+                        .map_or_else(|| key_range(&key, grammar), |(_, k)| key_range(&k, grammar));
+                    ctx.report(key_range(&key, grammar), format!("duplicate key `{name}`"))
+                        .related(first, "first defined here");
+                }
+            }
+            return;
+        }
+        let mut seen = Seen::default();
         // name -> (kinds seen: 1 plain, 2 getter, 4 setter; index of the first), with accessors only
         let mut kinds: HashMap<Cow<'_, str>, (u8, usize)> = HashMap::new();
-        let flat = hooks.flat_keys(node);
         let walked = flat.is_none().then(|| entries(node, grammar)).into_iter().flatten();
         let listed = flat.iter().flatten().map(|k| (node.clone(), k.clone()));
         let first_range = |first: usize, key: &SyntaxElement| {

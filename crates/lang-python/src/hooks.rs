@@ -56,7 +56,7 @@ impl RuleHooks for PythonHooks {
 
 fn string_key(raw: &str) -> Cow<'_, str> {
     let body = raw.trim_start_matches(|c: char| c.is_ascii_alphabetic());
-    let quote = body.chars().next().filter(|c| matches!(c, '"' | '''));
+    let quote = body.chars().next().filter(|c| matches!(c, '"' | '\''));
     match quote {
         Some(q) => {
             let n = if body.starts_with(&q.to_string().repeat(3)) && body.len() >= 6 {

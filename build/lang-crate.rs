@@ -37,6 +37,18 @@ fn main() {
             .flatten()
             .map(|e| e.unwrap().path())
             .filter(|p| p.extension().is_some_and(|e| e == "yaml"))
+            // A rule none of whose roles a node of the grammar has is not built in at all.
+            .filter(|p| {
+                let text = fs::read_to_string(p).unwrap();
+                let roles = text
+                    .lines()
+                    .find_map(|l| l.strip_prefix("  role:"))
+                    .unwrap_or("");
+                let mut names = roles
+                    .split(|c: char| !(c.is_alphanumeric() || c == '-'))
+                    .filter(|n| !n.is_empty());
+                names.any(|n| !grammar.nodes_with_tag(n).is_empty())
+            })
             .collect(),
         false => Vec::new(),
     };

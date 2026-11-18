@@ -543,4 +543,3 @@ pub(super) fn invalid_escape(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
         }
     }
 }
-
