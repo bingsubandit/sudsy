@@ -22,11 +22,21 @@ pub use matcher::{Captures, Pattern, SnippetParser};
 /// The ids of the rule files in `shared/` (rules written on roles, built into every language whose
 /// grammar has them); their fixtures live in the languages that test them.
 pub const SHARED_IDS: &[&str] = &[
+    "boolean-literal-comparison",
     "no-assignment-in-condition",
+    "no-broad-catch",
     "no-constant-comparison",
     "no-constant-condition",
+    "no-debugger",
     "no-empty-block",
+    "no-empty-catch",
+    "no-eval",
+    "no-print",
+    "no-self-assign",
     "no-self-compare",
+    "no-throw-generic",
+    "no-useless-expression",
+    "no-wildcard-imports",
 ];
 
 #[cfg(test)]

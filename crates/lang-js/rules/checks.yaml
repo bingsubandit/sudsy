@@ -24,14 +24,6 @@ example: "try { a() } catch (e) { throw e }   # reported"
 severity: off
 category: suspicious
 ---
-id: no-self-assign
-family: check
-params: { check: self-assign }
-message: "'{name}' is assigned to itself."
-description: "`a = a`, `a.b = a.b`, `[a, b] = [a, b]`."
-example: "a = a;   # reported"
-category: suspicious
----
 id: use-isnan
 family: check
 params: { check: use-isnan }
@@ -197,15 +189,6 @@ description: "Overloads of one function or method (or call and construct signatu
 example: "interface I { a(): void; b(): void; a(x: number): void }   # the last a is reported"
 severity: off
 category: style
----
-id: no-unused-expressions
-family: check
-params: { check: unused-expressions }
-message: "Expected an assignment or function call and instead saw an expression."
-description: "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them."
-example: "a + b;   # reported"
-severity: off
-category: suspicious
 ---
 id: no-unexpected-multiline
 family: check

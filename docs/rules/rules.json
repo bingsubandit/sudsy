@@ -27,8 +27,24 @@
       "languages": [
         "all"
       ],
-      "options": [],
+      "options": [
+        {
+          "default": true,
+          "description": "Check line comments (`// a`). Off, only block comments are checked (with `block`).",
+          "name": "line",
+          "type": "bool"
+        },
+        {
+          "default": false,
+          "description": "Also check block comments: text right after the opening or before the closing delimiter is reported (`/*a*/`). Exempt: an empty comment, and a delimiter repeated (`/**`, `/***/`). The fix inserts the space.",
+          "name": "block",
+          "type": "bool"
+        }
+      ],
       "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard",
         "kotlin/ktlint",
         "yaml/yamllint",
         "csharp/stylecop"
@@ -38,6 +54,11 @@
           "id": "SA1005",
           "partial": false,
           "tool": "StyleCop"
+        },
+        {
+          "id": "comment-whitespace-inside",
+          "partial": false,
+          "tool": "stylelint"
         },
         {
           "id": "comments.require-starting-space",
@@ -331,6 +352,9 @@
       ],
       "options": [],
       "presets": [
+        "css/stylelint-recommended",
+        "css/stylelint-recommended",
+        "css/stylelint-recommended",
         "csharp/stylecop"
       ],
       "upstream": [
@@ -338,6 +362,11 @@
           "id": "SA1120",
           "partial": false,
           "tool": "StyleCop"
+        },
+        {
+          "id": "comment-no-empty",
+          "partial": false,
+          "tool": "stylelint"
         }
       ]
     },
@@ -1057,97 +1086,6 @@
       "upstream": [
         {
           "id": "color-no-invalid-hex",
-          "partial": false,
-          "tool": "stylelint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A comment with nothing in it.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "/**/\n/* */\n/* text */\na { /* */ color: red }\n",
-        "language": "css",
-        "spans": [
-          {
-            "column": 1,
-            "length": 4,
-            "line": 1
-          },
-          {
-            "column": 1,
-            "length": 5,
-            "line": 2
-          },
-          {
-            "column": 5,
-            "length": 5,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "comment-no-empty",
-      "languages": [
-        "css",
-        "less",
-        "scss"
-      ],
-      "options": [],
-      "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
-        "css/stylelint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "comment-no-empty",
-          "partial": false,
-          "tool": "stylelint"
-        }
-      ]
-    },
-    {
-      "category": "style",
-      "default_level": "off",
-      "description": "A comment whose text touches `/*` or `*/`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/*a*/ /* a */ /** a **/ /**/\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
-        "language": "css",
-        "spans": [
-          {
-            "column": 1,
-            "length": 5,
-            "line": 4
-          },
-          {
-            "column": 25,
-            "length": 4,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "comment-whitespace-inside",
-      "languages": [
-        "css",
-        "less",
-        "scss"
-      ],
-      "options": [],
-      "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
-        "css/stylelint-standard"
-      ],
-      "upstream": [
-        {
-          "id": "comment-whitespace-inside",
           "partial": false,
           "tool": "stylelint"
         }
@@ -2075,7 +2013,7 @@
       "description": "`from` and `to` in a `@keyframes` that also uses percentages (a block with nothing but keywords is left alone).",
       "example": {
         "config": null,
-        "fixed": null,
+        "fixed": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/* a */ /* a */ /** a **/ /* */\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "input": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/*a*/ /* a */ /** a **/ /**/\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "language": "css",
         "spans": [
@@ -3122,7 +3060,7 @@
       "description": "An `:nth-child()` and the like whose `An+B` can never match (`0`, `0n`, `-n`, `-2n-1`).",
       "example": {
         "config": null,
-        "fixed": null,
+        "fixed": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/* a */ /* a */ /** a **/ /* */\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "input": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/*a*/ /* a */ /** a **/ /**/\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "language": "css",
         "spans": [
@@ -3288,7 +3226,7 @@
       "description": "An attribute selector whose value is not quoted (`[a=b]`).",
       "example": {
         "config": null,
-        "fixed": null,
+        "fixed": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/* a */ /* a */ /** a **/ /* */\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "input": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/*a*/ /* a */ /** a **/ /**/\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "language": "css",
         "spans": [
@@ -4194,7 +4132,7 @@
       "description": "`:before`, `:after`, `:first-line` and `:first-letter` with one colon.",
       "example": {
         "config": null,
-        "fixed": null,
+        "fixed": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/* a */ /* a */ /** a **/ /* */\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "input": "a:before, a::after, a:hover {}\n[a=b], [a=\"b\"], [a], [a~=b i] {}\na:nth-child(0), a:nth-child(2n+1), a:nth-last-child(-n) {}\n/*a*/ /* a */ /** a **/ /**/\n@keyframes k { from { top: 0 } to { top: 1px } }\n@keyframes j { from { top: 0 } 50% { top: 1px } to { top: 2px } }\n",
         "language": "css",
         "spans": [
@@ -7123,70 +7061,6 @@
       "upstream": []
     },
     {
-      "category": "style",
-      "default_level": "off",
-      "description": "An import with `*` (Checkstyle AvoidStarImport).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import java.util.*;\nimport static java.lang.Math.*;\n\nclass A {}\n",
-        "language": "java",
-        "spans": [
-          {
-            "column": 1,
-            "length": 19,
-            "line": 1
-          },
-          {
-            "column": 1,
-            "length": 31,
-            "line": 2
-          }
-        ]
-      },
-      "fix": null,
-      "id": "avoid-star-import",
-      "languages": [
-        "java"
-      ],
-      "options": [],
-      "presets": [
-        "java/google"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "cleanup",
-      "default_level": "warn",
-      "description": "`x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
-        "language": "java",
-        "spans": [
-          {
-            "column": 9,
-            "length": 12,
-            "line": 9
-          },
-          {
-            "column": 25,
-            "length": 13,
-            "line": 9
-          }
-        ]
-      },
-      "fix": null,
-      "id": "boolean-literal-comparison",
-      "languages": [
-        "java"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": []
-    },
-    {
       "category": "suspicious",
       "default_level": "warn",
       "description": "A `;` that is the body of an `if` or a loop, such as `while (x);` (Checkstyle EmptyStatement).",
@@ -8108,7 +7982,7 @@
     {
       "category": "suspicious",
       "default_level": "warn",
-      "description": "A `debugger` statement.",
+      "description": "A debugger statement, a call of one of the `calls` that start a debugger or an import matching `imports` (ESLint no-debugger, ruff T100); a language lists its calls in its grammar's `rule` row.",
       "example": {
         "config": null,
         "fixed": null,
@@ -8125,11 +7999,26 @@
       "fix": null,
       "id": "no-debugger",
       "languages": [
-        "js"
+        "js",
+        "python"
       ],
-      "options": [],
+      "options": [
+        {
+          "default": [],
+          "description": "Calls that start a debugger",
+          "name": "calls",
+          "type": "list"
+        },
+        {
+          "default": "\\b\\B",
+          "description": "An import of a debugger module",
+          "name": "imports",
+          "type": "string"
+        }
+      ],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "python/ruff"
       ],
       "upstream": [
         {
@@ -9235,95 +9124,6 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
-      "description": "`a = a`, `a.b = a.b`, `[a, b] = [a, b]`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 5,
-            "length": 1,
-            "line": 1
-          },
-          {
-            "column": 14,
-            "length": 3,
-            "line": 1
-          },
-          {
-            "column": 28,
-            "length": 3,
-            "line": 1
-          },
-          {
-            "column": 40,
-            "length": 4,
-            "line": 1
-          },
-          {
-            "column": 55,
-            "length": 6,
-            "line": 1
-          },
-          {
-            "column": 87,
-            "length": 1,
-            "line": 1
-          },
-          {
-            "column": 11,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 14,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 31,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 37,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 69,
-            "length": 1,
-            "line": 2
-          },
-          {
-            "column": 92,
-            "length": 1,
-            "line": 2
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-self-assign",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-self-assign",
-          "partial": true,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
       "default_level": "error",
       "description": "A variable, function, parameter or class named `NaN`, `Infinity`, `undefined`, `eval` or `arguments` (`var undefined;` without a value is left alone).",
       "example": {
@@ -9647,51 +9447,6 @@
     {
       "category": "suspicious",
       "default_level": "off",
-      "description": "An expression statement that does nothing: an identifier, literal, member, operator expression, short circuit, ternary or tagged template. Calls, `new`, assignments, updates, `await`, `yield`, `import()`, `void` and `delete` are fine, as are directives and, in TypeScript, `as`, `!` and `<T>` around them.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "a + b;\nf();\na && f();\nx = 1;\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 1,
-            "length": 6,
-            "line": 1
-          },
-          {
-            "column": 1,
-            "length": 9,
-            "line": 3
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-unused-expressions",
-      "languages": [
-        "js"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended",
-        "js/typescript-eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-unused-expressions",
-          "partial": true,
-          "tool": "eslint"
-        },
-        {
-          "id": "no-unused-expressions",
-          "partial": true,
-          "tool": "typescript-eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
       "description": "A `catch` that only rethrows its error.",
       "example": {
         "config": null,
@@ -9759,6 +9514,53 @@
           "id": "no-useless-escape",
           "partial": true,
           "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "An expression statement that is only a name, a literal, a member access or an operator expression: it is evaluated and thrown away (ESLint no-unused-expressions, ruff B018). Which kinds of expression have no effect of their own is the grammar's `#pure` tag.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a + b;\nf();\na && f();\nx = 1;\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 6,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-useless-expression",
+      "languages": [
+        "js",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended",
+        "js/typescript-eslint-recommended",
+        "python/ruff"
+      ],
+      "upstream": [
+        {
+          "id": "no-unused-expressions",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "no-unused-expressions",
+          "partial": true,
+          "tool": "typescript-eslint"
         }
       ]
     },
@@ -10721,34 +10523,6 @@
       },
       "fix": null,
       "id": "no-unit-return",
-      "languages": [
-        "kotlin"
-      ],
-      "options": [],
-      "presets": [
-        "kotlin/ktlint"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "style",
-      "default_level": "warn",
-      "description": "An import that ends in `.*` (ktlint no-wildcard-imports).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import a.b.*\nimport a.b.C\nimport a.b.D as E\n\nval x = 1\n",
-        "language": "kotlin",
-        "spans": [
-          {
-            "column": 1,
-            "length": 12,
-            "line": 1
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-wildcard-imports",
       "languages": [
         "kotlin"
       ],
@@ -12772,34 +12546,6 @@
       "upstream": []
     },
     {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "An `except` clause without an exception type, unless its body has a bare `raise` of its own.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "A = B = 1\ntry:\n    pass\nexcept:\n    pass\nexcept A:\n    pass\ntry:\n    pass\nexcept (A, B):\n    pass\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 6,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "bare-except",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
       "category": "correctness",
       "default_level": "warn",
       "description": "A `raise` with no exception in code that no `except` clause of its function contains.",
@@ -12818,39 +12564,6 @@
       },
       "fix": null,
       "id": "bare-raise-outside-handler",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "`except Exception` or `except BaseException` whose body neither raises again nor logs the traceback.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 8,
-            "length": 9,
-            "line": 3
-          },
-          {
-            "column": 8,
-            "length": 9,
-            "line": 12
-          }
-        ]
-      },
-      "fix": null,
-      "id": "blind-except",
       "languages": [
         "python"
       ],
@@ -12923,7 +12636,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -13179,41 +12892,13 @@
       "upstream": []
     },
     {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A call of the builtin `exec`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 13,
-            "line": 54
-          }
-        ]
-      },
-      "fix": null,
-      "id": "exec-call",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
       "category": "style",
       "default_level": "off",
       "description": "A `return None` in a function whose other returns (if any) return nothing or `None`, and that is not a generator. Left alone: a function that is only `return None`, a property, a function annotated with anything but `None`.",
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -13483,7 +13168,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -13626,7 +13311,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -13948,34 +13633,6 @@
       "upstream": []
     },
     {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "An import of `pdb`, `ipdb`, `pudb`, `wdb`, `rpdb` or `bpdb`, or a call of `breakpoint()` or `pdb.set_trace()`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 10,
-            "line": 15
-          }
-        ]
-      },
-      "fix": null,
-      "id": "leftover-debugger",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
       "category": "style",
       "default_level": "off",
       "description": "An import at module level after code (docstrings, `__all__`, blocks, and `sys.path` or `os.environ` setup are not code).",
@@ -14243,7 +13900,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -14327,7 +13984,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -14343,6 +14000,198 @@
         "python"
       ],
       "options": [],
+      "presets": [
+        "python/ruff"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `catch`, `except` or `rescue` that catches everything (`bare`), or one of the broad `types` and does not raise the error again and has no call matching `handled` (ruff E722 and BLE001, RuboCop Lint/RescueException). A language sets what is broad in its grammar's `rule` row.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "A = B = 1\ntry:\n    pass\nexcept:\n    pass\nexcept A:\n    pass\ntry:\n    pass\nexcept (A, B):\n    pass\n",
+        "language": "python",
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-broad-catch",
+      "languages": [
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": true,
+          "description": "A clause with no type is broad",
+          "name": "bare",
+          "type": "bool"
+        },
+        {
+          "default": [],
+          "description": "Types that are broad",
+          "name": "types",
+          "type": "list"
+        },
+        {
+          "default": "^[A-Za-z_][A-Za-z0-9_.]*[.]exception[(]|exc_info[ ]*=[ ]*[^F ]",
+          "description": "A call that handles the error (logs its traceback)",
+          "name": "handled",
+          "type": "string"
+        }
+      ],
+      "presets": [
+        "python/ruff",
+        "ruby/rubocop"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A call of one of the `calls` that run a string as code (ruff S102, ESLint no-eval); a language lists its calls in its grammar's `rule` row.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "language": "python",
+        "spans": [
+          {
+            "column": 1,
+            "length": 13,
+            "line": 54
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-eval",
+      "languages": [
+        "python"
+      ],
+      "options": [
+        {
+          "default": [
+            "exec"
+          ],
+          "description": "Calls that run a string as code",
+          "name": "calls",
+          "type": "list"
+        }
+      ],
+      "presets": [
+        "python/ruff"
+      ],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A call of one of the `calls` that write to the console (ruff T201 and T203), unless an argument matching `redirect` sends the output elsewhere and none matching `console` sends it back to the console; a language lists its calls and the two argument patterns in its grammar's `rule` row.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import pprint\nfrom pprint import pprint as pp\n\na = b = c = f = 1\n\nprint(1)\nprint()\nprint(\"x\", file=f)\nprint(\"x\", file=None)\npprint.pprint(1)\npp(2)\npprint(3)\nx = dict()\nx = dict(a=1)\nx = dict(**a)\nx = dict(a, b=1)\nx = list()\nx = tuple()\nx = list(a)\nx = a.startswith(\"a\") or a.startswith(\"b\")\nx = a.endswith(\"a\") or a.endswith((\"b\", \"c\")) or c\nx = a.startswith(\"a\") or b.startswith(\"b\")\nx = a.startswith(\"a\") and a.startswith(\"b\")\nx = a.startswith(\"a\") or a.endswith(\"b\")\nif a:\n    pass\n    pass\nelse:\n    ...\n    x = 1\n\n\ndef f():\n    \"\"\"doc\"\"\"\n    ...\n\n\nclass C:\n    pass\n",
+        "language": "python",
+        "spans": [
+          {
+            "column": 1,
+            "length": 8,
+            "line": 6
+          },
+          {
+            "column": 1,
+            "length": 7,
+            "line": 7
+          },
+          {
+            "column": 1,
+            "length": 21,
+            "line": 9
+          },
+          {
+            "column": 1,
+            "length": 16,
+            "line": 10
+          },
+          {
+            "column": 1,
+            "length": 5,
+            "line": 11
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-print",
+      "languages": [
+        "python"
+      ],
+      "options": [
+        {
+          "default": [
+            "print",
+            "pprint.pprint",
+            "pp"
+          ],
+          "description": "Calls that print",
+          "name": "calls",
+          "type": "list"
+        },
+        {
+          "default": "^file[ ]*=",
+          "description": "An argument that sends the output elsewhere",
+          "name": "redirect",
+          "type": "string"
+        },
+        {
+          "default": "^file[ ]*=[ ]*(None|sys[.]std(out|err))$",
+          "description": "An argument that sends the output to the console",
+          "name": "console",
+          "type": "string"
+        }
+      ],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A `raise` or `throw` of one of the generic `types`, itself or a call of it, which callers cannot tell from any other error (ruff TRY002, RuboCop Lint/RaiseException). A language lists the types in its grammar's `rule` row.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "language": "python",
+        "spans": [
+          {
+            "column": 1,
+            "length": 20,
+            "line": 33
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-throw-generic",
+      "languages": [
+        "python"
+      ],
+      "options": [
+        {
+          "default": [
+            "Exception"
+          ],
+          "description": "Generic exception types",
+          "name": "types",
+          "type": "list"
+        }
+      ],
       "presets": [
         "python/ruff"
       ],
@@ -14453,7 +14302,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -14848,73 +14697,6 @@
     {
       "category": "style",
       "default_level": "off",
-      "description": "A call of `pprint.pprint`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import pprint\nfrom pprint import pprint as pp\n\na = b = c = f = 1\n\nprint(1)\nprint()\nprint(\"x\", file=f)\nprint(\"x\", file=None)\npprint.pprint(1)\npp(2)\npprint(3)\nx = dict()\nx = dict(a=1)\nx = dict(**a)\nx = dict(a, b=1)\nx = list()\nx = tuple()\nx = list(a)\nx = a.startswith(\"a\") or a.startswith(\"b\")\nx = a.endswith(\"a\") or a.endswith((\"b\", \"c\")) or c\nx = a.startswith(\"a\") or b.startswith(\"b\")\nx = a.startswith(\"a\") and a.startswith(\"b\")\nx = a.startswith(\"a\") or a.endswith(\"b\")\nif a:\n    pass\n    pass\nelse:\n    ...\n    x = 1\n\n\ndef f():\n    \"\"\"doc\"\"\"\n    ...\n\n\nclass C:\n    pass\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 16,
-            "line": 10
-          },
-          {
-            "column": 1,
-            "length": 5,
-            "line": 11
-          }
-        ]
-      },
-      "fix": null,
-      "id": "pprint",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": []
-    },
-    {
-      "category": "style",
-      "default_level": "off",
-      "description": "A call of the builtin `print` without a `file` argument (or with `file=None`).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import pprint\nfrom pprint import pprint as pp\n\na = b = c = f = 1\n\nprint(1)\nprint()\nprint(\"x\", file=f)\nprint(\"x\", file=None)\npprint.pprint(1)\npp(2)\npprint(3)\nx = dict()\nx = dict(a=1)\nx = dict(**a)\nx = dict(a, b=1)\nx = list()\nx = tuple()\nx = list(a)\nx = a.startswith(\"a\") or a.startswith(\"b\")\nx = a.endswith(\"a\") or a.endswith((\"b\", \"c\")) or c\nx = a.startswith(\"a\") or b.startswith(\"b\")\nx = a.startswith(\"a\") and a.startswith(\"b\")\nx = a.startswith(\"a\") or a.endswith(\"b\")\nif a:\n    pass\n    pass\nelse:\n    ...\n    x = 1\n\n\ndef f():\n    \"\"\"doc\"\"\"\n    ...\n\n\nclass C:\n    pass\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 8,
-            "line": 6
-          },
-          {
-            "column": 1,
-            "length": 7,
-            "line": 7
-          },
-          {
-            "column": 1,
-            "length": 21,
-            "line": 9
-          }
-        ]
-      },
-      "fix": null,
-      "id": "print",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": []
-    },
-    {
-      "category": "style",
-      "default_level": "off",
       "description": "A `\"...\" % x` whose format string and values pair up (a tuple of as many values, a dict for named fields, or one value for one field).",
       "example": {
         "config": null,
@@ -14992,34 +14774,6 @@
       },
       "fix": null,
       "id": "raise-not-implemented",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "style",
-      "default_level": "off",
-      "description": "A `raise` of the builtin `Exception`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 20,
-            "line": 33
-          }
-        ]
-      },
-      "fix": null,
-      "id": "raise-vanilla-class",
       "languages": [
         "python"
       ],
@@ -15406,75 +15160,6 @@
     {
       "category": "style",
       "default_level": "off",
-      "description": "A comparison of a value to `True` or `False` with `==` or `!=`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "x = 1\nx == True\nx != False\nTrue == x\nx is True\nx == 1\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 9,
-            "line": 2
-          },
-          {
-            "column": 1,
-            "length": 10,
-            "line": 3
-          },
-          {
-            "column": 1,
-            "length": 9,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "true-false-comparison",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A handler for everything (`except:`, `except Exception`) whose only statement is `pass`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 1,
-            "line": 3
-          },
-          {
-            "column": 1,
-            "length": 1,
-            "line": 12
-          }
-        ]
-      },
-      "fix": null,
-      "id": "try-except-pass",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "style",
-      "default_level": "off",
       "description": "`X: TypeAlias = ...`, for a target version with the `type` statement (3.12).",
       "example": {
         "config": null,
@@ -15507,7 +15192,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -15618,32 +15303,6 @@
       "presets": [
         "python/ruff"
       ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A star import.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import os\nimport sys\nimport json as json\nimport a.b\nimport a.c\nfrom m import n, o as p\nfrom . import q\nfrom __future__ import annotations\nfrom k import *\n\nimport re\nimport re\n\n\ndef f():\n    import sys\n    return sys\n\n\nfor os in []:\n    pass\n\n\nclass C:\n    import unused_in_class\n\n\ntry:\n    import t\nexcept ImportError:\n    t = None\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 15,
-            "line": 9
-          }
-        ]
-      },
-      "fix": null,
-      "id": "undefined-local-with-import-star",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [],
       "upstream": []
     },
     {
@@ -16013,34 +15672,6 @@
       "upstream": []
     },
     {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "An expression statement that is only a name, an attribute, a number, a constant or a collection display.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 1,
-            "line": 44
-          }
-        ]
-      },
-      "fix": null,
-      "id": "useless-expression",
-      "languages": [
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "python/ruff"
-      ],
-      "upstream": []
-    },
-    {
       "category": "style",
       "default_level": "off",
       "description": "`import a as a` or `from m import a as a`.",
@@ -16134,7 +15765,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nimport pdb\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
+        "input": "try:\n    pass\nexcept Exception:\n    pass\n\nif a:\n    if b:\n        pass\n\ntry:\n    pass\nexcept Exception:\n    pass\n\nbreakpoint()\n\ndef f(x):\n    if x:\n        return True\n    return False\n\nif a:\n    x = 1\nelif b:\n    x = 1\n\nf = open(\"a\")\n\nwith a:\n    with b:\n        pass\n\nraise Exception(\"x\")\n\nif not isinstance(x, int):\n    raise ValueError(\"x\")\n\ndef f(x):\n    if x:\n        return None\n    print(x)\n\nx = 1\nx\n\ntry:\n    pass\nexcept ValueError as e:\n    raise e\n\ndef f():\n    raise\n\nexec(\"x = 1\")\n\nhasattr(x, \"__call__\")\n",
         "language": "python",
         "spans": [
           {
@@ -16746,34 +16377,6 @@
     {
       "category": "suspicious",
       "default_level": "warn",
-      "description": "A `rescue` that names `Exception` (RuboCop Lint/RescueException).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
-        "language": "ruby",
-        "spans": [
-          {
-            "column": 1,
-            "length": 16,
-            "line": 21
-          }
-        ]
-      },
-      "fix": null,
-      "id": "rescue-exception",
-      "languages": [
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "ruby/rubocop"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
       "description": "`return value` in `initialize` or a setter method, whose result is ignored (RuboCop Lint/ReturnInVoidContext).",
       "example": {
         "config": null,
@@ -16802,39 +16405,6 @@
     {
       "category": "suspicious",
       "default_level": "warn",
-      "description": "`a = a`, `@a ||= @a` and the like for a local, instance, class or global variable or a constant (RuboCop Lint/SelfAssignment).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
-        "language": "ruby",
-        "spans": [
-          {
-            "column": 1,
-            "length": 5,
-            "line": 7
-          },
-          {
-            "column": 1,
-            "length": 9,
-            "line": 8
-          }
-        ]
-      },
-      "fix": null,
-      "id": "self-assignment",
-      "languages": [
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "ruby/rubocop"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
       "description": "A `Struct.new` member that has the name of a method of `Struct` (`:hash`, `:size`, `:count`) (RuboCop Lint/StructNewOverride).",
       "example": {
         "config": null,
@@ -16851,39 +16421,6 @@
       },
       "fix": null,
       "id": "struct-new-override",
-      "languages": [
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "ruby/rubocop"
-      ],
-      "upstream": []
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "A `rescue` clause with no statements, unless a comment follows it before the end of the `begin`, method or block (RuboCop Lint/SuppressedException).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "x = :true\ny = :ok\nz = 'a #{b}'\n\"a #{1} #{x} #{[:a]}\"\n/(?<a>x)(y)/\n/(?<a>x)(?:y)/\na = a\n@b ||= @b\nc = d\nf == 0.1\nf == 0\nbegin\n  x\nend while y\ncase x\nwhen 1\nwhen 2 then z\nend\nbegin\n  1\nrescue Exception\nend\nbegin\n  1\nrescue\nend\n# rubocop:disable Foo/Bar\nh = { true: 1 }\n",
-        "language": "ruby",
-        "spans": [
-          {
-            "column": 1,
-            "length": 16,
-            "line": 21
-          },
-          {
-            "column": 1,
-            "length": 6,
-            "line": 25
-          }
-        ]
-      },
-      "fix": null,
-      "id": "suppressed-exception",
       "languages": [
         "ruby"
       ],
@@ -24356,6 +23893,66 @@
       ]
     },
     {
+      "category": "cleanup",
+      "default_level": "off",
+      "description": "An equality with `true` or `false` (`x == true`, `x != False`) on either side (ruff E712, Checkstyle SimplifyBooleanExpression).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = 1\nx == True\nx != False\nTrue == x\nx is True\nx == 1\n",
+        "language": "python",
+        "spans": [
+          {
+            "column": 1,
+            "length": 9,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 10,
+            "line": 3
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "boolean-literal-comparison",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": [
+            "true",
+            "false",
+            "True",
+            "False"
+          ],
+          "description": "The texts that are boolean literals",
+          "name": "literals",
+          "type": "list"
+        },
+        {
+          "default": [],
+          "description": "Equality operators that are not a comparison of value (Python `is`)",
+          "name": "not_operators",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": []
+    },
+    {
       "category": "style",
       "default_level": "off",
       "description": "A comparison with the constant on the left: `null == x` is `x == null`, `1 < x` is `x > 1`. Without the type layer a constant is a literal, `nameof`, `int.MaxValue`-style member or an expression of those; a named constant on the left is not recognised.",
@@ -26158,7 +25755,7 @@
     {
       "category": "suspicious",
       "default_level": "warn",
-      "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try`, `catch` or `finally` (also when the language wraps the block in a node of its own); an empty `catch` swallows the error (ESLint no-empty, Checkstyle EmptyBlock and EmptyCatchBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).",
+      "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try` or `finally` (also when the language wraps the block in a node of its own; an empty `catch` is `no-empty-catch`) (ESLint no-empty, Checkstyle EmptyBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).",
       "example": {
         "config": null,
         "fixed": null,
@@ -26167,11 +25764,6 @@
         "spans": [
           {
             "column": 6,
-            "length": 3,
-            "line": 2
-          },
-          {
-            "column": 28,
             "length": 3,
             "line": 2
           },
@@ -26222,6 +25814,61 @@
           "id": "RCS1075",
           "partial": false,
           "tool": "Roslynator"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `catch`, `except` or `rescue` clause whose body has no statement (a lone `pass` counts as none) and no comment, so the error is silently ignored (ESLint no-empty, Checkstyle EmptyCatchBlock, ruff S110, RuboCop Lint/SuppressedException). With `broad_only` only a clause that catches everything or one of the `types` is reported.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 7,
+            "length": 1,
+            "line": 19
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-empty-catch",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": false,
+          "description": "Report only a clause that catches everything or a broad type",
+          "name": "broad_only",
+          "type": "bool"
+        },
+        {
+          "default": [],
+          "description": "Types that count as broad",
+          "name": "types",
+          "type": "list"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended",
+        "python/ruff",
+        "ruby/rubocop"
+      ],
+      "upstream": [
+        {
+          "id": "no-empty",
+          "partial": true,
+          "tool": "eslint"
         }
       ]
     },
@@ -26433,6 +26080,98 @@
     {
       "category": "suspicious",
       "default_level": "warn",
+      "description": "A plain or logical assignment whose two sides are the same tokens, `a = a`, `a.b = a.b` or `@a ||= @a` (ESLint no-self-assign, RuboCop Lint/SelfAssignment).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 1
+          },
+          {
+            "column": 8,
+            "length": 9,
+            "line": 1
+          },
+          {
+            "column": 33,
+            "length": 11,
+            "line": 1
+          },
+          {
+            "column": 46,
+            "length": 15,
+            "line": 1
+          },
+          {
+            "column": 81,
+            "length": 7,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 15,
+            "line": 2
+          },
+          {
+            "column": 18,
+            "length": 21,
+            "line": 2
+          },
+          {
+            "column": 59,
+            "length": 13,
+            "line": 2
+          },
+          {
+            "column": 76,
+            "length": 19,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-self-assign",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": [
+            "=",
+            "||=",
+            "&&=",
+            "??="
+          ],
+          "description": "The assignment operators that store the right side as it is",
+          "name": "operators",
+          "type": "list"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended",
+        "ruby/rubocop"
+      ],
+      "upstream": [
+        {
+          "id": "no-self-assign",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
       "description": "An equality or comparison whose two sides are the same tokens: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too.",
       "example": {
         "config": null,
@@ -26501,6 +26240,44 @@
           "tool": "StyleCop"
         }
       ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "An import of every name of a package or module, `import a.b.*;` or `from a import *` (Checkstyle AvoidStarImport, ktlint no-wildcard-imports, ruff F403).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import java.util.*;\nimport static java.lang.Math.*;\n\nclass A {}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 1,
+            "length": 19,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 31,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-wildcard-imports",
+      "languages": [
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "java/google",
+        "kotlin/ktlint"
+      ],
+      "upstream": []
     },
     {
       "category": "style",

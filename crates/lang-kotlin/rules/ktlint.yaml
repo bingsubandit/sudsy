@@ -1,12 +1,3 @@
-id: no-wildcard-imports
-message: 'import the names you use, not `.*`'
-description: >-
-  An import that ends in `.*` (ktlint no-wildcard-imports).
-example: 'import a.b.*'
-severity: warn
-category: style
-rule: { kind: ImportDirective, regex: '^import\s+[^\s]*\.\*$' }
----
 id: no-empty-class-body
 message: 'the class body is empty: leave out the braces'
 description: >-

@@ -4,6 +4,8 @@
 
 language js 17 "JavaScript/TypeScript"
 roles
+rule no-useless-expression
+rule no-debugger
 // Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc).
 hoisted "var"
 precedence 1 left "??"
@@ -86,34 +88,34 @@ token Unknown #error
 
 node Program #scope #block = items:#statement* Eof
 node IdentifierName #expression #opaque
-node IdentifierReference #expression #reference = name:#identifier? IdentifierName?
+node IdentifierReference #expression #reference #pure = name:#identifier? IdentifierName?
 node BindingIdentifier #pattern #declaration = name:#identifier
 node LabelIdentifier #opaque
-node ThisExpression #expression #opaque
-node ArrayExpression #expression #opaque
+node ThisExpression #expression #opaque #pure
+node ArrayExpression #expression #opaque #pure
 node Elision #opaque #hole
-node ObjectExpression #expression #opaque #mapping
+node ObjectExpression #expression #opaque #mapping #pure
 node ObjectProperty #key-value = Keyword? Identifier? Operator? LBracket? key:#expression RBracket? Colon? value:#expression?
-node TemplateLiteral #expression #opaque #quoted
-node TaggedTemplateExpression #expression #opaque #escapes #raw-strings
+node TemplateLiteral #expression #opaque #quoted #pure
+node TaggedTemplateExpression #expression #opaque #escapes #raw-strings #pure
 node TemplateElement #opaque
-node ComputedMemberExpression #expression #index = object:#expression QuestionDot? LBracket arguments:#expression RBracket
-node StaticMemberExpression #expression #member-access = object:#expression Dot? QuestionDot? member:IdentifierName
-node PrivateFieldExpression #expression #member-access = object:#expression Dot? QuestionDot? member:PrivateIdentifier
+node ComputedMemberExpression #expression #index #pure = object:#expression QuestionDot? LBracket arguments:#expression RBracket
+node StaticMemberExpression #expression #member-access #pure = object:#expression Dot? QuestionDot? member:IdentifierName
+node PrivateFieldExpression #expression #member-access #pure = object:#expression Dot? QuestionDot? member:PrivateIdentifier
 node CallExpression #expression #call =
     callee:#expression QuestionDot? type_arguments:TSTypeParameterInstantiation? LParen arguments:#expression* RParen
 node NewExpression #expression #call =
     Keyword callee:#expression type_arguments:TSTypeParameterInstantiation? LParen? arguments:#expression* RParen?
-node ImportMeta #expression #opaque
-node NewTarget #expression #opaque
+node ImportMeta #expression #opaque #pure
+node NewTarget #expression #opaque #pure
 node SpreadElement #expression #opaque
 node UpdateExpression #expression #unary =
     prefix=operator:#operator? LParen* operand:#expression RParen* postfix=operator:#operator?
-node UnaryExpression #expression #unary = operator:#operator operand:#expression
-node BinaryExpression #expression #binary-chain #binary = left:#expression operator:#operator right:#expression
-node PrivateInExpression #expression #binary-chain #binary = left:PrivateIdentifier operator:#operator right:#expression
-node LogicalExpression #expression #binary-chain #binary = left:#expression operator:#operator right:#expression
-node ConditionalExpression #expression #conditional = condition:#expression Question then:#expression Colon else:#expression
+node UnaryExpression #expression #unary #pure = operator:#operator operand:#expression
+node BinaryExpression #expression #binary-chain #binary #pure = left:#expression operator:#operator right:#expression
+node PrivateInExpression #expression #binary-chain #binary #pure = left:PrivateIdentifier operator:#operator right:#expression
+node LogicalExpression #expression #binary-chain #binary #pure = left:#expression operator:#operator right:#expression
+node ConditionalExpression #expression #conditional #pure = condition:#expression Question then:#expression Colon else:#expression
 node AssignmentExpression #expression #assignment = LParen* left:#expression RParen* operator:#operator right:#expression
 node ArrayAssignmentTarget #expression #opaque
 node ObjectAssignmentTarget #expression #opaque
@@ -121,7 +123,7 @@ node AssignmentTargetRest #opaque #final
 node AssignmentTargetWithDefault #opaque
 node AssignmentTargetPropertyIdentifier #opaque
 node AssignmentTargetPropertyProperty #opaque
-node SequenceExpression #expression #opaque #sequence
+node SequenceExpression #expression #opaque #sequence #pure
 node Super #expression #opaque
 node AwaitExpression #expression #unary = operator:Keyword operand:#expression
 node ChainExpression #expression #opaque
@@ -130,8 +132,8 @@ node Directive #statement #opaque
 node BlockStatement #statement #block #scope = LBrace items:#statement* RBrace
 node VariableDeclaration #statement #declaration #inert-bare = Identifier* Keyword? Identifier* declarators:VariableDeclarator*
 node VariableDeclarator #declaration = name:#pattern Operator? type:TSTypeAnnotation? Operator? init:#expression?
-node EmptyStatement #statement #opaque #inert #empty-statement
-node ExpressionStatement #statement #opaque #expression-statement
+node EmptyStatement #statement #empty-statement #inert
+node ExpressionStatement #statement #expression-statement = expression:#expression Semicolon?
 node IfStatement #statement #conditional = Keyword LParen condition:#expression RParen then:#statement Keyword? else:#statement?
 node DoWhileStatement #statement #loop = Keyword body:#statement Keyword LParen condition:#expression RParen Semicolon?
 node WhileStatement #statement #loop = Keyword LParen condition:#expression RParen body:#statement
@@ -152,22 +154,22 @@ node ThrowStatement #statement #throw = Keyword value:#expression Semicolon?
 node TryStatement #statement #try = Keyword body:BlockStatement catches:CatchClause* Keyword? finally:BlockStatement?
 node CatchClause #scope #catch = Keyword LParen? parameter:CatchParameter? RParen? body:BlockStatement
 node CatchParameter #opaque
-node DebuggerStatement #statement #opaque
+node DebuggerStatement #statement #debugger
 node AssignmentPattern #pattern #opaque #default-value
 node ObjectPattern #pattern #opaque
 node BindingProperty #opaque
 node ArrayPattern #pattern #opaque
 node BindingRestElement #pattern #opaque #rest #final
-node Function #expression #statement #function #declaration #scope #inert =
+node Function #expression #statement #function #declaration #scope #inert #pure =
     Identifier* Keyword? Operator? name:BindingIdentifier? type_parameters:TSTypeParameterDeclaration? parameters:FormalParameters return_type:TSTypeAnnotation? body:FunctionBody?
 node FormalParameters #parameter-list = LParen? parameters:#parameter* RParen?
 node FormalParameter #parameter #opaque
 node FormalParameterRest #parameter #opaque #final
 node FunctionBody #block = LBrace items:#statement* RBrace
-node ArrowFunctionExpression #expression #function #scope =
+node ArrowFunctionExpression #expression #function #scope #pure =
     Identifier? type_parameters:TSTypeParameterDeclaration? parameters:FormalParameters return_type:TSTypeAnnotation? Arrow body:FunctionBody? expression_body:#expression?
 node YieldExpression #expression #opaque #escapes
-node Class #expression #statement #type-declaration #declaration #scope =
+node Class #expression #statement #type-declaration #declaration #scope #pure =
     Decorator* Identifier* Keyword name:BindingIdentifier? type_parameters:TSTypeParameterDeclaration? Keyword? superclass:#expression? super_type_arguments:TSTypeParameterInstantiation? Identifier? implements:TSClassImplements* members:ClassBody
 node ClassBody #block = LBrace items:#member* RBrace
 node MethodDefinition #member #declaration =
@@ -192,12 +194,12 @@ node ExportDefaultDeclaration #statement #opaque #export
 node ExportAllDeclaration #statement #opaque #export #export-list
 node ExportSpecifier #opaque
 node V8IntrinsicExpression #expression #opaque
-node BooleanLiteral #expression #literal = value:Keyword
-node NullLiteral #expression #literal = value:Keyword
-node NumericLiteral #expression #literal = value:Number
-node StringLiteral #expression #literal #quoted = value:String? StringLiteral?
-node BigIntLiteral #expression #literal = value:BigInt
-node RegExpLiteral #expression #literal #regex = value:RegExp
+node BooleanLiteral #expression #literal #pure = value:Keyword
+node NullLiteral #expression #literal #pure = value:Keyword
+node NumericLiteral #expression #literal #pure = value:Number
+node StringLiteral #expression #literal #quoted #pure = value:String? StringLiteral?
+node BigIntLiteral #expression #literal #pure = value:BigInt
+node RegExpLiteral #expression #literal #regex #pure = value:RegExp
 node JSXElement #expression #opaque
 node JSXOpeningElement #opaque #markup
 node JSXClosingElement #opaque

@@ -1,7 +1,7 @@
 //! Checks on literals: floats compared for equality, symbols that are booleans, single-quoted
 //! strings that contain `#{`.
 
-use super::tree::{child, has_token, method_name, span, tokens};
+use super::tree::{child, method_name, span, tokens};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_rules::checks::NodeCheck;
@@ -202,55 +202,6 @@ pub fn mixed_regexp_capture_types(check: &NodeCheck, node: &SyntaxNode, ctx: &mu
         i += 1;
     }
     if named && numbered {
-        check.hit(ctx, range, "");
-    }
-}
-
-/// `a.b = a.b`: an attribute assigned to itself.
-fn self_attribute(node: &SyntaxNode, ctx: &RuleContext<'_>) -> bool {
-    if !has_token(node, k::ASSIGN) {
-        return false;
-    }
-    let value = child(node, k::ARGUMENTS).and_then(|a| a.children().next());
-    let (Some(object), Some(name), Some(value)) =
-        (node.children().next(), method_name(node), value)
-    else {
-        return false;
-    };
-    has_token(node, k::DOT)
-        && value.kind() == k::CALL
-        && method_name(&value).is_some_and(|v| format!("{}=", v.text()) == name.text())
-        && value
-            .children()
-            .next()
-            .is_some_and(|o| ctx.file.text[span(ctx, &o)] == ctx.file.text[span(ctx, &object)])
-}
-
-/// `a = a`: a variable assigned to itself.
-pub fn self_assignment(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if node.kind() == k::CALL {
-        if self_attribute(node, ctx) {
-            let range = span(ctx, node);
-            check.hit(ctx, range, "");
-        }
-        return;
-    }
-    let Some(name) = tokens(node).next() else {
-        return;
-    };
-    let value = node.children().last();
-    let same = value.is_some_and(|v| {
-        matches!(
-            v.kind(),
-            k::LOCAL_VARIABLE_READ
-                | k::INSTANCE_VARIABLE_READ
-                | k::CLASS_VARIABLE_READ
-                | k::GLOBAL_VARIABLE_READ
-                | k::CONSTANT_READ
-        ) && ctx.file.text[span(ctx, &v)] == *name.text()
-    });
-    if same {
-        let range = span(ctx, node);
         check.hit(ctx, range, "");
     }
 }

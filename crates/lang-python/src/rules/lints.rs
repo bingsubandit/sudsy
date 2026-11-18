@@ -115,28 +115,6 @@ pub(super) fn builtin_call(cx: &Cx, call: &SyntaxNode) -> Option<String> {
         .filter(|q| !q.contains('.') && q.as_str() == code_text(&f))
 }
 
-pub(super) fn is_none(e: &SyntaxNode) -> bool {
-    inner(e).kind() == k::EXPR_NONE_LITERAL
-}
-
-/// Does the call print to the console: no `file` (or `stream`) argument, `None`, or `sys.stdout`
-/// or `sys.stderr`?
-fn writes_to_console(cx: &Cx, call: &SyntaxNode, name: &str) -> bool {
-    let (_, keywords) = call_args(call);
-    keywords
-        .iter()
-        .map(keyword)
-        .find(|(n, _)| n.as_deref() == Some(name))
-        .is_none_or(|(_, v)| {
-            v.is_some_and(|v| {
-                is_none(&v)
-                    || cx
-                        .qualified(&v)
-                        .is_some_and(|q| matches!(q.as_str(), "sys.stdout" | "sys.stderr"))
-            })
-        })
-}
-
 /// `itertools.count()`, `cycle(x)` or `repeat(x)` (without a count): never ends.
 fn is_infinite(cx: &Cx, e: &SyntaxNode) -> bool {
     let e = inner(e);
@@ -160,21 +138,6 @@ pub(super) fn get_attr_with_constant(c: &Check, n: &SyntaxNode, ctx: &mut RuleCo
         && keywords.is_empty()
         && attribute_name(&args[1])
     {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
-
-pub(super) fn print(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(cx) = model(ctx.file) else { return };
-    if builtin_call(&cx, n).as_deref() == Some("print") && writes_to_console(&cx, n, "file") {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
-
-pub(super) fn pprint(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(cx) = model(ctx.file) else { return };
-    let pprint = callee(n).and_then(|f| cx.qualified(&f)).as_deref() == Some("pprint.pprint");
-    if pprint && writes_to_console(&cx, n, "stream") {
         c.hit(ctx, span(ctx, n), "");
     }
 }

@@ -76,8 +76,23 @@ pub const ROLES: &[Role] = &[
     },
     Role {
         name: "catch",
-        fields: "body parameter?",
-        doc: "an exception handler; `parameter` is the caught type or variable, absent in a catch-all",
+        fields: "body parameter? type? binding?",
+        doc: "an exception handler; `parameter` is the caught type or variable, absent in a catch-all; `type` is the caught type (a list of alternatives is one node or the first of several items), absent when the handler catches everything or the grammar does not separate it from the variable; `binding` is the variable the error is bound to, where the grammar has it apart from `parameter`",
+    },
+    Role {
+        name: "expression-statement",
+        fields: "expression?",
+        doc: "an expression used as a statement; `expression` is the expression",
+    },
+    Role {
+        name: "empty-statement",
+        fields: "",
+        doc: "a statement that does nothing: a lone `;` or Python `pass`",
+    },
+    Role {
+        name: "debugger",
+        fields: "",
+        doc: "a statement that stops in a debugger (`debugger`)",
     },
     Role {
         name: "return",
@@ -86,8 +101,8 @@ pub const ROLES: &[Role] = &[
     },
     Role {
         name: "throw",
-        fields: "value",
-        doc: "raises an exception; `value` is optional (a rethrow)",
+        fields: "value? cause?",
+        doc: "raises an exception; `value` is absent in a rethrow; `cause` is the error it is raised from",
     },
     Role {
         name: "break",
@@ -196,6 +211,18 @@ pub fn common_operator_kind(text: &str) -> Option<&'static str> {
         | ">>=" | ">>>=" | "??=" | "&&=" | "||=" | ".=" => "compound",
         _ => return None,
     })
+}
+
+/// Tags a kind carries beside its role (or `#opaque`) that shared rules read: not roles, so a kind
+/// with one still needs a role or `#opaque`.
+pub const MARKS: &[(&str, &str)] = &[(
+    "pure",
+    "an expression that has no effect of its own (a name, a literal, a member access): as a whole statement it does nothing",
+)];
+
+/// Is `name` a role or a mark?
+pub fn is_tag(name: &str) -> bool {
+    role(name).is_some() || MARKS.iter().any(|m| m.0 == name)
 }
 
 pub fn role(name: &str) -> Option<&'static Role> {

@@ -1,0 +1,20 @@
+id: no-print
+per-language: true
+message: output goes through the logger, not a print call
+description: >-
+  A call of one of the `calls` that write to the console (ruff T201 and T203), unless an argument
+  matching `redirect` sends the output elsewhere and none matching `console` sends it back to the
+  console; a language lists its calls and the two argument patterns in its grammar's `rule` row.
+example: 'print("x")'
+severity: off
+category: style
+options:
+  - { name: calls, type: list, default: [], description: Calls that print }
+  - { name: redirect, type: regex, default: '\b\B', description: An argument that sends the output elsewhere }
+  - { name: console, type: regex, default: '\b\B', description: An argument that sends the output to the console }
+rule:
+  role: call
+  fields: { callee: { in-option: calls } }
+  any:
+    - not: { has: { regex-option: redirect } }
+    - has: { regex-option: console }

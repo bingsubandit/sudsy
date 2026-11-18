@@ -1,16 +1,16 @@
-blind-except: warn
+no-broad-catch: { level: warn, options: { types: [Exception, BaseException] } }
 collapsible-if: warn
-try-except-pass: warn
-leftover-debugger: warn
+no-empty-catch: warn
+no-debugger: warn
 needless-bool: warn
 if-with-same-arms: warn
 open-file-without-with: warn
 nested-with: warn
-raise-vanilla-class: warn
+no-throw-generic: warn
 type-check-without-type-error: warn
 explicit-return-none: warn
-useless-expression: warn
+no-useless-expression: warn
 verbose-raise: warn
 bare-raise-outside-handler: warn
-exec-call: warn
+no-eval: warn
 hasattr-call: warn

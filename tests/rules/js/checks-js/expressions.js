@@ -1,6 +1,6 @@
 a + b;
-^^^^^^ no-unused-expressions
+^^^^^^ no-useless-expression
 f();
 a && f();
-^^^^^^^^^ no-unused-expressions
+^^^^^^^^^ no-useless-expression
 x = 1;

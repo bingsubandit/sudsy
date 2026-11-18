@@ -4,7 +4,7 @@ shadowed-variable: warn
 undefined-variable: warn
 use-before-define: warn
 undefined-export: warn
-undefined-local-with-import-star: warn
+no-wildcard-imports: warn
 undefined-local-with-import-star-usage: warn
 undefined-local-with-nested-import-star-usage: warn
 unused-variable: warn

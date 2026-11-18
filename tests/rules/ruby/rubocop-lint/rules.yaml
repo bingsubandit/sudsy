@@ -15,11 +15,11 @@ parentheses-as-grouped-expression: warn
 post-condition-loop: warn
 raise-exception: warn
 redundant-string-coercion: warn
-rescue-exception: warn
+no-broad-catch: warn
 return-in-void-context: warn
-self-assignment: warn
+no-self-assign: warn
 struct-new-override: warn
-suppressed-exception: warn
+no-empty-catch: warn
 underscore-prefixed-variable-used: warn
 unknown-cop-name: warn
 unused-block-argument: warn

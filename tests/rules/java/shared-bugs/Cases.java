@@ -3,7 +3,7 @@ class Cases {
     if (a == a) { g(); }
 //      ^^^^^^ no-self-compare
     try { g(); } catch (Exception e) { }
-//                                   ^^^ no-empty-block
+//               ^^^^^^^^^^^^^^^^^^^^^^^ no-empty-catch
     if (a > 1) { } else { g(); }
 //             ^^^ no-empty-block
   }

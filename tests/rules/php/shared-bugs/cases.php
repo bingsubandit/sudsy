@@ -10,4 +10,4 @@ $d = ['k' => 1, 'k' => 2];
 switch ($a) { case 1: break; case 1: break; }
 //                           ^^^^^^^^^^^^^^ no-duplicate-case
 try { g(); } catch (Exception $e) { }
-//                                ^^^ no-empty-block
+//           ^^^^^^^^^^^^^^^^^^^^^^^^ no-empty-catch

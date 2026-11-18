@@ -1,0 +1,11 @@
+id: no-wildcard-imports
+message: 'import the names you use, not `*`'
+description: >-
+  An import of every name of a package or module, `import a.b.*;` or `from a import *`
+  (Checkstyle AvoidStarImport, ktlint no-wildcard-imports, ruff F403).
+example: 'import a.b.*'
+severity: off
+category: style
+rule:
+  role: import
+  regex: '(?:\.\*|\bimport\s+\*)\s*;?$'

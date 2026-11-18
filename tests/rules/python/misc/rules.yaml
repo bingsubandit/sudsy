@@ -1,5 +1,4 @@
-print: warn
-pprint: warn
+no-print: warn
 unnecessary-collection-call: warn
 multiple-starts-ends-with: warn
 unnecessary-placeholder: warn

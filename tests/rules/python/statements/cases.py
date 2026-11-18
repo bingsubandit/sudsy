@@ -26,13 +26,13 @@ def f():
         pass
     except:
 #   ^ default-except-not-last
-#   ^^^^^^ bare-except
+#   ^ no-broad-catch
         pass
     except ValueError:
         pass
     print >> sys.stderr, "x"
 #   ^^^^^^^^^^^^^^^^^^^ invalid-print-syntax
-#   ^^^^^^^^^^^^^^^^^^^^^^^^ useless-expression
+#   ^^^^^^^^^^^^^^^^^^^^^^^^ no-useless-expression
 
 
 def g(l: "int", O=1, *I):

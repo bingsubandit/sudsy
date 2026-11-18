@@ -28,6 +28,21 @@
   the constant string given to `re.compile`, `re.match`, `re.search` and the other `re` functions.
   `no-regex-spaces` now also reads the pattern of a string argument with its escapes decoded.
 
+* Rules that check the same thing share one id (config keys and the presets follow, no aliases):
+  `no-self-assign` (Ruby `self-assignment`), `boolean-literal-comparison` (Python
+  `true-false-comparison`; Java has it as before), `no-wildcard-imports` (Java `avoid-star-import`,
+  Python `undefined-local-with-import-star`), `no-useless-expression` (JavaScript
+  `no-unused-expressions`, Python `useless-expression`), `no-debugger` (Python `leftover-debugger`),
+  `no-print` (Python `print` and `pprint`; a `print(file=...)` to a file and the alias `pp` are no longer told apart), `no-eval` (Python `exec-call`), `no-empty-catch` (Python `try-except-pass`, Ruby
+  `suppressed-exception`), `no-broad-catch` (Python `bare-except` and `blind-except`, Ruby
+  `rescue-exception`; options `bare` and `types`) and `no-throw-generic` (Python
+  `raise-vanilla-class`; option `types`). An empty `catch` is `no-empty-catch`, no longer
+  `no-empty-block`. Python `bare-except` and `blind-except` are one rule: `blind-except` is
+  `no-broad-catch` with the option `types: [Exception, BaseException]`, and it no longer sees a
+  tuple of types. `no-debugger` also reports the Python import of a debugger module.
+  CSS `comment-no-empty` is `no-empty-comment` and `comment-whitespace-inside` is `comment-space`
+  with the options `block: true` and `line: false` (the stylelint preset sets them).
+
 ### Changed
 * GraphQL `selection-set-depth`: the option `max_depth` is now `max`, as in every `max` rule.
 

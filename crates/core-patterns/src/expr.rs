@@ -5,12 +5,13 @@
 use crate::matcher::{Capture, Captures, Pattern, SnippetParser};
 use crate::metavar::Meta;
 use core_rules::tree::TraversalCache;
-use core_rules::{Opt, OptionDecl, Re, RuleOptions};
+use core_rules::{Check, Opt, OptionDecl, Re, RuleOptions};
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
 use serde::Deserialize;
 use std::cell::Cell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
 /// One name or a list of them.
 #[derive(Debug, Deserialize)]
@@ -51,6 +52,15 @@ pub struct Spec {
     pub child: Option<Box<Spec>>,
     /// The bool option of this name is true.
     pub option: Option<String>,
+    /// The text of the node (a token: its text) is an item of this `list` option.
+    #[serde(rename = "in-option")]
+    pub in_option: Option<String>,
+    /// A `#catch` whose body raises the caught error again: a `#throw` with no `value`, or a `value`
+    /// or `cause` that is the catch's `binding` (nested `try`, functions and classes are not read).
+    pub rethrows: Option<bool>,
+    /// The text of the node matches the `regex` option of this name.
+    #[serde(rename = "regex-option")]
+    pub regex_option: Option<String>,
     pub all: Option<Vec<Spec>>,
     pub any: Option<Vec<Spec>>,
     pub not: Option<Box<Spec>>,
@@ -63,6 +73,10 @@ pub struct Spec {
     /// Each named role field of the node holds this rule (an element: a token matches by
     /// `regex`, `role`, `any`, `all`, `not`).
     pub fields: Option<BTreeMap<String, Spec>>,
+    /// Some child in each named role field holds this rule (`fields` reads the first).
+    pub items: Option<BTreeMap<String, Spec>>,
+    /// The named role field holds exactly one child.
+    pub single: Option<String>,
     /// The two named fields have the same tokens.
     pub same: Option<Vec<String>>,
     /// The node holds no node and no comment before its closing bracket.
@@ -109,15 +123,47 @@ pub enum Expr {
     Parent(Box<Expr>),
     Child(Box<Expr>),
     Option(String),
+    InOption(String),
+    Rethrows,
+    RegexOption(String, RegexCache),
     All(Vec<Expr>),
     Any(Vec<Expr>),
     Not(Box<Expr>),
     Role(Vec<String>, Vec<SyntaxKind>),
     Operator(Vec<String>),
     Fields(Vec<(String, Expr)>),
+    Items(Vec<(String, Expr)>),
+    Single(String),
     Same(String, String),
     Empty,
     Inner(Box<Expr>),
+}
+
+/// Regexes compiled once for each source text they take.
+#[derive(Default)]
+pub struct RegexCache(Mutex<HashMap<String, Option<Arc<Re>>>>);
+
+impl std::fmt::Debug for RegexCache {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("RegexCache")
+    }
+}
+
+impl RegexCache {
+    pub fn is_match(&self, source: &str, text: &str) -> bool {
+        let re = {
+            let mut cache = self.0.lock().unwrap();
+            match cache.get(source) {
+                Some(re) => re.clone(),
+                None => {
+                    let re = Re::new(source).ok().map(Arc::new);
+                    cache.insert(source.to_string(), re.clone());
+                    re
+                }
+            }
+        };
+        re.is_some_and(|re| re.is_match(text))
+    }
 }
 
 /// The node under parentheses and wrappers that hold nothing else (a Kotlin `Condition`).
@@ -203,7 +249,11 @@ impl Expr {
                 .ok_or_else(|| format!("`{name}` is not a node kind of the language"))?;
             all.push(Expr::Kind(kind));
         }
-        if let Some(text) = &spec.regex {
+        if spec.regex.as_deref() == Some("") {
+            // Every text matches: no regex to build (`fields: { x: { regex: '' } }` asks only that
+            // the slot is there).
+            all.push(Expr::All(Vec::new()));
+        } else if let Some(text) = &spec.regex {
             let re = Re::new(text).map_err(|e| format!("regex `{text}`: {e}"))?;
             let groups = re.groups();
             all.push(Expr::Regex(re, groups));
@@ -244,6 +294,27 @@ impl Expr {
             }
             all.push(Expr::Option(name.clone()));
         }
+        if let Some(name) = &spec.in_option {
+            if !options
+                .iter()
+                .any(|o| o.name == name && matches!(o.default, Opt::List(_)))
+            {
+                return Err(format!("option `{name}` is not a declared `list` option"));
+            }
+            all.push(Expr::InOption(name.clone()));
+        }
+        if spec.rethrows == Some(true) {
+            all.push(Expr::Rethrows);
+        }
+        if let Some(name) = &spec.regex_option {
+            if !options
+                .iter()
+                .any(|o| o.name == name && o.check == Check::Regex)
+            {
+                return Err(format!("option `{name}` is not a declared `regex` option"));
+            }
+            all.push(Expr::RegexOption(name.clone(), RegexCache::default()));
+        }
         if let Some(list) = &spec.all {
             all.push(Expr::All(list.iter().map(sub).collect::<Result<_, _>>()?));
         }
@@ -257,7 +328,7 @@ impl Expr {
             let names = names.list();
             let mut kinds = Vec::new();
             for n in &names {
-                if core_syntax::roles::role(n).is_none() {
+                if !core_syntax::roles::is_tag(n) {
                     return Err(format!("`{n}` is not a role"));
                 }
                 kinds.extend_from_slice(parser.grammar().nodes_with_tag(n));
@@ -276,6 +347,16 @@ impl Expr {
                 .collect::<Result<_, String>>()?;
             all.push(Expr::Fields(list));
         }
+        if let Some(fields) = &spec.items {
+            let list = fields
+                .iter()
+                .map(|(k, s)| Ok((k.clone(), sub(s)?)))
+                .collect::<Result<_, String>>()?;
+            all.push(Expr::Items(list));
+        }
+        if let Some(field) = &spec.single {
+            all.push(Expr::Single(field.clone()));
+        }
         if let Some(pair) = &spec.same {
             let [a, b] = pair.as_slice() else {
                 return Err("`same` names two fields".into());
@@ -291,8 +372,8 @@ impl Expr {
         match all.len() {
             0 => Err(
                 "a rule needs at least one of pattern, kind, regex, path, nth, inside, not-inside, \
-                      has, not-has, parent, child, option, all, any, not, role, operator, fields, \
-                      same, empty, inner"
+                      has, not-has, parent, child, option, in-option, all, any, not, role, operator, fields, \
+                      items, single, same, empty, inner, regex-option, rethrows"
                     .into(),
             ),
             1 => Ok(all.remove(0)),
@@ -341,6 +422,49 @@ impl Expr {
                 .any(|c| cx.spend() && e.matches(&c, cx).is_some())
                 .then(Captures::new),
             Expr::Option(name) => cx.options.bool(name).then(Captures::new),
+            Expr::InOption(name) => {
+                let range = cx.ranges.significant_range(node, cx.grammar);
+                cx.options
+                    .list_has(name, &cx.text[range])
+                    .then(Captures::new)
+            }
+            Expr::Rethrows => {
+                let g = cx.grammar;
+                let text = |e: SyntaxElement| match e {
+                    SyntaxElement::Token(t) => t.text().to_string(),
+                    SyntaxElement::Node(n) => {
+                        cx.text[cx.ranges.significant_range(&n, g)].to_string()
+                    }
+                };
+                let bound = g.slot(node, "binding").map(text);
+                let mut stack: Vec<SyntaxNode> = node.children().collect();
+                while let Some(n) = stack.pop() {
+                    if g.has_tag(n.kind(), "throw") {
+                        let rethrown = match g.slot(&n, "value") {
+                            None => true,
+                            Some(v) => bound.as_ref().is_some_and(|b| {
+                                text(v) == *b || g.slot(&n, "cause").is_some_and(|c| text(c) == *b)
+                            }),
+                        };
+                        if rethrown {
+                            return Some(Captures::new());
+                        }
+                    }
+                    if !["try", "function", "type-declaration"]
+                        .iter()
+                        .any(|r| g.has_tag(n.kind(), r))
+                    {
+                        stack.extend(n.children());
+                    }
+                }
+                None
+            }
+            Expr::RegexOption(name, cache) => {
+                let range = cx.ranges.significant_range(node, cx.grammar);
+                cache
+                    .is_match(cx.options.string(name), &cx.text[range])
+                    .then(Captures::new)
+            }
             Expr::All(list) => {
                 let mut captures = Captures::new();
                 for e in list {
@@ -368,9 +492,28 @@ impl Expr {
                 }
                 Some(Captures::new())
             }
+            Expr::Items(list) => {
+                for (label, e) in list {
+                    cx.grammar
+                        .slots(node, label)
+                        .find(|item| e.matches_element(item, cx).is_some())?;
+                }
+                Some(Captures::new())
+            }
+            Expr::Single(field) => (cx.grammar.slots(node, field).count() == 1).then(Captures::new),
             Expr::Same(a, b) => {
                 let a = cx.grammar.slot(node, a)?;
                 let b = cx.grammar.slot(node, b)?;
+                // Two sides that start with different characters (but for a comment) are not the
+                // same tokens: no need to walk them.
+                let first = |e: &SyntaxElement| cx.text[e.text_range()].trim_start().bytes().next();
+                if let (Some(x), Some(y)) = (first(&a), first(&b))
+                    && x != y
+                    && !matches!(x, b'#' | b'/')
+                    && !matches!(y, b'#' | b'/')
+                {
+                    return None;
+                }
                 same_words(&a, &b, cx.grammar).then(Captures::new)
             }
             Expr::Empty => is_empty(node, cx.grammar).then(Captures::new),
@@ -386,6 +529,7 @@ impl Expr {
         };
         match self {
             Expr::Regex(re, _) => re.is_match(t.text()).then(Captures::new),
+            Expr::InOption(name) => cx.options.list_has(name, t.text()).then(Captures::new),
             Expr::Role(names, _) => names
                 .iter()
                 .any(|n| cx.grammar.has_tag(t.kind(), n))
@@ -408,15 +552,19 @@ impl Expr {
             Expr::Inside(_) | Expr::Has(_) => true,
             Expr::All(list) | Expr::Any(list) => list.iter().any(Expr::superlinear),
             Expr::Not(e) | Expr::Parent(e) | Expr::Child(e) | Expr::Inner(e) => e.superlinear(),
-            Expr::Fields(list) => list.iter().any(|(_, e)| e.superlinear()),
+            Expr::Fields(list) | Expr::Items(list) => list.iter().any(|(_, e)| e.superlinear()),
             Expr::Kind(_)
             | Expr::Regex(..)
             | Expr::Path(_)
             | Expr::Nth(_)
             | Expr::Option(_)
+            | Expr::InOption(_)
+            | Expr::RegexOption(..)
+            | Expr::Rethrows
             | Expr::Role(..)
             | Expr::Operator(_)
             | Expr::Same(..)
+            | Expr::Single(_)
             | Expr::Empty => false,
         }
     }
@@ -458,12 +606,17 @@ impl Expr {
             | Expr::Path(_)
             | Expr::Nth(_)
             | Expr::Option(_)
+            | Expr::InOption(_)
+            | Expr::RegexOption(..)
+            | Expr::Rethrows
             | Expr::Has(_)
             | Expr::Child(_)
             | Expr::Not(_)
             | Expr::Role(..)
             | Expr::Operator(_)
             | Expr::Fields(_)
+            | Expr::Items(_)
+            | Expr::Single(_)
             | Expr::Same(..)
             | Expr::Empty
             | Expr::Inner(_) => {}

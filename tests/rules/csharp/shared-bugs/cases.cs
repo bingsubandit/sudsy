@@ -12,7 +12,7 @@ class A
         switch (a) { case 1: break; case 1: break; }
 //                                  ^^^^^^^^^^^^^^ no-duplicate-case
         try { b = true; } catch { }
-//                              ^^^ no-empty-block
+//                        ^^^^^^^^^ no-empty-catch
         var c = 1 == 2;
 //              ^^^^^^ no-constant-comparison
     }

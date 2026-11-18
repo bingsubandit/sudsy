@@ -2,6 +2,7 @@
 //! `no-empty-comment`. They read comment tokens, so they cost nothing when off.
 
 use crate::diagnostic::Edit;
+use crate::options::{Check, Opt, OptionDecl};
 use crate::rule;
 use crate::rule::{FileContext, RuleContext};
 use crate::tree::{is_code, structured_trivia};
@@ -25,12 +26,34 @@ rule! {
                   whitespace after the marker, a marker repeated (`////`, `##`), `--` separator \
                   lines, and a `#!` shebang on the first line. The fix inserts the space.",
         example: "//comment   // write: // comment",
+        options: [OptionDecl {
+            name: "line",
+            default: Opt::Bool(true),
+            check: Check::Any,
+            description: "Check line comments (`// a`). Off, only block comments are checked \
+                      (with `block`).",
+        }, OptionDecl {
+            name: "block",
+            default: Opt::Bool(false),
+            check: Check::Any,
+            description: "Also check block comments: text right after the opening or before the \
+                      closing delimiter is reported (`/*a*/`). Exempt: an empty comment, and a \
+                      delimiter repeated (`/**`, `/***/`). The fix inserts the space.",
+        }],
     }
 
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
+        if ctx.options.bool("block")
+            && let Some((open, close)) = &file.grammar.comments.block
+        {
+            block_space(file, ctx, open, close);
+        }
         let Some(marker) = file.grammar.comments.line.as_deref() else {
             return;
         };
+        if !ctx.options.bool("line") {
+            return;
+        }
         if !file.text.contains(marker) {
             return;
         }
@@ -52,6 +75,43 @@ rule! {
                 TextRange::new(start, after),
                 format!("a comment should start with a space after `{marker}`"),
                 ("Insert a space", vec![Edit::insert(after, " ")]),
+            );
+        }
+    }
+}
+
+/// The space of block comments: `/*a*/` wants `/* a */`.
+fn block_space(file: &FileContext<'_>, ctx: &mut RuleContext<'_>, open: &str, close: &str) {
+    let (first, last) = (
+        open.chars().last().unwrap_or(' '),
+        close.chars().next().unwrap_or(' '),
+    );
+    for token in comments(file) {
+        let text = token.text();
+        let Some(inner) = text.strip_prefix(open).and_then(|t| t.strip_suffix(close)) else {
+            continue;
+        };
+        let start = token.text_range().start();
+        let at = |offset: usize| start + core_syntax::TextSize::of(&text[..offset]);
+        if !inner.is_empty() && inner.trim_matches([first, last]).is_empty() {
+            continue;
+        }
+        let tight_open = !inner.starts_with([' ', '\t', '\n', '\r', first]);
+        let tight_close = !inner.ends_with([' ', '\t', '\n', '\r', last]);
+        if tight_open {
+            let pos = at(open.len());
+            ctx.report_fix(
+                TextRange::new(start, pos),
+                format!("a comment should start with a space after `{open}`"),
+                ("Insert a space", vec![Edit::insert(pos, " ")]),
+            );
+        }
+        if tight_close {
+            let pos = at(text.len() - close.len());
+            ctx.report_fix(
+                TextRange::new(pos, start + core_syntax::TextSize::of(text)),
+                format!("a comment should end with a space before `{close}`"),
+                ("Insert a space", vec![Edit::insert(pos, " ")]),
             );
         }
     }

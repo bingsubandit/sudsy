@@ -70,15 +70,6 @@ example: "import os\nfor os in []:\n    pass"
 severity: warn
 category: suspicious
 ---
-id: undefined-local-with-import-star
-family: check
-params: { check: undefined-local-with-import-star }
-message: "`from {name} import *` used; unable to detect undefined names"
-description: "A star import."
-example: "from os import *"
-severity: off
-category: suspicious
----
 id: late-future-import
 family: check
 params: { check: late-future-import }
@@ -286,15 +277,6 @@ example: 'f"text"'
 severity: warn
 category: suspicious
 ---
-id: bare-except
-family: check
-params: { check: bare-except }
-message: "name the exceptions to catch; a bare `except` also catches `SystemExit` and `KeyboardInterrupt`"
-description: "An `except` clause without an exception type, unless its body has a bare `raise` of its own."
-example: "try:\n    pass\nexcept:\n    pass"
-severity: warn
-category: suspicious
----
 id: lambda-assignment
 family: check
 params: { check: lambda-assignment }
@@ -493,24 +475,6 @@ example: "zip(a, b)"
 severity: off
 category: suspicious
 ---
-id: print
-family: check
-params: { check: print }
-message: "`print` found"
-description: "A call of the builtin `print` without a `file` argument (or with `file=None`)."
-example: "print(1)"
-severity: off
-category: style
----
-id: pprint
-family: check
-params: { check: pprint }
-message: "`pprint` found"
-description: "A call of `pprint.pprint`."
-example: "import pprint\npprint.pprint(1)"
-severity: off
-category: style
----
 id: useless-object-inheritance
 family: check
 params: { check: useless-object-inheritance }
@@ -664,15 +628,6 @@ example: "import os as os"
 severity: off
 category: style
 ---
-id: blind-except
-family: check
-params: { check: blind-except }
-message: "do not catch blind exception `{name}`"
-description: "`except Exception` or `except BaseException` whose body neither raises again nor logs the traceback."
-example: "try:\n    pass\nexcept Exception:\n    pass"
-severity: off
-category: suspicious
----
 id: collapsible-if
 family: check
 params: { check: collapsible-if }
@@ -681,24 +636,6 @@ description: "An `if` whose only statement is another `if`, neither having `elif
 example: "if a:\n    if b:\n        pass"
 severity: off
 category: style
----
-id: try-except-pass
-family: check
-params: { check: try-except-pass }
-message: "`try`-`except`-`pass`: consider logging the exception"
-description: "A handler for everything (`except:`, `except Exception`) whose only statement is `pass`."
-example: "try:\n    pass\nexcept Exception:\n    pass"
-severity: off
-category: suspicious
----
-id: leftover-debugger
-family: check
-params: { check: leftover-debugger }
-message: "remove the debugger: import or call left in the code"
-description: "An import of `pdb`, `ipdb`, `pudb`, `wdb`, `rpdb` or `bpdb`, or a call of `breakpoint()` or `pdb.set_trace()`."
-example: "import pdb"
-severity: warn
-category: suspicious
 ---
 id: printf-string-formatting
 family: check
@@ -754,15 +691,6 @@ example: "with a:\n    with b:\n        pass"
 severity: off
 category: style
 ---
-id: raise-vanilla-class
-family: check
-params: { check: raise-vanilla-class }
-message: "create your own exception instead of raising `Exception`"
-description: "A `raise` of the builtin `Exception`."
-example: "raise Exception(\"x\")"
-severity: off
-category: style
----
 id: type-check-without-type-error
 family: check
 params: { check: type-check-without-type-error }
@@ -780,15 +708,6 @@ description: "A `return None` in a function whose other returns (if any) return 
 example: "def f(x):\n    if x:\n        return None\n    print(x)"
 severity: off
 category: style
----
-id: useless-expression
-family: check
-params: { check: useless-expression }
-message: "useless expression: assign it to a variable or remove it"
-description: "An expression statement that is only a name, an attribute, a number, a constant or a collection display."
-example: "x = 1\nx"
-severity: warn
-category: suspicious
 ---
 id: implicit-concat-in-collection
 family: check

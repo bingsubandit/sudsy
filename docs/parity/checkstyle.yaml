@@ -7,7 +7,7 @@ sources:
   - "https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/sun_checks.xml"
 scope: "The checks of Checkstyle's two shipped rule sets, google_checks.xml and sun_checks.xml, and the commonly used ones outside them. Bug-catching checks are on by default; style checks are off unless the preset `java/google` turns them on. The layout checks of the Whitespace, Blocks, Indentation and Imports groups are the formatter's job (google-java-format layout, docs/parity/google-java-format.yaml)."
 entries:
-  EmptyCatchBlock: rule no-empty-block
+  EmptyCatchBlock: rule no-empty-catch
   StringLiteralEquality: rule string-literal-equality
   SimplifyBooleanExpression: rule boolean-literal-comparison | Only a comparison with a boolean literal, not the double negation or the conditional forms.
   EqualsHashCode: rule equals-hash-code | Only `equals` without `hashCode`, not the reverse.
@@ -15,7 +15,7 @@ entries:
   EmptyStatement: rule empty-statement | Only the body of an `if` or a loop.
   UpperEll: rule upper-ell
   ArrayTypeStyle: rule array-type-style
-  AvoidStarImport: rule avoid-star-import | No allow-list option.
+  AvoidStarImport: rule no-wildcard-imports | No allow-list option.
   NeedBraces: rule need-braces | No option for single-line bodies.
   ModifierOrder: rule modifier-order | Annotations are not checked against the modifiers.
   UnusedImports: rule unused-import | Names in Javadoc count as used; no option to turn that off.

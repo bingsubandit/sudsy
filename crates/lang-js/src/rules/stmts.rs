@@ -1,59 +1,11 @@
-//! Rules about single statements and expressions: `no-unused-expressions`,
-//! `no-unexpected-multiline`, `no-duplicate-enum-values`, `no-unsafe-finally` and `require-yield`.
+//! Rules about single statements and expressions: `no-unexpected-multiline`,
+//! `no-duplicate-enum-values`, `no-unsafe-finally` and `require-yield`.
 
 use super::{Check, code_text, has_own, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
 use std::collections::HashSet;
-
-/// Does the expression do nothing (ESLint's defaults: short circuits, ternaries and tagged
-/// templates count as nothing)? A call, `new`, assignment, update, `await`, `yield`, `import()`,
-/// `void` and `delete` do something.
-fn does_nothing(n: &SyntaxNode) -> bool {
-    match n.kind() {
-        k::PARENTHESIZED_EXPRESSION
-        | k::CHAIN_EXPRESSION
-        | k::TS_AS_EXPRESSION
-        | k::TS_TYPE_ASSERTION
-        | k::TS_NON_NULL_EXPRESSION
-        | k::TS_INSTANTIATION_EXPRESSION => n.children().next().is_some_and(|e| does_nothing(&e)),
-        k::UNARY_EXPRESSION => !has_own(n, "void") && !has_own(n, "delete"),
-        k::ARRAY_EXPRESSION
-        | k::ARROW_FUNCTION_EXPRESSION
-        | k::BINARY_EXPRESSION
-        | k::PRIVATE_IN_EXPRESSION
-        | k::CLASS
-        | k::CONDITIONAL_EXPRESSION
-        | k::FUNCTION
-        | k::IDENTIFIER_REFERENCE
-        | k::BOOLEAN_LITERAL
-        | k::NULL_LITERAL
-        | k::NUMERIC_LITERAL
-        | k::STRING_LITERAL
-        | k::BIG_INT_LITERAL
-        | k::REG_EXP_LITERAL
-        | k::LOGICAL_EXPRESSION
-        | k::STATIC_MEMBER_EXPRESSION
-        | k::COMPUTED_MEMBER_EXPRESSION
-        | k::PRIVATE_FIELD_EXPRESSION
-        | k::IMPORT_META
-        | k::NEW_TARGET
-        | k::OBJECT_EXPRESSION
-        | k::SEQUENCE_EXPRESSION
-        | k::TAGGED_TEMPLATE_EXPRESSION
-        | k::TEMPLATE_LITERAL
-        | k::THIS_EXPRESSION => true,
-        _ => false,
-    }
-}
-
-/// `no-unused-expressions`
-pub(super) fn unused_expressions(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if n.children().next().is_some_and(|e| does_nothing(&e)) {
-        c.hit(ctx, span(ctx, n), "");
-    }
-}
 
 /// The last code token before `t`.
 fn code_before(t: &SyntaxToken, g: &Grammar) -> Option<SyntaxToken> {

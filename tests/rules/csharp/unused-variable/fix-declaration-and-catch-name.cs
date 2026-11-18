@@ -3,7 +3,7 @@ class A { void F() {
 //      ^ unused-variable
     int a = 1, b = 2;
     try { F(); } catch (System.Exception e) { }
+//               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no-empty-catch
 //                                       ^ unused-variable
-//                                          ^^^ no-empty-block
     System.Console.WriteLine(b + a);
 } }

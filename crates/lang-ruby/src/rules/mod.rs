@@ -29,24 +29,6 @@ pub static FAMILIES: &[Family] = &[Family {
 
 const CALL: &[SyntaxKind] = &[k::CALL];
 const MODULE_BODY: &[SyntaxKind] = &[k::CLASS, k::MODULE];
-const SELF_ASSIGNED: &[SyntaxKind] = &[
-    k::LOCAL_VARIABLE_WRITE,
-    k::LOCAL_VARIABLE_OR_WRITE,
-    k::LOCAL_VARIABLE_AND_WRITE,
-    k::INSTANCE_VARIABLE_WRITE,
-    k::INSTANCE_VARIABLE_OR_WRITE,
-    k::INSTANCE_VARIABLE_AND_WRITE,
-    k::CLASS_VARIABLE_WRITE,
-    k::CLASS_VARIABLE_OR_WRITE,
-    k::CLASS_VARIABLE_AND_WRITE,
-    k::GLOBAL_VARIABLE_WRITE,
-    k::GLOBAL_VARIABLE_OR_WRITE,
-    k::GLOBAL_VARIABLE_AND_WRITE,
-    k::CONSTANT_WRITE,
-    k::CONSTANT_OR_WRITE,
-    k::CONSTANT_AND_WRITE,
-    k::CALL,
-];
 const DEFINITION: &[SyntaxKind] = &[k::CONSTANT_WRITE, k::CLASS, k::MODULE];
 
 const CHECKS: &[Entry] = &[
@@ -82,12 +64,6 @@ const CHECKS: &[Entry] = &[
         classes::constant_definition_in_block,
     ),
     ("missing-super", &[k::DEF], classes::missing_super),
-    ("rescue-exception", &[k::RESCUE], clauses::rescue_exception),
-    (
-        "suppressed-exception",
-        &[k::RESCUE],
-        clauses::suppressed_exception,
-    ),
     ("raise-exception", CALL, calls::raise_exception),
     (
         "parentheses-as-grouped-expression",
@@ -116,7 +92,6 @@ const CHECKS: &[Entry] = &[
         &[k::REGULAR_EXPRESSION],
         literals::mixed_regexp_capture_types,
     ),
-    ("self-assignment", SELF_ASSIGNED, literals::self_assignment),
     (
         "binary-operator-with-identical-operands",
         &[k::CALL, k::AND, k::OR],

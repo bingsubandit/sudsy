@@ -64,11 +64,6 @@ const CHECKS: &[Entry] = &[
     ),
     ("nested-with", &[k::STMT_WITH], branch::nested_with),
     (
-        "raise-vanilla-class",
-        &[k::STMT_RAISE],
-        branch::raise_vanilla_class,
-    ),
-    (
         "type-check-without-type-error",
         &[k::STMT_IF],
         branch::type_check_without_type_error,
@@ -77,11 +72,6 @@ const CHECKS: &[Entry] = &[
         "explicit-return-none",
         &[k::STMT_RETURN],
         branch::explicit_return_none,
-    ),
-    (
-        "useless-expression",
-        &[k::STMT_EXPR],
-        branch::useless_expression,
     ),
     (
         "implicit-concat-in-collection",
@@ -189,25 +179,13 @@ const CHECKS: &[Entry] = &[
         &[k::ALIAS],
         decl::useless_import_alias,
     ),
-    ("blind-except", HANDLER, control::blind_except),
     (
         "collapsible-if",
         &[k::STMT_IF, k::ELIF_ELSE_CLAUSE],
         control::collapsible_if,
     ),
-    ("try-except-pass", HANDLER, control::try_except_pass),
-    (
-        "leftover-debugger",
-        &[k::EXPR_CALL, k::STMT_IMPORT, k::STMT_IMPORT_FROM],
-        control::debugger,
-    ),
     ("printf-string-formatting", BIN_OP, format::percent),
     ("f-string", CALL, format::dot_format),
-    (
-        "undefined-local-with-import-star",
-        MODULE,
-        scope::import_star,
-    ),
     (
         "undefined-local-with-nested-import-star-usage",
         MODULE,
@@ -247,7 +225,6 @@ const CHECKS: &[Entry] = &[
         &[k::EXPR_F_STRING],
         stmts::f_string_missing_placeholders,
     ),
-    ("bare-except", &[k::STMT_TRY], stmts::bare_except),
     (
         "default-except-not-last",
         &[k::STMT_TRY],
@@ -293,8 +270,6 @@ const CHECKS: &[Entry] = &[
         CALL,
         lints::get_attr_with_constant,
     ),
-    ("print", CALL, lints::print),
-    ("pprint", CALL, lints::pprint),
     (
         "zip-without-explicit-strict",
         CALL,

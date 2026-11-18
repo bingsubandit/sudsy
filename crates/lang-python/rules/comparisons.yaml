@@ -11,23 +11,6 @@ rule:
     - { pattern: 'None == $A' }
     - { pattern: 'None != $A' }
 ---
-id: true-false-comparison
-message: test the truth of the value instead of comparing it to True or False
-description: A comparison of a value to `True` or `False` with `==` or `!=`.
-example: 'x == True'
-severity: off
-category: style
-rule:
-  any:
-    - { pattern: '$A == True' }
-    - { pattern: '$A != True' }
-    - { pattern: '$A == False' }
-    - { pattern: '$A != False' }
-    - { pattern: 'True == $A' }
-    - { pattern: 'True != $A' }
-    - { pattern: 'False == $A' }
-    - { pattern: 'False != $A' }
----
 id: not-in-test
 message: use `not in`, not `not ... in`
 description: A membership test negated in front of the expression (`not a in b`).

@@ -10,17 +10,6 @@ rule:
   kind: BinaryExpression
   regex: '^(?:[^|&]*[=!]=\s*"(?:[^"\\]|\\.)*"|"(?:[^"\\]|\\.)*"\s*[=!]=[^|&]*)$'
 ---
-id: boolean-literal-comparison
-message: 'comparing with a boolean literal is redundant: use the expression itself or `!`'
-description: >-
-  `x == true`, `x != false` and the like (Checkstyle SimplifyBooleanExpression).
-example: 'if (done == true) {}'
-severity: warn
-category: cleanup
-rule:
-  kind: BinaryExpression
-  regex: '^(?:[^|&]*[=!]=\s*(?:true|false)|(?:true|false)\s*[=!]=[^|&]*)$'
----
 id: equals-hash-code
 message: 'the class defines `equals(Object)` but not `hashCode()`'
 description: >-

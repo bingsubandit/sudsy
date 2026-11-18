@@ -116,14 +116,14 @@ entries:
   Lint/RequireParentheses: planned
   Lint/RequireRangeParentheses: deferred | disabled or pending by default in RuboCop
   Lint/RequireRelativeSelfPath: deferred | disabled or pending by default in RuboCop
-  Lint/RescueException: rule rescue-exception
+  Lint/RescueException: rule no-broad-catch
   Lint/RescueType: planned
   Lint/ReturnInVoidContext: rule return-in-void-context
   Lint/SafeNavigationChain: planned
   Lint/SafeNavigationConsistency: planned
   Lint/SafeNavigationWithEmpty: planned
   Lint/ScriptPermission: planned
-  Lint/SelfAssignment: rule self-assignment | not multiple assignment (`a, b = a, b`)
+  Lint/SelfAssignment: rule no-self-assign | not multiple assignment (`a, b = a, b`)
   Lint/SendWithMixinArgument: planned
   Lint/ShadowedArgument: planned
   Lint/ShadowedException: planned
@@ -131,7 +131,7 @@ entries:
   Lint/SharedMutableDefault: deferred | disabled or pending by default in RuboCop
   Lint/StructNewOverride: rule struct-new-override
   Lint/SuperArgumentMismatch: deferred | disabled or pending by default in RuboCop
-  Lint/SuppressedException: rule suppressed-exception
+  Lint/SuppressedException: rule no-empty-catch
   Lint/SuppressedExceptionInNumberConversion: deferred | disabled or pending by default in RuboCop
   Lint/SymbolConversion: deferred | disabled or pending by default in RuboCop
   Lint/ToEnumArguments: deferred | disabled or pending by default in RuboCop

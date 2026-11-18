@@ -22,7 +22,7 @@
 //!   - { name: allowed, type: list, default: [], description: Names that are fine }
 //! ```
 
-use crate::expr::{Ctx, Expr, STEP_BUDGET, Spec};
+use crate::expr::{Ctx, Expr, RegexCache, STEP_BUDGET, Spec};
 use crate::matcher::{Capture, Captures, SnippetParser};
 use crate::metavar::{Meta, names, template, transform};
 use core_config::Level;
@@ -35,7 +35,7 @@ use core_rules::{
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, TextRange};
 use serde::Deserialize;
 use std::cell::Cell;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
 #[derive(Debug, thiserror::Error)]
@@ -169,27 +169,6 @@ enum Rx {
     Template(String, RegexCache),
 }
 
-/// Regexes compiled once for each source text they take.
-#[derive(Default)]
-struct RegexCache(Mutex<HashMap<String, Option<Arc<Re>>>>);
-
-impl RegexCache {
-    fn is_match(&self, source: &str, text: &str) -> bool {
-        let re = {
-            let mut cache = self.0.lock().unwrap();
-            match cache.get(source) {
-                Some(re) => re.clone(),
-                None => {
-                    let re = Re::new(source).ok().map(Arc::new);
-                    cache.insert(source.to_string(), re.clone());
-                    re
-                }
-            }
-        };
-        re.is_some_and(|re| re.is_match(text))
-    }
-}
-
 /// What a metavariable of a template stands for in `text`: the capture, transformed.
 fn captured(meta: &Meta, captures: &Captures, text: &str) -> String {
     let text = captures.get(&meta.name).map_or("", |c| c.text(text));
@@ -281,6 +260,10 @@ struct FileSpec {
     fix_trim_before: bool,
     #[serde(default)]
     options: Vec<OptionSpec>,
+    /// Built-in shared rules only: the rule exists in a language only when its grammar has a
+    /// `rule` row for it, which gives the language's level and option values.
+    #[serde(rename = "per-language", default)]
+    per_language: bool,
 }
 
 struct CompiledConstraint {
@@ -827,9 +810,11 @@ pub fn load_lazy(
                     .any(|n| !grammar.nodes_with_tag(n).is_empty())
             })
         })
+        .filter(|spec| !spec.per_language || parser.grammar().rule_row(&spec.id).is_some())
         .map(|mut spec| {
             let id = spec.id.clone();
             let err = |e: String| PatternError(format!("rule `{id}`: {e}"));
+            apply_row(&mut spec, parser.grammar()).map_err(err)?;
             if spec.language.is_empty() {
                 spec.language = language.to_string();
             }
@@ -860,6 +845,40 @@ pub fn load_lazy(
             }) as Box<dyn Rule>)
         })
         .collect()
+}
+
+/// The language's `rule` row of the rule: its level and option values replace the file's.
+fn apply_row(spec: &mut FileSpec, grammar: &core_syntax::Grammar) -> Result<(), String> {
+    let Some(row) = grammar.rule_row(&spec.id) else {
+        return Ok(());
+    };
+    if let Some(level) = &row.level {
+        spec.severity = Some(match level.as_str() {
+            "off" => Level::Off,
+            "warn" => Level::Warn,
+            "error" => Level::Error,
+            other => return Err(format!("rule row: `{other}` is not a level")),
+        });
+    }
+    for (name, values) in &row.options {
+        let o = spec
+            .options
+            .iter_mut()
+            .find(|o| o.name == *name)
+            .ok_or_else(|| format!("rule row: no option `{name}`"))?;
+        let one = || values.first().cloned().unwrap_or_default();
+        o.default = match o.ty {
+            OptionType::List => DefaultSpec::List(values.clone()),
+            OptionType::Bool => DefaultSpec::Bool(one() == "true"),
+            OptionType::Int => DefaultSpec::Int(
+                one()
+                    .parse()
+                    .map_err(|_| format!("rule row: `{name}` is not an integer"))?,
+            ),
+            OptionType::String | OptionType::Regex => DefaultSpec::Str(one()),
+        };
+    }
+    Ok(())
 }
 
 fn substitute(tpl: &str, captures: &Captures, text: &str) -> String {
@@ -975,7 +994,7 @@ impl PatternRule {
                 && c.kind.is_none_or(|k| capture.kind == Some(k))
                 && c.in_option.as_ref().is_none_or(|(option, is_list)| {
                     if *is_list {
-                        options.list(option).contains(&captured)
+                        options.list_has(option, captured)
                     } else {
                         options.string(option) == captured
                     }

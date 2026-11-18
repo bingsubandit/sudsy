@@ -20,8 +20,8 @@ class my_class {
     try {
       f();
     } catch (RuntimeException E) {
+//    ^ no-empty-catch
 //                            ^ naming-convention
-//                               ^ no-empty-block
     }
   }
 
