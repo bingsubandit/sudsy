@@ -1,8 +1,7 @@
 # Profile for the Linux agent host (github.com/bingsubandit/agent-host): docs/development/dev-loop.md#linux-agent-host
 name: sudsy
 max_agents: 4
-agent_memory_gib: 4
-setup: scripts/agent-host/setup.sh
+setup: [scripts/agent-host/setup.sh, scripts/agent-host/caveman.sh]  # one script per use case, in order
 warm: scripts/agent-host/warm.sh
 worktree_env:
   CARGO_TARGET_DIR: "{slot}"
