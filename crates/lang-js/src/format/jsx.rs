@@ -4,7 +4,7 @@
 //! a multi-line element. The `{" "}` children are `JSXText` nodes (see the adapter), so text and
 //! jsx whitespace are one kind here.
 //!
-//! concept: new jsx-layout, text-fill
+//! concept: new jsx-layout
 //! what: JSX elements, attributes and children.
 //! tools: Prettier printJsxElement
 
@@ -13,10 +13,10 @@ use super::parens::{Need, needs_parens};
 use super::util::{R, kids, node_of, shape_error, token_of, will_break};
 use crate::generated::kind as k;
 use core_format::doc::{
-    Doc, concat, conditional_group, fill, group, group_broken, hardline, if_break, indent, line,
+    Doc, concat, conditional_group, group, group_broken, hardline, if_break, indent,
     line_suffix_boundary, lit, shared, softline, text,
 };
-use core_format::shapes;
+use core_format::shapes::{self, Child, meaningful};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxNode, SyntaxToken};
 
@@ -285,51 +285,6 @@ fn opening(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     })
 }
 
-/// One piece of an element's children.
-enum Child {
-    Text(String),
-    Node(SyntaxNode),
-}
-
-/// A part of the children list: a word or printed node (content), or what separates them.
-#[derive(Clone)]
-enum P {
-    Empty,
-    Hard,
-    Soft,
-    Line,
-    /// Jsx whitespace: a space, or `{" "}` and a line when the line breaks.
-    Ws,
-    Word(String),
-    Doc(Doc),
-}
-
-fn is_space(c: char) -> bool {
-    matches!(c, ' ' | '\n' | '\r' | '\t')
-}
-
-/// Text with a word or a newline-free space in it: whitespace between lines is not.
-fn meaningful(t: &str) -> bool {
-    t.contains(|c| !is_space(c)) || !t.contains('\n')
-}
-
-/// The text split at runs of whitespace, the runs kept: words at even places.
-fn split_words(t: &str) -> Vec<String> {
-    let mut out = vec![String::new()];
-    let mut in_space = false;
-    for c in t.chars() {
-        if is_space(c) != in_space {
-            in_space = !in_space;
-            out.push(String::new());
-        }
-        out.last_mut().expect("never empty").push(c);
-    }
-    if in_space {
-        out.push(String::new());
-    }
-    out
-}
-
 /// `{/* prettier-ignore */}`: a container with a comment and no expression.
 fn is_ignore_marker(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
     n.kind() == k::JSX_EXPRESSION_CONTAINER
@@ -339,133 +294,6 @@ fn is_ignore_marker(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
 
 fn is_self_closing(n: &SyntaxNode) -> bool {
     n.kind() == k::JSX_ELEMENT && !n.children().any(|c| c.kind() == k::JSX_CLOSING_ELEMENT)
-}
-
-fn utf16_len(s: &str) -> usize {
-    s.encode_utf16().count()
-}
-
-/// Between a word or node and the next: a softline, except next to a self-closing element.
-fn sep_no_ws(word: &str, this: &Child, next: Option<&Child>) -> P {
-    let closes = |c: &Child| matches!(c, Child::Node(n) if is_self_closing(n));
-    if closes(this) || next.is_some_and(closes) {
-        return if utf16_len(word) == 1 {
-            P::Soft
-        } else {
-            P::Hard
-        };
-    }
-    P::Soft
-}
-
-fn sep_with_ws(word: &str, this: &Child) -> P {
-    if utf16_len(word) == 1 {
-        return match this {
-            Child::Text(t) if !t.contains('\n') => P::Hard,
-            _ => P::Soft,
-        };
-    }
-    P::Hard
-}
-
-fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, FormatError> {
-    let mut parts = Vec::new();
-    for (i, child) in children.iter().enumerate() {
-        let next = children.get(i + 1);
-        match child {
-            Child::Text(t) if meaningful(t) => {
-                let mut words = split_words(t);
-                if words[0].is_empty() {
-                    parts.push(P::Empty);
-                    words.remove(0);
-                    if words[0].contains('\n') {
-                        parts.push(sep_with_ws(words.get(1).map_or("", |w| w), child));
-                    } else {
-                        parts.push(P::Ws);
-                    }
-                    words.remove(0);
-                }
-                let mut end_ws = None;
-                if words.last().is_some_and(|w| w.is_empty()) {
-                    words.pop();
-                    end_ws = words.pop();
-                }
-                if words.is_empty() {
-                    continue;
-                }
-                let last = words.last().cloned().unwrap_or_default();
-                for (j, w) in words.into_iter().enumerate() {
-                    parts.push(if j % 2 == 1 { P::Line } else { P::Word(w) });
-                }
-                parts.push(match end_ws {
-                    Some(e) if e.contains('\n') => sep_with_ws(&last, child),
-                    Some(_) => P::Ws,
-                    None => sep_no_ws(&last, child, next),
-                });
-            }
-            Child::Text(t) if t.contains('\n') => {
-                if t.matches('\n').count() > 1 {
-                    parts.extend([P::Empty, P::Hard]);
-                }
-            }
-            Child::Text(_) => parts.extend([P::Empty, P::Ws]),
-            Child::Node(n) => {
-                // `{/* prettier-ignore */}` keeps the next element as written.
-                let ignored = children[..i].iter().rev().find_map(|c| match c {
-                    Child::Text(t) if !meaningful(t) => None,
-                    Child::Node(p) => Some(is_ignore_marker(cx, p)),
-                    Child::Text(_) => Some(false),
-                });
-                parts.push(P::Doc(if ignored == Some(true) && is_jsx(n.kind()) {
-                    cx.verbatim_node(n)
-                } else {
-                    cx.format(n)?
-                }));
-                match next {
-                    Some(nx @ Child::Text(t)) if meaningful(t) => {
-                        let first = t
-                            .trim_matches(is_space)
-                            .split(is_space)
-                            .next()
-                            .unwrap_or("");
-                        parts.push(sep_no_ws(first, child, Some(nx)));
-                    }
-                    _ => parts.push(P::Hard),
-                }
-            }
-        }
-    }
-    Ok(parts)
-}
-
-/// Removes the doubled and misplaced separators `children_parts` leaves between text and nodes.
-fn clean(parts: &mut Vec<P>, contains_text: bool) {
-    use P::{Empty as E, Hard as H, Soft as S, Ws as W};
-    let mut i = parts.len() as isize - 2;
-    while i >= 0 {
-        let u = i as usize;
-        let at = |j: usize| parts.get(j);
-        let (a, b, c) = (at(u), at(u + 1), at(u + 2));
-        let b_empty = matches!(b, Some(E));
-        let pair_hard = matches!((a, c), (Some(H), Some(H))) && b_empty;
-        let pair_empty = matches!(a, Some(E)) && b_empty;
-        let line_ws = matches!(a, Some(H | S)) && b_empty && matches!(c, Some(W));
-        let ws_line = matches!(a, Some(W)) && b_empty && matches!(c, Some(H | S));
-        let double_ws = matches!(a, Some(W)) && b_empty && matches!(c, Some(W));
-        // The hard line wins over a soft one.
-        let soft_hard = b_empty && matches!((a, c), (Some(S), Some(H)));
-        let hard_soft = b_empty && matches!((a, c), (Some(H), Some(S)));
-        if (pair_hard && contains_text) || pair_empty || line_ws || double_ws || soft_hard {
-            parts.drain(u..u + 2);
-        } else if ws_line || hard_soft {
-            parts.drain(u + 1..u + 3);
-        }
-        i -= 1;
-    }
-}
-
-fn is_blank(p: &P) -> bool {
-    matches!(p, P::Empty | P::Hard | P::Soft | P::Line)
 }
 
 fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
@@ -503,17 +331,34 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     {
         return Ok(concat(vec![opening_doc, cx.format(only)?, closing_doc]));
     }
-    let children: Vec<Child> = inner
-        .iter()
-        .map(|n| {
-            let raw = n.text().to_string();
-            match n.kind() {
-                k::JSX_TEXT if raw.starts_with('{') => Child::Text(" ".into()),
-                k::JSX_TEXT => Child::Text(raw),
-                _ => Child::Node((*n).clone()),
+    let mut children = Vec::new();
+    // Whether the nearest earlier child that is not blank text is a `{/* prettier-ignore */}`.
+    let mut ignored = false;
+    for n in &inner {
+        let raw = n.text().to_string();
+        children.push(match n.kind() {
+            k::JSX_TEXT => {
+                let t = if raw.starts_with('{') { " ".into() } else { raw };
+                if meaningful(&t) {
+                    ignored = false;
+                }
+                Child::Text(t)
             }
-        })
-        .collect();
+            kind => {
+                // `{/* prettier-ignore */}` keeps the next element as written.
+                let doc = if ignored && is_jsx(kind) {
+                    cx.verbatim_node(n)
+                } else {
+                    cx.format(n)?
+                };
+                ignored = is_ignore_marker(cx, n);
+                Child::Node {
+                    doc,
+                    self_closing: is_self_closing(n),
+                }
+            }
+        });
+    }
     let contains_tag = inner.iter().any(|n| is_jsx(n.kind()));
     let many_expressions = inner
         .iter()
@@ -526,77 +371,19 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             .filter(|c| matches!(c.kind(), k::JSX_ATTRIBUTE | k::JSX_SPREAD_ATTRIBUTE))
             .count()
             > 1;
-    let mut forced_break =
+    let forced_break =
         will_break(&opening_doc) || contains_tag || many_attributes || many_expressions;
-    let raw_ws = if super::quote_style(cx.options) == super::QuoteStyle::Single {
+    let marker = if super::quote_style(cx.options) == super::QuoteStyle::Single {
         "{' '}"
     } else {
         "{\" \"}"
     };
-    let contains_text = children
-        .iter()
-        .any(|c| matches!(c, Child::Text(t) if meaningful(t)));
-    let mut parts = children_parts(cx, &children)?;
-    clean(&mut parts, contains_text);
-    while parts.last().is_some_and(is_blank) {
-        parts.pop();
-    }
-    while parts.len() > 1 && is_blank(&parts[0]) && is_blank(&parts[1]) {
-        parts.drain(..2);
-    }
-    let ws_doc = || if_break(concat(vec![lit(raw_ws), softline()]), lit(" "));
-    let to_doc = |p: &P| match p {
-        P::Empty => Doc::Nil,
-        P::Hard => hardline(),
-        P::Soft => softline(),
-        P::Line => line(),
-        P::Ws => ws_doc(),
-        P::Word(w) => text(w.clone()),
-        P::Doc(d) => d.clone(),
-    };
-    let mut multiline = Vec::new();
-    for (i, p) in parts.iter().enumerate() {
-        if matches!(p, P::Ws) {
-            let before_empty = i == 1 && matches!(parts[0], P::Empty);
-            if before_empty && parts.len() == 2 {
-                multiline.push(lit(raw_ws));
-                continue;
-            }
-            if before_empty {
-                multiline.push(concat(vec![lit(raw_ws), hardline()]));
-                continue;
-            }
-            if i + 1 == parts.len() {
-                // Trailing: measured with the content before it.
-                let last = multiline.pop().unwrap_or(Doc::Nil);
-                multiline.push(concat(vec![last, lit(raw_ws)]));
-                continue;
-            }
-            if i + 2 == parts.len()
-                && matches!(parts[i + 1], P::Empty)
-                && i > 0
-                && matches!(parts[i - 1], P::Hard)
-            {
-                multiline.push(lit(raw_ws));
-                continue;
-            }
-        }
-        multiline.push(to_doc(p));
-        forced_break |= match p {
-            P::Hard => true,
-            P::Doc(d) => will_break(d),
-            _ => false,
-        };
-    }
-    let content = if contains_text {
-        fill(multiline)
-    } else {
-        group_broken(concat(multiline))
-    };
+    let filled = shapes::fill_children(children, marker);
+    let forced_break = forced_break || filled.forced_break;
     let (opening_doc, closing_doc) = (shared(opening_doc), shared(closing_doc));
     let multi_line = group(concat(vec![
         opening_doc.clone(),
-        indent(concat(vec![hardline(), content])),
+        indent(concat(vec![hardline(), filled.broken])),
         hardline(),
         closing_doc.clone(),
     ]));
@@ -604,7 +391,7 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         return Ok(multi_line);
     }
     let mut flat = vec![opening_doc];
-    flat.extend(parts.iter().map(to_doc));
+    flat.extend(filled.flat);
     flat.push(closing_doc);
     Ok(conditional_group(vec![group(concat(flat)), multi_line]))
 }

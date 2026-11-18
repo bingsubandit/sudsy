@@ -1,6 +1,6 @@
 //! Inline content: paragraphs, emphasis, escapes.
 //!
-//! concept: text-fill
+//! concept: markdown-block-layout
 
 use super::*;
 use core_syntax::SyntaxNodeExt;

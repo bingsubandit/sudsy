@@ -1,16 +1,15 @@
 //! Prettier's printer-html: elements, tags with borrowed markers, children with the whitespace
 //! model, text as a fill of words, attributes.
 //!
-//! concept: new markup-layout, new text-fill
-//! what: markup-layout: Elements, tags, attributes and children laid out by the whitespace model.
-//! tools: markup-layout: Prettier printer-html
-//! what: text-fill: Words and separators laid out in a fill: JSX children, inline markup text, prose.
-//! tools: text-fill: Prettier fill, markdown proseWrap
+//! concept: new markup-layout
+//! what: Elements, tags, attributes and children laid out by the whitespace model.
+//! tools: Prettier printer-html
 
 use super::model::{Dialect, N, T, Tree, is_ws, pre_like};
 use core_format::EmbedMode;
 use core_format::context::verbatim_text;
 use core_format::doc::{self, Doc, GroupId};
+use core_format::shapes;
 
 mod angular;
 mod embed;
@@ -642,24 +641,7 @@ impl P<'_> {
                 s(suffix),
             ]);
         }
-        let words: Vec<&str> = n.value.split(is_ws).filter(|w| !w.is_empty()).collect();
-        let last = words.len().saturating_sub(1);
-        let mut parts = Vec::new();
-        for (i, w) in words.iter().enumerate() {
-            if i > 0 {
-                parts.push(doc::line());
-            }
-            let mut word = String::new();
-            if i == 0 {
-                word.push_str(&prefix);
-            }
-            word.push_str(w);
-            if i == last {
-                word.push_str(&suffix);
-            }
-            parts.push(s(word));
-        }
-        doc::fill(parts)
+        shapes::fill_words(&n.value, is_ws, &prefix, &suffix)
     }
 
     fn attribute(&self, id: usize, name: &str, value: &Option<&str>, braced: bool) -> Doc {

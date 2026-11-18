@@ -16,6 +16,7 @@ mod chain;
 mod compound;
 mod conditional;
 mod declaration;
+mod fill;
 pub mod flow;
 mod heritage;
 mod key_value;
@@ -30,6 +31,7 @@ pub use assignment::{
 pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
 };
+pub use fill::{Child, Filled, fill_children, fill_words, meaningful};
 pub use block::{
     BlockStyle, annotation_line, blank_before, block, block_between, block_open_inside, braces,
     document, spread_cases_style, statement_sequence, statement_sequence_with,
