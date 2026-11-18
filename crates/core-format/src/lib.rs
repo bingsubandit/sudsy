@@ -8,6 +8,7 @@
 //!
 //! A provider's formatter turns a node into a [`Doc`]; [`format_tree`] prints it.
 
+mod align;
 mod blank;
 pub mod calls;
 pub mod case;

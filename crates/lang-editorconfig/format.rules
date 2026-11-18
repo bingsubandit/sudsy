@@ -1,0 +1,8 @@
+# Every section starts after a blank line, the first one after the preamble only.
+[blank]
+* / kind=Section
+
+[layout]
+Document : document max_blank=option
+Section : section entries=Pair
+Pair : key_value space_before=yes

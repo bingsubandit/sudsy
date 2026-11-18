@@ -399,7 +399,7 @@ fn heredoc(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
             SyntaxElement::Node(n) => n.text().to_string(),
         })
         .collect();
-    parts.push(doc::line_suffix(doc::line_start(raw)));
+    parts.push(core_format::shapes::continuation::heredoc(&raw));
     Ok(doc::concat(parts))
 }
 

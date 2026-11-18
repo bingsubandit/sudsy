@@ -2,20 +2,19 @@
 //! one per line, without indentation (there are no braces); an inline table never breaks (TOML 1.0
 //! forbids line breaks in it); arrays follow the list shape.
 
-use crate::align::{self, AlignTable};
 use crate::generated::kind as k;
 use core_config::{ResolvedOptions, shared};
-use core_format::shapes::{
-    KeyValueStyle, ListLayout, ListStyle, TrailingComma, delimited_list, key_value,
-    statement_sequence,
-};
-use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, doc};
-use core_syntax::{SyntaxElement, SyntaxNode};
+use core_format::rules::LazyRules;
+use core_format::shapes::{ListLayout, ListStyle, TrailingComma, delimited_list};
+use core_format::{Doc, FormatCtx, FormatError, NodeFormatter};
+use core_syntax::{SyntaxElement, SyntaxNode, grammars};
 use std::borrow::Cow;
 
 include!("schema.generated.rs");
 
 pub struct TomlFormatter;
+
+static ROWS: LazyRules = LazyRules::new(|| grammars::TOML.get(), include_str!("../format.rules"));
 
 fn array_style(options: &ResolvedOptions) -> ListStyle {
     ListStyle {
@@ -49,7 +48,6 @@ impl NodeFormatter for TomlFormatter {
         cx: &FormatCtx<'_>,
     ) -> Result<Option<Doc>, FormatError> {
         let doc = match node.kind() {
-            k::PAIR => pair(cx, node)?,
             k::ARRAY => delimited_list(cx, node, &array_style(cx.options))?,
             k::INLINE_TABLE => delimited_list(
                 cx,
@@ -60,59 +58,9 @@ impl NodeFormatter for TomlFormatter {
                     ..ListStyle::default()
                 },
             )?,
-            k::TABLE | k::ARRAY_TABLE => table(cx, node)?,
-            k::DOCUMENT => document(cx, node)?,
+            k::DOCUMENT | k::TABLE | k::ARRAY_TABLE | k::PAIR => return ROWS.format_node(node, cx),
             _ => return Ok(None),
         };
         Ok(Some(doc))
     }
-}
-
-/// `key = value`, with its trailing comment padded to the column of its run.
-fn pair(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
-    let mut d = key_value(
-        cx,
-        node,
-        &KeyValueStyle {
-            space_before_separator: true,
-            ..KeyValueStyle::default()
-        },
-    )?;
-    if align_comments(cx.options) {
-        let extra = cx.cached(AlignTable::default).extra(node);
-        if extra > 0 {
-            align::pad_comment(&mut d, extra);
-        }
-    }
-    Ok(d)
-}
-
-/// `[header]` then its pairs, one per line.
-fn table(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
-    let mut parts = Vec::new();
-    for e in node.children_with_tokens() {
-        match e {
-            SyntaxElement::Token(t) if !cx.grammar.is_trivia(t.kind()) => parts.push(cx.token(&t)),
-            SyntaxElement::Node(n) if n.kind() == k::KEY => parts.push(cx.format(&n)?),
-            _ => {}
-        }
-    }
-    let pairs: Vec<SyntaxNode> = node.children().filter(|n| n.kind() == k::PAIR).collect();
-    if !pairs.is_empty() {
-        parts.push(doc::hardline());
-        parts.push(statement_sequence(
-            cx,
-            &pairs,
-            cx.options.max_blank_lines(),
-        )?);
-    }
-    Ok(doc::concat(parts))
-}
-
-/// The items, then the comments after them (owned by the end-of-file token).
-fn document(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
-    if align_comments(cx.options) {
-        cx.cached(|| AlignTable::build(cx, node));
-    }
-    core_format::shapes::document(cx, node, cx.options.max_blank_lines(), None)
 }

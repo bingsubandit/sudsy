@@ -1,0 +1,4 @@
+[layout]
+Document : document max_blank=option
+Table|ArrayTable : section entries=Pair
+Pair : key_value space_before=yes

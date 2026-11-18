@@ -264,6 +264,7 @@ fn key_value_style_controls_spacing() {
                 let style = KeyValueStyle {
                     space_before_separator: true,
                     space_after_separator: false,
+                    ..KeyValueStyle::default()
                 };
                 return shapes::key_value(cx, node, &style).map(Some);
             }

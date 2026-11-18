@@ -2,7 +2,9 @@
 //! of node and the details of that shape, so the language holds only a table (see
 //! [`crate::rules`]). A row is `KINDS[&parent=KINDS|&parent!=KINDS] : shape key=value ...`.
 //!
-//! Shapes: `verbatim`; `document` (the file; blank lines between statements from `[blank]`);
+//! Shapes: `verbatim`; `document [max_blank=option]` (the file; blank lines between statements from
+//! `[blank]`, at most `max_blank_lines` kept with the key); `section entries=K` (a header and its
+//! entries one per line);
 //! `scope body=K` (`namespace A;` and the statements after it); `braced open=K` (a declaration
 //! with its members in braces); `with_body body=K params=K` (a function: signature, then the
 //! body); `block` (statements between braces); `case colon=K` (a head up to the colon, then
@@ -40,6 +42,7 @@ const KIND_KEYS: &[&str] = &[
     "list",
     "ctor",
     "spaced",
+    "entries",
 ];
 
 pub(crate) struct Row {
@@ -240,9 +243,27 @@ impl Layout {
             "document" => shapes::document(
                 cx,
                 node,
-                usize::MAX,
+                if row.arg("max_blank") == Some("option") {
+                    cx.options.max_blank_lines()
+                } else {
+                    usize::MAX
+                },
                 Some(|cx, p, n| cx.blank_between(p, n)),
             ),
+            "key_value" => shapes::key_value(
+                cx,
+                node,
+                &shapes::KeyValueStyle {
+                    space_before_separator: row.arg("space_before") == Some("yes"),
+                    space_after_separator: true,
+                    // (an option of the language, when it has one)
+                    align_comments: matches!(
+                        cx.options.get("align_comments"),
+                        Some(core_config::OptionValue::Bool(true))
+                    ),
+                },
+            ),
+            "section" => shapes::section(cx, node, row.kinds_arg("entries")),
             "scope" => scope(cx, node, row, flow).unwrap_or_else(generic),
             "braced" => braced(cx, node, row, flow).unwrap_or_else(generic),
             "with_body" => with_body(cx, node, row, flow),
