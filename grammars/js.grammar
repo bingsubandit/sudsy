@@ -33,7 +33,7 @@ suppress ignore "sudsy-ignore"
 suppress ignore-start "sudsy-ignore-start"
 suppress ignore-end "sudsy-ignore-end"
 suppress ignore "prettier-ignore"
-keys accessors "get" "set"
+keys static accessors "get" "set"
 
 token Whitespace #trivia #whitespace
 token Newline #trivia #newline
@@ -70,7 +70,7 @@ token String #literal #string #restyle
 // \8 and \9 are the digits themselves; the legacy octal escapes are \0 to \7.
 string String quote "\"" "'" escape "\\" continuation octal 3 unknown drop replace 65533 surrogates
   map "n" 10 "r" 13 "v" 11 "t" 9 "b" 8 "f" 12 "8" 56 "9" 57 hex "x" 2 "u" 4
-token Number #literal #restyle
+token Number #literal #number #restyle
 token BigInt #literal #restyle
 token RegExp #literal #restyle
 regex RegExp flavor ecmascript quote "/"

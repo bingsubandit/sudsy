@@ -5,10 +5,10 @@
 //! what: typescript-eslint rules that read the syntax tree: comparisons, counts, names from the parent.
 //! tools: typescript-eslint
 
-use super::dupes::key_name;
 use super::{Check, code_text, code_token, has_own, operator, span, un};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
+use core_rules::names::static_name;
 use core_syntax::roles::has;
 use core_syntax::{Grammar, SyntaxNode, TextRange};
 
@@ -403,7 +403,7 @@ fn signature(n: &SyntaxNode, ctx: &RuleContext<'_>) -> Option<Signature> {
         k::TS_CONSTRUCT_SIGNATURE_DECLARATION => Some(plain("new".into(), false)),
         k::METHOD_DEFINITION | k::TS_METHOD_SIGNATURE => {
             let key = n.children().find(|c| c.kind() != k::DECORATOR)?;
-            let name = match key_name(&key, ctx.file.text) {
+            let name = match static_name(ctx.file.grammar, &key) {
                 Some(name)
                     if key.kind() == k::STRING_LITERAL
                         && !name

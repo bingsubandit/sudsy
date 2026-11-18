@@ -6,7 +6,6 @@
 
 mod adapter;
 mod format;
-mod hooks;
 mod rules;
 mod safety;
 mod semantic;

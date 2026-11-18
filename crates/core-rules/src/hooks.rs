@@ -35,9 +35,10 @@ pub trait RuleHooks: Send + Sync {
     }
 
     /// Whether a key is a name at all: `no-duplicate-keys` skips the others (HTML: template
-    /// words inside a start tag, `{{ if }}`). The default is every key.
-    fn is_name(&self, _key: &SyntaxElement, _text: &str) -> bool {
-        true
+    /// words inside a start tag, `{{ if }}`). The default is every key, or with `keys static` the
+    /// keys that have a static name ([`names::is_name`]).
+    fn is_name(&self, g: &Grammar, key: &SyntaxElement, _text: &str) -> bool {
+        names::is_name(g, key)
     }
 
     /// The identity of a key (the `key` item of a `#key-value` entry): the name that is compared,

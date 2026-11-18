@@ -372,6 +372,7 @@ pub(super) fn parse(source: &str) -> Result<Grammar, GrammarError> {
                     match *option {
                         "lowercase" => keys.lowercase = true,
                         "decode" => keys.decode = true,
+                        "static" => keys.static_names = true,
                         "strip" => keys.strip = Some(c.string("a prefix")?.to_string()),
                         "alias" => keys.alias_name = Some(c.ident("a node kind")?.to_string()),
                         "merge" => keys.merge = Some(c.string("a merge key")?.to_string()),
@@ -1044,7 +1045,8 @@ fn resolve(
     grammar.keys.plain = !grammar.keys.lowercase
         && !grammar.keys.decode
         && grammar.keys.strip.is_none()
-        && grammar.keys.alias_name.is_none();
+        && grammar.keys.alias_name.is_none()
+        && !grammar.keys.static_names;
     grammar.keys.parts = grammar.tokens.iter().any(|d| d.has_tag("key-part"));
     Ok(grammar)
 }

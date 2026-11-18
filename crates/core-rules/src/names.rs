@@ -9,7 +9,7 @@
 //! reads: grammar:keys
 
 use crate::hooks::{Accessor, Scalar};
-use core_syntax::strings::integer;
+use core_syntax::strings::{Number, integer, number};
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
 use rowan::{GreenNodeData, NodeOrToken};
 use std::borrow::Cow;
@@ -25,6 +25,12 @@ fn decode<'a>(g: &Grammar, kind: SyntaxKind, raw: &'a str) -> Cow<'a, str> {
 /// the entry, when it has one, stands for the key.
 pub fn key_name<'a>(g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, str> {
     let row = g.keys();
+    if row.static_names {
+        return match key {
+            SyntaxElement::Node(n) => static_name(g, n).map_or(Cow::Borrowed(""), Cow::Owned),
+            SyntaxElement::Token(_) => Cow::Borrowed(""),
+        };
+    }
     if row.plain && !row.parts {
         return Cow::Borrowed(strip_quotes(text[key.text_range()].trim()));
     }
@@ -64,6 +70,37 @@ pub fn key_name<'a>(g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, 
         }
         name => name,
     }
+}
+
+/// The statically known name of a key node (a grammar with `keys static`): its one code token, an
+/// identifier as written, a `#string` decoded, a number by value (`1`, `1.0` and `0x1` are one
+/// name). `None` for a key that is computed (a reference, an expression), a literal that is
+/// neither a string nor a number, or one made of several tokens (a template with a substitution).
+pub fn static_name(g: &Grammar, key: &SyntaxNode) -> Option<String> {
+    if g.has_tag(key.kind(), "reference") {
+        return None;
+    }
+    let mut tokens = key
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .filter(|t| !g.is_trivia(t.kind()));
+    let token = tokens.next().filter(|_| tokens.next().is_none())?;
+    let (raw, kind) = (token.text(), token.kind());
+    if g.has_tag(kind, "string") {
+        return Some(decode(g, kind, raw).into_owned());
+    }
+    if g.has_tag(kind, "number") {
+        return Some(match number(raw)? {
+            Number::Int(i) => i.to_string(),
+            Number::Float(f) => f.to_string(),
+        });
+    }
+    (!g.has_tag(key.kind(), "literal") && !g.has_tag(kind, "literal")).then(|| raw.to_owned())
+}
+
+/// Whether a key is a name at all: with `keys static`, one that has a static name.
+pub fn is_name(g: &Grammar, key: &SyntaxElement) -> bool {
+    !g.keys().static_names || matches!(key, SyntaxElement::Node(n) if static_name(g, n).is_some())
 }
 
 /// The node right in front of the key, trivia between them skipped: where an alias stands.

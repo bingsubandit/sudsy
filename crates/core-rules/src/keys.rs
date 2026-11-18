@@ -79,7 +79,7 @@ rule! {
         let mut seen = Seen::default();
         for (index, (_, key)) in entries(node, grammar).enumerate() {
             let name = hooks.key_name(grammar, &key, text);
-            if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
+            if merge_key == Some(&*name) || !hooks.is_name(grammar, &key, text) {
                 continue;
             }
             if let Some((first, name)) = seen.first(name, index) {
@@ -118,7 +118,7 @@ fn custom_keys(
     };
     for (index, (entry, key)) in listed.chain(walked).enumerate() {
         let name = hooks.key_name(grammar, &key, text);
-        if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
+        if merge_key == Some(&*name) || !hooks.is_name(grammar, &key, text) {
             continue;
         }
         let repeat = if accessors {

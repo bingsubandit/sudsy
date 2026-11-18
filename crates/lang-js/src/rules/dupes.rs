@@ -6,27 +6,9 @@
 use super::{Check, code_text, has_own, operator, span, test_of, un};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
+use core_rules::names::static_name;
 use core_syntax::{SyntaxKind, SyntaxNode, TextRange};
 use std::collections::HashMap;
-
-/// The statically known name of a property key node, as ESLint's `getStaticPropertyName`.
-pub(crate) fn key_name(key: &SyntaxNode, text: &str) -> Option<String> {
-    let range = key.text_range();
-    let raw = text[usize::from(range.start())..usize::from(range.end())].trim();
-    match key.kind() {
-        k::IDENTIFIER_NAME | k::PRIVATE_IDENTIFIER => Some(raw.to_string()),
-        k::STRING_LITERAL => Some(raw[1..raw.len() - 1].to_string()),
-        k::TEMPLATE_LITERAL if !raw.contains("${") => Some(raw[1..raw.len() - 1].to_string()),
-        k::NUMERIC_LITERAL => {
-            let digits = raw.replace('_', "");
-            match digits.parse::<f64>() {
-                Ok(v) => Some(v.to_string()),
-                Err(_) => Some(digits),
-            }
-        }
-        _ => None,
-    }
-}
 
 /// `get` and `set` accessors pair up; anything else (a value, a method, a field) conflicts with
 /// every earlier use of the name.
@@ -50,7 +32,7 @@ fn members(
         {
             continue;
         }
-        let Some(name) = key_name(&key, ctx.file.text) else {
+        let Some(name) = static_name(ctx.file.grammar, &key) else {
             continue;
         };
         let kind = if has_own(&m, "get") {

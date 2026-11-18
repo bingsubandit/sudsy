@@ -144,6 +144,9 @@ pub struct KeySyntax {
     pub lowercase: bool,
     /// Escapes of a `#string` key are decoded (`"a\u0062"` is `ab`).
     pub decode: bool,
+    /// A key is a node with a static name (an identifier, a string or number literal) or none (a
+    /// computed key): `names::static_name`.
+    pub static_names: bool,
     /// A prefix that is not part of the name (a GraphQL variable's `$`).
     pub strip: Option<String>,
     /// The node kind of an alias an entry may have, which is its name instead (a GraphQL response name).

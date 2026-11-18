@@ -11,7 +11,7 @@ use std::borrow::Cow;
 pub struct HtmlHooks;
 
 impl RuleHooks for HtmlHooks {
-    fn is_name(&self, key: &SyntaxElement, text: &str) -> bool {
+    fn is_name(&self, _g: &Grammar, key: &SyntaxElement, text: &str) -> bool {
         let start = usize::from(key.text_range().start());
         let tag = &text[text[..start].rfind('<').unwrap_or(0)..start];
         !in_template(tag)

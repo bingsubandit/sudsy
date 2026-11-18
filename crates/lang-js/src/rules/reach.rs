@@ -4,11 +4,11 @@
 //! concept: new getter-return
 //! what: A getter whose end can be reached without a return.
 
-use super::dupes::key_name;
 use super::{Check, has_own, span};
 use crate::generated::kind as k;
 use core_flow::build;
 use core_rules::RuleContext;
+use core_rules::names::static_name;
 use core_syntax::{SyntaxNode, TextRange};
 
 /// `return` statements of a function body, nested functions left out.
@@ -41,7 +41,7 @@ pub(super) fn getter_return(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>
     let key = n
         .children()
         .next()
-        .and_then(|key| key_name(&key, ctx.file.text));
+        .and_then(|key| static_name(ctx.file.grammar, &key));
     let name = key.map_or_else(|| "getter".to_string(), |key| format!("getter '{key}'"));
     let mut found = Vec::new();
     returns(&body, &mut found);

@@ -532,11 +532,36 @@ pub fn digits(raw: &str) -> Cow<'_, str> {
 /// The value of an integer token (`1_000`, `0xff`, `0o17`, `0b11`); `None` for anything else.
 pub fn integer(raw: &str) -> Option<i128> {
     let digits = digits(raw);
-    let radix = |p: &str, base| i128::from_str_radix(digits.strip_prefix(p)?, base).ok();
-    radix("0x", 16)
-        .or_else(|| radix("0o", 8))
-        .or_else(|| radix("0b", 2))
+    let radix = |p: [&str; 2], base| {
+        let rest = digits.strip_prefix(p[0]).or_else(|| digits.strip_prefix(p[1]))?;
+        i128::from_str_radix(rest, base).ok()
+    };
+    radix(["0x", "0X"], 16)
+        .or_else(|| radix(["0o", "0O"], 8))
+        .or_else(|| radix(["0b", "0B"], 2))
         .or_else(|| digits.parse().ok())
+}
+
+/// The value of a number token.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Number {
+    Int(i128),
+    Float(f64),
+}
+
+/// The value of a number token: an integer (any radix, `_` separators) or a decimal; a decimal
+/// without a fraction below `1e18` is an integer, so `1`, `1.0` and `1e0` are one value. `None`
+/// for anything else (`1j`, `10n`).
+pub fn number(raw: &str) -> Option<Number> {
+    if let Some(i) = integer(raw) {
+        return Some(Number::Int(i));
+    }
+    let f: f64 = digits(raw).parse().ok()?;
+    Some(if f.fract() == 0.0 && f.abs() < 1e18 {
+        Number::Int(f as i128)
+    } else {
+        Number::Float(f)
+    })
 }
 
 #[cfg(test)]
