@@ -100,7 +100,7 @@ pub fn format_parsed_with(
     // code: when this file was rewritten, the output gets one more rewrite round (a parse and a
     // scan for these files only), and a layout when that rewrote something.
     if let Some((done, _)) = &rewritten
-        && provider.formatter().settle_rewrites()
+        && core_format::rewrite::has_wrapped_statement(&out, &options.strings("settle_keywords"))
     {
         let settled = SourceFile {
             version: done.version + 1,

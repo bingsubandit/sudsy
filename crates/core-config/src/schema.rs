@@ -281,6 +281,12 @@ impl ResolvedOptions {
         }
     }
 
+    /// Is `item` one of the strings of a list option (no copy of the list)?
+    pub fn list_has(&self, name: &str, item: &str) -> bool {
+        matches!(self.0.get(name), Some(OptionValue::List(items))
+            if items.iter().any(|i| matches!(i, OptionValue::String(s) if s == item)))
+    }
+
     /// The lists of strings of a list-of-lists option; empty when the option is absent.
     pub fn string_lists(&self, name: &str) -> Vec<Vec<String>> {
         match self.0.get(name) {
@@ -508,6 +514,14 @@ pub mod shared {
             "semicolon_keep_parents",
             default,
             "`;` between and after statements is redundant: one at the end of a line is removed, one between two statements of a line becomes a line break, except in nodes of these kinds (where it separates other things).",
+        )
+    }
+
+    pub fn settle_keywords(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "settle_keywords",
+            default,
+            "Keywords of statements whose braces depend on the line width. A rewritten file whose formatted output has a line that starts with one, does not end with `{` and is followed by a deeper-indented line is rewritten once more, since the layout moved the code.",
         )
     }
 

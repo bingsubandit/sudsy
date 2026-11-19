@@ -40,10 +40,6 @@ impl NodeFormatter for KotlinFormatter {
         3
     }
 
-    fn settle_rewrites(&self) -> bool {
-        true
-    }
-
     fn rewrite_source(
         &self,
         tree: &SyntaxNode,

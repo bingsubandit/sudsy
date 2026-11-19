@@ -359,10 +359,7 @@ pub fn annotation_line(cx: &FormatCtx<'_>, prev: &core_syntax::SyntaxElement) ->
     let inline = |m: &SyntaxNode| {
         let o = cx.options;
         let Some(d) = m.parent() else { return false };
-        if o.strings("annotation_source_kinds")
-            .iter()
-            .any(|k| g.name(d.kind()) == k)
-        {
+        if o.list_has("annotation_source_kinds", g.name(d.kind())) {
             return true;
         }
         o.is("annotation_inline", "single") && {

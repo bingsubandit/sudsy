@@ -276,13 +276,13 @@ pub fn redundant_semicolons(
     keep: &[String],
     edits: &mut Vec<(usize, usize, String)>,
 ) {
-    // (most files have none: a text scan is cheaper than a walk of the tree)
-    if !text.contains(';') {
-        return;
-    }
-    for t in tree
-        .descendants_with_tokens()
-        .filter_map(|e| e.into_token())
+    // (a scan of the text finds the candidates; a walk of the tree for all tokens costs more)
+    for t in text
+        .match_indices(';')
+        .filter_map(|(at, _)| {
+            let at = u32::try_from(at).ok()?;
+            tree.token_at_offset(at.into()).right_biased()
+        })
         .filter(|t| t.text() == ";" && grammar.name(t.kind()).starts_with("Semi"))
     {
         if t.parent()
@@ -305,4 +305,30 @@ pub fn redundant_semicolons(
             edits.push((s, text.len() - rest.len(), "\n".into()));
         }
     }
+}
+
+/// Does the text have a line that starts with one of `keywords`, does not end with `{` and is
+/// followed by a deeper-indented line (a statement the layout wrapped, whose braces a rewrite
+/// that depends on the width decides again)?
+pub fn has_wrapped_statement(text: &str, keywords: &[String]) -> bool {
+    let indent = |l: &str| l.len() - l.trim_start().len();
+    let mut lines = text.lines().peekable();
+    while let Some(l) = lines.next() {
+        let t = l.trim_start();
+        if t.ends_with('{')
+            || !keywords.iter().any(|k| {
+                t.strip_prefix(k.as_str())
+                    .is_some_and(|r| r.starts_with([' ', '(']))
+            })
+        {
+            continue;
+        }
+        if lines
+            .peek()
+            .is_some_and(|n| !n.trim().is_empty() && indent(n) > indent(l))
+        {
+            return true;
+        }
+    }
+    false
 }

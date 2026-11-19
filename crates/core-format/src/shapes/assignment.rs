@@ -252,11 +252,7 @@ fn choose(
     // A break the source has after the operator stays (`assignment_keep_break_kinds`).
     if let Some(t) = a.op_token
         && comments::break_after(g, t)
-        && cx
-            .options
-            .strings(KEEP_BREAK)
-            .iter()
-            .any(|k| g.name(a.node.kind()) == k)
+        && cx.options.list_has(KEEP_BREAK, g.name(a.node.kind()))
     {
         return BreakAlways;
     }

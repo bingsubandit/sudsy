@@ -8657,6 +8657,19 @@
               },
               "type": "array"
             },
+            "settle_keywords": {
+              "default": [
+                "if",
+                "else",
+                "for",
+                "while"
+              ],
+              "description": "Keywords of statements whose braces depend on the line width. A rewritten file whose formatted output has a line that starts with one, does not end with `{` and is followed by a deeper-indented line is rewritten once more, since the layout moved the code.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "signature_wrap_annotated": {
               "default": true,
               "description": "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
@@ -11341,6 +11354,19 @@
                       "EnumEntry"
                     ],
                     "description": "`;` between and after statements is redundant: one at the end of a line is removed, one between two statements of a line becomes a line break, except in nodes of these kinds (where it separates other things).",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "settle_keywords": {
+                    "default": [
+                      "if",
+                      "else",
+                      "for",
+                      "while"
+                    ],
+                    "description": "Keywords of statements whose braces depend on the line width. A rewritten file whose formatted output has a line that starts with one, does not end with `{` and is followed by a deeper-indented line is rewritten once more, since the layout moved the code.",
                     "items": {
                       "type": "string"
                     },

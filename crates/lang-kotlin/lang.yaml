@@ -30,6 +30,7 @@ options:
   - assignment_keep_break_kinds: [["Property", "BinaryExpression"]]
   - annotation_inline: ["single"]
   - semicolon_keep_parents: [["ClassBody", "EnumEntry"]]
+  - settle_keywords: [["if", "else", "for", "while"]]
   - signature_wrap_annotated: [true]
   - annotation_source_kinds: [["ValueParameter"]]
   - member_chain_style: ["wrapped"]
