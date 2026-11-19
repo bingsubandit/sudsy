@@ -66,8 +66,11 @@ pub fn generate(providers: &[Box<dyn LanguageProvider>]) -> Result<Vec<(PathBuf,
         .collect();
     crates.dedup();
     let crates = crates.join(", ");
-    for rel in [
+    out.push(splice(
         "README.md",
+        &[("languages", names.clone()), ("speed", crate::speed::table()?)],
+    )?);
+    for rel in [
         "editors/vscode/README.md",
         "docs/ai/editor/vscode.md",
     ] {

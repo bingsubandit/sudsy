@@ -9,8 +9,9 @@ from pathlib import Path
 root = Path(__file__).resolve().parent.parent
 skip = re.compile(r"measurement|prints timings|flaky")
 include = []
-for mode, tools in json.load(open(root / "scripts/parity_tools.json")).items():
-    for tool in tools:
+modes = json.load(open(root / "scripts/parity_tools.json"))
+for mode in ("format", "lint"):  # the other sections (speed-only tools, corpora) have no parity run
+    for tool in modes[mode]:
         cmd = f"scripts/parity.sh {'format ' if mode == 'format' else ''}{tool}"
         include.append({"name": f"parity-{mode}-{tool}", "cmd": cmd})
 for crate in sorted((root / "crates").glob("lang-*")):
