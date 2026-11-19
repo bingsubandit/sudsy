@@ -31,7 +31,6 @@ pub use assignment::{
 pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
 };
-pub use fill::{Child, Filled, fill_children, fill_words, meaningful};
 pub use block::{
     BlockStyle, annotation_line, blank_before, block, block_between, block_open_inside, braces,
     document, spread_cases_style, statement_sequence, statement_sequence_with,
@@ -53,6 +52,7 @@ pub use declaration::{
     Annotations, Clause, HeaderStyle, Printer, annotation_args, annotations_above, enum_body,
     has_arguments, has_doc_comment, header, lead_annotations, members, modifiers, type_declaration,
 };
+pub use fill::{Child, Filled, fill_children, fill_words, meaningful};
 pub use heritage::{HeritageLayout, heritage};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_between};

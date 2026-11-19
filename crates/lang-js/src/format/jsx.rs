@@ -338,7 +338,11 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         let raw = n.text().to_string();
         children.push(match n.kind() {
             k::JSX_TEXT => {
-                let t = if raw.starts_with('{') { " ".into() } else { raw };
+                let t = if raw.starts_with('{') {
+                    " ".into()
+                } else {
+                    raw
+                };
                 if meaningful(&t) {
                     ignored = false;
                 }

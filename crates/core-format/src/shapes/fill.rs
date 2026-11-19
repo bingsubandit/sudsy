@@ -18,12 +18,7 @@ fn is_space(c: char) -> bool {
 
 /// The words of `text` (split where `split` holds) as a fill, a line between them; `prefix`
 /// goes before the first word and `suffix` after the last. No words, no fill.
-pub fn fill_words(
-    text: &str,
-    split: impl Fn(char) -> bool,
-    prefix: &str,
-    suffix: &str,
-) -> Doc {
+pub fn fill_words(text: &str, split: impl Fn(char) -> bool, prefix: &str, suffix: &str) -> Doc {
     let words: Vec<&str> = text.split(split).filter(|w| !w.is_empty()).collect();
     let last = words.len().saturating_sub(1);
     let mut parts = Vec::new();
@@ -49,7 +44,10 @@ pub enum Child {
     Text(String),
     /// A printed child. `self_closing`: an element with no content, next to which a word of more
     /// than one character goes on a line of its own.
-    Node { doc: Doc, self_closing: bool },
+    Node {
+        doc: Doc,
+        self_closing: bool,
+    },
 }
 
 /// A part of the children list: a word or printed node (content), or what separates them.
@@ -103,7 +101,15 @@ fn utf16_len(s: &str) -> usize {
 
 /// Between a word or node and the next: a softline, except next to a self-closing element.
 fn sep_no_ws(word: &str, this: &Child, next: Option<&Child>) -> Part {
-    let closes = |c: &Child| matches!(c, Child::Node { self_closing: true, .. });
+    let closes = |c: &Child| {
+        matches!(
+            c,
+            Child::Node {
+                self_closing: true,
+                ..
+            }
+        )
+    };
     if closes(this) || next.is_some_and(closes) {
         return if utf16_len(word) == 1 {
             Part::Soft
