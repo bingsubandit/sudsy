@@ -503,11 +503,11 @@ pub mod shared {
         )
     }
 
-    pub fn redundant_semicolon_parents(default: &[&str]) -> OptionDef {
+    pub fn semicolon_keep_parents(default: &[&str]) -> OptionDef {
         OptionDef::words(
-            "redundant_semicolon_parents",
+            "semicolon_keep_parents",
             default,
-            "Node kinds whose statements need no `;`: one at the end of a line is removed, one between two statements of a line becomes a line break.",
+            "`;` between and after statements is redundant: one at the end of a line is removed, one between two statements of a line becomes a line break, except in nodes of these kinds (where it separates other things).",
         )
     }
 
