@@ -5,7 +5,7 @@
 //! node's parent), `same_kind=yes|no` (both of one kind), `has=A|B` and `lacks=A|B` (a child of
 //! those kinds), `commented=yes|no` (a comment in front), `doc=yes|no` (a `/**` comment in
 //! front), `comment_blank=yes|no` (a blank line between the comments in front or after them),
-//! `annotation_args=yes|no` (an annotation with arguments among its modifiers) and `group=K`
+//! `annotated=any|args` (an annotation, or an annotation with arguments, among its modifiers) and `group=K`
 //! (only when the second token of the two is of kind `K` for one of them).
 //!
 //! A language with the options `blank_lines_between_members` (`preserve`, `separate`, `always`),
@@ -68,7 +68,8 @@ enum Test {
     Commented,
     Doc,
     CommentBlank,
-    AnnotationArgs,
+    /// An annotation among the modifiers; `true`: one with arguments.
+    Annotated(bool),
     /// The second token of the node is of this kind.
     Second(SyntaxKind),
 }
@@ -109,13 +110,14 @@ impl Blank {
                                 "has" => (Test::Has(kinds_of(g, value)), true),
                                 "lacks" => (Test::Has(kinds_of(g, value)), false),
                                 "group" => (Test::Second(kinds_of(g, value)[0]), true),
+                                "annotated" => (Test::Annotated(value == "args"), true),
                                 _ => {
                                     let test = match key {
                                         "same_kind" => Test::SameKind,
                                         "commented" => Test::Commented,
                                         "doc" => Test::Doc,
                                         "comment_blank" => Test::CommentBlank,
-                                        "annotation_args" => Test::AnnotationArgs,
+                                        "annotation_args" => Test::Annotated(true),
                                         _ => panic!("blank: key `{key}`"),
                                     };
                                     (test, value == "yes")
@@ -177,7 +179,7 @@ fn holds(
         Test::Commented => !leading(cx, node).is_empty(),
         Test::Doc => crate::shapes::has_doc_comment(cx, node),
         Test::CommentBlank => leading(cx, node).iter().any(|c| c.breaks_after >= 2),
-        Test::AnnotationArgs => crate::shapes::annotation_args(cx, node),
+        Test::Annotated(args) => crate::shapes::annotated(cx, node, *args),
         Test::Second(_) => false,
     }
 }

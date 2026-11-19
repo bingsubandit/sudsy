@@ -6990,11 +6990,12 @@
             },
             "assignment_layout": {
               "default": "compact",
-              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
               "enum": [
                 "compact",
                 "fluid",
-                "break"
+                "break",
+                "multiline"
               ],
               "type": "string"
             },
@@ -8397,11 +8398,12 @@
             },
             "assignment_layout": {
               "default": "break",
-              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
               "enum": [
                 "compact",
                 "fluid",
-                "break"
+                "break",
+                "multiline"
               ],
               "type": "string"
             },
@@ -8632,11 +8634,12 @@
             },
             "assignment_layout": {
               "default": "fluid",
-              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
               "enum": [
                 "compact",
                 "fluid",
-                "break"
+                "break",
+                "multiline"
               ],
               "type": "string"
             },
@@ -8971,6 +8974,25 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "annotation_inline": {
+              "default": "single",
+              "description": "A declaration whose only annotation has no arguments keeps its declaration on the line of the annotation when the source has it there (`@Test fun f()`); `never`: every annotation of a declaration has a line of its own.",
+              "enum": [
+                "never",
+                "single"
+              ],
+              "type": "string"
+            },
+            "annotation_source_kinds": {
+              "default": [
+                "ValueParameter"
+              ],
+              "description": "Node kinds of declarations whose annotations stay on the lines where the source has them.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "assignment_conditional": {
               "default": "always",
               "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
@@ -8987,13 +9009,25 @@
               "minimum": 1,
               "type": "integer"
             },
+            "assignment_keep_break_kinds": {
+              "default": [
+                "Property",
+                "BinaryExpression"
+              ],
+              "description": "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "assignment_layout": {
-              "default": "break",
-              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+              "default": "multiline",
+              "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
               "enum": [
                 "compact",
                 "fluid",
-                "break"
+                "break",
+                "multiline"
               ],
               "type": "string"
             },
@@ -9087,6 +9121,35 @@
                 "soft"
               ],
               "type": "string"
+            },
+            "semicolon_keep_parents": {
+              "default": [
+                "ClassBody",
+                "EnumEntry"
+              ],
+              "description": "`;` between and after statements is redundant: one at the end of a line is removed, one between two statements of a line becomes a line break, except in nodes of these kinds (where it separates other things).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "settle_keywords": {
+              "default": [
+                "if",
+                "else",
+                "for",
+                "while"
+              ],
+              "description": "Keywords of statements whose braces depend on the line width. A file whose formatted output has a line that starts with one, has a body after its head on the same line (no `{`) and is followed by a deeper-indented line is rewritten once more, since the layout moved the code.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "signature_wrap_annotated": {
+              "default": true,
+              "description": "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
+              "type": "boolean"
             },
             "trailing_commas": {
               "default": "multiline",
@@ -10138,11 +10201,12 @@
                   },
                   "assignment_layout": {
                     "default": "compact",
-                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
                     "enum": [
                       "compact",
                       "fluid",
-                      "break"
+                      "break",
+                      "multiline"
                     ],
                     "type": "string"
                   },
@@ -11472,11 +11536,12 @@
                   },
                   "assignment_layout": {
                     "default": "break",
-                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
                     "enum": [
                       "compact",
                       "fluid",
-                      "break"
+                      "break",
+                      "multiline"
                     ],
                     "type": "string"
                   },
@@ -11707,11 +11772,12 @@
                   },
                   "assignment_layout": {
                     "default": "fluid",
-                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
                     "enum": [
                       "compact",
                       "fluid",
-                      "break"
+                      "break",
+                      "multiline"
                     ],
                     "type": "string"
                   },
@@ -12046,6 +12112,25 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "annotation_inline": {
+                    "default": "single",
+                    "description": "A declaration whose only annotation has no arguments keeps its declaration on the line of the annotation when the source has it there (`@Test fun f()`); `never`: every annotation of a declaration has a line of its own.",
+                    "enum": [
+                      "never",
+                      "single"
+                    ],
+                    "type": "string"
+                  },
+                  "annotation_source_kinds": {
+                    "default": [
+                      "ValueParameter"
+                    ],
+                    "description": "Node kinds of declarations whose annotations stay on the lines where the source has them.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "assignment_conditional": {
                     "default": "always",
                     "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
@@ -12062,13 +12147,25 @@
                     "minimum": 1,
                     "type": "integer"
                   },
+                  "assignment_keep_break_kinds": {
+                    "default": [
+                      "Property",
+                      "BinaryExpression"
+                    ],
+                    "description": "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "assignment_layout": {
-                    "default": "break",
-                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+                    "default": "multiline",
+                    "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
                     "enum": [
                       "compact",
                       "fluid",
-                      "break"
+                      "break",
+                      "multiline"
                     ],
                     "type": "string"
                   },
@@ -12162,6 +12259,35 @@
                       "soft"
                     ],
                     "type": "string"
+                  },
+                  "semicolon_keep_parents": {
+                    "default": [
+                      "ClassBody",
+                      "EnumEntry"
+                    ],
+                    "description": "`;` between and after statements is redundant: one at the end of a line is removed, one between two statements of a line becomes a line break, except in nodes of these kinds (where it separates other things).",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "settle_keywords": {
+                    "default": [
+                      "if",
+                      "else",
+                      "for",
+                      "while"
+                    ],
+                    "description": "Keywords of statements whose braces depend on the line width. A file whose formatted output has a line that starts with one, has a body after its head on the same line (no `{`) and is followed by a deeper-indented line is rewritten once more, since the layout moved the code.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "signature_wrap_annotated": {
+                    "default": true,
+                    "description": "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
+                    "type": "boolean"
                   },
                   "trailing_commas": {
                     "default": "multiline",

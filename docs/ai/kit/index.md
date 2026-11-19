@@ -77,7 +77,7 @@ One row per concept (one behavior). `used by`: languages whose grammar, `format.
 | text-fill | core-format/shapes/fill.rs | Words and separators laid out in a fill: JSX children, inline markup text, prose. | Prettier fill, markdown proseWrap | html, js, markdown |  |
 | token-case | core-format/case.rs | Case of words per token kind (upper, lower, capitalise, consistent) as rows. | sqlfluff CP01-CP05, hadolint instruction case, Prettier lowercase hex and units | css, dockerfile, html, sql |  |
 | token-flow-layout | core-format/shapes/flow.rs | Children one after another with the spacing rows and the line breaks the source has. | none (internal) | csharp, dockerfile, hcl, java, kotlin, php, powershell, sql |  |
-| token-rewrite-rows | core-format/rewrite.rs | Token rewrites (replace, insert) as rows applied to the source before layout. | PHP-CS-Fixer short array syntax and visibility_required | java, js, php |  |
+| token-rewrite-rows | core-format/rewrite.rs | Token rewrites (replace, insert) as rows applied to the source before layout. | PHP-CS-Fixer short array syntax and visibility_required | java, js, kotlin, php |  |
 | token-spacing-rows | core-format/spacing.rs | Blanks between neighbouring tokens as ordered rows. | google-java-format spacing, ktlint spacing rules, PHP-CS-Fixer spacing, sqlfluff LT01 | csharp, dockerfile, hcl, java, kotlin, php, powershell, sql | LOCAL: lang-shell/format/arith.rs |
 | trailing-comment-alignment | core-format/align.rs | Trailing comments of consecutive entries start in one column. | taplo align_comments | toml | SINGLE-USE |
 | type-expression-layout | lang-js/format/ts/mod.rs | Type annotations: unions, intersections, generics, function, mapped and tuple types. | Prettier typescript types | js | SINGLE-USE |

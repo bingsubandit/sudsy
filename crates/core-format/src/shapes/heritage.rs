@@ -13,8 +13,8 @@ use core_syntax::{SyntaxElement, SyntaxNode};
 /// How the supertypes of a type declaration are laid out.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum HeritageLayout {
-    /// All on the line of the colon.
-    Inline,
+    /// All on the line of the colon while they fit; else all below it.
+    Fit,
     /// One per line, the first below the colon.
     Wrapped,
     /// One per line, the first after the colon on the line of the closing parenthesis of the
@@ -31,14 +31,36 @@ pub fn heritage(
     layout: HeritageLayout,
     tail: Option<Doc>,
 ) -> Doc {
+    if layout == HeritageLayout::Fit {
+        let mut all = vec![doc::line()];
+        for (i, d) in items.into_iter().enumerate() {
+            if i > 0 {
+                all.push(doc::lit(", "));
+            }
+            all.push(d);
+        }
+        // A head that spans lines (the parameters) keeps the supertypes on the line of its end.
+        let mut parts = if head.will_break() {
+            all[0] = doc::lit(" ");
+            vec![head, doc::lit(" "), colon, doc::concat(all)]
+        } else {
+            vec![doc::group(doc::concat(vec![
+                head,
+                doc::lit(" "),
+                colon,
+                doc::indent(doc::concat(all)),
+            ]))]
+        };
+        if let Some(t) = tail {
+            parts.push(doc::lit(" "));
+            parts.push(t);
+        }
+        return doc::concat(parts);
+    }
     let mut parts = vec![head, doc::lit(" "), colon];
     let mut items = items.into_iter();
     let first = items.next().unwrap_or(Doc::Nil);
-    let sep = if layout == HeritageLayout::Inline {
-        doc::lit(" ")
-    } else {
-        doc::hardline()
-    };
+    let sep = doc::hardline();
     let mut rest = Vec::new();
     for d in items {
         rest.push(doc::lit(","));
@@ -46,11 +68,7 @@ pub fn heritage(
         rest.push(d);
     }
     match layout {
-        HeritageLayout::Inline => {
-            parts.push(doc::lit(" "));
-            parts.push(first);
-            parts.extend(rest);
-        }
+        HeritageLayout::Fit => unreachable!(),
         HeritageLayout::Hugged => {
             parts.push(doc::lit(" "));
             parts.push(first);

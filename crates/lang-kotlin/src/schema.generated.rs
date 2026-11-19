@@ -14,6 +14,18 @@ pub const ASSIGNMENT_CONDITIONAL: &str = "assignment_conditional";
 #[allow(dead_code)]
 pub const ASSIGNMENT_INDENT: &str = "assignment_indent";
 #[allow(dead_code)]
+pub const ASSIGNMENT_KEEP_BREAK_KINDS: &str = "assignment_keep_break_kinds";
+#[allow(dead_code)]
+pub const ANNOTATION_INLINE: &str = "annotation_inline";
+#[allow(dead_code)]
+pub const SEMICOLON_KEEP_PARENTS: &str = "semicolon_keep_parents";
+#[allow(dead_code)]
+pub const SETTLE_KEYWORDS: &str = "settle_keywords";
+#[allow(dead_code)]
+pub const SIGNATURE_WRAP_ANNOTATED: &str = "signature_wrap_annotated";
+#[allow(dead_code)]
+pub const ANNOTATION_SOURCE_KINDS: &str = "annotation_source_kinds";
+#[allow(dead_code)]
 pub const MEMBER_CHAIN_STYLE: &str = "member_chain_style";
 #[allow(dead_code)]
 pub const MEMBER_CHAIN_MIN_CALLS: &str = "member_chain_min_calls";
@@ -57,9 +69,15 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::int("function_signature_wrap_min_parameters", 2, (1, 1000), "A function or constructor with at least this many parameters puts each on a line of its own, even when the signature fits."),
         core_config::OptionDef::int("class_signature_wrap_min_parameters", 1, (1, 1000), "A class with at least this many primary-constructor parameters puts each on a line of its own, even when the signature fits."),
         core_config::OptionDef::int("class_signature_wrap_min_supertypes", 2, (1, 1000), "A class or object with at least this many supertypes puts each on a line of its own."),
-        core_config::shared::assignment_layout("break"),
+        core_config::shared::assignment_layout("multiline"),
         core_config::shared::assignment_conditional("always"),
         core_config::shared::assignment_indent(1),
+        core_config::shared::assignment_keep_break_kinds(&["Property", "BinaryExpression"]),
+        core_config::shared::annotation_inline("single"),
+        core_config::shared::semicolon_keep_parents(&["ClassBody", "EnumEntry"]),
+        core_config::shared::settle_keywords(&["if", "else", "for", "while"]),
+        core_config::shared::signature_wrap_annotated(true),
+        core_config::shared::annotation_source_kinds(&["ValueParameter"]),
         core_config::shared::member_chain_style("wrapped"),
         core_config::shared::member_chain_min_calls(2),
         core_config::shared::member_chain_force_links(4),

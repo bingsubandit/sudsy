@@ -170,7 +170,6 @@ data grammar-line:format # users: python
 data grammar-line:hoisted # users: js
 data grammar-line:regex # users: js
 data row-key:at_least_one.parent # users: php
-data row-key:blank.annotation_args # users: java
 data row-key:blank.comment_blank # users: kotlin
 data row-key:blank.commented # users: kotlin
 data row-key:blank.doc # users: java
@@ -205,7 +204,6 @@ data row-key:rewrite.sibling # users: php
 data row-key:rewrite.text # users: php
 data row-key:space.ends # users: csharp
 data rules-section:call # users: js
-data tag:annotation-arguments # users: java
 data tag:argument # users: csharp
 data tag:branch # users: python
 data tag:branching # users: python

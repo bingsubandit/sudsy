@@ -89,9 +89,43 @@ pub fn format_parsed_with(
     if !parsed.errors.is_empty() {
         return Err(syntax_error(&file.text, &parsed.errors));
     }
+    let rewritten = rewrite_loop(provider, file, parsed, options)?;
+    let out = match &rewritten {
+        Some((again, reparsed)) => {
+            format_checked(provider, again, reparsed, options, directives, embedder)?
+        }
+        None => format_checked(provider, file, parsed, options, directives, embedder)?,
+    };
+    // A rewrite decided on the source (a width) can look different after the layout moved the
+    // code: when the output has a wrapped statement of the `settle_keywords` (a parse and a scan
+    // for these files only), it gets one more rewrite round, and a layout when that rewrote
+    // something.
+    let done = rewritten.as_ref().map_or(file, |(done, _)| done);
+    if core_format::rewrite::has_wrapped_statement(&out, &options.strings("settle_keywords")) {
+        let settled = SourceFile {
+            version: done.version + 1,
+            text: out.clone(),
+            ..done.clone()
+        };
+        if let Ok(reparsed) = provider.parse(&settled)
+            && reparsed.errors.is_empty()
+            && let Some((again, reparsed)) = rewrite_loop(provider, &settled, &reparsed, options)?
+        {
+            return format_checked(provider, &again, &reparsed, options, directives, embedder);
+        }
+    }
+    Ok(out)
+}
+
+/// The rewrite rounds on a parsed file: the file and its tree after the rewrites, `None` when
+/// nothing was rewritten.
+fn rewrite_loop(
+    provider: &dyn LanguageProvider,
+    file: &SourceFile,
+    parsed: &ParseResult,
+    options: &ResolvedOptions,
+) -> Result<Option<(SourceFile, ParseResult)>, FileFormatError> {
     let grammar = provider.grammar();
-    // A rewrite can unlock the next (`((T))` loses one pair of parentheses per round): repeat
-    // until the text is stable, so that formatting the output changes nothing more.
     let mut current: Option<(SourceFile, ParseResult)> = None;
     // The rules that rewrite the source take a round of their own: the language's rewrite follows.
     let rounds = provider.formatter().rewrite_rounds()
@@ -168,10 +202,7 @@ pub fn format_parsed_with(
         }
         current = Some((again, reparsed));
     }
-    if let Some((again, reparsed)) = &current {
-        return format_checked(provider, again, reparsed, options, directives, embedder);
-    }
-    format_checked(provider, file, parsed, options, directives, embedder)
+    Ok(current)
 }
 
 /// The shared rules that rewrite the source that the language has rows for, found once per

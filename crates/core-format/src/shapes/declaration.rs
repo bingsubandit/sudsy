@@ -316,12 +316,18 @@ pub fn has_doc_comment(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
     })
 }
 
-/// Does the declaration have an annotation with arguments among its modifiers?
-pub fn annotation_args(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
+/// Does the declaration have an annotation (with arguments: `args`) among its modifiers?
+pub fn annotated(cx: &FormatCtx<'_>, n: &SyntaxNode, args: bool) -> bool {
     kids(cx, n).iter().any(|m| {
         m.as_node().is_some_and(|m| {
             cx.grammar.has_tag(m.kind(), "modifiers")
-                && kids(cx, m).iter().any(|a| has_arguments(cx, a))
+                && kids(cx, m).iter().any(|a| {
+                    if args {
+                        has_arguments(cx, a)
+                    } else {
+                        cx.grammar.has_tag(a.kind(), "annotation")
+                    }
+                })
         })
     })
 }

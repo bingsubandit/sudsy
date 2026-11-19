@@ -148,6 +148,27 @@ impl Doc {
         }
     }
 
+    /// Can printing this document break a line anywhere (a line, a soft line or a hard line)?
+    pub fn has_break_point(&self) -> bool {
+        match self {
+            Doc::Line | Doc::SoftLine | Doc::HardLine | Doc::BreakParent => true,
+            Doc::LineStart(_) | Doc::NewlineIfNeeded | Doc::Outdent(..) => true,
+            Doc::Text(s) => s.contains('\n'),
+            Doc::Concat(ps) | Doc::Fill(ps) => ps.iter().any(Doc::has_break_point),
+            Doc::Group(g) => {
+                g.contents.has_break_point() || g.states.iter().any(Doc::has_break_point)
+            }
+            Doc::Indent(d)
+            | Doc::Align(_, d)
+            | Doc::Label(_, d)
+            | Doc::IndentIfBreak(_, d)
+            | Doc::LineSuffix(d) => d.has_break_point(),
+            Doc::IfBreak { broken, flat, .. } => broken.has_break_point() || flat.has_break_point(),
+            Doc::Shared(s) => s.doc.has_break_point(),
+            _ => false,
+        }
+    }
+
     /// The width of the document printed on one line, `None` when it has a forced line break.
     pub fn flat_width(&self) -> Option<usize> {
         Some(match self {

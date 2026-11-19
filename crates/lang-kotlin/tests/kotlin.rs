@@ -3,6 +3,7 @@
 //! attachment rule and has no `Unknown` token. The ignored test runs the same on the corpus
 //! (`tests/conformance/fetch-kotlin-corpus.sh`).
 
+use core_format::testing::Subject;
 use core_syntax::{print, trivia};
 use lang_kotlin::generated::kind;
 use lang_kotlin::provider;
@@ -203,4 +204,16 @@ fn blank_lines_between_declarations() {
         ),
         "package a\nimport b.C\n\nclass X {\n    val a = 1\n    val b = 2\n\n    fun f() {}\n\n    fun g() {\n        x()\n    }\n}\n"
     );
+}
+
+/// A branch that fits on a line at the source's column but not after the indentation is braced in
+/// the first format, so that formatting the output changes nothing more.
+#[test]
+fn braces_after_the_layout_wrapped_a_branch() {
+    let call = format!("callWithLongName({})", "x".repeat(112));
+    // (not `fmt`: its meaning check compares with the rewrite of the input, not of the output)
+    let formatting = Formatting::new(provider(), "A.kt");
+    let out = Subject::format(&formatting, &format!("fun f() {{\nif (c) {call}\n}}\n")).unwrap();
+    assert!(out.contains("if (c) {\n"), "{out}");
+    assert_eq!(Subject::format(&formatting, &out).unwrap(), out);
 }

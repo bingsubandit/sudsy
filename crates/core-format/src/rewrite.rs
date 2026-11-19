@@ -265,3 +265,90 @@ fn next_end(grammar: &Grammar, t: &SyntaxToken) -> Option<usize> {
     }
     None
 }
+
+/// The `;` between and after statements, but not in a node of the kinds of `semicolon_keep_parents`:
+/// one at the end of a line, in front of a `}`, an `else` or a comment is dropped, one between
+/// two statements of a line becomes a line break. Edits `(from, to, text)`.
+pub fn redundant_semicolons(
+    grammar: &Grammar,
+    tree: &SyntaxNode,
+    text: &str,
+    keep: &[String],
+    edits: &mut Vec<(usize, usize, String)>,
+) {
+    // (a scan of the text finds the candidates; a walk of the tree for all tokens costs more)
+    for t in text
+        .match_indices(';')
+        .filter_map(|(at, _)| {
+            let at = u32::try_from(at).ok()?;
+            tree.token_at_offset(at.into()).right_biased()
+        })
+        .filter(|t| t.text() == ";" && grammar.name(t.kind()).starts_with("Semi"))
+    {
+        if t.parent()
+            .is_none_or(|p| keep.iter().any(|k| grammar.name(p.kind()) == k))
+        {
+            continue;
+        }
+        let (s, e) = (
+            usize::from(t.text_range().start()),
+            usize::from(t.text_range().end()),
+        );
+        let rest = text[e..].trim_start_matches([' ', '\t']);
+        let ends_line = rest.is_empty()
+            || rest.starts_with(['\n', '\r', '}', ')'])
+            || rest.starts_with("//")
+            || rest.starts_with("else");
+        if ends_line {
+            edits.push((s, e, String::new()));
+        } else {
+            edits.push((s, text.len() - rest.len(), "\n".into()));
+        }
+    }
+}
+
+/// Does the text have a line that starts with one of `keywords`, has a body after its
+/// parenthesized head on the same line that does not start a `{` block, and is followed by a
+/// deeper-indented line (a statement the layout wrapped, whose braces a rewrite that depends on
+/// the width decides again)?
+pub fn has_wrapped_statement(text: &str, keywords: &[String]) -> bool {
+    let indent = |l: &str| l.len() - l.trim_start().len();
+    let mut lines = text.lines().peekable();
+    while let Some(l) = lines.next() {
+        let t = l.trim_start();
+        let Some(rest) = keywords.iter().find_map(|k| {
+            t.strip_prefix(k.as_str())
+                .filter(|r| r.starts_with([' ', '(']))
+        }) else {
+            continue;
+        };
+        let rest = rest.trim_start();
+        let body = if rest.starts_with('(') {
+            let mut depth = 0;
+            let closed = rest.char_indices().find(|&(_, c)| {
+                depth += i32::from(c == '(') - i32::from(c == ')');
+                depth == 0
+            });
+            // (a head that goes on to the next line leaves the body to a later round)
+            let Some((at, _)) = closed else { continue };
+            &rest[at + 1..]
+        } else {
+            rest
+        };
+        let code = body.split_once("//").map_or(body, |(c, _)| c).trim();
+        if code.is_empty()
+            || code.starts_with(['{', '('])
+            || code.ends_with('{')
+            || code.starts_with("if ")
+        {
+            continue;
+        }
+        if lines
+            .peek()
+            .is_some_and(|n| !n.trim().is_empty() && indent(n) > indent(l))
+        {
+            return true;
+        }
+    }
+    false
+}

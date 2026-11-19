@@ -57,7 +57,7 @@ pub use conditional::{
     Around, ConditionalHooks, ConditionalPolicy, NoConditionalHooks, conditional,
 };
 pub use declaration::{
-    Annotations, Clause, HeaderStyle, Printer, annotation_args, annotations_above, enum_body,
+    Annotations, Clause, HeaderStyle, Printer, annotated, annotations_above, enum_body,
     has_arguments, has_doc_comment, header, lead_annotations, members, modifiers, type_declaration,
 };
 pub use heritage::{HeritageLayout, clause_list, heritage};

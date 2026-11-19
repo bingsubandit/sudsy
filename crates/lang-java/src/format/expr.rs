@@ -124,6 +124,7 @@ pub(super) fn assign_at(
             op_token: None,
             right: Some(right),
             short_key: false,
+            left_broken: false,
         },
         &shapes::AssignPolicy::of(cx.options),
         &AssignHooks,

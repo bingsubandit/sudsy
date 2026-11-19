@@ -208,7 +208,12 @@ pub fn parse_time(lang: &str, passes: usize, dir: &Path) -> Result<()> {
         .map(|_| {
             let start = std::time::Instant::now();
             for f in &sources {
-                std::hint::black_box(p.parse(f).ok());
+                if std::env::var("PB_FORMAT").is_ok() {
+                    let (f, o) = file(p, "a.kt", 1, &String::from_utf8_lossy(f.text.as_bytes()));
+                    let _ = provider_api::format_file(p, &f, &o, &DirectiveTable::default());
+                } else {
+                    std::hint::black_box(p.parse(f).ok());
+                }
             }
             start.elapsed()
         })

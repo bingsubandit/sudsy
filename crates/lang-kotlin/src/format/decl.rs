@@ -129,7 +129,25 @@ fn with_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let SyntaxElement::Token(eq_tok) = &els[eq] else {
         return generic(cx, node);
     };
-    assign(cx, node, seq(cx, &els[..eq])?, eq_tok, &els[eq + 1])
+    // A function without a return type whose parameters go one per line keeps its expression body
+    // on the line of `) =`.
+    let left_broken = node.kind() == k::FUN
+        && !els.iter().any(|e| e.kind() == k::COLON)
+        && node
+            .children()
+            .find(|c| c.kind() == k::VALUE_PARAMETER_LIST)
+            .is_some_and(|list| {
+                let params = list.children().filter(|c| c.kind() == k::VALUE_PARAMETER);
+                params.count() >= super::function_signature_wrap_min_parameters(cx.options)
+            });
+    assign(
+        cx,
+        node,
+        seq(cx, &els[..eq])?,
+        eq_tok,
+        &els[eq + 1],
+        left_broken,
+    )
 }
 
 /// `left = right` as the shared assignment layouts.
@@ -139,6 +157,7 @@ pub(super) fn assign(
     left: Doc,
     eq_tok: &SyntaxToken,
     right: &SyntaxElement,
+    left_broken: bool,
 ) -> R {
     let op = doc::concat(vec![doc::lit(" "), cx.token(eq_tok)]);
     // A comment at the end of the line stays there, it does not push the value below the `=`.
@@ -152,6 +171,7 @@ pub(super) fn assign(
                 op_token: Some(eq_tok),
                 right: Some(right),
                 short_key: false,
+                left_broken,
             },
             &shapes::AssignPolicy::of(cx.options),
             &KeepOnLine,

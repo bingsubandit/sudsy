@@ -318,6 +318,12 @@ impl ResolvedOptions {
         }
     }
 
+    /// Is `item` one of the strings of a list option (no copy of the list)?
+    pub fn list_has(&self, name: &str, item: &str) -> bool {
+        matches!(self.0.get(name), Some(OptionValue::List(items))
+            if items.iter().any(|i| matches!(i, OptionValue::String(s) if s == item)))
+    }
+
     /// The lists of strings of a list-of-lists option; empty when the option is absent.
     pub fn string_lists(&self, name: &str) -> Vec<Vec<String>> {
         match self.0.get(name) {
@@ -532,6 +538,47 @@ pub mod shared {
         )
     }
 
+    pub fn signature_wrap_annotated(default: bool) -> OptionDef {
+        OptionDef::boolean(
+            "signature_wrap_annotated",
+            default,
+            "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
+        )
+    }
+
+    pub fn semicolon_keep_parents(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "semicolon_keep_parents",
+            default,
+            "`;` between and after statements is redundant: one at the end of a line is removed, one between two statements of a line becomes a line break, except in nodes of these kinds (where it separates other things).",
+        )
+    }
+
+    pub fn settle_keywords(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "settle_keywords",
+            default,
+            "Keywords of statements whose braces depend on the line width. A file whose formatted output has a line that starts with one, has a body after its head on the same line (no `{`) and is followed by a deeper-indented line is rewritten once more, since the layout moved the code.",
+        )
+    }
+
+    pub fn annotation_inline(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "annotation_inline",
+            &["never", "single"],
+            default,
+            "A declaration whose only annotation has no arguments keeps its declaration on the line of the annotation when the source has it there (`@Test fun f()`); `never`: every annotation of a declaration has a line of its own.",
+        )
+    }
+
+    pub fn annotation_source_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "annotation_source_kinds",
+            default,
+            "Node kinds of declarations whose annotations stay on the lines where the source has them.",
+        )
+    }
+
     pub fn member_chain_head_calls(default: &[&str]) -> OptionDef {
         OptionDef::words(
             "member_chain_head_calls",
@@ -561,9 +608,9 @@ pub mod shared {
     pub fn assignment_layout(default: &'static str) -> OptionDef {
         OptionDef::choice(
             "assignment_layout",
-            &["compact", "fluid", "break"],
+            &["compact", "fluid", "break", "multiline"],
             default,
-            "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+            "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
         )
     }
 
@@ -573,6 +620,14 @@ pub mod shared {
             &["always", "binary_test"],
             default,
             "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
+        )
+    }
+
+    pub fn assignment_keep_break_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "assignment_keep_break_kinds",
+            default,
+            "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
         )
     }
 
