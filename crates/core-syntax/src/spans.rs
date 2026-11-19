@@ -3,6 +3,8 @@
 //! range, and the extents of the labels of a block.
 //!
 //! concept: hand-written-parser-kit
+//! what: Lexer base, token stream with trivia, parser cursor and Pratt climbing for hand-written lossless parsers.
+//! tools: none (parser plumbing)
 
 use std::cmp::Reverse;
 
