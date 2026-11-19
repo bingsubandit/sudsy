@@ -103,7 +103,7 @@ fn parse_as(src: &str, source_type: SourceType) -> ParseResult {
         // wants parents first, in source order.
         let order = |n: &Node| (n.start, std::cmp::Reverse(n.end));
         if !collector.nodes.is_sorted_by_key(order) {
-            collector.nodes.sort_by_key(order);
+            core_syntax::spans::sort_nested(&mut collector.nodes, |n| (n.start, n.end, 0u8));
         }
         let tokens = (parsed.tokens.iter())
             .filter(|t| t.end() > t.start())

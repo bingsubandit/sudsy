@@ -110,8 +110,7 @@ fn build(src: &str, grammar: &'static Grammar) -> ParseResult {
     }
     // Children come in source order but for a few nodes: a stable sort keeps a parent before a
     // child of the same start.
-    walk.nodes
-        .sort_by_key(|n| (n.start, std::cmp::Reverse(n.end)));
+    core_syntax::spans::sort_nested(&mut walk.nodes, |n| (n.start, n.end, 0u8));
     let mut result = replay_grammar(src, grammar, &tokens(src), &walk.nodes, |t, _| t);
     let mut errors = syntax_errors(program);
     errors.append(&mut result.errors);
