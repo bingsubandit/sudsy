@@ -34,8 +34,10 @@ struct Run {
 /// The table and the line under it.
 pub(crate) fn table() -> Result<String> {
     let path = xtask::repo_root().join("bench/speed.json");
-    let text = std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
-    let speed: Speed = serde_json::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
+    let text =
+        std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+    let speed: Speed =
+        serde_json::from_str(&text).with_context(|| format!("parsing {}", path.display()))?;
     let mut languages: Vec<&str> = Vec::new();
     for row in &speed.rows {
         if !languages.contains(&row.language.as_str()) {
@@ -47,14 +49,21 @@ pub(crate) fn table() -> Result<String> {
     );
     let mut corpora = Vec::new();
     for language in &languages {
-        let mut rows: Vec<&Row> = speed.rows.iter().filter(|r| r.language == *language).collect();
+        let mut rows: Vec<&Row> = speed
+            .rows
+            .iter()
+            .filter(|r| r.language == *language)
+            .collect();
         rows.sort_by(|a, b| a.task.cmp(&b.task)); // stable: Format before Lint, tools in file order
         if let Some(row) = rows.iter().find(|r| !r.corpus.is_empty()) {
             corpora.push(format!("{language}: {}", row.corpus));
         }
         let mut task = "";
         for (i, row) in rows.iter().enumerate() {
-            let (language_cell, task_cell) = (if i == 0 { language } else { "" }, if row.task == task { "" } else { &row.task });
+            let (language_cell, task_cell) = (
+                if i == 0 { language } else { "" },
+                if row.task == task { "" } else { &row.task },
+            );
             task = &row.task;
             let (speed_cell, time, memory) = match (&row.sudsy, &row.other) {
                 (Some(s), Some(o)) => (
@@ -63,12 +72,18 @@ pub(crate) fn table() -> Result<String> {
                     format!("{:.0} / {:.0} MB", s.mb, o.mb),
                 ),
                 _ => (
-                    format!("not measured: {}", row.not_measured.as_deref().unwrap_or("no result")),
+                    format!(
+                        "not measured: {}",
+                        row.not_measured.as_deref().unwrap_or("no result")
+                    ),
                     "-".into(),
                     "-".into(),
                 ),
             };
-            out += &format!("| {language_cell} | {task_cell} | {} | {speed_cell} | {time} | {memory} |\n", row.tool);
+            out += &format!(
+                "| {language_cell} | {task_cell} | {} | {speed_cell} | {time} | {memory} |\n",
+                row.tool
+            );
         }
     }
     out += &format!(
@@ -83,7 +98,13 @@ pub(crate) fn table() -> Result<String> {
 /// What Sudsy is against the tool: `same` within 10%, else `N× faster` or `N× slower`.
 fn verdict(sudsy: f64, tool: f64) -> String {
     let ratio = tool / sudsy;
-    let times = |x: f64| if x >= 10.0 { format!("{x:.0}×") } else { format!("{x:.1}×") };
+    let times = |x: f64| {
+        if x >= 10.0 {
+            format!("{x:.0}×")
+        } else {
+            format!("{x:.1}×")
+        }
+    };
     if (1.0 / 1.1..=1.1).contains(&ratio) {
         "same".into()
     } else if ratio > 1.0 {
@@ -94,5 +115,9 @@ fn verdict(sudsy: f64, tool: f64) -> String {
 }
 
 fn seconds(s: f64) -> String {
-    if s < 0.1 { format!("{s:.3} s") } else { format!("{s:.2} s") }
+    if s < 0.1 {
+        format!("{s:.3} s")
+    } else {
+        format!("{s:.2} s")
+    }
 }

@@ -68,12 +68,12 @@ pub fn generate(providers: &[Box<dyn LanguageProvider>]) -> Result<Vec<(PathBuf,
     let crates = crates.join(", ");
     out.push(splice(
         "README.md",
-        &[("languages", names.clone()), ("speed", crate::speed::table()?)],
+        &[
+            ("languages", names.clone()),
+            ("speed", crate::speed::table()?),
+        ],
     )?);
-    for rel in [
-        "editors/vscode/README.md",
-        "docs/ai/editor/vscode.md",
-    ] {
+    for rel in ["editors/vscode/README.md", "docs/ai/editor/vscode.md"] {
         out.push(splice(rel, &[("languages", names.clone())])?);
     }
     out.push(splice(

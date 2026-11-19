@@ -1,8 +1,62 @@
 {
- "runner": "Linux aarch64, 8 cores, 0xd4f",
+ "runner": "local run, Linux aarch64, 8 cores (agent host, shared, not the CI runner)",
  "runs": 5,
- "commit": "47b96b54",
+ "commit": "33134977",
  "rows": [
+  {
+   "id": "prettier/format",
+   "language": "JSON",
+   "task": "Format",
+   "tool": "Prettier",
+   "version": "3.9.10",
+   "corpus": "the valid files of JSONTestSuite",
+   "files": 95,
+   "bytes": 1190,
+   "sudsy": {
+    "s": 0.012,
+    "mb": 34
+   },
+   "other": {
+    "s": 0.268,
+    "mb": 89
+   }
+  },
+  {
+   "id": "prettier-js/format",
+   "language": "JS/TS",
+   "task": "Format",
+   "tool": "Prettier",
+   "version": "3.9.10",
+   "corpus": "three.js src, express lib and test, 8 copies",
+   "files": 848,
+   "bytes": 4619096,
+   "sudsy": {
+    "s": 0.213,
+    "mb": 183
+   },
+   "other": {
+    "s": 5.028,
+    "mb": 297
+   }
+  },
+  {
+   "id": "biome/format",
+   "language": "JSON",
+   "task": "Format",
+   "tool": "Biome",
+   "version": "2.6.4",
+   "corpus": "the valid files of JSONTestSuite",
+   "files": 95,
+   "bytes": 1190,
+   "sudsy": {
+    "s": 0.009,
+    "mb": 42
+   },
+   "other": {
+    "s": 0.036,
+    "mb": 45
+   }
+  },
   {
    "id": "ruff/format",
    "language": "Python",
@@ -13,12 +67,12 @@
    "files": 1085,
    "bytes": 9052527,
    "sudsy": {
-    "s": 0.62,
-    "mb": 223
+    "s": 0.352,
+    "mb": 239
    },
    "other": {
-    "s": 0.121,
-    "mb": 59
+    "s": 0.08,
+    "mb": 58
    }
   },
   {
@@ -31,49 +85,63 @@
    "files": 1085,
    "bytes": 9052527,
    "sudsy": {
-    "s": 0.649,
-    "mb": 239
+    "s": 0.446,
+    "mb": 250
    },
    "other": {
-    "s": 0.242,
-    "mb": 55
+    "s": 0.186,
+    "mb": 57
    }
   },
   {
-   "id": "prettier-js/format",
+   "id": "csharpier/format",
+   "language": "C#",
+   "task": "Format",
+   "tool": "CSharpier",
+   "version": "1.3.0",
+   "corpus": "dotnet/runtime CoreLib",
+   "files": 1679,
+   "bytes": 27297478,
+   "sudsy": {
+    "s": 4.393,
+    "mb": 558
+   },
+   "other": {
+    "s": 16.327,
+    "mb": 548
+   }
+  },
+  {
+   "id": "biome-js/format",
    "language": "JS/TS",
    "task": "Format",
-   "tool": "Prettier",
-   "version": "3.9.10",
-   "corpus": "three.js src, express lib and test, 8 copies",
-   "files": 6864,
-   "bytes": 42099488,
-   "sudsy": {
-    "s": 3.373,
-    "mb": 617
-   },
-   "other": {
-    "s": 56.637,
-    "mb": 335
-   }
+   "tool": "Biome",
+   "version": "2.6.4",
+   "not_measured": "no mirroring preset"
   },
   {
-   "id": "prettier/format",
+   "id": "biome-js/lint",
+   "language": "JS/TS",
+   "task": "Lint",
+   "tool": "Biome",
+   "version": "2.6.4",
+   "not_measured": "no mirroring preset"
+  },
+  {
+   "id": "oxlint/lint",
+   "language": "JS/TS",
+   "task": "Lint",
+   "tool": "oxlint",
+   "version": "1.94.0",
+   "not_measured": "no mirroring preset"
+  },
+  {
+   "id": "dprint/format",
    "language": "JSON",
    "task": "Format",
-   "tool": "Prettier",
-   "version": "3.9.10",
-   "corpus": "the valid files of JSONTestSuite",
-   "files": 95,
-   "bytes": 1190,
-   "sudsy": {
-    "s": 0.01,
-    "mb": 50
-   },
-   "other": {
-    "s": 0.262,
-    "mb": 89
-   }
+   "tool": "dprint",
+   "version": "0.64.3",
+   "not_measured": "no mirroring preset"
   }
  ]
 }

@@ -102,7 +102,7 @@ def best_of(sudsy_cmd, tool_cmd, cwd, sudsy_env, tool_env):
 
 
 def runner():
-    cpu = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith(("model name", "Model name", "CPU part"))), "")
+    cpu = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith(("model name", "Model name"))), "")
     return os.environ.get("SPEED_RUNNER") or f"{platform.system()} {platform.machine()}, {os.cpu_count()} cores{', ' + cpu if cpu else ''}"
 
 

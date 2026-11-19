@@ -101,6 +101,20 @@ Corpora (for example Django for Python, the .NET runtime, Roslyn and ASP.NET Cor
 ## Performance
 
 <!-- generated:speed -->
+| Language | Task | Compared with | Sudsy speed | Time (Sudsy / tool) | Peak memory (Sudsy / tool) |
+|---|---|---|---|---|---|
+| JSON | Format | Prettier | 22× faster | 0.012 s / 0.27 s | 34 / 89 MB |
+|  |  | Biome | 4.0× faster | 0.009 s / 0.036 s | 42 / 45 MB |
+|  |  | dprint | not measured: no mirroring preset | - | - |
+| JS/TS | Format | Prettier | 24× faster | 0.21 s / 5.03 s | 183 / 297 MB |
+|  |  | Biome | not measured: no mirroring preset | - | - |
+|  | Lint | Biome | not measured: no mirroring preset | - | - |
+|  |  | oxlint | not measured: no mirroring preset | - | - |
+| Python | Format | ruff | 4.4× slower | 0.35 s / 0.080 s | 239 / 58 MB |
+|  | Lint | ruff | 2.4× slower | 0.45 s / 0.19 s | 250 / 57 MB |
+| C# | Format | CSharpier | 3.7× faster | 4.39 s / 16.33 s | 558 / 548 MB |
+
+Runner: local run, Linux aarch64, 8 cores (agent host, shared, not the CI runner). Best of 5 runs, a new process each, caches off, `format --check` and `lint` with the Sudsy preset that mirrors the tool. Corpus ([docs/languages.md](docs/languages.md)): JSON: the valid files of JSONTestSuite; JS/TS: three.js src, express lib and test, 8 copies; Python: 1085 files; C#: dotnet/runtime CoreLib. Rerun one row: `scripts/speed.sh <tool>`.
 <!-- /generated -->
 
 Sudsy does the same work as each tool: `format --check` and `lint` with the preset that mirrors it. The binary is about 53 MB: it holds the parsers for every language and a Wasm runtime for plugins. Method: [docs/performance.md](docs/performance.md).
