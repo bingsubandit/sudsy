@@ -83,21 +83,39 @@ def parse(output, spec, rules):
     return out
 
 
+def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out, before):
+    """The proof run of docs/ai/design/parity-target.md (`coverage --proof`): the corpus of `work` is copied, formatted with
+    `sudsy format` under the tool's preset and checked by the tool again; returns the findings of `layout` ids (the `formatter`
+    catalog entries) that remain. A finding left counts as missing in the target; `before` is the same count before formatting."""
+    after = prefix / "proof"
+    shutil.rmtree(after, ignore_errors=True)
+    shutil.copytree(work, after)
+    (after / "sudsy.yaml").write_text(json.dumps({"extends": [f"preset:{preset}"]}), encoding="utf-8")
+    run = subprocess.run([sudsy, "format", "."], cwd=after, capture_output=True, text=True, encoding="utf-8", check=False)
+    (after / "sudsy.yaml").unlink()
+    found, _ = findings(tool, spec, prefix, after, exe, rules, copy=False)
+    left = [f for f in found if f[1] in layout and f[0] not in left_out]
+    per = Counter(f[1] for f in left)
+    print(f"proof: `sudsy format` exit {run.returncode}; formatter findings {len(before)} before, {len(left)} after in {len({f[0] for f in left})} files: "
+          + (", ".join(f"{r} {n}" for r, n in per.most_common(12)) or "none"))
+    return len(left)
+
+
 def norm(path, work):
     """A path as the work folder names it: relative, with `/`."""
     p = os.path.normpath(path)
     return (os.path.relpath(p, work) if os.path.isabs(p) else p).replace("\\", "/")
 
 
-def findings(tool, spec, prefix, work, exe, rules):
-    """Copies the corpus into `work`, writes the config files and runs the tool; returns `(findings, files)`
-    where `findings` is `[(path, rule, message)]` and `files` the number of corpus files."""
+def findings(tool, spec, prefix, work, exe, rules, copy=True):
+    """Copies the corpus into `work` (unless `copy` is off: the files are there already), writes the config files and runs the tool;
+    returns `(findings, files)` where `findings` is `[(path, rule, message)]` and `files` the number of corpus files."""
     filters = Counter()
     files = corpus_files(spec, filters)
-    for inside, source in files:
+    for inside, source in files if copy else []:
         (work / inside).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(source, work / inside)
-    for name, text in spec.get("files", {}).items():
+    for name, text in spec.get("files", {}).items() if copy else []:
         (work / name).write_text(text.replace("{prefix}", str(prefix)), encoding="utf-8")
     groups = {}
     for inside, _ in files:
