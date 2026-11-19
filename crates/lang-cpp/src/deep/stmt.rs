@@ -113,7 +113,7 @@ impl Cx<'_> {
         if p >= b {
             return p;
         }
-        if self.c[p].kind == k::LBRACE && self.last[p] != super::NONE {
+        if self.c[p].kind == k::LBRACE && self.groups.is_open(p) {
             self.own_block(p, BODY);
             if self.closed(p) && self.group_kind(p) != Some(k::BLOCK) {
                 self.retag(p, k::BLOCK);

@@ -47,7 +47,7 @@ pub fn parse(src: &str) -> ParseResult {
     extend_over_heredocs(&mut nodes, &heredocs);
     // The visitor goes by field, not by position (`a if b` visits `b` first); a stable sort keeps a
     // parent before a child of the same span.
-    nodes.sort_by_key(|n| (n.start, std::cmp::Reverse(n.end)));
+    core_syntax::spans::sort_nested(&mut nodes, |n| (n.start, n.end, 0u8));
     let mut result = replay_grammar(src, grammars::RUBY.get(), &tokens, &nodes, |t, _| t);
     let mut errors: Vec<ParseError> = parsed
         .errors

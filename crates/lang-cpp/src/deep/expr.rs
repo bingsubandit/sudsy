@@ -109,7 +109,7 @@ impl Cx<'_> {
 
     /// The lines of a `{ }` group of values are read as a list when the driver reaches them.
     pub(super) fn mark_init(&mut self, i: usize) {
-        let Some(&g) = self.group.get(i).filter(|&&g| g != super::NONE) else {
+        let Some(g) = self.groups.node(i) else {
             return;
         };
         // A group that holds statements (`MACRO({ a; b; })`) is a block.
@@ -125,10 +125,10 @@ impl Cx<'_> {
                 "switch" | "if" | "for" | "while" | "do" | "return" | "try"
             );
         if (p < hi || statement) && self.closed(i) {
-            self.nodes[g as usize].kind = k::BLOCK;
-            self.scope[g as usize] = BODY;
+            self.nodes[g].kind = k::BLOCK;
+            self.scope[g] = BODY;
         } else {
-            self.scope[g as usize] = INIT;
+            self.scope[g] = INIT;
         }
     }
 
@@ -255,7 +255,7 @@ impl Cx<'_> {
             self.new_expression();
             return;
         }
-        if t.kind == k::LPAR && self.last[at] != super::NONE && self.cast(at) {
+        if t.kind == k::LPAR && self.groups.is_open(at) && self.cast(at) {
             self.pos = self.skip(at);
             self.unary();
             self.emit(at, self.pos - 1, k::CAST);
@@ -317,9 +317,8 @@ impl Cx<'_> {
         // `(T) x` with a lone name is a cast only before something that cannot continue a binary
         // expression: a name, a literal, `(` is a call (`(f)(x)`).
         // A prefix operator after a lone name is a binary operator: `(a) - b`.
-        let chained = self.is(after, self.lim, k::LPAR)
-            && self.last[after] != super::NONE
-            && self.cast(after);
+        let chained =
+            self.is(after, self.lim, k::LPAR) && self.groups.is_open(after) && self.cast(after);
         builtin || decorated || chained || (name && !prefix && self.c[after].kind != k::LPAR)
     }
 
@@ -352,13 +351,13 @@ impl Cx<'_> {
                 return;
             }
             match self.c[p].kind {
-                k::LPAR if self.last[p] != super::NONE => {
+                k::LPAR if self.groups.is_open(p) => {
                     self.args(p, k::ARGUMENTS);
                     self.pos = self.skip(p);
                     self.emit(at, self.pos - 1, k::CALL);
                 }
                 k::LBRACE
-                    if self.last[p] != super::NONE
+                    if self.groups.is_open(p)
                         && self.group_kind(p) != Some(k::BLOCK)
                         && self.callee_before(p) =>
                 {
@@ -369,7 +368,7 @@ impl Cx<'_> {
                     self.pos = self.skip(p);
                     self.emit(at, self.pos - 1, k::CALL);
                 }
-                k::LSQB if self.last[p] != super::NONE => {
+                k::LSQB if self.groups.is_open(p) => {
                     self.args(p, k::ARGUMENTS);
                     self.pos = self.skip(p);
                     self.emit(at, self.pos - 1, k::INDEX);
@@ -410,7 +409,7 @@ impl Cx<'_> {
         match t.kind {
             k::NUMBER | k::CHAR => self.pos += 1,
             k::STRING => self.strings(),
-            k::LPAR if self.last[at] != super::NONE => {
+            k::LPAR if self.groups.is_open(at) => {
                 let (lo, hi) = self.inner(at);
                 // `({ statements })` and what a directive splits are no plain parentheses.
                 if self.closed(at) && !self.has_block(lo, hi) && !self.crosses_in(at) {
@@ -419,12 +418,12 @@ impl Cx<'_> {
                 self.list(lo, hi);
                 self.pos = self.skip(at);
             }
-            k::LBRACE if self.last[at] != super::NONE => {
+            k::LBRACE if self.groups.is_open(at) => {
                 self.mark_init(at);
                 self.retag(at, k::INIT_LIST);
                 self.pos = self.skip(at);
             }
-            k::LSQB if self.last[at] != super::NONE => self.lambda(),
+            k::LSQB if self.groups.is_open(at) => self.lambda(),
             // A macro in front of a string (`PRI "x"`) goes with it.
             k::IDENT if self.is(at + 1, self.lim, k::STRING) => self.strings(),
             k::IDENT | k::COLON_COLON => self.name(),
@@ -513,12 +512,12 @@ impl Cx<'_> {
     pub(super) fn operator_name_end(&self, p: usize, b: usize) -> usize {
         let mut q = p + 1;
         if (self.is(q, b, k::LPAR) || self.is(q, b, k::LSQB))
-            && self.last[q] != super::NONE
+            && self.groups.is_open(q)
             && self.inner(q).0 >= self.inner(q).1
         {
             return self.skip(q);
         }
-        while q < b && !(self.c[q].kind == k::LPAR && self.last[q] != super::NONE) {
+        while q < b && !(self.c[q].kind == k::LPAR && self.groups.is_open(q)) {
             q += 1;
         }
         q
@@ -623,7 +622,7 @@ impl Cx<'_> {
                     }
                 }
                 k::LPAR | k::LSQB | k::LBRACE => {
-                    if self.last[q] == super::NONE {
+                    if !self.groups.is_open(q) {
                         return None;
                     }
                     q = self.skip(q);
@@ -664,14 +663,14 @@ impl Cx<'_> {
             q = self.skip(q);
         }
         // Specifiers and a trailing return type, up to the body.
-        while q < b && !(self.c[q].kind == k::LBRACE && self.last[q] != super::NONE) {
+        while q < b && !(self.c[q].kind == k::LBRACE && self.groups.is_open(q)) {
             if self.c[q].kind == k::SEMI || self.c[q].kind == k::COMMA || self.c[q].kind == k::RPAR
             {
                 break;
             }
             q = self.skip(q);
         }
-        if self.is(q, b, k::LBRACE) && self.last[q] != super::NONE {
+        if self.is(q, b, k::LBRACE) && self.groups.is_open(q) {
             if self.closed(q) && self.group_kind(q) != Some(k::BLOCK) {
                 self.retag(q, k::BLOCK);
             }

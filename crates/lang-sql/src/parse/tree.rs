@@ -67,7 +67,7 @@ pub(crate) fn build(src: &str, flat: Flat) -> ParseResult {
             Some((i, Node { start, end, kind }))
         })
         .collect();
-    spans.sort_by_key(|(i, n)| (n.start, std::cmp::Reverse(n.end), std::cmp::Reverse(*i)));
+    core_syntax::spans::sort_nested(&mut spans, |(i, n)| (n.start, n.end, std::cmp::Reverse(*i)));
     let spans: Vec<Node> = spans.into_iter().map(|(_, n)| n).collect();
     // The zero-width leaves share their start with the leaf after them: they are not looked up.
     let lexed = |_: &str, pos: usize| {

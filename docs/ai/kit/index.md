@@ -282,7 +282,7 @@ One row per concept (one behavior). `used by`: languages whose grammar, `format.
 | container-rows | core-syntax/containers.rs | Nodes whose content lines all carry a prefix (quote marker, list indent), and fenced blocks inside them. | CommonMark container blocks | markdown | SINGLE-USE |
 | dialect-keyword-tables | lang-sql/parse/dialect.rs | Keyword tables and syntax switches of the dialects of one parser. | sqlfluff dialects | sql | SINGLE-USE |
 | embed-rows | core-syntax/embed_rows.rs | Which node holds code of another language and how it is carved out of the host text. | none (embedded code as rows) | dockerfile, html, makefile, markdown |  |
-| hand-written-parser-kit | core-syntax/parse.rs | Lexer base, token stream with trivia, parser cursor and Pratt climbing for hand-written lossless parsers. | none (parser plumbing) | cpp, csharp, css, java, js, json, yaml |  |
+| hand-written-parser-kit | core-syntax/parse.rs +1 | Lexer base, token stream with trivia, parser cursor and Pratt climbing for hand-written lossless parsers. | none (parser plumbing) | cpp, csharp, css, java, js, json, ruby, sql, yaml |  |
 | html-tag-table | lang-html/parser/tags.rs | Void elements and which start tag closes an open element. | angular-html-parser | html | SINGLE-USE |
 | parse-guards | provider-api/guard.rs | Nesting, size and panic guards around the parse of one file. | none (robustness) | cpp, csharp, css, dockerfile, editorconfig, gitignore, graphql, hcl, html, ini, java, js, json, kotlin, makefile, markdown, php, powershell, protobuf, python, ruby, shell, sql, toml, xml, yaml |  |
 | parser-lookahead | lang-java/parser/look.rs | Token lookahead without building a tree, to decide what a construct is. |  | java | SINGLE-USE |

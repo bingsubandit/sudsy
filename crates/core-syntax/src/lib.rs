@@ -28,6 +28,7 @@ pub mod regex;
 pub mod roles;
 pub mod scan;
 pub mod shape;
+pub mod spans;
 pub mod strings;
 pub mod tree;
 pub mod trivia;

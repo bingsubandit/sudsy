@@ -21,9 +21,10 @@ mod stmt;
 use crate::generated::kind as k;
 use crate::lexer::LTok;
 use core_syntax::SyntaxKind;
+use core_syntax::spans::{self, Directives, Extents, Groups};
 use provider_api::adapter::Node;
 
-const NONE: u32 = u32::MAX;
+const NONE: u32 = spans::NONE;
 const GONE: u32 = u32::MAX;
 
 /// What the lines of a `Block` are: unset (the enclosing block's), a namespace, a class, a function.
@@ -46,13 +47,8 @@ struct Cx<'a> {
     src: &'a str,
     /// The tokens outside preprocessor directives.
     c: Vec<Tk>,
-    /// For an opening token: the index of the last token of its group; else `NONE`.
-    last: Vec<u32>,
-    /// For an opening token: the structural node of its group.
-    group: Vec<u32>,
-    /// For a token that ends a group: the innermost group it ends (an unclosed group ends at
-    /// the closer of another).
-    ender: Vec<u32>,
+    /// The bracket groups of the tokens, by their structural nodes.
+    groups: Groups,
     nodes: Vec<Node>,
     extra: Vec<Node>,
     /// The scope of each `Block` node, set by the construct that owns it.
@@ -62,9 +58,8 @@ struct Cx<'a> {
     lim: usize,
     /// Lookahead: nodes are not made.
     quiet: bool,
-    /// The preprocessor directives between code tokens: the number of code tokens before it and
-    /// the group it is in (the opening token's index, -1 for none), in order.
-    dirs: Vec<(u32, i64)>,
+    /// The preprocessor directives between code tokens.
+    dirs: Directives,
 }
 
 /// The nodes of `structure` with the statements, declarations and expressions inside them.
@@ -84,46 +79,35 @@ impl<'a> Cx<'a> {
                 end: t.end,
             })
             .collect();
-        let mut last = vec![NONE; c.len()];
-        let mut group = vec![NONE; c.len()];
-        for (i, n) in nodes.iter().enumerate() {
-            if matches!(
+        let spans: Vec<(u32, u32)> = c.iter().map(|t| (t.start, t.end)).collect();
+        let is_group = |n: &Node| {
+            matches!(
                 n.kind,
                 k::PAREN_GROUP | k::BRACKET_GROUP | k::BLOCK | k::INIT_LIST
-            ) {
-                let open = c.partition_point(|t| t.start < n.start);
-                let end = c.partition_point(|t| t.end <= n.end);
-                if open < c.len() && c[open].start == n.start && end > open {
-                    last[open] = (end - 1) as u32;
-                    group[open] = i as u32;
-                }
-            }
-        }
-        let mut ender = vec![NONE; c.len()];
-        for (open, &l) in last.iter().enumerate() {
-            if l != NONE {
-                ender[l as usize] = open as u32;
-            }
-        }
+            )
+        };
+        let groups = Groups::new(
+            &spans,
+            (nodes.iter().enumerate())
+                .filter(|(_, n)| is_group(n))
+                .map(|(i, n)| (i, n.start, n.end)),
+        );
         // A brace group the text ends early has no closer: it is no block.
         let mut nodes = nodes;
-        for (open, &g) in group.iter().enumerate() {
-            if g != NONE
-                && matches!(nodes[g as usize].kind, k::BLOCK | k::INIT_LIST)
-                && (c[last[open] as usize].kind != k::RBRACE
-                    || ender[last[open] as usize] != open as u32)
+        for open in 0..c.len() {
+            if let (Some(g), Some(l)) = (groups.node(open), groups.last(open))
+                && matches!(nodes[g].kind, k::BLOCK | k::INIT_LIST)
+                && (c[l].kind != k::RBRACE || groups.ender(l) != Some(open))
             {
-                nodes[g as usize].kind = k::BRACE_GROUP;
+                nodes[g].kind = k::BRACE_GROUP;
             }
         }
-        let dirs = directives(toks, &last);
+        let dirs = Directives::new(toks.iter().map(|t| t.dir), &groups);
         let scope = vec![UNSET; nodes.len()];
         Cx {
             src,
             c,
-            last,
-            group,
-            ender,
+            groups,
             nodes,
             extra: Vec::new(),
             scope,
@@ -137,18 +121,12 @@ impl<'a> Cx<'a> {
     /// Reads every line of the file, in order: the scope a line is in is the one of the innermost
     /// `Block` around it, which the owner of the block set when its own line was read.
     fn run(&mut self) {
-        // The end, the scope and the open `case` node of each enclosing block.
-        let mut stack: Vec<(u32, u8, u32)> = Vec::new();
+        let mut stack: Extents<u8> = Extents::default();
         for i in 0..self.nodes.len() {
             let (n_start, n_end, n_kind) =
                 (self.nodes[i].start, self.nodes[i].end, self.nodes[i].kind);
-            while let Some(&(end, _, case)) = stack.last()
-                && end <= n_start
-            {
-                self.close_case(case, end);
-                stack.pop();
-            }
-            let scope = stack.last().map_or(SCOPE, |s| s.1);
+            stack.leave(n_start, |case, end| self.close_case(case, end));
+            let scope = stack.top().copied().unwrap_or(SCOPE);
             match n_kind {
                 k::BLOCK | k::INIT_LIST | k::ARGUMENTS | k::PARENTHESIZED | k::LAMBDA => {
                     let own = match (self.scope[i], n_kind) {
@@ -160,28 +138,21 @@ impl<'a> Cx<'a> {
                     if own == INIT && n_kind == k::BLOCK {
                         self.nodes[i].kind = k::INIT_LIST;
                     }
-                    stack.push((n_end, own, NONE));
+                    stack.enter(n_end, own);
                 }
-                k::LINE => {
-                    let label = self.line(i, scope);
-                    if let (Some(top), true) = (stack.last_mut(), label) {
-                        self.close_case(top.2, n_start);
-                        top.2 = i as u32;
-                    }
+                // A line that is a label closes the one before it.
+                k::LINE if self.line(i, scope) => {
+                    stack.label(i as u32, n_start, |case, end| self.close_case(case, end));
                 }
+                k::LINE => {}
                 _ => {}
             }
         }
-        while let Some((end, _, case)) = stack.pop() {
-            self.close_case(case, end);
-        }
+        stack.finish(|case, end| self.close_case(case, end));
     }
 
     /// A `case` label covers the lines after it up to the next label or the end of the block.
     fn close_case(&mut self, case: u32, before: u32) {
-        if case == NONE {
-            return;
-        }
         let at = self.c.partition_point(|t| t.end <= before);
         let mut e = at;
         // The `}` of the block is not part of the last case.
@@ -194,29 +165,21 @@ impl<'a> Cx<'a> {
     }
 
     fn finish(mut self) -> Vec<Node> {
-        let mut keyed: Vec<(u32, u32, u32, SyntaxKind)> =
-            Vec::with_capacity(self.nodes.len() + self.extra.len());
-        for (i, n) in self.nodes.iter().enumerate() {
+        let base = self.nodes.len() as u32;
+        let mut keyed: Vec<(Node, u32)> = Vec::with_capacity(self.nodes.len() + self.extra.len());
+        for (i, n) in self.nodes.drain(..).enumerate() {
             if n.start != GONE {
-                keyed.push((n.start, !n.end, i as u32, n.kind));
+                keyed.push((n, i as u32));
             }
         }
         // New nodes after the structural ones that cover the same text, the one made last
         // (the outer one) first.
-        let base = self.nodes.len() as u32;
         let count = self.extra.len() as u32;
         for (i, n) in std::mem::take(&mut self.extra).into_iter().enumerate() {
-            keyed.push((n.start, !n.end, base + (count - i as u32), n.kind));
+            keyed.push((n, base + (count - i as u32)));
         }
-        keyed.sort_unstable_by_key(|&(s, e, o, _)| (s, e, o));
-        keyed
-            .into_iter()
-            .map(|(start, end, _, kind)| Node {
-                start,
-                end: !end,
-                kind,
-            })
-            .collect()
+        spans::sort_nested(&mut keyed, |(n, o)| (n.start, n.end, *o));
+        keyed.into_iter().map(|(n, _)| n).collect()
     }
 
     // ---- tokens
@@ -241,48 +204,38 @@ impl<'a> Cx<'a> {
 
     /// The token after the one at `i`, or after its whole group.
     fn skip(&self, i: usize) -> usize {
-        match self.last[i] {
-            NONE => i + 1,
-            l => l as usize + 1,
-        }
+        self.groups.skip(i)
     }
 
     /// The tokens between the brackets of the group opened at `i`.
     fn inner(&self, i: usize) -> (usize, usize) {
-        let l = self.last[i] as usize;
-        (i + 1, if self.closed(i) { l } else { l + 1 })
+        self.groups.inner(i, |l| self.closer(l))
+    }
+
+    /// The token at `l` is a closing bracket.
+    fn closer(&self, l: usize) -> bool {
+        matches!(self.c[l].kind, k::RPAR | k::RSQB | k::RBRACE)
     }
 
     fn open(&self, i: usize, b: usize, kind: SyntaxKind) -> bool {
-        self.is(i, b, kind) && self.last[i] != NONE
+        self.is(i, b, kind) && self.groups.is_open(i)
     }
 
     // ---- nodes
 
     /// A directive lies between two parts of the tokens `a..=z`, not inside a group of them.
     fn crosses(&self, a: usize, z: usize) -> bool {
-        let from = self.dirs.partition_point(|d| d.0 as usize <= a);
-        (self.dirs[from..].iter())
-            .take_while(|d| d.0 as usize <= z)
-            .any(|d| d.1 < a as i64)
+        self.dirs.crosses(a, z)
     }
 
     /// A directive lies between two parts of the group opened at `i`.
     fn crosses_in(&self, i: usize) -> bool {
-        let last = self.last[i] as usize;
-        let from = self.dirs.partition_point(|d| d.0 as usize <= i);
-        (self.dirs[from..].iter())
-            .take_while(|d| d.0 as usize <= last)
-            .any(|d| d.1 == i as i64)
+        self.dirs.crosses_in(i, &self.groups)
     }
 
     /// The group opened at `i` has its closing token.
     fn closed(&self, i: usize) -> bool {
-        let l = self.last[i];
-        l != NONE
-            && l as usize > i
-            && self.ender[l as usize] == i as u32
-            && matches!(self.c[l as usize].kind, k::RPAR | k::RSQB | k::RBRACE)
+        self.groups.closed(i, |l| self.closer(l))
     }
 
     /// A node over the tokens `a..=z`; none when a directive splits them.
@@ -300,51 +253,19 @@ impl<'a> Cx<'a> {
 
     /// The structural node of the group at `i` becomes `kind`.
     fn retag(&mut self, i: usize, kind: SyntaxKind) {
-        if let Some(&g) = self.group.get(i)
-            && g != NONE
-        {
-            self.nodes[g as usize].kind = kind;
+        if let Some(g) = self.groups.node(i) {
+            self.nodes[g].kind = kind;
         }
     }
 
     fn group_kind(&self, i: usize) -> Option<SyntaxKind> {
-        match self.group.get(i) {
-            Some(&g) if g != NONE => Some(self.nodes[g as usize].kind),
-            _ => None,
-        }
+        self.groups.node(i).map(|g| self.nodes[g].kind)
     }
 
     /// A `Block` that a construct owns: its lines are of `scope`.
     fn own_block(&mut self, i: usize, scope: u8) {
-        if let Some(&g) = self.group.get(i)
-            && g != NONE
-        {
-            self.scope[g as usize] = scope;
+        if let Some(g) = self.groups.node(i) {
+            self.scope[g] = scope;
         }
     }
-}
-
-/// Where the directives are: before which code token, and in which group.
-fn directives(toks: &[LTok], last: &[u32]) -> Vec<(u32, i64)> {
-    let mut dirs = Vec::new();
-    let mut stack: Vec<usize> = Vec::new();
-    let (mut ci, mut seen) = (0usize, 0u32);
-    for t in toks {
-        if t.dir == 0 {
-            while stack.last().is_some_and(|&o| (last[o] as usize) < ci) {
-                stack.pop();
-            }
-            if last[ci] != NONE {
-                stack.push(ci);
-            }
-            ci += 1;
-        } else if t.dir != seen {
-            seen = t.dir;
-            while stack.last().is_some_and(|&o| (last[o] as usize) < ci) {
-                stack.pop();
-            }
-            dirs.push((ci as u32, stack.last().map_or(-1, |&o| o as i64)));
-        }
-    }
-    dirs
 }

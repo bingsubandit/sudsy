@@ -119,7 +119,7 @@ impl Cx<'_> {
                         return p;
                     }
                 }
-                k::LSQB if self.last[p] != NONE => p = self.skip(p),
+                k::LSQB if self.groups.is_open(p) => p = self.skip(p),
                 _ => return p,
             }
         }
@@ -296,13 +296,13 @@ impl Cx<'_> {
                 || self.is(q, b, k::AMP_AMP)
             {
                 q += 1;
-            } else if self.is(q, b, k::LSQB) && self.last[q] != NONE {
+            } else if self.is(q, b, k::LSQB) && self.groups.is_open(q) {
                 q = self.skip(q);
             } else if self.is(q, b, k::ARROW) {
                 q += 1;
                 while q < b
                     && !matches!(self.c[q].kind, k::SEMI | k::EQUAL)
-                    && !(self.c[q].kind == k::LBRACE && self.last[q] != NONE)
+                    && !(self.c[q].kind == k::LBRACE && self.groups.is_open(q))
                 {
                     q = self.skip(q);
                 }
@@ -310,7 +310,7 @@ impl Cx<'_> {
                 q += 1;
                 while q < b
                     && !matches!(self.c[q].kind, k::SEMI)
-                    && !(self.c[q].kind == k::LBRACE && self.last[q] != NONE)
+                    && !(self.c[q].kind == k::LBRACE && self.groups.is_open(q))
                 {
                     q = self.skip(q);
                 }
@@ -324,7 +324,7 @@ impl Cx<'_> {
         if self.is(q, b, k::COLON) {
             q = self.initializers(q, b);
         }
-        if self.is(q, b, k::LBRACE) && self.last[q] != NONE {
+        if self.is(q, b, k::LBRACE) && self.groups.is_open(q) {
             if self.closed(q) && self.group_kind(q) != Some(k::BLOCK) {
                 self.retag(q, k::BLOCK);
             }
@@ -485,7 +485,7 @@ impl Cx<'_> {
         {
             q = self.skip(q);
         }
-        if !(self.is(q, b, k::LBRACE) && self.last[q] != NONE) {
+        if !(self.is(q, b, k::LBRACE) && self.groups.is_open(q)) {
             return None;
         }
         if self.closed(q) {
@@ -538,7 +538,7 @@ impl Cx<'_> {
         while q < b {
             match self.c[q].kind {
                 k::LBRACE => {
-                    return (self.last[q] != NONE).then_some((q, base));
+                    return (self.groups.is_open(q)).then_some((q, base));
                 }
                 k::SEMI | k::EQUAL => return None,
                 k::COLON if base.is_none() => base = Some(q),
