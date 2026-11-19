@@ -9,11 +9,18 @@
 use crate::generated::kind as k;
 use core_config::shared;
 use core_format::comments::{self, Comment, CommentStyle};
-use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, doc};
-use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken};
+use core_format::frames::Frames;
+use core_format::rules::LazyRules;
+use core_format::{Doc, FormatCtx, FormatError, NodeFormatter, columns, doc};
+use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, grammars};
 use std::collections::HashMap;
 
 include!("schema.generated.rs");
+
+static ROWS: LazyRules = LazyRules::new(
+    || grammars::POWERSHELL.get(),
+    include_str!("../format.rules"),
+);
 
 pub struct PowerShellFormatter;
 
@@ -75,11 +82,11 @@ impl Tk {
 }
 
 fn is_open(kind: SyntaxKind) -> bool {
-    matches!(kind, k::OPEN_BRACE | k::HASH_OPEN | k::OPEN_PAREN)
+    ROWS.get().brackets().is_open(kind)
 }
 
 fn is_close(kind: SyntaxKind) -> bool {
-    matches!(kind, k::CLOSE_BRACE | k::CLOSE_PAREN)
+    ROWS.get().brackets().is_close(kind)
 }
 
 fn collect(g: &Grammar, root: &SyntaxNode) -> Vec<Tk> {
@@ -340,9 +347,9 @@ fn align_hashtables(cx: &FormatCtx<'_>, root: &SyntaxNode, tks: &[Tk]) -> HashMa
             let width = end - usize::from(first.text_range().start());
             entries.push((width, ei));
         }
-        let widest = entries.iter().map(|e| e.0).max().unwrap_or(0);
-        for (width, ei) in entries {
-            pads.insert(ei, widest - width);
+        let widths: Vec<usize> = entries.iter().map(|e| e.0).collect();
+        for ((_, ei), pad) in entries.iter().zip(columns::pads(&widths)) {
+            pads.insert(*ei, pad);
         }
     }
     pads
@@ -352,58 +359,20 @@ fn align_hashtables(cx: &FormatCtx<'_>, root: &SyntaxNode, tks: &[Tk]) -> HashMa
 /// `Some(false)` adds one where there is none, `Some(true)` makes it exactly one.
 fn blank(tks: &[Tk], i: usize, pads: &HashMap<usize, usize>) -> Option<bool> {
     let (prev, cur) = (&tks[i - 1], &tks[i]);
-    let binary = |t: &Tk| {
-        t.kind == k::OP && t.text() != ".." && t.tok.parent().is_some_and(|p| p.kind() == k::BINARY)
-    };
-    let one = match (prev.kind, cur.kind) {
-        (k::PIPE, _) | (_, k::PIPE) => return Some(false),
-        // Invoke-Formatter does not add the blank after the aligned `=` of `a=1`.
-        (k::ASSIGN, _) if pads.contains_key(&(i - 1)) && cur.gap.is_empty() => return None,
-        (k::COMMA | k::SEMI, _) | (k::ASSIGN, _) | (_, k::ASSIGN) => true,
-        _ if binary(prev) || binary(cur) => true,
-        (k::OPEN_BRACE, k::CLOSE_BRACE) => false,
-        (k::OPEN_BRACE, _) => true,
-        // `@{ a = 1 }`: the blank before `}` only; `{ a }` has both.
-        (_, k::CLOSE_BRACE) => !is_open(prev.kind),
-        (_, k::OPEN_BRACE) => {
-            // `$x.ForEach{ }`: the block is the argument of the method.
-            let method =
-                prev.kind == k::WORD && (prev.text().contains('.') || prev.text().contains("::"));
-            !is_open(prev.kind) && prev.kind != k::OPEN_BRACKET && !method
-        }
-        (k::KEYWORD, k::OPEN_PAREN) => {
-            cur.text() == "("
-                && prev.keyword(&["if", "elseif", "while", "switch", "foreach", "for", "until"])
-        }
-        _ => false,
-    };
-    one.then_some(true)
-}
-
-enum Frame {
-    /// An open bracket.
-    Open,
-    /// The lines that continue a pipeline (`|` at the end of a line) or a statement (a backtick
-    /// at the end of a line); a line that does both is indented twice.
-    Continuation { pipe: bool, tick: bool },
-}
-
-/// The indentation levels the open frames add up to.
-fn depth(frames: &[Frame]) -> usize {
-    (frames.iter())
-        .map(|f| match f {
-            Frame::Open => 1,
-            Frame::Continuation { pipe, tick } => usize::from(*pipe) + usize::from(*tick),
-        })
-        .sum()
-}
-
-/// Ends the continuation lines and the bracket of a closer.
-fn close(frames: &mut Vec<Frame>) {
-    while matches!(frames.last(), Some(Frame::Continuation { .. })) {
-        frames.pop();
+    let rows = ROWS.get().space();
+    if rows.at_least_one(&prev.tok, &cur.tok) {
+        return Some(false);
     }
-    frames.pop();
+    // Invoke-Formatter does not add the blank after the aligned `=` of `a=1`.
+    if prev.kind == k::ASSIGN && pads.contains_key(&(i - 1)) && cur.gap.is_empty() {
+        return None;
+    }
+    // `$x.ForEach{ }`: the block is the argument of the method.
+    let method = prev.kind == k::WORD && (prev.text().contains('.') || prev.text().contains("::"));
+    if cur.kind == k::OPEN_BRACE && method {
+        return None;
+    }
+    rows.spaced(&prev.tok, &cur.tok).then_some(true)
 }
 
 fn program(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Doc {
@@ -418,7 +387,7 @@ fn program(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Doc {
     // The current line's parts, its indentation level and whether it starts with a line break.
     let mut cur: Vec<Doc> = Vec::new();
     let mut level = 0;
-    let mut frames: Vec<Frame> = Vec::new();
+    let mut frames = Frames::default();
     let flush = |lines: &mut Vec<Doc>, cur: &mut Vec<Doc>, level: usize| {
         if cur.is_empty() {
             return;
@@ -444,17 +413,7 @@ fn program(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Doc {
             flush(&mut lines, &mut cur, level);
             // A pipeline or backtick line continues on the next line.
             let (pipe, tick) = (tks[i - 1].kind == k::PIPE, tks[i].cont);
-            match frames.last_mut() {
-                Some(Frame::Continuation { pipe: p, tick: t }) if pipe || tick => {
-                    *p |= pipe;
-                    *t |= tick;
-                }
-                Some(Frame::Continuation { .. }) => {
-                    frames.pop();
-                }
-                _ if pipe || tick => frames.push(Frame::Continuation { pipe, tick }),
-                _ => {}
-            }
+            frames.continue_line(pipe, tick);
             // Comments stand where the code in front of the closing bracket stands.
             let mut blank = if tks[i].breaks > 0 {
                 comments::blank_lines_before(g, &tks[i].tok)
@@ -471,13 +430,13 @@ fn program(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Doc {
                 }
                 let mut parts: Vec<Doc> = blank_lines(blank).collect();
                 parts.extend([doc::hardline(), core_format::context::comment_doc(c)]);
-                lines.push(indented(depth(&frames), doc::concat(parts)));
+                lines.push(indented(frames.depth(), doc::concat(parts)));
                 blank = c.breaks_after.saturating_sub(1);
             }
             if is_close(tks[i].kind) {
-                close(&mut frames);
+                frames.close(1);
             }
-            level = depth(&frames);
+            level = frames.depth();
             cur.extend(blank_lines(blank));
             cur.push(doc::hardline());
             cur.extend(inline);
@@ -487,7 +446,7 @@ fn program(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Doc {
                 cur.push(doc::text(gap));
             }
             if is_close(tks[i].kind) {
-                close(&mut frames);
+                frames.close(1);
             }
         } else {
             // The first token: its comments stand on lines of their own.
@@ -503,7 +462,7 @@ fn program(cx: &FormatCtx<'_>, root: &SyntaxNode) -> Doc {
             cur.push(cx.trailing_comments_doc(&tks[i].tok));
         }
         if is_open(tks[i].kind) {
-            frames.push(Frame::Open);
+            frames.open(1);
         }
     }
     flush(&mut lines, &mut cur, level);

@@ -1,0 +1,22 @@
+# Blanks between two tokens of a line (Invoke-Formatter); no row: the source's.
+# Brackets open and close the frames that indent a line (syntax: crates/core-format/src/frames.rs).
+[lines]
+open = OpenBrace|HashOpen|OpenParen
+close = CloseBrace|CloseParen
+
+# A blank is added next to a pipe, not made exactly one.
+[at_least_one]
+kind=Pipe / *
+* / kind=Pipe
+
+[space]
+kind=Comma|Semi|Assign / * : yes
+* / kind=Assign : yes
+kind=Op&parent=Binary&text!=.. / * : yes
+* / kind=Op&parent=Binary&text!=.. : yes
+kind=OpenBrace|HashOpen|OpenParen / kind=CloseBrace : keep
+kind=OpenBrace / * : yes
+* / kind=CloseBrace : yes
+kind=HashOpen|OpenParen|OpenBracket / kind=OpenBrace : keep
+* / kind=OpenBrace : yes
+kind=Keyword&text=if|elseif|while|switch|foreach|for|until / kind=OpenParen&exact=( : yes
