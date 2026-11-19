@@ -47,7 +47,7 @@ impl NodeFormatter for KotlinFormatter {
         grammar: &core_syntax::Grammar,
         options: &core_config::ResolvedOptions,
     ) -> Option<String> {
-        crate::rewrite::rewrite(tree, text, grammar, options.int("line_width") as usize)
+        crate::rewrite::rewrite(tree, text, grammar, options)
     }
 
     fn blank_between(&self, cx: &FormatCtx<'_>, prev: &SyntaxNode, next: &SyntaxNode) -> bool {
