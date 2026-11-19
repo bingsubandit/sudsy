@@ -9,9 +9,11 @@ import argparse
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from collections import Counter
 from pathlib import Path
@@ -118,22 +120,45 @@ def corpus(name, config, speed, work):
     return len(found) * copies, size, spec.get("text") or f"{len(found)} files", paths
 
 
-def measure(command, cwd, env):
-    """One run in a new process: (wall seconds, peak resident MB of the process and the children it waited for)."""
+def files_checked(summary):
+    """The N of the `N file(s) checked` line that `sudsy format` and `sudsy lint` print last on stderr; None when absent."""
+    m = re.findall(r"(\d+) file\(s\) checked", summary)
+    return int(m[-1]) if m else None
+
+
+def check_sudsy_run(command, cwd, code, summary):
+    """A Sudsy run is a timing only when it exited 0 or 1 (findings or differences; a negative code is a crash) and
+    checked files: a run that checks none is a wrong corpus path, folder or preset, and its time means nothing."""
+    where = f"{' '.join(map(str, command))} in {cwd}"
+    if code < 0 or code > 1:
+        raise SystemExit(f"{where}: exit {code}")
+    if not files_checked(summary):
+        raise SystemExit(f"{where}: Sudsy checked 0 files")
+
+
+def measure(command, cwd, env, capture=False):
+    """One run in a new process: (wall seconds, peak resident MB of the process and the children it waited for, exit
+    code, stderr text when `capture`)."""
+    err = tempfile.TemporaryFile() if capture else subprocess.DEVNULL
     start = time.perf_counter()
-    p = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    p = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=err)
     _, status, usage = os.wait4(p.pid, 0)
     seconds = time.perf_counter() - start
     p.returncode = os.waitstatus_to_exitcode(status)
     if p.returncode in (126, 127):
         raise SystemExit(f"{' '.join(map(str, command))}: cannot run")
-    return seconds, usage.ru_maxrss / 1024, p.returncode  # ru_maxrss is KiB on Linux
+    text = ""
+    if capture:
+        err.seek(0)
+        text = err.read().decode("utf-8", "replace")
+        err.close()
+    return seconds, usage.ru_maxrss / 1024, p.returncode, text  # ru_maxrss is KiB on Linux
 
 
-def measure_all(commands, cwd, env):
+def measure_all(commands, cwd, env, capture=False):
     """The commands one after the other (a tool given `{files}` runs once per chunk): the seconds add up, the memory is the peak."""
-    runs = [measure(c, cwd, env) for c in commands]
-    return sum(r[0] for r in runs), max(r[1] for r in runs), max(r[2] for r in runs)
+    runs = [measure(c, cwd, env, capture) for c in commands]
+    return sum(r[0] for r in runs), max(r[1] for r in runs), max(r[2] for r in runs), runs[-1][3]
 
 
 def best_of(sudsy_cmd, tool_cmds, sudsy_cwd, tool_cwd, sudsy_env, tool_env):
@@ -141,9 +166,9 @@ def best_of(sudsy_cmd, tool_cmds, sudsy_cwd, tool_cwd, sudsy_env, tool_env):
     best = {}
     for _ in range(RUNS):
         for key, commands, cwd, env in (("sudsy", [sudsy_cmd], sudsy_cwd, sudsy_env), ("other", tool_cmds, tool_cwd, tool_env)):
-            seconds, mb, code = measure_all(commands, cwd, env)
-            if key == "sudsy" and code > 1:  # 1 is findings or differences; any other code is an error, not a timing
-                raise SystemExit(f"{' '.join(map(str, commands[0]))} in {cwd}: exit {code}")
+            seconds, mb, code, summary = measure_all(commands, cwd, env, capture=key == "sudsy")
+            if key == "sudsy":
+                check_sudsy_run(commands[0], cwd, code, summary)
             if key not in best or seconds < best[key]["s"]:
                 best[key] = {"s": round(seconds, 3), "mb": round(mb)}
     return best
@@ -173,7 +198,7 @@ def main():
     for name in chosen:
         config, specs = known[name]
         if not any(task in s for s in specs for task in ("format", "lint")):  # nothing to run: no install, only the reasons
-            version = config.get("version") or pf.catalog_version(config["catalog"])
+            version = config.get("version") or (pf.catalog_version(config["catalog"]) if "catalog" in config else "")
             prefix = exe = ""
         else:
             try:

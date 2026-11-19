@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 
 import parity_format as pf
+import speed
 
 YAML = """differences:
   wrong: choice  the tool is wrong
@@ -73,6 +74,24 @@ class Runner(unittest.TestCase):
             file.write_text("input", encoding="utf-8")
             self.assertEqual(pf.sudsy_format(fake, file, Path(tmp), "format")[0], "input")
         self.assertEqual(pf.tools()["format"]["terraform"]["sudsy_command"], "fix")  # the run compares the tool with `sudsy fix`
+
+
+class SpeedRuns(unittest.TestCase):
+    def test_a_sudsy_run_that_checks_no_file_fails_the_row(self):
+        with self.assertRaises(SystemExit) as e:
+            speed.check_sudsy_run(["sudsy", "lint", "."], "c", 0, "0 file(s) checked, 0 error(s), 0 warning(s)\n")
+        self.assertIn("checked 0 files", str(e.exception))
+        with self.assertRaises(SystemExit):
+            speed.check_sudsy_run(["sudsy", "lint", "."], "c", 0, "")
+
+    def test_a_crash_or_an_error_exit_fails_the_row(self):
+        for code in (-11, 2):
+            with self.assertRaises(SystemExit):
+                speed.check_sudsy_run(["sudsy", "lint", "."], "c", code, "5 file(s) checked, 0 error(s), 0 warning(s)\n")
+
+    def test_findings_and_differences_are_timings(self):
+        speed.check_sudsy_run(["sudsy", "format", "--check", "."], "c", 1, "5 file(s) checked, 2 would reformat, 3 unchanged\n")
+        self.assertEqual(speed.files_checked("x\n12 file(s) checked, 0 error(s), 0 warning(s)\n"), 12)
 
 
 if __name__ == "__main__":

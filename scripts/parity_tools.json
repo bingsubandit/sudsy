@@ -34,6 +34,7 @@
       ]
     },
     "prettier-css": {
+      "speed": {"language": "CSS", "label": "Prettier", "corpus": {"group": "real-world", "text": "the CSS, SCSS and Less corpus"}, "format": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--check", "--no-cache", "--log-level", "warn", "."]},
       "catalog": "prettier",
       "install": {"npm": "prettier"},
       "fetch": ["tests/conformance/fetch-css-corpus.sh"],
@@ -50,6 +51,7 @@
       ]
     },
     "prettier-html": {
+      "speed": {"language": "HTML", "label": "Prettier", "corpus": {"group": "real-world", "text": "the HTML corpus (mdn learning-area and others)"}, "format": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--check", "--no-cache", "--log-level", "warn", "."]},
       "catalog": "prettier",
       "install": {"npm": "prettier", "with": ["prettier-plugin-svelte@3.5.2"]},
       "fetch": ["tests/conformance/fetch-html-corpus.sh"],
@@ -69,6 +71,7 @@
       ]
     },
     "prettier-angular": {
+      "speed": {"language": "Angular", "label": "Prettier", "corpus": {"group": "angular"}, "not_measured": {"format": "Prettier picks its Angular parser from the .component.html name, which the corpus files do not carry"}},
       "catalog": "prettier",
       "install": {"npm": "prettier"},
       "fetch": ["tests/conformance/fetch-angular-corpus.sh"],
@@ -318,6 +321,7 @@
       "fixtures": [{"suffixes": [".cs"]}]
     },
     "csharpier-xml": {
+      "speed": {"language": "XML", "label": "CSharpier", "corpus": {"group": "fixtures", "text": "the XML fixtures and the project files of dotnet/aspnetcore"}, "format": ["{exe}", "check", ".", "--no-cache"]},
       "catalog": "csharpier",
       "install": {"dotnet-tool": "csharpier", "exe": "csharpier"},
       "fetch": ["tests/conformance/fetch-xml-projects.sh"],
@@ -331,6 +335,7 @@
       ]
     },
     "dotnet-format": {
+      "speed": {"language": "C# (.editorconfig)", "label": "dotnet format", "corpus": {"group": "fixtures"}, "not_measured": {"format": "its fixtures are small .editorconfig cases, each in a folder of its own, not a corpus"}},
       "version_command": ["dotnet", "--version"],
       "needs": ["worker"],
       "kind": "editorconfig-cases"
@@ -344,10 +349,10 @@
     "typescript-eslint": {"speed": {"language": "JS/TS", "label": "typescript-eslint", "corpus": "ts", "files": {"eslint.config.mjs": "import tseslint from \"typescript-eslint\";\nexport default [...tseslint.configs.recommended];\n"}, "lint": ["node", "{prefix}/node_modules/eslint/bin/eslint.js", "-c", "{prefix}/eslint.config.mjs", "--no-warn-ignored", "."]}, "preset": "js/typescript-eslint-recommended", "catalog": "typescript-eslint", "install": {"npm": "typescript-eslint", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
     "eslint-plugin-vue": {"speed": {"language": "Vue", "label": "eslint-plugin-vue", "corpus": "vue", "not_measured": {"lint": "no runner yet: the flat config for .vue files needs vue-eslint-parser and a corpus of .vue files"}}, "preset": "html/eslint-plugin-vue-recommended", "catalog": "eslint-plugin-vue", "install": {"npm": "eslint-plugin-vue", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
     "eslint-plugin-svelte": {"speed": {"language": "Svelte", "label": "eslint-plugin-svelte", "corpus": "svelte", "not_measured": {"lint": "no runner yet: the flat config for .svelte files needs svelte-eslint-parser and a corpus of .svelte files"}}, "preset": "html/eslint-plugin-svelte-recommended", "catalog": "eslint-plugin-svelte", "install": {"npm": "eslint-plugin-svelte", "with": ["eslint@9.39.5", "svelte@5.57.3", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
-    "eslint-jsonc":{"catalog": "eslint-plugin-jsonc", "install": {"npm": "eslint-plugin-jsonc", "with": ["eslint@9"]}},
+    "eslint-jsonc":{"speed": {"language": "JSON", "label": "eslint-plugin-jsonc", "corpus": "json", "not_measured": {"lint": "no mirroring preset"}}, "catalog": "eslint-plugin-jsonc", "install": {"npm": "eslint-plugin-jsonc", "with": ["eslint@9"]}},
     "stylelint": {"speed": {"language": "CSS", "label": "stylelint", "corpus": {"coverage": true, "text": "the CSS corpus (css-tricks, Bootstrap, and others)"}, "lint": "coverage"}, "preset": "css/stylelint-standard", "catalog": "stylelint", "install": {"npm": "stylelint", "with": ["stylelint-config-standard@40.0.0"]}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/css", "glob": ["*.css"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/stylelint/bin/stylelint.mjs", "--config", "stylelint.config.mjs", "-f", "json", "{files}"], "files": {"stylelint.config.mjs": "export default { extends: [\"{prefix}/node_modules/stylelint-config-standard\"] };\n"}, "stream": "stderr", "parse": {"format": "json", "levels": ["", "warnings"], "file": "0.source", "rule": "1.rule", "message": "1.text"}}},
-    "stylelint-scss": {"catalog": "stylelint-scss", "install": {"npm": "stylelint-scss", "with": ["stylelint@17.16.0", "postcss-scss@4.0.9"]}},
-    "stylelint-less": {"catalog": "stylelint-less", "install": {"npm": "stylelint-less", "with": ["stylelint@17.16.0", "postcss-less@7.0.1"]}},
+    "stylelint-scss": {"speed": {"language": "SCSS", "label": "stylelint-scss", "corpus": {"coverage": true}, "not_measured": {"lint": "no mirroring preset"}}, "catalog": "stylelint-scss", "install": {"npm": "stylelint-scss", "with": ["stylelint@17.16.0", "postcss-scss@4.0.9"]}},
+    "stylelint-less": {"speed": {"language": "Less", "label": "stylelint-less", "corpus": {"coverage": true}, "not_measured": {"lint": "no mirroring preset"}}, "catalog": "stylelint-less", "install": {"npm": "stylelint-less", "with": ["stylelint@17.16.0", "postcss-less@7.0.1"]}},
     "html-validate": {"speed": {"language": "HTML", "label": "html-validate", "corpus": {"coverage": true, "text": "the HTML corpus (Prettier tests, mdn learning-area)"}, "lint": "coverage"}, "preset": "html/html-validate-recommended", "catalog": "html-validate", "install": {"npm": "html-validate"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/html-validate/bin/html-validate.mjs", "-c", "htmlvalidate.json", "-f", "json", "{files}"], "files": {"htmlvalidate.json": "{\"extends\": [\"html-validate:recommended\"]}\n"}, "parse": {"format": "json", "levels": ["", "messages"], "file": "0.filePath", "rule": "1.ruleId", "message": "1.message"}}},
     "markdownlint": {"speed": {"language": "Markdown", "label": "markdownlint", "corpus": {"coverage": true, "text": "the dotnet/runtime documentation"}, "lint": "coverage"}, "preset": "markdown/markdownlint", "catalog": "markdownlint", "install": {"npm": "markdownlint-cli2"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/runtime-docs", "glob": ["*.md"]}], "command": ["node", "{prefix}/node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs", "--no-globs", "{files}"], "stream": "stderr", "parse": {"format": "regex", "pattern": "^(?P<file>.+?):\\d+(?::\\d+)? (?:error )?(?P<rule>MD\\d+)/\\S+ (?P<message>.*)$"}}},
     "hadolint": {"speed": {"language": "Dockerfile", "label": "hadolint", "corpus": {"coverage": true, "text": "the Dockerfile corpus"}, "lint": "coverage"}, 
