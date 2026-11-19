@@ -48,7 +48,7 @@ pub(super) fn rule(
         k::FIELD_DECLARATION | k::CONSTANT_DECLARATION => variables(cx, node, true),
         k::LOCAL_VARIABLE_DECLARATION => variables(cx, node, false),
         k::MODIFIERS => modifiers(cx, node),
-        k::THROWS => throws(cx, node),
+        k::THROWS | k::SUPER_INTERFACES | k::EXTENDS_INTERFACES | k::PERMITS => throws(cx, node),
         k::FORMAL_PARAMETER | k::SPREAD_PARAMETER => parameter(cx, node),
         k::RESOURCE_SPECIFICATION => resources(cx, node),
         k::FORMAL_PARAMETERS | k::RECORD_HEADER => hanging_list(cx, node, None),
@@ -173,7 +173,8 @@ fn method(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     Ok(doc::concat(parts))
 }
 
-/// `throws A, B`: the continuation lines are indented under the first type.
+/// `throws A, B` (also `implements`, `extends` and `permits`): the continuation lines are indented
+/// under the first type.
 fn throws(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let mut parts = Vec::new();
     let els = kids(cx, node);
@@ -276,6 +277,17 @@ fn paren_list_in(cx: &FormatCtx<'_>, node: &SyntaxNode, extra: bool) -> R {
                     SyntaxElement::Node(n) => n.text().to_string().contains('%'),
                 }
         });
+    // Arguments in pairs that the source lays out in rows stay in rows.
+    let values: Vec<&SyntaxElement> = items.iter().filter(|e| !is_tok(e, ",")).collect();
+    if args && values.len().is_multiple_of(2) && shapes::tabular::columns(cx, &values) == Some(2) {
+        let table = shapes::tabular::rows_of(items, 2, &doc::line(), |e| el(cx, e))?;
+        let inner = cont(doc::concat(vec![doc::hardline(), table]));
+        return Ok(doc::group(doc::concat(vec![
+            el(cx, open)?,
+            if extra { cont(inner) } else { inner },
+            el(cx, close)?,
+        ])));
+    }
     let mut parts = Vec::new();
     let mut rest = Vec::new();
     for (i, e) in items.iter().enumerate() {
@@ -284,6 +296,13 @@ fn paren_list_in(cx: &FormatCtx<'_>, node: &SyntaxNode, extra: bool) -> R {
         } else {
             &mut parts
         };
+        // A blank line in front of a comment stays.
+        if i > 0
+            && blank_before(cx, e)
+            && first(cx, e).is_some_and(|t| !comments::leading_comments(cx.grammar, &t).is_empty())
+        {
+            sink.push(doc::hardline());
+        }
         sink.push(el(cx, e)?);
         if is_tok(e, ",") {
             sink.push(doc::line());
@@ -292,10 +311,41 @@ fn paren_list_in(cx: &FormatCtx<'_>, node: &SyntaxNode, extra: bool) -> R {
     if format {
         parts.push(doc::group(doc::concat(rest)));
     }
+    // (inside the head of a broken chain the argument does not hug)
     let hug = items.len() == 1
+        && !extra
         && items[0]
             .as_node()
             .is_some_and(|n| shapes::hugs_last(cx, &shapes::CallStyle::of(cx.options), n, 1));
+    // A lone lambda with an expression body keeps its head on the line of the call, the body
+    // moves below it.
+    let lambda = items.len() == 1 && args && is_expression_lambda(&items[0]);
+    if lambda {
+        let item = doc::shared(doc::concat(std::mem::take(&mut parts)));
+        let hugged = if extra {
+            cont(item.clone())
+        } else {
+            item.clone()
+        };
+        // The lambda goes on a line of its own when it fits there, else its head stays.
+        let body = match item.flat_width() {
+            Some(width) => {
+                let own = cont(doc::concat(vec![doc::softline(), item]));
+                doc::fits_below(
+                    2 + 2 * usize::from(extra),
+                    width,
+                    if extra { cont(own) } else { own },
+                    hugged,
+                )
+            }
+            None => hugged,
+        };
+        return Ok(doc::group(doc::concat(vec![
+            el(cx, open)?,
+            body,
+            el(cx, close)?,
+        ])));
+    }
     if hug {
         return Ok(doc::group(doc::concat(vec![
             el(cx, open)?,
@@ -316,6 +366,12 @@ fn paren_list_in(cx: &FormatCtx<'_>, node: &SyntaxNode, extra: bool) -> R {
         if extra { cont(inner) } else { inner },
         el(cx, close)?,
     ])))
+}
+
+fn is_expression_lambda(e: &SyntaxElement) -> bool {
+    e.as_node().is_some_and(|n| {
+        n.kind() == k::LAMBDA_EXPRESSION && n.last_child().is_some_and(|b| b.kind() != k::BLOCK)
+    })
 }
 
 #[allow(unused_imports)]

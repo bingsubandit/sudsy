@@ -26,6 +26,7 @@ mod maybe_parenthesize;
 mod parens;
 mod section;
 mod signature;
+pub mod tabular;
 
 pub use assignment::{
     Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
@@ -34,8 +35,9 @@ pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
 };
 pub use block::{
-    BlockStyle, annotation_line, blank_before, block, block_between, block_open_inside, braces,
-    document, spread_cases_style, statement_sequence, statement_sequence_with,
+    BlockStyle, LabelStyle, annotation_line, blank_before, block, block_between, block_open_inside,
+    braces, continues, document, labeled, spread_cases_style, statement_sequence,
+    statement_sequence_with,
 };
 pub use call_arguments::{
     Args, CallStyle, Expanded, HugLast, Item, Plan, call_arguments, can_hug, expression_of,

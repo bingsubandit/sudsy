@@ -22,6 +22,7 @@ const BLOCK: BlockStyle = BlockStyle {
     expand_empty: false,
     keep_same_line: false,
     keep_leading_blank: false,
+    keep_trailing_blank: false,
 };
 
 /// The lines of a block string (`"""`), as the `dedent` row of the grammar reads them.

@@ -29,7 +29,7 @@ Status, measured results, presets and options for every language.
 | [PowerShell](#powershell) | partial | Invoke-Formatter | 93% of 211 | not measured | PSScriptAnalyzer | 34% |
 | [PHP](#php) | partial | PHP-CS-Fixer 3.95.31 | 88% of 10,382 | yes | PHPStan (`php/phpstan`) | 0% |
 | [Markdown](#markdown) | partial | Prettier 3.9.10 | 86% of 64 | not measured | markdownlint | 83% |
-| [Java](#java) | partial | google-java-format 2.0.0 | 82% of 5,337 | yes | Checkstyle | 26% |
+| [Java](#java) | partial | google-java-format 2.0.0 | 91% of 5,338 | yes | Checkstyle | 26% |
 | [Shell](#shell) | partial | shfmt | 82% of 82 | yes | ShellCheck | 47% |
 | [SQL](#sql) | partial | sqlfluff 4.5.0 | 78% of 867 | yes | sqlfluff | 4% |
 | [C#](#c) | partial | CSharpier 1.3.0 | 72% of 7,615 | not measured | StyleCop | not measured |
@@ -190,7 +190,7 @@ Status, measured results, presets and options for every language.
 ## Java
 
 - **Status:** partial.
-- **Formatter:** google-java-format 2.0.0, run with `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`. Identical: 4,403 of 5,337 files (82.5%). Corpus: Guava, Gson, Error Prone, Commons Lang. Stable: yes.
+- **Formatter:** google-java-format 2.0.0, run with `--skip-javadoc-formatting --skip-removing-unused-imports --skip-reflowing-long-strings`. Identical: 4,883 of 5,338 files (91.5%). Corpus: Guava, Gson, Error Prone, Commons Lang. Stable: yes.
 - **Linter:** Checkstyle, 25.5%.
 - **Presets:** `java/google`.
 - **Options:** `member_chain_*`, `binary_*`, `assignment_*` and `conditional_*` layout options. Default `line_width` is 100.

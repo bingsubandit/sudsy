@@ -357,10 +357,20 @@ fn labeled(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         return Err(shape_error("label"));
     };
     let body_node = node_at(&kids, 2)?;
-    let sep = if body_node.kind() == k::EMPTY_STATEMENT {
+    let bare = body_node.kind() == k::EMPTY_STATEMENT;
+    let body = if bare {
         cx.format(body_node)?
     } else {
-        concat(vec![lit(" "), elem(cx, body)?])
+        elem(cx, body)?
     };
-    Ok(concat(vec![elem(cx, label)?, elem(cx, colon)?, sep]))
+    let style = core_format::shapes::LabelStyle {
+        body_on_next_line: false,
+        outdent: 0,
+    };
+    Ok(core_format::shapes::labeled(
+        concat(vec![elem(cx, label)?, elem(cx, colon)?]),
+        body,
+        style,
+        bare,
+    ))
 }

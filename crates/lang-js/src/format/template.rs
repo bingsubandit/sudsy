@@ -73,6 +73,9 @@ fn flat(d: Doc) -> Option<Doc> {
         | Doc::NewlineIfNeeded
         | Doc::HardLine
         | Doc::BreakParent
+        | Doc::Reflow(..)
+        | Doc::Reserve(_)
+        | Doc::FitsBelow(_)
         | Doc::LineSuffix(_) => return None,
         Doc::Concat(parts) | Doc::Fill(parts) => {
             Doc::Concat(parts.into_iter().map(flat).collect::<Option<_>>()?)

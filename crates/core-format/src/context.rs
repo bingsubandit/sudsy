@@ -148,6 +148,12 @@ pub trait NodeFormatter: Send + Sync {
         None
     }
 
+    /// Does the formatter re-space and wrap `//` comments (`CommentStyle::reflow_width`)? The safety
+    /// check then compares their words, not their texts.
+    fn reflows_comments(&self) -> bool {
+        false
+    }
+
     /// How comments are printed; the default keeps their text and puts one space before a
     /// comment after code.
     fn comment_style(&self, _options: &ResolvedOptions) -> CommentStyle {
@@ -465,7 +471,7 @@ impl<'a> FormatCtx<'a> {
         let lead = if self.grammar.has_tag(tok.kind(), "close") {
             self.close_leading(tok, &leading)
         } else {
-            leading_comments_doc_with(&leading, self.comment_style.max_blank_after)
+            leading_comments_doc_with(&leading, &self.comment_style)
         };
         doc::concat(vec![
             lead,
@@ -492,7 +498,7 @@ impl<'a> FormatCtx<'a> {
                 doc::concat(leading.iter().map(comment_doc).collect()),
             ])
         } else {
-            leading_comments_doc_with(leading, self.comment_style.max_blank_after)
+            leading_comments_doc_with(leading, &self.comment_style)
         }
     }
 
@@ -522,7 +528,7 @@ impl<'a> FormatCtx<'a> {
     }
 
     pub fn leading_comments_doc(&self, tok: &SyntaxToken) -> Doc {
-        leading_comments_doc_with(&self.leading(tok), self.comment_style.max_blank_after)
+        leading_comments_doc_with(&self.leading(tok), &self.comment_style)
     }
 
     /// Holds back the leading comments of `tok` for the rest of the run, so that a shape can
@@ -546,7 +552,7 @@ impl<'a> FormatCtx<'a> {
 
     /// The comments [`FormatCtx::hold_leading`] held back, as printed leading comments.
     pub fn held_leading(&self, tok: &SyntaxToken) -> Doc {
-        leading_comments_doc_with(&self.leading_of(tok), self.comment_style.max_blank_after)
+        leading_comments_doc_with(&self.leading_of(tok), &self.comment_style)
     }
 
     /// The comments in front of `tok`, as the comment style wants them attached to it.
@@ -567,9 +573,12 @@ impl<'a> FormatCtx<'a> {
 
     fn leading_of(&self, tok: &SyntaxToken) -> Vec<Comment> {
         let mut cs = comments::leading_comments(self.grammar, tok);
-        if self.comment_style.attach_comments
+        let style = &self.comment_style;
+        if (style.attach_comments || style.attach_docs)
             && let Some(last) = cs.last_mut()
-            && matches!(last.kind, CommentKind::Line | CommentKind::Lines)
+            && (style.attach_comments
+                && matches!(last.kind, CommentKind::Line | CommentKind::Lines)
+                || (style.attach_docs && last.text().starts_with("/**")))
             && last.breaks_after >= 2
             && !last.text().starts_with("////")
             && !(last.kind == CommentKind::Lines && last.text().starts_with('#'))
@@ -708,11 +717,20 @@ pub fn verbatim_text(s: &str) -> Doc {
 
 /// One own-line comment (or kept-as-written text) as a document, without the break after it.
 pub fn comment_doc(c: &Comment) -> Doc {
+    comment_doc_in(c, &CommentStyle::default())
+}
+
+/// [`comment_doc`] in a comment style.
+fn comment_doc_in(c: &Comment, st: &CommentStyle) -> Doc {
     let text = c.text();
     match c.kind {
         CommentKind::Lines => lines_doc(&text),
         CommentKind::Directive => doc::concat(vec![doc::line_start(text), doc::break_parent()]),
-        CommentKind::Line | CommentKind::Block => verbatim_text(&text),
+        CommentKind::Line => match st.reflow_width {
+            Some(width) => doc::reflow(st.line_text(c), width),
+            None => verbatim_text(&text),
+        },
+        CommentKind::Block => verbatim_text(&text),
     }
 }
 
@@ -735,11 +753,12 @@ fn lines_doc(text: &str) -> Doc {
 
 /// Own-line comments go on their own lines, inline block comments stay inline.
 pub fn leading_comments_doc(cs: &[Comment]) -> Doc {
-    leading_comments_doc_with(cs, 1)
+    leading_comments_doc_with(cs, &CommentStyle::default())
 }
 
-/// [`leading_comments_doc`] keeping up to `max_blank` blank lines after a comment.
-pub fn leading_comments_doc_with(cs: &[Comment], max_blank: usize) -> Doc {
+/// [`leading_comments_doc`] in a comment style.
+pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
+    let max_blank = st.max_blank_after;
     if cs.is_empty() {
         return Doc::Nil;
     }
@@ -751,7 +770,7 @@ pub fn leading_comments_doc_with(cs: &[Comment], max_blank: usize) -> Doc {
         if i == 0 && (c.kind != CommentKind::Block || c.breaks_after > 0) {
             parts.push(doc::newline_if_needed());
         }
-        parts.push(comment_doc(c));
+        parts.push(comment_doc_in(c, st));
         if c.kind == CommentKind::Line || c.breaks_after > 0 {
             parts.push(doc::hardline());
             for _ in 0..c.breaks_after.saturating_sub(1).min(max_blank) {
@@ -772,10 +791,14 @@ pub fn trailing_comments_doc(st: &CommentStyle, cs: &[Comment]) -> Doc {
     }
     let mut parts = Vec::new();
     for c in cs {
-        let body = doc::concat(vec![st.gap_before(c), verbatim_text(&c.text())]);
+        let text = st.line_text(c);
+        let body = doc::concat(vec![st.gap_before(c), verbatim_text(&text)]);
         match c.kind {
             CommentKind::Line | CommentKind::Lines | CommentKind::Directive => {
                 parts.push(doc::line_suffix(body));
+                if !st.trailing_counts_after.is_empty() {
+                    parts.push(doc::reserve(1 + text.chars().count()));
+                }
                 parts.push(doc::break_parent());
             }
             CommentKind::Block => parts.push(body),

@@ -75,7 +75,7 @@ pub fn member_chain(chain: MemberChain) -> Doc {
         .map(|g| doc::shared(doc::concat(g)))
         .collect();
     let inner_break = break_on_inner_break
-        && if inner_break_anywhere && groups.len() >= 2 {
+        && if inner_break_anywhere && !groups.is_empty() {
             head.clone().propagate_breaks() || groups.iter().any(|g| g.clone().propagate_breaks())
         } else {
             groups

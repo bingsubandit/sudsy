@@ -135,6 +135,7 @@ fn block_style(cx: &FormatCtx<'_>) -> BlockStyle {
         expand_empty: false,
         keep_same_line: false,
         keep_leading_blank: false,
+        keep_trailing_blank: false,
     }
 }
 

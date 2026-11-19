@@ -358,6 +358,44 @@ impl<'a> Printer<'a> {
                 push(cmds, i, mode, d);
             }
             Doc::Text(s) => self.write(s),
+            Doc::Reserve(_) => {}
+            Doc::FitsBelow(f) => {
+                let mut below = indent;
+                for _ in 0..f.levels {
+                    below = self.indents.indent(below);
+                }
+                let room =
+                    self.opts.line_width as isize - self.indents.levels[below].width as isize;
+                let probe = Cmd {
+                    indent: below,
+                    mode: Mode::Flat,
+                    item: Item::Doc(&f.probe),
+                };
+                let fits_below = fits(
+                    &mut self.measure,
+                    probe,
+                    cmds,
+                    room,
+                    false,
+                    &self.group_modes,
+                    !self.suffixes.is_empty(),
+                );
+                push(
+                    cmds,
+                    indent,
+                    mode,
+                    if fits_below { &f.fits } else { &f.otherwise },
+                );
+            }
+            Doc::Reflow(r) => {
+                let (s, limit) = &**r;
+                for (i, line) in wrap_line_comment(s, self.pos, *limit).iter().enumerate() {
+                    if i > 0 {
+                        self.newline(indent);
+                    }
+                    self.write(line);
+                }
+            }
             Doc::Verbatim(s) => {
                 self.write(s);
                 self.keep = self.out.len();
@@ -593,6 +631,33 @@ impl<'a> Printer<'a> {
     }
 }
 
+/// The lines of the line comment `text` that starts at column `col`: a line wider than `limit`
+/// breaks at the last blank that keeps it within the limit (not within the `//` and the first
+/// character after it) and goes on in a line that starts with `//` (google-java-format).
+fn wrap_line_comment(text: &str, col: usize, limit: usize) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut chars: Vec<char> = text.chars().collect();
+    while chars.len() + col > limit {
+        let mut at = limit.saturating_sub(col).min(chars.len() - 1);
+        while at >= 2 && !chars[at].is_whitespace() {
+            at -= 1;
+        }
+        if at <= 2 {
+            break;
+        }
+        lines.push(
+            chars[..at]
+                .iter()
+                .collect::<String>()
+                .trim_end()
+                .to_string(),
+        );
+        chars = "//".chars().chain(chars[at..].iter().copied()).collect();
+    }
+    lines.push(chars.into_iter().collect());
+    lines
+}
+
 /// The work list of [`fits`] and a count of the steps it took.
 #[derive(Default)]
 struct Measure<'a> {
@@ -660,6 +725,14 @@ fn fits<'a>(
                     return answer;
                 }
             }
+            Doc::Reflow(r) => {
+                let s = &r.0;
+                if let Some(answer) = measure(s, &mut width) {
+                    return answer;
+                }
+            }
+            Doc::Reserve(n) => width -= *n as isize,
+            Doc::FitsBelow(f) => m.stack.push((mode, Item::Doc(&f.fits))),
             Doc::Verbatim(s) => {
                 if let Some(answer) = measure(s, &mut width) {
                     return answer;

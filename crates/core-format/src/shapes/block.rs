@@ -10,7 +10,7 @@ use crate::FormatCtx;
 use crate::comments::{self, Comment};
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use core_syntax::{SyntaxNode, SyntaxToken};
+use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 #[derive(Clone, Debug)]
 pub struct BlockStyle {
@@ -27,6 +27,9 @@ pub struct BlockStyle {
     pub keep_same_line: bool,
     /// A blank line after the opening delimiter stays.
     pub keep_leading_blank: bool,
+    /// A blank line before the closing delimiter stays (google-java-format: before the `}` that an
+    /// `else` or `catch` follows).
+    pub keep_trailing_blank: bool,
 }
 
 impl Default for BlockStyle {
@@ -38,8 +41,57 @@ impl Default for BlockStyle {
             expand_empty: false,
             keep_same_line: false,
             keep_leading_blank: false,
+            keep_trailing_blank: false,
         }
     }
+}
+
+/// Is the next significant element after `block` a node of one of `kinds` or a token that is one
+/// of `words` (`else`, `catch`, `finally`: the construct goes on after the block)?
+pub fn continues(
+    cx: &FormatCtx<'_>,
+    block: &SyntaxNode,
+    kinds: &[SyntaxKind],
+    words: &[&str],
+) -> bool {
+    let mut next = block.next_sibling_or_token();
+    while let Some(e) = &next {
+        if !matches!(e, SyntaxElement::Token(t) if cx.grammar.is_trivia(t.kind())) {
+            break;
+        }
+        next = e.next_sibling_or_token();
+    }
+    next.is_some_and(|e| match &e {
+        SyntaxElement::Node(n) => kinds.contains(&n.kind()),
+        SyntaxElement::Token(t) => words.contains(&t.text()),
+    })
+}
+
+/// Where a labeled statement puts its label.
+#[derive(Clone, Copy, Debug)]
+pub struct LabelStyle {
+    /// The body goes on the next line (at the indentation of the statement), else after the label.
+    pub body_on_next_line: bool,
+    /// Levels the label moves out of the statement's indentation.
+    pub outdent: usize,
+}
+
+/// A labeled statement: the `head` (`label:`), then the `body`. A `bare` body (an empty
+/// statement) follows the head directly.
+pub fn labeled(head: Doc, body: Doc, style: LabelStyle, bare: bool) -> Doc {
+    let head = if style.outdent > 0 {
+        doc::outdent(style.outdent, head)
+    } else {
+        head
+    };
+    let sep = if bare {
+        Doc::Nil
+    } else if style.body_on_next_line {
+        doc::hardline()
+    } else {
+        doc::lit(" ")
+    };
+    doc::concat(vec![head, sep, body])
 }
 
 /// `open`, the items one per line and indented, `close`. An empty block is `open close`. Separator
@@ -179,7 +231,9 @@ fn braces_of(
         ]);
     }
     let blank_before_close = body.is_some()
-        && (!dangling.is_empty() || style.max_blank_lines == usize::MAX)
+        && (!dangling.is_empty()
+            || style.keep_trailing_blank
+            || style.max_blank_lines == usize::MAX)
         && comments::blank_lines_before(g, close) > 0;
     let first_hardline = match (&body, lead_blank) {
         (None, _) => Doc::Nil,

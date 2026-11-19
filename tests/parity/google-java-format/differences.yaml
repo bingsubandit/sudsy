@@ -1,9 +1,9 @@
 differences:
-  layout-gaps: gap  about 16% of the real-world files differ in a detail. Over-long line comments are not re-wrapped, a method chain inside a ternary or lambda body is indented differently, and comments in unusual places (inside arguments, between modifiers) stay where the source has them
+  layout-gaps: gap  about 8% of the real-world files differ in a detail (a method chain whose head is a field access or that sits in a lambda or ternary, `@A()` keeps its parentheses, a text block's closing quotes are re-indented, a long trailing comment is not wrapped, and comments in unusual places (inside arguments, between modifiers) stay where the source has them)
 files:
   real-world: layout-gaps
 ratchet:
-  real-world: 4403
+  real-world: 4883
 second-format:
   real-world: 0
 refused:

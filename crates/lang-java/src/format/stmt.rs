@@ -19,8 +19,8 @@ pub(super) fn rule(
         | k::FOR_STATEMENT
         | k::ENHANCED_FOR_STATEMENT
         | k::DO_STATEMENT
-        | k::LABELED_STATEMENT
         | k::SYNCHRONIZED_STATEMENT => control(cx, node),
+        k::LABELED_STATEMENT => labeled(cx, node),
         k::SWITCH_BLOCK_STATEMENT_GROUP => switch_group(cx, node),
         k::FOR_SPEC => for_spec(cx, node),
         k::SWITCH_STATEMENT_RULE | k::SWITCH_EXPRESSION_RULE => switch_rule(cx, node),
@@ -58,6 +58,12 @@ fn block(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let style = BlockStyle {
         expand_empty: node.children().next().is_none() && keeps_lines(node),
         keep_leading_blank: true,
+        keep_trailing_blank: shapes::continues(
+            cx,
+            node,
+            &[k::CATCH_CLAUSE, k::FINALLY_CLAUSE],
+            &["else"],
+        ),
         ..BlockStyle::default()
     };
     shapes::block(cx, node, &style)
@@ -80,6 +86,23 @@ fn keeps_lines(block: &SyntaxNode) -> bool {
             .any(|c| c.as_token().is_some_and(|t| t.text() == "else")),
         _ => false,
     }
+}
+
+/// `label:` on a line of its own, the statement below it at the same indentation.
+fn labeled(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    let els = flat(cx, node);
+    let [name, colon, body] = &els[..] else {
+        return generic(cx, node);
+    };
+    Ok(shapes::labeled(
+        seq(cx, &[name.clone(), colon.clone()])?,
+        el(cx, body)?,
+        shapes::LabelStyle {
+            body_on_next_line: true,
+            outdent: 0,
+        },
+        false,
+    ))
 }
 
 /// `if (...) body else body`, loops and the like: a block body follows on the line, any other
@@ -203,11 +226,11 @@ fn switch_rule(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let body = &els[arrow + 1..];
-    if body.len() != 1 || body[0].kind() == k::BLOCK {
+    if body.is_empty() || body[0].kind() == k::BLOCK {
         return generic(cx, node);
     }
     Ok(doc::group(doc::concat(vec![
         seq(cx, &els[..=arrow])?,
-        cont(doc::concat(vec![doc::line(), el(cx, &body[0])?])),
+        cont(doc::concat(vec![doc::line(), seq(cx, body)?])),
     ])))
 }

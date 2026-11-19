@@ -80,11 +80,19 @@ pub struct CommentStyle {
     /// the blank lines after the last comment in front of a token are dropped, except in front
     /// of the first token of a file and after a `////` comment.
     pub attach_comments: bool,
+    /// A `/** */` comment attaches as under `attach_comments`, without line comments doing so.
+    pub attach_docs: bool,
     /// A comment after code keeps the blanks the source has before it when they are more than
     /// `gap` (comments aligned in a column stay aligned).
     pub keep_gap: bool,
     /// Blank lines kept after a comment in front of code.
     pub max_blank_after: usize,
+    /// The width at which an own-line `//` comment wraps onto more `//` lines; every `//x` comment
+    /// but `///x` is written `// x` (google-java-format). `None`: comments keep their text.
+    pub reflow_width: Option<usize>,
+    /// Tokens after which the width of a comment at the end of the line counts when a group on that
+    /// line is measured (a token that cannot break afterwards, like `;`).
+    pub trailing_counts_after: &'static [&'static str],
 }
 
 impl Default for CommentStyle {
@@ -92,8 +100,11 @@ impl Default for CommentStyle {
         CommentStyle {
             gap: 1,
             attach_comments: false,
+            attach_docs: false,
             keep_gap: false,
             max_blank_after: 1,
+            reflow_width: None,
+            trailing_counts_after: &[],
         }
     }
 }
@@ -103,6 +114,22 @@ impl CommentStyle {
         match self.gap {
             1 => crate::doc::lit(" "),
             n => crate::doc::text(" ".repeat(n)),
+        }
+    }
+
+    /// The text of the line comment `c` as the style writes it.
+    pub fn line_text<'a>(&self, c: &'a Comment) -> Cow<'a, str> {
+        let text = c.text();
+        match text.strip_prefix("//") {
+            Some(rest)
+                if self.reflow_width.is_some()
+                    && c.kind == CommentKind::Line
+                    && !rest.is_empty()
+                    && !rest.starts_with([' ', '/']) =>
+            {
+                Cow::Owned(format!("// {rest}"))
+            }
+            _ => text,
         }
     }
 

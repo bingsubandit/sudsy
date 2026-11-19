@@ -221,6 +221,11 @@ impl<'a> Walk<'a> {
         })
     }
 
+    /// Does the node hold a block of its own (the body of `new A() {...}`)?
+    fn has_body(&self, n: &SyntaxNode) -> bool {
+        n.children().any(|c| self.tag(&c, "block"))
+    }
+
     fn is_link(&self, n: &SyntaxNode) -> bool {
         (self.tag(n, "call") && !self.is_new(Some(n)))
             || self.tag(n, "member-access")
@@ -424,6 +429,7 @@ fn merges_first_group(
     cx: &FormatCtx<'_>,
     head: &SyntaxElement,
     called: bool,
+    call_len: impl FnOnce() -> usize,
     short_head: usize,
 ) -> bool {
     let text = text_of(cx, head);
@@ -438,8 +444,10 @@ fn merges_first_group(
     };
     keyword
         || matches!(text.as_str(), "this" | "base" | "super")
-        || (!called && text.chars().next().is_some_and(char::is_uppercase))
-        || text.chars().count() <= short_head
+        || (!called
+            && text.chars().next().is_some_and(char::is_uppercase)
+            && text.chars().any(char::is_lowercase))
+        || (text.chars().count() <= short_head && text.chars().count() + call_len() <= short_head)
 }
 
 /// Does link `i` start a group (at a dot), given the `count` of groups started before it?
@@ -610,7 +618,10 @@ pub fn member_chain(
         .iter()
         .map(|t| cx.leading_comments_doc(t))
         .collect();
-    let head_call = head.as_node().is_some_and(|n| w.tag(n, "call"));
+    // (`new A() {...}` with a body is no call: its chain stays together)
+    let head_call = head
+        .as_node()
+        .is_some_and(|n| w.tag(n, "call") && !(w.is_new(Some(n)) && w.has_body(n)));
     if policy.style == Style::Wrapped {
         return wrapped::wrapped(&w, node, &head, lead, &links, policy, hooks);
     }
@@ -635,37 +646,65 @@ pub fn member_chain(
 
     let (mut group_of, mut group_count) = group_links(&links, policy);
     let called = group_of.first().is_some_and(|g| g.is_none());
-    if group_count > 0 && merges_first_group(cx, &head, called, policy.short_head) {
+    // (a head that is called is as long as its call: `foo(a)`)
+    let call_len = || -> usize {
+        links
+            .iter()
+            .zip(&group_of)
+            .take_while(|(_, g)| g.is_none())
+            .flat_map(|(l, _)| &l.elems)
+            .map(|e| text_of(cx, e).chars().count())
+            .sum()
+    };
+    if group_count > 0 && merges_first_group(cx, &head, called, call_len, policy.short_head) {
         merge_first(&mut group_of, &mut group_count);
     }
-    // A call named in `head_calls` among the first two groups pulls the groups before it along.
-    let pulled = (0..group_count.min(2)).rev().find(|&g| {
-        links.iter().zip(&group_of).any(|(l, x)| {
-            *x == Some(g)
-                && l.call
-                && link_name(cx, l).is_some_and(|n| policy.head_calls.contains(&n))
-        })
-    });
-    if let Some(last) = pulled.filter(|_| !policy.head_calls.is_empty()) {
-        for g in group_of.iter_mut() {
-            *g = match *g {
-                Some(n) if n <= last => None,
-                Some(n) => Some(n - last - 1),
-                None => None,
-            };
-        }
-        group_count -= last + 1;
-    }
+    // The first call named in `head_calls` ends a prefix: the head and the groups
+    // up to it are a chain of their own, which breaks at its dots only when it does not fit.
+    let pulled = (0..if policy.head_calls.is_empty() {
+        0
+    } else {
+        group_count
+    })
+        .find(|&g| {
+            links.iter().zip(&group_of).any(|(l, x)| {
+                *x == Some(g)
+                    && l.call
+                    && link_name(cx, l).is_some_and(|n| policy.head_calls.contains(&n))
+            })
+        });
+    let prefix = pulled.filter(|_| !policy.head_calls.is_empty());
     let broken_head = calls >= policy.min_calls;
     lead.push(w.element(&head, broken_head)?);
     let mut head_parts = vec![doc::concat(lead)];
     let mut groups: Vec<Vec<Doc>> = vec![Vec::new(); group_count];
     for (link, g) in links.iter().zip(&group_of) {
-        let d = w.link_text(link, false, broken_head && g.is_none())?;
+        let d = w.link_text(link, false, broken_head && g.is_none() && prefix.is_none())?;
         match g {
             Some(g) => groups[*g].push(d),
             None => head_parts.push(d),
         }
+    }
+    if let Some(last) = prefix {
+        let rest = groups.split_off(last + 1);
+        let prefix_calls = links
+            .iter()
+            .zip(&group_of)
+            .filter(|(l, g)| l.call && g.is_none_or(|g| g <= last))
+            .count()
+            + usize::from(head_call);
+        let head_doc = print_chain(MemberChain {
+            head: head_parts,
+            groups,
+            calls: prefix_calls,
+            min_calls: policy.min_calls,
+            force_break: false,
+            break_on_inner_break: false,
+            inner_break_anywhere: false,
+            indent: policy.indent,
+        });
+        head_parts = vec![head_doc];
+        groups = rest;
     }
     // `BreakAll` / `KeepTogether` on the chain's outermost node: always / never at the dots.
     Ok(print_chain(MemberChain {

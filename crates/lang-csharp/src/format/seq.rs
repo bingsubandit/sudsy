@@ -336,11 +336,16 @@ pub fn labeled_statement(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     if els.len() < 3 {
         return seq_of(cx, node, &els);
     }
-    Ok(doc::concat(vec![
-        doc::outdent(label_outdent(cx.options), seq_of(cx, node, &els[..2])?),
-        doc::hardline(),
+    let style = core_format::shapes::LabelStyle {
+        body_on_next_line: true,
+        outdent: label_outdent(cx.options),
+    };
+    Ok(core_format::shapes::labeled(
+        seq_of(cx, node, &els[..2])?,
         seq_of(cx, node, &els[2..])?,
-    ]))
+        style,
+        false,
+    ))
 }
 
 pub fn seq(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

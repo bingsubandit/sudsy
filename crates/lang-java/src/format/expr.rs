@@ -193,6 +193,14 @@ fn cast(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     ])))
 }
 
+/// The characters the element has in the source, without comments around it.
+fn source_len(cx: &FormatCtx<'_>, e: &SyntaxElement) -> usize {
+    match (first(cx, e), last(cx, e)) {
+        (Some(a), Some(b)) => usize::from(b.text_range().end() - a.text_range().start()),
+        _ => 0,
+    }
+}
+
 /// `{a, b}`: on one line, else after the `{` one per line, or filled when the elements are
 /// literals or arrays. A trailing comma of the source stays and breaks the braces.
 fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
@@ -206,9 +214,18 @@ fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return seq(cx, &els);
     }
     let trailing = inner.last().is_some_and(|e| is_tok(e, ","));
-    let filled = items
-        .iter()
-        .all(|e| matches!(e.kind(), k::CHAR | k::NUMBER | k::ARRAY_INITIALIZER));
+    // Elements that the source lays out in rows keep their rows.
+    if let Some(columns) = shapes::tabular::columns(cx, &items) {
+        let table = shapes::tabular::rows_of(inner, columns, &doc::line(), |e| el(cx, e))?;
+        return Ok(doc::group(doc::concat(vec![
+            el(cx, open)?,
+            doc::indent(doc::concat(vec![doc::hardline(), table])),
+            doc::hardline(),
+            el(cx, close)?,
+        ])));
+    }
+    // (google-java-format: items of fewer than ten characters are filled)
+    let filled = items.iter().all(|e| source_len(cx, e) < 10);
     let commas: Vec<_> = inner.iter().filter(|e| is_tok(e, ",")).collect();
     let mut parts = Vec::new();
     for (i, e) in items.iter().enumerate() {
@@ -229,6 +246,12 @@ fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         doc::fill(parts)
     } else {
         doc::concat(parts)
+    };
+    // The items form a group of their own, so that they stay on one line below a broken `{`.
+    let body = if filled || !trailing {
+        doc::group(body)
+    } else {
+        body
     };
     let mut out = vec![shapes::between(el(cx, open)?, body, el(cx, close)?)];
     if trailing {

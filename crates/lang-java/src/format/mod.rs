@@ -13,7 +13,7 @@ mod stmt;
 
 use crate::generated::kind as k;
 use core_config::shared;
-use core_format::comments::{self, CommentKind};
+use core_format::comments::{self, CommentKind, CommentStyle};
 use core_format::doc::{self, Doc};
 use core_format::rules::LazyRules;
 use core_format::{FormatCtx, FormatError, NodeFormatter};
@@ -82,6 +82,19 @@ impl NodeFormatter for JavaFormatter {
 
     fn blank_between(&self, cx: &FormatCtx<'_>, prev: &SyntaxNode, next: &SyntaxNode) -> bool {
         ROWS.get().blank_between(cx, prev, next)
+    }
+
+    fn comment_style(&self, options: &core_config::ResolvedOptions) -> CommentStyle {
+        CommentStyle {
+            reflow_width: Some(core_format::print_options(options).line_width),
+            trailing_counts_after: &[";", ")", "]", "}"],
+            attach_docs: true,
+            ..CommentStyle::default()
+        }
+    }
+
+    fn reflows_comments(&self) -> bool {
+        true
     }
 
     fn format_node(
@@ -166,12 +179,17 @@ fn tok(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
     };
     let mut parts = vec![lead, cx.token_text(t)];
     for c in &trailing {
-        let text = doc::text(c.text().to_string());
+        let text = doc::text(cx.comment_style.line_text(c).into_owned());
         if c.kind == CommentKind::Block {
             parts.push(doc::lit(" "));
             parts.push(text);
         } else {
             parts.push(doc::line_suffix(doc::concat(vec![doc::lit(" "), text])));
+            if cx.comment_style.trailing_counts_after.contains(&t.text()) {
+                parts.push(doc::reserve(
+                    1 + cx.comment_style.line_text(c).chars().count(),
+                ));
+            }
             if !matches!(t.text(), ")" | ";" | "]" | "}") && !closes_next(t) {
                 parts.push(doc::break_parent());
             }

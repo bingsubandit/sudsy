@@ -201,7 +201,7 @@ impl<'a> Iterator for Events<'a> {
 /// `Ok` when both trees have the same nodes and non-trivia tokens in the same order and the same
 /// comments; else a description of the first difference. The value is the number of `#restyle`
 /// items.
-fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode) -> Result<usize, String> {
+fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode, words: bool) -> Result<usize, String> {
     let (a, b) = (a.green(), b.green());
     let (mut a, mut b) = (Events::new(g, &a), Events::new(g, &b));
     let mut restyled = 0;
@@ -222,9 +222,18 @@ fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode) -> Result<usize, String>
         }
     }
     let sorted = |v: Vec<Cow<'_, str>>| {
-        let mut v: Vec<String> = v.iter().map(|c| comment_key(c)).collect();
-        v.sort_unstable();
-        v
+        let mut keys: Vec<String> = Vec::new();
+        for c in &v {
+            match c.strip_prefix("//") {
+                // (a reflowed `//` comment: its words, wherever the lines break)
+                Some(rest) if words => {
+                    keys.extend(rest.split_whitespace().map(|w| format!("//{w}")))
+                }
+                _ => keys.push(comment_key(c)),
+            }
+        }
+        keys.sort_unstable();
+        keys
     };
     let (c, d) = (sorted(a.comments), sorted(b.comments));
     match (0..c.len().max(d.len())).find(|&i| c.get(i) != d.get(i)) {
@@ -250,7 +259,7 @@ fn comment_key(text: &str) -> String {
 
 /// [`compare`] without the values of the `#restyle` items.
 pub fn equal_ignoring_trivia(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode) -> Result<(), String> {
-    compare(g, a, b).map(drop)
+    compare(g, a, b, false).map(drop)
 }
 
 /// The `#restyle` items of a tree in document order, as `compare` counts them.
@@ -319,7 +328,10 @@ pub fn verify(
 ) -> Result<(), FormatError> {
     let after_tree = reparse(after)
         .map_err(|e| FormatError::Safety(format!("the output does not parse: {e}")))?;
-    if compare(g, before_tree, &after_tree).map_err(FormatError::Safety)? > 0 {
+    if compare(g, before_tree, &after_tree, formatter.reflows_comments())
+        .map_err(FormatError::Safety)?
+        > 0
+    {
         same_values(g, formatter, before_tree, &after_tree).map_err(FormatError::Safety)?;
     }
     formatter
