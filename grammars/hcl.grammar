@@ -23,9 +23,12 @@ token Ident #label
 token Keyword
 // Every other piece of syntax: `= : ? => , . ... .* [*]`, operators and `<<`.
 token Punct #punctuation
-// `( [ {` and the `${` and `%{` of a template, and their closers.
+// `( [ {` and their closers.
 token Open #punctuation
 token Close #punctuation
+// The `${` and `%{` of a template and the `}` that ends it.
+token TemplateOpen #punctuation
+token TemplateClose #punctuation
 // The quotes of a template.
 token QuoteOpen #punctuation
 token QuoteClose #punctuation
@@ -63,5 +66,5 @@ node Object #term #mapping = Open pairs:ObjectElem* Close
 node ObjectElem #key-value = key:Expr Punct value:Expr
 node QuotedTemplate #term = QuoteOpen #template* QuoteClose
 node Heredoc #term = Punct HeredocId #template* HeredocId
-node Interpolation #template = Open Strip? Expr? Strip? Close
+node Interpolation #template = TemplateOpen Strip? Expr? Strip? TemplateClose
 node TemplateDirective #template = #term* #template*

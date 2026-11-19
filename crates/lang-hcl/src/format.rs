@@ -19,12 +19,6 @@ include!("schema.generated.rs");
 
 static ROWS: LazyRules = LazyRules::new(|| grammars::HCL.get(), include_str!("../format.rules"));
 
-/// A `${` or `%{` and the `}` that ends it: the template text mode stops inside them.
-fn in_template_code(t: &SyntaxToken) -> bool {
-    t.parent()
-        .is_some_and(|p| matches!(p.kind(), k::INTERPOLATION | k::TEMPLATE_DIRECTIVE))
-}
-
 pub struct HclFormatter;
 
 impl NodeFormatter for HclFormatter {
@@ -126,12 +120,12 @@ fn lines(root: &SyntaxNode) -> Vec<Line> {
                     k::WHITESPACE => {}
                     k::NEWLINE => lines.extend(text.matches('\n').map(|_| Line::default())),
                     kind => {
-                        if matches!(kind, k::OPEN | k::CLOSE) && in_template_code(&t) {
-                            if kind == k::OPEN {
-                                text_mode.push(false);
-                            } else {
+                        match kind {
+                            k::TEMPLATE_OPEN => text_mode.push(false),
+                            k::TEMPLATE_CLOSE => {
                                 text_mode.pop();
                             }
+                            _ => {}
                         }
                         let line_comment = kind == k::COMMENT && !text.starts_with("/*");
                         let text = if kind == k::COMMENT {

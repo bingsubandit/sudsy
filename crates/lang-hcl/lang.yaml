@@ -26,8 +26,10 @@ mapping:
   TemplateText: template_literal
   Strip: strip_marker
   HeredocId: heredoc_identifier
-  Open: 'block_start object_start tuple_start template_interpolation_start template_directive_start ( ['
-  Close: 'block_end object_end tuple_end template_interpolation_end template_directive_end ) ]'
+  Open: 'block_start object_start tuple_start ( ['
+  Close: 'block_end object_end tuple_end ) ]'
+  TemplateOpen: 'template_interpolation_start template_directive_start'
+  TemplateClose: 'template_interpolation_end template_directive_end'
   QuoteOpen: quoted_template_start
   QuoteClose: quoted_template_end
   Punct: 'heredoc_start ellipsis = : ? => , . .* [*] - ! * / % + > >= < <= == != && ||'
