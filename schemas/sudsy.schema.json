@@ -135,6 +135,10 @@
               "$ref": "#/definitions/rule",
               "description": "`aria-label` names interactive elements, landmarks and elements with a role. A generic element (`<div>`, `<span>`, `<p>`, `<b>`, ...) and an `<a>` without `href` have no role to name."
             },
+            "array-in-string": {
+              "$ref": "#/definitions/rule",
+              "description": "A double-quoted argument that holds `$@` or `${array[@]}` among other text."
+            },
             "array-type": {
               "$ref": "#/definitions/rule",
               "description": "`Array<T>`, `ReadonlyArray<T>` and `Readonly<T[]>`; write `T[]` and `readonly T[]`."
@@ -143,6 +147,10 @@
               "$ref": "#/definitions/rule",
               "description": "A declarator or parameter with C-style brackets after the name (Checkstyle ArrayTypeStyle)."
             },
+            "array-without-index": {
+              "$ref": "#/definitions/rule",
+              "description": "`$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript."
+            },
             "assert-false": {
               "$ref": "#/definitions/rule",
               "description": "An `assert` whose test is the literal `False`."
@@ -150,6 +158,14 @@
             "assert-tuple": {
               "$ref": "#/definitions/rule",
               "description": "An `assert` whose test is a tuple (a message written inside the parentheses)."
+            },
+            "assignment-not-seen": {
+              "$ref": "#/definitions/rule",
+              "description": "`var=value cmd \"$var\"`: `$var` is expanded before the assignment takes effect."
+            },
+            "assignment-space": {
+              "$ref": "#/definitions/rule",
+              "description": "A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant."
             },
             "async-suffix": {
               "$ref": "#/definitions/rule",
@@ -1124,6 +1140,10 @@
               "$ref": "#/definitions/rule",
               "description": "Two tables of one `FROM` clause with the same alias (or name when there is no alias) (sqlfluff AL04)."
             },
+            "echo-in-substitution": {
+              "$ref": "#/definitions/rule",
+              "description": "A command substitution that only runs `echo` on words."
+            },
             "element-case": {
               "$ref": "#/definitions/rule",
               "description": "Element names are case-insensitive in HTML; lowercase is the convention. Everything inside `<svg>` and `<math>` keeps its case. Reported on the name of a start or end tag."
@@ -1226,6 +1246,10 @@
             "equals-hash-code": {
               "$ref": "#/definitions/rule",
               "description": "A class body that declares `boolean equals(Object)` and no `hashCode()`: equal objects get different hash codes (Checkstyle EqualsHashCode)."
+            },
+            "eval-array": {
+              "$ref": "#/definitions/rule",
+              "description": "An `eval` whose argument expands an array with `[@]`."
             },
             "explicit-return-none": {
               "$ref": "#/definitions/rule",
@@ -1730,6 +1754,10 @@
             "is-literal": {
               "$ref": "#/definitions/rule",
               "description": "An identity test (`is`, `is not`) with a string, bytes or number literal, a list, set, dict or comprehension, or a tuple of constants."
+            },
+            "iterate-file-output": {
+              "$ref": "#/definitions/rule",
+              "description": "A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`."
             },
             "iterate-find-output": {
               "$ref": "#/definitions/rule",
@@ -4063,6 +4091,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `using` directive inside a namespace whose name is not written fully qualified (it resolves relative to the enclosing namespace). The fix writes the full name, unless it has type arguments."
             },
+            "quote-array-element": {
+              "$ref": "#/definitions/rule",
+              "description": "An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed."
+            },
             "quote-at-expansion": {
               "$ref": "#/definitions/rule",
               "description": "An unquoted `$@` or `${array[@]}` in a command's arguments."
@@ -4070,6 +4102,10 @@
             "quote-command-substitution": {
               "$ref": "#/definitions/rule",
               "description": "An unquoted `$(...)` or backtick substitution in a command's arguments is split into words and globbed."
+            },
+            "quote-in-quotes": {
+              "$ref": "#/definitions/rule",
+              "description": "A word of two double-quoted strings with unquoted text between them, as `\"a\"b\"c\"`."
             },
             "quote-star-expansion": {
               "$ref": "#/definitions/rule",
@@ -5416,6 +5452,10 @@
               "$ref": "#/definitions/rule",
               "description": "Svelte's `spaced-html-comment` (eslint-plugin-svelte)."
             },
+            "split-command-output": {
+              "$ref": "#/definitions/rule",
+              "description": "An unquoted `$(...)` among the elements of an array assignment is split into words and globbed."
+            },
             "static-join": {
               "$ref": "#/definitions/rule",
               "description": "`\"sep\".join([a, b])` of a list or tuple written out in the call, which an f-string says directly."
@@ -5471,6 +5511,10 @@
             "test-exit-status": {
               "$ref": "#/definitions/rule",
               "description": "A test that compares `$?` with a number."
+            },
+            "test-grep-output": {
+              "$ref": "#/definitions/rule",
+              "description": "A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`."
             },
             "test-negated-empty": {
               "$ref": "#/definitions/rule",
@@ -5773,6 +5817,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `pass` or `...` statement in a body of two statements or more."
             },
+            "unquoted-pattern": {
+              "$ref": "#/definitions/rule",
+              "description": "A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion."
+            },
             "unreachable-code": {
               "description": "A statement that can never run: after `return`, `throw`, `break` or `continue`, after an `if`/`else` or `try` that always jumps, or after a loop that never ends. Only the first statement of a run is reported. Where the language has a flow layer (C#) it also covers constant conditions and calls that do not return (`does_not_return` in `semantics:`). Hoisted declarations and empty statements are left out. Removing the statement is offered as an editor quick fix only, because unreachable code usually signals a bug.",
               "oneOf": [
@@ -5811,6 +5859,10 @@
             "unsafe-numbers": {
               "$ref": "#/definitions/rule",
               "description": "A number that a double-precision parser (JavaScript, most JSON libraries) cannot hold: an integer beyond 2^53 - 1, a value that overflows to infinity, underflows to zero or is subnormal."
+            },
+            "unset-glob": {
+              "$ref": "#/definitions/rule",
+              "description": "`unset name[i]` with an unquoted subscript."
             },
             "unsorted-dunder-all": {
               "$ref": "#/definitions/rule",

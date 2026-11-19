@@ -1,0 +1,130 @@
+id: quote-in-quotes
+message: the word is "A"B"C"; the middle part is outside the quotes (write "ABC" or "A\"B\"C")
+description: A word of two double-quoted strings with unquoted text between them, as `"a"b"c"`.
+example: 'x="a "\""$v"\"" b"'
+severity: warn
+category: suspicious
+rule:
+  kind: Concat
+  regex: '\s"(?:\\.|[^"''`\s$*?\\])+"|"(?:\\.|[^"''`\s$*?\\])+"\s'
+  not: { regex: "'" }
+---
+id: array-in-string
+message: the string mixes text and an array; use "${array[*]}" or separate arguments
+description: A double-quoted argument that holds `$@` or `${array[@]}` among other text.
+example: 'echo "args: $@"'
+severity: warn
+category: correctness
+rule:
+  kind: String
+  parent: { kind: Command }
+  not: { regex: '^"(?:\$@|\$\{[^"]*\})"$' }
+token: { needs: '@', kind: [Word], regex: '^\s*(?:\$@|\$\{[A-Za-z_][A-Za-z0-9_]*\[@\].*\})\s*$' }
+---
+id: quote-array-element
+message: quote the expansion in the array, or split it with read -a or mapfile
+description: An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed.
+example: 'files=($list)'
+severity: warn
+category: suspicious
+rule: { kind: Array }
+token: { needs: '$', kind: [Word, Concat], regex: '^[^"''`\\(]*\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*(?:[^\[A-Za-z0-9_}][^}]*)?\})' }
+---
+id: split-command-output
+message: use mapfile or read -a to split command output into an array, or quote the substitution
+description: An unquoted `$(...)` among the elements of an array assignment is split into words and globbed.
+example: 'lines=($(cat file))'
+severity: warn
+category: suspicious
+rule: { kind: Subst, regex: '^[$`]', parent: { kind: Array } }
+---
+id: assignment-space
+message: remove the space after = to assign a value (an empty value is written `var=""`)
+description: A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant.
+example: 'PGHOST= psql'
+severity: warn
+category: correctness
+rule:
+  kind: Command
+  regex: '^(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*[A-Za-z_][A-Za-z0-9_]*=\s+(?:\\\n\s*)?[^\s=;|&<>()]'
+  not: { regex: '^IFS=' }
+---
+id: unset-glob
+message: quote the argument of unset so that `name[...]` is not expanded as a glob
+description: '`unset name[i]` with an unquoted subscript.'
+example: 'unset words[0]'
+severity: warn
+category: suspicious
+rule:
+  kind: Command
+  regex: '^unset(?:\s+-[fv])?\s+(?:\S+\s+)*[A-Za-z_][A-Za-z0-9_]*\['
+---
+id: unquoted-pattern
+message: quote the right-hand side of the comparison in [[ ]], or it is matched as a pattern
+description: A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion.
+example: '[[ $a == $b ]]'
+severity: warn
+category: suspicious
+rule:
+  kind: Test
+  regex: '^\[\[[^\]]*?(?:==|!=|\s=)\s+\$[A-Za-z_{0-9@#]'
+---
+id: echo-in-substitution
+message: use the argument of echo directly instead of $(echo ...)
+description: A command substitution that only runs `echo` on words.
+example: 'x=$(echo $y)'
+severity: warn
+category: suspicious
+rule: { kind: Subst, regex: '^\$\(\s*echo\s+[^|;&<>()`"'']*\)$' }
+---
+id: test-grep-output
+message: use grep -q and its exit status instead of testing the output of grep
+description: A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`.
+example: '[[ $(ps | grep x) ]]'
+severity: warn
+category: suspicious
+rule:
+  kind: Test
+  regex: '^\[\[?\s+(?:-[nz]\s+)?"?\$\([^)]*\bgrep\b[^)]*\)"?\s+\]\]?$'
+---
+id: iterate-file-output
+message: do not loop over the words of a command's output; read the lines with a while read loop
+description: A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`.
+example: 'for l in $(cat file); do'
+severity: warn
+category: suspicious
+rule:
+  kind: For
+  regex: '^for\s+\S+\s+in\s+("?\$\(|"?`)\s*(?:cat|sort|sed|head|tail)\b'
+---
+id: eval-array
+message: eval negates the benefit of arrays; drop eval or quote the elements
+description: An `eval` whose argument expands an array with `[@]`.
+example: 'eval "f ${args[@]}"'
+severity: warn
+category: suspicious
+rule:
+  kind: Command
+  regex: '^eval\b'
+token: { deep: true, needs: '[@]', kind: [Word], regex: '^[^'']*?(?:^|[^\\''])\$\{[A-Za-z_][A-Za-z0-9_]*\[@\]' }
+---
+id: assignment-not-seen
+message: the assignment before the command is only seen by that command; the expansion on the same line does not see it
+description: '`var=value cmd "$var"`: `$var` is expanded before the assignment takes effect.'
+example: 'A=1 echo "$A"'
+severity: warn
+category: correctness
+rule:
+  kind: String
+  inside: { kind: Command, regex: '^(?<VAR>[A-Za-z_][A-Za-z0-9_]*)=\S*\s+\S' }
+  not-inside: { kind: Assign }
+token: { needs: '$', kind: [Word], regex: '^\$\{?${VAR}\b' }
+---
+id: array-without-index
+message: expanding an array without an index gives only the first element
+description: '`$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript.'
+example: 'echo "$FUNCNAME"'
+severity: warn
+category: correctness
+rule: { kind: Program }
+token: { deep: true, needs: '$', kind: [Word], regex: '^\$\{?(?:BASH_SOURCE|BASH_LINENO|BASH_ARGC|BASH_ARGV|BASH_REMATCH|FUNCNAME|PIPESTATUS|DIRSTACK|GROUPS)\}?$' }
