@@ -139,8 +139,8 @@ pub struct Grammar {
     source: Box<str>,
     hash: OnceLock<String>,
     /// Hot tags per kind, indexed like `tokens` and `nodes`.
-    token_flags: Vec<u16>,
-    node_flags: Vec<u16>,
+    token_flags: Vec<u32>,
+    node_flags: Vec<u32>,
     /// Per body item of every node, in node order: the range of `pool` holding the sorted kinds
     /// the item accepts. `body_start[i]..body_start[i + 1]` are the items of node `i`.
     bodies: Vec<(u32, u32)>,
@@ -154,7 +154,7 @@ pub struct Grammar {
 
 /// Tags that formatting code asks about for every token or node: answered from a bit set
 /// instead of scanning the tag strings.
-const HOT_TAGS: [&str; 15] = [
+const HOT_TAGS: [&str; 20] = [
     "trivia",
     "separator",
     "optional",
@@ -170,16 +170,21 @@ const HOT_TAGS: [&str; 15] = [
     "parenthesized",
     "stray",
     "list-prefix",
+    "function",
+    "literal",
+    "member-access",
+    "binary",
+    "transparent",
 ];
 
-fn hot_flags(defs: &[KindDef]) -> Vec<u16> {
+fn hot_flags(defs: &[KindDef]) -> Vec<u32> {
     defs.iter()
         .map(|d| {
             HOT_TAGS
                 .iter()
                 .enumerate()
                 .filter(|(_, t)| d.has_tag(t))
-                .fold(0u16, |acc, (i, _)| acc | 1 << i)
+                .fold(0u32, |acc, (i, _)| acc | 1 << i)
         })
         .collect()
 }
@@ -502,7 +507,7 @@ impl Grammar {
         self.def(kind).is_some_and(|d| d.has_tag(tag))
     }
 
-    fn flags_of(&self, kind: SyntaxKind) -> u16 {
+    fn flags_of(&self, kind: SyntaxKind) -> u32 {
         if kind.lang() != self.language_id {
             return 0;
         }

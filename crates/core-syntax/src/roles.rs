@@ -8,6 +8,8 @@
 //! is optional. A required field must be declared in the node's body, as the item's label or as
 //! an alias (`when_true=then:#expression`); the item itself may be optional or repeated.
 
+use crate::{Grammar, SyntaxNode, SyntaxToken};
+
 pub struct Role {
     pub name: &'static str,
     pub fields: &'static str,
@@ -202,4 +204,32 @@ impl Role {
             .split_whitespace()
             .map(|f| f.strip_suffix('?').map_or((f, true), |n| (n, false)))
     }
+}
+
+/// The node inside any number of `#parenthesized` wrappers (`n` itself when it is not one).
+pub fn inner(g: &Grammar, n: &SyntaxNode) -> SyntaxNode {
+    let mut n = n.clone();
+    while g.has_tag(n.kind(), "parenthesized") {
+        match n.first_child() {
+            Some(c) => n = c,
+            None => break,
+        }
+    }
+    n
+}
+
+/// `n` with the `#parenthesized` wrappers around it: the node as its parent holds it.
+pub fn outer(g: &Grammar, n: &SyntaxNode) -> SyntaxNode {
+    let mut n = n.clone();
+    while let Some(p) = n.parent().filter(|p| g.has_tag(p.kind(), "parenthesized")) {
+        n = p;
+    }
+    n
+}
+
+/// The own tokens of a node that are code: not trivia.
+pub fn code_tokens<'a>(g: &'a Grammar, n: &SyntaxNode) -> impl Iterator<Item = SyntaxToken> + 'a {
+    n.children_with_tokens()
+        .filter_map(|e| e.into_token())
+        .filter(|t| !g.is_trivia(t.kind()))
 }
