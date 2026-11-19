@@ -18,6 +18,10 @@ pub const ASSIGNMENT_KEEP_BREAK_KINDS: &str = "assignment_keep_break_kinds";
 #[allow(dead_code)]
 pub const ANNOTATION_INLINE: &str = "annotation_inline";
 #[allow(dead_code)]
+pub const SEMICOLON_KEEP_PARENTS: &str = "semicolon_keep_parents";
+#[allow(dead_code)]
+pub const SIGNATURE_WRAP_ANNOTATED: &str = "signature_wrap_annotated";
+#[allow(dead_code)]
 pub const ANNOTATION_SOURCE_KINDS: &str = "annotation_source_kinds";
 #[allow(dead_code)]
 pub const MEMBER_CHAIN_STYLE: &str = "member_chain_style";
@@ -67,6 +71,8 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::assignment_indent(1),
         core_config::shared::assignment_keep_break_kinds(&["Property", "BinaryExpression"]),
         core_config::shared::annotation_inline("single"),
+        core_config::shared::semicolon_keep_parents(&["ClassBody", "EnumEntry"]),
+        core_config::shared::signature_wrap_annotated(true),
         core_config::shared::annotation_source_kinds(&["ValueParameter"]),
         core_config::shared::member_chain_style("wrapped"),
         core_config::shared::member_chain_min_calls(2),

@@ -266,27 +266,23 @@ fn next_end(grammar: &Grammar, t: &SyntaxToken) -> Option<usize> {
     None
 }
 
-/// The `;` of statements (`redundant_semicolon_parents`, the kinds of the nodes that hold them):
+/// The `;` between and after statements, but not in a node of the kinds of `semicolon_keep_parents`:
 /// one at the end of a line, in front of a `}`, an `else` or a comment is dropped, one between
 /// two statements of a line becomes a line break. Edits `(from, to, text)`.
 pub fn redundant_semicolons(
     grammar: &Grammar,
     tree: &SyntaxNode,
     text: &str,
-    parents: &[String],
+    keep: &[String],
     edits: &mut Vec<(usize, usize, String)>,
 ) {
-    if parents.is_empty() {
-        return;
-    }
     for t in tree
         .descendants_with_tokens()
         .filter_map(|e| e.into_token())
-        .filter(|t| t.text() == ";")
+        .filter(|t| t.text() == ";" && grammar.name(t.kind()).starts_with("Semi"))
     {
-        if !t
-            .parent()
-            .is_some_and(|p| parents.iter().any(|k| grammar.name(p.kind()) == k))
+        if t.parent()
+            .is_none_or(|p| keep.iter().any(|k| grammar.name(p.kind()) == k))
         {
             continue;
         }

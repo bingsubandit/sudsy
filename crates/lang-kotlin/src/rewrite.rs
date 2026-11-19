@@ -245,8 +245,7 @@ fn bracing(tree: &SyntaxNode, text: &str, width: usize, edits: &mut Vec<(usize, 
             k::IF if n.parent().is_none_or(|p| p.kind() != k::ELSE) => {
                 let branches = if_branches(&n);
                 let end = branches.last().and_then(last_code_end);
-                let long = n.children().any(|c| c.kind() == k::ELSE)
-                    && end.is_some_and(|e| too_long(text, code_start(&n), e, width));
+                let long = end.is_some_and(|e| too_long(text, code_start(&n), e, width));
                 (branches, long)
             }
             k::WHEN => {
@@ -294,7 +293,7 @@ pub fn rewrite(
         g,
         tree,
         text,
-        &options.strings("redundant_semicolon_parents"),
+        &options.strings("semicolon_keep_parents"),
         &mut edits,
     );
     if edits.is_empty() {
