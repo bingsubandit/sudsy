@@ -1,0 +1,41 @@
+name: speed
+
+# Wall time and peak memory of Sudsy against every tool with a `speed` key in scripts/parity_tools.json
+# (docs/ai/design/speed-comparison.md), on one fixed runner label so the numbers stay comparable. Started
+# by hand and before each release; the artifact `speed` holds bench/speed.json, which the lead commits
+# (`cargo xtask codegen` writes the README table from it).
+on:
+  workflow_dispatch:
+    inputs:
+      tools: { description: "space-separated tools (default: all)", type: string, required: false, default: "" }
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: never
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target
+  SPEED_RUNNER: ubuntu-24.04-arm
+
+jobs:
+  speed:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: scripts/speed.sh
+        env:
+          TOOLS: ${{ inputs.tools }}
+        run: bash scripts/speed.sh $TOOLS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: speed
+          path: bench/speed.json

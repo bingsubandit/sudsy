@@ -100,17 +100,10 @@ Corpora (for example Django for Python, the .NET runtime, Roslyn and ASP.NET Cor
 
 ## Performance
 
-Measured in check mode, with a new process per run and caches off, best of 5. Machine: Linux, 8-core Neoverse-V2. Each tool lints with its own default rules, so the rule sets differ: ruff runs 407 rules on Django, and Sudsy runs far fewer.
+<!-- generated:speed -->
+<!-- /generated -->
 
-| Task | Sudsy | Others |
-|---|---|---|
-| Format JS (848 files, 7 MB) | 0.22 s | Biome 0.15 s, Prettier 4.21 s (19× slower) |
-| Lint JS | 0.11 s | oxlint 0.05 s, Biome 0.32 s |
-| Format Python (Django, 883 files) | 0.18 s | ruff 0.04 s (4.5× faster) |
-| Lint Python (Django) | 0.11 s | ruff 0.11 s |
-| Format C# (7,659 files, 12 cores) | 8–10 s | CSharpier 42–43 s |
-
-Sudsy is far faster than the JavaScript and .NET tools, and slower than the Rust ones. Memory: 180 MB vs ruff's 47 MB on Django. The binary is about 53 MB: it holds the parsers for every language and a Wasm runtime for plugins. Method and more inputs: [docs/performance.md](docs/performance.md).
+Sudsy does the same work as each tool: `format --check` and `lint` with the preset that mirrors it. The binary is about 53 MB: it holds the parsers for every language and a Wasm runtime for plugins. Method: [docs/performance.md](docs/performance.md).
 
 ## Install
 

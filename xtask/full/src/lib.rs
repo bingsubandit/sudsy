@@ -8,6 +8,7 @@ mod differences;
 mod docs;
 pub mod manifests;
 mod rules;
+mod speed;
 mod vscode;
 
 use anyhow::Result;
