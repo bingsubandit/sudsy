@@ -157,18 +157,22 @@ impl P<'_> {
 
     fn if_stmt(&mut self) {
         self.bump_as(k::KEYWORD);
-        self.expression();
-        self.nested_statement();
+        self.indented(true, |p| {
+            p.expression();
+        });
+        self.indented(false, |p| p.nested_statement());
         if self.at("else") {
             self.bump_as(k::KEYWORD);
-            self.nested_statement();
+            self.indented(false, |p| p.nested_statement());
         }
     }
 
     fn while_stmt(&mut self) {
         self.bump_as(k::KEYWORD);
-        self.expression();
-        self.nested_statement();
+        self.indented(true, |p| {
+            p.expression();
+        });
+        self.indented(false, |p| p.nested_statement());
     }
 
     /// A statement inside another (the body of `IF`).

@@ -44,10 +44,8 @@ fn signature(seq: &Seq) -> u64 {
 
 pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -> Doc {
     let mut seq = Seq::build(root, grammar, ROWS.get().space());
-    match options.text("dialect") {
-        "mysql" => blocks::add_indents(&mut seq),
-        "tsql" => blocks::add_tsql_indents(&mut seq),
-        _ => {}
+    if options.text("dialect") == "mysql" {
+        blocks::add_indents(&mut seq);
     }
     let mut recase = ROWS.get().cases().recaser(options);
     for block in &mut seq.blocks {

@@ -374,6 +374,22 @@ impl<'a> P<'a> {
         self.meta(k::DEDENT);
     }
 
+    /// Indents what `f` reads (an implicit indent for a condition); nothing is placed when it reads nothing.
+    pub fn indented(&mut self, implicit: bool, f: impl FnOnce(&mut Self)) {
+        let (pos, metas) = (self.pos, self.metas.len());
+        if implicit {
+            self.implicit();
+        } else {
+            self.indent();
+        }
+        f(self);
+        if self.pos == pos {
+            self.metas.truncate(metas);
+        } else {
+            self.dedent();
+        }
+    }
+
     /// Ends the group of metas at this position: the next ones are placed on their own.
     pub fn split(&mut self) {
         self.group += 1;

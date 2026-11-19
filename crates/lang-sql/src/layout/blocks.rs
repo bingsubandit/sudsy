@@ -1,13 +1,12 @@
 //! The indentation of procedural blocks. The MySQL parse leaves `BEGIN ... END`, `LOOP`,
-//! `WHILE` and `REPEAT` as flat statements with no indent, and its T-SQL dialect puts no indent
-//! around the condition and the body of `IF`, `ELSE` and `WHILE`, so the indents sqlfluff's dialects have are put
+//! `WHILE` and `REPEAT` as flat statements with no indent, so the indents sqlfluff's dialect has are put
 //! on the points here, from the keywords and statements.
 //!
 //! concept: new indent-balance-layout
 //! what: Indentation from the indent and dedent balance of each line.
 //! tools: sqlfluff LT02
 
-use super::seq::{NONE, Seq};
+use super::seq::Seq;
 use crate::generated::kind as k;
 
 fn word(seq: &Seq, i: usize) -> String {
@@ -80,44 +79,6 @@ pub fn add_indents(seq: &mut Seq) {
                 _ => {}
             },
             _ => {}
-        }
-    }
-}
-
-/// T-SQL: the condition of `IF` and `WHILE`, and the statement after it or after `ELSE`, are indented.
-pub fn add_tsql_indents(seq: &mut Seq) {
-    for id in 0..seq.nodes.len() as u32 {
-        let node = &seq.nodes[id as usize];
-        if node.kind != k::STATEMENT || node.first == NONE {
-            continue;
-        }
-        let head = word(seq, node.first as usize);
-        if head != "IF" && head != "WHILE" {
-            continue;
-        }
-        let mut after_condition = false;
-        let mut bodies: Vec<(usize, usize)> = Vec::new();
-        for c in seq.children(id).collect::<Vec<_>>() {
-            let (kind, first, last) = {
-                let child = &seq.nodes[c as usize];
-                (child.kind, child.first as usize, child.last as usize)
-            };
-            if first == NONE as usize {
-                continue;
-            }
-            if kind == k::EXPRESSION && !after_condition {
-                indent(seq, first);
-                seq.points[first].implicit = true;
-                dedent(seq, last + 1);
-                after_condition = true;
-            } else if kind == k::STATEMENT && (after_condition || word(seq, first - 1) == "ELSE") {
-                bodies.push((first, last));
-                after_condition = false;
-            }
-        }
-        for (first, last) in bodies {
-            indent(seq, first);
-            dedent(seq, last + 1);
         }
     }
 }
