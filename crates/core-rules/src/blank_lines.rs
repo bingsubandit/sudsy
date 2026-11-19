@@ -16,7 +16,7 @@
 //! concept: blank-line-before-family
 //! what: Whether a blank line stands before a statement of a kind, with the usual exceptions.
 //! tools: stylelint rule-empty-line-before, at-rule-empty-line-before, declaration-empty-line-before
-//! reads: family:blank-line-before
+//! reads: family:blank-line-before, tag:comment, tag:newline
 
 use crate::tree::significant_range;
 use crate::{Family, Params, Rule, RuleContext, RuleMeta};
@@ -54,7 +54,12 @@ fn build(meta: &'static RuleMeta, mut p: Params) -> Result<Box<dyn Rule>, String
     let ignore = words(&mut p, "ignore");
     let has = |l: &[String], w: &str| l.iter().any(|x| x == w);
     for w in &except {
-        if !["first-nested", "after-same-kind", "after-blockless-same-name"].contains(&w.as_str())
+        if ![
+            "first-nested",
+            "after-same-kind",
+            "after-blockless-same-name",
+        ]
+        .contains(&w.as_str())
         {
             return Err(format!("param `except`: unknown word `{w}`"));
         }
@@ -140,7 +145,11 @@ impl Rule for BlankLineBefore {
             return;
         }
         let block = self.has_block(node, g);
-        if self.multi_line && !block.as_ref().is_some_and(|b| Self::multi_line_text(b, g, ctx.file.text)) {
+        if self.multi_line
+            && !block
+                .as_ref()
+                .is_some_and(|b| Self::multi_line_text(b, g, ctx.file.text))
+        {
             return;
         }
         let parent_block = node.parent().filter(|p| g.has_tag(p.kind(), &self.block));
@@ -189,11 +198,16 @@ impl Rule for BlankLineBefore {
                 && sibling.as_ref().is_some_and(|s| {
                     same(s)
                         && self.has_block(s, g).is_none()
-                        && first_word(s, g).is_some_and(|w| w.text().eq_ignore_ascii_case(first.text()))
+                        && first_word(s, g)
+                            .is_some_and(|w| w.text().eq_ignore_ascii_case(first.text()))
                 }));
         let wants_blank = !flip;
         if (newlines >= 2) != wants_blank {
-            let blank = if wants_blank { "an empty line" } else { "no empty line" };
+            let blank = if wants_blank {
+                "an empty line"
+            } else {
+                "no empty line"
+            };
             ctx.report(first.text_range(), self.message.replace("{blank}", blank));
         }
     }
