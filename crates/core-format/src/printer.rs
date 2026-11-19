@@ -392,7 +392,13 @@ impl<'a> Printer<'a> {
                 push(cmds, i, mode, d);
             }
             Doc::Align(n, d) => {
-                let i = self.indents.align(indent, *n);
+                // `usize::MAX`: to the column the contents start at (see `doc::align_here`).
+                let n = if *n == usize::MAX {
+                    self.pos.saturating_sub(self.indents.levels[indent].width)
+                } else {
+                    *n
+                };
+                let i = self.indents.align(indent, n);
                 push(cmds, i, mode, d);
             }
             Doc::IfBreak {
@@ -649,6 +655,21 @@ fn fits<'a>(
             Doc::Nil | Doc::BreakParent => {}
             Doc::LineSuffix(_) => suffix = true,
             Doc::Shared(s) => m.stack.push((mode, Item::Doc(&s.doc))),
+            // A unit inside the candidate counts whole; one after it (in the rest) breaks as usual.
+            Doc::Label(crate::doc::UNIT_LABEL, d) if rest_idx == rest.len() => {
+                let whole = match &**d {
+                    Doc::Group(g) => &g.contents,
+                    other => other,
+                };
+                m.stack.push((Mode::Flat, Item::Doc(whole)));
+            }
+            Doc::Label(crate::doc::HEAD_LABEL, d) if rest_idx == rest.len() => {
+                let first = match &**d {
+                    Doc::Group(g) => g.states.get(1).or(g.states.last()).unwrap_or(&g.contents),
+                    other => other,
+                };
+                m.stack.push((mode, Item::Doc(first)));
+            }
             Doc::IndentIfBreak(_, d) | Doc::Label(_, d) => m.stack.push((mode, Item::Doc(d))),
             Doc::LineSuffixBoundary => {
                 if suffix {

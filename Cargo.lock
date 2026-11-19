@@ -1665,6 +1665,7 @@ dependencies = [
  "core-rules",
  "core-syntax",
  "provider-api",
+ "rowan",
 ]
 
 [[package]]

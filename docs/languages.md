@@ -43,7 +43,7 @@ Status, measured results, presets and options for every language.
 | [Dockerfile](#dockerfile) | lint only | none | n/a | n/a | hadolint | 28% |
 | [Makefile](#makefile) | lint only | none | n/a | n/a | checkmake | 74% |
 | [GitHub Actions](#github-actions) | lint only | none | n/a | n/a | actionlint | 5% |
-| [C / C++](#c--c) | experimental | none | n/a | n/a | none | n/a |
+| [C / C++](#c--c) | formatter | none | n/a | n/a | none | n/a |
 | [INI, EditorConfig, .gitignore](#ini-editorconfig-gitignore) | experimental | none | n/a | n/a | none | n/a |
 
 ## Options every formatter shares
@@ -330,9 +330,9 @@ Status, measured results, presets and options for every language.
 
 ## C / C++
 
-- **Status:** experimental. Files are kept as written. There are no lint rules.
-- **Parser:** a lexer with a token-level structure. There is no full grammar.
-- **Not done:** a clang-format compatible layout.
+- **Status:** formatter after clang-format (LLVM style by default; Google, Chromium, Mozilla, WebKit, GNU and Microsoft as options). There are no lint rules.
+- **Parser:** a lexer with a token-level structure. There is no full grammar. A line or item the formatter cannot lay out safely is kept as written.
+- **Formatter:** the same as clang-format 20.1.8 on 87 of 420 LLVM, 29 of 70 fmt, 99 of 593 range-v3, 773 of 2,299 folly and 511 of 2,872 Linux files; a second format never changes the output. Open: long-line wrapping costs (argument bin-packing, return-type breaks), macro bodies.
 
 ## INI, EditorConfig, .gitignore
 

@@ -7,7 +7,7 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 
 | # | Language | Format identical (tool) | Lint coverage (tool, preset) | Biggest causes |
 |---|---|---|---|---|
-| 1 | C / C++ | none (no clang-format run) | none (no clang-tidy catalog) | no formatter, no lint rules ([design/cpp.md](design/cpp.md)) |
+| 1 | C / C++ | formatter on the Doc printer; identical to clang-format on 87/420 llvm, 29/70 fmt, 99/593 range-v3, 773/2299 folly, 511/2872 linux files, second-format 0 | none (no clang-tidy catalog) | layout costs (bin-packing, return-type break, operator precedence), macro bodies, no lint rules ([design/cpp.md](design/cpp.md)) |
 | 2 | JSON | ? (fixtures only, no real-world corpus) | ? (eslint-plugin-jsonc; corpus is JSONTestSuite) | no real-world corpus; no coverage run |
 | 3 | XML | ? (CSharpier XML, 372 project files, count not recorded) | none | no corpus count; no reference linter |
 | 4 | GitHub Actions | none (YAML formatter, no reference) | 5.4% (actionlint, `github-actions/actionlint`) | `syntax-check` 235, `expression/types` 155, `events` 115 findings |

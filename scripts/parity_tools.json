@@ -242,6 +242,36 @@
         {"dir": "tests/conformance/corpus/php", "suffixes": [".php"], "prefix": "corpus/", "ratchet": "real-world", "recursive": true}
       ]
     },
+    "clang-format": {
+      "catalog": "clang-format",
+      "install": {"pip": "clang-format", "dir": "clang_format"},
+      "fetch": ["tests/conformance/fetch-cpp-corpus.sh"],
+      "command": ["{prefix}/clang_format/data/bin/clang-format", "--style=file:{folder}/{style}.clang-format", "{file}"],
+      "input": "arg",
+      "tool_may_reject": true,
+      "parallel": true,
+      "quiet": true,
+      "fixtures": [
+        {"dir": "tests/conformance/corpus/cpp/llvm-project", "suffixes": [".cpp", ".h"], "style": "llvm", "ratchet": "llvm", "prefix": "llvm/", "recursive": true, "copy_as": ".cpp"},
+        {"dir": "tests/conformance/corpus/cpp/fmt", "suffixes": [".cc", ".h", ".cpp"], "style": "fmt", "ratchet": "fmt", "prefix": "fmt/", "recursive": true, "copy_as": ".cpp"},
+        {"dir": "tests/conformance/corpus/cpp/range-v3", "suffixes": [".hpp", ".cpp"], "style": "range-v3", "ratchet": "range-v3", "prefix": "range-v3/", "recursive": true, "copy_as": ".cpp"},
+        {"dir": "tests/conformance/corpus/cpp/folly", "suffixes": [".cpp", ".h"], "style": "llvm", "ratchet": "folly", "prefix": "folly/", "recursive": true, "copy_as": ".cpp"},
+        {"dir": "tests/conformance/corpus/cpp/linux", "suffixes": [".c", ".h"], "style": "linux", "ratchet": "linux", "prefix": "linux/", "recursive": true, "copy_as": ".c"},
+        {"dir": "tests/conformance/corpus/cpp/sqlite", "suffixes": [".c", ".h"], "style": "llvm", "ratchet": "sqlite", "prefix": "sqlite/", "recursive": true, "copy_as": ".c"},
+        {"dir": "bench/inputs/cpp", "suffixes": [".cpp", ".hpp"], "style": "google", "ratchet": "google", "prefix": "google/cpp/"},
+        {"dir": "bench/inputs/c", "suffixes": [".c"], "style": "google", "ratchet": "google", "prefix": "google/c/"},
+        {"dir": "bench/inputs/cpp", "suffixes": [".cpp", ".hpp"], "style": "chromium", "ratchet": "chromium", "prefix": "chromium/cpp/"},
+        {"dir": "bench/inputs/c", "suffixes": [".c"], "style": "chromium", "ratchet": "chromium", "prefix": "chromium/c/"},
+        {"dir": "bench/inputs/cpp", "suffixes": [".cpp", ".hpp"], "style": "mozilla", "ratchet": "mozilla", "prefix": "mozilla/cpp/"},
+        {"dir": "bench/inputs/c", "suffixes": [".c"], "style": "mozilla", "ratchet": "mozilla", "prefix": "mozilla/c/"},
+        {"dir": "bench/inputs/cpp", "suffixes": [".cpp", ".hpp"], "style": "webkit", "ratchet": "webkit", "prefix": "webkit/cpp/"},
+        {"dir": "bench/inputs/c", "suffixes": [".c"], "style": "webkit", "ratchet": "webkit", "prefix": "webkit/c/"},
+        {"dir": "bench/inputs/cpp", "suffixes": [".cpp", ".hpp"], "style": "gnu", "ratchet": "gnu", "prefix": "gnu/cpp/"},
+        {"dir": "bench/inputs/c", "suffixes": [".c"], "style": "gnu", "ratchet": "gnu", "prefix": "gnu/c/"},
+        {"dir": "bench/inputs/cpp", "suffixes": [".cpp", ".hpp"], "style": "microsoft", "ratchet": "microsoft", "prefix": "microsoft/cpp/"},
+        {"dir": "bench/inputs/c", "suffixes": [".c"], "style": "microsoft", "ratchet": "microsoft", "prefix": "microsoft/c/"}
+      ]
+    },
     "invoke-formatter": {
       "catalog": "psscriptanalyzer",
       "install": {"psmodule": "PSScriptAnalyzer"},

@@ -1,0 +1,5 @@
+BasedOnStyle: Google
+ColumnLimit: 80
+SortIncludes: Never
+FixNamespaceComments: false
+ReflowComments: false

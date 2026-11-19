@@ -42,7 +42,8 @@ pub enum Doc {
     Concat(Vec<Doc>),
     Group(Box<Group>),
     Indent(Box<Doc>),
-    /// Indent by this many extra spaces (not levels).
+    /// Indent by this many extra spaces (not levels); `usize::MAX`: so that wrapped lines start
+    /// in the column the contents start in ([`align_here`]).
     Align(usize, Box<Doc>),
     /// `broken` when the enclosing group (or, with `group`, the group with that id, printed
     /// before it) is broken, else `flat`.
@@ -511,6 +512,12 @@ pub fn outdent(levels: usize, d: Doc) -> Doc {
     Doc::Outdent(levels, Box::new(d))
 }
 
+/// Contents whose wrapped lines start in the column the contents start in (the text after an
+/// opening bracket, an operand after `return `).
+pub fn align_here(d: Doc) -> Doc {
+    Doc::Align(usize::MAX, Box::new(d))
+}
+
 pub fn align(spaces: usize, d: Doc) -> Doc {
     Doc::Align(spaces, Box::new(d))
 }
@@ -535,6 +542,25 @@ pub fn if_break_in(id: GroupId, broken: Doc, flat: Doc) -> Doc {
 /// See [`Doc::Label`].
 pub fn label(tag: &'static str, d: Doc) -> Doc {
     Doc::Label(tag, Box::new(d))
+}
+
+/// The label of a unit: a bracket with what it holds, measured flat by the candidates of an
+/// enclosing [`conditional_group`] that look only as far as their first possible break.
+pub const UNIT_LABEL: &str = "unit";
+
+/// `d` (a group, usually a [`conditional_group`]) as a unit: the first-line check of an enclosing
+/// candidate counts it whole instead of looking into its own breaks.
+pub fn unit(d: Doc) -> Doc {
+    label(UNIT_LABEL, d)
+}
+
+/// The label of a head: like a unit, but the first-line check of an enclosing candidate looks
+/// into its first break (the second candidate of its group) instead of counting it whole.
+pub const HEAD_LABEL: &str = "head";
+
+/// `d` (a [`conditional_group`]) as a head, see [`HEAD_LABEL`].
+pub fn head(d: Doc) -> Doc {
+    label(HEAD_LABEL, d)
 }
 
 /// See [`Doc::LineSuffixBoundary`].

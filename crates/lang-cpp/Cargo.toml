@@ -13,6 +13,7 @@ core-format.workspace = true
 core-rules.workspace = true
 core-syntax.workspace = true
 provider-api.workspace = true
+rowan.workspace = true
 
 [build-dependencies]
 core-syntax.workspace = true

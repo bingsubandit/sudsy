@@ -33,20 +33,33 @@ Options declared by more than one language, generated from the option schemas; p
 <!-- generated:shared-options -->
 | Option | Values | Defaults |
 |---|---|---|
+| `access_modifier_outdent` | int 0-16 | cpp `2`, c `2` |
+| `align_after_open_bracket` | `align`, `dont_align`, `always_break` | cpp `align`, c `align` |
+| `align_escaped_newlines` | `right`, `left`, `dont_align` | cpp `right`, c `right` |
+| `align_trailing_comments` | bool | cpp `true`, c `true` |
 | `array_bracket_spacing` | bool | json `false`, toml `false`, yaml `false`, github-actions `false` |
 | `assignment_conditional` | `always`, `binary_test` | java `always`, js `binary_test`, kotlin `always`, csharp `always` |
 | `assignment_indent` | int 1-4 | java `2`, js `1`, kotlin `1`, csharp `1` |
 | `assignment_layout` | `compact`, `fluid`, `break` | java `break`, js `fluid`, kotlin `break`, csharp `compact` |
+| `bin_pack_arguments` | bool | cpp `true`, c `true` |
+| `bin_pack_parameters` | bool | cpp `true`, c `true` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
 | `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
 | `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |
 | `blank_lines_after_key` | `preserve`, `remove` | yaml `preserve`, github-actions `preserve` |
+| `brace_wrapping` | list of words | cpp `[]`, c `[]` |
 | `bracket_same_line` | bool | html `false`, js `false`, angular `false`, vue `false`, svelte `false` |
 | `bracket_spacing` | bool | json `true`, graphql `true`, js `true`, toml `true`, yaml `true`, github-actions `true` |
+| `break_after_return_type` | `none`, `top_level`, `all`, `top_level_definitions`, `all_definitions` | cpp `none`, c `none` |
+| `break_before_binary_operators` | `none`, `non_assignment`, `all` | cpp `none`, c `none` |
+| `break_constructor_initializers` | `before_colon`, `before_comma` | cpp `before_colon`, c `before_colon` |
+| `break_template_declarations` | `yes`, `multiline`, `no` | cpp `multiline`, c `multiline` |
 | `collapse` | json: `preserve`, `always`, `never`, `opening_break`; toml: `preserve`, `always`, `never` | json `preserve`, toml `preserve` |
 | `comment_spacing` | int 1-10 | yaml `1`, github-actions `1` |
 | `conditional_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
 | `conditional_layout` | `indented`, `chained` | java `indented`, js `chained`, csharp `indented` |
+| `constructor_initializer_indent` | int 0-16 | cpp `4`, c `4` |
+| `continuation_indent` | int 0-16 | cpp `4`, c `4` |
 | `dialect` | json: `auto`, `json`, `jsonc`; sql: `ansi`, `postgres`, `mysql`, `tsql` | json `auto`, sql `ansi` |
 | `document_end` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |
 | `document_start` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |
@@ -55,24 +68,38 @@ Options declared by more than one language, generated from the option schemas; p
 | `final_newline` | bool | json `true`, css `true`, scss `true`, less `true`, html `true`, cpp `true`, c `true`, dockerfile `true`, editorconfig `true`, gitignore `true`, graphql `true`, hcl `true`, ini `true`, java `true`, js `true`, kotlin `true`, makefile `true`, markdown `true`, php `true`, powershell `true`, protobuf `true`, python `true`, ruby `true`, shell `true`, sql `true`, toml `true`, xml `true`, yaml `true`, github-actions `true`, angular `true`, vue `true`, svelte `true`, csharp `true` |
 | `hug_first_argument` | bool | java `false`, js `true` |
 | `hug_last_argument` | `never`, `sole`, `last` | java `sole`, js `last` |
+| `indent_braces` | bool | cpp `false`, c `false` |
+| `indent_case_labels` | bool | cpp `false`, c `false` |
 | `indent_nested_binary` | bool | java `true`, js `true`, csharp `false` |
 | `indent_script_and_style` | bool | vue `false`, svelte `true` |
 | `indent_size` | int 1-16 | json `2`, css `2`, scss `2`, less `2`, html `2`, cpp `2`, c `2`, dockerfile `4`, graphql `2`, hcl `2`, java `2`, js `2`, kotlin `4`, makefile `2`, markdown `2`, php `4`, powershell `4`, protobuf `2`, python `4`, ruby `2`, shell `4`, sql `4`, toml `2`, xml `2`, yaml `2`, github-actions `2`, angular `2`, vue `2`, svelte `2`, csharp `4` |
 | `indent_style` | `space`, `tab` | json `space`, css `space`, scss `space`, less `space`, html `space`, cpp `space`, c `space`, dockerfile `space`, graphql `space`, java `space`, js `space`, kotlin `space`, makefile `space`, php `space`, powershell `space`, protobuf `space`, python `space`, ruby `space`, shell `tab`, sql `space`, toml `space`, xml `space`, angular `space`, vue `space`, svelte `space`, csharp `space` |
 | `line_width` | int 20-1000 | json `80`, css `80`, scss `80`, less `80`, html `80`, cpp `80`, c `80`, graphql `80`, java `100`, js `80`, kotlin `140`, php `120`, python `88`, ruby `120`, sql `80`, toml `80`, xml `100`, yaml `80`, github-actions `80`, angular `80`, vue `80`, svelte `80`, csharp `120` |
-| `max_blank_lines` | int 0-10 | css `1`, scss `1`, less `1`, dockerfile `1`, editorconfig `1`, gitignore `1`, ini `1`, makefile `2`, powershell `10`, shell `1`, toml `1`, xml `1`, yaml `1`, github-actions `1` |
+| `max_blank_lines` | int 0-10 | css `1`, scss `1`, less `1`, cpp `1`, c `1`, dockerfile `1`, editorconfig `1`, gitignore `1`, ini `1`, makefile `2`, powershell `10`, shell `1`, toml `1`, xml `1`, yaml `1`, github-actions `1` |
 | `member_chain_break_on_block` | `never`, `inner`, `any` | java `any`, csharp `never` |
 | `member_chain_indent` | int 0-4 | java `2`, js `1`, kotlin `1`, python `0`, csharp `1` |
 | `member_chain_keep_accesses` | `never`, `head`, `always` | java `head`, python `always`, csharp `never` |
 | `member_chain_min_calls` | int 1-1000 | java `2`, js `3`, kotlin `2`, csharp `3` |
 | `member_chain_short_head` | int 0-100 | java `4`, js `2`, csharp `4` |
 | `member_chain_style` | `fluent`, `grouped`, `wrapped`, `soft` | js `grouped`, kotlin `wrapped`, python `soft` |
+| `namespace_indentation` | `none`, `inner`, `all` | cpp `none`, c `none` |
+| `penalty_return_type` | int 0-1000 | cpp `60`, c `60` |
+| `pointer_alignment` | `right`, `left`, `middle` | cpp `right`, c `right` |
 | `quote_style` | js: `double`, `single`; python: `double`, `single`, `preserve`; yaml: `preserve`, `single`, `double`, `prefer_double`; github-actions: `preserve`, `single`, `double`, `prefer_double` | js `double`, python `double`, yaml `preserve`, github-actions `preserve` |
 | `sequence_indent` | `preserve`, `indented`, `flush` | yaml `preserve`, github-actions `preserve` |
+| `short_case_labels` | bool | cpp `false`, c `false` |
+| `short_enums` | bool | cpp `true`, c `true` |
+| `short_functions` | `none`, `empty`, `inline`, `all` | cpp `all`, c `all` |
+| `short_ifs` | `never`, `without_else`, `all` | cpp `never`, c `never` |
+| `short_lambdas` | `none`, `empty`, `inline`, `all` | cpp `all`, c `all` |
+| `short_loops` | bool | cpp `false`, c `false` |
 | `single_attribute_per_line` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `single_quote` | bool | css `false`, scss `false`, less `false` |
+| `space_before_parens` | `never`, `control_statements`, `always` | cpp `control_statements`, c `control_statements` |
+| `spaces_before_trailing_comments` | int 0-16 | cpp `1`, c `1` |
 | `trailing_commas` | json: `never`, `multiline`; js: `all`, `es5`, `none`; kotlin: `never`, `multiline`; php: `never`, `multiline`; toml: `never`, `multiline`; csharp: `preserve`, `never`, `multiline` | json `never`, js `all`, kotlin `multiline`, php `multiline`, toml `multiline`, csharp `preserve` |
 | `whitespace_sensitivity` | `css`, `strict`, `ignore` | html `css`, angular `css`, vue `css`, svelte `css` |
+| `wrap_lines` | bool | cpp `true`, c `true` |
 <!-- /generated -->
 
 ## Parentheses (`shapes::parens`)

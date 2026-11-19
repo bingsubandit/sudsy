@@ -80,7 +80,7 @@ One row per concept (one behavior). `used by`: languages whose grammar, `format.
 | trailing-comment-alignment | core-format/align.rs | Trailing comments of consecutive entries start in one column. | taplo align_comments | toml | SINGLE-USE |
 | type-expression-layout | lang-js/format/ts/mod.rs | Type annotations: unions, intersections, generics, function, mapped and tuple types. | Prettier typescript types | js | SINGLE-USE |
 | unary-expression-layout | lang-js/format/unary.rs | Unary, update, await, yield, spread, return and throw expressions. | Prettier unary and keyword expressions | js | SINGLE-USE |
-| verbatim-formatter | lang-cpp/format.rs | A file or node printed as written. |  | cpp, markdown, ruby | LOCAL: lang-cpp/format.rs, lang-markdown/format/keep.rs, lang-ruby/format.rs |
+| verbatim-formatter | lang-cpp/format/mod.rs | A file or node printed as written. |  | cpp, markdown, ruby | LOCAL: lang-cpp/format/mod.rs, lang-markdown/format/keep.rs, lang-ruby/format.rs |
 
 ## lint
 

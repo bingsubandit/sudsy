@@ -19,7 +19,7 @@ token Whitespace #trivia #whitespace
 token Newline #trivia #newline
 // A backslash that ends a line.
 token Continuation #trivia #whitespace
-token Comment #trivia #comment
+token Comment #trivia #comment #indentable
 
 token Lbrace "{" #punctuation
 token Rbrace "}" #punctuation #close

@@ -1,0 +1,4 @@
+BasedOnStyle: Microsoft
+SortIncludes: Never
+FixNamespaceComments: false
+ReflowComments: false

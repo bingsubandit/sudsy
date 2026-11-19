@@ -69,7 +69,7 @@ def install(spec, catalog, version, prefix):
             prefix.mkdir(parents=True, exist_ok=True)
             run(["npm", "install", "--silent", "--no-audit", "--no-fund", "--prefix", prefix, *spec.get("with", []), f"{spec['npm']}@{version}"], ROOT)
     elif "pip" in spec:  # a Python tool, run with PYTHONPATH=prefix
-        if not (prefix / spec["pip"]).is_dir():
+        if not (prefix / spec.get("dir", spec["pip"])).is_dir():
             if subprocess.run([sys.executable, "-m", "pip", "--version"], capture_output=True).returncode == 0:
                 run([sys.executable, "-m", "pip", "install", "--quiet", "--target", prefix, f"{spec['pip']}=={version}"], ROOT)
             else:  # no pip on the host: the tool's wheel from PyPI, unpacked (a tool without dependencies, as ruff)
@@ -157,7 +157,7 @@ def install(spec, catalog, version, prefix):
 
 
 def fixtures(config, folder):
-    """The fixtures as (name, path, ratchet group or None); names are the keys of differences.yaml."""
+    """The fixtures as (name, path, ratchet group or None, its source); names are the keys of differences.yaml."""
     out = []
     for source in config["fixtures"]:
         base = ROOT / source["dir"] if "dir" in source else folder
@@ -178,11 +178,11 @@ def fixtures(config, folder):
                 path.read_bytes().decode("utf-8")
             except UnicodeDecodeError:
                 continue
-            out.append((source.get("prefix", "") + rel, path, source.get("ratchet")))
+            out.append((source.get("prefix", "") + rel, path, source.get("ratchet"), source))
     return out
 
 
-def upstream(config, prefix, version, copy, work):
+def upstream(config, prefix, version, copy, work, style=None):
     """The tool's output for the copy of a fixture, or None when it rejects the file."""
     exe = executable(prefix, config.get("install", {}).get("exe", ""))
     mode = config["input"]
@@ -192,7 +192,7 @@ def upstream(config, prefix, version, copy, work):
         copy.parent.mkdir(exist_ok=True)
         shutil.copy(work / copy.name, copy)
     group = re.search(config["group"], copy.name) if "group" in config else None  # `{group}`: the first group of the fixture name (sqlfluff: its dialect)
-    command, env = tool_command(config, prefix, exe=exe, file=copy.name, group=group.group(1) if group else "")
+    command, env = tool_command(config, prefix, exe=exe, file=copy.name, group=group.group(1) if group else "", style=style, folder=ROOT / "tests/parity" / config.get("folder", ""))
     r = run(command, copy.parent if mode == "in-place" else work, text if mode == "stdin" else None, check=False, env=env)
     if r.returncode != 0:
         if config.get("tool_may_reject"):
@@ -208,7 +208,7 @@ def upstream_batch(config, prefix, found, work):
     folder = work / "theirs"
     folder.mkdir()
     names = {}
-    for name, fixture, _ in found:
+    for name, fixture, _, _ in found:
         copy = name.replace("/", "__")
         shutil.copy(fixture, folder / copy)
         names[name] = copy
@@ -366,23 +366,32 @@ def main():
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
     shutil.copy(folder / "sudsy.yaml", work / "sudsy.yaml")
+    config["folder"] = tool
     known = Differences(folder)
     only = os.environ.get("PARITY_FILTER")  # a name substring: those fixtures only, with their diffs, no ratchet
     found = [f for f in fixtures(config, folder) if only is None or only in f[0]]
     quiet = bool(config.get("quiet")) and only is None
 
+    for style in {f[3].get("style") for f in found if f[3].get("style")}:  # set up before the threads read it
+        (work / f"style-{style}").mkdir()
+        shutil.copy(folder / f"{style}.yaml", work / f"style-{style}" / "sudsy.yaml")
+
     batch = upstream_batch(config, prefix, found, work) if config["input"] == "batch" else None
 
     def compare(item):
-        name, fixture, _ = item
-        copy = work / name.replace("/", "__")
+        name, fixture, _, source = item
+        style = source.get("style")
+        here = work / f"style-{style}" if style else work  # a style has its own folder and `sudsy.yaml` (`<style>.yaml` of the tool's folder)
+        copy = here / name.replace("/", "__")
+        if "copy_as" in source:  # the language comes from the extension: `.h` of a C++ project is `.cpp`
+            copy = copy.with_name(copy.name + source["copy_as"])
         if "copy_suffix" in config:  # the file name selects the language (Angular: `*.component.html`)
             copy = copy.with_name(copy.name.removesuffix(".html") + config["copy_suffix"])
         shutil.copy(fixture, copy)
-        theirs = batch[name] if batch is not None else upstream(config, prefix, version, copy, work)
-        ours, refused = sudsy_format(sudsy, copy, work, config.get("sudsy_command", "format"))
+        theirs = batch[name] if batch is not None else upstream(config, prefix, version, copy, here, style)
+        ours, refused = sudsy_format(sudsy, copy, here, config.get("sudsy_command", "format"))
         # Sudsy's own output must be a fixed point; the files that change on a second format are counted.
-        again = None if ours is None else sudsy_format(sudsy, copy, work, config.get("sudsy_command", "format"))[0]
+        again = None if ours is None else sudsy_format(sudsy, copy, here, config.get("sudsy_command", "format"))[0]
         unstable = again is not None and again != ours
         if config.get("ignore_trailing_blanks"):  # the tool keeps the trailing blanks of a line, Sudsy never does
             theirs, ours = (re.sub(r"[ 	]+$", "", t, flags=re.M) if t is not None else None for t in (theirs, ours))
@@ -393,7 +402,7 @@ def main():
     bad, groups = 0, {}  # a ratchet group is counted: [identical, different, rejected by the tool]
     unstable = Counter()  # group (or "fixtures") -> files that change on a second format
     refusals = Counter()  # group (or "fixtures") -> files Sudsy's safety check refuses
-    for (name, path, group), (_, _, again, refused) in zip(found, results):
+    for (name, path, group, _), (_, _, again, refused) in zip(found, results):
         if again:
             unstable[group or "fixtures"] += 1
             if only is not None:
@@ -402,7 +411,7 @@ def main():
             refusals[group or "fixtures"] += 1
             if only is not None:
                 print(f"{name}: refused by the safety check")
-    for (name, _, group), (theirs, ours, _, _) in zip(found, results):
+    for (name, _, group, _), (theirs, ours, _, _) in zip(found, results):
         if group and only is None:
             tally = groups.setdefault(group, [0, 0, 0])
             tally[2 if theirs is None else 0 if theirs == ours else 1] += 1

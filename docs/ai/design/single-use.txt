@@ -251,7 +251,7 @@ data tag:tuple # users: python
 data tag:verbatim-trivia # users: csharp
 data tag:with-item # users: python
 data tag:wrapper # users: java
-local lang-cpp/format.rs verbatim-formatter # lang: cpp
+local lang-cpp/format/mod.rs verbatim-formatter # lang: cpp
 local lang-cpp/lexer.rs source-lexer # lang: cpp
 local lang-csharp/rules/async_suffix.rs naming-convention # lang: csharp
 local lang-csharp/rules/binding.rs unused-import # lang: csharp
