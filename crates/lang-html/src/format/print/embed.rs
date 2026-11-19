@@ -323,7 +323,7 @@ impl P<'_> {
         };
         let borrowed = n.next.is_some_and(|x| self.borrow_prev_close_end(x));
         let broken = out.as_deref().is_some_and(has_line_comment);
-        doc::concat(vec![
+        let doc = doc::concat(vec![
             if broken {
                 doc::break_parent()
             } else {
@@ -336,7 +336,11 @@ impl P<'_> {
             ])),
             if borrowed { s(" ") } else { doc::line() },
             s(self.close_end(id)),
-        ])
+        ]);
+        // An interpolation that fits on its own line stays on it when only the text after it does
+        // not: the line after it breaks instead. (Prettier breaks the interpolation too, and its
+        // output then changes on a second format.)
+        if borrowed { doc } else { doc::group(doc) }
     }
 
     /// A Vue directive (`:a`, `@a`, `#a`, `v-*`) whose value is an expression.
