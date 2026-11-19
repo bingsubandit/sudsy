@@ -1,8 +1,10 @@
 //! The structural layer: the nodes of the tree, found from the tokens alone.
 //!
 //! The way clang-format reads a file (it does not preprocess either): tokens are grouped into
-//! unwrapped lines (a declaration or statement; a control statement's header is a line of its
-//! own and its body the next one), `{ }` `( )` `[ ]` pairs are groups, a preprocessor line is a
+//! unwrapped lines (a declaration or statement; a control statement is one line with its body, an
+//! `else` goes on the line of its `if`), `{ }` `( )` `[ ]` pairs are groups (a `{ }` is a `Block`
+//! where it holds statements or members and an `InitList` where it holds values; `deep` reads
+//! what is inside), a preprocessor line is a
 //! `Directive` and its tokens are no part of any line or group. The input is never wrong: a
 //! closer with no opener is a plain token, a group the text ends early has no closing token, and
 //! only the shape of the tree suffers.
@@ -35,6 +37,8 @@ enum Open {
 const STRUCTLIKE: u8 = 1;
 /// A line that has `namespace` or `extern`.
 const SCOPE: u8 = 2;
+/// A line with a trailing return type (`-> T`): the `{` after the type is the body.
+const TRAILING: u8 = 4;
 
 struct Frame {
     open: Open,
@@ -44,6 +48,8 @@ struct Frame {
     /// The tokens a line has of its own (a group counts as its opener).
     count: u32,
     flags: u8,
+    /// The `do` of the line that wait for their `while`.
+    dos: u32,
     /// A `?` not yet answered by its `:`.
     ternary: u32,
     /// A brace group that is a block (a body, a scope), not an initializer.
@@ -67,6 +73,8 @@ struct Builder<'a> {
     nodes: Vec<Node>,
     frames: Vec<Frame>,
     snaps: Vec<Snap>,
+    /// The opening token of the `( )` group closed last.
+    paren_open: usize,
 }
 
 pub fn build(src: &str, toks: &[LTok]) -> Vec<Node> {
@@ -76,6 +84,7 @@ pub fn build(src: &str, toks: &[LTok]) -> Vec<Node> {
         nodes: Vec::with_capacity(toks.len() / 4),
         frames: Vec::new(),
         snaps: Vec::new(),
+        paren_open: 0,
     };
     b.run();
     b.nodes.retain(|n| n.start != GONE);
@@ -142,7 +151,8 @@ impl Builder<'_> {
     fn push_frame(&mut self, open: Open, first: usize, block: bool) {
         let kind = match open {
             Open::Line => k::LINE,
-            Open::Brace => k::BRACE_GROUP,
+            Open::Brace if block => k::BLOCK,
+            Open::Brace => k::INIT_LIST,
             Open::Paren => k::PAREN_GROUP,
             Open::Bracket => k::BRACKET_GROUP,
         };
@@ -153,6 +163,7 @@ impl Builder<'_> {
             first,
             count: 0,
             flags: 0,
+            dos: 0,
             ternary: 0,
             block,
         });
@@ -179,6 +190,17 @@ impl Builder<'_> {
         self.frames.last().is_some_and(|f| f.open == open)
     }
 
+    /// The `->` at `i` follows a parameter list or its qualifiers: a trailing return type.
+    fn trailing_arrow(&self, i: usize) -> bool {
+        self.prev_code(i).is_some_and(|p| {
+            self.toks[p].kind == k::RPAR
+                || matches!(
+                    self.text(p),
+                    "const" | "noexcept" | "override" | "final" | "volatile"
+                )
+        })
+    }
+
     fn ensure_line(&mut self, i: usize) {
         if self.frames.last().is_none_or(|f| f.open == Open::Brace) {
             self.push_frame(Open::Line, i, false);
@@ -196,6 +218,7 @@ impl Builder<'_> {
                 },
                 0,
             ),
+            k::ARROW if self.trailing_arrow(i) => (TRAILING, 0),
             k::QUESTION => (0, 1),
             _ => (0, 0),
         };
@@ -203,6 +226,10 @@ impl Builder<'_> {
             f.count += 1;
             f.flags |= flags;
             f.ternary += ternary;
+            f.dos += u32::from(
+                self.toks[i].kind == k::KEYWORD
+                    && &self.src[self.toks[i].start as usize..self.toks[i].end as usize] == "do",
+            );
         }
     }
 
@@ -307,6 +334,7 @@ impl Builder<'_> {
                         self.close_to(pos + 1, before);
                         let f = self.pop(self.toks[i].end);
                         if kind == k::RPAR {
+                            self.paren_open = f.first;
                             self.after_paren(i, &f);
                         }
                     }
@@ -326,7 +354,20 @@ impl Builder<'_> {
             }
             k::SEMI => {
                 self.plain(i);
-                if self.top_is(Open::Line) {
+                // `if (a) b; else c;` and `do a; while (b);` are one line.
+                let next = self.next_code(i).map(|n| self.text(n).to_owned());
+                let next = next.as_deref();
+                let mut do_while = false;
+                if next == Some("while")
+                    && let Some(f) = self
+                        .frames
+                        .last_mut()
+                        .filter(|f| f.open == Open::Line && f.dos > 0)
+                {
+                    f.dos -= 1;
+                    do_while = true;
+                }
+                if self.top_is(Open::Line) && next != Some("else") && !do_while {
                     self.pop(self.toks[i].end);
                 }
             }
@@ -353,12 +394,8 @@ impl Builder<'_> {
         let text = self.text(i);
         let count = self.frames.last().map_or(0, |f| f.count);
         let next = self.next_code(i);
+        // A macro used as a statement: `Q_OBJECT` alone on a line.
         let ends = match (kind, next) {
-            // `else` has its body on the next line.
-            (k::KEYWORD, Some(n)) if text == "else" => {
-                !matches!(self.toks[n].kind, k::LBRACE) && self.text(n) != "if"
-            }
-            // A macro used as a statement: `Q_OBJECT` alone on a line.
             (k::IDENT, Some(n)) if count == 1 && macro_name(text) => {
                 self.broken(i, n) && !continues(self.toks[n].kind, self.text(n))
             }
@@ -393,11 +430,19 @@ impl Builder<'_> {
         let Some(p) = self.prev_code(i) else {
             return true;
         };
-        let flags = (self.frames.last())
-            .filter(|f| f.open == Open::Line)
-            .map_or(0, |f| f.flags);
+        let line = self.frames.last().filter(|f| f.open == Open::Line);
+        let (flags, count) = line.map_or((0, 0), |f| (f.flags, f.count));
         match self.toks[p].kind {
-            k::RPAR | k::SEMI | k::RBRACE | k::LBRACE | k::COLON => true,
+            // `(T){ ... }` after an operator or `return` is a compound literal.
+            k::RPAR => !self.prev_code(self.paren_open).is_some_and(|o| {
+                matches!(
+                    self.toks[o].kind,
+                    k::EQUAL | k::QUESTION | k::COMMA | k::LPAR | k::LSQB
+                ) || self.text(o) == "return"
+            }),
+            k::SEMI | k::RBRACE | k::LBRACE | k::COLON | k::AMP | k::AMP_AMP => true,
+            // A macro that takes a block: `SCOPE_EXIT {`.
+            k::IDENT if count == 1 && self.text(p).len() >= 4 && macro_name(self.text(p)) => true,
             k::IDENT | k::KEYWORD | k::STRING | k::GREATER | k::GREATER_GREATER => {
                 matches!(
                     self.text(p),
@@ -409,7 +454,8 @@ impl Builder<'_> {
                         | "noexcept"
                         | "override"
                         | "final"
-                ) || (flags != 0 && self.text(p) != "return")
+                ) || (flags & (STRUCTLIKE | SCOPE) != 0 && self.text(p) != "return")
+                    || flags & TRAILING != 0
             }
             _ => false,
         }
@@ -420,26 +466,42 @@ impl Builder<'_> {
         let Some(line) = self.frames.last().filter(|f| f.open == Open::Line) else {
             return;
         };
-        let (first, flags) = (line.first, line.flags);
+        let (flags, dos) = (line.flags, line.dos);
         let Some(n) = self.next_code(i) else {
+            // The last token of the file.
+            self.pop(self.toks[i].end);
             return;
         };
         let text = self.text(n);
+        let while_do = text == "while" && dos > 0;
         let always = matches!(
             self.toks[n].kind,
-            k::SEMI | k::COMMA | k::RPAR | k::RSQB | k::DOT | k::ARROW
+            k::SEMI | k::COMMA | k::RPAR | k::RSQB | k::DOT | k::ARROW | k::COLON | k::QUESTION
         ) || text == "else"
             || text == "catch"
-            || (text == "while" && self.text(first) == "do");
+            || while_do
+            // The end of an initializer: the expression goes on.
+            || (!group.block && continues(self.toks[n].kind, text));
         let same_line = !self.broken(i, n);
-        if !(always || same_line && (!group.block || flags & STRUCTLIKE != 0)) {
+        // `[] { ... }()`: the call follows the body.
+        let called = self.toks[n].kind == k::LPAR && self.toks[n].start == self.toks[i].end;
+        let goes_on = always || called || same_line && (!group.block || flags & STRUCTLIKE != 0);
+        if !goes_on {
             self.pop(self.toks[i].end);
+        } else if let Some(f) = self.frames.last_mut() {
+            // The braces of a class are closed: what follows are its declarators.
+            if group.block {
+                f.flags &= !STRUCTLIKE;
+            }
+            if while_do {
+                f.dos -= 1;
+            }
         }
     }
 
-    /// The `)` at `i` closed `group`: a control statement's header ends its line unless a block
-    /// follows; so does a call used as a statement (`BEGIN_NAMESPACE(x)`) when the next token
-    /// starts a new statement on the next line.
+    /// The `)` at `i` closed `group`: a call used as a statement (`BEGIN_NAMESPACE(x)`) ends its
+    /// line when the next token starts a new statement on the next line; the header of a control
+    /// statement goes on with its body.
     fn after_paren(&mut self, i: usize, group: &Frame) {
         let Some(line) = self.frames.last().filter(|f| f.open == Open::Line) else {
             return;
@@ -456,7 +518,7 @@ impl Builder<'_> {
                     && self.prev_code(p).is_some_and(|q| self.text(q) == "if"))
         });
         let ends = if control {
-            !matches!(self.toks[n].kind, k::LBRACE | k::SEMI)
+            false
         } else {
             count == 2
                 && open == first + 1
@@ -471,7 +533,7 @@ impl Builder<'_> {
 }
 
 /// `Q_OBJECT`, `BEGIN_NAMESPACE`: two or more capitals, digits and underscores.
-fn macro_name(s: &str) -> bool {
+pub(crate) fn macro_name(s: &str) -> bool {
     s.len() >= 2
         && s.bytes().any(|c| c.is_ascii_uppercase())
         && s.bytes()

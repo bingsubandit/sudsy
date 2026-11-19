@@ -1,5 +1,5 @@
 //! The flow graph of a body built from statement roles (`#block`, `#statements`, `#conditional`, `#loop`,
-//! `#switch`, `#case`, `#try`, `#catch`, `#return`, `#throw`, `#break`, `#continue`, `#labeled`),
+//! `#switch`, `#case`, `#try`, `#catch`, `#return`, `#throw`, `#break`, `#continue`, `#labeled`, `#goto-target`),
 //! so a language gets reachability from its grammar's roles alone. Every statement the walk
 //! passes becomes one operation (its source span) in the block it runs in; a statement that no
 //! operation of a reachable block names is unreachable. A loop with no test or a literal `true`
@@ -399,6 +399,16 @@ impl<'a> Builder<'a> {
     }
 
     fn stmt(&mut self, n: &SyntaxNode) {
+        if self.g.has_tag(n.kind(), "directive") {
+            return; // a preprocessor line among the statements is no statement
+        }
+        if self.g.has_tag(n.kind(), "goto-target") {
+            // a `goto` can come from anywhere: the code from here on is reachable
+            let target = self.new_block();
+            self.always(0, target);
+            self.always(self.cur, target);
+            self.cur = target;
+        }
         self.emit(n);
         self.walk(n);
     }
@@ -562,7 +572,11 @@ impl<'a> Builder<'a> {
             }
         }
         self.frames.pop();
-        if !default {
+        // an `#if` or `#include` in the body may add arms that are not in the tree
+        let preprocessed = n
+            .descendants()
+            .any(|d| self.g.has_tag(d.kind(), "directive"));
+        if !default || preprocessed {
             self.always(dispatch, after);
         }
         if let Some(p) = prev {

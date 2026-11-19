@@ -5,7 +5,7 @@ use core_syntax::{SyntaxKind, print};
 use lang_cpp::generated::kind;
 use lang_cpp::{Dialect, provider};
 use provider_api::format_testing::{
-    assert_file_names, assert_parses, bench_input_files, check_corpus,
+    assert_file_names, assert_parses, bench_input_files, check_corpus, check_corpus_shapes,
 };
 use provider_api::{LanguageProvider, SourceFile};
 
@@ -104,27 +104,6 @@ fn texts(src: &str, dialect: Dialect, wanted: SyntaxKind) -> Vec<String> {
 }
 
 #[test]
-fn lines() {
-    let src = "int a; int f(int x)\n{ if (x) return 1; else { x; } }\nstruct S { int a; } s;\npublic:\nBEGIN(x)\nint b;\n";
-    assert_eq!(
-        texts(src, Dialect::Cpp, kind::LINE),
-        [
-            "int a;",
-            "int f(int x) { if (x) return 1; else { x; } }",
-            "if (x)",
-            "return 1;",
-            "else { x; }",
-            "x;",
-            "struct S { int a; } s;",
-            "int a;",
-            "public:",
-            "BEGIN(x)",
-            "int b;",
-        ]
-    );
-}
-
-#[test]
 fn c_has_no_cpp_keywords() {
     let src = "int new = 1; class x;";
     let keywords = |dialect| {
@@ -149,12 +128,51 @@ fn conditional_groups() {
     assert_eq!(texts(whole, Dialect::Cpp, kind::PP_GROUP).len(), 1);
     let open = "#if A\nvoid f(int a) {\n#else\nvoid f(long a) {\n#endif\n  g();\n}\n";
     assert!(texts(open, Dialect::Cpp, kind::PP_GROUP).is_empty());
-    assert_eq!(texts(open, Dialect::Cpp, kind::BRACE_GROUP).len(), 2);
+    // The branch that leaves the `{` open has a `BraceGroup`; the closed one a `Block`.
+    assert_eq!(texts(open, Dialect::Cpp, kind::BLOCK).len(), 1);
+    assert_eq!(texts(open, Dialect::Cpp, kind::BRACE_GROUP).len(), 1);
     let closing = "void f() {\n#if A\n}\n#endif\n";
     assert!(texts(closing, Dialect::Cpp, kind::PP_GROUP).is_empty());
     assert_eq!(texts(closing, Dialect::Cpp, kind::DIRECTIVE).len(), 2);
     let nested = "#if A\n#if B\nx;\n#endif\n#elif C\ny;\n#else\nz;\n#endif\n";
     assert_eq!(texts(nested, Dialect::Cpp, kind::PP_BRANCH).len(), 4);
+}
+
+/// The deep layer: statements, declarations and expressions are nodes of their own kind.
+#[test]
+fn deep_nodes() {
+    let src = "int f(int a, char* b) {\n  if (a) return a + b * 2;\n  for (;;) g(x->y[1]);\n  int c = a ? 1 : 2;\n}\nclass A : B { int m; };\nauto l = [&](int x) { return x; };\n";
+    let one =
+        |wanted, text: &str| assert_eq!(texts(src, Dialect::Cpp, wanted), [text], "{wanted:?}");
+    one(
+        kind::FUNCTION_DECLARATION,
+        "int f(int a, char* b) { if (a) return a + b * 2; for (;;) g(x->y[1]); int c = a ? 1 : 2; }",
+    );
+    one(kind::IF_STATEMENT, "if (a) return a + b * 2;");
+    one(kind::FOR_STATEMENT, "for (;;) g(x->y[1]);");
+    one(kind::TERNARY, "a ? 1 : 2");
+    one(kind::CLASS_SPECIFIER, "class A : B { int m; };");
+    one(kind::BASE_CLAUSE, ": B");
+    one(kind::LAMBDA, "[&](int x) { return x; }");
+    one(kind::MEMBER_ACCESS, "x->y");
+    one(kind::INDEX, "x->y[1]");
+    // `*` binds tighter than `+`.
+    assert_eq!(texts(src, Dialect::Cpp, kind::BINARY).len(), 2);
+}
+
+/// Labels, macro calls and `try` are statements of their own; `.f = v` and `[x = x]` hold no assignment.
+#[test]
+fn deep_precision() {
+    let src = "void f(S s) {\n  try { g(); } catch (E&) { h(); }\nout:\n  FOO(s);\n  S t = { .a = s.a };\n  auto l = [x = x] { return x; };\n  y = y;\n}\n";
+    let one = |wanted, text: &str| assert_eq!(texts(src, Dialect::Cpp, wanted), [text]);
+    one(kind::TRY_STATEMENT, "try { g(); } catch (E&) { h(); }");
+    one(kind::LABEL_STATEMENT, "out:");
+    one(kind::MACRO_STATEMENT, "FOO(s);");
+    // the declarators and `y = y`, not `.a = s.a` or `x = x` of the capture
+    assert_eq!(
+        texts(src, Dialect::Cpp, kind::ASSIGNMENT),
+        ["t = { .a = s.a }", "l = [x = x] { return x; }", "y = y"]
+    );
 }
 
 #[test]
@@ -291,4 +309,53 @@ fn a_backslash_before_a_line_break_continues_the_string() {
         .map(|t| t.text().to_string())
         .collect();
     assert_eq!(strings, ["\"a\\\r\nb\"", "'\\\\'", "\"open"]);
+}
+
+#[test]
+#[ignore]
+fn dump_tree() {
+    let path = std::env::var("DUMP").unwrap();
+    let src = std::fs::read_to_string(&path).unwrap();
+    let dialect = if path.ends_with(".c") {
+        Dialect::C
+    } else {
+        Dialect::Cpp
+    };
+    let parsed = provider(dialect)
+        .parse(&SourceFile::new("a.cc", 1, &src))
+        .unwrap();
+    let g = core_syntax::grammars::CPP.get();
+    let mut depth = 0;
+    for ev in parsed.tree.preorder_with_tokens() {
+        match ev {
+            core_syntax::WalkEvent::Enter(e) => {
+                if let Some(n) = e.as_node() {
+                    println!("{}{}", "  ".repeat(depth), g.name(n.kind()));
+                    depth += 1;
+                } else if let Some(t) = e.as_token()
+                    && !g.is_trivia(t.kind())
+                {
+                    println!("{}'{}'", "  ".repeat(depth), t.text());
+                }
+            }
+            core_syntax::WalkEvent::Leave(e) => {
+                if e.as_node().is_some() {
+                    depth -= 1;
+                }
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore = "needs the corpus: tests/conformance/fetch-cpp-corpus.sh"]
+fn shapes_cpp() {
+    let exts = ["cc", "cpp", "cxx", "hpp", "hh", "hxx", "ipp"];
+    check_corpus_shapes(provider(Dialect::Cpp), "cpp", &exts);
+}
+
+#[test]
+#[ignore = "needs the corpus: tests/conformance/fetch-cpp-corpus.sh"]
+fn shapes_c() {
+    check_corpus_shapes(provider(Dialect::C), "cpp", &["c", "h"]);
 }

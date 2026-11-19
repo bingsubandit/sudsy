@@ -40,6 +40,7 @@ Run the parity, classify the differing files by cause, rank by count. Known shar
 
 ### Phase 4: speed
 cpp/c format instructions and allocations per byte within 2x of `java.format` on the bench inputs (the first attempt ran 1,034 M instructions and about 20 allocations per byte for 97 KB). Check [../performance/checklist.md](../performance/checklist.md).
+C/C++ parse per byte within 1.5x of `java.parse` (deep pass; now 1.86x for C and 1.96x for C++).
 
 ## Done when
 second-format 0 and refused 0 in every project; identical counts at least the verbatim baseline in every project and recorded per project; the formatter on shapes with the HARD RULE review passing; docs (`docs/ai/formatting/cpp.md`, roadmap status table, `docs/languages.md`, numbers) current. Landings: phase 0, then phases 1-2 (tree and first formatter), then each phase 3 fix.

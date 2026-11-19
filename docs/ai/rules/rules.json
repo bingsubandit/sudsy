@@ -5053,6 +5053,598 @@
       ]
     },
     {
+      "category": "cleanup",
+      "default_level": "off",
+      "description": "An equality with `true` or `false` (`x == true`, `x != False`) on either side (ruff E712, Checkstyle SimplifyBooleanExpression).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "x = 1\nx == True\nx != False\nTrue == x\nx is True\nx == 1\n",
+        "language": "python",
+        "spans": [
+          {
+            "column": 1,
+            "length": 9,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 10,
+            "line": 3
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "boolean-literal-comparison",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": [
+            "true",
+            "false",
+            "True",
+            "False"
+          ],
+          "description": "The texts that are boolean literals",
+          "name": "literals",
+          "type": "list"
+        },
+        {
+          "default": [],
+          "description": "Equality operators that are not a comparison of value (Python `is`)",
+          "name": "not_operators",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "The condition of an `if`, ternary or loop is an assignment not wrapped in parentheses of its own (ESLint no-cond-assign, PHPCS Generic.CodeAnalysis.AssignmentInCondition). Python's `:=` is the idiom and is left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 5,
+            "length": 5,
+            "line": 3
+          },
+          {
+            "column": 38,
+            "length": 5,
+            "line": 3
+          },
+          {
+            "column": 61,
+            "length": 5,
+            "line": 3
+          },
+          {
+            "column": 76,
+            "length": 5,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-assignment-in-condition",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended",
+        "ruby/rubocop"
+      ],
+      "upstream": [
+        {
+          "id": "no-cond-assign",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "if (a === a) {} if (a.b < a.b) {} if (f() === f()) {} if (a === b) {}\nif (1 === 2) {} if (a === 1) {}\nif (true) {} while (0) {} while (true) {} for (;;) {} var c = \"x\" ? 1 : 2, d = a ? 1 : 2;\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 5,
+            "length": 7,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-constant-comparison",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-constant-binary-expression",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and `while (1)` are the usual endless loop and are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "if (a === a) {} if (a.b < a.b) {} if (f() === f()) {} if (a === b) {}\nif (1 === 2) {} if (a === 1) {}\nif (true) {} while (0) {} while (true) {} for (;;) {} var c = \"x\" ? 1 : 2, d = a ? 1 : 2;\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 5,
+            "length": 4,
+            "line": 3
+          },
+          {
+            "column": 21,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 63,
+            "length": 3,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-constant-condition",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-constant-condition",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "Two arms of one `switch` (or `match`, `when`, `case`) have the same test; the second arm can never run. ESLint `no-duplicate-case`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "switch (a) { case 1: break; case 1: break; case \"x\": break; case 'x': break; case b + 1: break; case b+1: break; default: }\nif (a) {} else if (b) {} else if (a) {}\nif (a || b) {} else if (a) {} else if (b && c) {}\nif (a && b) {} else if (a) {} else if (b && a) {}\nif (a) { if (a) {} } else if (c) {} else { if (c) {} }\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 29,
+            "length": 14,
+            "line": 1
+          },
+          {
+            "column": 97,
+            "length": 16,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-duplicate-case",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby",
+        "sql"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-duplicate-case",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try` or `finally` (also when the language wraps the block in a node of its own; an empty `catch` is `no-empty-catch`) (ESLint no-empty, Checkstyle EmptyBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A { void F() {\n try { } catch (Exception) { }\n try { } catch { /* ignored on purpose */ }\n try { } catch { Log(); }\n try { } catch { try { } catch { Log(); } }\n} }\n",
+        "language": "csharp",
+        "spans": [
+          {
+            "column": 6,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 6,
+            "length": 3,
+            "line": 3
+          },
+          {
+            "column": 6,
+            "length": 3,
+            "line": 4
+          },
+          {
+            "column": 6,
+            "length": 3,
+            "line": 5
+          },
+          {
+            "column": 22,
+            "length": 3,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-empty-block",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-empty",
+          "partial": true,
+          "tool": "eslint"
+        },
+        {
+          "id": "RCS1075",
+          "partial": false,
+          "tool": "Roslynator"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A `catch`, `except` or `rescue` clause whose body has no statement (a lone `pass` counts as none) and no comment, so the error is silently ignored (ESLint no-empty, Checkstyle EmptyCatchBlock, ruff S110, RuboCop Lint/SuppressedException). With `comment_handles` off a comment does not count (PSScriptAnalyzer). With `broad_only` only a clause that catches everything or one of the `types` is reported.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 7,
+            "length": 1,
+            "line": 19
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-empty-catch",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "powershell",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": true,
+          "description": "A comment in the body counts as handling the error",
+          "name": "comment_handles",
+          "type": "bool"
+        },
+        {
+          "default": false,
+          "description": "Report only a clause that catches everything or a broad type",
+          "name": "broad_only",
+          "type": "bool"
+        },
+        {
+          "default": [],
+          "description": "Types that count as broad",
+          "name": "types",
+          "type": "list"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended",
+        "powershell/psscriptanalyzer",
+        "python/ruff",
+        "ruby/rubocop"
+      ],
+      "upstream": [
+        {
+          "id": "no-empty",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A plain or logical assignment whose two sides are the same tokens, `a = a`, `a.b = a.b` or `@a ||= @a` (ESLint no-self-assign, RuboCop Lint/SelfAssignment).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
+        "language": "js",
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 1
+          },
+          {
+            "column": 8,
+            "length": 9,
+            "line": 1
+          },
+          {
+            "column": 33,
+            "length": 11,
+            "line": 1
+          },
+          {
+            "column": 46,
+            "length": 15,
+            "line": 1
+          },
+          {
+            "column": 81,
+            "length": 7,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 15,
+            "line": 2
+          },
+          {
+            "column": 18,
+            "length": 21,
+            "line": 2
+          },
+          {
+            "column": 59,
+            "length": 13,
+            "line": 2
+          },
+          {
+            "column": 76,
+            "length": 19,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-self-assign",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": [
+            "=",
+            "||=",
+            "&&=",
+            "??="
+          ],
+          "description": "The assignment operators that store the right side as it is",
+          "name": "operators",
+          "type": "list"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended",
+        "ruby/rubocop"
+      ],
+      "upstream": [
+        {
+          "id": "no-self-assign",
+          "partial": true,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "An equality or comparison whose two sides are the same tokens: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class Cases {\n  void f(int a) {\n    if (a == a) { g(); }\n    try { g(); } catch (Exception e) { }\n    if (a > 1) { } else { g(); }\n  }\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 9,
+            "length": 6,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-self-compare",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [
+        {
+          "id": "no-self-compare",
+          "partial": false,
+          "tool": "eslint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A statement that can never run: after `return`, `throw`, `break` or `continue`, after an `if`/`else` or `try` that always jumps, or after a loop that never ends. Only the first statement of a run is reported. Where the language has a flow layer (C#) it also covers constant conditions and calls that do not return (`does_not_return` in `semantics:`). Hoisted declarations and empty statements are left out. Removing the statement is offered as an editor quick fix only, because unreachable code usually signals a bug.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A { int F() { return 1; G(); G(); }\n int H(int x) { if (false) { G(); } throw null; x++; } int G() => 1; }\n",
+        "language": "csharp",
+        "spans": [
+          {
+            "column": 31,
+            "length": 4,
+            "line": 1
+          },
+          {
+            "column": 30,
+            "length": 4,
+            "line": 2
+          },
+          {
+            "column": 49,
+            "length": 4,
+            "line": 2
+          }
+        ]
+      },
+      "fix": "suggestion",
+      "id": "unreachable-code",
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "java",
+        "js",
+        "kotlin",
+        "php",
+        "python",
+        "ruby"
+      ],
+      "options": [
+        {
+          "default": true,
+          "description": "With a flow layer, treat the code after a call that never returns (`[DoesNotReturn]`, `does_not_return` in `semantics:`) as unreachable. A compiler does not, so turn this off to report exactly what it reports.",
+          "name": "non_returning_calls",
+          "type": "bool"
+        }
+      ],
+      "presets": [
+        "js/eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "no-unreachable",
+          "partial": false,
+          "tool": "eslint"
+        },
+        {
+          "id": "RCS1148",
+          "partial": false,
+          "tool": "Roslynator"
+        }
+      ]
+    },
+    {
       "category": "performance",
       "default_level": "off",
       "description": "apk add without --no-cache.",
@@ -24206,66 +24798,6 @@
       ]
     },
     {
-      "category": "cleanup",
-      "default_level": "off",
-      "description": "An equality with `true` or `false` (`x == true`, `x != False`) on either side (ruff E712, Checkstyle SimplifyBooleanExpression).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "x = 1\nx == True\nx != False\nTrue == x\nx is True\nx == 1\n",
-        "language": "python",
-        "spans": [
-          {
-            "column": 1,
-            "length": 9,
-            "line": 2
-          },
-          {
-            "column": 1,
-            "length": 10,
-            "line": 3
-          },
-          {
-            "column": 1,
-            "length": 9,
-            "line": 4
-          }
-        ]
-      },
-      "fix": null,
-      "id": "boolean-literal-comparison",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [
-        {
-          "default": [
-            "true",
-            "false",
-            "True",
-            "False"
-          ],
-          "description": "The texts that are boolean literals",
-          "name": "literals",
-          "type": "list"
-        },
-        {
-          "default": [],
-          "description": "Equality operators that are not a comparison of value (Python `is`)",
-          "name": "not_operators",
-          "type": "list"
-        }
-      ],
-      "presets": [],
-      "upstream": []
-    },
-    {
       "category": "style",
       "default_level": "off",
       "description": "A comparison with the constant on the left: `null == x` is `x == null`, `1 < x` is `x > 1`. Without the type layer a constant is a literal, `nameof`, `int.MaxValue`-style member or an expression of those; a named constant on the left is not recognised.",
@@ -25546,62 +26078,6 @@
       ]
     },
     {
-      "category": "suspicious",
-      "default_level": "off",
-      "description": "The condition of an `if`, ternary or loop is an assignment not wrapped in parentheses of its own (ESLint no-cond-assign, PHPCS Generic.CodeAnalysis.AssignmentInCondition). Python's `:=` is the idiom and is left alone.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 5,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 38,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 61,
-            "length": 5,
-            "line": 3
-          },
-          {
-            "column": 76,
-            "length": 5,
-            "line": 3
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-assignment-in-condition",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended",
-        "ruby/rubocop"
-      ],
-      "upstream": [
-        {
-          "id": "no-cond-assign",
-          "partial": true,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
       "category": "style",
       "default_level": "off",
       "description": "A comment between the head of an `if`, `else`, `while`, `do`, `for`, `foreach`, `lock`, `try`, `catch`, `finally`, `switch`, `checked` or `unchecked` and its `{`. Put it inside the block or above the statement.",
@@ -25632,96 +26108,6 @@
           "id": "SA1108",
           "partial": false,
           "tool": "StyleCop"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "An equality or comparison of two literals (ruff PLR0133, ESLint no-constant-binary-expression).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "if (a === a) {} if (a.b < a.b) {} if (f() === f()) {} if (a === b) {}\nif (1 === 2) {} if (a === 1) {}\nif (true) {} while (0) {} while (true) {} for (;;) {} var c = \"x\" ? 1 : 2, d = a ? 1 : 2;\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 5,
-            "length": 7,
-            "line": 2
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-constant-comparison",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-constant-binary-expression",
-          "partial": true,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "The condition of an `if`, ternary or loop is a literal, so one branch never runs (ESLint no-constant-condition, PHPCS Generic.CodeAnalysis.UnconditionalIfStatement). `while (true)` and `while (1)` are the usual endless loop and are left alone.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "if (a === a) {} if (a.b < a.b) {} if (f() === f()) {} if (a === b) {}\nif (1 === 2) {} if (a === 1) {}\nif (true) {} while (0) {} while (true) {} for (;;) {} var c = \"x\" ? 1 : 2, d = a ? 1 : 2;\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 5,
-            "length": 4,
-            "line": 3
-          },
-          {
-            "column": 21,
-            "length": 1,
-            "line": 3
-          },
-          {
-            "column": 63,
-            "length": 3,
-            "line": 3
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-constant-condition",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-constant-condition",
-          "partial": true,
-          "tool": "eslint"
         }
       ]
     },
@@ -25960,52 +26346,6 @@
       ]
     },
     {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "Two arms of one `switch` (or `match`, `when`, `case`) have the same test; the second arm can never run. ESLint `no-duplicate-case`.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "switch (a) { case 1: break; case 1: break; case \"x\": break; case 'x': break; case b + 1: break; case b+1: break; default: }\nif (a) {} else if (b) {} else if (a) {}\nif (a || b) {} else if (a) {} else if (b && c) {}\nif (a && b) {} else if (a) {} else if (b && a) {}\nif (a) { if (a) {} } else if (c) {} else { if (c) {} }\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 29,
-            "length": 14,
-            "line": 1
-          },
-          {
-            "column": 97,
-            "length": 16,
-            "line": 1
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-duplicate-case",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby",
-        "sql"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-duplicate-case",
-          "partial": false,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
       "category": "style",
       "default_level": "off",
       "description": "Two elements of one documentation comment with the same text (a copied and pasted `<param>`, for example). Empty elements and \"The parameter is not used.\" are ignored. No fix.",
@@ -26100,134 +26440,6 @@
           "id": "SA1411",
           "partial": false,
           "tool": "StyleCop"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A block with no statement and no comment, as the body of an `if`, `else`, loop, `try` or `finally` (also when the language wraps the block in a node of its own; an empty `catch` is `no-empty-catch`) (ESLint no-empty, Checkstyle EmptyBlock, PHPCS Generic.CodeAnalysis.EmptyStatement).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class A { void F() {\n try { } catch (Exception) { }\n try { } catch { /* ignored on purpose */ }\n try { } catch { Log(); }\n try { } catch { try { } catch { Log(); } }\n} }\n",
-        "language": "csharp",
-        "spans": [
-          {
-            "column": 6,
-            "length": 3,
-            "line": 2
-          },
-          {
-            "column": 6,
-            "length": 3,
-            "line": 3
-          },
-          {
-            "column": 6,
-            "length": 3,
-            "line": 4
-          },
-          {
-            "column": 6,
-            "length": 3,
-            "line": 5
-          },
-          {
-            "column": 22,
-            "length": 3,
-            "line": 5
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-empty-block",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-empty",
-          "partial": true,
-          "tool": "eslint"
-        },
-        {
-          "id": "RCS1075",
-          "partial": false,
-          "tool": "Roslynator"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A `catch`, `except` or `rescue` clause whose body has no statement (a lone `pass` counts as none) and no comment, so the error is silently ignored (ESLint no-empty, Checkstyle EmptyCatchBlock, ruff S110, RuboCop Lint/SuppressedException). With `comment_handles` off a comment does not count (PSScriptAnalyzer). With `broad_only` only a clause that catches everything or one of the `types` is reported.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class A {\n  public boolean equals(Object o) {\n    return o == \"s\" || o.toString() != \"t\" || o.hashCode() == 1;\n  }\n\n  boolean ok(boolean done, String s) {\n    long big = 10l;\n    long fine = 10L;\n    if (done == true || done != false) {\n      return s.equals(\"a\");\n    }\n    while (done);\n    return false;\n  }\n\n  void f(int x) {\n    try {\n      g();\n    } catch (Exception e) {\n    }\n    try {\n      g();\n    } catch (Exception e) {\n      // ignored\n    }\n    switch (x) {\n      case 1:\n        g();\n    }\n    switch (x) {\n      case 1:\n        g();\n        break;\n      default:\n        break;\n    }\n  }\n}\n\nclass B {\n  public boolean equals(Object o) {\n    return true;\n  }\n\n  public int hashCode() {\n    return 1;\n  }\n}\n",
-        "language": "java",
-        "spans": [
-          {
-            "column": 7,
-            "length": 1,
-            "line": 19
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-empty-catch",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "powershell",
-        "python",
-        "ruby"
-      ],
-      "options": [
-        {
-          "default": true,
-          "description": "A comment in the body counts as handling the error",
-          "name": "comment_handles",
-          "type": "bool"
-        },
-        {
-          "default": false,
-          "description": "Report only a clause that catches everything or a broad type",
-          "name": "broad_only",
-          "type": "bool"
-        },
-        {
-          "default": [],
-          "description": "Types that count as broad",
-          "name": "types",
-          "type": "list"
-        }
-      ],
-      "presets": [
-        "js/eslint-recommended",
-        "powershell/psscriptanalyzer",
-        "python/ruff",
-        "ruby/rubocop"
-      ],
-      "upstream": [
-        {
-          "id": "no-empty",
-          "partial": true,
-          "tool": "eslint"
         }
       ]
     },
@@ -26509,136 +26721,6 @@
           "id": "SA1617",
           "partial": false,
           "tool": "StyleCop"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A plain or logical assignment whose two sides are the same tokens, `a = a`, `a.b = a.b` or `@a ||= @a` (ESLint no-self-assign, RuboCop Lint/SelfAssignment).",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "a = a; a.b = a.b; a[\"b\"] = a.b; a[b] = a[b]; this.c = this.c; a = b; a.b = a.c; a &&= a; a += a;\n[a, b] = [a, b]; [a, ...b] = [a, ...b]; [a, b] = [b, a]; ({ a } = { a }); ({ a: b } = { a: b });\nif (a = b) {} if ((a = b)) {} while (a = b) {} do {} while (a = b); for (; a = b; ) {} for (; (a = b); ) {}\nvar x = (a = b) ? 1 : 2, y = a = b ? 1 : 2;\nif (!!a) {} while (!!a) {} do {} while (!!a); for (; !!a; ) {} var z = !!a ? 1 : 2, w = !!a;\nif (Boolean(a)) {} if (!Boolean(a)) {} Boolean(!!a); !!!a; if ((!!a)) {} if (a && !!b) {} var u = Boolean(a);\n",
-        "language": "js",
-        "spans": [
-          {
-            "column": 1,
-            "length": 5,
-            "line": 1
-          },
-          {
-            "column": 8,
-            "length": 9,
-            "line": 1
-          },
-          {
-            "column": 33,
-            "length": 11,
-            "line": 1
-          },
-          {
-            "column": 46,
-            "length": 15,
-            "line": 1
-          },
-          {
-            "column": 81,
-            "length": 7,
-            "line": 1
-          },
-          {
-            "column": 1,
-            "length": 15,
-            "line": 2
-          },
-          {
-            "column": 18,
-            "length": 21,
-            "line": 2
-          },
-          {
-            "column": 59,
-            "length": 13,
-            "line": 2
-          },
-          {
-            "column": 76,
-            "length": 19,
-            "line": 2
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-self-assign",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [
-        {
-          "default": [
-            "=",
-            "||=",
-            "&&=",
-            "??="
-          ],
-          "description": "The assignment operators that store the right side as it is",
-          "name": "operators",
-          "type": "list"
-        }
-      ],
-      "presets": [
-        "js/eslint-recommended",
-        "ruby/rubocop"
-      ],
-      "upstream": [
-        {
-          "id": "no-self-assign",
-          "partial": true,
-          "tool": "eslint"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "An equality or comparison whose two sides are the same tokens: the result never changes (ESLint no-self-compare, ruff PLR0124, Sonar S1764). `x != x` as an `isNaN` test is reported too.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class Cases {\n  void f(int a) {\n    if (a == a) { g(); }\n    try { g(); } catch (Exception e) { }\n    if (a > 1) { } else { g(); }\n  }\n}\n",
-        "language": "java",
-        "spans": [
-          {
-            "column": 9,
-            "length": 6,
-            "line": 3
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-self-compare",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": [
-        {
-          "id": "no-self-compare",
-          "partial": false,
-          "tool": "eslint"
         }
       ]
     },
@@ -27128,68 +27210,6 @@
           "id": "SA1414",
           "partial": false,
           "tool": "StyleCop"
-        }
-      ]
-    },
-    {
-      "category": "suspicious",
-      "default_level": "warn",
-      "description": "A statement that can never run: after `return`, `throw`, `break` or `continue`, after an `if`/`else` or `try` that always jumps, or after a loop that never ends. Only the first statement of a run is reported. Where the language has a flow layer (C#) it also covers constant conditions and calls that do not return (`does_not_return` in `semantics:`). Hoisted declarations and empty statements are left out. Removing the statement is offered as an editor quick fix only, because unreachable code usually signals a bug.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "class A { int F() { return 1; G(); G(); }\n int H(int x) { if (false) { G(); } throw null; x++; } int G() => 1; }\n",
-        "language": "csharp",
-        "spans": [
-          {
-            "column": 31,
-            "length": 4,
-            "line": 1
-          },
-          {
-            "column": 30,
-            "length": 4,
-            "line": 2
-          },
-          {
-            "column": 49,
-            "length": 4,
-            "line": 2
-          }
-        ]
-      },
-      "fix": "suggestion",
-      "id": "unreachable-code",
-      "languages": [
-        "csharp",
-        "java",
-        "js",
-        "kotlin",
-        "php",
-        "python",
-        "ruby"
-      ],
-      "options": [
-        {
-          "default": true,
-          "description": "With a flow layer, treat the code after a call that never returns (`[DoesNotReturn]`, `does_not_return` in `semantics:`) as unreachable. A compiler does not, so turn this off to report exactly what it reports.",
-          "name": "non_returning_calls",
-          "type": "bool"
-        }
-      ],
-      "presets": [
-        "js/eslint-recommended"
-      ],
-      "upstream": [
-        {
-          "id": "no-unreachable",
-          "partial": false,
-          "tool": "eslint"
-        },
-        {
-          "id": "RCS1148",
-          "partial": false,
-          "tool": "Roslynator"
         }
       ]
     },

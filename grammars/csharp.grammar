@@ -654,7 +654,7 @@ node ExpressionStatement #statement #expression-statement =
     attribute_lists:AttributeList* expression:#expression semicolon:SemicolonToken
 node EmptyStatement #statement #inert #empty-statement =
     attribute_lists:AttributeList* semicolon:SemicolonToken
-node LabeledStatement #statement #statements #inert =
+node LabeledStatement #statement #statements #inert #goto-target =
     attribute_lists:AttributeList* identifier:IdentifierToken colon:ColonToken statement=items:#statement
 node GotoStatement #statement #opaque =
     attribute_lists:AttributeList* goto_keyword:GotoKeyword case_or_default_keyword:#goto-statement-case-or-default-keyword? expression:#expression? semicolon:SemicolonToken

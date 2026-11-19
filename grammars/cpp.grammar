@@ -3,6 +3,20 @@
 // Format: see crates/core-syntax/src/grammar/mod.rs.
 
 language cpp 21 "C/C++"
+roles
+// Binary operators, loosest first: `precedence <level> <assoc> "op"...` (core_syntax::Assoc). Assignment, `?:` and `,` are not binary operators.
+precedence 1 left "||"
+precedence 2 left "&&"
+precedence 3 left "|"
+precedence 4 left "^"
+precedence 5 left "&"
+precedence 6 left "==" "!="
+precedence 7 left "<" ">" "<=" ">="
+precedence 8 left "<=>"
+precedence 9 left "<<" ">>"
+precedence 10 left "+" "-"
+precedence 11 left "*" "/" "%"
+precedence 12 left ".*" "->*"
 comments line "//" block "/*" "*/"
 trivia Comment line "//" block "/*" "*/"
 trivia Continuation continuation
@@ -27,78 +41,138 @@ token Lpar "(" #punctuation
 token Rpar ")" #punctuation #close
 token Lsqb "[" #punctuation
 token Rsqb "]" #punctuation #close
-token Semi ";" #punctuation #separator
-token Comma "," #punctuation #separator
-token Colon ":" #punctuation
-token ColonColon "::" #punctuation
-token Dot "." #punctuation
-token Ellipsis "..." #punctuation
-token Arrow "->" #punctuation
-token ArrowStar "->*" #punctuation
-token DotStar ".*" #punctuation
-token Question "?" #punctuation
-token Plus "+" #punctuation
-token Minus "-" #punctuation
-token Star "*" #punctuation
-token Slash "/" #punctuation
-token Percent "%" #punctuation
-token Caret "^" #punctuation
-token Amp "&" #punctuation
-token Pipe "|" #punctuation
-token Tilde "~" #punctuation
-token Bang "!" #punctuation
-token Equal "=" #punctuation
-token Less "<" #punctuation
-token Greater ">" #punctuation
-token PlusEq "+=" #punctuation
-token MinusEq "-=" #punctuation
-token StarEq "*=" #punctuation
-token SlashEq "/=" #punctuation
-token PercentEq "%=" #punctuation
-token CaretEq "^=" #punctuation
-token AmpEq "&=" #punctuation
-token PipeEq "|=" #punctuation
-token LessLess "<<" #punctuation
-token GreaterGreater ">>" #punctuation
-token LessLessEq "<<=" #punctuation
-token GreaterGreaterEq ">>=" #punctuation
-token EqEq "==" #punctuation
-token BangEq "!=" #punctuation
-token LessEq "<=" #punctuation
-token GreaterEq ">=" #punctuation
-token Spaceship "<=>" #punctuation
-token AmpAmp "&&" #punctuation
-token PipePipe "||" #punctuation
-token PlusPlus "++" #punctuation
-token MinusMinus "--" #punctuation
-token Hash "#" #punctuation
-token HashHash "##" #punctuation
+token Semi ";" #punctuation #separator #stray #part
+token Comma "," #punctuation #separator #part
+token Colon ":" #punctuation #part
+token ColonColon "::" #punctuation #part
+token Dot "." #punctuation #operator #part
+token Ellipsis "..." #punctuation #part
+token Arrow "->" #punctuation #operator #part
+token ArrowStar "->*" #punctuation #operator #part
+token DotStar ".*" #punctuation #operator #part
+token Question "?" #punctuation #part
+token Plus "+" #punctuation #operator #part
+token Minus "-" #punctuation #operator #part
+token Star "*" #punctuation #operator #part
+token Slash "/" #punctuation #operator #part
+token Percent "%" #punctuation #operator #part
+token Caret "^" #punctuation #operator #part
+token Amp "&" #punctuation #operator #part
+token Pipe "|" #punctuation #operator #part
+token Tilde "~" #punctuation #operator #part
+token Bang "!" #punctuation #operator #part
+token Equal "=" #punctuation #operator #part
+token Less "<" #punctuation #operator #part
+token Greater ">" #punctuation #operator #part
+token PlusEq "+=" #punctuation #operator #part
+token MinusEq "-=" #punctuation #operator #part
+token StarEq "*=" #punctuation #operator #part
+token SlashEq "/=" #punctuation #operator #part
+token PercentEq "%=" #punctuation #operator #part
+token CaretEq "^=" #punctuation #operator #part
+token AmpEq "&=" #punctuation #operator #part
+token PipeEq "|=" #punctuation #operator #part
+token LessLess "<<" #punctuation #operator #part
+token GreaterGreater ">>" #punctuation #operator #part
+token LessLessEq "<<=" #punctuation #operator #part
+token GreaterGreaterEq ">>=" #punctuation #operator #part
+token EqEq "==" #punctuation #operator #part
+token BangEq "!=" #punctuation #operator #part
+token LessEq "<=" #punctuation #operator #part
+token GreaterEq ">=" #punctuation #operator #part
+token Spaceship "<=>" #punctuation #operator #part
+token AmpAmp "&&" #punctuation #operator #part
+token PipePipe "||" #punctuation #operator #part
+token PlusPlus "++" #punctuation #operator #part
+token MinusMinus "--" #punctuation #operator #part
+token Hash "#" #punctuation #part
+token HashHash "##" #punctuation #part
 
-token Ident
-token Keyword #keyword
-token Number #literal
-token String #literal #string
-token Char #literal #string
+token Ident #operand #type-token #part
+token Keyword #keyword #type-token #operand #operator #part
+token Number #literal #operand #part
+token String #literal #string #operand #part
+token Char #literal #string #operand #part
 string String Char quote "\"" "'" escape "\\" continuation line
 // The `<...>` of #include.
-token HeaderName #literal
+token HeaderName #literal #part
 // A byte that starts no other token (`@`, a backquote, a stray backslash).
-token Other
+token Other #part
 
 // Zero-width end-of-file token; it carries the leading trivia of the file's tail.
 token EndOfFile
 // Text the lexer could not classify.
-token Unknown #error
+token Unknown #error #part
 
-node TranslationUnit = EndOfFile
-// An unwrapped line: the tokens and groups of one declaration or statement (a control statement's header is a line of its own, its body the next one).
-node Line
-// A `{ }`, `( )` or `[ ]` pair and what lies between; the closing token is missing when the text ends the group early.
-node BraceGroup
-node ParenGroup
-node BracketGroup
+
+// The file and the groups of the structural layer (crates/lang-cpp/src/structure.rs). A group nothing claims keeps its generic kind.
+node TranslationUnit #block #scope = items:#child* EndOfFile
+// An unwrapped line (a statement or declaration, a control statement with its body) that no construct below claims.
+node Line #child #statement #member #opaque = #child*
+node ParenGroup #child #part #expression #opaque = #child*
+node BracketGroup #child #part #expression #opaque = #child*
 // A preprocessor line: `#`, the directive's name and its tokens, with the lines it continues over.
-node Directive
+node Directive #child #part #directive #opaque = #child*
 // `#if` ... `#endif` where the branches nest with the groups around them, and each of its branches (from its directive to the next).
-node PpGroup
-node PpBranch
+node PpGroup #child #part #opaque = #child*
+node PpBranch #child #part #opaque = #child*
+// A `{ }` that holds statements or members (a body, a scope, a class), and one that holds values (an initializer).
+node Block #child #statement #member #block #scope = Lbrace items:#child* Rbrace
+node InitList #child #part #expression #opaque #huggable = #child*
+// A `{ }` the text ends early (at an `#else`).
+node BraceGroup #child #part #statement #opaque = #child*
+// `( )` of a call, `[ ]` of an index, `{ }` of a braced construction.
+node Arguments #child #part #opaque #arguments = #child*
+node TemplateArguments #child #part #opaque = #child*
+
+// Expressions: a name or a literal stays a bare token.
+node Parenthesized #child #part #expression #parenthesized = Lpar expression:#expression? expression_token=expression:#operand? #part* Rpar
+node Binary #child #part #expression #binary-chain #binary = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand? #part*
+node Assignment #child #part #expression #assignment = left:#expression? left_token=left:#operand? operator:#operator right:#expression? right_token=right:#operand? #part*
+node Ternary #child #part #expression #conditional = condition:#expression? condition_token=condition:#operand? Question then:#expression? then_token=then:#operand? Colon else:#expression? else_token=else:#operand? #part*
+node Unary #child #part #expression #unary = prefix=operator:#operator? operand:#expression? operand_token=operand:#operand? postfix=operator:#operator? #part*
+node Cast #child #part #expression #hug-wrapper #opaque = #child*
+node Call #child #part #expression #call = callee:#expression? callee_token=callee:#operand? arguments:Arguments? #part*
+node MemberAccess #child #part #expression #member-access = object:#expression? object_token=object:#operand? operator:#operator? member:#expression? member_token=member:#operand? #part*
+node Index #child #part #expression #index = object:#expression? object_token=object:#operand? arguments:Arguments #part*
+// Adjacent string literals.
+node StringConcat #child #part #expression #opaque = #child*
+// `a, b` where one expression is expected, a `case` range.
+node CompoundExpression #child #part #expression #opaque = #child*
+node QualifiedName #child #part #expression #type #opaque = #child*
+node Lambda #child #part #expression #function #huggable-function #scope = Captures #part* parameters:ParameterList? #part* body:Block?
+node Captures #child #part #opaque = #child*
+node New #child #part #expression #call = Keyword #part* callee:#expression? arguments:Arguments*
+
+// Statements.
+node ExpressionStatement #child #statement #expression-statement = expression:#expression? expression_token=expression:#operand? #part*
+node ReturnStatement #child #statement #return = Keyword value:#expression? value_token=value:#operand? #part*
+node MacroStatement #child #statement #inert #opaque = #child*
+node EmptyStatement #child #statement #empty-statement = Semi
+node BreakStatement #child #statement #break = Keyword #part*
+node ContinueStatement #child #statement #continue = Keyword #part*
+node GotoStatement #child #statement #opaque = #child*
+node Condition #child #part #opaque = #child*
+node IfStatement #child #statement #conditional = Keyword Keyword? condition:Condition then:#statement Keyword? else:#statement?
+node WhileStatement #child #statement #loop = Keyword condition:Condition body:#statement
+node DoStatement #child #statement #loop = Keyword body:#statement Keyword condition:Condition #part*
+node ForStatement #child #statement #scope #loop = Keyword Condition body:#statement
+node SwitchStatement #child #statement #scope #switch = Keyword subject:Condition cases=block:Block
+node CaseClause #child #case = Keyword test:#expression? test_token=test:#operand? Colon body:#child*
+node LabelStatement #child #statement #goto-target #opaque = Ident Colon
+node TryStatement #child #statement #try = Keyword body:Block catches:CatchClause*
+node CatchClause #child #scope #catch = Keyword parameter:Condition body:Block
+
+// Declarations.
+node SimpleDeclaration #child #statement #member #declaration = #part*
+node FunctionDeclaration #child #statement #member #declaration #function #scope = #part* parameters:ParameterList #part* body:Block?
+node ParameterList #child #parameter-list = Lpar parameters:#parameter* Rpar
+node Parameter #child #parameter #opaque = #child*
+node ClassSpecifier #child #statement #member #type-declaration #declaration #scope = #part* members:Block? #part*
+node EnumSpecifier #child #statement #member #type-declaration #declaration #scope = #part* members:Block? #part*
+node BaseClause #child #part #opaque #heritage = #child*
+node NamespaceDeclaration #child #statement #member #declaration #scope = #part* body:Block?
+node TemplateDeclaration #child #statement #member #opaque = #child*
+node TemplateParameters #child #part #opaque = #child*
+node ConstructorInitializers #child #part #opaque = #child*
+node AccessSpecifier #child #member #opaque = #child*

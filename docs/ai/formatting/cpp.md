@@ -1,6 +1,6 @@
 # C and C++
 
-Two languages, `c` and `cpp`, one crate (`lang-cpp`) with one hand-written lexer and one structural layer. There is no parser for the full grammar: C and C++ cannot be parsed without the preprocessor and the types the headers declare, and the tree-sitter grammars and `cpp_parser` fail on 5-67% of real files (unknown macros). The tree is a token-level structure in the manner of clang-format's unwrapped lines, and it never fails.
+Two languages, `c` and `cpp`, one crate (`lang-cpp`) with one hand-written lexer, one structural layer and a deep layer of lookahead. There is no parser for the full grammar: C and C++ cannot be parsed without the preprocessor and the types the headers declare, and the tree-sitter grammars and `cpp_parser` fail on 5-67% of real files (unknown macros). The tree is a token-level structure in the manner of clang-format's unwrapped lines, and it never fails.
 
 Files: `.c` and `.h` are `c`; `.cc .cpp .cxx .hpp .hh .hxx .ipp` are `cpp`. A `.h` is C because the extension does not say, and the lexer differs only in keywords (C++ keywords are identifiers in C); C++ projects that use `.h` select `cpp` with a `files` override.
 
@@ -9,10 +9,19 @@ Lossless tokens: identifiers, keywords (by dialect), numbers (digit separators, 
 
 ## Structure (`structure.rs`)
 One pass over the tokens builds nodes over them:
-- `Line`: an unwrapped line (a statement, a declaration, a control-statement header, a `case`/label, a `public:`, a macro invocation alone on its line). A line that ends in a block holds the `BraceGroup`.
-- `BraceGroup`, `ParenGroup`, `BracketGroup`: bracket groups, nested in the line that opens them.
+- `Line`: an unwrapped line (a statement, a declaration, a `case`/label, a `public:`, a macro invocation alone on its line). A control statement is one line with its body (`if (a) b; else c;`, `do { } while (x);`); a line goes on after a `}` that is followed by `;`, `,`, `)`, `.`, `else`, `catch`, `while` of a `do`, an operator, or the `(` of a called lambda.
+- `Block` (a `{ }` that holds statements or declarations), `InitList` (a `{ }` of values), `ParenGroup`, `BracketGroup`: bracket groups, nested in the line that opens them. `BraceGroup` is a `{` the text never closes (a branch of `#if`).
 - `Directive`: a preprocessor directive including its continuation lines; directives are siblings of lines, never inside one.
 - `PpGroup` of `PpBranch`: an `#if`...`#endif` whose branches start and end at the same bracket depth. When a branch opens or closes a bracket the others do not, only the `Directive` nodes remain.
+
+## Deep parse (`deep/`)
+A second pass reads each `Line` and bracket group by lookahead on the tokens (no rollback) and replaces it with the statement, declaration or expression it is, or leaves it opaque. The ambiguities are settled as clang-format settles them: `<` opens template arguments when a `>` follows over tokens an argument can have; a name followed by a name, or by `*`/`&` and a name, starts a declaration; a `( )` after a name is a parameter list in a declaration scope and a constructor call in a function body (`T x(a)` is a variable inside a function).
+- Statements: `ExpressionStatement`, `ReturnStatement`, `IfStatement` (`Condition`), `WhileStatement`, `DoStatement`, `ForStatement`, `SwitchStatement`, `CaseClause`, `CatchClause`, `BreakStatement`, `ContinueStatement`, `GotoStatement`, `LabelStatement` (`#goto-target`: code from a label on is reachable), `MacroStatement` (`FOO(x);` or `FOO` with a capitalized name; `#inert`: a macro may expand to anything), `EmptyStatement`, `TryStatement` (`#try`: `body`, `catches`; no `finally`).
+- Declarations: `SimpleDeclaration`, `FunctionDeclaration` (`ParameterList`, `Parameter`, `ConstructorInitializers`, body `Block`), `ClassSpecifier` (`BaseClause`, `AccessSpecifier`), `EnumSpecifier`, `NamespaceDeclaration`, `TemplateDeclaration` (`TemplateParameters`).
+- Expressions: `Binary` (by the precedence lines of the grammar; the shared `Pratt` climb), `Assignment` (not `.field = v` of an initializer, not an init-capture `[x = x]`), `Ternary`, `Unary`, `Cast` (opaque), `Call` (`Arguments`), `MemberAccess`, `Index`, `QualifiedName` (`TemplateArguments`), `Parenthesized`, `Lambda` (`Captures`), `New` (`#call`), `StringConcat`, `CompoundExpression` (a comma or `case` range where one expression is expected).
+- Left as `Line` (opaque): a line a directive crosses, a statement macro with a block, GNU `({ })`. Not read: requires-clauses (skipped), `a * b;` is a declaration, the insides of parameters and conditions are partly loose parts.
+- `Directive` is `#directive`: the flow graph skips it among statements, and a `switch` with a directive in its body may have arms the tree does not show (`#if`/`#include` around `case`).
+- Roles, tags and fields are in `grammars/cpp.grammar`; `#part` marks what a body may hold loosely (`#part*`), so a shape check passes on tokens the parse does not place.
 
 `#if` branches are not each parsed as clang-format does: at `#else`/`#elif` the groups opened in the branch are closed back to the depth at `#if`, and at `#endif` the state of the last branch continues (single-pass bracket reset). 0.2-6.5% of corpus files have branch-asymmetric groups.
 
