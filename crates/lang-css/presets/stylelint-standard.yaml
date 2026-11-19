@@ -4,7 +4,11 @@ extends: [preset:css/stylelint-recommended]
 css:
   lint:
     rules:
+      alpha-value-notation: error
+      at-rule-empty-line-before: error
       at-rule-no-vendor-prefix: error
+      color-function-alias-notation: error
+      color-function-notation: error
       color-hex-length: error
       comment-space:
         level: error
@@ -27,9 +31,11 @@ css:
         level: error
         options:
           max: 1
+      declaration-empty-line-before: error
       font-family-name-quotes: error
       function-name-case: error
       function-url-quotes: error
+      hue-degree-notation: error
       import-notation: error
       keyframe-selector-notation: error
       keyframes-name-pattern:
@@ -47,6 +53,7 @@ css:
         options:
           max: 4
       property-no-vendor-prefix: error
+      rule-empty-line-before: error
       selector-attribute-quotes: error
       selector-class-pattern:
         level: error

@@ -1,0 +1,47 @@
+id: color-function-alias-notation
+message: "write rgb or hsl, not the alias with an a: they take an alpha value too"
+description: "`rgba()` and `hsla()`, the legacy names of `rgb()` and `hsl()`."
+example: "a { color: rgba(0 0 0 / 50%) }   # reported"
+severity: off
+category: style
+rule:
+  kind: Function
+  regex: '^(?i:rgba|hsla)\('
+report-on: first-token
+---
+id: color-function-notation
+message: "write the color function with spaces and `/` before the alpha value, not commas"
+description: "`rgb()`, `rgba()`, `hsl()` or `hsla()` with the legacy comma-separated arguments (`rgb(0, 0, 0)` is `rgb(0 0 0)`); a function with a nested call (`var()`) is left alone."
+example: "a { color: rgb(0, 0, 0) }   # reported"
+severity: off
+category: style
+rule:
+  kind: Function
+  regex: '^(?i:rgba?|hsla?)\([^(),]+,[^(),]+,[^(),]+(?:,[^(),]+)?\)$'
+report-on: first-token
+---
+id: alpha-value-notation
+message: "write the alpha value of a color function as a percentage"
+description: "The alpha value of `rgb()`, `hsl()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()` or `color()` written as a number (`/ 0.5` is `/ 50%`); the comma form of `rgba()` and `hsla()` counts too."
+example: "a { color: rgb(0 0 0 / 0.5) }   # reported"
+severity: off
+category: style
+rule:
+  kind: Function
+  any:
+    - { regex: '^(?i:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\([^/]*/\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?\s*\)$' }
+    - { regex: '^(?i:rgba?|hsla?)\((?:[^(),]|\([^()]*\))+(?:,(?:[^(),]|\([^()]*\))+){2},\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?\s*\)$' }
+report-on: first-token
+---
+id: hue-degree-notation
+message: "write the hue of a color function as an angle with a unit"
+description: "The hue of `hsl()`, `hsla()`, `hwb()`, `lch()` or `oklch()` written as a number (`120` is `120deg`)."
+example: "a { color: hsl(120 50% 50%) }   # reported"
+severity: off
+category: style
+rule:
+  kind: Function
+  any:
+    - { regex: '^(?i:hsla?|hwb)\(\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?[\s,/)]' }
+    - { regex: '^(?i:lch|oklch)\(\s*[^()\s,]+\s+[^()\s,]+\s+[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?\s*(?:/[^()]*)?\)$' }
+report-on: first-token

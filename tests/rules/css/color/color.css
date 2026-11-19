@@ -1,0 +1,31 @@
+a { color: rgba(0, 0, 0, 0.5); }
+//         ^^^^ alpha-value-notation
+//         ^^^^ color-function-alias-notation
+//         ^^^^ color-function-notation
+b { color: rgb(0, 0, 0); }
+//         ^^^ color-function-notation
+c { color: rgba(0 0 0 / 50%); }
+//         ^^^^ color-function-alias-notation
+d { color: rgb(0 0 0 / 0.5); }
+//         ^^^ alpha-value-notation
+e { color: hsl(120deg 50% 50%); }
+f { color: hsl(120, 50%, 50%); }
+//         ^^^ color-function-notation
+//         ^^^ hue-degree-notation
+g { color: hsla(120 50% 50% / 50%); }
+//         ^^^^ color-function-alias-notation
+//         ^^^^ hue-degree-notation
+h { color: rgb(0 0 0 / 50%); }
+i { color: hsl(120 50% 50% / 0.5); }
+//         ^^^ alpha-value-notation
+//         ^^^ hue-degree-notation
+j { color: rgb(var(--x), 0.5); }
+k { color: rgb(var(--x) / 0.5); }
+//         ^^^ alpha-value-notation
+l { color: oklch(50% 0.2 120); }
+//         ^^^^^ hue-degree-notation
+m { color: oklch(50% 0.2 120deg / 50%); }
+n { color: rgb(0 0 0); }
+o { color: hsla(var(--h), var(--s), var(--l), 1); }
+//         ^^^^ alpha-value-notation
+//         ^^^^ color-function-alias-notation

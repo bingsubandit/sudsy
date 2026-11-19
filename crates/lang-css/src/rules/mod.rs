@@ -15,6 +15,7 @@ use core_rules::Family;
 pub static FAMILIES: &[Family] = &[
     names::FAMILY,
     core_rules::max::FAMILY,
+    core_rules::blank_lines::FAMILY,
     max::FAMILY,
     checks::FAMILY,
     table::FAMILY,

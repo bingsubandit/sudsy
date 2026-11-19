@@ -1,0 +1,4 @@
+color-function-alias-notation: warn
+color-function-notation: warn
+alpha-value-notation: warn
+hue-degree-notation: warn

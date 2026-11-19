@@ -4,4 +4,4 @@ differences:
 files:
   unknown/tailwind stylelint:at-rule-no-unknown 1: tailwind-at-rules
   unknown/tailwind stylelint:color-no-invalid-hex 4: element-id
-coverage: 13.4  # share of the default-set findings of stylelint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage stylelint; at least 85% is the bar)
+coverage: 94.1  # share of the default-set findings of stylelint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage stylelint; at least 85% is the bar)

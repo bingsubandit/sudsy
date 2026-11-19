@@ -1,0 +1,64 @@
+@import "a.css";
+@import "b.css";
+
+@import "c.css";
+^^^^^^^ at-rule-empty-line-before
+a { color: red; }
+b { color: red; }
+
+c { color: red;
+  top: 0; }
+d { color: red;
+^ rule-empty-line-before
+  top: 0; }
+/* comment */
+e { color: red; }
+
+/* comment */
+
+f {
+
+  color: red;
+//^^^^^ declaration-empty-line-before
+  top: 0;
+
+  left: 0;
+//^^^^ declaration-empty-line-before
+  /* c */
+  right: 0;
+  g { x: y }
+  h { x: y;
+//^ rule-empty-line-before
+    z: w }
+//  ^ property-no-unknown
+  @media (a) { top: 0; }
+//^^^^^^ at-rule-empty-line-before
+//        ^ media-feature-name-no-unknown
+  bottom: 0;
+//^^^^^^ declaration-empty-line-before
+}
+@media (a) { top: 0; }
+^^^^^^ at-rule-empty-line-before
+//      ^ media-feature-name-no-unknown
+//           ^^^^^^^ no-invalid-position-declaration
+@media (b) { top: 0; }
+^^^^^^ at-rule-empty-line-before
+//      ^ media-feature-name-no-unknown
+//           ^^^^^^^ no-invalid-position-declaration
+@font-face { font-family: x; }
+^^^^^^^^^^ at-rule-empty-line-before
+x { --a: 1;
+^ rule-empty-line-before
+  --b: 2;
+
+  --c: 3;
+  color: red; }
+//^^^^^ declaration-empty-line-before
+y {
+^ rule-empty-line-before
+  @media (a) { top: 0; }
+//        ^ media-feature-name-no-unknown
+  @media (b) { top: 0; }
+//^^^^^^ at-rule-empty-line-before
+//        ^ media-feature-name-no-unknown
+}
