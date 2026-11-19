@@ -14,6 +14,10 @@ pub const ASSIGNMENT_CONDITIONAL: &str = "assignment_conditional";
 #[allow(dead_code)]
 pub const ASSIGNMENT_INDENT: &str = "assignment_indent";
 #[allow(dead_code)]
+pub const ANNOTATION_INLINE: &str = "annotation_inline";
+#[allow(dead_code)]
+pub const ANNOTATION_SOURCE_KINDS: &str = "annotation_source_kinds";
+#[allow(dead_code)]
 pub const MEMBER_CHAIN_STYLE: &str = "member_chain_style";
 #[allow(dead_code)]
 pub const MEMBER_CHAIN_MIN_CALLS: &str = "member_chain_min_calls";
@@ -59,6 +63,8 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::assignment_layout("break"),
         core_config::shared::assignment_conditional("always"),
         core_config::shared::assignment_indent(1),
+        core_config::shared::annotation_inline("single"),
+        core_config::shared::annotation_source_kinds(&["ValueParameter"]),
         core_config::shared::member_chain_style("wrapped"),
         core_config::shared::member_chain_min_calls(2),
         core_config::shared::member_chain_force_links(4),

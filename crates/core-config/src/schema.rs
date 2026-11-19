@@ -495,6 +495,23 @@ pub mod shared {
         )
     }
 
+    pub fn annotation_inline(default: &'static str) -> OptionDef {
+        OptionDef::choice(
+            "annotation_inline",
+            &["never", "single"],
+            default,
+            "A declaration whose only annotation has no arguments keeps its declaration on the line of the annotation when the source has it there (`@Test fun f()`); `never`: every annotation of a declaration has a line of its own.",
+        )
+    }
+
+    pub fn annotation_source_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "annotation_source_kinds",
+            default,
+            "Node kinds of declarations whose annotations stay on the lines where the source has them.",
+        )
+    }
+
     pub fn member_chain_head_calls(default: &[&str]) -> OptionDef {
         OptionDef::words(
             "member_chain_head_calls",
