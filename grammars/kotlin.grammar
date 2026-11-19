@@ -138,7 +138,7 @@ node Annotation #annotation #opaque
 node AnnotationEntry #annotation #opaque
 node AnnotationTarget #opaque
 node TypeArgumentList #opaque
-node ValueArgumentList #opaque
+node ValueArgumentList #opaque #annotation-arguments
 node ValueArgument #opaque
 node ContractEffectList #opaque
 node ContractEffect #opaque

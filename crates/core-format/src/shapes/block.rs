@@ -353,16 +353,32 @@ pub fn annotation_line(cx: &FormatCtx<'_>, prev: &core_syntax::SyntaxElement) ->
         return false;
     };
     let declaration = |d: &SyntaxNode| g.has_tag(d.kind(), "declaration");
+    let annotation = |c: &core_syntax::SyntaxElement| g.has_tag(c.kind(), "annotation");
+    // A declaration whose annotations follow the source, or whose only annotation has no
+    // arguments (`annotation_inline`).
+    let inline = |m: &SyntaxNode| {
+        let o = cx.options;
+        let Some(d) = m.parent() else { return false };
+        if o.strings("annotation_source_kinds").iter().any(|k| g.name(d.kind()) == k) {
+            return true;
+        }
+        o.is("annotation_inline", "single") && {
+            let all: Vec<_> = m.children_with_tokens().filter(&annotation).collect();
+            all.len() == 1 && !super::has_arguments(cx, &all[0])
+        }
+    };
     if g.has_tag(n.kind(), "modifiers") {
-        let annotation = |c: &core_syntax::SyntaxElement| g.has_tag(c.kind(), "annotation");
         n.parent().is_some_and(|d| declaration(&d))
+            && !inline(n)
             && n.children_with_tokens()
                 .filter(|e| !g.is_trivia(e.kind()) && !e.text_range().is_empty())
                 .last()
                 .is_some_and(|c| annotation(&c))
     } else if g.has_tag(n.kind(), "annotation") {
         n.parent().is_some_and(|m| {
-            g.has_tag(m.kind(), "modifiers") && m.parent().is_some_and(|d| declaration(&d))
+            g.has_tag(m.kind(), "modifiers")
+                && m.parent().is_some_and(|d| declaration(&d))
+                && !inline(&m)
         })
     } else {
         false

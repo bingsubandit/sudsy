@@ -206,7 +206,6 @@ data row-key:rewrite.sibling # users: php
 data row-key:rewrite.text # users: php
 data row-key:space.ends # users: csharp
 data rules-section:call # users: js
-data tag:annotation-arguments # users: java
 data tag:argument # users: csharp
 data tag:branch # users: python
 data tag:branching # users: python

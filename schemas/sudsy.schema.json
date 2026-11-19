@@ -8483,6 +8483,25 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "annotation_inline": {
+              "default": "single",
+              "description": "A declaration whose only annotation has no arguments keeps its declaration on the line of the annotation when the source has it there (`@Test fun f()`); `never`: every annotation of a declaration has a line of its own.",
+              "enum": [
+                "never",
+                "single"
+              ],
+              "type": "string"
+            },
+            "annotation_source_kinds": {
+              "default": [
+                "ValueParameter"
+              ],
+              "description": "Node kinds of declarations whose annotations stay on the lines where the source has them.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "assignment_conditional": {
               "default": "always",
               "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
@@ -11122,6 +11141,25 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "annotation_inline": {
+                    "default": "single",
+                    "description": "A declaration whose only annotation has no arguments keeps its declaration on the line of the annotation when the source has it there (`@Test fun f()`); `never`: every annotation of a declaration has a line of its own.",
+                    "enum": [
+                      "never",
+                      "single"
+                    ],
+                    "type": "string"
+                  },
+                  "annotation_source_kinds": {
+                    "default": [
+                      "ValueParameter"
+                    ],
+                    "description": "Node kinds of declarations whose annotations stay on the lines where the source has them.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "assignment_conditional": {
                     "default": "always",
                     "description": "A conditional (`a ? b : c`) as the value of an assignment moves below the operator when it does not fit: `always`, or `binary_test` only when its test is an operator chain.",
