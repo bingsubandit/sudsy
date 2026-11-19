@@ -59,27 +59,27 @@ def walk(node, levels, chain):
 
 
 def parse(output, spec, rules):
-    """`[(file, rule, message)]` of a report. `regex`: one finding per matching line (groups `file`, `rule`,
-    `message`). `json` and `jsonl`: `levels` name the lists to walk (`""` the report itself; `files*` an object
+    """`[(file, rule, message, line)]` of a report (`line` is None when the entry gives none). `regex`: one finding per matching line (groups `file`, `rule`,
+    `message`, and `line`). `json` and `jsonl`: `levels` name the lists to walk (`""` the report itself; `files*` an object
     whose members are the elements), `file`, `rule` and `message` are `<level>.<keys>` and `rule_fn` names a
-    function of `rules` that takes the finding's record. Both: `rule_prefix` is put before the rule and
+    function of `rules` that takes the finding's record, `line` is `<level>.<keys>` too. Both: `rule_prefix` is put before the rule and
     `rule_sub` is a `[pattern, replacement]` over it, `json_line` reads the report from the last line that starts an object; a finding with no rule (a parse error) is left out."""
     found = []
     if spec["format"] == "regex":
-        found = [(m["file"], m["rule"], m.groupdict().get("message") or "") for m in (re.match(spec["pattern"], line) for line in output.splitlines()) if m]
+        found = [(m["file"], m["rule"], m.groupdict().get("message") or "", m.groupdict().get("line")) for m in (re.match(spec["pattern"], line) for line in output.splitlines()) if m]
     else:
         if spec.get("json_line"):  # a report after text the tool prints around it: the last line that starts an object
             output = next((line for line in reversed(output.splitlines()) if line.startswith("{")), "")
         data = [json.loads(line) for line in output.splitlines() if line.startswith("{")] if spec["format"] == "jsonl" else json.loads(output) if output.strip() else []
         for chain in walk(data, spec["levels"], []):
             rule = rules[spec["rule_fn"]](chain[-1]) if "rule_fn" in spec else str(ref(chain, spec["rule"]))
-            found.append((str(ref(chain, spec["file"])), rule, str(ref(chain, spec["message"]) or "")))
+            found.append((str(ref(chain, spec["file"])), rule, str(ref(chain, spec["message"]) or ""), ref(chain, spec["line"]) if "line" in spec else None))
     out = []
-    for file, rule, message in found:
+    for file, rule, message, line in found:
         if "rule_sub" in spec:
             rule = re.sub(spec["rule_sub"][0], spec["rule_sub"][1], rule)
         if rule != "None":
-            out.append((file, spec.get("rule_prefix", "") + rule, message))
+            out.append((file, spec.get("rule_prefix", "") + rule, message, int(line) if line is not None else None))
     return out
 
 
@@ -109,7 +109,7 @@ def norm(path, work):
 
 def findings(tool, spec, prefix, work, exe, rules, copy=True):
     """Copies the corpus into `work` (unless `copy` is off: the files are there already), writes the config files and runs the tool;
-    returns `(findings, files)` where `findings` is `[(path, rule, message)]` and `files` the number of corpus files."""
+    returns `(findings, files)` where `findings` is `[(path, rule, message, line)]` and `files` the number of corpus files."""
     filters = Counter()
     files = corpus_files(spec, filters)
     for inside, source in files if copy else []:
@@ -151,7 +151,7 @@ def findings(tool, spec, prefix, work, exe, rules, copy=True):
                 skipped += names[i:i + size] if "{files}" in spec["command"] else names
                 continue
             try:
-                found += [(norm(f if os.path.isabs(f) or not folder else f"{folder}/{f}", work), r, m) for f, r, m in parse(report, spec["parse"], rules)]
+                found += [(norm(f if os.path.isabs(f) or not folder else f"{folder}/{f}", work), r, m, n) for f, r, m, n in parse(report, spec["parse"], rules)]
             except (json.JSONDecodeError, KeyError, ValueError) as error:
                 raise SystemExit(f"{tool}: no usable report ({error}):\n{report[:500]}\n{stderr[:500]}")
     print(f"input filters: skip {filters['skip']}, the tool did not finish (time or memory limit, or a crash) {len(skipped)}")
