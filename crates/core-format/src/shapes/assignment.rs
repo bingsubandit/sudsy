@@ -21,6 +21,7 @@ use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 pub const LAYOUT: &str = "assignment_layout";
 pub const CONDITIONAL: &str = "assignment_conditional";
 pub const INDENT: &str = "assignment_indent";
+pub const KEEP_BREAK: &str = "assignment_keep_break_kinds";
 
 /// How a right side that is not decided by its kind is laid out.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -234,8 +235,19 @@ fn choose(
     if a.op_token.is_some_and(|t| ends_in_line_comment(cx, t)) {
         return BreakAlways;
     }
+    // A break the source has after the operator stays (`assignment_keep_break_kinds`).
+    if let Some(t) = a.op_token
+        && comments::break_after(g, t)
+        && cx
+            .options
+            .strings(KEEP_BREAK)
+            .iter()
+            .any(|k| g.name(a.node.kind()) == k)
+    {
+        return BreakAlways;
+    }
     let right_inner = right.as_node().map(roles::un);
-    let right_assign = right_inner.as_ref().filter(|n| is_assignment(cx, n));
+    let right_assign =right_inner.as_ref().filter(|n| is_assignment(cx, n));
     let fluid = policy.style == AssignStyle::Fluid;
     if fluid && is_assignment(cx, a.node) {
         let held = roles::outer(a.node);

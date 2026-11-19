@@ -27,6 +27,7 @@ options:
   - assignment_layout: ["break"]
   - assignment_conditional: ["always"]
   - assignment_indent: [1]
+  - assignment_keep_break_kinds: [["Property", "BinaryExpression"]]
   - annotation_inline: ["single"]
   - annotation_source_kinds: [["ValueParameter"]]
   - member_chain_style: ["wrapped"]

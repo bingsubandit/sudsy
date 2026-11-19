@@ -8518,6 +8518,17 @@
               "minimum": 1,
               "type": "integer"
             },
+            "assignment_keep_break_kinds": {
+              "default": [
+                "Property",
+                "BinaryExpression"
+              ],
+              "description": "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "assignment_layout": {
               "default": "break",
               "description": "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
@@ -11175,6 +11186,17 @@
                     "maximum": 4,
                     "minimum": 1,
                     "type": "integer"
+                  },
+                  "assignment_keep_break_kinds": {
+                    "default": [
+                      "Property",
+                      "BinaryExpression"
+                    ],
+                    "description": "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "assignment_layout": {
                     "default": "break",
