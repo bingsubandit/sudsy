@@ -7,7 +7,9 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
+import parity_coverage as pc
 import parity_format as pf
+import parity_lint as pl
 
 YAML = """differences:
   wrong: choice  the tool is wrong
@@ -73,6 +75,25 @@ class Runner(unittest.TestCase):
             file.write_text("input", encoding="utf-8")
             self.assertEqual(pf.sudsy_format(fake, file, Path(tmp), "format")[0], "input")
         self.assertEqual(pf.tools()["format"]["terraform"]["sudsy_command"], "fix")  # the run compares the tool with `sudsy fix`
+
+    def test_coverage_target_compares_lines(self):
+        spec = {"format": "regex", "pattern": r"^(?P<file>[^:]+):(?P<line>\d+): (?P<rule>\w+) (?P<message>.*)$"}
+        found = pc.parse("a.txt:3: r1 one\nb.txt:5: r2 two\n", spec, {})
+        self.assertEqual(found, [("a.txt", "r1", "one", 3), ("b.txt", "r2", "two", 5)])
+        # 4 findings of one rule: 3 covered in the file (raw), 2 on the line, 1 reviewed as the tool being wrong
+        per = {"r1": [4, 3, 2]}
+        line = pl.target_line("checkmake", per, 2, 4, 0, "", 1)
+        self.assertIn("target 66.7% (2 of 3, same line)", line)
+        self.assertIn("tool-wrong 1", line)
+        self.assertIn("formatter findings counted as missing 2", pl.target_line("checkmake", per, 2, 4, 2, "", 0))
+
+    def test_reviewed_finding_is_pinned_per_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "differences.yaml").write_text("differences:\n  late: gap  the tool reports a line late\nintentional:\n  late: tool-wrong\nfiles:\n  a.mk checkmake:r1 4: late\n", encoding="utf-8")
+            reviewed = pf.Differences(folder, lint=True)
+            self.assertEqual(reviewed.status("a.mk checkmake:r1 4"), "tool-wrong")
+            self.assertIsNone(reviewed.status("a.mk checkmake:r1 5"))
 
 
 if __name__ == "__main__":
