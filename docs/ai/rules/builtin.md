@@ -473,10 +473,17 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `useless-method-definition` | ruby | suspicious | off | none | A method whose whole body is a bare `super` (RuboCop Lint/UselessMethodDefinition). Equivalent: rubocop Lint/UselessMethodDefinition. |
 | `useless-times` | ruby | suspicious | off | none | `0.times` and `1.times` with a block (RuboCop Lint/UselessTimes). Equivalent: rubocop Lint/UselessTimes. |
 | `and-or-is-not-if-else` | shell | suspicious | off | none | A list `a && b \|\| c` of three commands, unless `c` is `echo`, `printf`, `true`, `:`, `return` or `exit`. Equivalent: shellcheck SC2015 (partial). |
+| `array-in-string` | shell | correctness | warn | none | A double-quoted argument that holds `$@` or `${array[@]}` among other text. Equivalent: shellcheck SC2145 (partial). |
+| `array-without-index` | shell | correctness | warn | none | `$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript. Equivalent: shellcheck SC2128 (partial). |
+| `assignment-not-seen` | shell | correctness | warn | none | `var=value cmd "$var"`: `$var` is expanded before the assignment takes effect. Equivalent: shellcheck SC2097, shellcheck SC2098 (partial). |
+| `assignment-space` | shell | correctness | warn | none | A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant. Equivalent: shellcheck SC1007 (partial). |
 | `cd-without-exit` | shell | suspicious | warn | none | `cd`, `pushd` or `popd` whose failure is not handled (`cd dir \|\| exit`). Not reported with `set -e`, for `cd ..` or `cd /`, or for `popd -n`. Equivalent: shellcheck SC2164. |
 | `declare-and-assign-separately` | shell | suspicious | off | none | `export`, `local`, `declare`, `readonly` or `typeset` with a command substitution as the value reports the status of the declaration, not of the command. Equivalent: shellcheck SC2155. |
+| `echo-in-substitution` | shell | suspicious | warn | none | A command substitution that only runs `echo` on words. Equivalent: shellcheck SC2116 (partial). |
+| `eval-array` | shell | suspicious | warn | none | An `eval` whose argument expands an array with `[@]`. Equivalent: shellcheck SC2294 (partial). |
 | `find-xargs-print0` | shell | suspicious | warn | none | A pipeline from `find` into `xargs` without `-print0`/`-0`. Equivalent: shellcheck SC2038 (partial). |
 | `grep-count` | shell | style | off | none | A pipeline from `grep` into `wc -l`. Equivalent: shellcheck SC2126 (partial). |
+| `iterate-file-output` | shell | suspicious | warn | none | A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`. Equivalent: shellcheck SC2013 (partial). |
 | `iterate-find-output` | shell | suspicious | warn | none | A `for` loop over the output of `find`. Equivalent: shellcheck SC2044. |
 | `iterate-ls-output` | shell | suspicious | warn | none | A `for` loop over the output of `ls`. Equivalent: shellcheck SC2045. |
 | `no-backticks` | shell | style | off | safe | A command substitution written with backticks. Equivalent: shellcheck SC2006. |
@@ -485,15 +492,21 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `no-ps-grep` | shell | style | off | none | A pipeline from `ps` into `grep`. Equivalent: shellcheck SC2009. |
 | `no-which` | shell | style | off | none | A call of `which`. Equivalent: shellcheck SC2230. |
 | `printf-variable-format` | shell | suspicious | off | none | A `printf` whose format string contains an expansion and no `%`. Equivalent: shellcheck SC2059 (partial). |
+| `quote-array-element` | shell | suspicious | warn | none | An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed. Equivalent: shellcheck SC2206 (partial). |
 | `quote-at-expansion` | shell | correctness | error | none | An unquoted `$@` or `${array[@]}` in a command's arguments. Equivalent: shellcheck SC2068 (partial). |
 | `quote-command-substitution` | shell | suspicious | warn | none | An unquoted `$(...)` or backtick substitution in a command's arguments is split into words and globbed. Equivalent: shellcheck SC2046. |
+| `quote-in-quotes` | shell | suspicious | warn | none | A word of two double-quoted strings with unquoted text between them, as `"a"b"c"`. Equivalent: shellcheck SC2140 (partial). |
 | `quote-star-expansion` | shell | suspicious | warn | none | An unquoted `$*` or `${array[*]}` in a command's arguments. Equivalent: shellcheck SC2048 (partial). |
 | `quote-variable` | shell | suspicious | warn | none | An unquoted `$var` or `${var}` in a command's arguments is split into words and globbed. Does not know which variables hold only a number or a single word. Equivalent: shellcheck SC2086 (partial). |
 | `read-without-raw` | shell | suspicious | off | none | A `read` without the `-r` flag. Equivalent: shellcheck SC2162. |
+| `split-command-output` | shell | suspicious | warn | none | An unquoted `$(...)` among the elements of an array assignment is split into words and globbed. Equivalent: shellcheck SC2207. |
 | `test-and-or` | shell | suspicious | warn | none | A `[ ]` test that joins conditions with `-a` or `-o`. Equivalent: shellcheck SC2166. |
 | `test-exit-status` | shell | style | off | none | A test that compares `$?` with a number. Equivalent: shellcheck SC2181 (partial). |
+| `test-grep-output` | shell | suspicious | warn | none | A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`. Equivalent: shellcheck SC2143 (partial). |
 | `test-negated-empty` | shell | style | off | none | A test that negates `-z` or `-n`. Equivalent: shellcheck SC2236. |
 | `trap-expands-now` | shell | suspicious | warn | none | A `trap` whose double-quoted command contains an expansion. Equivalent: shellcheck SC2064. |
+| `unquoted-pattern` | shell | suspicious | warn | none | A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion. Equivalent: shellcheck SC2053 (partial). |
+| `unset-glob` | shell | suspicious | warn | none | `unset name[i]` with an unquoted subscript. Equivalent: shellcheck SC2184 (partial). |
 | `useless-cat` | shell | style | off | none | A pipeline that starts with `cat file`. Equivalent: shellcheck SC2002. |
 | `useless-echo` | shell | style | off | none | An `echo` whose only argument is a command substitution. Equivalent: shellcheck SC2005. |
 | `count-star` | sql | style | off | none | A `COUNT` of the constant 1 or 0 (sqlfluff CV04). Equivalent: sqlfluff CV04. |
