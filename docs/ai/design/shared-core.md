@@ -112,7 +112,7 @@ Kept as they are: oxc, ruff, Roslyn, mago, ruby-prism; tree-sitter for Bash, Mar
 | # | Step | Where | Done when | After |
 |---|---|---|---|---|
 | M1 | `scripts/cost.sh` reports, per language, hand-written lines by kind (formatter, rules, other) per grammar node, and the shared share of the workspace; the table in `adding-a-language.md` shows them for every language | `scripts`, docs | a CI check fails when the shared share falls or a language passes its budget (decision 3) without a line in the commit message | |
-| M2 | Speed against ruff, Biome and oxlint as a script beside `speed-json-yaml.sh`, numbers in `numbers.md` | `tests/conformance`, docs | the table of section 1 can be re-run | |
+| M2 | Speed against ruff, Biome and oxlint (`scripts/speed.sh`, `bench/speed.json`) | `tests/conformance`, docs | the table of section 1 can be re-run | |
 | M3 | Parity catalogs list every upstream rule (ruff's lists 93 of its rules) as an inventory; their headline number is M4's coverage, not rules covered of N | `docs/ai/parity` | counts regenerated | |
 | M4 | Lint parity by function (decision 6): one mode of `scripts/parity_lint.py` for every tool runs the reference tool's default or recommended set on its real-world corpus and reports the share of its findings that the mapped Sudsy rule also reports in the same file, by rule and file (and reported name where the tool gives one), not by position; a ratchet on that share in `differences.yaml`. Fixture comparisons by `(rule, line)` stay only where the position is the check | `scripts/parity_lint.py`, `docs/ai/development/parity.md` | every lint tool with a corpus reports its coverage share; S1 uses this mode | |
 

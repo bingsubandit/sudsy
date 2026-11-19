@@ -49,39 +49,11 @@ Machine unless noted: AMD Ryzen 5 3600 (6 cores / 12 threads), 32 GB, Windows 11
 
 Time is linear in file size (guards: `core-format/tests/scaling.rs`, `tools/perf-bench/tests/scaling.rs`). Remaining cost is spread over phases: layout is ~7 allocations per node (rowan red nodes), parse is mostly rowan's node builder. Release builds skip the safety check (a re-parse and tree compare, about a third of a debug run; `perf-bench` phases still time it). Allocator: mimalloc gives 1.3-1.4x over the system allocator.
 
-## JSON / YAML against other formatters (`speed-json-yaml.sh`, check mode, caches off, new process per run, best of 3, seconds)
-Prettier 3.9.10, Biome 2.6.4, dprint 0.64.3 (json 0.25.2, pretty_yaml 0.6.0), Node 24.22.0. Biome YAML is not stable and is excluded.
+## Speed against other tools
+One generated table: `bench/speed.json` (written by `scripts/speed.sh`, run by `.github/workflows/speed.yml` on `ubuntu-24.04-arm`), rendered into the README by `cargo xtask codegen`. Method: [docs/performance.md](../../performance.md).
 
-| Input | Sudsy | Prettier | Biome | dprint |
-|---|---|---|---|---|
-| JSON, 95 small files | 0.10 | 0.67 | 0.36 | 0.37 |
-| JSON, one 11.1 MB file | 2.03 | 9.19 | 1.45 | 1.91 |
-| YAML, 308 small files | 0.11 | 1.13 | - | 0.35 |
-| YAML, one 5.0 MB file | 2.39 | 20.19 | - | 3.06 |
-
-## Python and JavaScript against ruff, Biome, oxlint and Prettier (`speed-lint-format.sh`, check mode, new process per run, best of 5)
-8 cores Neoverse-V2 (aarch64 Linux, 15 GB), release CLI, ruff 0.17.4, Biome 2.6.4, oxlint 1.94.0, Prettier 3.9.10. Python: Django 5.2.8 (883 files, 8 MB), ruff with `--isolated --no-cache`. JavaScript: three.js `src` and express `lib` + `test`, 8 copies (848 files, 7 MB). Lint is each tool's default rules, so the rule counts differ (Sudsy has far fewer rules than ruff's 407); peak memory is the best run's maximum resident set.
-
-| Task | Tool | Wall | Peak memory |
-|---|---|---|---|
-| Django format | Sudsy | 0.18 s | 180 MB |
-| Django format | ruff | 0.04 s | 47 MB |
-| Django lint | Sudsy | 0.11 s | 171 MB |
-| Django lint | ruff | 0.11 s | 47 MB |
-| JS format | Sudsy | 0.22 s | 197 MB |
-| JS format | Biome | 0.15 s | 102 MB |
-| JS format | Prettier | 4.21 s | 298 MB |
-| JS lint | Sudsy | 0.11 s | 206 MB |
-| JS lint | oxlint | 0.05 s | 164 MB |
-| JS lint | Biome | 0.32 s | 146 MB |
-
-## C# (12 cores, `speed.sh` and `perf-bench csharp`)
-| | CSharpier 1.3.0 | Sudsy CLI cold | Sudsy warm worker |
-|---|---|---|---|
-| CoreLib (1679 files, 27.8 MB) | 17.3 - 17.8 s | 3.8 - 3.9 s | 2.4 - 2.6 s |
-| full corpus (7659 files, 89.8 MB) | 42.3 - 43.3 s | 9.7 - 10.3 s | 8.0 - 8.1 s |
-
-(Machine ran ~15% slower on that day; use the ratios: 4.3-4.5x cold, 5.3-7.3x warm.) Baseline run: CoreLib warm 12 threads 7.0 / 4.1 / 3.4 s over three passes; one thread 13.5 s, per file median 1.6 ms, p95 26.9 ms. Editor-style (one thread, one file at a time, warm): median 1.4-1.5 ms, p95 15-25 ms, p99 67-117 ms (slowest 1% are large generated files).
+## C# (`perf-bench csharp`)
+Baseline run (12 cores, CoreLib 1679 files, 27.8 MB): warm 12 threads 7.0 / 4.1 / 3.4 s over three passes; one thread 13.5 s, per file median 1.6 ms, p95 26.9 ms. Editor-style (one thread, one file at a time, warm): median 1.4-1.5 ms, p95 15-25 ms, p99 67-117 ms (slowest 1% are large generated files).
 
 C# cost structure: on CoreLib Roslyn parse ~0.94 s and the mapping walk ~0.83 s (88% of parse, 8.4 M elements); the walk is bounded by Roslyn's public API creating red nodes on demand (visiting with no mapping costs 65% of parse), so a C# file costs about 2x its Roslyn parse to reach Rust. The safety re-parse (debug builds) costs as much as the first parse. Worker pool: 1 worker 6.1 s, 2 4.1 s, 4 3.4 s, 6 3.3 s (hence the cap of 4). Tree wire encoding overhead is 4.8% of parse.
 
