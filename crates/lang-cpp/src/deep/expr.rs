@@ -154,7 +154,9 @@ impl Cx<'_> {
             self.pos += 1;
             let rhs = self.pos;
             self.assign();
-            if self.pos > rhs {
+            // `.field = v` in an initializer names a member: no assignment
+            let designator = at > 0 && self.c[at - 1].kind == k::DOT;
+            if self.pos > rhs && !designator {
                 self.emit(at, self.pos - 1, k::ASSIGNMENT);
             }
         }
@@ -653,7 +655,7 @@ impl Cx<'_> {
         }
         self.retag(at, k::CAPTURES);
         let (lo, hi) = self.inner(at);
-        self.list(lo, hi);
+        self.captures(lo, hi);
         if params {
             if self.closed(q) && !self.crosses_in(q) {
                 self.retag(q, k::PARAMETER_LIST);
@@ -678,6 +680,21 @@ impl Cx<'_> {
         }
         self.pos = q;
         self.emit(at, q - 1, k::LAMBDA);
+    }
+
+    /// The captures between `lo` and `hi`: an init-capture `name = value` is no assignment, only its
+    /// value is read.
+    fn captures(&mut self, lo: usize, hi: usize) {
+        let mut p = lo;
+        while p < hi {
+            let mut e = p;
+            while e < hi && self.c[e].kind != k::COMMA {
+                e = self.skip(e);
+            }
+            let named = self.is(p, e, k::IDENT) && self.is(p + 1, e, k::EQUAL);
+            self.list(if named { p + 2 } else { p }, e);
+            p = e + 1;
+        }
     }
 
     /// `new T(args)`, `new T[n]`, `new (place) T{..}`.

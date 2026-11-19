@@ -77,6 +77,22 @@ impl Cx<'_> {
                 return r;
             }
         }
+        if t.kind == k::IDENT && crate::structure::macro_name(self.text(a)) {
+            // `FOO(x);` and `FOO`: a macro call, which may expand to anything
+            let mut e = a + 1;
+            if self.open(e, b, k::LPAR) {
+                e = self.skip(e);
+            }
+            if self.is(e, b, k::SEMI) {
+                e += 1;
+            }
+            if e >= b || self.c[e - 1].kind == k::SEMI {
+                return (e, Some(k::MACRO_STATEMENT));
+            }
+        }
+        if t.kind == k::IDENT && self.is(a + 1, b, k::COLON) && scope != CLASS {
+            return (a + 2, Some(k::LABEL_STATEMENT));
+        }
         self.declaration_or_expression(a, b, scope)
     }
 

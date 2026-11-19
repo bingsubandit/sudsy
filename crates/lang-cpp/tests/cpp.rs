@@ -160,6 +160,21 @@ fn deep_nodes() {
     assert_eq!(texts(src, Dialect::Cpp, kind::BINARY).len(), 2);
 }
 
+/// Labels, macro calls and `try` are statements of their own; `.f = v` and `[x = x]` hold no assignment.
+#[test]
+fn deep_precision() {
+    let src = "void f(S s) {\n  try { g(); } catch (E&) { h(); }\nout:\n  FOO(s);\n  S t = { .a = s.a };\n  auto l = [x = x] { return x; };\n  y = y;\n}\n";
+    let one = |wanted, text: &str| assert_eq!(texts(src, Dialect::Cpp, wanted), [text]);
+    one(kind::TRY_STATEMENT, "try { g(); } catch (E&) { h(); }");
+    one(kind::LABEL_STATEMENT, "out:");
+    one(kind::MACRO_STATEMENT, "FOO(s);");
+    // the declarators and `y = y`, not `.a = s.a` or `x = x` of the capture
+    assert_eq!(
+        texts(src, Dialect::Cpp, kind::ASSIGNMENT),
+        ["t = { .a = s.a }", "l = [x = x] { return x; }", "y = y"]
+    );
+}
+
 #[test]
 fn lexing() {
     let src = "#include <a/b.h>\n#define X(a) a##b \\\n  \"s\"\nint x = 1'000 + 0x1p-3; auto s = u8\"x\" R\"d(\n)d\"_s; char c = '\\'';\n";

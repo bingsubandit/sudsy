@@ -112,7 +112,7 @@ node Line #child #statement #member #opaque = #child*
 node ParenGroup #child #part #expression #opaque = #child*
 node BracketGroup #child #part #expression #opaque = #child*
 // A preprocessor line: `#`, the directive's name and its tokens, with the lines it continues over.
-node Directive #child #part #opaque = #child*
+node Directive #child #part #directive #opaque = #child*
 // `#if` ... `#endif` where the branches nest with the groups around them, and each of its branches (from its directive to the next).
 node PpGroup #child #part #opaque = #child*
 node PpBranch #child #part #opaque = #child*
@@ -142,11 +142,12 @@ node CompoundExpression #child #part #expression #opaque = #child*
 node QualifiedName #child #part #expression #type #opaque = #child*
 node Lambda #child #part #expression #function #huggable-function #scope = Captures #part* parameters:ParameterList? #part* body:Block?
 node Captures #child #part #opaque = #child*
-node New #child #part #expression #opaque = #child*
+node New #child #part #expression #call #opaque = #child*
 
 // Statements.
 node ExpressionStatement #child #statement #expression-statement = expression:#expression? expression_token=expression:#operand? #part*
 node ReturnStatement #child #statement #return = Keyword value:#expression? value_token=value:#operand? #part*
+node MacroStatement #child #statement #inert #opaque = #child*
 node EmptyStatement #child #statement #empty-statement = Semi
 node BreakStatement #child #statement #break = Keyword #part*
 node ContinueStatement #child #statement #continue = Keyword #part*
@@ -158,7 +159,8 @@ node DoStatement #child #statement #loop = Keyword body:#statement Keyword condi
 node ForStatement #child #statement #scope #loop = Keyword Condition body:#statement
 node SwitchStatement #child #statement #scope #switch = Keyword subject:Condition cases=block:Block
 node CaseClause #child #case = Keyword test:#expression? test_token=test:#operand? Colon body:#child*
-node TryStatement #child #statement #opaque = #child*
+node LabelStatement #child #statement #goto-target = Ident Colon
+node TryStatement #child #statement #try = Keyword body:Block catches:CatchClause*
 node CatchClause #child #scope #catch = Keyword parameter:Condition body:Block
 
 // Declarations.

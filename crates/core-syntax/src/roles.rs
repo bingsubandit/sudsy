@@ -76,7 +76,7 @@ pub const ROLES: &[Role] = &[
     },
     Role {
         name: "try",
-        fields: "body catches finally",
+        fields: "body catches finally?",
         doc: "`try` with its `#catch` clauses (any number) and `finally` block (optional)",
     },
     Role {

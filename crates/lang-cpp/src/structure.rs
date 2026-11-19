@@ -533,7 +533,7 @@ impl Builder<'_> {
 }
 
 /// `Q_OBJECT`, `BEGIN_NAMESPACE`: two or more capitals, digits and underscores.
-fn macro_name(s: &str) -> bool {
+pub(crate) fn macro_name(s: &str) -> bool {
     s.len() >= 2
         && s.bytes().any(|c| c.is_ascii_uppercase())
         && s.bytes()
