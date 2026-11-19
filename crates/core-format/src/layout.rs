@@ -558,7 +558,7 @@ fn heritage(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -
             l.children().filter(|c| !c.text_range().is_empty()).count()
         });
     let layout = if entries.len() < option_int(cx, row, "min") {
-        shapes::HeritageLayout::Inline
+        shapes::HeritageLayout::Fit
     } else if params > 0 && params >= option_int(cx, row, "hug_min") {
         shapes::HeritageLayout::Hugged
     } else {
