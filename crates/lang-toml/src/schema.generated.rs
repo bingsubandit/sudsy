@@ -33,7 +33,8 @@ pub fn align_comments(o: &core_config::ResolvedOptions) -> bool {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::line_width(80),
         core_config::shared::indent_size(2),
         shared::indent_style(),
@@ -45,8 +46,9 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice("trailing_commas", &["never", "multiline"], "multiline", "Trailing comma after the last item of a multi-line array."),
         core_config::shared::max_blank_lines(1, "Largest number of blank lines kept between entries, tables and comments."),
         core_config::OptionDef::boolean("align_comments", false, "Start the trailing comments of consecutive entries in one column (entries with no              blank line or comment line between them); a run with an entry on several lines is not \n             aligned."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("toml/taplo-compat", include_str!("../presets/taplo-compat.yaml")),
-    ])
+        ])
+    })
 }

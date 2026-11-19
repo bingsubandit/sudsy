@@ -247,7 +247,8 @@ pub fn align_escaped_newlines(o: &core_config::ResolvedOptions) -> AlignEscapedN
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::line_width(80),
         core_config::shared::indent_size(2),
         shared::indent_style(),
@@ -281,13 +282,14 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::boolean("align_trailing_comments", true, "Align the trailing comments of consecutive lines."),
         core_config::OptionDef::choice("break_template_declarations", &["yes", "multiline", "no"], "multiline", "`template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never."),
         core_config::OptionDef::choice("align_escaped_newlines", &["right", "left", "dont_align"], "right", "The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("cpp/google", include_str!("../presets/google.yaml")),
         core_config::Preset::new("cpp/chromium", include_str!("../presets/chromium.yaml")),
         core_config::Preset::new("cpp/mozilla", include_str!("../presets/mozilla.yaml")),
         core_config::Preset::new("cpp/webkit", include_str!("../presets/webkit.yaml")),
         core_config::Preset::new("cpp/gnu", include_str!("../presets/gnu.yaml")),
         core_config::Preset::new("cpp/microsoft", include_str!("../presets/microsoft.yaml")),
-    ])
+        ])
+    })
 }

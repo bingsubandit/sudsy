@@ -100,7 +100,8 @@ pub fn jsx_single_quote(o: &core_config::ResolvedOptions) -> bool {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::line_width(80),
         core_config::shared::indent_size(2),
         shared::indent_style(),
@@ -129,9 +130,10 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice("arrow_parens", &["always", "avoid"], "always", "Parentheses around the lone parameter of an arrow function: `always` writes `(x) => x`, `avoid` writes `x => x` when the parameter is a plain name (no type, default, rest or destructuring)."),
         core_config::OptionDef::boolean("bracket_same_line", false, "JSX: put the `>` of a multi-line element on the line of its last attribute instead of on a line of its own."),
         core_config::OptionDef::boolean("jsx_single_quote", false, "Single quotes for JSX attribute strings (a string with more of the preferred quote than of the other keeps the other one)."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("js/eslint-recommended", include_str!("../presets/eslint-recommended.yaml")),
         core_config::Preset::new("js/typescript-eslint-recommended", include_str!("../presets/typescript-eslint-recommended.yaml")),
-    ])
+        ])
+    })
 }

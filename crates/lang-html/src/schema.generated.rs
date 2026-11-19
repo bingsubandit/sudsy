@@ -39,7 +39,8 @@ pub fn single_attribute_per_line(o: &core_config::ResolvedOptions) -> bool {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::line_width(80),
         core_config::shared::indent_size(2),
         shared::indent_style(),
@@ -49,13 +50,14 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice("whitespace_sensitivity", &["css", "strict", "ignore"], "css", "Whether whitespace between inline elements and text is significant: `css` follows each element's CSS display, `strict` treats every element as inline, `ignore` as block."),
         core_config::OptionDef::boolean("bracket_same_line", false, "Put the `>` of a multi-line start tag at the end of the last attribute's line."),
         core_config::OptionDef::boolean("single_attribute_per_line", false, "Put every attribute of a tag that has several on its own line."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("html/html-validate-standard", include_str!("../presets/html-validate-standard.yaml")),
         core_config::Preset::new("html/html-validate-recommended", include_str!("../presets/html-validate-recommended.yaml")),
         core_config::Preset::new("html/htmlhint", include_str!("../presets/htmlhint.yaml")),
         core_config::Preset::new("html/html-eslint-recommended", include_str!("../presets/html-eslint-recommended.yaml")),
         core_config::Preset::new("html/eslint-plugin-vue-recommended", include_str!("../presets/eslint-plugin-vue-recommended.yaml")),
         core_config::Preset::new("html/eslint-plugin-svelte-recommended", include_str!("../presets/eslint-plugin-svelte-recommended.yaml")),
-    ])
+        ])
+    })
 }

@@ -170,10 +170,24 @@ pub struct OptionError {
 }
 
 /// The options of one provider.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default)]
 pub struct OptionSchema {
     defs: Vec<OptionDef>,
     presets: Vec<Preset>,
+    /// A schema built on first use: startup builds every provider, a file reads one schema.
+    later: Option<Later>,
+}
+
+#[derive(Clone, Debug)]
+struct Later {
+    build: fn() -> OptionSchema,
+    cell: std::sync::OnceLock<Box<OptionSchema>>,
+}
+
+impl PartialEq for OptionSchema {
+    fn eq(&self, other: &Self) -> bool {
+        self.defs() == other.defs() && self.presets() == other.presets()
+    }
 }
 
 impl OptionSchema {
@@ -181,30 +195,53 @@ impl OptionSchema {
         OptionSchema {
             defs,
             presets: Vec::new(),
+            later: None,
+        }
+    }
+
+    /// A schema that `build` makes when its options are first read.
+    pub fn lazy(build: fn() -> OptionSchema) -> Self {
+        OptionSchema {
+            defs: Vec::new(),
+            presets: Vec::new(),
+            later: Some(Later {
+                build,
+                cell: std::sync::OnceLock::new(),
+            }),
         }
     }
 
     /// The presets (`extends: preset:...`) of this provider.
     pub fn with_presets(mut self, presets: Vec<Preset>) -> Self {
+        // Extra presets need the built options: a lazy schema is built here.
+        if let Some(l) = self.later.take() {
+            self.defs = l.get().defs().to_vec();
+        }
         self.presets = presets;
         self
     }
 
     pub fn presets(&self) -> &[Preset] {
-        &self.presets
+        match &self.later {
+            Some(l) => l.get().presets(),
+            None => &self.presets,
+        }
     }
 
     pub fn defs(&self) -> &[OptionDef] {
-        &self.defs
+        match &self.later {
+            Some(l) => l.get().defs(),
+            None => &self.defs,
+        }
     }
 
     pub fn get(&self, name: &str) -> Option<&OptionDef> {
-        self.defs.iter().find(|d| d.name == name)
+        self.defs().iter().find(|d| d.name == name)
     }
 
     pub fn defaults(&self) -> ResolvedOptions {
         ResolvedOptions(
-            self.defs
+            self.defs()
                 .iter()
                 .map(|d| (d.name.to_string(), d.default.clone()))
                 .collect(),
@@ -220,7 +257,7 @@ impl OptionSchema {
     ) -> Result<(), OptionError> {
         let def = self.get(name).ok_or_else(|| OptionError {
             option: name.into(),
-            message: unknown_name("option", name, self.defs.iter().map(|d| d.name)).replacen(
+            message: unknown_name("option", name, self.defs().iter().map(|d| d.name)).replacen(
                 &format!("unknown option `{name}`"),
                 "unknown",
                 1,
@@ -626,10 +663,16 @@ pub mod shared {
         )
     }
 }
+impl Later {
+    fn get(&self) -> &OptionSchema {
+        self.cell.get_or_init(|| Box::new((self.build)()))
+    }
+}
+
 impl OptionSchema {
     /// The preset named `language/name`.
     pub fn find_preset(&self, name: &str) -> Option<&Preset> {
-        self.presets.iter().find(|p| p.name == name)
+        self.presets().iter().find(|p| p.name == name)
     }
 }
 

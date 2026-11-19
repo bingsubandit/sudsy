@@ -46,7 +46,8 @@ pub fn class_signature_wrap_min_supertypes(o: &core_config::ResolvedOptions) -> 
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::indent_size(4),
         core_config::shared::line_width(140),
         shared::indent_style(),
@@ -63,8 +64,9 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::member_chain_min_calls(2),
         core_config::shared::member_chain_force_links(4),
         core_config::shared::member_chain_indent(1),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("kotlin/ktlint", include_str!("../presets/ktlint.yaml")),
-    ])
+        ])
+    })
 }

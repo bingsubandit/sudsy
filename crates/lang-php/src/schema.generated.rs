@@ -26,7 +26,8 @@ pub fn declaration_brace(o: &core_config::ResolvedOptions) -> DeclarationBrace {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::indent_size(4),
         core_config::shared::line_width(120),
         shared::indent_style(),
@@ -34,8 +35,9 @@ pub fn option_schema() -> core_config::OptionSchema {
         shared::end_of_line(),
         core_config::OptionDef::choice("trailing_commas", &["never", "multiline"], "multiline", "Trailing comma after the last argument, parameter or `match` arm of a list that is laid out on several lines: `multiline` adds one, `never` removes it."),
         core_config::OptionDef::choice("declaration_brace", &["next_line", "same_line"], "next_line", "Where the `{` of a class, interface, trait, enum, function or method goes (PER Coding Style: its own line). Control structures, closures and anonymous classes keep it on the line."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("php/phpstan", include_str!("../presets/phpstan.yaml")),
-    ])
+        ])
+    })
 }

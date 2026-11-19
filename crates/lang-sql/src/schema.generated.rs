@@ -98,7 +98,8 @@ pub fn type_case(o: &core_config::ResolvedOptions) -> TypeCase {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::OptionDef::choice("dialect", &["ansi", "postgres", "mysql", "tsql"], "ansi", "The SQL dialect the file is parsed as."),
         core_config::shared::line_width(80),
         shared::indent_style(),
@@ -111,8 +112,9 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice("function_case", &["consistent", "upper", "lower", "capitalise"], "consistent", "Case of function names: `consistent` follows the first one written (all that follow are brought to its case once one differs), the others set it."),
         core_config::OptionDef::choice("literal_case", &["consistent", "upper", "lower", "capitalise"], "consistent", "Case of `NULL`, `TRUE` and `FALSE`: `consistent` follows the first one written (all that follow are brought to its case once one differs), the others set it."),
         core_config::OptionDef::choice("type_case", &["consistent", "upper", "lower", "capitalise"], "consistent", "Case of data types: `consistent` follows the first one written (all that follow are brought to its case once one differs), the others set it."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("sql/sqlfluff", include_str!("../presets/sqlfluff.yaml")),
-    ])
+        ])
+    })
 }

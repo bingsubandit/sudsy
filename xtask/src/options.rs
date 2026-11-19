@@ -190,6 +190,6 @@ pub fn generate(name: &str, l: &Lang) -> Result<Option<String>> {
         .map(|p| format!("        core_config::Preset::new(\"{name}/{p}\", include_str!(\"../presets/{p}.yaml\")),\n"))
         .collect();
     Ok(Some(format!(
-        "// Generated from lang.yaml by `cargo xtask codegen`.\n{consts}{getters}\n#[rustfmt::skip]\npub fn option_schema() -> core_config::OptionSchema {{\n    core_config::OptionSchema::new(vec![\n{defs}    ])\n    .with_presets(vec![\n{presets}    ])\n}}\n"
+        "// Generated from lang.yaml by `cargo xtask codegen`.\n{consts}{getters}\n#[rustfmt::skip]\npub fn option_schema() -> core_config::OptionSchema {{\n    core_config::OptionSchema::lazy(|| {{\n        core_config::OptionSchema::new(vec![\n{defs}        ])\n        .with_presets(vec![\n{presets}        ])\n    }})\n}}\n"
     )))
 }

@@ -38,7 +38,8 @@ pub const CONDITIONAL_LAYOUT: &str = "conditional_layout";
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::indent_size(2),
         core_config::shared::line_width(100),
         shared::indent_style(),
@@ -62,8 +63,9 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::assignment_indent(2),
         core_config::shared::conditional_indent(2),
         core_config::shared::conditional_layout("indented"),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("java/google", include_str!("../presets/google.yaml")),
-    ])
+        ])
+    })
 }

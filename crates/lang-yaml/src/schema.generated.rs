@@ -73,7 +73,8 @@ pub fn comment_spacing(o: &core_config::ResolvedOptions) -> usize {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::line_width(80),
         core_config::shared::indent_size(2),
         core_config::shared::final_newline(true),
@@ -87,9 +88,10 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::max_blank_lines(1, "Largest number of blank lines kept between entries, comments and documents."),
         core_config::OptionDef::choice("blank_lines_after_key", &["preserve", "remove"], "preserve", "Blank lines between a key and its block value on the next line: `preserve` keeps \n             them (up to `max_blank_lines`); `remove` drops them."),
         core_config::OptionDef::int("comment_spacing", 1, (1, 10), "Spaces between a value and a comment after it on the same line."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("yaml/prettier-compat", include_str!("../presets/prettier-compat.yaml")),
         core_config::Preset::new("yaml/yamllint", include_str!("../presets/yamllint.yaml")),
-    ])
+        ])
+    })
 }

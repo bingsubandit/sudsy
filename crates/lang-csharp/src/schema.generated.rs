@@ -416,7 +416,8 @@ pub fn separate_using_groups(o: &core_config::ResolvedOptions) -> bool {
 
 #[rustfmt::skip]
 pub fn option_schema() -> core_config::OptionSchema {
-    core_config::OptionSchema::new(vec![
+    core_config::OptionSchema::lazy(|| {
+        core_config::OptionSchema::new(vec![
         core_config::shared::line_width(120),
         core_config::shared::indent_size(4),
         shared::indent_style(),
@@ -481,12 +482,13 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::boolean("sort_usings", false, "Sort `using` directives like the `using-order` rule with `compare: culture_ignore_case`, `static_position: after` and `alias_position: after` (System first, then the others, `using static`, aliases), and join the groups: blank lines between directives go, comments above a directive move with it. `global using` directives come first, `using global::X` behind the System ones. `#if` regions stay as they are behind the sorted directives; a list with another preprocessor directive is left alone."),
         core_config::OptionDef::boolean("sort_usings_system_first", true, "With `sort_usings`: `System` namespaces come before the others (`using static System.*` before other `using static`)."),
         core_config::OptionDef::boolean("separate_using_groups", false, "With `sort_usings`: one blank line between the System usings and the others (only with `sort_usings_system_first`)."),
-    ])
-    .with_presets(vec![
+        ])
+        .with_presets(vec![
         core_config::Preset::new("csharp/dotnet-runtime", include_str!("../presets/dotnet-runtime.yaml")),
         core_config::Preset::new("csharp/google", include_str!("../presets/google.yaml")),
         core_config::Preset::new("csharp/csharpier-compat", include_str!("../presets/csharpier-compat.yaml")),
         core_config::Preset::new("csharp/stylecop", include_str!("../presets/stylecop.yaml")),
         core_config::Preset::new("csharp/unity", include_str!("../presets/unity.yaml")),
-    ])
+        ])
+    })
 }
