@@ -53,7 +53,7 @@ impl shapes::AssignHooks for AssignHooks {
                 (string || property_initializer || rhs.kind() == k::COLLECTION_EXPRESSION)
                     .then_some(BreakAfterOperator)
             }
-            shapes::AssignStyle::Break => None,
+            shapes::AssignStyle::Break | shapes::AssignStyle::Multiline => None,
         }
     }
 }
@@ -77,6 +77,7 @@ fn with_rhs(
             op_token: Some(op_token),
             right: Some(&right),
             short_key: false,
+            left_broken: false,
         },
         &shapes::AssignPolicy::of(cx.options),
         &AssignHooks,
