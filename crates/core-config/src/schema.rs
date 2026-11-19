@@ -556,6 +556,14 @@ pub mod shared {
         )
     }
 
+    pub fn assignment_keep_break_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "assignment_keep_break_kinds",
+            default,
+            "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
+        )
+    }
+
     pub fn assignment_indent(default: i64) -> OptionDef {
         OptionDef::int(
             "assignment_indent",
