@@ -27,9 +27,7 @@ Line oriented, prose kept as written (Prettier's `proseWrap: preserve`, checked 
 
 <!-- generated:differences:prettier -->
 
-- `code-trailing-blanks`: trailing blanks inside a code block are code and stay; Prettier removes them
 - `invalid-graphql`: the file is not valid GraphQL (Prettier's range markers, an empty selection set): Sudsy rejects it
-- `tab-blocks`: a block with a tab is kept as written (the width of a tab depends on its column); Prettier re-indents the nested list
 - `toc-indent`: a table of contents with nested lists indented by three columns is kept as written because the output would not parse to the same lists
 <!-- /generated -->
 

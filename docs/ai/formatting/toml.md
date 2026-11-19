@@ -37,10 +37,6 @@ Where Sudsy differs from taplo by design:
 <!-- generated:differences:taplo -->
 
 - `comment-dropped`: taplo drops the comment after an array item that is followed by a comma on the next line; Sudsy keeps it
-- `crlf-in-string`: taplo keeps CRLF inside a multi-line string and converts the rest; Sudsy writes LF everywhere
-- `empty-file`: taplo writes a newline for an empty file; Sudsy keeps it empty
-- `inline-table-array`: taplo expands an array inside a long inline table even when it fits after the break; Sudsy breaks only what does not fit
-- `multiline-string-array`: taplo keeps an array with a multi-line string on one line; Sudsy expands it
 - `taplo-rejects`: taplo rejects a valid file (`[[ products ]]` with blanks inside the brackets, some Unicode keys, strings, comments and datetimes); Sudsy formats it
 <!-- /generated -->
 

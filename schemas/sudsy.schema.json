@@ -897,8 +897,35 @@
               "description": "A list item read with the legacy dot syntax, `a.0` (tflint terraform_deprecated_index). The fix writes `a[0]`."
             },
             "deprecated-interpolation": {
-              "$ref": "#/definitions/rule",
-              "description": "A string that is one interpolation, `\"${var.a}\"`, where the expression alone does (tflint terraform_deprecated_interpolation). The fix writes the expression. Not in Nomad job files (`.nomad`, `.nomad.hcl`), whose agent fills those in at run time."
+              "description": "A string that is one interpolation, `\"${var.a}\"`, where the expression alone does (tflint terraform_deprecated_interpolation). The fix writes the expression. Not in Nomad job files (`.nomad`, `.nomad.hcl`), whose agent fills those in at run time.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "in_lists": {
+                          "default": true,
+                          "description": "Also report (and fix) a string that is one item of a list. Off: only a string that is a whole argument, as `terraform fmt` unwraps it.",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "deprecated-typing-alias": {
               "$ref": "#/definitions/rule",

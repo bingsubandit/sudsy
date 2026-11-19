@@ -63,4 +63,4 @@ migrated .prettierrc
 extends: preset:json/prettier-compat
 extends: preset:yaml/prettier-compat
 not migrated: overrides / .prettierignore / .editorconfig (config: overrides, exclude, ignore files, .editorconfig)
-not migrated: proseWrap (wontfix: deferred, docs/ai/roadmap.md (YAML re-wrapping))
+not migrated: proseWrap (docs/ai/roadmap.md (YAML re-wrapping))

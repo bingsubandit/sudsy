@@ -21,9 +21,7 @@ Where Sudsy differs from terraform by design:
 
 <!-- generated:differences:terraform -->
 
-- `interpolation-in-list`: terraform fmt unwraps `"${x}"` only as a whole argument; the rule `deprecated-interpolation` also fixes it inside a list
 - `semantic-error`: terraform rejects a file for a semantic error (a repeated plugin name); Sudsy formats it
-- `token-rewrite`: terraform fmt rewrites tokens (it quotes a bare block label, `list` becomes `list(any)`); Sudsy keeps the tokens
 <!-- /generated -->
 `cargo test --profile corpus -p lang-hcl --test integration -- --ignored --nocapture conformance` checks every corpus file: parses without errors, round-trips, formats with the same tokens and idempotently.
 
