@@ -1,0 +1,17 @@
+id: unused-variable
+family: scope
+params: { check: unused-local-variable }
+message: "`{name}` is assigned but never used in the file (export it if another program reads it)"
+description: A variable that the file assigns and never reads, in an expansion, an arithmetic expression or an operand of `read`, `export` and the like. A name that is exported, set in the environment of a command (`A=1 cmd`) or that steers the shell (`IFS`, `PATH`, `PS1`) is left alone.
+example: 'unused=1'
+severity: off
+category: cleanup
+---
+id: unassigned-variable
+family: scope
+params: { check: undefined-variable }
+message: "`{name}` is referenced but not assigned"
+description: A lower case variable that the file reads and never assigns, reads with `read`, `getopts`, `local` or a `for` loop, or guards with a default (`${name:-x}`). Names with an upper case letter are the environment's and are left alone.
+example: 'echo "$name"'
+severity: off
+category: correctness

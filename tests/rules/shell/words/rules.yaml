@@ -1,0 +1,13 @@
+quote-in-quotes: warn
+array-in-string: error
+quote-array-element: warn
+split-command-output: warn
+assignment-space: warn
+unset-glob: warn
+unquoted-pattern: warn
+echo-in-substitution: warn
+test-grep-output: warn
+iterate-file-output: warn
+eval-array: warn
+assignment-not-seen: warn
+array-without-index: warn

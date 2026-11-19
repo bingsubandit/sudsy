@@ -589,7 +589,9 @@ impl Binder<'_> {
         let green = node.green();
         let base = node.text_range().start();
         let is_name = |c: &NodeOrToken<&GreenNodeData, &GreenTokenData>| match c {
-            NodeOrToken::Token(t) => table.is_name_token(SyntaxKind(t.kind().0)),
+            NodeOrToken::Token(t) => {
+                table.is_name_token(SyntaxKind(t.kind().0)) && table.name_of(t.text()).is_some()
+            }
             NodeOrToken::Node(_) => false,
         };
         let count = own_parts(&green, base).filter(|(c, _)| is_name(c)).count();
@@ -644,7 +646,10 @@ impl Binder<'_> {
                 }
                 _ => (t.text(), range),
             };
-            let access = match hit.map(|(_, f)| *f) {
+            let Some(text) = table.name_of(text) else {
+                continue;
+            };
+            let access = match hit.map(|(_, f)| settle(*f, node, table)) {
                 Some(Flow::Skip) => continue,
                 Some(Flow::Declare) => {
                     let name = self.intern(text);
@@ -812,6 +817,14 @@ fn own_parts(
         at += c.text_len();
         (c, range)
     })
+}
+
+/// The flow a conditional flow comes to for the node.
+fn settle(mut flow: Flow, node: &SyntaxNode, table: &Table) -> Flow {
+    while let Flow::Cond(test, yes, no) = flow {
+        flow = if test.test(node, table) { *yes } else { *no };
+    }
+    flow
 }
 
 /// The state a [`Flow`] gives the child, and whether the child is outside the node's scope.

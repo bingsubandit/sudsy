@@ -19680,8 +19680,31 @@
     },
     {
       "category": "correctness",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A double-quoted argument that holds `$@` or `${array[@]}` among other text.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 16,
+            "length": 2,
+            "line": 5
+          },
+          {
+            "column": 9,
+            "length": 7,
+            "line": 6
+          },
+          {
+            "column": 9,
+            "length": 10,
+            "line": 20
+          }
+        ]
+      },
       "fix": null,
       "id": "array-in-string",
       "languages": [
@@ -19701,8 +19724,21 @@
     },
     {
       "category": "correctness",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "`$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 7,
+            "length": 9,
+            "line": 24
+          }
+        ]
+      },
       "fix": null,
       "id": "array-without-index",
       "languages": [
@@ -19722,8 +19758,21 @@
     },
     {
       "category": "correctness",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "`var=value cmd \"$var\"`: `$var` is expanded before the assignment takes effect.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 11,
+            "length": 2,
+            "line": 21
+          }
+        ]
+      },
       "fix": null,
       "id": "assignment-not-seen",
       "languages": [
@@ -19748,8 +19797,21 @@
     },
     {
       "category": "correctness",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 1,
+            "length": 12,
+            "line": 8
+          }
+        ]
+      },
       "fix": null,
       "id": "assignment-space",
       "languages": [
@@ -19872,8 +19934,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A command substitution that only runs `echo` on words.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 3,
+            "length": 10,
+            "line": 15
+          }
+        ]
+      },
       "fix": null,
       "id": "echo-in-substitution",
       "languages": [
@@ -19893,8 +19968,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "An `eval` whose argument expands an array with `[@]`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 9,
+            "length": 10,
+            "line": 20
+          }
+        ]
+      },
       "fix": null,
       "id": "eval-array",
       "languages": [
@@ -19987,8 +20075,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 1,
+            "length": 32,
+            "line": 18
+          }
+        ]
+      },
       "fix": null,
       "id": "iterate-file-output",
       "languages": [
@@ -20320,8 +20421,26 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 5,
+            "length": 3,
+            "line": 3
+          },
+          {
+            "column": 4,
+            "length": 3,
+            "line": 4
+          }
+        ]
+      },
       "fix": null,
       "id": "quote-array-element",
       "languages": [
@@ -20419,8 +20538,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A word of two double-quoted strings with unquoted text between them, as `\"a\"b\"c\"`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 3,
+            "length": 16,
+            "line": 1
+          }
+        ]
+      },
       "fix": null,
       "id": "quote-in-quotes",
       "languages": [
@@ -20577,8 +20709,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "An unquoted `$(...)` among the elements of an array assignment is split into words and globbed.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 4,
+            "length": 11,
+            "line": 2
+          }
+        ]
+      },
       "fix": null,
       "id": "split-command-output",
       "languages": [
@@ -20671,8 +20816,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 1,
+            "length": 20,
+            "line": 17
+          }
+        ]
+      },
       "fix": null,
       "id": "test-grep-output",
       "languages": [
@@ -20764,9 +20922,66 @@
       ]
     },
     {
+      "category": "correctness",
+      "default_level": "off",
+      "description": "A lower case variable that the file reads and never assigns, reads with `read`, `getopts`, `local` or a `for` loop, or guards with a default (`${name:-x}`). Names with an upper case letter are the environment's and are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "used=1\nunused=1\necho \"$used\" \"$status\" \"${output:-}\" \"${missing[@]}\"\nlocal_var() {\n  local kept=1 dropped=2 bare\n  local -a list=(a b)\n  echo \"$kept\" \"${list[0]}\"\n}\nread -r line rest\necho \"$rest\"\nfor i in 1 2; do echo \"$i\"; done\nfor j in 1 2; do :; done\ncount=0\n(( count += 1 ))\ntotal=$((count * 2))\necho \"$total\"\nexport EXPORTED=1\nPREFIXED=1 cmd\nIFS=,\nprintf -v formatted '%s' x\necho \"$formatted\"\narr[0]=x\necho \"${arr[0]}\" \"${#arr[@]}\" \"$#\" \"$@\" \"$1\" \"$_\"\ncat <<EOF\n$heredoc_read ${FROM_ENV}\nEOF\necho '$single' \"\\$escaped\"\nwhile getopts \"ab:\" opt; do\n  case $opt in a) flag=1 ;; esac\ndone\necho \"$flag\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 16,
+            "length": 6,
+            "line": 3
+          },
+          {
+            "column": 41,
+            "length": 7,
+            "line": 3
+          },
+          {
+            "column": 2,
+            "length": 12,
+            "line": 25
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unassigned-variable",
+      "languages": [
+        "shell"
+      ],
+      "options": [],
+      "presets": [
+        "shell/shellcheck"
+      ],
+      "upstream": [
+        {
+          "id": "SC2154",
+          "partial": true,
+          "tool": "shellcheck"
+        }
+      ]
+    },
+    {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 1,
+            "length": 14,
+            "line": 13
+          }
+        ]
+      },
       "fix": null,
       "id": "unquoted-pattern",
       "languages": [
@@ -20786,8 +21001,21 @@
     },
     {
       "category": "suspicious",
-      "default_level": "warn",
+      "default_level": "off",
       "description": "`unset name[i]` with an unquoted subscript.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a=\"x \"\\\"\"$v\"\\\"\" y\"\nd=($(cmd \"$a\"))\nl+=($dl)\nx=($dl \"q\" \"$m\")\nflunk \"failed: $@\"\necho \"a ${s[@]} b\"\necho \"$@\" \"${s[@]}\"\nPGHOST= psql\nIFS= read -r line\nPGHOST=db psql\nunset words[0]\nunset \"words[0]\"\n[[ $a == $b ]]\n[[ $a == \"$b\" ]]\nx=$(echo $y)\nx=$(echo \"a\" | tr a b)\n[[ $(ps | grep x) ]]\nfor l in $(cat file); do :; done\nfor l in \"$@\"; do :; done\neval \"f ${args[@]}\"\nA=1 echo \"$A\"\nA=1 cmd \"$B\"\nA=1 cmd \"$A_\"\necho \"$FUNCNAME\" \"${FUNCNAME[0]}\"\n",
+        "language": "shell",
+        "spans": [
+          {
+            "column": 1,
+            "length": 14,
+            "line": 11
+          }
+        ]
+      },
       "fix": null,
       "id": "unset-glob",
       "languages": [
@@ -30395,7 +30623,8 @@
       "languages": [
         "csharp",
         "js",
-        "python"
+        "python",
+        "shell"
       ],
       "options": [],
       "presets": [
@@ -30403,7 +30632,8 @@
         "js/typescript-eslint-recommended",
         "js/biome-recommended",
         "js/oxlint",
-        "python/ruff"
+        "python/ruff",
+        "shell/shellcheck"
       ],
       "upstream": [
         {
@@ -30415,6 +30645,11 @@
           "id": "F841",
           "partial": false,
           "tool": "ruff"
+        },
+        {
+          "id": "SC2034",
+          "partial": true,
+          "tool": "shellcheck"
         },
         {
           "id": "no-unused-vars",

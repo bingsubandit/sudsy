@@ -23,7 +23,7 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 | 14 | Terraform (HCL) | 98.1% of 318 (terraform fmt) | 19.6% (tflint, `hcl/tflint-recommended`) | module-level rules: `terraform_required_providers` 37, `unused_declarations` 31, `typed_variables` 27 |
 | 15 | Java | 82.5% of 5,337 (google-java-format 2.0.0) | 25.5% (Checkstyle, `java/google`) | `MissingJavadocMethod` 18,283, `MethodName` 7,887, `JavadocParagraph` 5,301; 934 files with layout gaps (line comments, chains in ternaries) |
 | 16 | PowerShell | 92.9% of 211 (Invoke-Formatter; not re-run, no `pwsh` on the host) | 34.4% (PSScriptAnalyzer) | `PSUseShouldProcessForStateChangingFunctions` 140, `PSUseDeclaredVarsMoreThanAssignments` 130 |
-| 17 | Shell | 86.6% of 82 (shfmt 3.14.1) | 47.0% (ShellCheck, `shell/shellcheck`) | `SC2140` 22, `SC2034` 14, `SC1091` 12; backticks, `case` in `if`, arithmetic spacing |
+| 17 | Shell | 86.6% of 82 (shfmt 3.14.1) | 86.6% (ShellCheck, `shell/shellcheck`) | `SC1091` 12 and `SC1090` 2 (source following), `SC2235` 2; backticks, `case` in `if`, arithmetic spacing |
 | 18 | HTML | 92.7% of 233 (Prettier) | 63.7% (html-validate; htmlhint 5.0%, html-eslint 0.3%) | `wcag/h63` 48, `parser-error` 21; html-eslint `indent` 16,182 planned; embedded code 56 files |
 | 19 | Markdown | 85.9% of 64 (Prettier; small corpus) | 82.7% (markdownlint, `markdown/markdownlint`) | `MD010` 309 (tabs); corpus of 64 files |
 | 20 | Vue | 83.1% of 941 (Prettier) | 87.2% (eslint-plugin-vue) | `vue-js-layout` 183 files; `vue/attributes-order` 81 |
@@ -42,6 +42,8 @@ Not ranked: INI, EditorConfig and `.gitignore` have no reference tool. Measured 
 - Read shared rule specs once per process, not per embedded language.
 - Human docs (docs/*.md, README.md) carry numbers copied from docs/ai; refresh them when a parity or performance number changes.
 - Format-string family: dispatch once per node instead of 16 `MEMO.names` calls (py.lint +3.6%).
+- The 13 pattern rules of `lang-shell/rules/words.yaml` cost +194% shell lint (6.5 M to 19.2 M instructions) when on: measure the matching cost of pattern rules (regexes on the text of every `Command`, `deep` token scans of the whole program) before any of them goes default-on.
+- Honour `# shellcheck disable=SC....` comments as a shared suppress-alias that a preset maps to its rules, so the shellcheck preset stays quiet where the file silences shellcheck.
 - Profile the `core_format::spacing` row lookup (kt.format +6.4%, java.format +4% at F2) once a profiler runs on the agent host.
 - Scope family: JS `unused-import` is still part of `unused-variable` (split it as Java, Kotlin and PHP have it); Python's `F401`/`F841` rows move on the family in L3.
 - Flow family modeling gaps (`unreachable-code`, `no-fallthrough`; [rules/semantics.md](rules/semantics.md#flow-family-core_rulesflow_rules)): JS static blocks and TS module blocks are not units of their own; PHP file level and `if`/`else` bodies (opaque wrappers); Java arrow `switch` arms and `for` heads; Ruby `begin`/`rescue`; Python `with` and `try`/`else`.

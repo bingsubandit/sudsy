@@ -5560,6 +5560,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `variable` block with no `type` argument (tflint terraform_typed_variables)."
             },
+            "unassigned-variable": {
+              "$ref": "#/definitions/rule",
+              "description": "A lower case variable that the file reads and never assigns, reads with `read`, `getopts`, `local` or a `for` loop, or guards with a default (`${name:-x}`). Names with an upper case letter are the environment's and are left alone."
+            },
             "undefined-export": {
               "$ref": "#/definitions/rule",
               "description": "A name in `__all__` that the module does not bind."

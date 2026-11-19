@@ -1,0 +1,2 @@
+unused-variable: warn
+unassigned-variable: warn

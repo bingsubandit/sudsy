@@ -32,6 +32,8 @@ entries:
   SC2184: rule unset-glob | Only `unset name[...]`.
   SC2140: rule quote-in-quotes | Only a word whose middle part touches a space inside one of the two strings (the `"a "\""$b"\""` idiom).
   SC2145: rule array-in-string | Only the arguments of a command.
+  SC2034: rule unused-variable | A name the whole file assigns and never reads; the file is one scope, `local` is not told apart.
+  SC2154: rule unassigned-variable | Lower case names only, reported at the first read.
   SC2155: rule declare-and-assign-separately
   SC2206: rule quote-array-element | `$var` and `${var}` among the elements, not other expansions.
   SC2207: rule split-command-output
@@ -45,6 +47,8 @@ entries:
   SC2230: rule no-which
   SC2236: rule test-negated-empty
 deferred:
+  - gap: "Source following: needs the file a `source` or `.` command names, which a single-file lint cannot read."
+    ids: [SC1090, SC1091]
   - gap: "Parser diagnostic; Sudsy reports tree-sitter errors as `syntax-error` only."
     ids: [SC1000, SC1001, SC1003, SC1004, SC1008, SC1009, SC1010, SC1011, SC1012, SC1014, SC1015,
        SC1016, SC1017, SC1018, SC1019, SC1020, SC1026, SC1027, SC1028, SC1029, SC1033, SC1034, SC1035,
@@ -52,7 +56,7 @@ deferred:
        SC1049, SC1050, SC1051, SC1052, SC1053, SC1054, SC1055, SC1056, SC1057, SC1058, SC1059, SC1060,
        SC1061, SC1062, SC1063, SC1064, SC1065, SC1066, SC1067, SC1068, SC1069, SC1070, SC1071, SC1072,
        SC1073, SC1074, SC1075, SC1076, SC1077, SC1078, SC1079, SC1080, SC1081, SC1082, SC1083, SC1084,
-       SC1085, SC1086, SC1087, SC1088, SC1089, SC1090, SC1091, SC1092, SC1094, SC1095, SC1097, SC1098,
+       SC1085, SC1086, SC1087, SC1088, SC1089, SC1092, SC1094, SC1095, SC1097, SC1098,
        SC1099, SC1100, SC1101, SC1102, SC1103, SC1104, SC1105, SC1106, SC1107, SC1108, SC1109, SC1110,
        SC1111, SC1112, SC1113, SC1114, SC1115, SC1116, SC1117, SC1118, SC1119, SC1120, SC1121, SC1122,
        SC1123, SC1124, SC1125, SC1126, SC1127, SC1128, SC1129, SC1130, SC1131, SC1132, SC1133, SC1134,
@@ -82,9 +86,9 @@ deferred:
        SC2240, SC2241, SC2242, SC2253, SC2267, SC2290, SC2291, SC2293, SC2304, SC2305, SC2306,
        SC2307, SC2308, SC2313, SC2316, SC2318]
   - gap: "Needs data flow across the script (assignments, scopes, subshells)."
-    ids: [SC2030, SC2031, SC2032, SC2033, SC2034, SC2037, SC2069, SC2070, SC2083, SC2084, SC2087, SC2088,
+    ids: [SC2030, SC2031, SC2032, SC2033, SC2037, SC2069, SC2070, SC2083, SC2084, SC2087, SC2088,
        SC2089, SC2090, SC2093, SC2094, SC2104, SC2105, SC2107, SC2108, SC2109, SC2110, SC2111, SC2119,
-       SC2120, SC2123, SC2124, SC2125, SC2141, SC2142, SC2153, SC2154, SC2171, SC2178,
+       SC2120, SC2123, SC2124, SC2125, SC2141, SC2142, SC2153, SC2171, SC2178,
        SC2182, SC2183, SC2218, SC2219, SC2220, SC2221, SC2222, SC2223, SC2224, SC2225, SC2226, SC2227,
        SC2229, SC2317, SC2329]
   - gap: "Needs the target dialect (POSIX sh, dash, bash version); Shell has no dialect model."

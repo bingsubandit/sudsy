@@ -39,3 +39,5 @@ shell:
       eval-array: warn
       assignment-not-seen: warn
       array-without-index: warn
+      unused-variable: warn
+      unassigned-variable: warn
