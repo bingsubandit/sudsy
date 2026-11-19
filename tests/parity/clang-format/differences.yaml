@@ -1,5 +1,5 @@
 differences:
-  layout-gap: gap  "the layout of our own does not yet match clang-format everywhere (nested call and lambda arguments, braced initializer lists, comment reflow around code, macro bodies)"
+  layout-gap: gap  "the formatter prints the source as written (no layout yet); a file is identical when clang-format also leaves it unchanged"
 files:
   llvm: layout-gap
   fmt: layout-gap
@@ -14,18 +14,18 @@ files:
   gnu: layout-gap
   microsoft: layout-gap
 ratchet:
-  llvm: 87
-  fmt: 29
-  range-v3: 99
-  folly: 773
-  linux: 511
+  llvm: 227
+  fmt: 20
+  range-v3: 49
+  folly: 367
+  linux: 312
   sqlite: 0
   google: 0
   chromium: 0
   mozilla: 0
   webkit: 0
   gnu: 0
-  microsoft: 1
+  microsoft: 0
 second-format:
   llvm: 0
   folly: 0

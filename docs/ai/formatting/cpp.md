@@ -17,7 +17,10 @@ One pass over the tokens builds nodes over them:
 `#if` branches are not each parsed as clang-format does: at `#else`/`#elif` the groups opened in the branch are closed back to the depth at `#if`, and at `#endif` the state of the last branch continues (single-pass bracket reset). 0.2-6.5% of corpus files have branch-asymmetric groups.
 
 ## Formatter
-Verbatim for now: the text is printed back unchanged. The clang-format-compatible layout is the next step.
+Verbatim for now: the text is printed back unchanged. The layout is built on the shared shapes ([../design/cpp-formatter.md](../design/cpp-formatter.md)).
+
+## Parity
+`scripts/parity.sh format clang-format` runs clang-format 20.1.8 (`tests/parity/clang-format/`, a `.clang-format` per style: each corpus project's own for LLVM, fmt, range-v3 and Linux, LLVM for folly and SQLite, the six presets on the bench inputs; sorting of includes, namespace end comments and comment reflow off) and compares it with `sudsy format` on the corpus of `fetch-cpp-corpus.sh`. Identical files of the verbatim formatter (the ratchets of `differences.yaml`, which may only rise): LLVM 227/420, folly 367/2,299, Linux 312/2,872, range-v3 49/593, fmt 20/70, SQLite 0/325, 0/10 for each preset. Second format and refused: 0 in every project.
 
 ## Options
 <!-- generated:options -->
