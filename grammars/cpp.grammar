@@ -142,7 +142,7 @@ node CompoundExpression #child #part #expression #opaque = #child*
 node QualifiedName #child #part #expression #type #opaque = #child*
 node Lambda #child #part #expression #function #huggable-function #scope = Captures #part* parameters:ParameterList? #part* body:Block?
 node Captures #child #part #opaque = #child*
-node New #child #part #expression #call #opaque = #child*
+node New #child #part #expression #call = Keyword #part* callee:#expression? arguments:Arguments*
 
 // Statements.
 node ExpressionStatement #child #statement #expression-statement = expression:#expression? expression_token=expression:#operand? #part*
@@ -159,7 +159,7 @@ node DoStatement #child #statement #loop = Keyword body:#statement Keyword condi
 node ForStatement #child #statement #scope #loop = Keyword Condition body:#statement
 node SwitchStatement #child #statement #scope #switch = Keyword subject:Condition cases=block:Block
 node CaseClause #child #case = Keyword test:#expression? test_token=test:#operand? Colon body:#child*
-node LabelStatement #child #statement #goto-target = Ident Colon
+node LabelStatement #child #statement #goto-target #opaque = Ident Colon
 node TryStatement #child #statement #try = Keyword body:Block catches:CatchClause*
 node CatchClause #child #scope #catch = Keyword parameter:Condition body:Block
 

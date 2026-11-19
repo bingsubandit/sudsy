@@ -573,7 +573,9 @@ impl<'a> Builder<'a> {
         }
         self.frames.pop();
         // an `#if` or `#include` in the body may add arms that are not in the tree
-        let preprocessed = n.descendants().any(|d| self.g.has_tag(d.kind(), "directive"));
+        let preprocessed = n
+            .descendants()
+            .any(|d| self.g.has_tag(d.kind(), "directive"));
         if !default || preprocessed {
             self.always(dispatch, after);
         }
