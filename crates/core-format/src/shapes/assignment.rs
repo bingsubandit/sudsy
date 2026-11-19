@@ -261,7 +261,7 @@ fn choose(
         return BreakAlways;
     }
     let right_inner = right.as_node().map(roles::un);
-    let right_assign =right_inner.as_ref().filter(|n| is_assignment(cx, n));
+    let right_assign = right_inner.as_ref().filter(|n| is_assignment(cx, n));
     let fluid = policy.style == AssignStyle::Fluid;
     if fluid && is_assignment(cx, a.node) {
         let held = roles::outer(a.node);

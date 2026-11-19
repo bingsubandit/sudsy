@@ -136,7 +136,9 @@ impl Doc {
             Doc::LineStart(_) | Doc::NewlineIfNeeded | Doc::Outdent(..) => true,
             Doc::Text(s) => s.contains('\n'),
             Doc::Concat(ps) | Doc::Fill(ps) => ps.iter().any(Doc::has_break_point),
-            Doc::Group(g) => g.contents.has_break_point() || g.states.iter().any(Doc::has_break_point),
+            Doc::Group(g) => {
+                g.contents.has_break_point() || g.states.iter().any(Doc::has_break_point)
+            }
             Doc::Indent(d)
             | Doc::Align(_, d)
             | Doc::Label(_, d)

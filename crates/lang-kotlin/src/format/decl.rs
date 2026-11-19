@@ -140,7 +140,14 @@ fn with_value(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                 let params = list.children().filter(|c| c.kind() == k::VALUE_PARAMETER);
                 params.count() >= super::function_signature_wrap_min_parameters(cx.options)
             });
-    assign(cx, node, seq(cx, &els[..eq])?, eq_tok, &els[eq + 1], left_broken)
+    assign(
+        cx,
+        node,
+        seq(cx, &els[..eq])?,
+        eq_tok,
+        &els[eq + 1],
+        left_broken,
+    )
 }
 
 /// `left = right` as the shared assignment layouts.

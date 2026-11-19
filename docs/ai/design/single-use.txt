@@ -176,6 +176,7 @@ data row-key:blank.doc # users: java
 data row-key:blank.group # users: php
 data row-key:blank.has # users: kotlin
 data row-key:blank.parent # users: kotlin
+data row-key:blank.prev.annotation_args # users: java
 data row-key:blank.prev.doc # users: java
 data row-key:blank.prev.has # users: kotlin
 data row-key:call.arg # users: js

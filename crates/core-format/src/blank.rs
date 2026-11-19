@@ -117,6 +117,7 @@ impl Blank {
                                         "commented" => Test::Commented,
                                         "doc" => Test::Doc,
                                         "comment_blank" => Test::CommentBlank,
+                                        "annotation_args" => Test::Annotated(true),
                                         _ => panic!("blank: key `{key}`"),
                                     };
                                     (test, value == "yes")

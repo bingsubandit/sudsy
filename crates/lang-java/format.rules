@@ -37,7 +37,7 @@ kind!=FieldDeclaration|ConstantDeclaration / *
 * / * : doc=yes
 * / * : prev.doc=yes
 * / * : annotated=args
-* / * : prev.annotated=args
+* / * : prev.annotation_args=yes
 
 # A `;` that ends nothing: between members, after a class, among the statements of a block.
 [rewrite]
