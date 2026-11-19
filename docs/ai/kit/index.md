@@ -237,7 +237,6 @@ One row per concept (one behavior). `used by`: languages whose grammar, `format.
 |---|---|---|---|---|---|
 | component-option-checks | lang-html/script/keys.rs | Names a component defines twice in its option groups, props and models. | eslint-plugin-vue no-dupe-keys | html | SINGLE-USE |
 | component-props-model | lang-html/script/props.rs | The props a component declares through defineProps, the props option or defineModel. | eslint-plugin-vue require-default-prop | html | SINGLE-USE |
-| cpp-deep-parse | lang-cpp/deep/mod.rs | The statements, declarations and expressions of C/C++ found by lookahead inside the lines of the structural layer. | clang-format | cpp | SINGLE-USE |
 | cyclic-needs | lang-github-actions/jobs.rs | The `needs` of the jobs form a cycle, so no job of it can start |  | github-actions | SINGLE-USE |
 | deprecated-commands | lang-github-actions/scripts.rs | A script uses a workflow command that GitHub has disabled (`::set-output`, `::save-state`, `::set-env`, `::add-path`); write to `$GITHUB_OUTPUT`, `$GITHUB_STATE`, `$GITHU |  | github-actions | SINGLE-USE |
 | duplicate-ids | lang-github-actions/jobs.rs | Job ids that differ only in case (ids are case-insensitive; exact repeats are `no-duplicate-keys`), and step ids repeated within a job |  | github-actions | SINGLE-USE |

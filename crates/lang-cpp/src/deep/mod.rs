@@ -12,9 +12,7 @@
 //! by another name, or by `*`/`&` and a name, starts a declaration; a `( )` group after a name is
 //! a parameter list in a declaration scope and a constructor call in a function body.
 //!
-//! concept: new cpp-deep-parse
-//! what: The statements, declarations and expressions of C/C++ found by lookahead inside the lines of the structural layer.
-//! tools: clang-format
+//! concept: hand-written-parser-kit
 
 mod decl;
 mod expr;

@@ -224,7 +224,6 @@ data tag:final # users: js
 data tag:finally # users: python
 data tag:global-scope # users: js
 data tag:hole # users: js
-data tag:hug-wrapper # users: js
 data tag:huggable-always # users: js
 data tag:huggable-body # users: js
 data tag:huggable-tail # users: js
@@ -244,7 +243,6 @@ data tag:quoted # users: js
 data tag:raw-strings # users: js
 data tag:regex # users: js
 data tag:signature # users: js
-data tag:stray # users: java
 data tag:string-escapes # users: python
 data tag:string-literal # users: python
 data tag:tuple # users: python

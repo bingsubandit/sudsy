@@ -1,6 +1,8 @@
 //! Declarations: a type and its declarators, functions with their parameters and bodies, classes,
 //! enums, namespaces and templates. A line is a declaration when a type (a name path or builtin
 //! words, with `*` `&` and `const`) is followed by a name and then by what can follow a declarator.
+//!
+//! concept: hand-written-parser-kit
 
 use super::expr::is_builtin;
 use super::{BODY, CLASS, Cx, ENUM, NONE, SCOPE};

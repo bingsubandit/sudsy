@@ -1,5 +1,7 @@
 //! Statements: what one line is. A control statement is one line with its body (a block, or the
 //! statement that follows, up to its `;`), so its parts are read from the tokens of the line.
+//!
+//! concept: hand-written-parser-kit
 
 use super::{BODY, CLASS, Cx, ENUM, INIT, SCOPE, UNSET};
 use crate::generated::kind as k;

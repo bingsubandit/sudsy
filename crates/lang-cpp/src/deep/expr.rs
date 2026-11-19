@@ -1,6 +1,8 @@
 //! Expressions: precedence climbing for the binary operators (the `precedence` lines of the
 //! grammar), the postfix forms (call, index, member access), prefix operators, casts, lambdas and
 //! names with template arguments. A name or a literal alone stays a bare token.
+//!
+//! concept: hand-written-parser-kit
 
 use super::{BODY, Cx, INIT, UNSET};
 use crate::generated::kind as k;
