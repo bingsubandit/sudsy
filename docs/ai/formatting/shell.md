@@ -48,7 +48,7 @@ Shared: suppression comments (`# sudsy-disable-next-line <rule>`), `no-empty-com
 ## Conformance
 `tests/conformance/fetch-shell-corpus.sh` fetches shell scripts at pinned commits: the install scripts of dotnet, nvm, rustup, docker and Homebrew, the docker-library entrypoints of postgres and mysql, and the Bash sources of pyenv, bats-core and asdf. `cargo test --profile corpus -p lang-shell --test integration -- --ignored --nocapture conformance` checks that each file that tree-sitter parses (all 81) round-trips, formats with the same tokens (the safety check, comments compared as well) and formats idempotently. `tests/parity/shfmt/` compares with shfmt on the same files: 67 of 82 (the 81 corpus files and the `layout.sh` fixture) are identical, the 15 others are named in `tests/parity/shfmt/differences.yaml`. A file with a syntax error runs no rule.
 
-Where Sudsy differs from shfmt by design:
+The run compares `sudsy fix` with the rule `no-backticks` on (`tests/parity/shfmt/sudsy.yaml`): shfmt rewrites backticks to `$(...)`, which the formatter never does (it never changes a token) and the rule's safe fix does for a body without a backslash. Where Sudsy differs from shfmt:
 
 <!-- generated:differences:shfmt -->
 

@@ -11,6 +11,7 @@ differences:
 files:
   runtime-docs/coding-guidelines/adding-api-guidelines.md: code-span-backticks
   runtime-docs/coding-guidelines/coding-style.md: code-span-backticks
+  docs/ai/design/parity-target.md: list-looseness
   runtime-docs/coding-guidelines/breaking-change-rules.md: list-looseness
   runtime-docs/coding-guidelines/clr-code-guide.md: toc-indent
   runtime-docs/coding-guidelines/cross-platform-performance-and-eventing.md: tab-blocks
@@ -33,3 +34,5 @@ intentional:
 flags:
   no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet
   embedded-language-formatting-off: "Prettier runs with `--embedded-language-formatting=off` and the folder's sudsy.yaml sets `embedded_language_formatting: off`: the formatters of the fenced languages make other choices than Prettier's"
+pins:
+  runtime-docs/coding-guidelines/clr-code-guide.md: d76e8e41f57543e8

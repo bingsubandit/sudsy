@@ -1,7 +1,7 @@
 """Findings of an upstream tool on its corpus for the generic coverage mode (scripts/parity_lint.py `coverage`).
 
 A tool entry of parity_tools.json has a `coverage` object (docs/ai/development/parity.md#coverage-mode):
-`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
+`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
 (`{exe}`, `{prefix}`, `{group}` and `{files}`), `group` (a regex over the file's path: files of one group run in one
 command; `cwd: group` runs it in the folder `group` names), `chunk` (files per command), `ok_codes` (exit codes with an empty report meaning no findings), `timeout` (seconds) and `memory_gb` (address space) per command, `env`, `stream` (`stdout` or `stderr`: where the report is), `files` (config files
 written next to the corpus), `parse` (how the report turns into findings) and `sudsy` (the Sudsy side's config).
@@ -97,10 +97,19 @@ def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out,
     run = subprocess.run([sudsy, "format", "."], cwd=after, capture_output=True, text=True, encoding="utf-8", check=False)
     (after / "sudsy.yaml").unlink()
     found, _ = findings(tool, spec, prefix, after, exe, rules, copy=False)
-    left = [f for f in found if f[1] in layout and f[0] not in left_out]
+    # A file `sudsy format` rejects stays as it was. The reference for "invalid" is the corpus's own marking (`invalid_marker`: a file of
+    # that name next to the input, as the yaml-test-suite's `error`): a marked file is invalid input and leaves the count, any other
+    # rejected file is a Sudsy bug and its findings stay.
+    sources = dict(corpus_files(spec, Counter()))
+    rejected = {n for n in (norm(m, after) for m in re.findall(r"^error: (.+?): \d+:\d+:", run.stderr, re.M)) if n in sources}
+    marker = spec.get("invalid_marker")
+    invalid = {n for n in rejected if marker and (sources[n].parent / marker).exists()}
+    left = [f for f in found if f[1] in layout and f[0] not in left_out and f[0] not in invalid]
     per = Counter(f[1] for f in left)
     print(f"proof: `sudsy format` exit {run.returncode}; formatter findings {len(before)} before, {len(left)} after in {len({f[0] for f in left})} files: "
           + (", ".join(f"{r} {n}" for r, n in per.most_common(12)) or "none"))
+    print(f"proof: `sudsy format` rejects {len(rejected)} files: {len(invalid)} that the corpus marks as invalid (invalid-input, left out), "
+          f"{len(rejected) - len(invalid)} that it does not (Sudsy bugs, counted)" + "".join(f"\n  bug: {n}" for n in sorted(rejected - invalid)))
     return len(left)
 
 

@@ -57,3 +57,53 @@ files:
 intentional:
   width-accounting: tool-wrong
   not-xml: invalid-input
+pins:
+  corpus/eng/Baseline.Designer.props: 629df9a8db708d33
+  corpus/src/Components/Components/src/Routing/Resources.resx: 3efe192c604d82cd
+  corpus/src/Http/Authentication.Abstractions/src/Resources.resx: c255822644a22cac
+  corpus/src/Http/Http.Abstractions/src/Resources.resx: e791c92485565e2e
+  corpus/src/Http/Http.Extensions/gen/Microsoft.AspNetCore.Http.RequestDelegateGenerator/Resources.resx: 9c4bd9d050f7e186
+  corpus/src/Http/Routing/src/Resources.resx: 26538993d0f02e15
+  corpus/src/Http/WebUtilities/src/Resources.resx: ddaf4189dab5c884
+  corpus/src/Middleware/CORS/src/Resources.resx: a94153ad2265e49b
+  corpus/src/Middleware/Diagnostics/src/Resources.resx: 0d44f3b51754a79b
+  corpus/src/Middleware/Diagnostics.EntityFrameworkCore/src/Strings.resx: 8e064a892b11bd29
+  corpus/src/Middleware/HealthChecks/src/Resources.resx: 996749d4919b8cbd
+  corpus/src/Middleware/HttpLogging/src/Resources.resx: b001363aaf988f18
+  corpus/src/Middleware/Localization/sample/My/Resources/Startup.es-ES.resx: 43b35ce52de23fab
+  corpus/src/Middleware/Localization/sample/My/Resources/Startup.fr-FR.resx: 8a5e8cdf05491d9a
+  corpus/src/Middleware/Localization/sample/My/Resources/Startup.ja-JP.resx: b65ea467e8158850
+  corpus/src/Middleware/Localization/sample/My/Resources/Startup.zh-CN.resx: 92f2abafe8f0e5e9
+  corpus/src/Middleware/Localization/sample/My/Resources/Startup.zh.resx: 92f2abafe8f0e5e9
+  corpus/src/Middleware/Localization/src/Resources.resx: 7f624488115e17fe
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/Models/Customer.fr-FR.resx: 9bb766e239d3abae
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/Resources/Models.Customer.fr-FR.resx: 1de4279a257ef554
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/Resources/StartupCustomCulturePreserved.en-US.resx: 57bb9846fed840f2
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/Resources/StartupResourcesInFolder.fr-FR.resx: fb3f5dcd57245141
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/Resources/Test.fr-FR.resx: c1aa021b63873282
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/StartupResourcesAtRootFolder.fr-FR.resx: de2c49042c6b765e
+  corpus/src/Middleware/Localization/testassets/LocalizationWebsite/Test.fr-FR.resx: 0eb766a49df48e93
+  corpus/src/Middleware/Localization/testassets/ResourcesClassLibraryNoAttribute/Resources/Model.resx: 1da839f64d201698
+  corpus/src/Middleware/Localization/testassets/ResourcesClassLibraryWithAttribute/ResourceFolder/Model.resx: 694fcd86cc64af9c
+  corpus/src/Middleware/OutputCaching/src/Resources.resx: 86556aad47c774cf
+  corpus/src/Middleware/RateLimiting/src/Resources.resx: ac12ed0293b91f4e
+  corpus/src/Middleware/Rewrite/src/Resources.resx: 4c51f52b830cdd4a
+  corpus/src/Middleware/Session/src/Resources.resx: 64e80aa044458061
+  corpus/src/Middleware/StaticFiles/src/Resources.resx: b0d97809922a0fe5
+  corpus/src/Mvc/Mvc.Abstractions/src/Resources.resx: 8ab687f6a91e8f36
+  corpus/src/Mvc/Mvc.Core/src/Resources.resx: 502133736c971660
+  corpus/src/Mvc/Mvc.Cors/src/Resources.resx: 758eff70d1ded53d
+  corpus/src/Mvc/Mvc.DataAnnotations/src/Resources.resx: 51acf85afd5d72b5
+  corpus/src/Mvc/Mvc.DataAnnotations/test/Resources.resx: b33d3434126bef6d
+  corpus/src/Mvc/Mvc.Formatters.Xml/src/Resources.resx: 97789c594ed0dae8
+  corpus/src/Mvc/Mvc.NewtonsoftJson/src/Resources.resx: 806e9dc416d63076
+  corpus/src/Mvc/Mvc.Razor/src/Resources.resx: e383fbd4505a98cf
+  corpus/src/Mvc/Mvc.Razor.RuntimeCompilation/src/Resources.resx: 77c480dccd67124d
+  corpus/src/Mvc/Mvc.RazorPages/src/Resources.resx: c00deaad542faeba
+  corpus/src/Mvc/Mvc.TagHelpers/src/Resources.resx: 1013f55c1b66101b
+  corpus/src/Mvc/Mvc.Testing/src/Resources.resx: b1f25dce9064f283
+  corpus/src/Mvc/Mvc.ViewFeatures/src/Resources.resx: c129d860c658b5a2
+  corpus/src/Mvc/Mvc.ViewFeatures/test/Resources.resx: 08a6a5cd08ed4ada
+  corpus/src/Mvc/test/WebSites/RazorWebSite/Resources/Models/ModelEnum.resx: a6026e5ec5ce00a1
+  corpus/src/Mvc/test/WebSites/RazorWebSite/Resources/SingleType.resx: 8570c3dcad6bb9f6
+  corpus/src/Servers/Kestrel/Core/src/CoreStrings.resx: a39f1a395002d185
