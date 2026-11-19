@@ -13,7 +13,7 @@ kind=Punct&text=.|.* / * : no
 kind=Punct&text=, / * : yes
 kind=TemplateText|HeredocId|Strip|QuoteOpen / * : no
 kind=Punct&text=<<|<<- / * : no
-kind=Punct&parent=Unary / * : no
+kind=Punct&text=-|!&parent=Unary / * : no
 * / kind=TemplateText|HeredocId|QuoteClose|Strip : no
 * / kind=Close&parent=Interpolation|TemplateDirective : no
 kind=Close&parent=Interpolation|TemplateDirective / kind=Open&parent=Interpolation|TemplateDirective : no
