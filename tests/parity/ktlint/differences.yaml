@@ -1,7 +1,7 @@
 ratchet:
   real-world: 4407
 second-format:
-  real-world: 1  # gap: Duration.kt: braces around an `if` body are decided on the source column, the layout then moves the lambda value below `=` (4 columns deeper) and the body goes past the width
+  real-world: 0
 refused:
   real-world: 0
 coverage: 13.2  # share of the default-set findings of ktlint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage ktlint; at least 85% is the bar)

@@ -276,6 +276,10 @@ pub fn redundant_semicolons(
     keep: &[String],
     edits: &mut Vec<(usize, usize, String)>,
 ) {
+    // (most files have none: a text scan is cheaper than a walk of the tree)
+    if !text.contains(';') {
+        return;
+    }
     for t in tree
         .descendants_with_tokens()
         .filter_map(|e| e.into_token())

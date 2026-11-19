@@ -97,6 +97,13 @@ pub trait NodeFormatter: Send + Sync {
         1
     }
 
+    /// Whether the output of a file that was rewritten gets one more rewrite round: a rewrite that
+    /// depends on the width (braces around a branch that would go past it) is decided on the
+    /// source, where the layout can still move the code.
+    fn settle_rewrites(&self) -> bool {
+        false
+    }
+
     /// The text of the language's `format.rules`: the rows of the rules that run on the source
     /// before layout (`core_rules::Rule::formats`) are in it. Empty: the language has none.
     fn rows(&self) -> &'static str {
