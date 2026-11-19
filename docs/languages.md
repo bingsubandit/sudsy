@@ -57,7 +57,7 @@ Status, measured results, presets and options for every language.
   - Identical: 2,288 of 2,456 real-world files (93.2%). Stable: yes.
   - Prettier's own tests: 1,115 of 1,595 files (69.9%). Stable: yes.
 - **Linter:** ESLint recommended rules at 100.0% and typescript-eslint recommended at 100.0%. Core rules only. No react, import or a11y plugins. No type-aware rules.
-- **Presets:** `js/eslint-recommended`, `js/typescript-eslint-recommended`.
+- **Presets:** `js/eslint-recommended`, `js/typescript-eslint-recommended`, `js/biome`, `js/biome-recommended`, `js/oxlint`.
 - **Options:** `semi`, `quote_style`, `quote_props`, `trailing_commas`, `arrow_parens`, `bracket_spacing`, `bracket_same_line`, `jsx_single_quote`, `member_chain_style`. Default `line_width` is 80.
 - **Differences:**
   - A line comment in a class or interface header moves into the body.
@@ -267,7 +267,7 @@ Status, measured results, presets and options for every language.
 - **Status:** partial. Covers JSONC. Config section: `json`.
 - **Formatter:** Prettier and Biome, on fixtures only. No real-world corpus: not measured. Stable: not measured.
 - **Linter:** eslint-plugin-jsonc: 36 of 44 rules in the catalog. Recall: not measured.
-- **Presets:** `json/prettier-compat`, `json/biome`.
+- **Presets:** `json/prettier-compat`, `json/biome`, `json/dprint`.
 - **Options:** `collapse` (`preserve`, `always`, `never`, `opening_break`), `trailing_commas` (JSONC), `dialect` (`auto`, `json`, `jsonc`), `bracket_spacing`. Default `line_width` is 80.
 - **Differences:** not measured on real-world files.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh format biome`.

@@ -49,8 +49,8 @@ A preset is an ordinary config file built into the binary. Write its values by h
 | HCL (Terraform) | `hcl/tflint-recommended` |
 | HTML, Vue, Svelte | `html/html-validate-recommended`, `html/html-validate-standard`, `html/htmlhint`, `html/html-eslint-recommended`, `html/eslint-plugin-vue-recommended`, `html/eslint-plugin-svelte-recommended` |
 | Java | `java/google` |
-| JavaScript, TypeScript | `js/eslint-recommended`, `js/typescript-eslint-recommended` |
-| JSON | `json/prettier-compat`, `json/biome` |
+| JavaScript, TypeScript | `js/eslint-recommended`, `js/typescript-eslint-recommended`, `js/biome`, `js/biome-recommended`, `js/oxlint` |
+| JSON | `json/prettier-compat`, `json/biome`, `json/dprint` |
 | Kotlin | `kotlin/ktlint` |
 | Makefile | `makefile/checkmake` |
 | Markdown | `markdown/prettier-compat`, `markdown/markdownlint` |
