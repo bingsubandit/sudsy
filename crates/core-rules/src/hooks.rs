@@ -25,14 +25,14 @@ pub enum Accessor {
 pub trait RuleHooks: Send + Sync {
     /// The keys, in order, of a `#mapping` whose entries are not nodes of their own (a Python
     /// dict is flat: `key : value , ...`); `None` when the entries are `#key-value` nodes.
-    fn flat_keys(&self, _mapping: &SyntaxNode) -> Option<Vec<SyntaxElement>> {
-        None
+    fn flat_keys(&self, g: &Grammar, mapping: &SyntaxNode) -> Option<Vec<SyntaxElement>> {
+        names::flat_keys(g, mapping)
     }
 
     /// Whether a key is a name at all: `no-duplicate-keys` skips the others (HTML: template
     /// words inside a start tag, `{{ if }}`). The default is every key.
-    fn is_name(&self, _key: &SyntaxElement, _text: &str) -> bool {
-        true
+    fn is_name(&self, g: &Grammar, key: &SyntaxElement, _text: &str) -> bool {
+        names::is_name(g, key)
     }
 
     /// The identity of a key (the `key` item of a `#key-value` entry): the name that is compared,

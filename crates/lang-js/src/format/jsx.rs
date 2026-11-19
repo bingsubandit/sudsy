@@ -4,7 +4,7 @@
 //! a multi-line element. The `{" "}` children are `JSXText` nodes (see the adapter), so text and
 //! jsx whitespace are one kind here.
 
-use super::ast::{has_trailing_comment, is_binaryish, is_jsx, parent, un};
+use super::ast::{has_trailing_comment, parent, un};
 use super::parens::{Need, needs_parens};
 use super::util::{R, kids, node_of, shape_error, token_of, will_break};
 use crate::generated::kind as k;
@@ -13,6 +13,7 @@ use core_format::doc::{
     line_suffix_boundary, lit, shared, softline, text,
 };
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles;
 use core_syntax::{SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -77,11 +78,12 @@ fn container(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         return Ok(doc);
     }
     let held = un(expr);
-    let in_element = node.parent().is_some_and(|p| is_jsx(p.kind()));
+    let in_element = node.parent().is_some_and(|p| roles::has(p.kind(), "jsx"));
     let inline = !super::ast::has_comment(cx, expr)
         && (hugs(&held)
             || (in_element
-                && (held.kind() == k::CONDITIONAL_EXPRESSION || is_binaryish(held.kind()))));
+                && (held.kind() == k::CONDITIONAL_EXPRESSION
+                    || roles::has(held.kind(), "binary-chain"))));
     let body = cx.format(expr)?;
     Ok(group(if inline {
         concat(vec![
@@ -416,11 +418,13 @@ fn children_parts(cx: &FormatCtx<'_>, children: &[Child]) -> Result<Vec<P>, Form
                     Child::Node(p) => Some(is_ignore_marker(cx, p)),
                     Child::Text(_) => Some(false),
                 });
-                parts.push(P::Doc(if ignored == Some(true) && is_jsx(n.kind()) {
-                    cx.verbatim_node(n)
-                } else {
-                    cx.format(n)?
-                }));
+                parts.push(P::Doc(
+                    if ignored == Some(true) && roles::has(n.kind(), "jsx") {
+                        cx.verbatim_node(n)
+                    } else {
+                        cx.format(n)?
+                    },
+                ));
                 match next {
                     Some(nx @ Child::Text(t)) if meaningful(t) => {
                         let first = t
@@ -514,7 +518,7 @@ fn element(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             }
         })
         .collect();
-    let contains_tag = inner.iter().any(|n| is_jsx(n.kind()));
+    let contains_tag = inner.iter().any(|n| roles::has(n.kind(), "jsx"));
     let many_expressions = inner
         .iter()
         .filter(|n| n.kind() == k::JSX_EXPRESSION_CONTAINER)

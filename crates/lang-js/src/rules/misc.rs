@@ -1,10 +1,11 @@
 //! Checks on one statement or expression of its own.
 
-use super::dupes::key_name;
 use super::{Check, code_text, has_own, operator, span, test_of, un};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
+use core_rules::names::static_name;
 use core_syntax::SyntaxNode;
+use core_syntax::grammars;
 
 fn first_and_last(n: &SyntaxNode) -> Option<(SyntaxNode, SyntaxNode)> {
     Some((n.children().next()?, n.children().last()?))
@@ -52,7 +53,7 @@ fn reference(n: &SyntaxNode, text: &str) -> Option<String> {
         k::STATIC_MEMBER_EXPRESSION | k::COMPUTED_MEMBER_EXPRESSION => {
             let (object, property) = first_and_last(&n)?;
             let object = reference(&object, text)?;
-            match key_name(&property, text) {
+            match static_name(grammars::JS.get(), &property) {
                 Some(name) => Some(format!("{object}.{name}")),
                 None => Some(format!("{object}[{}]", reference(&property, text)?)),
             }
@@ -115,7 +116,7 @@ fn pairs(l: &SyntaxNode, r: &SyntaxNode, text: &str, out: &mut Vec<SyntaxNode>) 
                     if shorthand {
                         Some(code_text(&key))
                     } else {
-                        key_name(&key, text)
+                        static_name(grammars::JS.get(), &key)
                     }
                 }) else {
                     continue;
@@ -123,7 +124,7 @@ fn pairs(l: &SyntaxNode, r: &SyntaxNode, text: &str, out: &mut Vec<SyntaxNode>) 
                 let right = props[from..].iter().find(|p| {
                     p.children()
                         .next()
-                        .and_then(|key| key_name(&key, text))
+                        .and_then(|key| static_name(grammars::JS.get(), &key))
                         .as_deref()
                         == Some(&name)
                 });

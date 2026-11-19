@@ -1,10 +1,12 @@
 //! typescript-eslint rules that read the syntax tree alone and that a pattern cannot say: a
 //! comparison of two nodes, a count, a name taken from the parent, the comments of the file.
 
-use super::dupes::key_name;
 use super::{Check, code_text, code_token, has_own, operator, span, un};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
+use core_rules::names::static_name;
+use core_syntax::grammars;
+use core_syntax::roles;
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, TextRange};
 
 const LINE_BREAKS: [char; 4] = ['\n', '\r', '\u{2028}', '\u{2029}'];
@@ -144,21 +146,13 @@ pub(super) fn misused_new(_: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) 
     ctx.report(span(ctx, n), message);
 }
 
-fn is_literal(kind: SyntaxKind) -> bool {
-    matches!(
-        kind,
-        k::STRING_LITERAL
-            | k::NUMERIC_LITERAL
-            | k::BOOLEAN_LITERAL
-            | k::NULL_LITERAL
-            | k::BIG_INT_LITERAL
-            | k::REG_EXP_LITERAL
-    )
-}
-
 /// `let a: 'a' = 'a'`, `x as 'a'` on the same literal.
 pub(super) fn prefer_as_const(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    let Some(literal) = n.children().next().filter(|l| is_literal(l.kind())) else {
+    let Some(literal) = n
+        .children()
+        .next()
+        .filter(|l| roles::has(l.kind(), "literal"))
+    else {
         return;
     };
     let Some(parent) = n.parent() else { return };
@@ -204,7 +198,7 @@ fn inferrable(ty: &SyntaxNode, value: SyntaxNode) -> bool {
     match ty.kind() {
         k::TS_BIG_INT_KEYWORD => {
             let v = operand(&value, &["-"]).unwrap_or(value);
-            is_call(&v, "BigInt") || is_literal(v.kind())
+            is_call(&v, "BigInt") || roles::has(v.kind(), "literal")
         }
         k::TS_BOOLEAN_KEYWORD => {
             operand(&value, &["!"]).is_some()
@@ -410,7 +404,7 @@ fn signature(n: &SyntaxNode, ctx: &RuleContext<'_>) -> Option<Signature> {
         k::TS_CONSTRUCT_SIGNATURE_DECLARATION => Some(plain("new".into(), false)),
         k::METHOD_DEFINITION | k::TS_METHOD_SIGNATURE => {
             let key = n.children().find(|c| c.kind() != k::DECORATOR)?;
-            let name = match key_name(&key, ctx.file.text) {
+            let name = match static_name(grammars::JS.get(), &key) {
                 Some(name)
                     if key.kind() == k::STRING_LITERAL
                         && !name

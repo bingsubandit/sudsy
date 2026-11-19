@@ -9,6 +9,7 @@ use core_format::doc::{Doc, concat};
 use core_format::shapes::{self, Place};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::SyntaxNode;
+use core_syntax::roles;
 
 /// `a || { ... }`, `a && [...]`: the right side stays on the operator's line.
 pub(crate) fn should_inline_logical(node: &SyntaxNode) -> bool {
@@ -102,7 +103,7 @@ impl shapes::BinaryHooks for Hooks {
 
     fn tail_outside(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         node.last_child()
-            .is_some_and(|r| super::ast::is_jsx(un(&r).kind()))
+            .is_some_and(|r| roles::has(un(&r).kind(), "jsx"))
     }
 
     fn place(&self, cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<Place> {

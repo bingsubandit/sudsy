@@ -11,7 +11,6 @@ use super::seq::{
     R, Sep, block_is_empty, braced_element, direct_tokens, is_empty_braces, keeps_empty_inline,
     sep_doc, separator, seq_of, sig,
 };
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::shapes::{
     BlankRule, BlockStyle, ListLayout, ListStyle, block_between, delimited_list_between,
@@ -177,8 +176,8 @@ fn in_member_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         let kind = p.kind();
         kind == k::COMPILATION_UNIT
             || kind == k::FILE_SCOPED_NAMESPACE_DECLARATION
-            || tags::has(cx.grammar, kind, Tag::Namespace)
-            || tags::has(cx.grammar, kind, Tag::TypeDeclaration)
+            || cx.grammar.has_tag(kind, "namespace")
+            || cx.grammar.has_tag(kind, "type-declaration")
     })
 }
 
@@ -425,7 +424,7 @@ pub fn switch_section(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let g = cx.grammar;
     let (labels, statements): (Vec<_>, Vec<_>) = nodes_of(&sig(cx, node))
         .into_iter()
-        .partition(|n| tags::has(g, n.kind(), Tag::SwitchLabel));
+        .partition(|n| g.has_tag(n.kind(), "switch-label"));
     if flat::inside(cx, node) {
         let mut parts = Vec::new();
         for n in labels.iter().chain(&statements) {

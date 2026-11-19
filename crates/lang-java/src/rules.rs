@@ -4,7 +4,7 @@
 use crate::generated::kind as k;
 use core_rules::options::{Check, Opt, OptionDecl};
 use core_rules::{Re, Rule, RuleContext, rule};
-use core_syntax::{SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{SyntaxNode, SyntaxNodeExt, SyntaxToken, TextRange};
 
 pub static RULES: &[&dyn Rule] = &[
     &NamingConvention,
@@ -14,12 +14,8 @@ pub static RULES: &[&dyn Rule] = &[
     &crate::scope::PARAMETER_ASSIGNMENT,
 ];
 
-fn tokens(node: &SyntaxNode) -> impl Iterator<Item = SyntaxToken> {
-    node.children_with_tokens().filter_map(|e| e.into_token())
-}
-
 fn ident(node: &SyntaxNode) -> impl Iterator<Item = SyntaxToken> {
-    tokens(node).filter(|t| t.kind() == k::IDENTIFIER)
+    node.tokens().filter(|t| t.kind() == k::IDENTIFIER)
 }
 
 /// The nodes below `node` that are not in a nested declaration of the same kind of body, in
@@ -40,7 +36,7 @@ fn declarators(node: &SyntaxNode) -> Vec<SyntaxNode> {
 fn has_modifier(node: &SyntaxNode, words: &[&str]) -> bool {
     node.children()
         .filter(|c| c.kind() == k::MODIFIERS)
-        .flat_map(|m| tokens(&m).collect::<Vec<_>>())
+        .flat_map(|m| m.tokens().collect::<Vec<_>>())
         .filter(|t| t.kind() == k::KEYWORD)
         .filter(|t| words.contains(&t.text()))
         .count()
@@ -211,7 +207,7 @@ rule! {
 
     fn check(&self, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
         let mut top = 0;
-        for t in tokens(node).filter(|t| t.kind() == k::KEYWORD) {
+        for t in node.tokens().filter(|t| t.kind() == k::KEYWORD) {
             let Some(rank) = MODIFIER_ORDER.iter().position(|m| *m == t.text()) else { continue };
             if rank < top {
                 ctx.report(t.text_range(), format!("`{}` is out of order", t.text()));

@@ -1,6 +1,7 @@
 //! Reading the JavaScript tree of a script: names of keys, calls and object members. Plain
 //! accessors over `lang_js`'s node kinds; no rule logic.
 
+use core_rules::names;
 use core_syntax::{SyntaxNode, SyntaxNodeExt, TextRange, code_span, grammars};
 use lang_js::generated::kind as j;
 
@@ -52,10 +53,7 @@ pub(super) fn string(n: &SyntaxNode) -> Option<String> {
 
 /// The statically known name of a property key (a key of an object, a type member).
 pub(super) fn key_name(key: &SyntaxNode) -> Option<String> {
-    match key.kind() {
-        j::IDENTIFIER_NAME | j::NUMERIC_LITERAL => first(key),
-        _ => string(key),
-    }
+    names::static_name(grammars::JS.get(), key)
 }
 
 /// The arguments of a call.

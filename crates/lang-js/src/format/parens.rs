@@ -3,13 +3,14 @@
 //! for the safety check): a kept pair is printed as written, an unneeded pair is left out, and a
 //! node that needs a pair the source lacks gets one around its printed document.
 
-use super::ast::{is_binaryish, is_member, operator_text, outer, parent, starts_with, un};
+use super::ast::{operator_text, outer, parent, starts_with, un};
 use crate::generated::kind as k;
 use core_format::doc::Doc;
 use core_format::shapes::{
     self, ParenHooks, ParenLayout, ParenPolicy, Unneeded, binary_needs, is_dropped_close as dropped,
 };
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles;
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 
 pub(crate) use shapes::Need;
@@ -141,7 +142,7 @@ pub(crate) fn needs_parens(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Need {
     let yes = |b: bool| if b { Need::Yes } else { Need::No };
     let first = p.first_child().as_ref() == Some(&c);
     let last = p.last_child().as_ref() == Some(&c);
-    let member_p = is_member(pk);
+    let member_p = roles::is_member(pk);
     let is_callee = matches!(pk, k::CALL_EXPRESSION | k::NEW_EXPRESSION) && first;
     let is_object = member_p && first;
     let super_class = pk == k::CLASS
@@ -277,7 +278,7 @@ pub(crate) fn needs_parens(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Need {
                     if kind == k::TS_TYPE_ASSERTION {
                         return Need::Keep;
                     }
-                    if is_cast(kind) || !is_binaryish(kind) {
+                    if is_cast(kind) || !roles::has(kind, "binary-chain") {
                         return Need::Yes;
                     }
                     let pop = operator_text(cx, &p);

@@ -2,13 +2,13 @@
 //! `return` / `throw` with their argument.
 
 use super::ast::{
-    has_leading_comment_in_parens, has_leading_own_line_comment, is_binaryish, is_member, outer,
-    parent, starts_with, un,
+    has_leading_comment_in_parens, has_leading_own_line_comment, outer, parent, starts_with, un,
 };
 use super::util::{R, elem, keyword, kids, node_of, semi, shape_error, token_of};
 use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, group, hardline, if_break, indent, line, lit, softline};
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -121,7 +121,7 @@ fn commented_parenthesized(
     // (the content keeps the parentheses it needs of its own)
     parts.push(
         if super::parens::needs_parens(cx, &inner) == super::parens::Need::Yes
-            && !super::ast::is_binaryish(inner.kind())
+            && !roles::has(inner.kind(), "binary-chain")
         {
             concat(vec![lit("("), content, lit(")")])
         } else {
@@ -153,7 +153,7 @@ fn await_expression(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let p = parent(node);
     let head = p.as_ref().is_some_and(|p| {
         p.first_child().as_ref() == Some(&held)
-            && (matches!(p.kind(), k::CALL_EXPRESSION) || is_member(p.kind()))
+            && (matches!(p.kind(), k::CALL_EXPRESSION) || roles::is_member(p.kind()))
     });
     if !head {
         return Ok(parts);
@@ -239,7 +239,7 @@ fn return_or_throw(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             hardline(),
             lit(")"),
         ])
-    } else if is_binaryish(arg_u.kind()) || arg_u.kind() == k::SEQUENCE_EXPRESSION {
+    } else if roles::has(arg_u.kind(), "binary-chain") || arg_u.kind() == k::SEQUENCE_EXPRESSION {
         // A sequence keeps its parentheses on one line.
         let seq = arg_u.kind() == k::SEQUENCE_EXPRESSION;
         group(concat(vec![

@@ -2,7 +2,7 @@
 //! in the `grouped` style; this module keeps what only
 //! JavaScript knows: parentheses, comments, the argument list and `[expr]`.
 
-use super::ast::{Call, is_member, parent, token_comments, un};
+use super::ast::{Call, parent, token_comments, un};
 use super::call::arguments;
 use super::parens::{Need, needs_parens};
 use super::util::{R, kids, shape_error};
@@ -10,6 +10,7 @@ use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, group, hardline, indent, softline};
 use core_format::shapes::{self, ChainHooks, ChainPolicy};
 use core_format::{FormatCtx, FormatError, comments};
+use core_syntax::roles;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -81,7 +82,7 @@ fn member(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         && node
             .last_child()
             .is_some_and(|p| p.kind() == k::IDENTIFIER_NAME)
-        && parent(node).is_none_or(|p| !is_member(p.kind()));
+        && parent(node).is_none_or(|p| !roles::is_member(p.kind()));
     let inline = first_non_member.is_some_and(|p| {
         p.kind() == k::NEW_EXPRESSION
             || (p.kind() == k::ASSIGNMENT_EXPRESSION
@@ -125,7 +126,7 @@ impl ChainHooks for Hooks<'_> {
     fn through(&self, paren: &SyntaxNode) -> bool {
         let inner = un(paren);
         (matches!(inner.kind(), k::CALL_EXPRESSION | k::TS_NON_NULL_EXPRESSION)
-            || is_member(inner.kind()))
+            || roles::is_member(inner.kind()))
             && needs_parens(self.cx, &inner) == Need::No
             && !paren_commented(self.cx, paren, &self.start)
     }

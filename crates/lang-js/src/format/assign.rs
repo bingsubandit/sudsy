@@ -2,7 +2,7 @@
 //! left side, the operator and the right side (Prettier's assignment layouts).
 
 use super::arrow::{self, Flags};
-use super::ast::{Call, has_comment, is_literal, name_of, operator, text_of, un};
+use super::ast::{Call, has_comment, name_of, operator, text_of, un};
 use super::binary::should_inline_logical;
 use super::chain::is_chain_label;
 use super::util::{R, inline, is_tok, kids, shape_error, token_of};
@@ -10,6 +10,7 @@ use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, lit};
 use core_format::shapes::{self, Assign, AssignHooks, AssignLayout, AssignPolicy};
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles;
 use core_syntax::{SyntaxElement, SyntaxNode};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -208,7 +209,7 @@ fn can_break(d: &Doc) -> bool {
 }
 
 fn is_member_expression_chain(n: &SyntaxNode) -> bool {
-    if !super::ast::is_member(n.kind()) {
+    if !roles::is_member(n.kind()) {
         return false;
     }
     match n.first_child().map(|o| un(&o)) {
@@ -314,7 +315,7 @@ fn poorly_breakable(cx: &FormatCtx<'_>, n: &SyntaxNode, deep: bool) -> Result<bo
     };
     match n.kind() {
         k::CHAIN_EXPRESSION | k::TS_NON_NULL_EXPRESSION => go(n.first_child()),
-        kind if super::ast::is_member(kind) => go(n.first_child()),
+        kind if roles::is_member(kind) => go(n.first_child()),
         k::CALL_EXPRESSION => {
             if is_chain_label(&cx.format(n)?) {
                 return Ok(false);
@@ -367,7 +368,7 @@ fn is_lone_short_argument(cx: &FormatCtx<'_>, arg: &SyntaxNode) -> bool {
         k::TS_NON_NULL_EXPRESSION => arg
             .first_child()
             .is_some_and(|a| is_lone_short_argument(cx, &un(&a))),
-        kind => is_literal(kind),
+        kind => roles::has(kind, "literal"),
     }
 }
 

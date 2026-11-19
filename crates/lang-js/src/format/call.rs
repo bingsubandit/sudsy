@@ -2,7 +2,7 @@
 //! test-call and `require` forms. Member chains are `chain.rs`.
 
 use super::arrow::{self, Flags};
-use super::ast::{Call, has_comment, is_function, is_literal, nodes, parent, token_comments, un};
+use super::ast::{Call, has_comment, nodes, parent, token_comments, un};
 use super::chain;
 use super::util::{R, kids, shape_error, token_of, will_break};
 use crate::generated::kind as k;
@@ -11,6 +11,7 @@ use core_format::doc::{
     line, lit, shared, softline,
 };
 use core_format::{FormatCtx, FormatError, comments};
+use core_syntax::roles;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -36,10 +37,7 @@ fn call(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         && ((!is_new && is_common_js_or_amd(cx, node, &c))
             || (args.len() == 1 && template_on_own_line(cx, &un(&args[0].0)))
             || (!is_new && is_test_call(cx, &c)));
-    if !special
-        && !is_new
-        && super::ast::is_member(callee_u.kind())
-        && !has_inner_comment(cx, &callee_u)
+    if !special && !is_new && roles::is_member(callee_u.kind()) && !has_inner_comment(cx, &callee_u)
     {
         return chain::member_chain(cx, node);
     }
@@ -375,7 +373,7 @@ fn is_function_composition(cx: &FormatCtx<'_>, a: &[SyntaxNode]) -> bool {
     }
     let mut count = 0;
     for n in a {
-        if is_function(n.kind()) {
+        if roles::has(n.kind(), "function") {
             count += 1;
             if count > 1 {
                 return true;
@@ -383,9 +381,11 @@ fn is_function_composition(cx: &FormatCtx<'_>, a: &[SyntaxNode]) -> bool {
         } else if matches!(
             n.kind(),
             k::CALL_EXPRESSION | k::NEW_EXPRESSION | k::IMPORT_EXPRESSION
-        ) && Call::of(cx, n)
-            .is_some_and(|c| c.args.iter().any(|x| is_function(un(&x.0).kind())))
-        {
+        ) && Call::of(cx, n).is_some_and(|c| {
+            c.args
+                .iter()
+                .any(|x| roles::has(un(&x.0).kind(), "function"))
+        }) {
             return true;
         }
     }
@@ -523,7 +523,7 @@ pub(crate) fn is_simple_call_argument(cx: &FormatCtx<'_>, n: &SyntaxNode, depth:
     match n.kind() {
         // A pattern of up to five characters.
         k::REG_EXP_LITERAL => n.text().to_string().rfind('/').is_some_and(|end| end <= 6),
-        kind if is_literal(kind) => true,
+        kind if roles::has(kind, "literal") => true,
         k::IDENTIFIER_REFERENCE
         | k::THIS_EXPRESSION
         | k::SUPER
@@ -645,9 +645,9 @@ fn is_test_call(cx: &FormatCtx<'_>, c: &Call) -> bool {
                 return false;
             }
             if a.len() == 2 {
-                is_function(a[1].kind()) || is_angular_wrapper(cx, &a[1])
+                roles::has(a[1].kind(), "function") || is_angular_wrapper(cx, &a[1])
             } else {
-                (is_function(a[1].kind())
+                (roles::has(a[1].kind(), "function")
                     && a[1]
                         .last_child()
                         .is_some_and(|b| b.kind() == k::FUNCTION_BODY)
@@ -690,7 +690,7 @@ fn is_angular_wrapper(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
     n.kind() == k::CALL_EXPRESSION
         && Call::of(cx, n).is_some_and(|c| {
             c.args.len() == 1
-                && is_function(un(&c.args[0].0).kind())
+                && roles::has(un(&c.args[0].0).kind(), "function")
                 && super::ast::name_of(cx, &c.callee).is_some_and(|name| {
                     matches!(
                         name.as_str(),

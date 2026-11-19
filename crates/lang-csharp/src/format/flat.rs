@@ -4,7 +4,6 @@
 
 use super::options::{preserve_single_line_blocks, preserve_single_line_statements};
 use super::seq::R;
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::FormatCtx;
 use core_format::doc;
@@ -49,8 +48,8 @@ pub fn is_root(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
     let kind = node.kind();
     let braced = kind == k::BLOCK
         || kind == k::SWITCH_STATEMENT
-        || tags::has(cx.grammar, kind, Tag::TypeDeclaration)
-        || tags::has(cx.grammar, kind, Tag::Namespace);
+        || cx.grammar.has_tag(kind, "type-declaration")
+        || cx.grammar.has_tag(kind, "namespace");
     let wanted = if braced {
         preserve_single_line_blocks(cx.options)
     } else {

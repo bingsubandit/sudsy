@@ -122,6 +122,9 @@ pub struct Precedence {
 pub struct KeySyntax {
     /// Names are case-insensitive.
     pub lowercase: bool,
+    /// A key is an expression and has a static name only when it is a name, a string, a number or
+    /// a template without substitutions (`core_rules::names::static_name`); a computed key has none.
+    pub static_names: bool,
     /// Escapes of a `#string` key are decoded (`"a\u0062"` is `ab`).
     pub decode: bool,
     /// A prefix that is not part of the name (a GraphQL variable's `$`).
@@ -182,8 +185,8 @@ pub struct Grammar {
     source: Box<str>,
     hash: OnceLock<String>,
     /// Hot tags per kind, indexed like `tokens` and `nodes`.
-    token_flags: Vec<u32>,
-    node_flags: Vec<u32>,
+    token_flags: Vec<u64>,
+    node_flags: Vec<u64>,
     /// Per body item of every node, in node order: the range of `pool` holding the sorted kinds
     /// the item accepts. `body_start[i]..body_start[i + 1]` are the items of node `i`.
     bodies: Vec<(u32, u32)>,
@@ -197,7 +200,7 @@ pub struct Grammar {
 
 /// Tags that formatting code asks about for every token or node: answered from a bit set
 /// instead of scanning the tag strings.
-const HOT_TAGS: [&str; 21] = [
+const HOT_TAGS: [&str; 34] = [
     "trivia",
     "separator",
     "optional",
@@ -219,6 +222,19 @@ const HOT_TAGS: [&str; 21] = [
     "number",
     "hole",
     "final",
+    "function",
+    "literal",
+    "member-access",
+    "index",
+    "binary-chain",
+    "member-chain",
+    "assignment",
+    "initializer-expression",
+    "statement",
+    "type-declaration",
+    "namespace",
+    "switch-label",
+    "jsx",
 ];
 
 /// The index of a hot tag in [`HOT_TAGS`]: a `match`, which compiles to a length switch where a scan
@@ -247,12 +263,25 @@ fn hot_index(tag: &str) -> Option<usize> {
         "number" => 18,
         "hole" => 19,
         "final" => 20,
+        "function" => 21,
+        "literal" => 22,
+        "member-access" => 23,
+        "index" => 24,
+        "binary-chain" => 25,
+        "member-chain" => 26,
+        "assignment" => 27,
+        "initializer-expression" => 28,
+        "statement" => 29,
+        "type-declaration" => 30,
+        "namespace" => 31,
+        "switch-label" => 32,
+        "jsx" => 33,
         _ => return None,
     })
 }
 
 /// The bit of a hot tag, found by its name (a tag missing from the table fails the build).
-const fn hot_bit(tag: &str) -> u32 {
+const fn hot_bit(tag: &str) -> u64 {
     let mut i = 0;
     while i < HOT_TAGS.len() {
         if HOT_TAGS[i].len() == tag.len() {
@@ -270,16 +299,16 @@ const fn hot_bit(tag: &str) -> u32 {
     panic!("not a hot tag")
 }
 
-const TRIVIA: u32 = hot_bit("trivia");
+const TRIVIA: u64 = hot_bit("trivia");
 
-fn hot_flags(defs: &[KindDef]) -> Vec<u32> {
+fn hot_flags(defs: &[KindDef]) -> Vec<u64> {
     defs.iter()
         .map(|d| {
             HOT_TAGS
                 .iter()
                 .enumerate()
                 .filter(|(_, t)| d.has_tag(t))
-                .fold(0u32, |acc, (i, _)| acc | 1 << i)
+                .fold(0u64, |acc, (i, _)| acc | 1 << i)
         })
         .collect()
 }
@@ -662,7 +691,7 @@ impl Grammar {
     }
 
     #[inline]
-    fn flags_of(&self, kind: SyntaxKind) -> u32 {
+    fn flags_of(&self, kind: SyntaxKind) -> u64 {
         if kind.lang() != self.language_id {
             return 0;
         }

@@ -67,14 +67,14 @@ rule! {
             .filter(|_| ctx.options.string("merge_keys") == "allow");
         // Ranges are found only for the keys that are reported (finding one reads the tree), so
         // the first occurrence is kept as its index and looked up again on a duplicate.
-        let flat = hooks.flat_keys(node);
+        let flat = hooks.flat_keys(grammar, node);
         if flat.is_some() || !grammar.keys().accessors.is_empty() {
             return custom_keys(node, flat, ctx, merge_key);
         }
         let mut seen = Seen::default();
         for (index, (_, key)) in entries(node, grammar).enumerate() {
             let name = hooks.key_name(grammar, &key, text);
-            if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
+            if merge_key == Some(&*name) || !hooks.is_name(grammar, &key, text) {
                 continue;
             }
             if let Some((first, name)) = seen.first(name, index) {
@@ -113,7 +113,7 @@ fn custom_keys(
     };
     for (index, (entry, key)) in listed.chain(walked).enumerate() {
         let name = hooks.key_name(grammar, &key, text);
-        if merge_key == Some(&*name) || !hooks.is_name(&key, text) {
+        if merge_key == Some(&*name) || !hooks.is_name(grammar, &key, text) {
             continue;
         }
         let repeat = if accessors {

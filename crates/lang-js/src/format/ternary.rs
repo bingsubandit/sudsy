@@ -2,12 +2,13 @@
 //! `chained` layout: Prettier's `printTernary`); what stays here is the JSX mode that wraps
 //! branches in parentheses and the places that indent the whole conditional.
 
-use super::ast::{is_jsx, is_member, outer, parent, un};
+use super::ast::{outer, parent, un};
 use crate::generated::kind as k;
 use core_format::doc::Doc;
 use core_format::shapes::{self, Around};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::SyntaxNode;
+use core_syntax::roles;
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
     if node.kind() != k::CONDITIONAL_EXPRESSION {
@@ -25,7 +26,7 @@ fn chain_contains_jsx(top: &SyntaxNode) -> bool {
     while let Some(c) = todo.pop() {
         for part in c.children() {
             let part = un(&part);
-            if is_jsx(part.kind()) {
+            if roles::has(part.kind(), "jsx") {
                 return true;
             }
             if is_cond(&part) {
@@ -53,7 +54,7 @@ fn left_side(parent: &SyntaxNode) -> Option<SyntaxNode> {
         | k::TS_SATISFIES_EXPRESSION
         | k::TS_NON_NULL_EXPRESSION
         | k::CHAIN_EXPRESSION => parent.first_child(),
-        kind if is_member(kind) => parent.first_child(),
+        kind if roles::is_member(kind) => parent.first_child(),
         k::UNARY_EXPRESSION
         | k::SPREAD_ELEMENT
         | k::YIELD_EXPRESSION
@@ -74,7 +75,7 @@ fn should_extra_indent(node: &SyntaxNode) -> bool {
         match p.kind() {
             k::CHAIN_EXPRESSION | k::TS_NON_NULL_EXPRESSION => child = p,
             k::CALL_EXPRESSION if first => child = p,
-            kind if is_member(kind) && first => child = p,
+            kind if roles::is_member(kind) && first => child = p,
             k::NEW_EXPRESSION | k::TS_AS_EXPRESSION | k::TS_SATISFIES_EXPRESSION if first => {
                 let gp = parent(&p);
                 child = p;
@@ -93,7 +94,7 @@ struct Hooks;
 
 impl shapes::ConditionalHooks for Hooks {
     fn wrap_branches(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode, top: &SyntaxNode) -> bool {
-        node.children().any(|c| is_jsx(un(&c).kind())) || chain_contains_jsx(top)
+        node.children().any(|c| roles::has(un(&c).kind(), "jsx")) || chain_contains_jsx(top)
     }
 
     fn bare_branch(&self, cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {

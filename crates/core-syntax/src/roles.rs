@@ -217,6 +217,13 @@ pub fn has(kind: SyntaxKind, tag: &str) -> bool {
     crate::grammars::of(kind.lang()).is_some_and(|g| g.has_tag(kind, tag))
 }
 
+/// Is the kind a member access, `a.b` or `a[b]`: `#member-access` or `#index`?
+#[inline]
+pub fn is_member(kind: SyntaxKind) -> bool {
+    crate::grammars::of(kind.lang())
+        .is_some_and(|g| g.has_tag(kind, "member-access") || g.has_tag(kind, "index"))
+}
+
 /// The node without the `#transparent` wrappers around it (parentheses): the expression inside
 /// any number of them.
 pub fn un(node: &SyntaxNode) -> SyntaxNode {

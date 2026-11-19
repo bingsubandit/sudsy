@@ -4,6 +4,7 @@
 use super::{Check, code_text, has_own, span};
 use crate::generated::kind as k;
 use core_rules::RuleContext;
+use core_syntax::roles;
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
 use std::collections::HashSet;
 
@@ -162,10 +163,6 @@ fn is_loop(kind: SyntaxKind) -> bool {
     )
 }
 
-fn is_function(kind: SyntaxKind) -> bool {
-    matches!(kind, k::FUNCTION | k::ARROW_FUNCTION_EXPRESSION | k::CLASS)
-}
-
 fn label_of(n: &SyntaxNode) -> Option<String> {
     n.children()
         .find(|l| l.kind() == k::LABEL_IDENTIFIER)
@@ -189,7 +186,7 @@ pub(super) fn unsafe_finally(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
     let mut current = n.clone();
     while let Some(p) = current.parent() {
         match p.kind() {
-            kind if is_function(kind) => return,
+            kind if roles::has(kind, "function") || kind == k::CLASS => return,
             kind if is_loop(kind)
                 && label.is_none()
                 && matches!(jump, k::BREAK_STATEMENT | k::CONTINUE_STATEMENT) =>

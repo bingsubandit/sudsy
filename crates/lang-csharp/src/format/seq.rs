@@ -9,7 +9,6 @@ use super::options::{
     space_after_empty_last_for_clause, space_between_empty_for_clauses,
 };
 use super::spacing;
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
 use core_format::shapes::paren_group;
@@ -225,7 +224,7 @@ fn separator_raw(
                 Sep::Brace(block_element(pk))
             };
         }
-        if tags::has(cx.grammar, nk, Tag::InitializerExpression) {
+        if cx.grammar.has_tag(nk, "initializer-expression") {
             return match pk {
                 k::OBJECT_CREATION_EXPRESSION
                 | k::IMPLICIT_OBJECT_CREATION_EXPRESSION
@@ -251,7 +250,7 @@ fn separator_raw(
             };
         }
         if has_embedded_body(pk)
-            && tags::has(cx.grammar, nk, Tag::Statement)
+            && cx.grammar.has_tag(nk, "statement")
             && !(pk == k::ELSE_CLAUSE && nk == k::IF_STATEMENT)
         {
             return Sep::Embedded;
@@ -276,7 +275,7 @@ fn separator_raw(
         {
             return Sep::HardIndented;
         }
-        if pk == k::LABELED_STATEMENT && tags::has(cx.grammar, nk, Tag::Statement) {
+        if pk == k::LABELED_STATEMENT && cx.grammar.has_tag(nk, "statement") {
             return Sep::Hard;
         }
     }

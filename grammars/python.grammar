@@ -62,7 +62,7 @@ token Tilde "~" #punctuation #operator #part
 token CircumFlex "^" #punctuation #operator #part
 token LeftShift "<<" #punctuation #operator #part
 token RightShift ">>" #punctuation #operator #part
-token DoubleStar "**" #punctuation #operator #part
+token DoubleStar "**" #punctuation #operator #part #spread
 token DoubleStarEqual "**=" #punctuation #operator #part
 token PlusEqual "+=" #punctuation #operator #part
 token MinusEqual "-=" #punctuation #operator #part
@@ -194,7 +194,7 @@ node ExprLambda #expression #part #function #scope =
     Lambda parameters:Parameters? Colon expression_body:#expression
 node ExprIf #expression #part #conditional =
     body=then:#expression If condition:#expression Else orelse=else:#expression
-node ExprDict #expression #part #opaque #mapping
+node ExprDict #expression #part #opaque #mapping #flat
 node ExprSet #expression #part #opaque
 node ExprListComp #expression #part #scope
 node ExprSetComp #expression #part #scope

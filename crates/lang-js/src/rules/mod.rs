@@ -35,7 +35,6 @@ const FAMILY: Family = Family {
 };
 
 pub(super) use core_rules::checks::{Entry, NodeCheck as Check};
-pub(crate) use dupes::key_name;
 
 const CHECKS: &[Entry] = &[
     (

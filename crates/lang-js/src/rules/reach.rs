@@ -1,11 +1,12 @@
 //! `getter-return`: asks the flow graph (`core_flow::build`, from the statement roles) whether a
 //! getter's end can be reached.
 
-use super::dupes::key_name;
 use super::{Check, has_own, span};
 use crate::generated::kind as k;
 use core_flow::build;
 use core_rules::RuleContext;
+use core_rules::names::static_name;
+use core_syntax::grammars;
 use core_syntax::{SyntaxNode, TextRange};
 
 /// `return` statements of a function body, nested functions left out.
@@ -38,7 +39,7 @@ pub(super) fn getter_return(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>
     let key = n
         .children()
         .next()
-        .and_then(|key| key_name(&key, ctx.file.text));
+        .and_then(|key| static_name(grammars::JS.get(), &key));
     let name = key.map_or_else(|| "getter".to_string(), |key| format!("getter '{key}'"));
     let mut found = Vec::new();
     returns(&body, &mut found);

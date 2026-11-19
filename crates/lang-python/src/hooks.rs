@@ -1,39 +1,16 @@
-//! What the shared rules ask of Python: the keys of a dict, which has no entry nodes, and the name
-//! of a literal or variable key.
+//! What the shared rules ask of Python: the name of a literal or variable key.
 
 use crate::format::syntax;
 use crate::generated::kind as k;
 use core_rules::RuleHooks;
-use core_syntax::{Grammar, SyntaxElement, SyntaxNode};
+use core_syntax::{Grammar, SyntaxElement};
 use std::borrow::Cow;
 
 pub struct PythonHooks;
 
 impl RuleHooks for PythonHooks {
-    /// The first node of each `key: value` item; a `**mapping` item has none.
-    fn flat_keys(&self, mapping: &SyntaxNode) -> Option<Vec<SyntaxElement>> {
-        let (mut at_start, mut skip) = (true, false);
-        let mut keys = Vec::new();
-        for e in mapping.children_with_tokens() {
-            match e {
-                SyntaxElement::Token(t) => match t.text() {
-                    "," => (at_start, skip) = (true, false),
-                    "**" => skip = true,
-                    _ => {}
-                },
-                SyntaxElement::Node(n) => {
-                    if at_start && !skip {
-                        keys.push(SyntaxElement::Node(n));
-                    }
-                    at_start = false;
-                }
-            }
-        }
-        Some(keys)
-    }
-
     /// A literal or a name; anything else (a call, an f-string) is not a key that repeats.
-    fn is_name(&self, key: &SyntaxElement, _text: &str) -> bool {
+    fn is_name(&self, _g: &Grammar, key: &SyntaxElement, _text: &str) -> bool {
         matches!(key, SyntaxElement::Node(n) if matches!(n.kind(),
             k::EXPR_STRING_LITERAL | k::EXPR_BYTES_LITERAL | k::EXPR_NUMBER_LITERAL
             | k::EXPR_BOOLEAN_LITERAL | k::EXPR_NONE_LITERAL | k::EXPR_NAME))

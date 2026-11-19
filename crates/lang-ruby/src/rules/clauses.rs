@@ -1,10 +1,11 @@
 //! Checks on `rescue` clauses.
 
-use super::tree::{child, span, tokens};
+use super::tree::span;
 use crate::generated::kind as k;
 use core_rules::RuleContext;
 use core_rules::checks::NodeCheck;
-use core_syntax::SyntaxNode;
+use core_syntax::roles::code_tokens;
+use core_syntax::{SyntaxNode, SyntaxNodeExt};
 
 /// `rescue Exception`: it also catches `SystemExit` and `NoMemoryError`.
 pub fn rescue_exception(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
@@ -21,12 +22,12 @@ pub fn rescue_exception(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleCont
 /// A `rescue` with no statements, unless a comment follows it before the end of the `begin`, method
 /// or block.
 pub fn suppressed_exception(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
-    if child(node, k::STATEMENTS).is_some() {
+    if node.child(k::STATEMENTS).is_some() {
         return;
     }
     let owner = node.ancestors().skip(1).find(|a| match a.kind() {
         k::DEF | k::BLOCK | k::LAMBDA => true,
-        k::BEGIN => tokens(a).next().is_some_and(|t| t.text() == "begin"),
+        k::BEGIN => code_tokens(a).next().is_some_and(|t| t.text() == "begin"),
         _ => false,
     });
     let range = span(ctx, node);
@@ -61,7 +62,7 @@ pub fn empty_when(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleContext<'_
             None => false,
         });
     let commented = own || next;
-    if child(node, k::STATEMENTS).is_none() && !commented {
+    if node.child(k::STATEMENTS).is_none() && !commented {
         let range = span(ctx, node);
         check.hit(ctx, range, "");
     }
@@ -76,8 +77,10 @@ pub fn post_condition_loop(check: &NodeCheck, node: &SyntaxNode, ctx: &mut RuleC
     else {
         return;
     };
-    if tokens(&body).next().is_some_and(|t| t.text() == "begin")
-        && let Some(keyword) = tokens(node).find(|t| t.kind() == k::KEYWORD)
+    if code_tokens(&body)
+        .next()
+        .is_some_and(|t| t.text() == "begin")
+        && let Some(keyword) = code_tokens(node).find(|t| t.kind() == k::KEYWORD)
     {
         check.hit(ctx, keyword.text_range(), keyword.text());
     }

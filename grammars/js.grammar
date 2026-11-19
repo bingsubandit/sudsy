@@ -31,7 +31,7 @@ suppress ignore "sudsy-ignore"
 suppress ignore-start "sudsy-ignore-start"
 suppress ignore-end "sudsy-ignore-end"
 suppress ignore "prettier-ignore"
-keys accessors "get" "set"
+keys static accessors "get" "set"
 
 token Whitespace #trivia #whitespace
 token Newline #trivia #newline
@@ -68,7 +68,7 @@ token String #literal #string #restyle
 // \8 and \9 are the digits themselves; the legacy octal escapes are \0 to \7.
 string String quote "\"" "'" escape "\\" continuation octal 3 unknown drop replace 65533 surrogates
   map "n" 10 "r" 13 "v" 11 "t" 9 "b" 8 "f" 12 "8" 56 "9" 57 hex "x" 2 "u" 4
-token Number #literal #restyle
+token Number #literal #number #restyle
 token BigInt #literal #restyle
 token RegExp #literal #restyle
 // A piece of a template literal: the text with its backtick or `${` and `}` delimiters.
@@ -81,7 +81,7 @@ token Eof
 token Unknown #error
 
 node Program #scope #block = items:#statement* Eof
-node IdentifierName #expression #opaque
+node IdentifierName #expression #name #opaque
 node IdentifierReference #expression #reference = name:#identifier? IdentifierName?
 node BindingIdentifier #pattern #declaration = name:#identifier
 node LabelIdentifier #opaque
@@ -90,7 +90,7 @@ node ArrayExpression #expression #opaque
 node Elision #opaque #hole
 node ObjectExpression #expression #opaque #mapping
 node ObjectProperty #key-value = Keyword? Identifier? Operator? LBracket? key:#expression RBracket? Colon? value:#expression?
-node TemplateLiteral #expression #opaque
+node TemplateLiteral #expression #template #opaque
 node TaggedTemplateExpression #expression #opaque #escapes
 node TemplateElement #opaque
 node ComputedMemberExpression #expression #index = object:#expression QuestionDot? LBracket arguments:#expression RBracket
@@ -170,7 +170,7 @@ node MethodDefinition #member #declaration =
     Decorator* Identifier* Operator? LBracket? name:#expression RBracket? Question? value:Function
 node PropertyDefinition #member #declaration #field =
     Decorator* Identifier* LBracket? name:#expression RBracket? Question? Operator? type:TSTypeAnnotation? Operator? value:#expression?
-node PrivateIdentifier #expression #opaque
+node PrivateIdentifier #expression #name #opaque
 node StaticBlock #member #block #scope = Identifier LBrace items:#statement* RBrace
 node AccessorProperty #member #opaque
 node ImportExpression #expression #opaque
@@ -194,10 +194,10 @@ node NumericLiteral #expression #literal = value:Number
 node StringLiteral #expression #literal = value:String? StringLiteral?
 node BigIntLiteral #expression #literal = value:BigInt
 node RegExpLiteral #expression #literal = value:RegExp
-node JSXElement #expression #opaque
+node JSXElement #expression #jsx #opaque
 node JSXOpeningElement #opaque #markup
 node JSXClosingElement #opaque
-node JSXFragment #expression #opaque
+node JSXFragment #expression #jsx #opaque
 node JSXOpeningFragment #opaque
 node JSXClosingFragment #opaque
 node JSXNamespacedName #opaque

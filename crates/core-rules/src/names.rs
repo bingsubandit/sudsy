@@ -4,7 +4,8 @@
 //! overrides the methods of [`RuleHooks`](crate::hooks::RuleHooks).
 
 use crate::hooks::{Accessor, Scalar};
-use core_syntax::strings::integer;
+use core_syntax::roles::code_text;
+use core_syntax::strings::{digits, integer};
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
 use rowan::{GreenNodeData, NodeOrToken};
 use std::borrow::Cow;
@@ -20,6 +21,12 @@ fn decode<'a>(g: &Grammar, kind: SyntaxKind, raw: &'a str) -> Cow<'a, str> {
 /// the entry, when it has one, stands for the key.
 pub fn key_name<'a>(g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, str> {
     let row = g.keys();
+    if row.static_names {
+        return match key {
+            SyntaxElement::Node(node) => static_name(g, node).map_or(Cow::Borrowed(""), Cow::Owned),
+            SyntaxElement::Token(_) => Cow::Borrowed(""),
+        };
+    }
     if row.plain && !row.parts {
         return Cow::Borrowed(strip_quotes(text[key.text_range()].trim()));
     }
@@ -59,6 +66,80 @@ pub fn key_name<'a>(g: &Grammar, key: &SyntaxElement, text: &'a str) -> Cow<'a, 
         }
         name => name,
     }
+}
+
+/// Whether a key is a name at all: with `keys static`, only a key that has a static name; a
+/// computed key is none.
+pub fn is_name(g: &Grammar, key: &SyntaxElement) -> bool {
+    !g.keys().static_names
+        || matches!(key, SyntaxElement::Node(node) if static_name(g, node).is_some())
+}
+
+/// The static name of a key expression, as ESLint's `getStaticPropertyName`: the text of a `#name`
+/// node, a `#string` literal without its quotes (escapes stay), a `#template` without
+/// substitutions, a `#number` read as a number (`1.0` and `1` are `1`); `None` for any other (a
+/// computed key).
+pub fn static_name(g: &Grammar, key: &SyntaxNode) -> Option<String> {
+    let kind = key.kind();
+    let first = || {
+        key.descendants_with_tokens()
+            .filter_map(|e| e.into_token())
+            .find(|t| !g.is_trivia(t.kind()))
+    };
+    if g.has_tag(kind, "name") {
+        return first().map(|t| t.text().to_owned());
+    }
+    if g.has_tag(kind, "template") {
+        let raw = code_text(key);
+        let inner = raw.get(1..raw.len().checked_sub(1)?)?;
+        return (!inner.contains("${")).then(|| inner.to_owned());
+    }
+    if !g.has_tag(kind, "literal") {
+        return None;
+    }
+    let token = first()?;
+    let raw = token.text();
+    if g.has_tag(token.kind(), "string") {
+        let row = g.string_rows(token.kind()).find(|r| r.matches(raw))?;
+        return row.split(raw).map(|lit| lit.inner.to_owned());
+    }
+    if g.has_tag(token.kind(), "number") {
+        let digits = digits(raw);
+        return Some(
+            digits
+                .parse::<f64>()
+                .map_or_else(|_| digits.into_owned(), |v| v.to_string()),
+        );
+    }
+    None
+}
+
+/// The keys of a `#flat` mapping, whose entries are no nodes of their own (a Python dict is
+/// `key : value , ...`): the first node of each item between `#separator` tokens; an item that
+/// starts with a `#spread` token (`**mapping`) has none. `None` for a mapping of `#key-value`
+/// entries.
+pub fn flat_keys(g: &Grammar, mapping: &SyntaxNode) -> Option<Vec<SyntaxElement>> {
+    if !g.has_tag(mapping.kind(), "flat") {
+        return None;
+    }
+    let (mut at_start, mut skip) = (true, false);
+    let mut keys = Vec::new();
+    for e in mapping.children_with_tokens() {
+        match e {
+            SyntaxElement::Token(t) if g.has_tag(t.kind(), "separator") => {
+                (at_start, skip) = (true, false)
+            }
+            SyntaxElement::Token(t) if g.has_tag(t.kind(), "spread") => skip = true,
+            SyntaxElement::Token(_) => {}
+            SyntaxElement::Node(n) => {
+                if at_start && !skip {
+                    keys.push(SyntaxElement::Node(n));
+                }
+                at_start = false;
+            }
+        }
+    }
+    Some(keys)
 }
 
 /// The node right in front of the key, trivia between them skipped: where an alias stands.

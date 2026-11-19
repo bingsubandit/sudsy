@@ -3,7 +3,6 @@
 
 use super::options::preserve_query_breaks;
 use super::seq::{R, element_doc, seq, sig};
-use super::tags::{self, Tag};
 use crate::generated::kind as k;
 use core_format::{FormatCtx, doc};
 use core_syntax::{SyntaxElement, SyntaxNode};
@@ -16,7 +15,7 @@ pub fn query_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     // After `=` the assignment's own indentation applies.
     let clauses = doc::concat(vec![doc::line(), cx.format(body)?]);
     let after_equals = node.parent().is_some_and(|p| {
-        p.kind() == k::EQUALS_VALUE_CLAUSE || tags::has(cx.grammar, p.kind(), Tag::Assignment)
+        p.kind() == k::EQUALS_VALUE_CLAUSE || cx.grammar.has_tag(p.kind(), "assignment")
     });
     Ok(doc::group(doc::concat(vec![
         if preserve_query_breaks(cx.options) && cx.has_line_break(node, node.text_range()) {

@@ -8,6 +8,7 @@ use crate::generated::kind as k;
 use core_format::doc::{Doc, concat, group, hardline, indent, line, lit, softline};
 use core_format::shapes::{self, BlockStyle};
 use core_format::{FormatCtx, FormatError};
+use core_syntax::roles;
 use core_syntax::{SyntaxElement, SyntaxNode};
 
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
@@ -210,12 +211,12 @@ fn condition_clause(node: &SyntaxNode, cx: &FormatCtx<'_>, soft: bool) -> R {
 
 /// `!(a && b)`: the test keeps `if (!(` on its line and breaks inside the inner parentheses.
 fn negated_chain(test: &SyntaxNode) -> bool {
-    use super::ast::{is_binaryish, un};
+    use super::ast::un;
     let test = un(test);
     test.kind() == k::UNARY_EXPRESSION
         && test
             .last_child()
-            .is_some_and(|a| is_binaryish(un(&a).kind()))
+            .is_some_and(|a| roles::has(un(&a).kind(), "binary-chain"))
         && test.text().to_string().trim_start().starts_with('!')
 }
 
