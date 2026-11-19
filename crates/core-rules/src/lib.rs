@@ -11,6 +11,7 @@
 //!
 //! concept: none (glue: crate root)
 
+pub mod blank_lines;
 pub mod cases;
 pub mod checks;
 pub mod commands;

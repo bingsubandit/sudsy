@@ -27,6 +27,10 @@
               "$ref": "#/definitions/rule",
               "description": "Overloads of one function or method (or call and construct signatures) with other members between them."
             },
+            "alpha-value-notation": {
+              "$ref": "#/definitions/rule",
+              "description": "The alpha value of `rgb()`, `hsl()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()` or `color()` written as a number (`/ 0.5` is `/ 50%`); the comma form of `rgba()` and `hsla()` counts too."
+            },
             "ambiguous-block-association": {
               "$ref": "#/definitions/rule",
               "description": "A call without parentheses whose last argument is a call with a braces block (`expect { x }.to change { y }`, RuboCop Lint/AmbiguousBlockAssociation); also a `do` block that binds to the outer call while a block method such as `map` ends its arguments (`puts items.map do ... end`)."
@@ -218,6 +222,10 @@
                   "type": "object"
                 }
               ]
+            },
+            "at-rule-empty-line-before": {
+              "$ref": "#/definitions/rule",
+              "description": "An at-rule needs a blank line before it, unless a comment is right before it; the first at-rule of a block, and a blockless one right after a blockless one of the same name (`@import` lines), take none."
             },
             "at-rule-no-deprecated": {
               "description": "A deprecated at-rule (`@document`, `@nest`, `@viewport`).",
@@ -525,6 +533,14 @@
             "collapsible-if": {
               "$ref": "#/definitions/rule",
               "description": "An `if` whose only statement is another `if`, neither having `elif` or `else`."
+            },
+            "color-function-alias-notation": {
+              "$ref": "#/definitions/rule",
+              "description": "`rgba()` and `hsla()`, the legacy names of `rgb()` and `hsl()`."
+            },
+            "color-function-notation": {
+              "$ref": "#/definitions/rule",
+              "description": "`rgb()`, `rgba()`, `hsl()` or `hsla()` with the legacy comma-separated arguments (`rgb(0, 0, 0)` is `rgb(0 0 0)`); a function with a nested call (`var()`) is left alone."
             },
             "color-hex-length": {
               "description": "A hex color that can be written with three or four digits (`#aabbcc` is `#abc`); with the `style` option set to `long`, one that is written short.",
@@ -843,6 +859,10 @@
                   "type": "object"
                 }
               ]
+            },
+            "declaration-empty-line-before": {
+              "$ref": "#/definitions/rule",
+              "description": "A declaration right after a rule or at-rule needs a blank line before it, one after another declaration or first in a block takes none; a comment right before it, a single-line block, custom properties and variables are left alone."
             },
             "declaration-no-important": {
               "$ref": "#/definitions/rule",
@@ -1425,6 +1445,10 @@
             "html-self-closing": {
               "$ref": "#/definitions/rule",
               "description": "Vue's `html-self-closing` (eslint-plugin-vue) with its defaults: HTML elements, components, SVG and MathML elements without content are self-closing, void HTML elements are not. The elements of the file's root (`<template>`, `<script>`) are left alone."
+            },
+            "hue-degree-notation": {
+              "$ref": "#/definitions/rule",
+              "description": "The hue of `hsl()`, `hsla()`, `hwb()`, `lch()` or `oklch()` written as a number (`120` is `120deg`)."
             },
             "id-pattern": {
               "description": "An `id` that does not match the `pattern` option (a regex; by default kebab-case: lowercase letters and digits in words joined by `-`, beginning with a letter).",
@@ -4137,6 +4161,10 @@
             "rpm-pin-versions": {
               "$ref": "#/definitions/rule",
               "description": "A yum or dnf install package without a version."
+            },
+            "rule-empty-line-before": {
+              "$ref": "#/definitions/rule",
+              "description": "A rule whose block spans lines needs a blank line before it, unless a comment is right before it; the first rule of a block takes none (`always-multi-line` with `first-nested` as the exception)."
             },
             "script-injection": {
               "$ref": "#/definitions/rule",

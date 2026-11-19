@@ -6,20 +6,20 @@ sources:
   - "https://stylelint.io/user-guide/rules/"
 scope: "Stylelint core rules (its stylistic rules were removed in 16, so formatting is Prettier's job: see prettier.yaml); the plugins' rules are stylelint-scss.yaml and stylelint-less.yaml"
 entries:
-  alpha-value-notation: planned | Needs the parse of color functions (arguments, separators, alpha), not built yet.
+  alpha-value-notation: rule alpha-value-notation
   annotation-no-unknown: planned
   at-rule-allowed-list: rule at-rule-allowed-list
   at-rule-descriptor-no-unknown: planned
   at-rule-disallowed-list: rule at-rule-disallowed-list
-  at-rule-empty-line-before: planned | Needs the `except` and `ignore` secondary options (`first-nested`, `after-comment`, ...), which the rule options do not express yet.
+  at-rule-empty-line-before: rule at-rule-empty-line-before
   at-rule-no-deprecated: rule at-rule-no-deprecated
   at-rule-no-unknown: rule at-rule-no-unknown | Less at-rules are not told apart (detached ruleset calls look like at-rules), so none is reported in Less.
   at-rule-no-vendor-prefix: rule at-rule-no-vendor-prefix
   at-rule-property-required-list: planned | The option maps a property to its values or units, and rule options are not maps.
   block-no-empty: rule block-no-empty
   block-no-redundant-nested-style-rules: planned
-  color-function-alias-notation: planned | Needs the parse of color functions (arguments, separators, alpha), not built yet.
-  color-function-notation: planned | Needs the parse of color functions (arguments, separators, alpha), not built yet.
+  color-function-alias-notation: rule color-function-alias-notation
+  color-function-notation: rule color-function-notation
   color-hex-alpha: planned
   color-hex-length: rule color-hex-length
   color-named: planned
@@ -40,7 +40,7 @@ entries:
   declaration-block-no-redundant-longhand-properties: planned
   declaration-block-no-shorthand-property-overrides: rule declaration-block-no-shorthand-property-overrides
   declaration-block-single-line-max-declarations: rule declaration-block-single-line-max-declarations | differs from stylelint on single-line @font-face blocks
-  declaration-empty-line-before: planned | Needs the `except` and `ignore` secondary options (`first-nested`, `after-comment`, ...), which the rule options do not express yet.
+  declaration-empty-line-before: rule declaration-empty-line-before
   declaration-no-important: rule declaration-no-important
   declaration-property-max-values: planned | The option maps a property to its values or units, and rule options are not maps.
   declaration-property-unit-allowed-list: planned | The option maps a property to its values or units, and rule options are not maps.
@@ -63,7 +63,7 @@ entries:
   function-url-quotes: rule function-url-quotes | differs from stylelint on url() inside image-set()
   function-url-scheme-allowed-list: planned
   function-url-scheme-disallowed-list: planned
-  hue-degree-notation: planned | Needs the parse of color functions (arguments, separators, alpha), not built yet.
+  hue-degree-notation: rule hue-degree-notation
   import-notation: rule import-notation
   keyframe-block-no-duplicate-selectors: rule keyframe-block-no-duplicate-selectors
   keyframe-declaration-no-important: rule keyframe-declaration-no-important
@@ -103,7 +103,7 @@ entries:
   property-no-unknown: rule property-no-unknown
   property-no-vendor-prefix: rule property-no-vendor-prefix | `-webkit-background-size` with several values is reported (stylelint skips it).
   relative-selector-nesting-notation: planned
-  rule-empty-line-before: planned | Needs the `except` and `ignore` secondary options (`first-nested`, `after-comment`, ...), which the rule options do not express yet.
+  rule-empty-line-before: rule rule-empty-line-before
   rule-nesting-at-rule-required-list: planned
   rule-selector-property-disallowed-list: planned | The option maps a property to its values or units, and rule options are not maps.
   selector-anb-no-unmatchable: rule selector-anb-no-unmatchable

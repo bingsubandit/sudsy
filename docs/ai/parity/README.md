@@ -51,7 +51,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | shfmt | - | 9 | 1 | 1 | 0 | 0 | 3 | 4 | 0 |
 | sqlfluff | 4.4% | 97 | 35 | 0 | 43 | 0 | 4 | 15 | 43 |
 | stylecop | - | 197 | 120 | 10 | 1 | 45 | 21 | 0 | 1 |
-| stylelint | 13.4% | 150 | 83 | 9 | 54 | 0 | 0 | 4 | 54 |
+| stylelint | 94.1% | 150 | 90 | 9 | 47 | 0 | 0 | 4 | 47 |
 | stylelint-less | - | 6 | 0 | 0 | 5 | 0 | 0 | 1 | 5 |
 | stylelint-scss | - | 71 | 1 | 2 | 67 | 0 | 0 | 1 | 67 |
 | taplo | - | 23 | 11 | 7 | 0 | 0 | 0 | 5 | 0 |
@@ -73,7 +73,7 @@ The share of the findings of each reference tool's default or recommended set on
 | Vue | eslint-plugin-vue | `html/eslint-plugin-vue-recommended` | 87.2% | 87.2% | 99.6% | `vue/attributes-order` 81, `vue/html-self-closing` 71, `vue/no-v-html` 25, `vue/no-template-shadow` 3, `vue/return-in-computed-property` 1 |
 | Svelte | eslint-plugin-svelte | `html/eslint-plugin-svelte-recommended` | 100.0% | 100.0% | 100.0% | - |
 | YAML | yamllint | `yaml/yamllint` | 73.8% | 0.2% | 73.8% | `comments` 325, `indentation` 160, `syntax` 136, `braces` 57, `document-start` 52 |
-| CSS | stylelint | `css/stylelint-standard` | 13.4% | 0.1% | 13.4% | `rule-empty-line-before` 3832, `color-function-notation` 3181, `color-function-alias-notation` 1428, `alpha-value-notation` 1271, `media-feature-range-notation` 415 |
+| CSS | stylelint | `css/stylelint-standard` | 94.1% | 0.1% | 94.1% | `media-feature-range-notation` 415, `value-keyword-case` 127, `no-descending-specificity` 74 |
 | HTML | html-validate | `html/html-validate-recommended` | 63.7% | 10.4% | 63.7% | `wcag/h63` 48, `wcag/h30` 23, `element-permitted-content` 23, `parser-error` 21, `element-required-content` 20 |
 | HTML | htmlhint | `html/htmlhint` | 5.0% | 0.3% | 5.0% | `spec-char-escape` 1087, `tag-pair` 105, `doctype-first` 36, `src-not-empty` 6, `title-require` 1 |
 | HTML | html-eslint | `html/html-eslint-recommended` | 0.3% | 0.2% | 0.3% | `indent` 16182, `element-newline` 2175, `attrs-newline` 1158, `require-closing-tags` 146, `no-extra-spacing-tags` 132 |

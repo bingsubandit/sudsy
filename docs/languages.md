@@ -276,7 +276,7 @@ Status, measured results, presets and options for every language.
 
 - **Status:** partial. Config section: `css` (also `scss`, `less`).
 - **Formatter:** Prettier 3.9.10 (`--no-config`). Identical: real-world 494 of 533 (92.7%); Prettier's own tests CSS 108 of 154, SCSS 78 of 90, Less 34 of 40. Stable: yes on the conformance corpus (Bootstrap, Bulma and others).
-- **Linter:** stylelint standard, 13.4%. SCSS and Less plugins: not measured.
+- **Linter:** stylelint standard, 94.1%. SCSS and Less plugins: not measured.
 - **Presets:** `css/stylelint-recommended`, `css/stylelint-standard`.
 - **Options:** `single_quote`, `max_blank_lines`. Default `line_width` is 80.
 - **Differences:**

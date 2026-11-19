@@ -1,0 +1,23 @@
+id: rule-empty-line-before
+family: blank-line-before
+params: { tag: item, kind: Rule, block: declaration-block, always: multi-line, except: first-nested, ignore: after-comment, message: "expected {blank} before the rule" }
+description: "A rule whose block spans lines needs a blank line before it, unless a comment is right before it; the first rule of a block takes none (`always-multi-line` with `first-nested` as the exception)."
+example: "a {\n  top: 0;\n}\nb {\n  top: 0;\n}   # b is reported"
+severity: off
+category: style
+---
+id: at-rule-empty-line-before
+family: blank-line-before
+params: { tag: item, kind: AtRule, block: declaration-block, always: "true", except: "first-nested after-blockless-same-name", ignore: after-comment, skip: "@else", message: "expected {blank} before the at-rule" }
+description: "An at-rule needs a blank line before it, unless a comment is right before it; the first at-rule of a block, and a blockless one right after a blockless one of the same name (`@import` lines), take none."
+example: "a {}\n@media (a) {}   # reported"
+severity: off
+category: style
+---
+id: declaration-empty-line-before
+family: blank-line-before
+params: { tag: item, kind: Declaration, block: declaration-block, always: "true", except: "first-nested after-same-kind", ignore: "after-comment inside-single-line-block", skip: "--* $* @*", message: "expected {blank} before the declaration" }
+description: "A declaration right after a rule or at-rule needs a blank line before it, one after another declaration or first in a block takes none; a comment right before it, a single-line block, custom properties and variables are left alone."
+example: "a {\n  top: 0;\n\n  left: 0;\n}   # reported"
+severity: off
+category: style

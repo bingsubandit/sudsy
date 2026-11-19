@@ -743,6 +743,64 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "The alpha value of `rgb()`, `hsl()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()` or `color()` written as a number (`/ 0.5` is `/ 50%`); the comma form of `rgba()` and `hsla()` counts too.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a { color: rgba(0, 0, 0, 0.5); }\nb { color: rgb(0, 0, 0); }\nc { color: rgba(0 0 0 / 50%); }\nd { color: rgb(0 0 0 / 0.5); }\ne { color: hsl(120deg 50% 50%); }\nf { color: hsl(120, 50%, 50%); }\ng { color: hsla(120 50% 50% / 50%); }\nh { color: rgb(0 0 0 / 50%); }\ni { color: hsl(120 50% 50% / 0.5); }\nj { color: rgb(var(--x), 0.5); }\nk { color: rgb(var(--x) / 0.5); }\nl { color: oklch(50% 0.2 120); }\nm { color: oklch(50% 0.2 120deg / 50%); }\nn { color: rgb(0 0 0); }\no { color: hsla(var(--h), var(--s), var(--l), 1); }\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 12,
+            "length": 4,
+            "line": 1
+          },
+          {
+            "column": 12,
+            "length": 3,
+            "line": 4
+          },
+          {
+            "column": 12,
+            "length": 3,
+            "line": 9
+          },
+          {
+            "column": 12,
+            "length": 3,
+            "line": 11
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 15
+          }
+        ]
+      },
+      "fix": null,
+      "id": "alpha-value-notation",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "alpha-value-notation",
+          "partial": false,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "An at-rule (vendor prefix left out) that is not in the `list` option. An empty list allows everything.",
       "example": {
         "config": "property-allowed-list: { level: warn, options: { list: [color, \"/^wid/\"] } }\nunit-allowed-list: { level: warn, options: { list: [px, em] } }\nfunction-allowed-list: { level: warn, options: { list: [var] } }\nat-rule-allowed-list: { level: warn, options: { list: [media] } }\nmedia-feature-name-allowed-list: { level: warn, options: { list: [max-width] } }\nselector-pseudo-class-allowed-list: { level: warn, options: { list: [focus] } }\nselector-pseudo-element-allowed-list: { level: warn, options: { list: [after] } }\nselector-combinator-allowed-list: { level: warn, options: { list: [\" \"] } }\nselector-attribute-operator-allowed-list: { level: warn, options: { list: [\"=\"] } }\n",
@@ -817,6 +875,69 @@
       "upstream": [
         {
           "id": "at-rule-disallowed-list",
+          "partial": false,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "An at-rule needs a blank line before it, unless a comment is right before it; the first at-rule of a block, and a blockless one right after a blockless one of the same name (`@import` lines), take none.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "@import \"a.css\";\n@import \"b.css\";\n\n@import \"c.css\";\na { color: red; }\nb { color: red; }\n\nc { color: red;\n  top: 0; }\nd { color: red;\n  top: 0; }\n/* comment */\ne { color: red; }\n\n/* comment */\n\nf {\n\n  color: red;\n  top: 0;\n\n  left: 0;\n  /* c */\n  right: 0;\n  g { x: y }\n  h { x: y;\n    z: w }\n  @media (a) { top: 0; }\n  bottom: 0;\n}\n@media (a) { top: 0; }\n@media (b) { top: 0; }\n@font-face { font-family: x; }\nx { --a: 1;\n  --b: 2;\n\n  --c: 3;\n  color: red; }\ny {\n  @media (a) { top: 0; }\n  @media (b) { top: 0; }\n}\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 1,
+            "length": 7,
+            "line": 4
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 28
+          },
+          {
+            "column": 1,
+            "length": 6,
+            "line": 31
+          },
+          {
+            "column": 1,
+            "length": 6,
+            "line": 32
+          },
+          {
+            "column": 1,
+            "length": 10,
+            "line": 33
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 41
+          }
+        ]
+      },
+      "fix": null,
+      "id": "at-rule-empty-line-before",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "at-rule-empty-line-before",
           "partial": false,
           "tool": "stylelint"
         }
@@ -1017,6 +1138,107 @@
       "upstream": [
         {
           "id": "block-no-empty",
+          "partial": false,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "`rgba()` and `hsla()`, the legacy names of `rgb()` and `hsl()`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a { color: rgba(0, 0, 0, 0.5); }\nb { color: rgb(0, 0, 0); }\nc { color: rgba(0 0 0 / 50%); }\nd { color: rgb(0 0 0 / 0.5); }\ne { color: hsl(120deg 50% 50%); }\nf { color: hsl(120, 50%, 50%); }\ng { color: hsla(120 50% 50% / 50%); }\nh { color: rgb(0 0 0 / 50%); }\ni { color: hsl(120 50% 50% / 0.5); }\nj { color: rgb(var(--x), 0.5); }\nk { color: rgb(var(--x) / 0.5); }\nl { color: oklch(50% 0.2 120); }\nm { color: oklch(50% 0.2 120deg / 50%); }\nn { color: rgb(0 0 0); }\no { color: hsla(var(--h), var(--s), var(--l), 1); }\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 12,
+            "length": 4,
+            "line": 1
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 3
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 7
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 15
+          }
+        ]
+      },
+      "fix": null,
+      "id": "color-function-alias-notation",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "color-function-alias-notation",
+          "partial": false,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "`rgb()`, `rgba()`, `hsl()` or `hsla()` with the legacy comma-separated arguments (`rgb(0, 0, 0)` is `rgb(0 0 0)`); a function with a nested call (`var()`) is left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a { color: rgba(0, 0, 0, 0.5); }\nb { color: rgb(0, 0, 0); }\nc { color: rgba(0 0 0 / 50%); }\nd { color: rgb(0 0 0 / 0.5); }\ne { color: hsl(120deg 50% 50%); }\nf { color: hsl(120, 50%, 50%); }\ng { color: hsla(120 50% 50% / 50%); }\nh { color: rgb(0 0 0 / 50%); }\ni { color: hsl(120 50% 50% / 0.5); }\nj { color: rgb(var(--x), 0.5); }\nk { color: rgb(var(--x) / 0.5); }\nl { color: oklch(50% 0.2 120); }\nm { color: oklch(50% 0.2 120deg / 50%); }\nn { color: rgb(0 0 0); }\no { color: hsla(var(--h), var(--s), var(--l), 1); }\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 12,
+            "length": 4,
+            "line": 1
+          },
+          {
+            "column": 12,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 12,
+            "length": 3,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "color-function-notation",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "color-function-notation",
           "partial": false,
           "tool": "stylelint"
         }
@@ -1505,6 +1727,59 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A declaration right after a rule or at-rule needs a blank line before it, one after another declaration or first in a block takes none; a comment right before it, a single-line block, custom properties and variables are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "@import \"a.css\";\n@import \"b.css\";\n\n@import \"c.css\";\na { color: red; }\nb { color: red; }\n\nc { color: red;\n  top: 0; }\nd { color: red;\n  top: 0; }\n/* comment */\ne { color: red; }\n\n/* comment */\n\nf {\n\n  color: red;\n  top: 0;\n\n  left: 0;\n  /* c */\n  right: 0;\n  g { x: y }\n  h { x: y;\n    z: w }\n  @media (a) { top: 0; }\n  bottom: 0;\n}\n@media (a) { top: 0; }\n@media (b) { top: 0; }\n@font-face { font-family: x; }\nx { --a: 1;\n  --b: 2;\n\n  --c: 3;\n  color: red; }\ny {\n  @media (a) { top: 0; }\n  @media (b) { top: 0; }\n}\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 3,
+            "length": 5,
+            "line": 19
+          },
+          {
+            "column": 3,
+            "length": 4,
+            "line": 22
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 29
+          },
+          {
+            "column": 3,
+            "length": 5,
+            "line": 38
+          }
+        ]
+      },
+      "fix": null,
+      "id": "declaration-empty-line-before",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "declaration-empty-line-before",
+          "partial": false,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "A declaration that ends in `!important`.",
       "example": {
         "config": null,
@@ -1963,6 +2238,59 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "The hue of `hsl()`, `hsla()`, `hwb()`, `lch()` or `oklch()` written as a number (`120` is `120deg`).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a { color: rgba(0, 0, 0, 0.5); }\nb { color: rgb(0, 0, 0); }\nc { color: rgba(0 0 0 / 50%); }\nd { color: rgb(0 0 0 / 0.5); }\ne { color: hsl(120deg 50% 50%); }\nf { color: hsl(120, 50%, 50%); }\ng { color: hsla(120 50% 50% / 50%); }\nh { color: rgb(0 0 0 / 50%); }\ni { color: hsl(120 50% 50% / 0.5); }\nj { color: rgb(var(--x), 0.5); }\nk { color: rgb(var(--x) / 0.5); }\nl { color: oklch(50% 0.2 120); }\nm { color: oklch(50% 0.2 120deg / 50%); }\nn { color: rgb(0 0 0); }\no { color: hsla(var(--h), var(--s), var(--l), 1); }\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 12,
+            "length": 3,
+            "line": 6
+          },
+          {
+            "column": 12,
+            "length": 4,
+            "line": 7
+          },
+          {
+            "column": 12,
+            "length": 3,
+            "line": 9
+          },
+          {
+            "column": 12,
+            "length": 5,
+            "line": 12
+          }
+        ]
+      },
+      "fix": null,
+      "id": "hue-degree-notation",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "hue-degree-notation",
+          "partial": false,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "An `@import` of `url(...)`: write the string.",
       "example": {
         "config": null,
@@ -2385,13 +2713,33 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "@foo {}\n@media (foo: 1) and (min-width: 1px) and (-webkit-min-device-pixel-ratio: 2) and (400px <= width) {}\n@media (min-resolution: 2x) {}\na { colour: red; width: 1foo; height: 2x; -webkit-foo: 1; --x: 1foo; width: foo(1) bar(2) var(--a) calc(1px + 2px) }\na { background: image-set(url(\"a.png\") 1x); margin: 1PX 2% 1e3em }\na:foo, a:hover, a::foo, a::before, a:before, a:-moz-foo, a:nth-child(even), a:lang(en), a:not(:bar) {}\nfoo, div, b::slotted(x-y), svg > circle {}\n::-webkit-scrollbar-thumb:horizontal {}\na:horizontal {}\n@page :first { margin: 1cm }\n@font-face {\n  src: url(\"a\");\n  font-display: swap;\n}\n@keyframes k { from { color: red } 50% { color: blue } }\n",
+        "input": "@import \"a.css\";\n@import \"b.css\";\n\n@import \"c.css\";\na { color: red; }\nb { color: red; }\n\nc { color: red;\n  top: 0; }\nd { color: red;\n  top: 0; }\n/* comment */\ne { color: red; }\n\n/* comment */\n\nf {\n\n  color: red;\n  top: 0;\n\n  left: 0;\n  /* c */\n  right: 0;\n  g { x: y }\n  h { x: y;\n    z: w }\n  @media (a) { top: 0; }\n  bottom: 0;\n}\n@media (a) { top: 0; }\n@media (b) { top: 0; }\n@font-face { font-family: x; }\nx { --a: 1;\n  --b: 2;\n\n  --c: 3;\n  color: red; }\ny {\n  @media (a) { top: 0; }\n  @media (b) { top: 0; }\n}\n",
         "language": "css",
         "spans": [
           {
+            "column": 11,
+            "length": 1,
+            "line": 28
+          },
+          {
             "column": 9,
-            "length": 3,
-            "line": 2
+            "length": 1,
+            "line": 31
+          },
+          {
+            "column": 9,
+            "length": 1,
+            "line": 32
+          },
+          {
+            "column": 11,
+            "length": 1,
+            "line": 40
+          },
+          {
+            "column": 11,
+            "length": 1,
+            "line": 41
           }
         ]
       },
@@ -2793,18 +3141,18 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "color: red;\n@media print { color: red; a { color: red } }\na { color: red; @media print { color: blue } b { color: green } }\n@font-face { src: url(a) }\n",
+        "input": "@import \"a.css\";\n@import \"b.css\";\n\n@import \"c.css\";\na { color: red; }\nb { color: red; }\n\nc { color: red;\n  top: 0; }\nd { color: red;\n  top: 0; }\n/* comment */\ne { color: red; }\n\n/* comment */\n\nf {\n\n  color: red;\n  top: 0;\n\n  left: 0;\n  /* c */\n  right: 0;\n  g { x: y }\n  h { x: y;\n    z: w }\n  @media (a) { top: 0; }\n  bottom: 0;\n}\n@media (a) { top: 0; }\n@media (b) { top: 0; }\n@font-face { font-family: x; }\nx { --a: 1;\n  --b: 2;\n\n  --c: 3;\n  color: red; }\ny {\n  @media (a) { top: 0; }\n  @media (b) { top: 0; }\n}\n",
         "language": "css",
         "spans": [
           {
-            "column": 1,
-            "length": 11,
-            "line": 1
+            "column": 14,
+            "length": 7,
+            "line": 31
           },
           {
-            "column": 16,
-            "length": 11,
-            "line": 2
+            "column": 14,
+            "length": 7,
+            "line": 32
           }
         ]
       },
@@ -3033,13 +3381,13 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "@foo {}\n@media (foo: 1) and (min-width: 1px) and (-webkit-min-device-pixel-ratio: 2) and (400px <= width) {}\n@media (min-resolution: 2x) {}\na { colour: red; width: 1foo; height: 2x; -webkit-foo: 1; --x: 1foo; width: foo(1) bar(2) var(--a) calc(1px + 2px) }\na { background: image-set(url(\"a.png\") 1x); margin: 1PX 2% 1e3em }\na:foo, a:hover, a::foo, a::before, a:before, a:-moz-foo, a:nth-child(even), a:lang(en), a:not(:bar) {}\nfoo, div, b::slotted(x-y), svg > circle {}\n::-webkit-scrollbar-thumb:horizontal {}\na:horizontal {}\n@page :first { margin: 1cm }\n@font-face {\n  src: url(\"a\");\n  font-display: swap;\n}\n@keyframes k { from { color: red } 50% { color: blue } }\n",
+        "input": "@import \"a.css\";\n@import \"b.css\";\n\n@import \"c.css\";\na { color: red; }\nb { color: red; }\n\nc { color: red;\n  top: 0; }\nd { color: red;\n  top: 0; }\n/* comment */\ne { color: red; }\n\n/* comment */\n\nf {\n\n  color: red;\n  top: 0;\n\n  left: 0;\n  /* c */\n  right: 0;\n  g { x: y }\n  h { x: y;\n    z: w }\n  @media (a) { top: 0; }\n  bottom: 0;\n}\n@media (a) { top: 0; }\n@media (b) { top: 0; }\n@font-face { font-family: x; }\nx { --a: 1;\n  --b: 2;\n\n  --c: 3;\n  color: red; }\ny {\n  @media (a) { top: 0; }\n  @media (b) { top: 0; }\n}\n",
         "language": "css",
         "spans": [
           {
             "column": 5,
-            "length": 6,
-            "line": 4
+            "length": 1,
+            "line": 27
           }
         ]
       },
@@ -3117,6 +3465,59 @@
         {
           "id": "property-no-vendor-prefix",
           "partial": true,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A rule whose block spans lines needs a blank line before it, unless a comment is right before it; the first rule of a block takes none (`always-multi-line` with `first-nested` as the exception).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "@import \"a.css\";\n@import \"b.css\";\n\n@import \"c.css\";\na { color: red; }\nb { color: red; }\n\nc { color: red;\n  top: 0; }\nd { color: red;\n  top: 0; }\n/* comment */\ne { color: red; }\n\n/* comment */\n\nf {\n\n  color: red;\n  top: 0;\n\n  left: 0;\n  /* c */\n  right: 0;\n  g { x: y }\n  h { x: y;\n    z: w }\n  @media (a) { top: 0; }\n  bottom: 0;\n}\n@media (a) { top: 0; }\n@media (b) { top: 0; }\n@font-face { font-family: x; }\nx { --a: 1;\n  --b: 2;\n\n  --c: 3;\n  color: red; }\ny {\n  @media (a) { top: 0; }\n  @media (b) { top: 0; }\n}\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 10
+          },
+          {
+            "column": 3,
+            "length": 1,
+            "line": 26
+          },
+          {
+            "column": 1,
+            "length": 1,
+            "line": 34
+          },
+          {
+            "column": 1,
+            "length": 1,
+            "line": 39
+          }
+        ]
+      },
+      "fix": null,
+      "id": "rule-empty-line-before",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard",
+        "css/stylelint-standard",
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "rule-empty-line-before",
+          "partial": false,
           "tool": "stylelint"
         }
       ]
