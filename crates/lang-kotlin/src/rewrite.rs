@@ -192,7 +192,10 @@ fn if_branches(n: &SyntaxNode) -> Vec<SyntaxNode> {
             .find(|c| c.kind() == k::ELSE)
             .and_then(|b| content(&b))
         else {
-            out.clear();
+            // An `if` without `else` is braced when its branch is on a line of its own.
+            if cur != *n {
+                out.clear();
+            }
             return out;
         };
         if c.kind() == k::IF {
@@ -242,7 +245,8 @@ fn bracing(tree: &SyntaxNode, text: &str, width: usize, edits: &mut Vec<(usize, 
             k::IF if n.parent().is_none_or(|p| p.kind() != k::ELSE) => {
                 let branches = if_branches(&n);
                 let end = branches.last().and_then(last_code_end);
-                let long = end.is_some_and(|e| too_long(text, code_start(&n), e, width));
+                let long = n.children().any(|c| c.kind() == k::ELSE)
+                    && end.is_some_and(|e| too_long(text, code_start(&n), e, width));
                 (branches, long)
             }
             k::WHEN => {
@@ -271,7 +275,13 @@ fn bracing(tree: &SyntaxNode, text: &str, width: usize, edits: &mut Vec<(usize, 
 }
 
 /// The source with the rewrites applied, or `None` when there is nothing to rewrite.
-pub fn rewrite(tree: &SyntaxNode, text: &str, g: &Grammar, width: usize) -> Option<String> {
+pub fn rewrite(
+    tree: &SyntaxNode,
+    text: &str,
+    g: &Grammar,
+    options: &core_config::ResolvedOptions,
+) -> Option<String> {
+    let width = options.int("line_width") as usize;
     let mut edits: Vec<(usize, usize, String)> = sort_edits(tree, text, g, &IMPORT_ORDER)
         .into_iter()
         .map(|(r, new)| (r.start().into(), r.end().into(), new))
@@ -280,6 +290,13 @@ pub fn rewrite(tree: &SyntaxNode, text: &str, g: &Grammar, width: usize) -> Opti
     enum_trailing_comma(tree, text, &mut edits);
     expression_body(tree, &mut edits);
     bracing(tree, text, width, &mut edits);
+    core_format::rewrite::redundant_semicolons(
+        g,
+        tree,
+        text,
+        &options.strings("redundant_semicolon_parents"),
+        &mut edits,
+    );
     if edits.is_empty() {
         return None;
     }

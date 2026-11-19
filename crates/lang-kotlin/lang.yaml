@@ -29,6 +29,8 @@ options:
   - assignment_indent: [1]
   - assignment_keep_break_kinds: [["Property", "BinaryExpression"]]
   - annotation_inline: ["single"]
+  - redundant_semicolon_parents: [["Block", "KtFile"]]
+  - signature_wrap_annotated: [true]
   - annotation_source_kinds: [["ValueParameter"]]
   - member_chain_style: ["wrapped"]
   - member_chain_min_calls: [2]

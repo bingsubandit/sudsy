@@ -495,6 +495,22 @@ pub mod shared {
         )
     }
 
+    pub fn signature_wrap_annotated(default: bool) -> OptionDef {
+        OptionDef::boolean(
+            "signature_wrap_annotated",
+            default,
+            "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
+        )
+    }
+
+    pub fn redundant_semicolon_parents(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "redundant_semicolon_parents",
+            default,
+            "Node kinds whose statements need no `;`: one at the end of a line is removed, one between two statements of a line becomes a line break.",
+        )
+    }
+
     pub fn annotation_inline(default: &'static str) -> OptionDef {
         OptionDef::choice(
             "annotation_inline",

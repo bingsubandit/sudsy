@@ -80,7 +80,7 @@ pub fn parameter_list(
         .count();
     let style = ListStyle {
         trailing_comma,
-        layout: if count >= min_params {
+        layout: if count >= min_params || (min_params != usize::MAX && wraps_annotated(cx, node)) {
             ListLayout::Break
         } else {
             otherwise
@@ -88,4 +88,17 @@ pub fn parameter_list(
         ..ListStyle::default()
     };
     delimited_list(cx, node, &style)
+}
+
+/// Does the option `signature_wrap_annotated` ask for one parameter per line and a parameter
+/// have an annotation among its modifiers?
+fn wraps_annotated(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    let g = cx.grammar;
+    cx.options.flag("signature_wrap_annotated", false)
+        && node.children().any(|p| {
+            p.children().any(|m| {
+                g.has_tag(m.kind(), "modifiers")
+                    && m.children().any(|a| g.has_tag(a.kind(), "annotation"))
+            })
+        })
 }
