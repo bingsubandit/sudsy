@@ -473,10 +473,17 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `useless-method-definition` | ruby | suspicious | off | none | A method whose whole body is a bare `super` (RuboCop Lint/UselessMethodDefinition). |
 | `useless-times` | ruby | suspicious | off | none | `0.times` and `1.times` with a block (RuboCop Lint/UselessTimes). |
 | `and-or-is-not-if-else` | shell | suspicious | off | none | A list `a && b \|\| c` of three commands, unless `c` is `echo`, `printf`, `true`, `:`, `return` or `exit`. |
+| `array-in-string` | shell | correctness | warn | none | A double-quoted argument that holds `$@` or `${array[@]}` among other text. |
+| `array-without-index` | shell | correctness | warn | none | `$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript. |
+| `assignment-not-seen` | shell | correctness | warn | none | `var=value cmd "$var"`: `$var` is expanded before the assignment takes effect. |
+| `assignment-space` | shell | correctness | warn | none | A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant. |
 | `cd-without-exit` | shell | suspicious | warn | none | `cd`, `pushd` or `popd` whose failure is not handled (`cd dir \|\| exit`). Not reported with `set -e`, for `cd ..` or `cd /`, or for `popd -n`. |
 | `declare-and-assign-separately` | shell | suspicious | off | none | `export`, `local`, `declare`, `readonly` or `typeset` with a command substitution as the value reports the status of the declaration, not of the command. |
+| `echo-in-substitution` | shell | suspicious | warn | none | A command substitution that only runs `echo` on words. |
+| `eval-array` | shell | suspicious | warn | none | An `eval` whose argument expands an array with `[@]`. |
 | `find-xargs-print0` | shell | suspicious | warn | none | A pipeline from `find` into `xargs` without `-print0`/`-0`. |
 | `grep-count` | shell | style | off | none | A pipeline from `grep` into `wc -l`. |
+| `iterate-file-output` | shell | suspicious | warn | none | A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`. |
 | `iterate-find-output` | shell | suspicious | warn | none | A `for` loop over the output of `find`. |
 | `iterate-ls-output` | shell | suspicious | warn | none | A `for` loop over the output of `ls`. |
 | `no-backticks` | shell | style | off | safe | A command substitution written with backticks. |
@@ -485,15 +492,21 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `no-ps-grep` | shell | style | off | none | A pipeline from `ps` into `grep`. |
 | `no-which` | shell | style | off | none | A call of `which`. |
 | `printf-variable-format` | shell | suspicious | off | none | A `printf` whose format string contains an expansion and no `%`. |
+| `quote-array-element` | shell | suspicious | warn | none | An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed. |
 | `quote-at-expansion` | shell | correctness | error | none | An unquoted `$@` or `${array[@]}` in a command's arguments. |
 | `quote-command-substitution` | shell | suspicious | warn | none | An unquoted `$(...)` or backtick substitution in a command's arguments is split into words and globbed. |
+| `quote-in-quotes` | shell | suspicious | warn | none | A word of two double-quoted strings with unquoted text between them, as `"a"b"c"`. |
 | `quote-star-expansion` | shell | suspicious | warn | none | An unquoted `$*` or `${array[*]}` in a command's arguments. |
 | `quote-variable` | shell | suspicious | warn | none | An unquoted `$var` or `${var}` in a command's arguments is split into words and globbed. Does not know which variables hold only a number or a single word. |
 | `read-without-raw` | shell | suspicious | off | none | A `read` without the `-r` flag. |
+| `split-command-output` | shell | suspicious | warn | none | An unquoted `$(...)` among the elements of an array assignment is split into words and globbed. |
 | `test-and-or` | shell | suspicious | warn | none | A `[ ]` test that joins conditions with `-a` or `-o`. |
 | `test-exit-status` | shell | style | off | none | A test that compares `$?` with a number. |
+| `test-grep-output` | shell | suspicious | warn | none | A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`. |
 | `test-negated-empty` | shell | style | off | none | A test that negates `-z` or `-n`. |
 | `trap-expands-now` | shell | suspicious | warn | none | A `trap` whose double-quoted command contains an expansion. |
+| `unquoted-pattern` | shell | suspicious | warn | none | A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion. |
+| `unset-glob` | shell | suspicious | warn | none | `unset name[i]` with an unquoted subscript. |
 | `useless-cat` | shell | style | off | none | A pipeline that starts with `cat file`. |
 | `useless-echo` | shell | style | off | none | An `echo` whose only argument is a command substitution. |
 | `count-star` | sql | style | off | none | A `COUNT` of the constant 1 or 0 (sqlfluff CV04). |
