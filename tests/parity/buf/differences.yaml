@@ -1,5 +1,5 @@
 differences:
-  empty-statements: choice  empty statements (`;`) are kept; buf drops them
+  empty-statements: gap  empty statements (`;`) are kept; buf drops them
   statement-comments: gap  comments inside a statement before its `;` stay line comments on their own lines; buf joins them into block comments on the statement's line
   option-comments: gap  comments separated by blank lines between the file options travel with the next statement; buf keeps them where they stand
   literal-field-blank: gap  a blank line before a comment between the fields of a message literal is dropped; buf keeps it

@@ -15,14 +15,14 @@ entries:
   endOfLine: option json.format.end_of_line
   bracketSpacing: option json.format.bracket_spacing
   singleQuote (yaml): option yaml.format.quote_style
-  singleQuote (json): wontfix no json5 dialect
-  quoteProps (json): wontfix no json5 dialect
+  singleQuote (json): deferred | no json5 dialect
+  quoteProps (json): deferred | no json5 dialect
   trailingComma: option json.format.trailing_commas | Prettier's `json` parser never adds commas; whether the `jsonc` parser adds them under `all` is unverified (issue 15553 and Zed docs suggest the .jsonc extension can add trailing commas)
   objectWrap: option json.format.collapse
-  proseWrap: wontfix deferred, docs/ai/roadmap.md (YAML re-wrapping)
+  proseWrap: deferred | docs/ai/roadmap.md (YAML re-wrapping)
   embeddedLanguageFormatting: option html.format.embedded_language_formatting | only the code of HTML, Vue and Svelte files; Markdown fences and code in JS templates are formatted as written
-  insertPragma / requirePragma / checkIgnorePragma: wontfix no pragma mode
-  rangeStart / rangeEnd: wontfix deferred, docs/ai/roadmap.md (range formatting)
+  insertPragma / requirePragma / checkIgnorePragma: deferred | no pragma mode
+  rangeStart / rangeEnd: deferred | docs/ai/roadmap.md (range formatting)
   htmlWhitespaceSensitivity: option html.format.whitespace_sensitivity
   vueIndentScriptAndStyle: option vue.format.indent_script_and_style
   svelteIndentScriptAndStyle: option svelte.format.indent_script_and_style
@@ -59,7 +59,7 @@ entries:
   "js: formatting": formatter
   "js: // prettier-ignore": formatter
   "js: embedded CSS/GraphQL/HTML/Markdown in templates": "deferred | formatted by those languages' own formatters later"
-  "js: Flow syntax": "wontfix not supported by the parser; reported as a syntax error"
+  "js: Flow syntax": "deferred | Flow is not supported by the parser; reported as a syntax error"
   printWidth (css): option css.format.line_width
   tabWidth (css): option css.format.indent_size
   useTabs (css): option css.format.indent_style

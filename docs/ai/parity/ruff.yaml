@@ -16,7 +16,7 @@ entries:
   line-ending: option python.format.end_of_line
   docstring-code-format: planned
   docstring-code-line-length: planned
-  preview: wontfix preview style is not planned
+  preview: deferred | preview style is not planned
   exclude: formatter
   E401: rule multiple-imports-on-one-line
   E402: rule module-import-not-at-top-of-file

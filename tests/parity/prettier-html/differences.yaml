@@ -28,3 +28,5 @@ ratchet:
   real-world: 216
   real-world-svelte: 941
   real-world-vue: 782
+flags:
+  no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet

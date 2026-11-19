@@ -11,3 +11,6 @@ second-format:
 refused:
   prettier-tests: 0
   real-world: 0
+flags:
+  no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet
+  embedded-language-formatting-off: "Prettier runs with `--embedded-language-formatting=off`: the embedded CSS, GraphQL and HTML of JS are formatted by Sudsy's formatters, which differ"

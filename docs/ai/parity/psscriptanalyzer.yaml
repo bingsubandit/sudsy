@@ -12,7 +12,7 @@ entries:
   PSUseConsistentIndentation: option powershell.format.indent_size
   PSUseConsistentWhitespace: formatter
   PSAlignAssignmentStatement: formatter
-  PSUseCorrectCasing: wontfix needs the command and parameter tables of a PowerShell runtime
+  PSUseCorrectCasing: planned | needs the command and parameter tables of a PowerShell runtime
   PSAvoidUsingCmdletAliases: rule no-cmdlet-aliases | The table is fixed (a Windows host's); PSScriptAnalyzer reads the aliases of the host it runs on, so on Linux `ls` and `cat` are not aliases there, and user-defined aliases are not known. No fix that expands the alias. `& ls` is reported at the `&`.
   PSAvoidUsingWriteHost: rule no-print
   PSAvoidUsingInvokeExpression: rule no-eval

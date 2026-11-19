@@ -2,9 +2,9 @@ differences:
   code-span-backticks: gap  a code span with three backticks (tree-sitter-md does not read it as code) is kept; Prettier writes one backtick
   list-looseness: gap  a list item holding a paragraph, a nested list and an indented continuation keeps the blank lines of the source; Prettier's looseness differs
   toc-indent: choice  a table of contents with nested lists indented by three columns is kept as written because the output would not parse to the same lists
-  tab-blocks: choice  a block with a tab is kept as written (the width of a tab depends on its column); Prettier re-indents the nested list
+  tab-blocks: gap  a block with a tab is kept as written (the width of a tab depends on its column); Prettier re-indents the nested list
   code-span-lines: gap  a code span over two lines in a list item keeps the text of the span; Prettier removes the indentation of the second line
-  code-trailing-blanks: choice  trailing blanks inside a code block are code and stay; Prettier removes them
+  code-trailing-blanks: gap  trailing blanks inside a code block are code and stay; Prettier removes them
   html-after-table: gap  an HTML block right after a table gets a blank line in front; Prettier keeps it on the next line (both parse it as HTML)
   graphql-comment-position: gap  comments between the interfaces and the `{` stay in front of the `{` where Prettier moves them into the body
   invalid-graphql: "choice  the file is not valid GraphQL (Prettier's range markers, an empty selection set): Sudsy rejects it"
@@ -27,3 +27,9 @@ files:
   graphql/prettier/tests/format/graphql/selection-set/empty-5.graphql: invalid-graphql
   graphql/prettier/tests/format/graphql/selection-set/empty-6.graphql: invalid-graphql
   graphql/prettier/tests/format/graphql/selection-set/empty-7.graphql: invalid-graphql
+intentional:
+  toc-indent: tool-wrong
+  invalid-graphql: invalid-input
+flags:
+  no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet
+  embedded-language-formatting-off: "Prettier runs with `--embedded-language-formatting=off` and the folder's sudsy.yaml sets `embedded_language_formatting: off`: the formatters of the fenced languages make other choices than Prettier's"

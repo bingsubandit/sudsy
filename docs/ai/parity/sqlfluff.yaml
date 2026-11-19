@@ -74,10 +74,10 @@ entries:
   ST10: planned
   ST11: planned
   ST12: planned
-  JJ01: wontfix templated SQL is not rendered
-  TQ01: wontfix T-SQL naming and batch checks are not scheduled
-  TQ02: wontfix T-SQL naming and batch checks are not scheduled
-  TQ03: wontfix T-SQL naming and batch checks are not scheduled
+  JJ01: deferred | templated SQL is not rendered
+  TQ01: deferred | T-SQL naming and batch checks are not scheduled
+  TQ02: deferred | T-SQL naming and batch checks are not scheduled
+  TQ03: deferred | T-SQL naming and batch checks are not scheduled
   indentation.indent_unit: option sql.format.indent_style
   indentation.tab_space_size: option sql.format.indent_size
   core.dialect: option sql.format.dialect

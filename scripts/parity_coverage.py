@@ -1,7 +1,7 @@
 """Findings of an upstream tool on its corpus for the generic coverage mode (scripts/parity_lint.py `coverage`).
 
 A tool entry of parity_tools.json has a `coverage` object (docs/ai/development/parity.md#coverage-mode):
-`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
+`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
 (`{exe}`, `{prefix}`, `{group}` and `{files}`), `group` (a regex over the file's path: files of one group run in one
 command; `cwd: group` runs it in the folder `group` names), `chunk` (files per command), `ok_codes` (exit codes with an empty report meaning no findings), `timeout` (seconds) and `memory_gb` (address space) per command, `env`, `stream` (`stdout` or `stderr`: where the report is), `files` (config files
 written next to the corpus), `parse` (how the report turns into findings) and `sudsy` (the Sudsy side's config).
@@ -32,6 +32,9 @@ def corpus_files(spec, filters):
                     filters["skip"] += 1
                 elif p.is_file():
                     name = f"{source['as']}/{inside}" if "as" in source else p.relative_to(base.parent).as_posix()
+                    if "esm" in source:  # `[module suffix, script suffix]`: a `.js` with `import`/`export` is read as a module by both tools, the others as scripts
+                        module = re.search(r"^(?:import|export)\b", p.read_text(encoding="utf-8", errors="replace"), re.M)
+                        name = str(Path(name).with_suffix(source["esm"][0 if module else 1]))
                     out.append((f"{source['into']}/{name.replace('/', '__')}" if "into" in source else name, p))
     return list(dict(out).items())
 

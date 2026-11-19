@@ -52,7 +52,7 @@ entries:
   csharp_space_before_open_square_brackets: formatter
   csharp_space_between_empty_square_brackets: formatter
   csharp_space_between_square_brackets: formatter
-  csharp_space_* non-default values: wontfix fixed to the default value; no preset needs the other values
+  csharp_space_* non-default values: deferred | fixed to the default value; no preset needs the other values
   csharp_preserve_single_line_statements: option csharp.format.preserve_single_line_statements
   csharp_preserve_single_line_blocks: option csharp.format.preserve_single_line_blocks
   IDE0055: formatter | Sudsy formats; it does not report "would change" as IDE0055 diagnostics (`format --check` instead); the csharp_space_* values and `false` of the two initializer newline keys are not followed

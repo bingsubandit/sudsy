@@ -46,10 +46,12 @@ token: { needs: '$', kind: [Word, Concat], regex: '^[^"''`\\(]*\$(\*|\{\*\}|\{[A
 id: no-backticks
 message: use $(...) instead of backticks
 description: A command substitution written with backticks.
-example: 'now=`date`'
+example: 'now=`date`   # now=$(date)'
 severity: off
 category: style
-rule: { kind: Subst, regex: '^`' }
+rule: { kind: Subst, regex: '^`(?:(?<BODY>[^`\\]*)`$)?' }
+fix: '$($BODY)'
+fix-kind: safe
 ---
 id: declare-and-assign-separately
 message: declare and assign separately, or the exit status of the substitution is lost

@@ -51,32 +51,32 @@ entries:
   id-match: planned
   implicit-arrow-linebreak: formatter
   indent: formatter
-  indent-legacy: wontfix deprecated formatting rule with no formatter equivalent
+  indent-legacy: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   init-declarations: planned
   jsx-quotes: formatter
   key-spacing: formatter
   keyword-spacing: formatter
-  line-comment-position: wontfix deprecated formatting rule with no formatter equivalent
+  line-comment-position: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   linebreak-style: formatter
-  lines-around-comment: wontfix deprecated formatting rule with no formatter equivalent
-  lines-around-directive: wontfix deprecated formatting rule with no formatter equivalent
+  lines-around-comment: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
+  lines-around-directive: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   lines-between-class-members: formatter
   logical-assignment-operators: planned
   max-classes-per-file: planned
   max-depth: planned
-  max-len: wontfix deprecated formatting rule with no formatter equivalent
+  max-len: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   max-lines: planned
   max-lines-per-function: planned
   max-nested-callbacks: planned
   max-params: planned
   max-statements: planned
   max-statements-per-line: formatter
-  multiline-comment-style: wontfix deprecated formatting rule with no formatter equivalent
+  multiline-comment-style: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   multiline-ternary: formatter
   new-cap: planned
   new-parens: formatter
-  newline-after-var: wontfix deprecated formatting rule with no formatter equivalent
-  newline-before-return: wontfix deprecated formatting rule with no formatter equivalent
+  newline-after-var: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
+  newline-before-return: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   newline-per-chained-call: formatter
   no-alert: planned
   no-array-constructor: planned
@@ -90,7 +90,7 @@ entries:
   no-class-assign: rule no-class-assign
   no-compare-neg-zero: rule no-compare-neg-zero
   no-cond-assign: rule no-assignment-in-condition | only the default `except-parens` mode
-  no-confusing-arrow: wontfix deprecated formatting rule with no formatter equivalent
+  no-confusing-arrow: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   no-console: planned
   no-const-assign: rule no-const-assign
   no-constant-binary-expression: rule no-constant-comparison | only two literals compared
@@ -133,7 +133,7 @@ entries:
   no-loss-of-precision: rule no-loss-of-precision
   no-magic-numbers: planned
   no-misleading-character-class: rule no-misleading-character-class | the surrogate pair, emoji modifier, flag and joined-sequence checks are not made
-  no-mixed-operators: wontfix deprecated formatting rule with no formatter equivalent
+  no-mixed-operators: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   no-mixed-requires: wontfix deprecated upstream
   no-mixed-spaces-and-tabs: formatter
   no-multi-assign: planned
@@ -216,11 +216,11 @@ entries:
   object-property-newline: formatter
   object-shorthand: planned
   one-var: planned
-  one-var-declaration-per-line: wontfix deprecated formatting rule with no formatter equivalent
+  one-var-declaration-per-line: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   operator-assignment: planned
   operator-linebreak: formatter
   padded-blocks: formatter
-  padding-line-between-statements: wontfix deprecated formatting rule with no formatter equivalent
+  padding-line-between-statements: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   prefer-arrow-callback: planned
   prefer-const: "rule prefer-const | the options keep their defaults (`destructuring: any`, `ignoreReadBeforeAssign: false`)"
   prefer-destructuring: planned
@@ -254,7 +254,7 @@ entries:
   space-in-parens: formatter
   space-infix-ops: formatter
   space-unary-ops: formatter
-  spaced-comment: wontfix deprecated formatting rule with no formatter equivalent
+  spaced-comment: planned | deprecated formatting rule; the planned JS formatter does not have an equivalent yet
   strict: planned
   switch-colon-spacing: formatter
   symbol-description: planned

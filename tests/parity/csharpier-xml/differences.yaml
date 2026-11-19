@@ -1,7 +1,7 @@
 differences:
   width-accounting: choice  CSharpier's width accounting keeps a tag on one line after a long multi-line header comment (.resx) or below a tag far longer than the width; Sudsy breaks the attributes
   not-xml: choice  a file that is not XML is passed through by CSharpier; Sudsy reports a syntax error
-  text-as-written: choice  text content and attribute values stay as written; CSharpier writes a double quote in a value as `&quot;`, puts CDATA and `xml:space="preserve"` content on lines of their own and trims its whitespace
+  text-as-written: gap  text content and attribute values stay as written; CSharpier writes a double quote in a value as `&quot;`, puts CDATA and `xml:space="preserve"` content on lines of their own and trims its whitespace
 files:
   corpus/eng/Baseline.Designer.props: width-accounting
   corpus/eng/sdl-tsa-vars.config: not-xml
@@ -54,3 +54,6 @@ files:
   corpus/src/Mvc/test/WebSites/RazorWebSite/Resources/SingleType.resx: width-accounting
   corpus/src/Servers/Kestrel/Core/src/CoreStrings.resx: width-accounting
   fixtures/mixed.xml: text-as-written
+intentional:
+  width-accounting: tool-wrong
+  not-xml: invalid-input

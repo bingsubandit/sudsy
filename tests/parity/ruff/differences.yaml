@@ -15,4 +15,6 @@ second-format:
 refused:
   black-tests: 0
   ruff-fixtures: 0
+flags:
+  skip_with: "a fixture that has an `.options.json` is skipped: its options are not mapped to Sudsy's yet"
 coverage: 95.6  # share of the default-set findings of ruff on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage ruff; at least 85% is the bar)

@@ -4,4 +4,5 @@ second-format:
   real-world: 0
 refused:
   real-world: 0
+rejected: invalid-input  # a file the tool rejects is not compared (the tool rejecting it is the evidence)
 coverage: 13.2  # share of the default-set findings of ktlint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage ktlint; at least 85% is the bar)

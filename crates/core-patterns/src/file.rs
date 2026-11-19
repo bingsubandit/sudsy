@@ -403,6 +403,9 @@ struct FixTemplate {
     /// The metavariable whose capture the fix replaces; the matched node without it.
     on: Option<String>,
     trim_before: bool,
+    /// The metavariables the template names: a hit that did not capture one of them (a `regex` group
+    /// of an optional part) is reported without the fix.
+    names: Vec<String>,
 }
 
 /// What compiling the patterns of a rule gives; needs the language's parser.
@@ -619,6 +622,7 @@ fn compile_body(
         template: template.clone(),
         on: fix_on,
         trim_before: spec.fix_trim_before,
+        names: names(template, true).into_iter().map(|m| m.name).collect(),
     });
     Ok(Body {
         kinds,
@@ -1194,7 +1198,7 @@ impl PatternRule {
         if let Some(message) = &self.message {
             let at = self.report_range(node, captures, range, file.grammar);
             let diagnostic = ctx.report(at, substitute(message, captures, file.text));
-            if let Some(fix) = &body.fix {
+            if let Some(fix) = body.fix.as_ref().filter(|f| f.names.iter().all(|n| captures.get(n).is_some())) {
                 let edit = Self::fix_edit(fix, captures, range, file.text);
                 diagnostic.fix(Fix::new(fix.title.clone(), fix.kind, vec![edit]));
             }

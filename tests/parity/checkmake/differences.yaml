@@ -8,4 +8,9 @@ files:
   timestamp-expanded/cases sudsy:timestamp-expanded 8: target-specific-variable
   unique-targets/cases checkmake:unique-targets 6: double-colon-rule
   unique-targets/cases sudsy:unique-targets 10: multi-target-rule
+intentional:
+  empty-recipe: tool-wrong
+  target-specific-variable: tool-wrong
+  double-colon-rule: tool-wrong
+  multi-target-rule: tool-wrong
 coverage: 73.5  # share of the default-set findings of checkmake on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage checkmake; at least 85% is the bar)

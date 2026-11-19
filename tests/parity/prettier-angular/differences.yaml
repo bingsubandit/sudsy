@@ -25,3 +25,5 @@ second-format:
 refused:
   components: 0
   prettier-angular: 0
+flags:
+  no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet

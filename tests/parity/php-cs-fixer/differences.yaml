@@ -4,3 +4,4 @@ second-format:
   real-world: 0
 refused:
   real-world: 0
+rejected: invalid-input  # a file the tool rejects is not compared (the tool rejecting it is the evidence)

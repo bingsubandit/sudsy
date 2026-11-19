@@ -1,7 +1,7 @@
 differences:
-  script-line: choice  a script rule is reported at the line of the text of a block scalar; actionlint reports it at the line of the `|`
-  needs-location: choice  an unknown `needs` entry is reported at the entry; actionlint reports it at the job
-  self-hosted-labels: choice  a job with `self-hosted` is not checked for custom runner labels; actionlint wants them in its config
+  script-line: gap  a script rule is reported at the line of the text of a block scalar; actionlint reports it at the line of the `|`
+  needs-location: gap  an unknown `needs` entry is reported at the entry; actionlint reports it at the job
+  self-hosted-labels: gap  a job with `self-hosted` is not checked for custom runner labels; actionlint wants them in its config
 files:
   deprecated-commands/cases actionlint:deprecated-commands 5: script-line
   deprecated-commands/cases sudsy:deprecated-commands 6: script-line
