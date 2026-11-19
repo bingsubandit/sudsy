@@ -57,8 +57,8 @@ pub use declaration::{
 pub use heritage::{HeritageLayout, heritage};
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{
-    ListLayout, ListStyle, TrailingComma, delimited_list, delimited_list_around,
-    delimited_list_between,
+    ListFacts, ListLayout, ListStyle, StyleOf, TrailingComma, delimited_list,
+    delimited_list_around, delimited_list_between,
 };
 pub use maybe_parenthesize::{between, enclosed, head_test, keyword_argument, maybe_parenthesize};
 pub use parens::{
@@ -152,6 +152,20 @@ pub(crate) struct Container {
     /// A node tagged `#list-prefix` before the first item (a C# attribute target: `[assembly: A]`).
     prefix: Option<SyntaxNode>,
     slots: Vec<Slot>,
+}
+
+impl Container {
+    /// What the source says about the list, for the choice of its style.
+    pub(crate) fn facts(&self) -> ListFacts<'_> {
+        ListFacts {
+            items: self.slots.len(),
+            last_sep: self.slots.last().and_then(|s| s.sep.as_ref()),
+            only: match self.slots.as_slice() {
+                [s] if s.ext.is_none() && !s.hole => Some(&s.node),
+                _ => None,
+            },
+        }
+    }
 }
 
 /// The container of a node whose first and last significant elements are its delimiters.

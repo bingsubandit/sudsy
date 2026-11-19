@@ -138,15 +138,38 @@ impl Default for ListStyle {
     }
 }
 
+/// What a caller reads off the source of a list to choose its style.
+pub struct ListFacts<'a> {
+    /// The number of items.
+    pub items: usize,
+    /// The separator after the last item, if the source has one.
+    pub last_sep: Option<&'a SyntaxToken>,
+    /// The node of the only item, when the list has one item and it is a plain node.
+    pub only: Option<&'a SyntaxNode>,
+}
+
+/// A style given, or chosen from the facts of the list.
+#[derive(Clone, Copy)]
+pub enum StyleOf<'a> {
+    Given(&'a ListStyle),
+    By(&'a dyn Fn(&ListFacts<'_>) -> ListStyle),
+}
+
+impl<'a> From<&'a ListStyle> for StyleOf<'a> {
+    fn from(s: &'a ListStyle) -> Self {
+        StyleOf::Given(s)
+    }
+}
+
 /// `open item, item, item close` in a group; the node's directives `BreakAll` and `KeepTogether`
 /// override the style's layout. Separator tokens are re-created from `style.separator`; their
 /// comments are kept.
-pub fn delimited_list(
+pub fn delimited_list<'a>(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
-    style: &ListStyle,
+    style: impl Into<StyleOf<'a>>,
 ) -> Result<Doc, FormatError> {
-    list_of(cx, node, container(cx, node)?, style)
+    list_of(cx, node, container(cx, node)?, style.into())
 }
 
 /// [`delimited_list`] for the delimiters `open` and `close` among the children of `node`; the
@@ -162,25 +185,25 @@ pub fn delimited_list_between(
         cx,
         node,
         container_between(cx, node, Some((open, close)), style.unwrap)?,
-        style,
+        style.into(),
     )
 }
 
 /// [`delimited_list`] for the children of `items` between the delimiters `open` and `close`, which
 /// stand outside it, in `node`.
-pub fn delimited_list_around(
+pub fn delimited_list_around<'a>(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
     items: &SyntaxNode,
     open: &SyntaxToken,
     close: &SyntaxToken,
-    style: &ListStyle,
+    style: impl Into<StyleOf<'a>>,
 ) -> Result<Doc, FormatError> {
     list_of(
         cx,
         node,
         super::container_around(cx, items, open, close)?,
-        style,
+        style.into(),
     )
 }
 
@@ -188,8 +211,16 @@ fn list_of(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
     c: super::Container,
-    style: &ListStyle,
+    style: StyleOf<'_>,
 ) -> Result<Doc, FormatError> {
+    let owned;
+    let style = match style {
+        StyleOf::Given(s) => s,
+        StyleOf::By(f) => {
+            owned = f(&c.facts());
+            &owned
+        }
+    };
     let g = cx.grammar;
     // The separator goes right after an item and its trailing comments after the separator:
     // `b, // c` and `b, /* c */` whether or not the source had a comma.

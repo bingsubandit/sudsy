@@ -827,6 +827,7 @@ impl Grammar {
         self.trivia_nodes
     }
 
+    #[inline]
     pub fn is_trivia(&self, kind: SyntaxKind) -> bool {
         self.flags_of(kind) & TRIVIA != 0
     }
