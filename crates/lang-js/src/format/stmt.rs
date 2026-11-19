@@ -363,14 +363,11 @@ fn labeled(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     } else {
         elem(cx, body)?
     };
-    let style = core_format::shapes::LabelStyle {
-        body_on_next_line: false,
-        outdent: 0,
-    };
+    let head = concat(vec![elem(cx, label)?, elem(cx, colon)?]);
     Ok(core_format::shapes::labeled(
-        concat(vec![elem(cx, label)?, elem(cx, colon)?]),
+        head,
         body,
-        style,
+        Default::default(),
         bare,
     ))
 }

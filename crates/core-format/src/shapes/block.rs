@@ -32,17 +32,22 @@ pub struct BlockStyle {
     pub keep_trailing_blank: bool,
 }
 
+impl BlockStyle {
+    /// What `Default` gives, for `const` styles: `BlockStyle { .. BlockStyle::DEFAULT }`.
+    pub const DEFAULT: BlockStyle = BlockStyle {
+        max_blank_lines: 1,
+        empty: "",
+        force_blank: None,
+        expand_empty: false,
+        keep_same_line: false,
+        keep_leading_blank: false,
+        keep_trailing_blank: false,
+    };
+}
+
 impl Default for BlockStyle {
     fn default() -> Self {
-        BlockStyle {
-            max_blank_lines: 1,
-            empty: "",
-            force_blank: None,
-            expand_empty: false,
-            keep_same_line: false,
-            keep_leading_blank: false,
-            keep_trailing_blank: false,
-        }
+        BlockStyle::DEFAULT
     }
 }
 
@@ -68,7 +73,7 @@ pub fn continues(
 }
 
 /// Where a labeled statement puts its label.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct LabelStyle {
     /// The body goes on the next line (at the indentation of the statement), else after the label.
     pub body_on_next_line: bool,

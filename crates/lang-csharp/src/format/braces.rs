@@ -129,13 +129,8 @@ fn with_braces(
 
 fn block_style(cx: &FormatCtx<'_>) -> BlockStyle {
     BlockStyle {
-        max_blank_lines: 1,
         empty: empty_body_text(cx.options),
-        force_blank: None,
-        expand_empty: false,
-        keep_same_line: false,
-        keep_leading_blank: false,
-        keep_trailing_blank: false,
+        ..BlockStyle::DEFAULT
     }
 }
 

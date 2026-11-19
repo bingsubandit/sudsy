@@ -18,15 +18,7 @@ include!("schema.generated.rs");
 
 pub struct ProtoFormatter;
 
-const BLOCK: BlockStyle = BlockStyle {
-    max_blank_lines: 1,
-    empty: "",
-    force_blank: None,
-    expand_empty: false,
-    keep_same_line: false,
-    keep_leading_blank: false,
-    keep_trailing_blank: false,
-};
+const BLOCK: BlockStyle = BlockStyle::DEFAULT;
 
 impl NodeFormatter for ProtoFormatter {
     /// Only the blanks between adjacent string literals may change.

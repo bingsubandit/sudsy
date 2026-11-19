@@ -15,15 +15,7 @@ include!("schema.generated.rs");
 
 pub struct GraphqlFormatter;
 
-const BLOCK: BlockStyle = BlockStyle {
-    max_blank_lines: 1,
-    empty: "",
-    force_blank: None,
-    expand_empty: false,
-    keep_same_line: false,
-    keep_leading_blank: false,
-    keep_trailing_blank: false,
-};
+const BLOCK: BlockStyle = BlockStyle::DEFAULT;
 
 /// The lines of a block string (`"""`), as the `dedent` row of the grammar reads them.
 fn block_lines(text: &str) -> Vec<&str> {
