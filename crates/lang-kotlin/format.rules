@@ -17,7 +17,8 @@ kind=SecondaryConstructor / kind=SecondaryConstructor : parent=KtFile|ClassBody 
 * / kind=Class|Fun|ObjectDeclaration|SecondaryConstructor|Typealias|ClassInitializer : parent=Block
 
 [layout]
-Class|ObjectDeclaration : heritage colon=Colon list=SuperTypeList ctor=PrimaryConstructor params=ValueParameterList min=option:class_signature_wrap_min_supertypes hug_min=option:class_signature_wrap_min_parameters
+Class : heritage colon=Colon list=SuperTypeList ctor=PrimaryConstructor params=ValueParameterList min=option:class_signature_wrap_min_supertypes hug_min=option:class_signature_wrap_min_parameters
+ObjectDeclaration : heritage colon=Colon list=SuperTypeList
 DotQualifiedExpression|SafeAccessExpression&parent!=ImportDirective|PackageDirective : chain spaced=LambdaArgument
 When : cases open=Lbrace
 
