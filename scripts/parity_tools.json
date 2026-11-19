@@ -454,7 +454,7 @@
     }
   },
   "corpora": {
-    "js": {"text": "three.js src, express lib and test, 8 copies", "copies": 8, "fetch": ["tests/conformance/fetch-js-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "three.js/src/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/", "recursive": true}]},
+    "js": {"text": "three.js src, express lib and test, 8 copies", "copies": 8, "fetch": ["tests/conformance/fetch-js-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "three.js/src/"}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/lib/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/test/", "recursive": true}]},
     "json": {"text": "the valid files of JSONTestSuite", "fetch": ["tests/conformance/fetch-json-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/JSONTestSuite/test_parsing", "suffixes": [".json"], "only": "y_"}]},
     "csharp": {"text": "dotnet/runtime CoreLib", "fetch": ["tests/conformance/fetch-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/runtime", "suffixes": [".cs"], "recursive": true}]}
   }

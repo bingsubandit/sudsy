@@ -1,0 +1,79 @@
+{
+ "runner": "Linux aarch64, 8 cores, 0xd4f",
+ "runs": 5,
+ "commit": "47b96b54",
+ "rows": [
+  {
+   "id": "ruff/format",
+   "language": "Python",
+   "task": "Format",
+   "tool": "ruff",
+   "version": "0.17.4",
+   "corpus": "1085 files",
+   "files": 1085,
+   "bytes": 9052527,
+   "sudsy": {
+    "s": 0.62,
+    "mb": 223
+   },
+   "other": {
+    "s": 0.121,
+    "mb": 59
+   }
+  },
+  {
+   "id": "ruff/lint",
+   "language": "Python",
+   "task": "Lint",
+   "tool": "ruff",
+   "version": "0.17.4",
+   "corpus": "1085 files",
+   "files": 1085,
+   "bytes": 9052527,
+   "sudsy": {
+    "s": 0.649,
+    "mb": 239
+   },
+   "other": {
+    "s": 0.242,
+    "mb": 55
+   }
+  },
+  {
+   "id": "prettier-js/format",
+   "language": "JS/TS",
+   "task": "Format",
+   "tool": "Prettier",
+   "version": "3.9.10",
+   "corpus": "three.js src, express lib and test, 8 copies",
+   "files": 6864,
+   "bytes": 42099488,
+   "sudsy": {
+    "s": 3.373,
+    "mb": 617
+   },
+   "other": {
+    "s": 56.637,
+    "mb": 335
+   }
+  },
+  {
+   "id": "prettier/format",
+   "language": "JSON",
+   "task": "Format",
+   "tool": "Prettier",
+   "version": "3.9.10",
+   "corpus": "the valid files of JSONTestSuite",
+   "files": 95,
+   "bytes": 1190,
+   "sudsy": {
+    "s": 0.01,
+    "mb": 50
+   },
+   "other": {
+    "s": 0.262,
+    "mb": 89
+   }
+  }
+ ]
+}
