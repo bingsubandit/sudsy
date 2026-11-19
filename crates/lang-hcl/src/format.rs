@@ -223,23 +223,22 @@ fn align(lines: &mut [Line]) {
         lines,
         |l| !l.assign.is_empty(),
         |run| {
-            let widths: Vec<usize> = run.iter().map(|l| columns(&l.lead)).collect();
-            for (l, pad) in run.iter_mut().zip(columns::pads(&widths)) {
-                l.assign[0].spaces = pad + 1;
-            }
+            columns::pad(run, |l| columns(&l.lead), |l, pad| l.assign[0].spaces = pad + 1);
         },
     );
     columns::runs(
         lines,
         |l| l.comment.is_some(),
         |run| {
-            let widths: Vec<usize> = (run.iter())
-                .map(|l| columns(&l.lead) + columns(&l.assign))
-                .collect();
-            for (l, pad) in run.iter_mut().zip(columns::pads(&widths)) {
+            let own = |l: &Line| columns(&l.lead) + columns(&l.assign);
+            columns::pad(run, own, |l, pad| {
                 if let Some(c) = &mut l.comment {
                     c.spaces = pad + 1;
                 }
+            });
+        },
+    );
+}
             }
         },
     );

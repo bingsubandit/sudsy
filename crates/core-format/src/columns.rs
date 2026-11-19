@@ -22,8 +22,11 @@ pub fn runs<T>(items: &mut [T], member: impl Fn(&T) -> bool, mut each: impl FnMu
     }
 }
 
-/// The blanks each width needs to reach the widest.
-pub fn pads(widths: &[usize]) -> Vec<usize> {
-    let widest = widths.iter().copied().max().unwrap_or(0);
-    widths.iter().map(|w| widest - w).collect()
+/// Calls `set` with the blanks each item needs to reach the widest of the run.
+pub fn pad<T>(run: &mut [T], width: impl Fn(&T) -> usize, mut set: impl FnMut(&mut T, usize)) {
+    let widest = run.iter().map(&width).max().unwrap_or(0);
+    for item in run {
+        let pad = widest - width(item);
+        set(item, pad);
+    }
 }

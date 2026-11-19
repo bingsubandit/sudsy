@@ -347,10 +347,13 @@ fn align_hashtables(cx: &FormatCtx<'_>, root: &SyntaxNode, tks: &[Tk]) -> HashMa
             let width = end - usize::from(first.text_range().start());
             entries.push((width, ei));
         }
-        let widths: Vec<usize> = entries.iter().map(|e| e.0).collect();
-        for ((_, ei), pad) in entries.iter().zip(columns::pads(&widths)) {
-            pads.insert(*ei, pad);
-        }
+        columns::pad(
+            &mut entries,
+            |e| e.0,
+            |e, pad| {
+                pads.insert(e.1, pad);
+            },
+        );
     }
     pads
 }
