@@ -9,8 +9,11 @@
 
 mod assignment;
 mod binary_chain;
+mod arrow;
 mod block;
 mod call_arguments;
+mod initializer;
+mod paren_list;
 mod call_chain;
 mod chain;
 mod compound;
@@ -35,9 +38,9 @@ pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
 };
 pub use block::{
-    BlockStyle, LabelStyle, annotation_line, blank_before, block, block_between, block_open_inside,
-    braces, continues, document, labeled, spread_cases_style, statement_sequence,
-    statement_sequence_with,
+    BlockStyle, Continuations, LabelStyle, annotation_line, blank_before, block, block_between,
+    block_open_inside, braces, document, labeled, labeled_statement, spread_cases_style,
+    statement_sequence, statement_sequence_with,
 };
 pub use call_arguments::{
     Args, CallStyle, Expanded, HugLast, Item, Plan, call_arguments, can_hug, expression_of,
@@ -56,7 +59,10 @@ pub use declaration::{
     Annotations, Clause, HeaderStyle, Printer, annotation_args, annotations_above, enum_body,
     has_arguments, has_doc_comment, header, lead_annotations, members, modifiers, type_declaration,
 };
-pub use heritage::{HeritageLayout, heritage};
+pub use arrow::arrow_body;
+pub use heritage::{HeritageLayout, clause_list, heritage};
+pub use initializer::initializer;
+pub use paren_list::paren_list;
 pub use key_value::{KeyValueStyle, key_value};
 pub use list::{
     ListFacts, ListLayout, ListStyle, StyleOf, TrailingComma, delimited_list,

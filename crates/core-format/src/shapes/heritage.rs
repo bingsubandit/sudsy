@@ -3,7 +3,12 @@
 //! tools: google-java-format class headers, ktlint class-signature, Prettier class heritage
 //! reads: tag:heritage
 
+use super::Printer;
+use crate::FormatCtx;
 use crate::doc::{self, Doc};
+use crate::error::FormatError;
+use crate::seq;
+use core_syntax::{SyntaxElement, SyntaxNode};
 
 /// How the supertypes of a type declaration are laid out.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -62,4 +67,25 @@ pub fn heritage(
         parts.push(t);
     }
     doc::concat(parts)
+}
+
+/// A clause that is a keyword and a list (`throws A, B`, `implements A, B`): a group, the list
+/// after the keyword, a break after each comma that indents the next item `levels` levels.
+pub fn clause_list(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    p: &dyn Printer,
+    levels: usize,
+) -> Result<Doc, FormatError> {
+    let mut parts = Vec::new();
+    for (i, e) in seq::kids(cx, node).iter().enumerate() {
+        if i == 1 {
+            parts.push(doc::lit(" "));
+        }
+        parts.push(p.el(e)?);
+        if matches!(e, SyntaxElement::Token(t) if t.text() == ",") {
+            parts.push((0..levels).fold(doc::line(), |d, _| doc::indent(d)));
+        }
+    }
+    Ok(doc::group(doc::concat(parts)))
 }

@@ -54,55 +54,27 @@ fn is_statement(kind: core_syntax::SyntaxKind) -> bool {
     )
 }
 
+/// The clauses and keywords that go on after a block of a compound statement.
+const CONTINUATIONS: shapes::Continuations<'static> = shapes::Continuations {
+    clauses: &[k::CATCH_CLAUSE, k::FINALLY_CLAUSE],
+    words: &["else"],
+};
+
 fn block(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let style = BlockStyle {
-        expand_empty: node.children().next().is_none() && keeps_lines(node),
+    let base = BlockStyle {
         keep_leading_blank: true,
-        keep_trailing_blank: shapes::continues(
-            cx,
-            node,
-            &[k::CATCH_CLAUSE, k::FINALLY_CLAUSE],
-            &["else"],
-        ),
         ..BlockStyle::default()
     };
-    shapes::block(cx, node, &style)
-}
-
-/// An empty block that is part of a longer statement (`catch`, `finally`, `if` with an `else`,
-/// `try` with a `catch`) keeps its `}` on a line of its own.
-fn keeps_lines(block: &SyntaxNode) -> bool {
-    let Some(parent) = block.parent() else {
-        return false;
-    };
-    let has = |kind| parent.children().any(|c| c.kind() == kind);
-    match parent.kind() {
-        k::CATCH_CLAUSE | k::FINALLY_CLAUSE => true,
-        k::TRY_STATEMENT | k::TRY_WITH_RESOURCES_STATEMENT => {
-            has(k::CATCH_CLAUSE) || has(k::FINALLY_CLAUSE)
-        }
-        k::IF_STATEMENT => parent
-            .children_with_tokens()
-            .any(|c| c.as_token().is_some_and(|t| t.text() == "else")),
-        _ => false,
-    }
+    shapes::block(cx, node, &CONTINUATIONS.style(cx, node, base))
 }
 
 /// `label:` on a line of its own, the statement below it at the same indentation.
 fn labeled(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = flat(cx, node);
-    let [name, colon, body] = &els[..] else {
-        return generic(cx, node);
+    let style = shapes::LabelStyle {
+        body_on_next_line: true,
+        outdent: 0,
     };
-    Ok(shapes::labeled(
-        seq(cx, &[name.clone(), colon.clone()])?,
-        el(cx, body)?,
-        shapes::LabelStyle {
-            body_on_next_line: true,
-            outdent: 0,
-        },
-        false,
-    ))
+    shapes::labeled_statement(cx, node, style, &|els| seq(cx, els)).or_else(|_| generic(cx, node))
 }
 
 /// `if (...) body else body`, loops and the like: a block body follows on the line, any other

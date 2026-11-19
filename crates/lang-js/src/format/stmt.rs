@@ -352,22 +352,11 @@ fn switch_case(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
 
 /// `label: statement`.
 fn labeled(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
-    let kids = kids(cx, node);
-    let [label, colon, body] = &kids[..] else {
-        return Err(shape_error("label"));
-    };
-    let body_node = node_at(&kids, 2)?;
-    let bare = body_node.kind() == k::EMPTY_STATEMENT;
-    let body = if bare {
-        cx.format(body_node)?
-    } else {
-        elem(cx, body)?
-    };
-    let head = concat(vec![elem(cx, label)?, elem(cx, colon)?]);
-    Ok(core_format::shapes::labeled(
-        head,
-        body,
-        Default::default(),
-        bare,
-    ))
+    shapes::labeled_statement(cx, node, Default::default(), &|els| {
+        Ok(concat(
+            els.iter()
+                .map(|e| elem(cx, e))
+                .collect::<Result<_, _>>()?,
+        ))
+    })
 }

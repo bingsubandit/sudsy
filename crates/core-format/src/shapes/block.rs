@@ -51,25 +51,54 @@ impl Default for BlockStyle {
     }
 }
 
-/// Is the next significant element after `block` a node of one of `kinds` or a token that is one
-/// of `words` (`else`, `catch`, `finally`: the construct goes on after the block)?
-pub fn continues(
-    cx: &FormatCtx<'_>,
-    block: &SyntaxNode,
-    kinds: &[SyntaxKind],
-    words: &[&str],
-) -> bool {
-    let mut next = block.next_sibling_or_token();
-    while let Some(e) = &next {
-        if !matches!(e, SyntaxElement::Token(t) if cx.grammar.is_trivia(t.kind())) {
-            break;
+/// The parts of a compound statement that follow its first block: the kinds of the clauses
+/// (`catch`, `finally`) and the keywords (`else`).
+#[derive(Clone, Copy, Debug)]
+pub struct Continuations<'a> {
+    pub clauses: &'a [SyntaxKind],
+    pub words: &'a [&'a str],
+}
+
+impl Continuations<'_> {
+    /// `base` for a block of a compound statement: an empty block that is part of a longer
+    /// statement keeps its closing delimiter on a line of its own, and a blank line before the
+    /// closing delimiter stays when a clause or keyword follows the block.
+    pub fn style(&self, cx: &FormatCtx<'_>, block: &SyntaxNode, base: BlockStyle) -> BlockStyle {
+        BlockStyle {
+            expand_empty: block.children().next().is_none() && self.within(cx, block),
+            keep_trailing_blank: self.follows(cx, block),
+            ..base
         }
-        next = e.next_sibling_or_token();
     }
-    next.is_some_and(|e| match &e {
-        SyntaxElement::Node(n) => kinds.contains(&n.kind()),
-        SyntaxElement::Token(t) => words.contains(&t.text()),
-    })
+
+    /// Does the next significant element after `block` start a clause or is a keyword of the set?
+    fn follows(&self, cx: &FormatCtx<'_>, block: &SyntaxNode) -> bool {
+        let mut next = block.next_sibling_or_token();
+        while let Some(e) = &next {
+            if !matches!(e, SyntaxElement::Token(t) if cx.grammar.is_trivia(t.kind())) {
+                break;
+            }
+            next = e.next_sibling_or_token();
+        }
+        next.is_some_and(|e| match &e {
+            SyntaxElement::Node(n) => self.clauses.contains(&n.kind()),
+            SyntaxElement::Token(t) => self.words.contains(&t.text()),
+        })
+    }
+
+    /// Is `block` part of a longer statement: the body of a clause, of a `#try` that has one, or
+    /// of a statement that has a keyword of the set?
+    fn within(&self, cx: &FormatCtx<'_>, block: &SyntaxNode) -> bool {
+        let Some(parent) = block.parent() else {
+            return false;
+        };
+        self.clauses.contains(&parent.kind())
+            || (cx.grammar.has_tag(parent.kind(), "try")
+                && parent.children().any(|c| self.clauses.contains(&c.kind())))
+            || parent
+                .children_with_tokens()
+                .any(|c| c.as_token().is_some_and(|t| self.words.contains(&t.text())))
+    }
 }
 
 /// Where a labeled statement puts its label.
@@ -89,7 +118,7 @@ pub fn labeled(head: Doc, body: Doc, style: LabelStyle, bare: bool) -> Doc {
     } else {
         head
     };
-    let sep = if bare {
+    let sep = if bare && !style.body_on_next_line {
         Doc::Nil
     } else if style.body_on_next_line {
         doc::hardline()
@@ -97,6 +126,24 @@ pub fn labeled(head: Doc, body: Doc, style: LabelStyle, bare: bool) -> Doc {
         doc::lit(" ")
     };
     doc::concat(vec![head, sep, body])
+}
+
+/// A `label: body` node (`#labeled`): `print` prints a run of its elements (the label with its
+/// colon, then the body). A node of fewer than three elements is a shape error.
+pub fn labeled_statement(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    style: LabelStyle,
+    print: &dyn Fn(&[SyntaxElement]) -> Result<Doc, FormatError>,
+) -> Result<Doc, FormatError> {
+    let els = crate::seq::kids(cx, node);
+    if els.len() < 3 {
+        return Err(FormatError::Shape("labeled statement".into()));
+    }
+    let bare = els[2]
+        .as_node()
+        .is_some_and(|b| cx.grammar.has_tag(b.kind(), "empty-statement"));
+    Ok(labeled(print(&els[..2])?, print(&els[2..])?, style, bare))
 }
 
 /// `open`, the items one per line and indented, `close`. An empty block is `open close`. Separator

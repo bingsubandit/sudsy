@@ -332,20 +332,12 @@ fn has_paren_condition(kind: SyntaxKind) -> bool {
 
 /// `label:` moved out by `label_indent`, then the labeled statement on the next line.
 pub fn labeled_statement(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    let els = children(cx, node);
-    if els.len() < 3 {
-        return seq_of(cx, node, &els);
-    }
     let style = core_format::shapes::LabelStyle {
         body_on_next_line: true,
         outdent: label_outdent(cx.options),
     };
-    Ok(core_format::shapes::labeled(
-        seq_of(cx, node, &els[..2])?,
-        seq_of(cx, node, &els[2..])?,
-        style,
-        false,
-    ))
+    core_format::shapes::labeled_statement(cx, node, style, &|els| seq_of(cx, node, els))
+        .or_else(|_| seq(cx, node))
 }
 
 pub fn seq(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

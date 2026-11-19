@@ -610,6 +610,15 @@ pub mod shared {
         )
     }
 
+    pub fn initializer_fill_width(default: i64) -> OptionDef {
+        OptionDef::int(
+            "initializer_fill_width",
+            default,
+            (0, 100),
+            "The elements of an array initializer are filled (as many as fit on a line) when each is shorter than this many characters in the source; 0: never.",
+        )
+    }
+
     pub fn indent_nested_binary(default: bool) -> OptionDef {
         OptionDef::boolean(
             "indent_nested_binary",
