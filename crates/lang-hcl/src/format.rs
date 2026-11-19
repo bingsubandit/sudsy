@@ -126,13 +126,11 @@ fn lines(root: &SyntaxNode) -> Vec<Line> {
                     k::WHITESPACE => {}
                     k::NEWLINE => lines.extend(text.matches('\n').map(|_| Line::default())),
                     kind => {
-                        if in_template_code(&t) {
-                            match kind {
-                                k::OPEN => text_mode.push(false),
-                                k::CLOSE => {
-                                    text_mode.pop();
-                                }
-                                _ => {}
+                        if matches!(kind, k::OPEN | k::CLOSE) && in_template_code(&t) {
+                            if kind == k::OPEN {
+                                text_mode.push(false);
+                            } else {
+                                text_mode.pop();
                             }
                         }
                         let line_comment = kind == k::COMMENT && !text.starts_with("/*");
