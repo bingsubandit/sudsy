@@ -5,7 +5,7 @@ use core_syntax::{SyntaxKind, print};
 use lang_cpp::generated::kind;
 use lang_cpp::{Dialect, provider};
 use provider_api::format_testing::{
-    assert_file_names, assert_parses, bench_input_files, check_corpus,
+    assert_file_names, assert_parses, bench_input_files, check_corpus, check_corpus_shapes,
 };
 use provider_api::{LanguageProvider, SourceFile};
 
@@ -104,27 +104,6 @@ fn texts(src: &str, dialect: Dialect, wanted: SyntaxKind) -> Vec<String> {
 }
 
 #[test]
-fn lines() {
-    let src = "int a; int f(int x)\n{ if (x) return 1; else { x; } }\nstruct S { int a; } s;\npublic:\nBEGIN(x)\nint b;\n";
-    assert_eq!(
-        texts(src, Dialect::Cpp, kind::LINE),
-        [
-            "int a;",
-            "int f(int x) { if (x) return 1; else { x; } }",
-            "if (x)",
-            "return 1;",
-            "else { x; }",
-            "x;",
-            "struct S { int a; } s;",
-            "int a;",
-            "public:",
-            "BEGIN(x)",
-            "int b;",
-        ]
-    );
-}
-
-#[test]
 fn c_has_no_cpp_keywords() {
     let src = "int new = 1; class x;";
     let keywords = |dialect| {
@@ -149,7 +128,7 @@ fn conditional_groups() {
     assert_eq!(texts(whole, Dialect::Cpp, kind::PP_GROUP).len(), 1);
     let open = "#if A\nvoid f(int a) {\n#else\nvoid f(long a) {\n#endif\n  g();\n}\n";
     assert!(texts(open, Dialect::Cpp, kind::PP_GROUP).is_empty());
-    assert_eq!(texts(open, Dialect::Cpp, kind::BRACE_GROUP).len(), 2);
+    assert_eq!(texts(open, Dialect::Cpp, kind::BLOCK).len(), 2);
     let closing = "void f() {\n#if A\n}\n#endif\n";
     assert!(texts(closing, Dialect::Cpp, kind::PP_GROUP).is_empty());
     assert_eq!(texts(closing, Dialect::Cpp, kind::DIRECTIVE).len(), 2);
@@ -291,4 +270,53 @@ fn a_backslash_before_a_line_break_continues_the_string() {
         .map(|t| t.text().to_string())
         .collect();
     assert_eq!(strings, ["\"a\\\r\nb\"", "'\\\\'", "\"open"]);
+}
+
+#[test]
+#[ignore]
+fn dump_tree() {
+    let path = std::env::var("DUMP").unwrap();
+    let src = std::fs::read_to_string(&path).unwrap();
+    let dialect = if path.ends_with(".c") {
+        Dialect::C
+    } else {
+        Dialect::Cpp
+    };
+    let parsed = provider(dialect)
+        .parse(&SourceFile::new("a.cc", 1, &src))
+        .unwrap();
+    let g = core_syntax::grammars::CPP.get();
+    let mut depth = 0;
+    for ev in parsed.tree.preorder_with_tokens() {
+        match ev {
+            core_syntax::WalkEvent::Enter(e) => {
+                if let Some(n) = e.as_node() {
+                    println!("{}{}", "  ".repeat(depth), g.name(n.kind()));
+                    depth += 1;
+                } else if let Some(t) = e.as_token() {
+                    if !g.is_trivia(t.kind()) {
+                        println!("{}'{}'", "  ".repeat(depth), t.text());
+                    }
+                }
+            }
+            core_syntax::WalkEvent::Leave(e) => {
+                if e.as_node().is_some() {
+                    depth -= 1;
+                }
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore = "needs the corpus: tests/conformance/fetch-cpp-corpus.sh"]
+fn shapes_cpp() {
+    let exts = ["cc", "cpp", "cxx", "hpp", "hh", "hxx", "ipp"];
+    check_corpus_shapes(provider(Dialect::Cpp), "cpp", &exts);
+}
+
+#[test]
+#[ignore = "needs the corpus: tests/conformance/fetch-cpp-corpus.sh"]
+fn shapes_c() {
+    check_corpus_shapes(provider(Dialect::C), "cpp", &["c", "h"]);
 }

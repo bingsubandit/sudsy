@@ -1,11 +1,13 @@
 //! C and C++ (`.c .h`, `.cc .cpp .cxx .hpp .hh .hxx .ipp`): read without preprocessing, as
 //! clang-format reads them. `lexer` gives every token, `structure` the unwrapped lines, bracket
-//! groups, directives and conditional groups; the two providers (`cpp`, and `c` as its dialect)
+//! groups, directives and conditional groups, `deep` the statements, declarations and expressions
+//! inside them; the two providers (`cpp`, and `c` as its dialect)
 //! share both. The formatter prints the file as written.
 //!
 //! concept: none (glue: provider entry)
 
 core_syntax::include_generated!();
+mod deep;
 mod format;
 mod lexer;
 mod structure;
@@ -55,7 +57,7 @@ fn parse_file(file: &SourceFile, dialect: Dialect) -> ParseResult {
 
 pub fn parse(src: &str, dialect: Dialect) -> ParseResult {
     let lexed = lexer::lex(src, dialect);
-    let nodes = structure::build(src, &lexed.toks);
+    let nodes = deep::build(src, &lexed.toks, structure::build(src, &lexed.toks));
     let tokens: Vec<Tok> = (lexed.toks.iter())
         .map(|t| Tok {
             kind: t.kind,
