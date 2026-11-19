@@ -196,8 +196,8 @@ impl<'a> Cx<'a> {
     }
 
     fn finish(mut self) -> Vec<Node> {
-        let mut keyed: Vec<(u32, u32, u32, SyntaxKind)> = Vec::new();
-        keyed.reserve(self.nodes.len() + self.extra.len());
+        let mut keyed: Vec<(u32, u32, u32, SyntaxKind)> =
+            Vec::with_capacity(self.nodes.len() + self.extra.len());
         for (i, n) in self.nodes.iter().enumerate() {
             if n.start != GONE {
                 keyed.push((n.start, !n.end, i as u32, n.kind));

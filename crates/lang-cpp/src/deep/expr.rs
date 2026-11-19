@@ -289,9 +289,7 @@ impl Cx<'_> {
                         p = self.skip(p + 1);
                         continue;
                     }
-                    if w == "struct" || w == "class" || w == "enum" || w == "union" {
-                        builtin = true;
-                    } else if is_builtin(w) {
+                    if matches!(w, "struct" | "class" | "enum" | "union") || is_builtin(w) {
                         builtin = true;
                     } else if !matches!(
                         w,
@@ -546,7 +544,6 @@ impl Cx<'_> {
             | k::ARROW
             | k::AMP
             | k::STAR
-            | k::AMP_AMP
             | k::ELLIPSIS
             | k::EQUAL => true,
             k::IDENT | k::KEYWORD => decl,

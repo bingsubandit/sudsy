@@ -50,12 +50,11 @@ impl Cx<'_> {
         if self.word(s, b, "template") {
             return Some(self.template(s, b, scope));
         }
-        if self.word(s, b, "namespace")
-            || (self.word(s, b, "extern") && self.is(s + 1, b, k::STRING))
+        if (self.word(s, b, "namespace")
+            || (self.word(s, b, "extern") && self.is(s + 1, b, k::STRING)))
+            && let Some(r) = self.namespace(s, b)
         {
-            if let Some(r) = self.namespace(s, b) {
-                return Some(r);
-            }
+            return Some(r);
         }
         if (self.word(s, b, "class") || self.word(s, b, "struct") || self.word(s, b, "union"))
             && let Some(r) = self.class_specifier(s, b)
@@ -103,10 +102,8 @@ impl Cx<'_> {
                         && !(w == "extern" && self.is(p + 1, b, k::STRING))
                     {
                         p += 1;
-                    } else if ATTRIBUTES.contains(&w) && self.open(p + 1, b, k::LPAR) {
-                        p = self.skip(p + 1);
-                    } else if t.kind == k::IDENT
-                        && w.starts_with("__")
+                    } else if (ATTRIBUTES.contains(&w)
+                        || (t.kind == k::IDENT && w.starts_with("__")))
                         && self.open(p + 1, b, k::LPAR)
                     {
                         p = self.skip(p + 1);
@@ -186,9 +183,10 @@ impl Cx<'_> {
             }
         }
         loop {
-            if self.is(q, b, k::STAR) || self.is(q, b, k::AMP) || self.is(q, b, k::AMP_AMP) {
-                q += 1;
-            } else if self.word(q, b, "const")
+            if self.is(q, b, k::STAR)
+                || self.is(q, b, k::AMP)
+                || self.is(q, b, k::AMP_AMP)
+                || self.word(q, b, "const")
                 || self.word(q, b, "volatile")
                 || self.word(q, b, "restrict")
                 || self.word(q, b, "__restrict")
@@ -292,9 +290,9 @@ impl Cx<'_> {
                 || self.word(q, b, "volatile")
                 || self.word(q, b, "override")
                 || self.word(q, b, "final")
+                || self.is(q, b, k::AMP)
+                || self.is(q, b, k::AMP_AMP)
             {
-                q += 1;
-            } else if self.is(q, b, k::AMP) || self.is(q, b, k::AMP_AMP) {
                 q += 1;
             } else if self.is(q, b, k::LSQB) && self.last[q] != NONE {
                 q = self.skip(q);
@@ -440,11 +438,13 @@ impl Cx<'_> {
                 if self.c[q].kind == k::EQUAL && eq == NONE as usize {
                     eq = q;
                 }
-                if self.c[q].kind == k::LESS && q > 0 && self.c[q - 1].kind == k::IDENT {
-                    if let Some(e) = self.template_end(q, hi, false) {
-                        q = e;
-                        continue;
-                    }
+                if self.c[q].kind == k::LESS
+                    && q > 0
+                    && self.c[q - 1].kind == k::IDENT
+                    && let Some(e) = self.template_end(q, hi, false)
+                {
+                    q = e;
+                    continue;
                 }
                 q = self.skip(q);
             }

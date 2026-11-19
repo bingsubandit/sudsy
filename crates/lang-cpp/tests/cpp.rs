@@ -128,12 +128,36 @@ fn conditional_groups() {
     assert_eq!(texts(whole, Dialect::Cpp, kind::PP_GROUP).len(), 1);
     let open = "#if A\nvoid f(int a) {\n#else\nvoid f(long a) {\n#endif\n  g();\n}\n";
     assert!(texts(open, Dialect::Cpp, kind::PP_GROUP).is_empty());
-    assert_eq!(texts(open, Dialect::Cpp, kind::BLOCK).len(), 2);
+    // The branch that leaves the `{` open has a `BraceGroup`; the closed one a `Block`.
+    assert_eq!(texts(open, Dialect::Cpp, kind::BLOCK).len(), 1);
+    assert_eq!(texts(open, Dialect::Cpp, kind::BRACE_GROUP).len(), 1);
     let closing = "void f() {\n#if A\n}\n#endif\n";
     assert!(texts(closing, Dialect::Cpp, kind::PP_GROUP).is_empty());
     assert_eq!(texts(closing, Dialect::Cpp, kind::DIRECTIVE).len(), 2);
     let nested = "#if A\n#if B\nx;\n#endif\n#elif C\ny;\n#else\nz;\n#endif\n";
     assert_eq!(texts(nested, Dialect::Cpp, kind::PP_BRANCH).len(), 4);
+}
+
+/// The deep layer: statements, declarations and expressions are nodes of their own kind.
+#[test]
+fn deep_nodes() {
+    let src = "int f(int a, char* b) {\n  if (a) return a + b * 2;\n  for (;;) g(x->y[1]);\n  int c = a ? 1 : 2;\n}\nclass A : B { int m; };\nauto l = [&](int x) { return x; };\n";
+    let one =
+        |wanted, text: &str| assert_eq!(texts(src, Dialect::Cpp, wanted), [text], "{wanted:?}");
+    one(
+        kind::FUNCTION_DECLARATION,
+        "int f(int a, char* b) { if (a) return a + b * 2; for (;;) g(x->y[1]); int c = a ? 1 : 2; }",
+    );
+    one(kind::IF_STATEMENT, "if (a) return a + b * 2;");
+    one(kind::FOR_STATEMENT, "for (;;) g(x->y[1]);");
+    one(kind::TERNARY, "a ? 1 : 2");
+    one(kind::CLASS_SPECIFIER, "class A : B { int m; };");
+    one(kind::BASE_CLAUSE, ": B");
+    one(kind::LAMBDA, "[&](int x) { return x; }");
+    one(kind::MEMBER_ACCESS, "x->y");
+    one(kind::INDEX, "x->y[1]");
+    // `*` binds tighter than `+`.
+    assert_eq!(texts(src, Dialect::Cpp, kind::BINARY).len(), 2);
 }
 
 #[test]
@@ -293,10 +317,10 @@ fn dump_tree() {
                 if let Some(n) = e.as_node() {
                     println!("{}{}", "  ".repeat(depth), g.name(n.kind()));
                     depth += 1;
-                } else if let Some(t) = e.as_token() {
-                    if !g.is_trivia(t.kind()) {
-                        println!("{}'{}'", "  ".repeat(depth), t.text());
-                    }
+                } else if let Some(t) = e.as_token()
+                    && !g.is_trivia(t.kind())
+                {
+                    println!("{}'{}'", "  ".repeat(depth), t.text());
                 }
             }
             core_syntax::WalkEvent::Leave(e) => {
