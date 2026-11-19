@@ -447,7 +447,11 @@ impl P<'_> {
             let k = self.n(c);
             if k.t == T::Text && k.lead_sp {
                 // The case's own softline starts a broken body: a second line break would add a blank line.
-                body.push(if i == 0 { doc::if_break(doc::nil(), doc::line()) } else { doc::line() });
+                body.push(if i == 0 {
+                    doc::if_break(doc::nil(), doc::line())
+                } else {
+                    doc::line()
+                });
             }
             // An interpolation in a case stays as written.
             body.push(if k.t == T::Interp {

@@ -35,7 +35,6 @@ The differences are named in `tests/parity/csharpier-xml/differences.yaml`; wher
 <!-- generated:differences:csharpier-xml -->
 
 - `not-xml`: a file that is not XML is passed through by CSharpier; Sudsy reports a syntax error
-- `text-as-written`: text content and attribute values stay as written; CSharpier writes a double quote in a value as `&quot;`, puts CDATA and `xml:space="preserve"` content on lines of their own and trims its whitespace
 - `width-accounting`: CSharpier's width accounting keeps a tag on one line after a long multi-line header comment (.resx) or below a tag far longer than the width; Sudsy breaks the attributes
 <!-- /generated -->
 

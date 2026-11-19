@@ -1198,7 +1198,11 @@ impl PatternRule {
         if let Some(message) = &self.message {
             let at = self.report_range(node, captures, range, file.grammar);
             let diagnostic = ctx.report(at, substitute(message, captures, file.text));
-            if let Some(fix) = body.fix.as_ref().filter(|f| f.names.iter().all(|n| captures.get(n).is_some())) {
+            if let Some(fix) = body
+                .fix
+                .as_ref()
+                .filter(|f| f.names.iter().all(|n| captures.get(n).is_some()))
+            {
                 let edit = Self::fix_edit(fix, captures, range, file.text);
                 diagnostic.fix(Fix::new(fix.title.clone(), fix.kind, vec![edit]));
             }

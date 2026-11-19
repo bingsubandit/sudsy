@@ -91,6 +91,13 @@ The parser already reports a stray end tag, a raw `&` or `<` in text and a self-
 - The `html` rules and the `template` family run on the tree (the Vue-only ones have `only: vue`);
 - Angular template rules (the `template` family with `only: component.html`, text checks in `ng_checks.rs` over bindings, interpolations and block heads; fixtures under `tests/rules/angular`): @angular-eslint's `banana-in-box`, `eqeqeq` and `no-negated-async`, and `require-for-track` (`@for` without `track`, a compiler error); `no-implicit-button-type` and `no-inline-style` also cover its `button-has-type` and `no-inline-styles`. Catalog: `docs/ai/parity/angular-eslint.yaml`.
 - Formatting parity: `scripts/parity.sh format prettier-angular` (Prettier 3.9.10 `--parser angular` on `*.component.html` copies; gaps in `tests/parity/prettier-angular/differences.yaml`): identical files `prettier-angular` (Prettier's `tests/format/angular`) 57 of 80, `components` 679 of 684, `angular` 444 of 446, `realworld-app` 11 of 11; no file is refused by the safety check, and a second format changes none. Prettier's own output is not stable on 2 files of `components` (`non-idempotent`, `tool-wrong`, pinned): it breaks an interpolation that fits on its line because the text after it does not, and joins it again on a second format; the printer keeps such an interpolation on one line and breaks the line after it. An ICU case whose text starts on a line of its own gets no blank line.
+Where Sudsy differs from Prettier's Angular output by design:
+
+<!-- generated:differences:prettier-angular -->
+
+- `non-idempotent`: Prettier's output for these files changes on a second format (an interpolation it breaks only because of the text after it); Sudsy's output is stable, so it keeps the interpolation on one line and breaks after it
+<!-- /generated -->
+
 - Not done: comments inside a start tag (a finding: the printer would lose them), `<ng-template>` content typed as TypeScript, `@defer` triggers formatted (kept as written).
 
 `tests/conformance/fetch-angular-corpus.sh` fetches angular/components, angular/angular, the RealWorld app and Prettier's angular format tests at pinned commits; `cargo test --profile corpus -p lang-html --test integration -- --ignored --nocapture angular` runs the shared checks on every `.html` of the first three. The files with findings are not Angular (the Dgeni templates of components, a stackblitz page).

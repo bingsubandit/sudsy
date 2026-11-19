@@ -46,13 +46,7 @@ The tree-only core rules of stylelint, with stylelint's ids, in `lang-css/rules/
 
 The model (`model.rs`) gives the rules the property and at-rule names, the selectors of a rule split into compounds and parts (a functional pseudo-class adds what its arguments hold to its compound), and the tokens of a value. Names are compared as stylelint does: properties, at-rules, units and pseudo-classes in lowercase, classes, ids, functions and font families as written; the `pattern` of a custom property or custom media is matched against the name without `--`. Custom properties in `var()` count for `custom-property-pattern`. Not built: `annotation-no-unknown`, `at-rule-descriptor-no-unknown`, `declaration-property-value-keyword-no-deprecated`, `no-unknown-*`, those whose options are maps (`declaration-property-unit-allowed-list`, ...), `comment-empty-line-before`, `custom-property-empty-line-before`, `media-feature-range-notation`, `value-keyword-case` and `string-no-newline` (the lexer reports an unterminated string as a syntax error).
 
-Checked against stylelint by `scripts/parity.sh stylelint` ([../development/parity.md](../development/parity.md)); where Sudsy differs by design:
-
-<!-- generated:differences:stylelint -->
-
-- `element-id`: color-no-invalid-hex leaves the id of `element(#id)` alone (stylelint reports it as a hex colour)
-- `tailwind-at-rules`: Tailwind's at-rules (`@tailwind`, `@apply`, ...) are known to at-rule-no-unknown (stylelint reports them)
-<!-- /generated -->
+Checked against stylelint by `scripts/parity.sh stylelint` ([../development/parity.md](../development/parity.md)).
 
 ## Conformance
 The real projects of `tests/conformance/fetch-css-corpus.sh` (Bootstrap, Bulma, ant-design, Semantic UI, normalize.css, docusaurus; its Prettier fixtures belong to the parity harness and hold deliberate errors): every file parses without errors and formats with the shared checks (round trip, meaning, idempotency, comments kept). `cargo test --profile corpus -p lang-css --test integration -- --ignored --nocapture conformance` after `bash tests/conformance/fetch-css-corpus.sh`.

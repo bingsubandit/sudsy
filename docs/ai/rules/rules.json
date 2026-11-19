@@ -7236,7 +7236,14 @@
       "languages": [
         "hcl"
       ],
-      "options": [],
+      "options": [
+        {
+          "default": true,
+          "description": "Also report (and fix) a string that is one item of a list. Off: only a string that is a whole argument, as `terraform fmt` unwraps it.",
+          "name": "in_lists",
+          "type": "bool"
+        }
+      ],
       "presets": [
         "hcl/tflint-recommended"
       ],
@@ -17201,38 +17208,28 @@
       "description": "A command substitution written with backticks.",
       "example": {
         "config": null,
-        "fixed": null,
-        "input": "rm $(cat list)\nrm \"$(cat list)\"\nrm a$(b) `c`\nrm '$(literal)' \"$(ok)\"\necho $((1 + 2))\ndiff <(sort a) <(sort b); echo <(date)\nrm $file ${dir}/x \"$file\" '$file' $1 $?\nrm --opt=$value \"x $y\"\ncp $@ dir\ncp \"$@\" dir \"${arr[@]}\" ${arr[@]}\ncp $* dir ${arr[*]}\nnow=`date`\necho `date` \"`date`\" 'a`b`'\n[ -n `foo` ]\n[ $x -eq 0 ]\n[[ $x = $y ]] && [[ -n $(foo) ]]\nexport out=$(make)\nlocal out=\"$(make)\" x=1\ndeclare plain=1\nfor f in $files; do :; done\n",
+        "fixed": "now=$(date)\necho \"$(date +%s)\" done\nesc=`printf \"\\\\n\"`\n",
+        "input": "now=`date`\necho \"`date +%s`\" done\nesc=`printf \"\\\\n\"`\n",
         "language": "shell",
         "spans": [
           {
-            "column": 10,
-            "length": 3,
-            "line": 3
+            "column": 5,
+            "length": 6,
+            "line": 1
+          },
+          {
+            "column": 7,
+            "length": 10,
+            "line": 2
           },
           {
             "column": 5,
-            "length": 6,
-            "line": 12
-          },
-          {
-            "column": 6,
-            "length": 6,
-            "line": 13
-          },
-          {
-            "column": 14,
-            "length": 6,
-            "line": 13
-          },
-          {
-            "column": 6,
-            "length": 5,
-            "line": 14
+            "length": 14,
+            "line": 3
           }
         ]
       },
-      "fix": null,
+      "fix": "safe",
       "id": "no-backticks",
       "languages": [
         "shell"

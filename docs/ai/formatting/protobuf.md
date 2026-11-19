@@ -15,12 +15,6 @@ Layout follows `buf format` (no style options of its own): two-space indentation
 ## Parity
 `scripts/parity.sh format buf` compares with `buf format` 1.75.0 (downloaded on first use, `docs/ai/parity/buf.yaml`) on `tests/parity/buf/` and a corpus of real files (`tests/conformance/fetch-proto-corpus.sh`: googleapis common and service protos, protobuf's own protos including proto2, proto3 and editions test files, grpc's): 320 of 323 files are identical. The other 3 are named in `tests/parity/buf/differences.yaml`.
 
-Where Sudsy differs from buf by design:
-
-<!-- generated:differences:buf -->
-
-- `empty-statements`: empty statements (`;`) are kept; buf drops them
-<!-- /generated -->
 `cargo test --profile corpus -p lang-protobuf --test integration -- --ignored --nocapture conformance` checks every corpus file: parses without errors (322 of 322), round-trips, formats with the same tokens and idempotently.
 
 ## Lint

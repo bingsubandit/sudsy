@@ -39,16 +39,9 @@ Where Sudsy differs from Invoke-Formatter by design:
 
 <!-- generated:differences:invoke-formatter -->
 
-- `backtick-scriptblock`: Invoke-Formatter outdents the script block that follows a backtick continuation; Sudsy keeps its indentation
 - `not-powershell`: the file is C# source: Sudsy rejects it
 <!-- /generated -->
 
-`scripts/parity.sh psscriptanalyzer` compares the rules with the module; where they differ by design:
-
-<!-- generated:differences:psscriptanalyzer -->
-
-- `parameter-report-line`: a parameter is reported at its first attribute line; the module reports it at the variable
-- `scalar-variable-type`: the left operand of a null comparison is a variable of a scalar type, which the module knows and Sudsy (no types) does not
-<!-- /generated -->
+`scripts/parity.sh psscriptanalyzer` compares the rules with the module.
 
 `tests/conformance/fetch-powershell-corpus.sh` fetches scripts at pinned commits: dotnet-install.ps1, the modules and tools of PowerShell, the engine and tests of PSScriptAnalyzer, the sources of Pester. `cargo test --profile corpus -p lang-powershell -- --ignored --nocapture conformance` checks that each file the parser accepts (209 of 210; the other is C# in a `.ps1` file) round-trips, formats with the same tokens (the safety check) and formats idempotently.

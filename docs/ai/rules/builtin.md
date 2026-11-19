@@ -182,7 +182,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `unique-operation-name` | graphql | correctness | error | none | Two operations of a document have the same name; a server cannot tell which to run and tools that key on the name (caches, persisted queries) collide. Checked within the file. |
 | `comment-syntax` | hcl | style | off | safe | A `//` comment where `#` is the convention (tflint terraform_comment_syntax). The fix writes `#`. |
 | `deprecated-index` | hcl | style | warn | safe | A list item read with the legacy dot syntax, `a.0` (tflint terraform_deprecated_index). The fix writes `a[0]`. |
-| `deprecated-interpolation` | hcl | style | warn | safe | A string that is one interpolation, `"${var.a}"`, where the expression alone does (tflint terraform_deprecated_interpolation). The fix writes the expression. Not in Nomad job files (`.nomad`, `.nomad.hcl`), whose agent fills those in at run time. |
+| `deprecated-interpolation` | hcl | style | warn | safe | A string that is one interpolation, `"${var.a}"`, where the expression alone does (tflint terraform_deprecated_interpolation). The fix writes the expression. Not in Nomad job files (`.nomad`, `.nomad.hcl`), whose agent fills those in at run time. Options: `in_lists` (default `true`): Also report (and fix) a string that is one item of a list. Off: only a string that is a whole argument, as `terraform fmt` unwraps it. |
 | `documented-outputs` | hcl | style | off | none | An `output` block with no `description` argument (tflint terraform_documented_outputs). |
 | `documented-variables` | hcl | style | off | none | A `variable` block with no `description` argument (tflint terraform_documented_variables). |
 | `empty-list-equality` | hcl | suspicious | warn | none | A comparison with an empty list, `x == []` or `x != []` (tflint terraform_empty_list_equality): it is false for an empty set or a tuple of another type. |
@@ -467,7 +467,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `grep-count` | shell | style | off | none | A pipeline from `grep` into `wc -l`. |
 | `iterate-find-output` | shell | suspicious | warn | none | A `for` loop over the output of `find`. |
 | `iterate-ls-output` | shell | suspicious | warn | none | A `for` loop over the output of `ls`. |
-| `no-backticks` | shell | style | off | none | A command substitution written with backticks. |
+| `no-backticks` | shell | style | off | safe | A command substitution written with backticks. |
 | `no-egrep` | shell | style | off | none | A call of `egrep` or `fgrep`. |
 | `no-ls-grep` | shell | suspicious | warn | none | A pipeline from `ls` into `grep`. |
 | `no-ps-grep` | shell | style | off | none | A pipeline from `ps` into `grep`. |
