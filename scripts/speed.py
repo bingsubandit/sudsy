@@ -176,7 +176,12 @@ def main():
             version = config.get("version") or pf.catalog_version(config["catalog"])
             prefix = exe = ""
         else:
-            version, prefix, exe = prepare(name, config, specs, parity)
+            try:
+                version, prefix, exe = prepare(name, config, specs, parity)
+            except (SystemExit, Exception) as e:  # an install or fetch that fails leaves the tool's rows "not measured", with the error
+                print(f"{name}: {e}", file=sys.stderr, flush=True)
+                version, prefix, exe = config.get("version") or "?", "", ""
+                specs = [{**s, "not_measured": {t: f"setup failed: {str(e).strip().splitlines()[-1][:150]}" for t in ("format", "lint") if t in s}} for s in specs]
         values = {"prefix": prefix, "exe": exe, "python": sys.executable, "root": ROOT, "sudsy": args.sudsy}
         fill = lambda cmd: [str(a).format(**values) for a in cmd]  # noqa: E731
         tool_env = {**os.environ, **{k: v.format(prefix=prefix) for k, v in config.get("env", {}).items()}}
@@ -194,6 +199,7 @@ def main():
                 if config_text is None:
                     row["not_measured"] = reason
                 else:
+                  try:
                     corpus_info = corpus_info or corpus(name, config, speed, work)
                     row.update(corpus=corpus_info[2], files=corpus_info[0], bytes=corpus_info[1])
                     (work / "sudsy.yaml").write_text(config_text, encoding="utf-8", newline="\n")  # above the corpus, so it is no input
@@ -211,6 +217,10 @@ def main():
                     cmds = commands_for(command, {**values, "work": work}, paths)
                     sudsy_cmd = ["{sudsy}", "format", "--check", "."] if task == "format" else ["{sudsy}", "lint", "."]
                     row.update(best_of(fill(sudsy_cmd), cmds, work / "c", cwd, os.environ, env))
+                  except (SystemExit, Exception) as e:  # a run that fails is a row "not measured", with the error
+                    print(f"{name}/{speed['language']}/{task}: {e}", file=sys.stderr, flush=True)
+                    row = {k: v for k, v in row.items() if k not in ("corpus", "files", "bytes", "sudsy", "other")}
+                    row["not_measured"] = f"run failed: {str(e).strip().splitlines()[-1][:150]}"
                 rows.append(row)
                 print(json.dumps(row), flush=True)
     out = Path(args.out)
