@@ -1,0 +1,10 @@
+tool: "clang-format"
+version: "20.1.8 (PyPI clang-format wheel; the version `scripts/parity.sh format clang-format` installs)"
+languages: ["c", "cpp"]
+sources:
+  - "https://clang.llvm.org/docs/ClangFormatStyleOptions.html"
+  - "tests/parity/clang-format (differential numbers, docs/ai/development/parity.md)"
+scope: "clang-format's style options. Layout is measured by `scripts/parity.sh format clang-format` on the pinned C and C++ corpus (`tests/conformance/fetch-cpp-corpus.sh`: LLVM, fmt and range-v3 with their own .clang-format, the Linux kernel with its own, folly and SQLite under LLVM) and on the bench inputs under each preset, with sorting of includes, namespace end comments and comment reflow off in both tools; the known differences are `tests/parity/clang-format/differences.yaml`."
+entries:
+  IndentWidth: option cpp.format.indent_size
+  ColumnLimit: option cpp.format.line_width

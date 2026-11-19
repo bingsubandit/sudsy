@@ -4,3 +4,103 @@ options:
   - indent_style
   - final_newline: true
   - end_of_line
+  - max_blank_lines: [1, "Largest number of blank lines kept between statements and comments."]
+  - wrap_lines:
+      default: true
+      doc: "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change)."
+  - continuation_indent:
+      range: [0, 16]
+      default: 4
+      doc: "Columns a wrapped line is indented more than the line it continues, where it is not aligned to a bracket."
+  - access_modifier_outdent:
+      range: [0, 16]
+      default: 2
+      doc: "Columns `public:`, `private:` and `protected:` are outdented from the members of their class."
+  - indent_case_labels:
+      default: false
+      doc: "Indent `case` labels one level inside their `switch`."
+  - namespace_indentation:
+      values: ["none", "inner", "all"]
+      default: "none"
+      doc: "Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`."
+  - pointer_alignment:
+      values: ["right", "left", "middle"]
+      default: "right"
+      doc: "Where the `*` and `&` of a pointer or reference declarator go: next to the name (`right`), next to the type (`left`) or between them (`middle`)."
+  - brace_wrapping:
+      kind: "words"
+      doc: "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct."
+  - indent_braces:
+      default: false
+      doc: "Indent a brace that is on its own line together with the block it opens."
+  - short_functions:
+      values: ["none", "empty", "inline", "all"]
+      default: "all"
+      doc: "Function bodies kept on the line of the signature when they fit: `none`, `empty` (`{}` only), `inline` (functions defined in a class, and empty ones) or `all`."
+  - short_ifs:
+      values: ["never", "without_else", "all"]
+      default: "never"
+      doc: "An `if` with a simple statement is kept on one line when it fits: `never`, without an `else`, or with or without."
+  - short_loops:
+      default: false
+      doc: "A `for`, `while` or range-for with a simple statement is kept on one line when it fits."
+  - short_lambdas:
+      values: ["none", "empty", "inline", "all"]
+      default: "all"
+      doc: "Lambda bodies kept on the line of the lambda when they fit: `none`, `empty`, `inline` (a lambda that is an argument) or `all`."
+  - short_case_labels:
+      default: false
+      doc: "A `case` label and its simple statement are kept on one line when they fit."
+  - bin_pack_arguments:
+      default: true
+      doc: "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line)."
+  - bin_pack_parameters:
+      default: true
+      doc: "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line)."
+  - align_after_open_bracket:
+      values: ["align", "dont_align", "always_break"]
+      default: "align"
+      doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."
+  - break_before_binary_operators:
+      values: ["none", "non_assignment", "all"]
+      default: "none"
+      doc: "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`)."
+  - break_constructor_initializers:
+      values: ["before_colon", "before_comma"]
+      default: "before_colon"
+      doc: "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`)."
+  - constructor_initializer_indent:
+      range: [0, 16]
+      default: 4
+      doc: "Columns a constructor initializer list is indented more than its constructor."
+  - break_after_return_type:
+      values: ["none", "top_level", "all", "top_level_definitions", "all_definitions"]
+      default: "none"
+      doc: "The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`)."
+  - short_enums:
+      default: true
+      doc: "An enum whose body fits stays on one line."
+  - penalty_return_type:
+      range: [0, 1000]
+      default: 60
+      doc: "What a return type on a line of its own costs the layout; the higher, the longer the parameter list may wrap before the return type moves."
+  - space_before_parens:
+      values: ["never", "control_statements", "always"]
+      default: "control_statements"
+      doc: "A blank before the parenthesis of `if`, `for`, `while`, `switch` and `catch` (`control_statements`), before every parenthesis (`always`) or never."
+  - spaces_before_trailing_comments:
+      range: [0, 16]
+      default: 1
+      doc: "Blanks between the code of a line and its `//` comment."
+  - align_trailing_comments:
+      default: true
+      doc: "Align the trailing comments of consecutive lines."
+  - break_template_declarations:
+      values: ["yes", "multiline", "no"]
+      default: "multiline"
+      doc: "`template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never."
+  - align_escaped_newlines:
+      values: ["right", "left", "dont_align"]
+      default: "right"
+      doc: "The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line."
+presets: [google, chromium, mozilla, webkit, gnu, microsoft]

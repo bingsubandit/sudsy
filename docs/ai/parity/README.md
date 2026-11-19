@@ -26,6 +26,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | buf | 85.9% | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
 | checkmake | 73.5% | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
 | checkstyle | 25.5% | 126 | 36 | 12 | 72 | 0 | 6 | 0 | 72 |
+| clang-format | - | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | csharpier | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | - | 56 | 50 | 3 | 0 | 1 | 2 | 0 | 0 |
 | eslint | 100.0% | 292 | 95 | 22 | 122 | 0 | 32 | 21 | 122 |

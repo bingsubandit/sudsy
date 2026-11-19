@@ -1,0 +1,9 @@
+# Microsoft's C++ style as clang-format's Microsoft style: four spaces, 120 columns, braces on their own line.
+cpp:
+  format:
+    short_enums: false
+    short_functions: none
+    brace_wrapping: [class, enum, function, namespace, extern, control, else, catch]
+    line_width: 120
+    indent_size: 4
+    penalty_return_type: 1000
