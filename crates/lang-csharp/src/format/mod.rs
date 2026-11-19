@@ -111,7 +111,7 @@ impl NodeFormatter for CSharpFormatter {
             kind,
             k::SIMPLE_LAMBDA_EXPRESSION | k::PARENTHESIZED_LAMBDA_EXPRESSION
         ) && fluid_assignments(cx.options)
-            && let Some(doc) = chains::lambda(cx, node)?
+            && let Ok(doc) = chains::lambda(cx, node)
         {
             return Ok(Some(doc));
         }

@@ -139,7 +139,7 @@ fn assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 }
 
 fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    shapes::arrow_body(cx, node, &decl::Java(cx), k::ARROW, 2).or_else(|_| generic(cx, node))
+    shapes::arrow_body(cx, node, &decl::Java(cx), super::ARROW_BODY).or_else(|_| generic(cx, node))
 }
 
 /// Prefix and postfix operators stick to their operand.

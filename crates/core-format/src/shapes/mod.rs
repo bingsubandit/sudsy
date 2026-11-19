@@ -31,7 +31,7 @@ mod section;
 mod signature;
 pub mod tabular;
 
-pub use arrow::arrow_body;
+pub use arrow::{ArrowStyle, arrow_body};
 pub use assignment::{
     Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
 };

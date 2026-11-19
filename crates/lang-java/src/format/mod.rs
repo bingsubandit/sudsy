@@ -21,6 +21,13 @@ use core_rules::imports::{Compare, Order, Separate};
 use core_syntax::grammars;
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
 
+/// The body of a lambda or a switch rule: two levels in, a group of its own.
+const ARROW_BODY: core_format::shapes::ArrowStyle = core_format::shapes::ArrowStyle {
+    arrow: k::ARROW,
+    levels: 2,
+    own_group: true,
+};
+
 include!("../schema.generated.rs");
 
 pub struct JavaFormatter;

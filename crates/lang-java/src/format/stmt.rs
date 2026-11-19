@@ -193,5 +193,5 @@ fn for_spec(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 
 /// `case X -> body`: an expression body moves to the next line when it does not fit.
 fn switch_rule(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    shapes::arrow_body(cx, node, &decl::Java(cx), k::ARROW, 2).or_else(|_| generic(cx, node))
+    shapes::arrow_body(cx, node, &decl::Java(cx), super::ARROW_BODY).or_else(|_| generic(cx, node))
 }

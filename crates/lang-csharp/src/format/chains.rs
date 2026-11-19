@@ -7,7 +7,7 @@ use super::options::fluid_assignments;
 use super::seq::{R, seq_of};
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
-use core_format::seq::children;
+use core_format::seq::{children, el};
 use core_format::shapes::{self, ChainPolicy, ends_in_line_comment};
 use core_format::{FormatCtx, FormatError};
 use core_syntax::{SyntaxElement, SyntaxNode, SyntaxToken};
@@ -131,26 +131,27 @@ pub fn arrow_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     with_rhs(cx, node, Doc::Nil, lead, op, value)
 }
 
-/// A lambda with an expression body for `assignment_layout: fluid`: the body moves to its own
-/// line when the lambda does not fit (always after a comment after `=>`). `None` for a block body.
-pub fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Option<Doc>, FormatError> {
-    let els = children(cx, node);
-    let Some((SyntaxElement::Node(body), head)) = els.split_last() else {
-        return Ok(None);
+/// Prints the elements of a node of C# with its own spacing.
+struct Csharp<'a>(&'a FormatCtx<'a>, &'a SyntaxNode);
+
+impl shapes::Printer for Csharp<'_> {
+    fn el(&self, e: &SyntaxElement) -> R {
+        el(self.0, e)
+    }
+    fn seq_with(&self, els: &[SyntaxElement], _doc: &dyn Fn(&SyntaxElement) -> R) -> R {
+        seq_of(self.0, self.1, els)
+    }
+}
+
+/// A lambda for `assignment_layout: fluid`: the body moves to its own line when the lambda does
+/// not fit (always after a comment after `=>`).
+pub fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    const STYLE: shapes::ArrowStyle = shapes::ArrowStyle {
+        arrow: k::EQUALS_GREATER_THAN_TOKEN,
+        levels: 1,
+        own_group: false,
     };
-    let arrow = head.last().and_then(|e| e.as_token());
-    let Some(arrow) = arrow.filter(|_| body.kind() != k::BLOCK) else {
-        return Ok(None);
-    };
-    let sep = if ends_in_line_comment(cx, arrow) {
-        doc::hardline()
-    } else {
-        doc::line()
-    };
-    Ok(Some(doc::group(doc::concat(vec![
-        seq_of(cx, node, head)?,
-        doc::indent(doc::concat(vec![sep, cx.format(body)?])),
-    ]))))
+    shapes::arrow_body(cx, node, &Csharp(cx, node), STYLE)
 }
 
 /// `pattern => expr` in a switch expression, laid out like an assignment (`switch_arm_layout`).
