@@ -292,6 +292,8 @@
         "html/eslint-plugin-vue-recommended",
         "hcl/tflint-recommended",
         "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint",
         "python/ruff",
         "html/html-validate-standard",
         "html/htmlhint",
@@ -7685,7 +7687,8 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -7896,7 +7899,9 @@
         "js"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "js/biome-recommended"
+      ],
       "upstream": [
         {
           "id": "adjacent-overload-signatures",
@@ -7986,7 +7991,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -8081,7 +8087,9 @@
         "js"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "js/biome-recommended"
+      ],
       "upstream": [
         {
           "id": "consistent-type-imports",
@@ -8129,7 +8137,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8168,7 +8178,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8217,7 +8229,8 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -8261,7 +8274,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8300,7 +8315,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8359,7 +8376,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8408,6 +8427,8 @@
       ],
       "presets": [
         "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint",
         "python/ruff"
       ],
       "upstream": [
@@ -8447,7 +8468,8 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8491,7 +8513,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8540,7 +8564,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8574,7 +8600,9 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8660,7 +8688,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8704,7 +8734,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -8753,7 +8784,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8787,7 +8820,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -8866,7 +8900,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8910,7 +8946,9 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -8949,7 +8987,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9013,7 +9053,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9099,7 +9141,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9180,7 +9224,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9224,7 +9270,9 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9307,7 +9355,9 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9375,7 +9425,9 @@
         "js"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "js/biome-recommended"
+      ],
       "upstream": [
         {
           "id": "no-non-null-assertion",
@@ -9457,7 +9509,8 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -9545,7 +9598,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9589,7 +9644,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9628,7 +9685,9 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9696,7 +9755,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -9734,7 +9794,9 @@
         "js"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "js/biome-recommended"
+      ],
       "upstream": [
         {
           "id": "no-unneeded-ternary",
@@ -9782,7 +9844,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9816,7 +9880,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -9855,7 +9920,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9894,7 +9961,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9928,7 +9997,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -9970,6 +10041,7 @@
       "presets": [
         "js/eslint-recommended",
         "js/typescript-eslint-recommended",
+        "js/oxlint",
         "python/ruff"
       ],
       "upstream": [
@@ -10043,7 +10115,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10077,7 +10151,9 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10131,7 +10207,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10170,7 +10247,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -10204,7 +10282,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -10289,6 +10368,7 @@
       "options": [],
       "presets": [
         "js/eslint-recommended",
+        "js/biome-recommended",
         "python/ruff"
       ],
       "upstream": [
@@ -10343,7 +10423,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10473,7 +10555,8 @@
       ],
       "options": [],
       "presets": [
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10586,7 +10669,9 @@
       ],
       "presets": [
         "js/eslint-recommended",
-        "js/typescript-eslint-recommended"
+        "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10670,6 +10755,7 @@
         }
       ],
       "presets": [
+        "js/biome-recommended",
         "python/ruff"
       ],
       "upstream": [
@@ -10729,7 +10815,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -10768,7 +10856,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -25591,6 +25681,8 @@
       "options": [],
       "presets": [
         "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint",
         "ruby/rubocop"
       ],
       "upstream": [
@@ -25665,7 +25757,8 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -25715,7 +25808,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -25753,7 +25848,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -25995,7 +26092,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -26347,7 +26446,9 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -26385,7 +26486,8 @@
       ],
       "options": [],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended"
       ],
       "upstream": [
         {
@@ -26594,6 +26696,8 @@
       ],
       "presets": [
         "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint",
         "ruby/rubocop"
       ],
       "upstream": [
@@ -26633,7 +26737,9 @@
         "ruby"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "js/biome-recommended"
+      ],
       "upstream": [
         {
           "id": "no-self-compare",
@@ -27178,7 +27284,9 @@
         }
       ],
       "presets": [
-        "js/eslint-recommended"
+        "js/eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint"
       ],
       "upstream": [
         {
@@ -27307,6 +27415,8 @@
       "presets": [
         "js/eslint-recommended",
         "js/typescript-eslint-recommended",
+        "js/biome-recommended",
+        "js/oxlint",
         "python/ruff"
       ],
       "upstream": [

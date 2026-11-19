@@ -1,0 +1,52 @@
+# The rules of oxlint's default set (the `correctness` category, version 1.94.0, `oxlint --print-config`) that Sudsy has,
+# at oxlint's severity (warn), mapped through the eslint and typescript-eslint catalogs.
+# Rules with no mapped Sudsy rule (66): constructor-super, for-direction, no-caller, no-empty-static-block, no-eval, no-ex-assign, no-global-assign, no-invalid-regexp, no-iterator, no-new-native-nonconstructor, no-nonoctal-decimal-escape, no-obj-calls, no-setter-return, no-this-before-super, no-unassigned-vars, no-unsafe-optional-chaining, no-unused-labels, no-unused-private-class-members, no-useless-backreference, no-useless-rename, oxc/bad-array-method-on-arguments, oxc/bad-char-at-comparison, oxc/bad-comparison-sequence, oxc/bad-match-all-arg, oxc/bad-min-max-func, oxc/bad-object-literal-comparison, oxc/bad-replace-all-arg, oxc/const-comparisons, oxc/double-comparisons, oxc/erasing-op, oxc/missing-throw, oxc/number-arg-out-of-range, oxc/only-used-in-recursion, oxc/uninvoked-array-callback, typescript/await-thenable, typescript/no-array-delete, typescript/no-base-to-string, typescript/no-duplicate-type-constituents, typescript/no-floating-promises, typescript/no-for-in-array, typescript/no-implied-eval, typescript/no-meaningless-void-operator, typescript/no-misused-spread, typescript/no-redundant-type-constituents, typescript/no-unnecessary-parameter-property-assignment, typescript/no-unsafe-declaration-merging, typescript/no-unsafe-unary-minus, typescript/no-useless-default-assignment, typescript/no-useless-empty-export, typescript/prefer-namespace-keyword, typescript/require-array-sort-compare, typescript/restrict-template-expressions, typescript/unbound-method, unicorn/no-await-in-promise-methods, unicorn/no-empty-file, unicorn/no-invalid-fetch-options, unicorn/no-invalid-remove-event-listener, unicorn/no-new-array, unicorn/no-single-promise-in-promise-methods, unicorn/no-thenable, unicorn/no-unnecessary-await, unicorn/no-useless-fallback-in-spread, unicorn/no-useless-length-check, unicorn/no-useless-spread, unicorn/prefer-set-size, unicorn/prefer-string-starts-ends-with
+js:
+  lint:
+    rules:
+      getter-return: warn
+      no-async-promise-executor: warn
+      no-class-assign: warn
+      no-compare-neg-zero: warn
+      no-assignment-in-condition: warn
+      no-const-assign: warn
+      no-constant-comparison: warn
+      no-constant-condition: warn
+      no-control-regex: warn
+      no-debugger: warn
+      no-delete-var: warn
+      no-dupe-class-members: warn
+      no-dupe-else-if: warn
+      no-duplicate-keys: warn
+      no-duplicate-case: warn
+      no-empty-character-class: warn
+      no-empty-pattern: warn
+      no-extra-boolean-cast: warn
+      no-func-assign: warn
+      no-import-assign: warn
+      no-irregular-whitespace: warn
+      no-loss-of-precision: warn
+      no-misleading-character-class: warn
+      no-self-assign: warn
+      no-shadow-restricted-names: warn
+      no-sparse-arrays: warn
+      unreachable-code: warn
+      no-unsafe-finally: warn
+      no-unsafe-negation: warn
+      no-useless-expression: warn
+      unused-variable: warn
+      unused-parameter: warn
+      no-useless-catch: warn
+      no-useless-escape: warn
+      no-with: warn
+      require-yield: warn
+      use-isnan: warn
+      valid-typeof: warn
+      no-duplicate-enum-values: warn
+      no-extra-non-null-assertion: warn
+      no-misused-new: warn
+      no-non-null-asserted-optional-chain: warn
+      no-this-alias: warn
+      no-wrapper-object-types: warn
+      prefer-as-const: warn
+      triple-slash-reference: warn

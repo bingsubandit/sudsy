@@ -16,30 +16,58 @@ import time
 from collections import Counter
 from pathlib import Path
 
+import parity_coverage as pc
 import parity_format as pf
 
 ROOT = pf.ROOT
 RUNS = 5
+CHUNK = 500  # files per process when a command takes `{files}`
 
 
 def entries():
-    """name -> (config, speed) for every entry with a `speed` key, in file order. A tool with a parity entry carries
-    the key there; one without (oxlint, dprint) is an entry of the `speed` section, which no parity runner reads."""
+    """name -> (config, [speed, ...]) for every entry with a `speed` key, in file order; a list is one tool measured on
+    several languages. A tool with a parity entry carries the key there; one without (oxlint, dprint) is an entry of the
+    `speed` section, which no parity runner reads."""
     found = {}
     for section in ("format", "lint", "speed"):
         for name, config in pf.tools().get(section, {}).items():
             if "speed" in config:
-                found.setdefault(name, (config, config["speed"]))
+                speed = config["speed"]
+                found.setdefault(name, (config, speed if isinstance(speed, list) else [speed]))
     return found
 
 
-def prepare(name, config, speed, parity):
+def commands_for(command, values, paths):
+    """The tool's commands with the placeholders filled; `{files}` is every corpus file, in chunks of CHUNK per process."""
+    fill = lambda a: str(a).format(**values)  # noqa: E731
+    if "{files}" not in command:
+        return [[fill(a) for a in command]]
+    i = command.index("{files}")
+    return [[*map(fill, command[:i]), *paths[k:k + CHUNK], *map(fill, command[i + 1:])] for k in range(0, len(paths), CHUNK)]
+
+
+def sudsy_config(name, speed, task, lint_presets):
+    """(the sudsy.yaml text of the Sudsy side, None) or (None, why the task is not measured). The mirroring preset of a
+    format run is the `preset` of the speed key (one name or a list), else the `sudsy.yaml` of the tool's parity folder;
+    of a lint run the `lint_preset` of the key, else the preset of the tool's lint entry."""
+    if task == "format":
+        if "preset" in speed:
+            names = [speed["preset"]] if isinstance(speed["preset"], str) else speed["preset"]
+            return json.dumps({"extends": [f"preset:{n}" for n in names]}), None
+        folder = ROOT / "tests/parity" / speed.get("sudsy", name) / "sudsy.yaml"
+        return (folder.read_text(encoding="utf-8"), None) if folder.exists() else (None, "no mirroring preset")
+    preset = speed.get("lint_preset") or lint_presets.get(name)
+    return (json.dumps({"extends": [f"preset:{preset}"]}), None) if preset else (None, "no mirroring preset")
+
+
+def prepare(name, config, specs, parity):
     """Builds what the entry needs, fetches its corpus and installs the tool; returns (version, prefix, exe)."""
     if "worker" in config.get("needs", []):
         pf.run(["dotnet", "build", "-c", "Release", "--nologo", "-v:q", "workers/csharp/Sudsy.Worker"], ROOT)
         os.environ.setdefault("SUDSY_CSHARP_WORKER", str(ROOT / "workers/csharp/Sudsy.Worker/bin/Release/net10.0/Sudsy.Worker.dll"))
-    for script in config.get("fetch", []):
-        pf.run(["bash", script], ROOT)
+    if any(isinstance(s["corpus"], dict) for s in specs):  # a named corpus fetches itself; a group needs the entry's fixtures
+        for script in config.get("fetch", []):
+            pf.run(["bash", script], ROOT)
     catalog = config.get("catalog")
     version = config.get("version") or pf.catalog_version(catalog)
     prefix = parity / f"{catalog or name}-{version}"
@@ -47,35 +75,42 @@ def prepare(name, config, speed, parity):
     spec = pf.tools()["format"][spec]["install"] if isinstance(spec, str) else spec
     if spec:
         pf.install(spec, catalog or name, version, prefix)
-    for file, text in speed.get("files", {}).items():  # config files the tool's command reads
-        (prefix / file).write_text(text.replace("{prefix}", str(prefix)), encoding="utf-8", newline="\n")
+    for speed in specs:
+        for file, text in speed.get("files", {}).items():  # config files the tool's command reads
+            (prefix / file).write_text(text.replace("{prefix}", str(prefix)), encoding="utf-8", newline="\n")
     return version, prefix, pf.executable(prefix, spec["exe"]) if spec and "exe" in spec else ""
 
 
 def corpus(name, config, speed, work):
-    """Copies the speed corpus into `work` (`copies` times) and returns (files, bytes, text). `corpus` names an entry of
-    `corpora` in parity_tools.json (fixture sources shared by the tools of a language), or is `{"group": <ratchet group
-    of the entry's fixtures>}` (`fixtures`: the ungrouped ones)."""
+    """Copies the speed corpus into `work/c` (`copies` times) and returns (files, bytes, text, paths below `work/c`).
+    `corpus` names an entry of `corpora` in parity_tools.json (fixture sources shared by the tools of a language), is
+    `{"group": <ratchet group of the entry's fixtures>}` (`fixtures`: the ungrouped ones), or `{"coverage": true}`: the
+    corpus of the entry's coverage run (`text`, `copies` as in the other forms)."""
     spec = speed["corpus"]
     if isinstance(spec, str):
         spec = pf.tools()["corpora"][spec]
+    if "coverage" in spec:
+        found = [(rel, path, None) for rel, path in pc.corpus_files(config["coverage"], Counter())]
     else:
-        spec = {**spec, "sources": [s for s in config["fixtures"] if (s.get("ratchet") or "fixtures") == spec["group"]]}
-    for script in spec.get("fetch", []):
-        pf.run(["bash", script], ROOT)
-    found = pf.fixtures({"fixtures": spec["sources"]}, ROOT / "tests/parity" / name, Counter())
+        if "group" in spec:
+            spec = {**spec, "sources": [s for s in config["fixtures"] if (s.get("ratchet") or "fixtures") == spec["group"]]}
+        for script in spec.get("fetch", []):
+            pf.run(["bash", script], ROOT)
+        found = pf.fixtures({"fixtures": spec["sources"]}, ROOT / "tests/parity" / name, Counter())
     if not found:
         raise SystemExit(f"{name}: the speed corpus is empty")
     copies = spec.get("copies", 1)
     shutil.rmtree(work, ignore_errors=True)
-    size = 0
+    size, paths = 0, []
     for i in range(copies):
         for rel, path, _ in found:
-            dest = work / (f"c{i + 1}" if copies > 1 else "") / rel
+            inside = (f"c{i + 1}/" if copies > 1 else "") + rel
+            dest = work / "c" / inside
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, dest)
             size += path.stat().st_size
-    return len(found) * copies, size, spec.get("text") or f"{len(found)} files"
+            paths.append(inside)
+    return len(found) * copies, size, spec.get("text") or f"{len(found)} files", paths
 
 
 def measure(command, cwd, env):
@@ -87,15 +122,23 @@ def measure(command, cwd, env):
     p.returncode = os.waitstatus_to_exitcode(status)
     if p.returncode in (126, 127):
         raise SystemExit(f"{' '.join(map(str, command))}: cannot run")
-    return seconds, usage.ru_maxrss / 1024  # ru_maxrss is KiB on Linux
+    return seconds, usage.ru_maxrss / 1024, p.returncode  # ru_maxrss is KiB on Linux
 
 
-def best_of(sudsy_cmd, tool_cmd, cwd, sudsy_env, tool_env):
-    """Alternates the two commands; the best run of each by wall time, as {"s", "mb"}."""
+def measure_all(commands, cwd, env):
+    """The commands one after the other (a tool given `{files}` runs once per chunk): the seconds add up, the memory is the peak."""
+    runs = [measure(c, cwd, env) for c in commands]
+    return sum(r[0] for r in runs), max(r[1] for r in runs), max(r[2] for r in runs)
+
+
+def best_of(sudsy_cmd, tool_cmds, sudsy_cwd, tool_cwd, sudsy_env, tool_env):
+    """Alternates Sudsy and the tool; the best run of each by wall time, as {"s", "mb"}."""
     best = {}
     for _ in range(RUNS):
-        for key, command, env in (("sudsy", sudsy_cmd, sudsy_env), ("other", tool_cmd, tool_env)):
-            seconds, mb = measure(command, cwd, env)
+        for key, commands, cwd, env in (("sudsy", [sudsy_cmd], sudsy_cwd, sudsy_env), ("other", tool_cmds, tool_cwd, tool_env)):
+            seconds, mb, code = measure_all(commands, cwd, env)
+            if key == "sudsy" and code > 1:  # 1 is findings or differences; any other code is an error, not a timing
+                raise SystemExit(f"{' '.join(map(str, commands[0]))} in {cwd}: exit {code}")
             if key not in best or seconds < best[key]["s"]:
                 best[key] = {"s": round(seconds, 3), "mb": round(mb)}
     return best
@@ -123,34 +166,43 @@ def main():
     lint_presets = {n: c.get("preset") for n, c in pf.tools()["lint"].items()}
     rows = []
     for name in chosen:
-        config, speed = known[name]
-        version, prefix, exe = prepare(name, config, speed, parity)
-        tasks = {}  # task -> (the sudsy.yaml of the run or None, the Sudsy command)
-        for task in ("format", "lint"):
-            if task == "format":
-                folder = ROOT / "tests/parity" / speed.get("sudsy", name) / "sudsy.yaml"
-                tasks[task] = (folder.read_text(encoding="utf-8") if folder.exists() else None, ["{sudsy}", "format", "--check", "."])
-            else:
-                preset = lint_presets.get(name)
-                tasks[task] = (json.dumps({"extends": [f"preset:{preset}"]}) if preset else None, ["{sudsy}", "lint", "."])
-        work = parity / f"{name}-speed"
-        corpus_info = None
+        config, specs = known[name]
+        version, prefix, exe = prepare(name, config, specs, parity)
         values = {"prefix": prefix, "exe": exe, "python": sys.executable, "root": ROOT, "sudsy": args.sudsy}
         fill = lambda cmd: [str(a).format(**values) for a in cmd]  # noqa: E731
         tool_env = {**os.environ, **{k: v.format(prefix=prefix) for k, v in config.get("env", {}).items()}}
-        for task, (config_text, sudsy_cmd) in tasks.items():
-            if task not in speed:
-                continue
-            row = {"id": f"{name}/{task}", "language": speed["language"], "task": task.capitalize(), "tool": speed.get("label", name), "version": version}
-            if config_text is None:
-                row["not_measured"] = "no mirroring preset"
-            else:
-                corpus_info = corpus_info or corpus(name, config, speed, work)
-                row.update(corpus=corpus_info[2], files=corpus_info[0], bytes=corpus_info[1])
-                (work / "sudsy.yaml").write_text(config_text, encoding="utf-8", newline="\n")
-                row.update(best_of(fill(sudsy_cmd), fill(speed[task]), work, os.environ, tool_env))
-            rows.append(row)
-            print(json.dumps(row), flush=True)
+        for i, speed in enumerate(specs):
+            work = parity / f"{name}-speed{i or ''}"
+            corpus_info = None
+            for task in ("format", "lint"):
+                if task not in speed and task not in speed.get("not_measured", {}):
+                    continue
+                row = {"id": f"{name}/{speed['language']}/{task}", "language": speed["language"], "task": task.capitalize(), "tool": speed.get("label", name), "version": version}
+                reason = speed.get("not_measured", {}).get(task)  # a task the tool cannot run here, with the reason
+                config_text = None
+                if not reason:
+                    config_text, reason = sudsy_config(name, speed, task, lint_presets)
+                if config_text is None:
+                    row["not_measured"] = reason
+                else:
+                    corpus_info = corpus_info or corpus(name, config, speed, work)
+                    row.update(corpus=corpus_info[2], files=corpus_info[0], bytes=corpus_info[1])
+                    (work / "sudsy.yaml").write_text(config_text, encoding="utf-8", newline="\n")  # above the corpus, so it is no input
+                    command = speed[task]
+                    coverage = command == "coverage"  # the command of the entry's coverage run, on the files of its corpus
+                    env = tool_env
+                    if coverage:
+                        command = config["coverage"]["command"]
+                        for file, text in config["coverage"].get("files", {}).items():
+                            (work / file).write_text(text.replace("{prefix}", str(prefix)), encoding="utf-8", newline="\n")
+                        env = {**tool_env, **{k: v.format(prefix=prefix) for k, v in config["coverage"].get("env", {}).items()}}
+                    cwd = work if coverage else work / "c"  # a coverage command names its config files relative to `work`
+                    paths = ["c/" + p for p in corpus_info[3]] if coverage else corpus_info[3]
+                    cmds = commands_for(command, {**values, "work": work}, paths)
+                    sudsy_cmd = ["{sudsy}", "format", "--check", "."] if task == "format" else ["{sudsy}", "lint", "."]
+                    row.update(best_of(fill(sudsy_cmd), cmds, work / "c", cwd, os.environ, env))
+                rows.append(row)
+                print(json.dumps(row), flush=True)
     out = Path(args.out)
     order = list(known)
     if args.tools and out.exists():  # a partial run replaces the rows of its tools and keeps the others

@@ -1,0 +1,65 @@
+# The rules of Biome's recommended set (JavaScript, TypeScript and JSX; biomejs.dev rules page) that Sudsy has through the
+# eslint and typescript-eslint rules each Biome rule lists as its source, at Biome's severity (error for most, warn for some).
+# Rules with no mapped Sudsy rule (172): noAccessKey, noAmbiguousAnchorText, noAriaHiddenOnFocusable, noAriaUnsupportedElements, noAutofocus, noDistractingElements, noHeaderScope, noInteractiveElementToNoninteractiveRole, noLabelWithoutControl, noNoninteractiveElementToInteractiveRole, noNoninteractiveTabindex, noPositiveTabindex, noRedundantAlt, noRedundantRoles, noStaticElementInteractions, noSvgWithoutTitle, useAltText, useAnchorContent, useAriaActivedescendantWithTabindex, useAriaPropsForRole, useAriaPropsSupportedByRole, useButtonType, useFocusableInteractive, useHeadingContent, useHtmlLang, useIframeTitle, useKeyWithClickEvents, useKeyWithMouseEvents, useMediaCaption, useSemanticElements, useValidAnchor, useValidAriaProps, useValidAriaRole, useValidAriaValues, useValidAutocomplete, useValidLang, noCommaOperator, noEmptyTypeParameters, noFlatMapIdentity, noStaticOnlyClass, noThisInStatic, noUselessConstructor, noUselessContinue, noUselessEmptyExport, noUselessFragments, noUselessLabel, noUselessLoneBlockStatements, noUselessRename, noUselessStringRaw, noUselessSwitchCase, noUselessUndefinedInitialization, useArrowFunction, useDateNow, useFlatMap, useIndexOf, useLiteralKeys, useMathMinMax, useNumericLiterals, useOptionalChain, useRegexLiterals, useSimpleNumberKeys, noChildrenProp, noComponentHookFactories, noConstantMathMinMaxClamp, noConstructorReturn, noGlobalObjectCalls, noInnerDeclarations, noInvalidBuiltinInstantiation, noInvalidConstructorSuper, noJsxNamespace, noNonoctalDecimalEscape, noPlaywrightMissingAwait, noPrivateImports, noQwikUseVisibleTask, noReactNativeRawText, noRenderReturnValue, noSetterReturn, noStringCaseMismatch, noUnreachableSuper, noUnsafeOptionalChaining, noUnusedFunctionParameters, noUnusedImports, noUnusedLabels, noUnusedPrivateClassMembers, noVoidElementsWithChildren, noVoidTypeReturn, noVueDataObjectDeclaration, noVueDuplicateKeys, noVueImportCompilerMacros, noVueRefAsOperand, noVueReservedKeys, noVueReservedProps, useExhaustiveDependencies, useHookAtTopLevel, useImageSize, useInlineScriptId, useJsxKeyInIterable, useParseIntRadix, usePlaywrightValidDescribeCallback, useQwikClasslist, useQwikLoaderLocation, useQwikMethodUsage, useQwikValidLexicalScope, useReactAsyncServerFunction, useReactNativePlatformComponents, useValidForDirection, noAccumulatingSpread, noDynamicNamespaceImportAccess, noImgElement, noUnwantedPolyfillio, useDomNodeTextContent, useGoogleFontPreconnect, noBlankTarget, noDangerouslySetInnerHtml, noDangerouslySetInnerHtmlWithChildren, noGlobalEval, noScriptUrl, noHeadElement, useArrayLiterals, useExponentiationOperator, useExportType, useLiteralEnumMembers, useNodejsImportProtocol, useShorthandFunctionType, useTemplate, useVueMultiWordComponentNames, useVueNextTickPromise, noApproximativeNumericConstant, noArrayIndexKey, noCatchAssign, noCommentText, noConfusingLabels, noConfusingVoidType, noConstEnum, noDocumentCookie, noDocumentImportInPage, noDoubleEquals, noDrizzleDeleteWithoutWhere, noDrizzleUpdateWithoutWhere, noDuplicateJsxProps, noDuplicateParameters, noDuplicateTestHooks, noEmptyInterface, noExportsInTest, noFocusedTests, noGlobalAssign, noGlobalIsFinite, noGlobalIsNan, noHeadImportInDocument, noIdenticalTestTitle, noImplicitAnyLet, noLabelVar, noMisrefactoredShorthandAssign, noOctalEscape, noProto, noReactNativeDeepImports, noReactSpecificProps, noReactStringRefs, noRedundantUseStrict, noSuspiciousSemicolonInJsx, noTemplateCurlyInString, noThenProperty, noUndeclaredEnvVars, noUnsafeDeclarationMerging, noUselessEscapeInString, noUselessRegexBackrefs, noVueArrowFuncInWatch, useDefaultSwitchClauseLast, useGoogleFontDisplay, useIsArray, useIterableCallbackReturn, useNamespaceKeyword
+js:
+  lint:
+    rules:
+      no-regex-spaces: error
+      prefer-rest-params: error
+      no-empty-object-type: error
+      no-unsafe-function-type: error
+      no-wrapper-object-types: error
+      no-extra-boolean-cast: error
+      no-useless-catch: error
+      no-useless-escape: error
+      no-unneeded-ternary: error
+      no-this-alias: error
+      no-unnecessary-type-constraint: error
+      no-const-assign: error
+      no-constant-condition: error
+      no-empty-character-class: error
+      no-empty-pattern: error
+      use-before-define: error
+      no-loss-of-precision: error
+      no-self-assign: error
+      no-case-declarations: error
+      unreachable-code: error
+      no-unsafe-finally: error
+      unused-variable: error
+      unused-parameter: error
+      use-isnan: error
+      valid-typeof: error
+      require-yield: error
+      no-non-null-assertion: error
+      prefer-const: error
+      consistent-type-imports: error
+      no-assignment-in-condition: error
+      no-async-promise-executor: error
+      no-class-assign: error
+      no-compare-neg-zero: error
+      no-control-regex: error
+      no-debugger: error
+      no-duplicate-case: error
+      no-dupe-class-members: error
+      no-dupe-else-if: error
+      no-duplicate-enum-values: error
+      no-duplicate-keys: error
+      no-explicit-any: error
+      no-extra-non-null-assertion: error
+      no-fallthrough: error
+      no-func-assign: error
+      no-import-assign: error
+      no-irregular-whitespace: error
+      no-misleading-character-class: error
+      no-misused-new: error
+      no-non-null-asserted-optional-chain: error
+      no-prototype-builtins: error
+      redeclared-variable: error
+      no-self-compare: error
+      no-shadow-restricted-names: error
+      no-sparse-arrays: error
+      ban-ts-comment: error
+      no-unsafe-negation: error
+      no-with: error
+      adjacent-overload-signatures: error
+      getter-return: error

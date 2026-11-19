@@ -1,10 +1,10 @@
 {
- "runner": "local run, Linux aarch64, 8 cores (agent host, shared, not the CI runner)",
+ "runner": "Linux aarch64, 8 cores",
  "runs": 5,
- "commit": "33134977",
+ "commit": "8033e0ee",
  "rows": [
   {
-   "id": "prettier/format",
+   "id": "prettier/JSON/format",
    "language": "JSON",
    "task": "Format",
    "tool": "Prettier",
@@ -13,12 +13,30 @@
    "files": 95,
    "bytes": 1190,
    "sudsy": {
-    "s": 0.012,
-    "mb": 34
+    "s": 0.018,
+    "mb": 41
    },
    "other": {
-    "s": 0.268,
-    "mb": 89
+    "s": 0.37,
+    "mb": 90
+   }
+  },
+  {
+   "id": "prettier/YAML/format",
+   "language": "YAML",
+   "task": "Format",
+   "tool": "Prettier",
+   "version": "3.9.10",
+   "corpus": "the GitHub Actions workflows of real repositories, 8 copies",
+   "files": 3160,
+   "bytes": 3762080,
+   "sudsy": {
+    "s": 0.342,
+    "mb": 97
+   },
+   "other": {
+    "s": 17.953,
+    "mb": 241
    }
   },
   {
@@ -112,36 +130,94 @@
    }
   },
   {
-   "id": "biome-js/format",
+   "id": "biome-js/JS/TS/format",
    "language": "JS/TS",
    "task": "Format",
    "tool": "Biome",
    "version": "2.6.4",
-   "not_measured": "no mirroring preset"
+   "corpus": "three.js src, express lib and test, 8 copies",
+   "files": 848,
+   "bytes": 4619096,
+   "sudsy": {
+    "s": 0.005,
+    "mb": 39
+   },
+   "other": {
+    "s": 0.536,
+    "mb": 104
+   }
   },
   {
-   "id": "biome-js/lint",
+   "id": "biome-js/JS/TS/lint",
    "language": "JS/TS",
    "task": "Lint",
    "tool": "Biome",
    "version": "2.6.4",
-   "not_measured": "no mirroring preset"
+   "corpus": "three.js src, express lib and test, 8 copies",
+   "files": 848,
+   "bytes": 4619096,
+   "sudsy": {
+    "s": 0.003,
+    "mb": 39
+   },
+   "other": {
+    "s": 1.045,
+    "mb": 147
+   }
   },
   {
-   "id": "oxlint/lint",
+   "id": "oxlint/JS/TS/lint",
    "language": "JS/TS",
    "task": "Lint",
    "tool": "oxlint",
    "version": "1.94.0",
-   "not_measured": "no mirroring preset"
+   "corpus": "three.js src, express lib and test, 8 copies",
+   "files": 848,
+   "bytes": 4619096,
+   "sudsy": {
+    "s": 0.003,
+    "mb": 39
+   },
+   "other": {
+    "s": 0.148,
+    "mb": 157
+   }
   },
   {
-   "id": "dprint/format",
+   "id": "dprint/JSON/format",
    "language": "JSON",
    "task": "Format",
    "tool": "dprint",
    "version": "0.64.3",
-   "not_measured": "no mirroring preset"
+   "corpus": "the valid files of JSONTestSuite",
+   "files": 95,
+   "bytes": 1190,
+   "sudsy": {
+    "s": 0.003,
+    "mb": 39
+   },
+   "other": {
+    "s": 0.023,
+    "mb": 39
+   }
+  },
+  {
+   "id": "dprint/YAML/format",
+   "language": "YAML",
+   "task": "Format",
+   "tool": "dprint",
+   "version": "0.64.3",
+   "corpus": "the GitHub Actions workflows of real repositories, 8 copies",
+   "files": 3160,
+   "bytes": 3762080,
+   "sudsy": {
+    "s": 0.314,
+    "mb": 99
+   },
+   "other": {
+    "s": 0.567,
+    "mb": 39
+   }
   }
  ]
 }

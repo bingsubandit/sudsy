@@ -133,5 +133,8 @@ pub fn option_schema() -> core_config::OptionSchema {
     .with_presets(vec![
         core_config::Preset::new("js/eslint-recommended", include_str!("../presets/eslint-recommended.yaml")),
         core_config::Preset::new("js/typescript-eslint-recommended", include_str!("../presets/typescript-eslint-recommended.yaml")),
+        core_config::Preset::new("js/biome", include_str!("../presets/biome.yaml")),
+        core_config::Preset::new("js/biome-recommended", include_str!("../presets/biome-recommended.yaml")),
+        core_config::Preset::new("js/oxlint", include_str!("../presets/oxlint.yaml")),
     ])
 }

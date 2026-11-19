@@ -2,7 +2,10 @@
   "format": {
     "prettier": {
       "catalog": "prettier",
-      "speed": {"language": "JSON", "label": "Prettier", "corpus": "json", "format": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--check", "--no-cache", "--log-level", "warn", "."]},
+      "speed": [
+        {"language": "JSON", "label": "Prettier", "corpus": "json", "format": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--check", "--no-cache", "--log-level", "warn", "."]},
+        {"language": "YAML", "label": "Prettier", "corpus": "yaml", "format": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--check", "--no-cache", "--log-level", "warn", "."]}
+      ],
       "install": {"npm": "prettier"},
       "fetch": ["tests/conformance/fetch-markdown-corpus.sh", "tests/conformance/fetch-graphql-corpus.sh"],
       "command": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--no-config", "--no-editorconfig", "--embedded-language-formatting=off", "{file}"],
@@ -433,27 +436,38 @@
     "biome-js": {
       "catalog": "biome",
       "install": {"npm": "@biomejs/biome"},
-      "speed": {"language": "JS/TS", "label": "Biome", "corpus": "js", "format": ["node", "{prefix}/node_modules/@biomejs/biome/bin/biome", "format", "--colors=off", "--max-diagnostics=0", "."], "lint": ["node", "{prefix}/node_modules/@biomejs/biome/bin/biome", "lint", "--colors=off", "--max-diagnostics=0", "."]}
+      "speed": {"language": "JS/TS", "label": "Biome", "corpus": "js", "preset": "js/biome", "lint_preset": "js/biome-recommended", "format": ["node", "{prefix}/node_modules/@biomejs/biome/bin/biome", "format", "--colors=off", "--max-diagnostics=0", "."], "lint": ["node", "{prefix}/node_modules/@biomejs/biome/bin/biome", "lint", "--colors=off", "--max-diagnostics=0", "."]}
     },
     "oxlint": {
       "version": "1.94.0",
       "install": {"npm": "oxlint"},
-      "speed": {"language": "JS/TS", "label": "oxlint", "corpus": "js", "lint": ["node", "{prefix}/node_modules/oxlint/bin/oxlint", "."]}
+      "speed": {"language": "JS/TS", "label": "oxlint", "corpus": "js", "lint_preset": "js/oxlint", "lint": ["node", "{prefix}/node_modules/oxlint/bin/oxlint", "."]}
     },
     "dprint": {
       "version": "0.64.3",
       "install": {"npm": "dprint"},
       "env": {"DPRINT_CACHE_DIR": "{prefix}/cache"},
-      "speed": {
-        "language": "JSON",
-        "label": "dprint",
-        "corpus": "json",
-        "files": {"dprint.json": "{\"incremental\": false, \"plugins\": [\"https://plugins.dprint.dev/json-0.25.2.wasm\", \"https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm\"]}\n"},
-        "format": ["{prefix}/node_modules/.bin/dprint", "check", "--config", "{prefix}/dprint.json", "."]
-      }
+      "speed": [
+        {
+          "language": "JSON",
+          "label": "dprint",
+          "corpus": "json",
+          "preset": "json/dprint",
+          "files": {"dprint.json": "{\"incremental\": false, \"plugins\": [\"https://plugins.dprint.dev/json-0.25.2.wasm\", \"https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm\"]}\n"},
+          "format": ["{prefix}/node_modules/.bin/dprint", "check", "--config", "{prefix}/dprint.json", "."]
+        },
+        {
+          "language": "YAML",
+          "label": "dprint",
+          "corpus": "yaml",
+          "preset": "yaml/prettier-compat",
+          "format": ["{prefix}/node_modules/.bin/dprint", "check", "--config", "{prefix}/dprint.json", "."]
+        }
+      ]
     }
   },
   "corpora": {
+    "yaml": {"text": "the GitHub Actions workflows of real repositories, 8 copies", "copies": 8, "fetch": ["tests/conformance/fetch-github-actions-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/github-actions", "suffixes": [".yml", ".yaml"], "recursive": true}]},
     "js": {"text": "three.js src, express lib and test, 8 copies", "copies": 8, "fetch": ["tests/conformance/fetch-js-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/js/three.js/src", "suffixes": [".js"], "prefix": "three.js/src/"}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/lib/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/test/", "recursive": true}]},
     "json": {"text": "the valid files of JSONTestSuite", "fetch": ["tests/conformance/fetch-json-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/JSONTestSuite/test_parsing", "suffixes": [".json"], "only": "y_"}]},
     "csharp": {"text": "dotnet/runtime CoreLib", "fetch": ["tests/conformance/fetch-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/runtime", "suffixes": [".cs"], "recursive": true}]}

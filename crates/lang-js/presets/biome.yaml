@@ -1,0 +1,6 @@
+# Formats like Biome's JS and TS output with its defaults: Sudsy's defaults are Prettier's, and Biome differs in the
+# indentation (a tab) and the line ending (always LF).
+js:
+  format:
+    indent_style: tab
+    end_of_line: lf

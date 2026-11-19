@@ -1,0 +1,11 @@
+# Formats like dprint's JSON output with its defaults (dprint-plugin-json 0.25): 120 columns, two spaces, LF, an object or
+# array stays expanded when a line break follows its opening delimiter, no trailing commas.
+json:
+  format:
+    line_width: 120
+    indent_size: 2
+    end_of_line: lf
+    bracket_spacing: true
+    array_bracket_spacing: false
+    collapse: opening_break
+    trailing_commas: never
