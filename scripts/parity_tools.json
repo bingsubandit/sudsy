@@ -93,7 +93,7 @@
       "input": "stdin",
       "fixtures": [{"suffixes": [".json", ".jsonc", ".yaml", ".yml"]}]
     },
-    "taplo": {
+    "taplo": {"speed": {"language": "TOML", "label": "taplo", "corpus": {"group": "fixtures", "text": "the toml-test valid files and the TOML fixtures of the repository"}, "format": ["{exe}", "fmt", "--check", "--no-auto-config", "{files}"]}, 
       "catalog": "taplo",
       "install": {
         "release": "https://github.com/tamasfe/taplo/releases/download/{version}/{asset}",
@@ -118,7 +118,7 @@
     },
     "ruff": {
       "catalog": "ruff",
-      "speed": {"language": "Python", "label": "ruff", "corpus": {"group": "real-world"}, "format": ["{python}", "-m", "ruff", "format", "--check", "--isolated", "--no-cache", "."], "lint": ["{python}", "-m", "ruff", "check", "--isolated", "--no-cache", "."]},
+      "speed": {"language": "Python", "label": "ruff", "corpus": {"group": "real-world", "text": "the Python corpus (Django, Requests, Flask, Click, HTTPX, pytest, Black)"}, "format": ["{python}", "-m", "ruff", "format", "--check", "--isolated", "--no-cache", "."], "lint": ["{python}", "-m", "ruff", "check", "--isolated", "--no-cache", "."]},
       "install": {"pip": "ruff"},
       "fetch": ["tests/conformance/fetch-python-corpus.sh"],
       "command": ["{python}", "-m", "ruff", "format", "--isolated", "--no-cache", "--quiet", "{file}"],
@@ -139,7 +139,7 @@
         {"dir": "tests/conformance/corpus/python", "suffixes": [".py", ".pyi"], "only": "black/src/", "ratchet": "real-world", "recursive": true}
       ]
     },
-    "sqlfluff": {
+    "sqlfluff": {"speed": {"language": "SQL", "label": "sqlfluff", "corpus": {"group": "sqlfluff-ansi", "text": "the ANSI dialect fixtures of sqlfluff"}, "env": {"PYTHONPATH": "{prefix}"}, "format": ["{python}", "-m", "sqlfluff", "lint", "--rules", "layout,capitalisation", "--dialect", "ansi", "--nocolor", "."], "lint": ["{python}", "-m", "sqlfluff", "lint", "--dialect", "ansi", "--nocolor", "."]}, 
       "catalog": "sqlfluff",
       "install": {"pip": "sqlfluff"},
       "fetch": ["tests/conformance/fetch-sql-corpus.sh"],
@@ -159,7 +159,7 @@
       ],
       "coverage": {"corpus": [{"dir": "tests/conformance/corpus/sql", "glob": ["*.sql"]}], "group": "(?:dialects/|^sql/)(ansi|postgres|mysql|tsql)/", "command": ["{python}", "-m", "sqlfluff", "lint", "--dialect", "{group}", "--format", "json", "--nocolor", "--processes", "8", "{files}"], "timeout": 7200, "env": {"PYTHONPATH": "{prefix}"}, "parse": {"format": "json", "levels": ["", "violations"], "file": "0.filepath", "rule": "1.code", "message": "1.description"}}
     },
-    "shfmt": {
+    "shfmt": {"speed": {"language": "Shell", "label": "shfmt", "corpus": {"group": "fixtures", "text": "the shell script corpus"}, "format": ["{exe}", "-l", "."]}, 
       "catalog": "shfmt",
       "install": {
         "release": "https://github.com/mvdan/sh/releases/download/v{version}/{asset}",
@@ -181,7 +181,7 @@
         {"dir": "tests/conformance/corpus/shell", "suffixes": [".sh", ".bash"], "prefix": "corpus/", "recursive": true}
       ]
     },
-    "google-java-format": {
+    "google-java-format": {"speed": {"language": "Java", "label": "google-java-format", "corpus": {"group": "real-world", "text": "the Java corpus (5 projects)"}, "format": ["{exe}", "--dry-run", "--skip-javadoc-formatting", "--skip-removing-unused-imports", "--skip-reflowing-long-strings", "{files}"]}, 
       "catalog": "google-java-format",
       "install": {
         "release": "https://github.com/google/google-java-format/releases/download/v{version}/{asset}",
@@ -204,7 +204,7 @@
         {"dir": "tests/conformance/corpus/java", "suffixes": [".java"], "prefix": "corpus/", "ratchet": "real-world", "recursive": true}
       ]
     },
-    "ktlint": {
+    "ktlint": {"speed": {"language": "Kotlin", "label": "ktlint", "corpus": {"group": "real-world", "text": "the Kotlin corpus"}, "format": ["{exe}", "{files}"], "lint": "coverage"}, 
       "catalog": "ktlint",
       "install": {
         "jar": "https://repo1.maven.org/maven2/com/pinterest/ktlint/ktlint-cli/{version}/ktlint-cli-{version}-all.jar",
@@ -223,7 +223,7 @@
         {"dir": "tests/conformance/corpus/kotlin", "suffixes": [".kt", ".kts"], "skip": "kotlin/compiler/", "prefix": "corpus/", "ratchet": "real-world", "recursive": true}
       ]
     },
-    "php-cs-fixer": {
+    "php-cs-fixer": {"speed": {"language": "PHP", "label": "PHP-CS-Fixer", "corpus": {"group": "real-world", "text": "the PHP corpus"}, "format": ["{exe}", "{prefix}/php-cs-fixer.phar", "fix", "--dry-run", "--config={root}/tests/parity/php-cs-fixer/per-cs.config", "--sequential", "--no-interaction", "--show-progress=none", "{files}"]}, 
       "catalog": "php-cs-fixer",
       "install": {
         "release": "https://dl.static-php.dev/static-php-cli/common/{asset}",
@@ -249,7 +249,7 @@
         {"dir": "tests/conformance/corpus/php", "suffixes": [".php"], "prefix": "corpus/", "ratchet": "real-world", "recursive": true}
       ]
     },
-    "invoke-formatter": {
+    "invoke-formatter": {"speed": {"language": "PowerShell", "label": "Invoke-Formatter", "corpus": {"group": "fixtures"}, "not_measured": {"format": "no PowerShell (pwsh) on the host that wrote this table"}}, 
       "catalog": "psscriptanalyzer",
       "install": {"psmodule": "PSScriptAnalyzer"},
       "fetch": ["tests/conformance/fetch-powershell-corpus.sh"],
@@ -262,7 +262,7 @@
         {"dir": "tests/conformance/corpus/powershell", "suffixes": [".ps1", ".psm1"], "prefix": "corpus/", "recursive": true}
       ]
     },
-    "buf": {
+    "buf": {"speed": {"language": "Protobuf", "label": "buf", "corpus": {"group": "fixtures", "text": "the Protobuf corpus"}, "format": ["{exe}", "format", "--diff", "--exit-code", "."], "not_measured": {"lint": "the analysis runs per module, not on a folder of unrelated files"}}, 
       "catalog": "buf",
       "install": {
         "release": "https://github.com/bufbuild/buf/releases/download/v{version}/{asset}",
@@ -284,7 +284,7 @@
         {"dir": "tests/conformance/corpus/proto", "suffixes": [".proto"], "prefix": "corpus/", "recursive": true}
       ]
     },
-    "terraform": {
+    "terraform": {"speed": {"language": "HCL", "label": "terraform fmt", "corpus": {"group": "fixtures", "text": "the Terraform corpus"}, "format": ["{exe}", "fmt", "-check", "-no-color", "-recursive", "."]}, 
       "catalog": "terraform",
       "install": {
         "release": "https://releases.hashicorp.com/terraform/{version}/{asset}",
@@ -338,19 +338,19 @@
   },
   "lint": {
     "ruff": {"preset": "python/ruff", "catalog": "ruff", "install": "ruff", "fetch": ["tests/conformance/fetch-python-corpus.sh"], "command": ["{python}", "-m", "ruff", "check", "--isolated", "--no-cache", "--output-format", "json", "--exit-zero", "--ignore-noqa", "--target-version", "py314"], "env": {"PYTHONPATH": "{prefix}"}},
-    "yamllint": {"preset": "yaml/yamllint", "catalog": "yamllint", "install": {"pip": "yamllint"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/github-actions", "glob": ["*.yml", "*.yaml"]}, {"dir": "tests/conformance/corpus/yaml-test-suite", "glob": ["in.yaml"]}], "command": ["{python}", "-m", "yamllint", "-f", "parsable", "{files}"], "env": {"PYTHONPATH": "{prefix}"}, "parse": {"format": "regex", "pattern": "^(?P<file>[^:]+):\\d+:\\d+: \\[(?:error|warning)\\] (?P<message>.*) \\((?P<rule>[\\w-]+)\\)$"}}},
-    "eslint": {"preset": "js/eslint-recommended", "catalog": "eslint", "install": {"npm": "eslint"}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
-    "rubocop": {"preset": "ruby/rubocop", "catalog": "rubocop", "install": {"gem": "rubocop", "ruby": "3.4.6"}, "fetch": ["tests/conformance/fetch-ruby-corpus.sh"]},
-    "typescript-eslint": {"preset": "js/typescript-eslint-recommended", "catalog": "typescript-eslint", "install": {"npm": "typescript-eslint", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
-    "eslint-plugin-vue": {"preset": "html/eslint-plugin-vue-recommended", "catalog": "eslint-plugin-vue", "install": {"npm": "eslint-plugin-vue", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
-    "eslint-plugin-svelte": {"preset": "html/eslint-plugin-svelte-recommended", "catalog": "eslint-plugin-svelte", "install": {"npm": "eslint-plugin-svelte", "with": ["eslint@9.39.5", "svelte@5.57.3", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
+    "yamllint": {"speed": {"language": "YAML", "label": "yamllint", "corpus": {"coverage": true, "text": "the GitHub Actions workflows of real repositories and the yaml-test-suite cases"}, "lint": "coverage"}, "preset": "yaml/yamllint", "catalog": "yamllint", "install": {"pip": "yamllint"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/github-actions", "glob": ["*.yml", "*.yaml"]}, {"dir": "tests/conformance/corpus/yaml-test-suite", "glob": ["in.yaml"]}], "command": ["{python}", "-m", "yamllint", "-f", "parsable", "{files}"], "env": {"PYTHONPATH": "{prefix}"}, "parse": {"format": "regex", "pattern": "^(?P<file>[^:]+):\\d+:\\d+: \\[(?:error|warning)\\] (?P<message>.*) \\((?P<rule>[\\w-]+)\\)$"}}},
+    "eslint": {"speed": {"language": "JS/TS", "label": "ESLint", "corpus": "js", "files": {"eslint.config.mjs": "import js from \"@eslint/js\";\nexport default [js.configs.recommended];\n"}, "lint": ["node", "{prefix}/node_modules/eslint/bin/eslint.js", "-c", "{prefix}/eslint.config.mjs", "--no-warn-ignored", "."]}, "preset": "js/eslint-recommended", "catalog": "eslint", "install": {"npm": "eslint"}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
+    "rubocop": {"speed": {"language": "Ruby", "label": "RuboCop", "corpus": "ruby", "files": {".rubocop.yml": "AllCops:\n  TargetRubyVersion: 3.4\n  NewCops: disable\n  SuggestExtensions: false\n"}, "lint": ["{prefix}/bin/rubocop", "--only", "Lint", "--cache", "false", "--config", "{prefix}/.rubocop.yml", "-P", "."]}, "preset": "ruby/rubocop", "catalog": "rubocop", "install": {"gem": "rubocop", "ruby": "3.4.6"}, "fetch": ["tests/conformance/fetch-ruby-corpus.sh"]},
+    "typescript-eslint": {"speed": {"language": "JS/TS", "label": "typescript-eslint", "corpus": "ts", "files": {"eslint.config.mjs": "import tseslint from \"typescript-eslint\";\nexport default [...tseslint.configs.recommended];\n"}, "lint": ["node", "{prefix}/node_modules/eslint/bin/eslint.js", "-c", "{prefix}/eslint.config.mjs", "--no-warn-ignored", "."]}, "preset": "js/typescript-eslint-recommended", "catalog": "typescript-eslint", "install": {"npm": "typescript-eslint", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
+    "eslint-plugin-vue": {"speed": {"language": "Vue", "label": "eslint-plugin-vue", "corpus": "vue", "not_measured": {"lint": "no runner yet: the flat config for .vue files needs vue-eslint-parser and a corpus of .vue files"}}, "preset": "html/eslint-plugin-vue-recommended", "catalog": "eslint-plugin-vue", "install": {"npm": "eslint-plugin-vue", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
+    "eslint-plugin-svelte": {"speed": {"language": "Svelte", "label": "eslint-plugin-svelte", "corpus": "svelte", "not_measured": {"lint": "no runner yet: the flat config for .svelte files needs svelte-eslint-parser and a corpus of .svelte files"}}, "preset": "html/eslint-plugin-svelte-recommended", "catalog": "eslint-plugin-svelte", "install": {"npm": "eslint-plugin-svelte", "with": ["eslint@9.39.5", "svelte@5.57.3", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},
     "eslint-jsonc":{"catalog": "eslint-plugin-jsonc", "install": {"npm": "eslint-plugin-jsonc", "with": ["eslint@9"]}},
-    "stylelint": {"preset": "css/stylelint-standard", "catalog": "stylelint", "install": {"npm": "stylelint", "with": ["stylelint-config-standard@40.0.0"]}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/css", "glob": ["*.css"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/stylelint/bin/stylelint.mjs", "--config", "stylelint.config.mjs", "-f", "json", "{files}"], "files": {"stylelint.config.mjs": "export default { extends: [\"{prefix}/node_modules/stylelint-config-standard\"] };\n"}, "stream": "stderr", "parse": {"format": "json", "levels": ["", "warnings"], "file": "0.source", "rule": "1.rule", "message": "1.text"}}},
+    "stylelint": {"speed": {"language": "CSS", "label": "stylelint", "corpus": {"coverage": true, "text": "the CSS corpus (css-tricks, Bootstrap, and others)"}, "lint": "coverage"}, "preset": "css/stylelint-standard", "catalog": "stylelint", "install": {"npm": "stylelint", "with": ["stylelint-config-standard@40.0.0"]}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/css", "glob": ["*.css"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/stylelint/bin/stylelint.mjs", "--config", "stylelint.config.mjs", "-f", "json", "{files}"], "files": {"stylelint.config.mjs": "export default { extends: [\"{prefix}/node_modules/stylelint-config-standard\"] };\n"}, "stream": "stderr", "parse": {"format": "json", "levels": ["", "warnings"], "file": "0.source", "rule": "1.rule", "message": "1.text"}}},
     "stylelint-scss": {"catalog": "stylelint-scss", "install": {"npm": "stylelint-scss", "with": ["stylelint@17.16.0", "postcss-scss@4.0.9"]}},
     "stylelint-less": {"catalog": "stylelint-less", "install": {"npm": "stylelint-less", "with": ["stylelint@17.16.0", "postcss-less@7.0.1"]}},
-    "html-validate": {"preset": "html/html-validate-recommended", "catalog": "html-validate", "install": {"npm": "html-validate"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/html-validate/bin/html-validate.mjs", "-c", "htmlvalidate.json", "-f", "json", "{files}"], "files": {"htmlvalidate.json": "{\"extends\": [\"html-validate:recommended\"]}\n"}, "parse": {"format": "json", "levels": ["", "messages"], "file": "0.filePath", "rule": "1.ruleId", "message": "1.message"}}},
-    "markdownlint": {"preset": "markdown/markdownlint", "catalog": "markdownlint", "install": {"npm": "markdownlint-cli2"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/runtime-docs", "glob": ["*.md"]}], "command": ["node", "{prefix}/node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs", "--no-globs", "{files}"], "stream": "stderr", "parse": {"format": "regex", "pattern": "^(?P<file>.+?):\\d+(?::\\d+)? (?:error )?(?P<rule>MD\\d+)/\\S+ (?P<message>.*)$"}}},
-    "hadolint": {
+    "html-validate": {"speed": {"language": "HTML", "label": "html-validate", "corpus": {"coverage": true, "text": "the HTML corpus (Prettier tests, mdn learning-area)"}, "lint": "coverage"}, "preset": "html/html-validate-recommended", "catalog": "html-validate", "install": {"npm": "html-validate"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/html-validate/bin/html-validate.mjs", "-c", "htmlvalidate.json", "-f", "json", "{files}"], "files": {"htmlvalidate.json": "{\"extends\": [\"html-validate:recommended\"]}\n"}, "parse": {"format": "json", "levels": ["", "messages"], "file": "0.filePath", "rule": "1.ruleId", "message": "1.message"}}},
+    "markdownlint": {"speed": {"language": "Markdown", "label": "markdownlint", "corpus": {"coverage": true, "text": "the dotnet/runtime documentation"}, "lint": "coverage"}, "preset": "markdown/markdownlint", "catalog": "markdownlint", "install": {"npm": "markdownlint-cli2"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/runtime-docs", "glob": ["*.md"]}], "command": ["node", "{prefix}/node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs", "--no-globs", "{files}"], "stream": "stderr", "parse": {"format": "regex", "pattern": "^(?P<file>.+?):\\d+(?::\\d+)? (?:error )?(?P<rule>MD\\d+)/\\S+ (?P<message>.*)$"}}},
+    "hadolint": {"speed": {"language": "Dockerfile", "label": "hadolint", "corpus": {"coverage": true, "text": "the Dockerfile corpus"}, "lint": "coverage"}, 
       "preset": "dockerfile/hadolint",
       "catalog": "hadolint",
       "install": {
@@ -366,7 +366,7 @@
       },
       "coverage": {"corpus": [{"dir": "tests/conformance/corpus/dockerfile", "glob": ["Dockerfile", "Dockerfile.*", "*.Dockerfile", "*.dockerfile"]}], "command": ["{exe}", "--no-fail", "--no-color", "-f", "json", "{files}"], "parse": {"format": "json", "levels": [""], "file": "0.file", "rule": "0.code", "message": "0.message"}, "map_also": ["shellcheck"]}
     },
-    "shellcheck": {
+    "shellcheck": {"speed": {"language": "Shell", "label": "ShellCheck", "corpus": {"coverage": true, "text": "the shell script corpus"}, "lint": "coverage"}, 
       "preset": "shell/shellcheck",
       "catalog": "shellcheck",
       "install": {
@@ -382,7 +382,7 @@
       },
       "coverage": {"corpus": [{"dir": "tests/conformance/corpus/shell", "glob": ["*.sh", "*.bash"]}], "command": ["{exe}", "-f", "json", "{files}"], "chunk": 1, "timeout": 120, "memory_gb": 4, "parse": {"format": "json", "levels": [""], "file": "0.file", "rule": "0.code", "message": "0.message", "rule_prefix": "SC"}}
     },
-    "actionlint": {
+    "actionlint": {"speed": {"language": "GitHub Actions", "label": "actionlint", "corpus": {"coverage": true, "text": "the GitHub Actions workflows of real repositories"}, "lint": "coverage"}, 
       "preset": "github-actions/actionlint",
       "catalog": "actionlint",
       "install": {
@@ -399,7 +399,7 @@
       "fetch": ["tests/conformance/fetch-github-actions-corpus.sh"],
       "coverage": {"corpus": [{"dir": "tests/conformance/corpus/github-actions", "glob": ["*.yml", "*.yaml"], "into": ".github/workflows"}], "command": ["{exe}", "-no-color", "-format", "{{{{json .}}}}", "-shellcheck=", "-pyflakes=", "{files}"], "chunk": 1, "parse": {"format": "json", "levels": [""], "file": "0.filepath", "rule_fn": "actionlint", "message": "0.message"}}
     },
-    "checkmake": {
+    "checkmake": {"speed": {"language": "Makefile", "label": "checkmake", "corpus": {"coverage": true, "text": "the Makefile corpus"}, "lint": "coverage"}, 
       "preset": "makefile/checkmake",
       "catalog": "checkmake",
       "install": {
@@ -416,7 +416,7 @@
       "coverage": {"corpus": [{"dir": "tests/conformance/corpus/makefile", "glob": ["Makefile", "makefile"]}], "command": ["{exe}", "--format", "{{{{.FileName}}}}|||{{{{.Rule}}}}|||{{{{.Violation}}}}", "{files}"], "parse": {"format": "regex", "pattern": "^(?P<file>.+?)\\|\\|\\|(?P<rule>[^|]+)\\|\\|\\|(?P<message>.*)$"}}
     },
     "buf": {"preset": "protobuf/buf-standard", "catalog": "buf", "install": "buf", "coverage": {"corpus": [{"dir": "tests/conformance/corpus/proto/googleapis", "glob": ["*.proto"], "skip": ["preview/"], "as": "googleapis"}, {"dir": "tests/conformance/corpus/proto/googleapis/preview", "glob": ["*.proto"], "as": "googleapis-preview"}, {"dir": "tests/conformance/corpus/proto/protobuf/src", "glob": ["*.proto"], "as": "protobuf/src"}, {"dir": "tests/conformance/corpus/proto/protobuf/conformance", "glob": ["*.proto"], "as": "protobuf/conformance"}, {"dir": "tests/conformance/corpus/proto/protobuf/editions/golden", "glob": ["*.proto"], "as": "protobuf/golden"}, {"dir": "tests/conformance/corpus/proto/protobuf/csharp/compatibility_tests/v3.0.0", "glob": ["*.proto"], "as": "protobuf/csharp"}, {"dir": "tests/conformance/corpus/proto/grpc/src/proto", "glob": ["*.proto"], "as": "grpc"}], "group": "^(googleapis-preview|googleapis|grpc|protobuf/\\w+)/", "cwd": "group", "command": ["{exe}", "lint", "--error-format=json", "--config", "{work}/buf.yaml", "--path", "{files}"], "chunk": 1, "unreadable": ["COMPILE"], "files": {"buf.yaml": "version: v2\nlint:\n  use:\n    - STANDARD\n"}, "parse": {"format": "jsonl", "levels": [""], "file": "0.path", "rule": "0.type", "message": "0.message"}}},
-    "psscriptanalyzer": {
+    "psscriptanalyzer": {"speed": {"language": "PowerShell", "label": "PSScriptAnalyzer", "corpus": {"coverage": true}, "not_measured": {"lint": "no PowerShell (pwsh) on the host that wrote this table"}}, 
       "preset": "powershell/psscriptanalyzer",
       "catalog": "psscriptanalyzer",
       "install": {"psmodule": "PSScriptAnalyzer"},
@@ -424,13 +424,13 @@
       "coverage": {"corpus": [{"dir": "tests/conformance/corpus/powershell", "glob": ["*.ps1", "*.psm1"]}], "command": ["pwsh", "-NoProfile", "-File", "{root}/scripts/parity_psscriptanalyzer.ps1", "{prefix}", "run", "*", "."], "timeout": 3600, "parse": {"format": "json", "levels": [""], "file": "0.file", "rule": "0.rule", "message": "0.message"}}
     },
     "ktlint": {"preset": "kotlin/ktlint", "catalog": "ktlint", "install": "ktlint", "fetch": ["tests/conformance/fetch-kotlin-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/kotlin", "glob": ["*.kt", "*.kts"], "skip": ["kotlin/compiler/"]}], "command": ["{exe}", "{files}"], "chunk": 2000, "timeout": 3600, "parse": {"format": "regex", "pattern": "^(?P<file>[^:]+):\\d+:\\d+: (?P<message>.*) \\((?:standard:)?(?P<rule>[\\w-]+)\\)$"}}},
-    "tflint": {"preset": "hcl/tflint-recommended", "catalog": "tflint", "version": "0.66.0", "fetch": ["tests/conformance/fetch-hcl-corpus.sh"], "install": {"release": "https://github.com/terraform-linters/tflint/releases/download/v{version}/{asset}", "assets": {"windows": "tflint_windows_amd64.zip", "linux-x86_64": "tflint_linux_amd64.zip", "linux-aarch64": "tflint_linux_arm64.zip", "darwin-arm64": "tflint_darwin_arm64.zip", "darwin-x86_64": "tflint_darwin_amd64.zip"}, "exe": "tflint"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/hcl", "glob": ["*.tf"]}], "command": ["{exe}", "--format", "json", "--recursive"], "parse": {"format": "json", "levels": ["issues"], "file": "0.range.filename", "rule": "0.rule.name", "message": "0.message"}}},
-    "checkstyle": {"preset": "java/google", "catalog": "checkstyle", "version": "14.4.0", "fetch": ["tests/conformance/fetch-java-corpus.sh"], "install": {"jar": "https://github.com/checkstyle/checkstyle/releases/download/checkstyle-{version}/checkstyle-{version}-all.jar", "sha256": "c0a521e54eabd1ece4ff7bd84cf231b012615745ed3aa4fb27ab0ca73097250c", "exe": "checkstyle"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/java", "glob": ["*.java"]}], "command": ["{exe}", "-c", "/google_checks.xml", "{files}"], "chunk": 2000, "timeout": 3600, "parse": {"format": "regex", "pattern": "^\\[(?:WARN|ERROR)\\] (?P<file>[^:]+):\\d+(?::\\d+)?: (?P<message>.*) \\[(?P<rule>\\w+)\\]$", "rule_sub": ["^Google(?=\\w)", ""]}}},
-    "htmlhint": {"preset": "html/htmlhint", "catalog": "htmlhint", "install": {"npm": "htmlhint"}, "fetch": ["tests/conformance/fetch-html-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/htmlhint/bin/htmlhint", "--format", "json", "{files}"], "parse": {"format": "json", "levels": ["", "messages"], "file": "0.file", "rule": "1.rule.id", "message": "1.message"}}},
-    "html-eslint": {"preset": "html/html-eslint-recommended", "catalog": "html-eslint", "install": {"npm": "@html-eslint/eslint-plugin", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "-f", "json", "--no-warn-ignored", "{files}"], "files": {"eslint.config.mjs": "import html from \"@html-eslint/eslint-plugin\";\nexport default [{ ...html.configs[\"flat/recommended\"], files: [\"**/*.html\"], linterOptions: { noInlineConfig: true } }];\n"}, "parse": {"format": "json", "levels": ["", "messages"], "file": "0.filePath", "rule": "1.ruleId", "message": "1.message", "rule_sub": ["^@html-eslint/", ""]}}},
-    "phpstan": {"preset": "php/phpstan", "catalog": "phpstan", "version": "2.3.6", "fetch": ["tests/conformance/fetch-php-corpus.sh"], "install": {"release": "https://github.com/phpstan/phpstan/releases/download/{version}/{asset}", "assets": {"windows": "phpstan.phar", "linux-x86_64": "phpstan.phar", "linux-aarch64": "phpstan.phar", "darwin-arm64": "phpstan.phar", "darwin-x86_64": "phpstan.phar"}, "exe": "phpstan"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/php", "glob": ["*.php"]}], "group": "^(php/[^/]+)/", "cwd": "group", "timeout": 7200, "command": ["php", "{exe}", "analyse", "--level", "0", "--no-progress", "--no-interaction", "--memory-limit=-1", "--error-format=json", "."], "parse": {"format": "json", "json_line": true, "levels": ["files*", "messages"], "file": "0._key", "rule": "1.identifier", "message": "1.message"}}},
+    "tflint": {"speed": {"language": "HCL", "label": "tflint", "corpus": {"coverage": true, "text": "the Terraform corpus"}, "lint": "coverage"}, "preset": "hcl/tflint-recommended", "catalog": "tflint", "version": "0.66.0", "fetch": ["tests/conformance/fetch-hcl-corpus.sh"], "install": {"release": "https://github.com/terraform-linters/tflint/releases/download/v{version}/{asset}", "assets": {"windows": "tflint_windows_amd64.zip", "linux-x86_64": "tflint_linux_amd64.zip", "linux-aarch64": "tflint_linux_arm64.zip", "darwin-arm64": "tflint_darwin_arm64.zip", "darwin-x86_64": "tflint_darwin_amd64.zip"}, "exe": "tflint"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/hcl", "glob": ["*.tf"]}], "command": ["{exe}", "--format", "json", "--recursive"], "parse": {"format": "json", "levels": ["issues"], "file": "0.range.filename", "rule": "0.rule.name", "message": "0.message"}}},
+    "checkstyle": {"speed": {"language": "Java", "label": "Checkstyle", "corpus": {"coverage": true, "text": "the Java corpus (5 projects)"}, "lint": "coverage"}, "preset": "java/google", "catalog": "checkstyle", "version": "14.4.0", "fetch": ["tests/conformance/fetch-java-corpus.sh"], "install": {"jar": "https://github.com/checkstyle/checkstyle/releases/download/checkstyle-{version}/checkstyle-{version}-all.jar", "sha256": "c0a521e54eabd1ece4ff7bd84cf231b012615745ed3aa4fb27ab0ca73097250c", "exe": "checkstyle"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/java", "glob": ["*.java"]}], "command": ["{exe}", "-c", "/google_checks.xml", "{files}"], "chunk": 2000, "timeout": 3600, "parse": {"format": "regex", "pattern": "^\\[(?:WARN|ERROR)\\] (?P<file>[^:]+):\\d+(?::\\d+)?: (?P<message>.*) \\[(?P<rule>\\w+)\\]$", "rule_sub": ["^Google(?=\\w)", ""]}}},
+    "htmlhint": {"speed": {"language": "HTML", "label": "HTMLHint", "corpus": {"coverage": true, "text": "the HTML corpus (Prettier tests, mdn learning-area)"}, "lint": "coverage"}, "preset": "html/htmlhint", "catalog": "htmlhint", "install": {"npm": "htmlhint"}, "fetch": ["tests/conformance/fetch-html-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/htmlhint/bin/htmlhint", "--format", "json", "{files}"], "parse": {"format": "json", "levels": ["", "messages"], "file": "0.file", "rule": "1.rule.id", "message": "1.message"}}},
+    "html-eslint": {"speed": {"language": "HTML", "label": "html-eslint", "corpus": {"coverage": true, "text": "the HTML corpus (Prettier tests, mdn learning-area)"}, "lint": "coverage"}, "preset": "html/html-eslint-recommended", "catalog": "html-eslint", "install": {"npm": "@html-eslint/eslint-plugin", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/html", "glob": ["*.html"], "skip": ["prettier/"]}], "command": ["node", "{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "-f", "json", "--no-warn-ignored", "{files}"], "files": {"eslint.config.mjs": "import html from \"@html-eslint/eslint-plugin\";\nexport default [{ ...html.configs[\"flat/recommended\"], files: [\"**/*.html\"], linterOptions: { noInlineConfig: true } }];\n"}, "parse": {"format": "json", "levels": ["", "messages"], "file": "0.filePath", "rule": "1.ruleId", "message": "1.message", "rule_sub": ["^@html-eslint/", ""]}}},
+    "phpstan": {"speed": {"language": "PHP", "label": "PHPStan", "corpus": {"coverage": true}, "not_measured": {"lint": "the analysis runs per project folder, not on a folder of unrelated files"}}, "preset": "php/phpstan", "catalog": "phpstan", "version": "2.3.6", "fetch": ["tests/conformance/fetch-php-corpus.sh"], "install": {"release": "https://github.com/phpstan/phpstan/releases/download/{version}/{asset}", "assets": {"windows": "phpstan.phar", "linux-x86_64": "phpstan.phar", "linux-aarch64": "phpstan.phar", "darwin-arm64": "phpstan.phar", "darwin-x86_64": "phpstan.phar"}, "exe": "phpstan"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/php", "glob": ["*.php"]}], "group": "^(php/[^/]+)/", "cwd": "group", "timeout": 7200, "command": ["php", "{exe}", "analyse", "--level", "0", "--no-progress", "--no-interaction", "--memory-limit=-1", "--error-format=json", "."], "parse": {"format": "json", "json_line": true, "levels": ["files*", "messages"], "file": "0._key", "rule": "1.identifier", "message": "1.message"}}},
     "sqlfluff": {"preset": "sql/sqlfluff", "catalog": "sqlfluff", "install": "sqlfluff", "fetch": ["tests/conformance/fetch-sql-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/sql", "glob": ["*.sql"]}], "group": "(?:dialects/|^sql/)(ansi|postgres|mysql|tsql)/", "command": ["{python}", "-m", "sqlfluff", "lint", "--dialect", "{group}", "--format", "json", "--nocolor", "--processes", "8", "{files}"], "chunk": 100000, "timeout": 7200, "env": {"PYTHONPATH": "{prefix}"}, "parse": {"format": "json", "levels": ["", "violations"], "file": "0.filepath", "rule": "1.code", "message": "1.description"}}},
-    "stylecop": {"catalog": "stylecop", "needs": ["worker"]}
+    "stylecop": {"speed": {"language": "C#", "label": "StyleCop", "corpus": "csharp", "not_measured": {"lint": "the compiler skips analyzers when the compilation has errors, and the C# corpus does not compile on its own"}}, "catalog": "stylecop", "needs": ["worker"]}
   },
   "speed": {
     "biome-js": {
@@ -467,6 +467,8 @@
     }
   },
   "corpora": {
+    "ts": {"text": "TypeScript sources of vuejs/core, docusaurus, excalidraw and MUI", "fetch": ["tests/conformance/fetch-js-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/js", "suffixes": [".ts", ".tsx"], "only": "core/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".ts", ".tsx"], "only": "docusaurus/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".ts", ".tsx"], "only": "excalidraw/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".ts", ".tsx"], "only": "material-ui/", "recursive": true}]},
+    "ruby": {"text": "the Ruby corpus", "fetch": ["tests/conformance/fetch-ruby-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/ruby", "suffixes": [".rb"], "recursive": true}]},
     "yaml": {"text": "the GitHub Actions workflows of real repositories, 8 copies", "copies": 8, "fetch": ["tests/conformance/fetch-github-actions-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/github-actions", "suffixes": [".yml", ".yaml"], "recursive": true}]},
     "js": {"text": "three.js src, express lib and test, 8 copies", "copies": 8, "fetch": ["tests/conformance/fetch-js-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/js/three.js/src", "suffixes": [".js"], "prefix": "three.js/src/"}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/lib/", "recursive": true}, {"dir": "tests/conformance/corpus/js", "suffixes": [".js"], "only": "express/test/", "recursive": true}]},
     "json": {"text": "the valid files of JSONTestSuite", "fetch": ["tests/conformance/fetch-json-corpus.sh"], "sources": [{"dir": "tests/conformance/corpus/JSONTestSuite/test_parsing", "suffixes": [".json"], "only": "y_"}]},

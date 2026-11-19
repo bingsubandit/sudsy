@@ -37,6 +37,11 @@ def entries():
     return found
 
 
+def coverage_of(name, config):
+    """The coverage run of a tool: on its entry, else on its lint entry (a tool with a format and a lint entry has the speed key on the first)."""
+    return config.get("coverage") or pf.tools()["lint"][name]["coverage"]
+
+
 def commands_for(command, values, paths):
     """The tool's commands with the placeholders filled; `{files}` is every corpus file, in chunks of CHUNK per process."""
     fill = lambda a: str(a).format(**values)  # noqa: E731
@@ -65,8 +70,8 @@ def prepare(name, config, specs, parity):
     if "worker" in config.get("needs", []):
         pf.run(["dotnet", "build", "-c", "Release", "--nologo", "-v:q", "workers/csharp/Sudsy.Worker"], ROOT)
         os.environ.setdefault("SUDSY_CSHARP_WORKER", str(ROOT / "workers/csharp/Sudsy.Worker/bin/Release/net10.0/Sudsy.Worker.dll"))
-    if any(isinstance(s["corpus"], dict) for s in specs):  # a named corpus fetches itself; a group needs the entry's fixtures
-        for script in config.get("fetch", []):
+    if any(isinstance(s["corpus"], dict) for s in specs):  # a named corpus fetches itself; a group or a coverage corpus needs the entry's
+        for script in [*config.get("fetch", []), *pf.tools()["lint"].get(name, {}).get("fetch", [])]:
             pf.run(["bash", script], ROOT)
     catalog = config.get("catalog")
     version = config.get("version") or pf.catalog_version(catalog)
@@ -90,7 +95,7 @@ def corpus(name, config, speed, work):
     if isinstance(spec, str):
         spec = pf.tools()["corpora"][spec]
     if "coverage" in spec:
-        found = [(rel, path, None) for rel, path in pc.corpus_files(config["coverage"], Counter())]
+        found = [(rel, path, None) for rel, path in pc.corpus_files(coverage_of(name, config), Counter())]
     else:
         if "group" in spec:
             spec = {**spec, "sources": [s for s in config["fixtures"] if (s.get("ratchet") or "fixtures") == spec["group"]]}
@@ -167,7 +172,11 @@ def main():
     rows = []
     for name in chosen:
         config, specs = known[name]
-        version, prefix, exe = prepare(name, config, specs, parity)
+        if not any(task in s for s in specs for task in ("format", "lint")):  # nothing to run: no install, only the reasons
+            version = config.get("version") or pf.catalog_version(config["catalog"])
+            prefix = exe = ""
+        else:
+            version, prefix, exe = prepare(name, config, specs, parity)
         values = {"prefix": prefix, "exe": exe, "python": sys.executable, "root": ROOT, "sudsy": args.sudsy}
         fill = lambda cmd: [str(a).format(**values) for a in cmd]  # noqa: E731
         tool_env = {**os.environ, **{k: v.format(prefix=prefix) for k, v in config.get("env", {}).items()}}
@@ -190,12 +199,13 @@ def main():
                     (work / "sudsy.yaml").write_text(config_text, encoding="utf-8", newline="\n")  # above the corpus, so it is no input
                     command = speed[task]
                     coverage = command == "coverage"  # the command of the entry's coverage run, on the files of its corpus
-                    env = tool_env
+                    env = {**tool_env, **{k: v.format(prefix=prefix) for k, v in speed.get("env", {}).items()}}
                     if coverage:
-                        command = config["coverage"]["command"]
-                        for file, text in config["coverage"].get("files", {}).items():
+                        cov = coverage_of(name, config)
+                        command = cov["command"]
+                        for file, text in cov.get("files", {}).items():
                             (work / file).write_text(text.replace("{prefix}", str(prefix)), encoding="utf-8", newline="\n")
-                        env = {**tool_env, **{k: v.format(prefix=prefix) for k, v in config["coverage"].get("env", {}).items()}}
+                        env = {**env, **{k: v.format(prefix=prefix) for k, v in cov.get("env", {}).items()}}
                     cwd = work if coverage else work / "c"  # a coverage command names its config files relative to `work`
                     paths = ["c/" + p for p in corpus_info[3]] if coverage else corpus_info[3]
                     cmds = commands_for(command, {**values, "work": work}, paths)

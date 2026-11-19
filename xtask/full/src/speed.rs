@@ -55,8 +55,14 @@ pub(crate) fn table() -> Result<String> {
             .filter(|r| r.language == *language)
             .collect();
         rows.sort_by(|a, b| a.task.cmp(&b.task)); // stable: Format before Lint, tools in file order
-        if let Some(row) = rows.iter().find(|r| !r.corpus.is_empty()) {
-            corpora.push(format!("{language}: {}", row.corpus));
+        let mut texts: Vec<&str> = Vec::new();
+        for row in rows.iter().filter(|r| !r.corpus.is_empty()) {
+            if !texts.contains(&row.corpus.as_str()) {
+                texts.push(&row.corpus);
+            }
+        }
+        if !texts.is_empty() {
+            corpora.push(format!("{language}: {}", texts.join(" and ")));
         }
         let mut task = "";
         for (i, row) in rows.iter().enumerate() {
