@@ -18,6 +18,7 @@ if [ "${1:-}" = --test ]; then test=1; shift; fi
 if [ "${1:-}" = --pin ]; then mode=format; extra=(--pin); shift; fi
 if [ "${1:-}" = format ]; then mode=format; shift; fi
 if [ "${1:-}" = coverage ]; then extra=(--coverage); shift; fi
+if [ "${1:-}" = --proof ]; then extra+=(--proof); shift; fi  # coverage: the formatter findings that remain after `sudsy format`
 tool=${1:-}
 py=
 for candidate in python3 python; do

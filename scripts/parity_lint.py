@@ -586,8 +586,12 @@ def coverage(tool, sudsy, version, prefix, exe):
         found = [(Path(r["filePath"]).name, m["ruleId"], m["message"]) for r in results for m in r["messages"] if m["ruleId"] and not m.get("fatal")]
     found = [f for f in found if f[0] not in fatal]
     owned = sum(f[1] in layout for f in found)  # `formatter` ids: `sudsy format` does their work, so they are no findings to cover in the raw share
+    if "--proof" in sys.argv:  # the formatter findings that remain after `sudsy format` are the ones that count as missing
+        if not spec:
+            sys.exit(f"{tool}: the proof run needs a `coverage` entry in scripts/parity_tools.json")
+        owned = parity_coverage.proof(tool, spec, prefix, work, exe, {"actionlint": actionlint_check}, sudsy, preset, layout, fatal, [f for f in found if f[1] in layout])
     found = [f for f in found if f[1] not in layout]
-    print(f"input filters: files the tool cannot read {len(fatal)}, formatter-owned findings left out of raw {owned} (in the target they count as missing)")
+    print(f"input filters: files the tool cannot read {len(fatal)}, formatter-owned findings left out of raw (in the target they count as missing: {owned}{', after the proof run' if '--proof' in sys.argv else ', all of them: no proof run'})")
     def run_sudsy(config):  # Sudsy's findings with `config` as the sudsy.yaml of the corpus (None: no file, the default a user gets)
         (work / "sudsy.yaml").unlink(missing_ok=True)
         if config is not None:
