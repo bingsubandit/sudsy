@@ -9,21 +9,28 @@ differences:
   i18n-values: gap  long `i18n` attribute values are not broken
   whitespace-edges: gap  whitespace of `[target]=" "`, between a custom inline element and a block child, and before `{{` after a comment differs
   blank-lines: gap  a blank line between a `@defer` or autocomplete child and its siblings is dropped
-  non-idempotent: gap  files Prettier itself does not keep stable (component-styling, focus-trap-demo, plural ICU, paren-statement indentation); Sudsy follows Prettier's output, so a second format changes them
+  non-idempotent: choice  Prettier's output for these files changes on a second format (an interpolation it breaks only because of the text after it); Sudsy's output is stable, so it keeps the interpolation on one line and breaks after it
 files:
-  prettier-angular: embedded-language-off, angularjs, start-tag-comments, non-bindable, let-and-text, microsyntax, expression-layout, i18n-values, whitespace-edges, blank-lines, non-idempotent
-  components: expression-layout, blank-lines, non-idempotent
+  corpus/components/docs/src/app/pages/component-viewer/component-styling.html: non-idempotent
+  corpus/components/src/dev-app/focus-trap/focus-trap-demo.html: non-idempotent
+  prettier-angular: embedded-language-off, angularjs, start-tag-comments, non-bindable, let-and-text, microsyntax, expression-layout, i18n-values, whitespace-edges, blank-lines
+  components: expression-layout, blank-lines
   angular: expression-layout, blank-lines, whitespace-edges, i18n-values
 ratchet:
-  prettier-angular: 56
-  components: 681
+  prettier-angular: 57
+  components: 679
   angular: 444
   realworld-app: 11
 second-format:
-  components: 2
-  prettier-angular: 1
+  components: 0
+  prettier-angular: 0
 refused:
   components: 0
   prettier-angular: 0
+intentional:
+  non-idempotent: tool-wrong
 flags:
   no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet
+pins:
+  corpus/components/docs/src/app/pages/component-viewer/component-styling.html: 12570746e406b115
+  corpus/components/src/dev-app/focus-trap/focus-trap-demo.html: 6b21b7348039f8dc
