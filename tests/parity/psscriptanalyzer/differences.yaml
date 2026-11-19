@@ -1,6 +1,6 @@
 differences:
-  scalar-variable-type: choice  the left operand of a null comparison is a variable of a scalar type, which the module knows and Sudsy (no types) does not
-  parameter-report-line: choice  a parameter is reported at its first attribute line; the module reports it at the variable
+  scalar-variable-type: gap  the left operand of a null comparison is a variable of a scalar type, which the module knows and Sudsy (no types) does not
+  parameter-report-line: gap  a parameter is reported at its first attribute line; the module reports it at the variable
 files:
   corpus/PSScriptAnalyzer/Tests/Engine/LibraryUsage.tests.ps1 sudsy:null-comparison-side 179: scalar-variable-type
   corpus/PSScriptAnalyzer/Tests/Engine/ModuleHelp.Tests.ps1 sudsy:null-comparison-side 230: scalar-variable-type

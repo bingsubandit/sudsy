@@ -7,6 +7,7 @@
       "command": ["node", "{prefix}/node_modules/prettier/bin/prettier.cjs", "--no-config", "--no-editorconfig", "--embedded-language-formatting=off", "{file}"],
       "input": "arg",
       "tool_may_reject": true,
+      "reference_parser": {"npm": "graphql", "version": "16.11.0", "script": "try { require(process.argv[1]).parse(require('fs').readFileSync(process.argv[2], 'utf8')); } catch (e) { process.exit(1); }"},
       "fixtures": [
         {"suffixes": [".json", ".jsonc", ".yaml", ".yml", ".md", ".graphql", ".gql"]},
         {"dir": "docs", "suffixes": [".md"], "prefix": "docs/", "recursive": true},
@@ -167,6 +168,7 @@
       },
       "fetch": ["tests/conformance/fetch-shell-corpus.sh"],
       "command": ["{exe}", "{file}"],
+      "sudsy_command": "fix",
       "input": "arg",
       "tool_may_reject": true,
       "fixtures": [
@@ -361,7 +363,7 @@
   "lint": {
     "ruff": {"preset": "python/ruff", "catalog": "ruff", "install": "ruff", "fetch": ["tests/conformance/fetch-python-corpus.sh"], "command": ["{python}", "-m", "ruff", "check", "--isolated", "--no-cache", "--output-format", "json", "--exit-zero", "--ignore-noqa", "--target-version", "py314"], "env": {"PYTHONPATH": "{prefix}"}},
     "yamllint": {"preset": "yaml/yamllint", "catalog": "yamllint", "install": {"pip": "yamllint"}, "coverage": {"corpus": [{"dir": "tests/conformance/corpus/github-actions", "glob": ["*.yml", "*.yaml"]}, {"dir": "tests/conformance/corpus/yaml-test-suite", "glob": ["in.yaml"]}], "command": ["{python}", "-m", "yamllint", "-f", "parsable", "{files}"], "env": {"PYTHONPATH": "{prefix}"}, "parse": {"format": "regex", "pattern": "^(?P<file>[^:]+):(?P<line>\\d+):\\d+: \\[(?:error|warning)\\] (?P<message>.*) \\((?P<rule>[\\w-]+)\\)$"}}},
-    "eslint": {"preset": "js/eslint-recommended", "catalog": "eslint", "install": {"npm": "eslint"}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
+    "eslint": {"preset": "js/eslint-recommended", "catalog": "eslint", "install": {"npm": "eslint"}, "fetch": ["tests/conformance/fetch-js-corpus.sh"], "coverage": {"corpus": [{"dir": "tests/conformance/corpus/js", "glob": ["*.js"], "skip": ["prettier/"], "esm": [".mjs", ".cjs"]}], "command": ["node", "{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "-f", "json", "--no-warn-ignored", "{files}"], "files": {"eslint.config.mjs": "import js from \"@eslint/js\";\nexport default [{ linterOptions: { noInlineConfig: true } }, js.configs.recommended];\n"}, "parse": {"format": "json", "levels": ["", "messages"], "file": "0.filePath", "rule": "1.ruleId", "message": "1.message", "line": "1.line"}}},
     "rubocop": {"preset": "ruby/rubocop", "catalog": "rubocop", "install": {"gem": "rubocop", "ruby": "3.4.6"}, "fetch": ["tests/conformance/fetch-ruby-corpus.sh"]},
     "typescript-eslint": {"preset": "js/typescript-eslint-recommended", "catalog": "typescript-eslint", "install": {"npm": "typescript-eslint", "with": ["eslint@9.39.5"]}, "fetch": ["tests/conformance/fetch-js-corpus.sh"]},
     "eslint-plugin-vue": {"preset": "html/eslint-plugin-vue-recommended", "catalog": "eslint-plugin-vue", "install": {"npm": "eslint-plugin-vue", "with": ["eslint@9.39.5", "typescript-eslint@8.72.2"]}, "fetch": ["tests/conformance/fetch-html-corpus.sh"]},

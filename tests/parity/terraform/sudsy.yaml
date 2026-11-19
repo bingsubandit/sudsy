@@ -1,7 +1,9 @@
 # `terraform fmt` has no options. Sudsy runs `fix` because terraform fmt also rewrites `"${x}"` to
-# `x`; the other rules are off so that only layout and that fix are compared.
+# `x`, only as a whole argument (`in_lists: false`); the other rules are off so that only layout and
+# that fix are compared.
 lint:
   rules:
     deprecated-index: off
     empty-list-equality: off
     no-duplicate-keys: off
+    deprecated-interpolation: { level: warn, options: { in_lists: false } }

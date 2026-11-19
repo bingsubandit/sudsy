@@ -1,0 +1,1 @@
+deprecated-interpolation: { level: warn, options: { in_lists: false } }

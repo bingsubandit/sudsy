@@ -1,2 +1,6 @@
-# The Sudsy side of the comparison with shfmt's defaults (tabs, no flags): Sudsy's own defaults.
+# The Sudsy side of the comparison with shfmt's defaults (tabs, no flags): Sudsy's own defaults, run as `fix`
+# with the rule that mirrors the one token rewrite of shfmt (`$(...)` for backticks).
 extends: []
+lint:
+  rules:
+    no-backticks: warn

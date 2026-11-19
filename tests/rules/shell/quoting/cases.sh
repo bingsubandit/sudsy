@@ -3,7 +3,6 @@ rm $(cat list)
 rm "$(cat list)"
 rm a$(b) `c`
 #   ^^^^ quote-command-substitution
-#        ^^^ no-backticks
 #        ^^^ quote-command-substitution
 rm '$(literal)' "$(ok)"
 echo $((1 + 2))
@@ -24,13 +23,9 @@ cp $* dir ${arr[*]}
 #         ^^^^^^^^^ quote-star-expansion
 #         ^^^^^^^^^ quote-variable
 now=`date`
-#   ^^^^^^ no-backticks
 echo `date` "`date`" 'a`b`'
-#    ^^^^^^ no-backticks
 #    ^^^^^^ quote-command-substitution
-#            ^^^^^^ no-backticks
 [ -n `foo` ]
-#    ^^^^^ no-backticks
 #    ^^^^^ quote-command-substitution
 [ $x -eq 0 ]
 # ^^ quote-variable

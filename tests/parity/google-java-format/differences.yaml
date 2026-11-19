@@ -8,3 +8,7 @@ second-format:
   real-world: 0
 refused:
   real-world: 0
+flags:
+  skip-javadoc-formatting: "gjf runs with `--skip-javadoc-formatting`: Sudsy does not format Javadoc yet"
+  skip-removing-unused-imports: "gjf runs with `--skip-removing-unused-imports`: Sudsy does not remove unused imports in the formatter yet"
+  skip-reflowing-long-strings: "gjf runs with `--skip-reflowing-long-strings`: Sudsy does not reflow long strings yet"

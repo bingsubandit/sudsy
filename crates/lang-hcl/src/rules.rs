@@ -59,6 +59,13 @@ rule! {
                   does (tflint terraform_deprecated_interpolation). The fix writes the expression. \
                   Not in Nomad job files (`.nomad`, `.nomad.hcl`), whose agent fills those in at run time.",
         example: "name = \"${var.name}\"   // name = var.name",
+        options: [OptionDecl {
+            name: "in_lists",
+            default: Opt::Bool(true),
+            check: Check::Any,
+            description: "Also report (and fix) a string that is one item of a list. Off: only a string that \
+                      is a whole argument, as `terraform fmt` unwraps it.",
+        }],
         kinds: &[k::QUOTED_TEMPLATE],
     }
 
@@ -85,6 +92,9 @@ rule! {
             ctx.report(range, message);
             return;
         };
+        if !ctx.options.bool("in_lists") && whole.parent().is_some_and(|p| p.kind() == k::TUPLE) {
+            return;
+        }
         let is_key = whole.parent().is_some_and(|o| o.kind() == k::OBJECT_ELEM && o.first_child().as_ref() == Some(&whole));
         let inner = expr.text().to_string().trim().to_string();
         let text = if is_key { format!("({inner})") } else { inner };

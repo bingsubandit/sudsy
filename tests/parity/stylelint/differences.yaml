@@ -1,6 +1,6 @@
 differences:
-  tailwind-at-rules: choice  Tailwind's at-rules (`@tailwind`, `@apply`, ...) are known to at-rule-no-unknown (stylelint reports them)
-  element-id: choice  color-no-invalid-hex leaves the id of `element(#id)` alone (stylelint reports it as a hex colour)
+  tailwind-at-rules: gap  Tailwind's at-rules (`@tailwind`, `@apply`, ...) are known to at-rule-no-unknown (stylelint reports them)
+  element-id: gap  color-no-invalid-hex leaves the id of `element(#id)` alone (stylelint reports it as a hex colour)
 files:
   unknown/tailwind stylelint:at-rule-no-unknown 1: tailwind-at-rules
   unknown/tailwind stylelint:color-no-invalid-hex 4: element-id

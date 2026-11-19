@@ -1,6 +1,6 @@
 differences:
   pipeline-indent: gap  the lines after a multi-line pipeline or call are indented as the source has them; Invoke-Formatter derives the indentation from the syntax tree
-  backtick-scriptblock: choice  Invoke-Formatter outdents the script block that follows a backtick continuation; Sudsy keeps its indentation
+  backtick-scriptblock: gap  Invoke-Formatter outdents the script block that follows a backtick continuation; Sudsy keeps its indentation
   hashtable-first-entry: gap  a hashtable whose first entry is on the `@{` line is aligned to the column of that entry; Invoke-Formatter lays it out differently
   switch-brace: gap  a `{` on its own line after a switch clause that is a string, or after a comment, is joined by Invoke-Formatter and not by Sudsy
   enum-alignment: gap  Invoke-Formatter aligns the `=` of enum members; Sudsy aligns hashtables only
@@ -22,3 +22,7 @@ files:
   corpus/PSScriptAnalyzer/build.psm1: pipeline-indent
   corpus/PSScriptAnalyzer/Tests/Engine/CSharp.ps1: not-powershell
   corpus/PSScriptAnalyzer/Tests/Engine/CustomRuleNREAssets/MyCustom.psm1: hashtable-first-entry
+intentional:
+  not-powershell: invalid-input
+flags:
+  ignore_trailing_blanks: "the trailing blanks of a line are removed from both outputs before comparing: Invoke-Formatter keeps them, Sudsy never does"

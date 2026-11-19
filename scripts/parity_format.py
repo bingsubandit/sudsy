@@ -244,6 +244,20 @@ def upstream_batch(config, prefix, found, work):
     return {n: None if c in rejected else (folder / c).read_bytes().decode("utf-8") for n, c in names.items()}
 
 
+def check_reference(spec, parity, known, rejected):
+    """The reference parser of a language (docs/ai/design/parity-target.md: `invalid-input` for a file Sudsy rejects needs the
+    language's own parser to reject it too): `spec` is `{npm, version, script}`, a Node script that exits 1 on a syntax error.
+    A file it accepts is put in `known.refuted`, which `Differences.status` reports as REVIEW (counts against Sudsy)."""
+    prefix = parity / f"reference-{spec['npm']}-{spec['version']}"
+    install({"npm": spec["npm"]}, spec["npm"], spec["version"], prefix)
+    for name, path in rejected:
+        if name in known.files and any(known.intentional.get(n) == "invalid-input" for n in known.files[name]):
+            r = run(["node", "-e", spec["script"], prefix / "node_modules" / spec["npm"], path], ROOT, check=False)
+            if r.returncode == 0:
+                known.refuted.add(name)
+                print(f"{name}: Sudsy rejects it, the reference parser ({spec['npm']} {spec['version']}) accepts it: a Sudsy bug")
+
+
 def sudsy_format(sudsy, fixture, work, command="format"):
     r = run([sudsy, command, fixture.name], work, check=False)
     # None: Sudsy rejects the file; `refused`: its safety check did (an internal error, not a syntax error)
@@ -279,6 +293,9 @@ class Differences:
         self.refused = data.get("refused") or {}  # group -> most files Sudsy's safety check refuses (a lower bound of the second-format count)
         self.intentional = data.get("intentional") or {}
         self.pins = data.get("pins") or {}
+        self.rejected = data.get("rejected")  # `invalid-input`: a file the tool rejects is not compared (the tool rejecting it is the evidence)
+        self.flags = data.get("flags") or {}  # reference-tool flag that turns a feature off -> why it is there (a named gap, printed with its count)
+        self.refuted = set()  # `invalid-input` files that the reference parser accepts: Sudsy's rejection is a bug
         self.lint = lint
         self.differing = {}  # key -> files that differ, listed or not
         self.same = self.total = 0
@@ -292,6 +309,8 @@ class Differences:
     def status(self, key, ours=None):
         """`invalid-input` or `tool-wrong` for a listed key whose name is intentional; `REVIEW` for a `tool-wrong` file whose
         Sudsy output is not the pinned one (it counts against Sudsy); else None."""
+        if key in self.refuted:
+            return "REVIEW"
         kinds = {self.intentional[n] for n in self.files.get(key, []) if n in self.intentional}
         if "invalid-input" in kinds:
             return "invalid-input"
@@ -350,6 +369,11 @@ def verdict(name, theirs, ours, diffs, label, quiet=False):
         diffs.tally(True)
         if not quiet:
             print(f"{name}: ok")
+        return 0
+    if theirs is None and diffs.rejected:
+        diffs.tally(False, diffs.rejected)
+        if not quiet:
+            print(f"{name}: rejected by the tool, intentional: {diffs.rejected}")
         return 0
     known = diffs.known(name)
     state = diffs.status(name, ours) if known else None
@@ -439,6 +463,8 @@ def main():
 
     batch = upstream_batch(config, prefix, found, work) if config["input"] == "batch" else None
 
+    flagged = Counter()  # flag -> files the flag changed the result of
+
     def compare(item):
         name, fixture, _, source = item
         style = source.get("style")
@@ -454,8 +480,12 @@ def main():
         # Sudsy's own output must be a fixed point; the files that change on a second format are counted.
         again = None if ours is None else sudsy_format(sudsy, copy, here, config.get("sudsy_command", "format"))[0]
         unstable = again is not None and again != ours
+        masked = False
         if config.get("ignore_trailing_blanks"):  # the tool keeps the trailing blanks of a line, Sudsy never does
+            before = theirs == ours
             theirs, ours = (re.sub(r"[ 	]+$", "", t, flags=re.M) if t is not None else None for t in (theirs, ours))
+            masked = not before and theirs == ours
+        flagged["ignore_trailing_blanks"] += masked
         return theirs, ours, unstable, refused
 
     with ThreadPoolExecutor(os.cpu_count() if config.get("parallel") else 1) as pool:
@@ -463,6 +493,8 @@ def main():
     bad, groups = 0, {}  # a ratchet group is counted: [identical, different, rejected by the tool]
     unstable = Counter()  # group (or "fixtures") -> files that change on a second format
     refusals = Counter()  # group (or "fixtures") -> files Sudsy's safety check refuses
+    if "reference_parser" in config and only is None:  # Sudsy rejects a file the reference parser accepts: a Sudsy bug, not invalid input
+        check_reference(config["reference_parser"], parity, known, [(n, work / n.replace("/", "__")) for (n, _, _, _), (_, o, _, _) in zip(found, results) if o is None])
     for (name, path, group, _), (_, _, again, refused) in zip(found, results):
         if again:
             unstable[group or "fixtures"] += 1
@@ -478,6 +510,8 @@ def main():
             same = theirs is not None and theirs == ours
             tally[2 if theirs is None else 0 if same else 1] += 1
             state = None if same or not known.known(name) else known.status(name, ours)
+            if theirs is None and known.rejected:
+                state = known.rejected
             known.tally(same, state)
             if state == "REVIEW":
                 print(f"{name}: REVIEW (Sudsy's output differs from the pinned one; counts against Sudsy)")
@@ -507,6 +541,9 @@ def main():
     bad += known.finish(only is not None)
     known.summary()
     rejected = sum(theirs is None for theirs, *_ in results)
+    for flag, why in known.flags.items():  # reference-tool flags that turn a feature off: named gaps, with the files they apply to
+        count = filters["skip_with"] if flag == "skip_with" else flagged[flag] if flag in flagged else len(found)
+        print(f"flag {flag} (gap): {count} fixtures; {why}")
     print("input filters: " + ", ".join(f"{k} {filters[k]}" for k in ("non-UTF-8 files", "skip", "skip_with")) + f", rejected by {tool} {rejected}")
     if "--pin" in sys.argv:  # for the lead to paste into `pins:` after review: the runner never writes them
         print("pins (tool-wrong names):")
