@@ -511,13 +511,15 @@ def message_name(message):
     return re.sub(r"^(?:v-(?:bind|on|slot):|[:@#])", "", name) if name else None
 
 
-def target_line(tool, per, hit, total, owned, prefix=""):
-    """The target number of a coverage run (docs/ai/design/parity-target.md): the findings of `wontfix` catalog entries (out of
-    scope) leave the denominator; the `owned` findings of `formatter` ids stay in it, as missing, until a proof run exists."""
+def target_line(tool, per, hit, total, owned, prefix="", wrong=0):
+    """The target number of a coverage run (docs/ai/design/parity-target.md): `hit` is the findings the mapped rule reports on the
+    same line (the column is not compared); the findings of `wontfix` catalog entries (out of scope) and the reviewed `tool-wrong`
+    ones (`wrong`, pinned per finding in differences.yaml as `<file> <tool>:<rule> <line>`) leave the denominator; the `owned`
+    findings of `formatter` ids stay in it, as missing, until a proof run exists."""
     wontfix = {f"{prefix}{e['id']}" for e in catalog_entries(tool, sub=True) if e["coverage"] == "wontfix"}
-    out = sum(n for rule, (n, _) in per.items() if rule in wontfix)
-    left = total + owned - out
-    return f"target {round(1000 * hit / left) / 10 if left else 100.0}% ({hit} of {left}); intentional: out of scope (wontfix) {out}, formatter findings counted as missing {owned}"
+    out = sum(row[0] for rule, row in per.items() if rule in wontfix)
+    left = total + owned - out - wrong
+    return f"target {round(1000 * hit / left) / 10 if left else 100.0}% ({hit} of {left}, same line); intentional: out of scope (wontfix) {out}, tool-wrong {wrong}, formatter findings counted as missing {owned}"
 
 
 def coverage(tool, sudsy, version, prefix, exe):
@@ -569,7 +571,7 @@ def coverage(tool, sudsy, version, prefix, exe):
     elif tool == "ruff":
         command, env = parity_format.tool_command(parity_format.tools()["lint"]["ruff"], prefix)
         run = subprocess.run([*command, "."], cwd=work, capture_output=True, text=True, encoding="utf-8", check=False, env=env)
-        found = [(Path(d["filename"]).name, d["code"], d["message"]) for d in json.loads(run.stdout) if d["code"]]
+        found = [(Path(d["filename"]).name, d["code"], d["message"], d["location"]["row"]) for d in json.loads(run.stdout) if d["code"]]
         fatal = set()
     else:
         config = (plugin_config(tool, f'...{PLUGINS[tool]}.configs["flat/recommended"]') if tool in PLUGINS else
@@ -583,40 +585,51 @@ def coverage(tool, sudsy, version, prefix, exe):
         except json.JSONDecodeError:
             sys.exit(f"eslint produced no report:\n{run.stdout}\n{run.stderr}")
         fatal = {Path(r["filePath"]).name for r in results if any(m.get("fatal") for m in r["messages"])}
-        found = [(Path(r["filePath"]).name, m["ruleId"], m["message"]) for r in results for m in r["messages"] if m["ruleId"] and not m.get("fatal")]
+        found = [(Path(r["filePath"]).name, m["ruleId"], m["message"], m["line"]) for r in results for m in r["messages"] if m["ruleId"] and not m.get("fatal")]
     found = [f for f in found if f[0] not in fatal]
     owned = sum(f[1] in layout for f in found)  # `formatter` ids: `sudsy format` does their work, so they are no findings to cover in the raw share
+    if "--proof" in sys.argv:  # the formatter findings that remain after `sudsy format` are the ones that count as missing
+        if not spec:
+            sys.exit(f"{tool}: the proof run needs a `coverage` entry in scripts/parity_tools.json")
+        owned = parity_coverage.proof(tool, spec, prefix, work, exe, {"actionlint": actionlint_check}, sudsy, preset, layout, fatal, [f for f in found if f[1] in layout])
     found = [f for f in found if f[1] not in layout]
-    print(f"input filters: files the tool cannot read {len(fatal)}, formatter-owned findings left out of raw {owned} (in the target they count as missing)")
+    print(f"input filters: files the tool cannot read {len(fatal)}, formatter-owned findings left out of raw (in the target they count as missing: {owned}{', after the proof run' if '--proof' in sys.argv else ', all of them: no proof run'})")
     def run_sudsy(config):  # Sudsy's findings with `config` as the sudsy.yaml of the corpus (None: no file, the default a user gets)
         (work / "sudsy.yaml").unlink(missing_ok=True)
         if config is not None:
             (work / "sudsy.yaml").write_text(config, encoding="utf-8")
         out = subprocess.run([sudsy, "lint", "--format", "json", "."], cwd=work, capture_output=True, text=True, encoding="utf-8", check=False).stdout
-        result = {}  # (file, sudsy rule) -> messages
+        result = {}  # (file, sudsy rule) -> [(message, line)]
         for d in json.loads(out)["diagnostics"]:
-            result.setdefault((parity_coverage.norm(d["path"], work) if spec else Path(d["path"]).name, aliases.get(d["rule"], d["rule"])), []).append(d["message"])
+            result.setdefault((parity_coverage.norm(d["path"], work) if spec else Path(d["path"]).name, aliases.get(d["rule"], d["rule"])), []).append((d["message"], d["range"]["start"]["line"]))
         return result
 
+    reviewed = parity_format.Differences(folder, lint=True)  # `<file> <tool>:<rule> <line>`: a finding where the tool is wrong, pinned per finding
+
     def score(ours):
-        named = {r for (_, r), ms in ours.items() if any(message_name(m) for m in ms)}  # rules whose messages quote a name
-        per = {}  # upstream rule -> [findings, covered]
-        for file, rule, message in found:
-            row = per.setdefault(rule, [0, 0])
+        """`(per, raw hits, total, raw share, same-line hits, tool-wrong findings)`; raw: the mapped rule reports in the same file,
+        target: on the same line. `per`: upstream rule -> [findings, raw covered, covered on the line]."""
+        named = {r for (_, r), ms in ours.items() if any(message_name(m) for m, _ in ms)}  # rules whose messages quote a name
+        per, wrong = {}, 0
+        for file, rule, message, line in found:
+            row = per.setdefault(rule, [0, 0, 0])
             row[0] += 1
             target = mapping.get(rule)
-            messages = ours.get((file, target)) if target else None
-            if messages and (target not in named or (n := message_name(message)) is None or any(n in m for m in messages)):
-                row[1] += 1
+            n = message_name(message)
+            reports = [(m, l) for m, l in ours.get((file, target), []) if target not in named or n is None or n in m] if target else []
+            row[1] += bool(reports)
+            on_line = any(l == line for _, l in reports)
+            row[2] += on_line
+            wrong += not on_line and reviewed.status(f"{file} {tool}:{rule} {line}") == "tool-wrong"
         total, hit = sum(r[0] for r in per.values()), sum(r[1] for r in per.values())
-        return per, hit, total, round(1000 * hit / total) / 10 if total else 100.0
+        return per, hit, total, round(1000 * hit / total) / 10 if total else 100.0, sum(r[2] for r in per.values()), wrong
 
     everything = score(run_sudsy(full))[3]  # informational: every mapped rule on
     default = score(run_sudsy(None))[3]  # informational: Sudsy's default config, as a user gets it with no sudsy.yaml
     ours = run_sudsy(json.dumps({"extends": [f"preset:{preset}"]}))  # the headline: the preset that mirrors the tool's default set
-    per, hit, total, share = score(ours)
+    per, hit, total, share, on_line, wrong = score(ours)
     extra = {}  # Sudsy rule -> its findings in files where the tool reports its rule nowhere (a false positive, or a suppression comment)
-    wanted = {(f, mapping[r]) for f, r, _ in found if r in mapping}
+    wanted = {(f, mapping[r]) for f, r, _, _ in found if r in mapping}
     on = set()  # the Sudsy rules of the rules that the tool's set turns on
     if tool in PLUGINS:
         config = subprocess.run(["node", f"{prefix}/node_modules/eslint/bin/eslint.js", "-c", "eslint.config.mjs", "--print-config", next(iter(names))],
@@ -626,9 +639,9 @@ def coverage(tool, sudsy, version, prefix, exe):
         if r in on and (f, r) not in wanted and f not in fatal:
             extra[r] = extra.get(r, 0) + len(ms)
     print("only Sudsy (files the tool reports the rule in nowhere): " + (", ".join(f"{r} {n}" for r, n in sorted(extra.items(), key=lambda kv: -kv[1])[:12]) or "none"))
-    for rule, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:int(os.environ.get("COVERAGE_TOP", 15))]:
-        print(f"  {rule}: {c} of {n} covered" + ("" if rule in mapping else " (no Sudsy rule)"))
-    print(target_line(tool, per, hit, total, owned, "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else ""))
+    for rule, (n, c, l) in sorted(per.items(), key=lambda kv: kv[1][2] - kv[1][0])[:int(os.environ.get("COVERAGE_TOP", 15))]:
+        print(f"  {rule}: {c} of {n} covered in the file, {l} on the line" + ("" if rule in mapping else " (no Sudsy rule)"))
+    print(target_line(tool, per, on_line, total, owned, "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else "", wrong))
     print(f"{tool} {version}: {hit} of {total} findings of {len(per)} rules in {len(names) - len(fatal)} files covered = {share}% with preset:{preset} (informational: {default}% default config, {everything}% all mapped rules on)")
     return ratchet(tool, folder, share)
 
@@ -741,4 +754,5 @@ def main():
     return 1 if mismatches else 0
 
 
-sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())
