@@ -19,3 +19,10 @@ files:
 intentional:
   taplo-rejects: tool-wrong
   comment-dropped: tool-wrong
+pins:
+  fixtures/handwritten-values.toml: 57e56ebeffea1341
+  valid/comment/nonascii.toml: b2f1303380594322
+  valid/comment/tricky.toml: d19743d782ccb292
+  valid/datetime/edge.toml: 550403bb048081a4
+  valid/key/quoted-unicode.toml: 3ee75b690e51c3ef
+  valid/string/quoted-unicode.toml: 765e3d81ce74761d
