@@ -28,6 +28,7 @@ options:
       values: ["keep", "add"]
       default: "keep"
       doc: "The last arm of a `case` without `;;`: `keep` leaves it as written, `add` ends it with `;;`."
+families: scope::FAMILIES
 presets: [shellcheck, shfmt]
 mapping:
   same: 'program command pipeline list subshell do_group case_item heredoc_redirect string array comment heredoc_body heredoc_end word'

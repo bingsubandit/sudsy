@@ -1,2 +1,2 @@
-coverage: 47.0  # share of the default-set findings of shellcheck on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage shellcheck; at least 85% is the bar)
-target: 47.0
+coverage: 86.6  # share of the default-set findings of shellcheck on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage shellcheck; at least 85% is the bar)
+target: 86.6

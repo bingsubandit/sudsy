@@ -103,10 +103,11 @@ pub enum Pred {
     HasToken(&'static str),
     /// No sibling before the node has its kind (the first `for` of a comprehension).
     FirstOfKind,
-    /// The node's first child ends with a name in the set (`typing.Optional`).
+    /// The node's head (its first own name token, else the name its first child ends with) is in the
+    /// set (`typing.Optional`, a command word).
     HeadIn(&'static [&'static str]),
-    /// The node's parent's first child ends with this name (`cast(...)`: the arguments' parent).
-    CalleeIs(&'static str),
+    /// The head of the node's parent is in the set (`cast(...)`: the arguments' parent).
+    CalleeIs(&'static [&'static str]),
 }
 
 impl Pred {
@@ -116,15 +117,13 @@ impl Pred {
                 .children_with_tokens()
                 .any(|e| e.as_token().is_some_and(|t| t.text() == *text)),
             Pred::FirstOfKind => node.prev_sibling().is_none_or(|p| p.kind() != node.kind()),
-            Pred::HeadIn(set) => node
-                .first_child()
-                .and_then(|o| table.last_name(&o))
+            Pred::HeadIn(set) => table
+                .head(node)
                 .is_some_and(|name| set.contains(&name.text())),
-            Pred::CalleeIs(text) => node
+            Pred::CalleeIs(set) => node
                 .parent()
-                .and_then(|call| call.first_child())
-                .and_then(|callee| table.last_name(&callee))
-                .is_some_and(|name| name.text() == *text),
+                .and_then(|call| table.head(&call))
+                .is_some_and(|name| set.contains(&name.text())),
         }
     }
 }
@@ -249,6 +248,7 @@ pub struct Table {
     operators: Vec<bool>,
     params: Vec<bool>,
     bare: bool,
+    identifiers: bool,
     dynamic: &'static [&'static str],
 }
 
@@ -283,6 +283,7 @@ impl Table {
             operators: vec![false; size(true)],
             params: vec![false; size(false)],
             bare: false,
+            identifiers: false,
             dynamic: &[],
         };
         for row in rows {
@@ -310,6 +311,13 @@ impl Table {
         self
     }
 
+    /// Only name tokens written as an identifier (letters, digits, `_`), optionally followed by a
+    /// subscript `[...]` that is no part of the name, are names (shell words: `-r`, `x[0]`).
+    pub fn identifier_names(mut self, on: bool) -> Table {
+        self.identifiers = on;
+        self
+    }
+
     /// Referring to one of these names makes the names of the scope unknowable (`extract`).
     pub fn dynamic_names(mut self, names: &'static [&'static str]) -> Table {
         self.dynamic = names;
@@ -332,6 +340,26 @@ impl Table {
 
     pub(crate) fn is_label(&self, kind: SyntaxKind) -> bool {
         self.labels.contains(&kind)
+    }
+
+    /// The name a name token's text stands for (`None`: it is no name).
+    pub(crate) fn name_of<'a>(&self, text: &'a str) -> Option<&'a str> {
+        if !self.identifiers {
+            return Some(text);
+        }
+        let name = text.split_once('[').map_or(text, |(n, _)| n);
+        let mut chars = name.chars();
+        (chars.next().is_some_and(|c| c.is_alphabetic() || c == '_')
+            && chars.all(|c| c.is_alphanumeric() || c == '_'))
+        .then_some(name)
+    }
+
+    /// The first own name token of the node, else the name its first child node ends with.
+    pub(crate) fn head(&self, n: &SyntaxNode) -> Option<core_syntax::SyntaxToken> {
+        let own = n
+            .children_with_tokens()
+            .find_map(|e| e.into_token().filter(|t| self.is_name_token(t.kind())));
+        own.or_else(|| self.last_name(&n.first_child()?))
     }
 
     pub(crate) fn is_bare(&self) -> bool {

@@ -24,6 +24,7 @@ pub(super) fn run(cx: &Cx, extra: &[&str]) -> Vec<(TextRange, String)> {
             || r.is_probe()
             || r.is_tag()
             || (lang.skips_top() && m.scope(m.var_scope(r.scope)).parent.is_none())
+            || (lang.lowercase_undefined && name.chars().any(char::is_uppercase))
             || lang.is_global(name, cx.file.path)
             || extra.contains(&name)
             || m.ancestors(r.scope)
@@ -33,6 +34,11 @@ pub(super) fn run(cx: &Cx, extra: &[&str]) -> Vec<(TextRange, String)> {
             continue;
         }
         hits.push((r.range, name.to_string()));
+    }
+    if lang.first_undefined {
+        hits.sort_by_key(|(range, _)| range.start());
+        let mut seen = std::collections::HashSet::new();
+        hits.retain(|(_, name)| seen.insert(name.clone()));
     }
     hits
 }

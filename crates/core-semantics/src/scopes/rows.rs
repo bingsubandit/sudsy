@@ -248,7 +248,10 @@ fn flow(word: &'static str, sets: &HashMap<&str, Words>) -> Result<Flow, String>
             sets.get(arg)
                 .ok_or_else(|| format!("unknown set `{arg}`"))?,
         ),
-        "callee-is" => Pred::CalleeIs(arg),
+        "callee-is" => Pred::CalleeIs(match sets.get(arg) {
+            Some(set) => set,
+            None => leak(vec![arg]),
+        }),
         other => return Err(format!("unknown predicate `{other}`")),
     };
     let both = |w: &'static str| simple_flow(w).map(|f| &*Box::leak(Box::new(f)));

@@ -225,7 +225,7 @@ fn check_template(metas: &[Meta], known: &dyn Fn(&str) -> bool) -> Result<(), St
     Ok(())
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct FileSpec {
     id: String,
@@ -421,9 +421,15 @@ struct Body {
     token: Option<TokenMatch>,
 }
 
+/// The text of a rule, read in full when its patterns compile.
+enum Source {
+    Spec(Box<FileSpec>),
+    Doc(String),
+}
+
 /// A rule whose patterns are not compiled yet.
 struct Pending {
-    spec: FileSpec,
+    source: Source,
     parser: Arc<dyn SnippetParser + Send + Sync>,
 }
 
@@ -807,6 +813,138 @@ pub fn load_lazy(
     parser: &Arc<dyn SnippetParser + Send + Sync>,
     families: &[Family],
 ) -> Result<Vec<Box<dyn Rule>>, PatternError> {
+    // A default-off rule of plain top-level scalars and a `rule` or `token` body is listed from its
+    // scalars, and read in full when its rule first runs: reading every document of every
+    // language's files costs more than the rules that never run.
+    let mut rules: Vec<Box<dyn Rule>> = Vec::new();
+    for doc in documents(source) {
+        match light(doc, parser.grammar()) {
+            Some(spec) => rules.push(Box::new(PatternRule {
+                meta: meta_of(&spec).map_err(PatternError)?,
+                message: spec.message.clone(),
+                has_layout: false,
+                body: OnceLock::new(),
+                failure: Mutex::default(),
+                pending: Some(Pending {
+                    source: Source::Doc(doc.to_string()),
+                    parser: parser.clone(),
+                }),
+            })),
+            None => rules.extend(load_full(doc, language, parser, families)?),
+        }
+    }
+    Ok(rules)
+}
+
+/// The documents of a multi-document file.
+fn documents(source: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut start = 0;
+    let mut at = 0;
+    for line in source.split_inclusive('\n') {
+        if line.trim_end() == "---" {
+            out.push(&source[start..at]);
+            start = at + line.len();
+        }
+        at += line.len();
+    }
+    out.push(&source[start..]);
+    out.retain(|d| {
+        d.lines()
+            .any(|l| !l.trim().is_empty() && !l.starts_with('#'))
+    });
+    out
+}
+
+/// The value of a one-line scalar that reads the same in every YAML way of writing it.
+fn scalar(text: &str) -> Option<String> {
+    let t = text.trim_end();
+    if let Some(inner) = t.strip_prefix('\'').and_then(|t| t.strip_suffix('\'')) {
+        let mut out = String::new();
+        let mut chars = inner.chars();
+        while let Some(c) = chars.next() {
+            if c == '\'' && chars.next() != Some('\'') {
+                return None;
+            }
+            out.push(c);
+        }
+        return Some(out);
+    }
+    if let Some(inner) = t.strip_prefix('"').and_then(|t| t.strip_suffix('"')) {
+        return (!inner.contains(['"', '\\'])).then(|| inner.to_string());
+    }
+    let first = t.chars().next()?;
+    let plain = !"{[&*!|>%@`#'\"-?:,".contains(first)
+        && !t.contains(": ")
+        && !t.contains(" #")
+        && !t.ends_with(':')
+        && !matches!(t, "true" | "false" | "null" | "~" | "yes" | "no");
+    plain.then(|| t.to_string())
+}
+
+/// The spec of a document of a rule that is off by default, only plain top-level scalars and a `rule` or `token` body, for
+/// a language that gives its rules no row; `None` for any other document.
+fn light(doc: &str, grammar: &core_syntax::Grammar) -> Option<FileSpec> {
+    if doc.contains("role") {
+        return None;
+    }
+    let mut spec = FileSpec::default();
+    let (mut has_rule, mut inside, mut message) = (false, false, false);
+    for line in doc.lines() {
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if line.starts_with([' ', '\t']) {
+            if inside {
+                continue;
+            }
+            return None;
+        }
+        let (key, value) = line.split_once(':')?;
+        let value = value.trim_start();
+        inside = false;
+        match key {
+            "rule" => (has_rule, inside) = (true, true),
+            "token" => inside = true,
+            "id" => spec.id = scalar(value)?,
+            "message" => (spec.message, message) = (Some(scalar(value)?), true),
+            "description" => spec.description = Some(scalar(value)?),
+            "example" => spec.example = Some(scalar(value)?),
+            "severity" => {
+                spec.severity = Some(match scalar(value)?.as_str() {
+                    "off" => Level::Off,
+                    "warn" => Level::Warn,
+                    "error" => Level::Error,
+                    _ => return None,
+                })
+            }
+            "category" => {
+                spec.category = Some(match scalar(value)?.as_str() {
+                    "correctness" => CategorySpec::Correctness,
+                    "suspicious" => CategorySpec::Suspicious,
+                    "style" => CategorySpec::Style,
+                    "cleanup" => CategorySpec::Cleanup,
+                    "performance" => CategorySpec::Performance,
+                    _ => return None,
+                })
+            }
+            _ => return None,
+        }
+    }
+    (has_rule
+        && message
+        && spec.severity == Some(Level::Off)
+        && spec.example.is_some()
+        && grammar.rule_row(&spec.id).is_none())
+    .then_some(spec)
+}
+
+fn load_full(
+    source: &str,
+    language: &str,
+    parser: &Arc<dyn SnippetParser + Send + Sync>,
+    families: &[Family],
+) -> Result<Vec<Box<dyn Rule>>, PatternError> {
     read_specs(source)?
         .into_iter()
         // A rule written on roles that no node of the language has is not part of the language.
@@ -848,7 +986,7 @@ pub fn load_lazy(
                 body: OnceLock::new(),
                 failure: Mutex::default(),
                 pending: Some(Pending {
-                    spec,
+                    source: Source::Spec(Box::new(spec)),
                     parser: parser.clone(),
                 }),
             }) as Box<dyn Rule>)
@@ -924,7 +1062,18 @@ impl PatternRule {
             .pending
             .as_ref()
             .expect("an uncompiled rule is pending");
-        let compiled = compile_body(&p.spec, &*p.parser, self.meta.options);
+        let read;
+        let spec = match &p.source {
+            Source::Spec(spec) => &**spec,
+            Source::Doc(doc) => {
+                read = read_specs(doc).map(|mut specs| specs.remove(0));
+                match &read {
+                    Ok(spec) => spec,
+                    Err(e) => return Err(e.0.clone()),
+                }
+            }
+        };
+        let compiled = compile_body(spec, &*p.parser, self.meta.options);
         *self.failure.lock().unwrap() = compiled.as_ref().err().cloned();
         compiled.map(|body| self.body.get_or_init(|| body))
     }

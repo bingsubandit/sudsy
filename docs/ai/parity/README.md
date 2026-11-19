@@ -48,7 +48,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | roslynator | - | - | 340 | 23 | 7 | 289 | 18 | 1 | 2 | 289 |
 | rubocop | 96.2% | 96.2% | 160 | 27 | 5 | 69 | 0 | 0 | 59 | 69 |
 | ruff | 94.6% | 94.6% | 980 | 133 | 0 | 689 | 0 | 18 | 140 | 689 |
-| shellcheck | 47.0% | 47.0% | 520 | 19 | 20 | 0 | 0 | 0 | 481 | 0 |
+| shellcheck | 86.6% | 86.6% | 520 | 19 | 22 | 0 | 0 | 0 | 479 | 0 |
 | shfmt | - | - | 9 | 1 | 1 | 0 | 0 | 3 | 4 | 0 |
 | sqlfluff | 4.3% | 3.3% | 97 | 35 | 0 | 43 | 0 | 0 | 19 | 43 |
 | stylecop | - | - | 197 | 120 | 10 | 1 | 45 | 21 | 0 | 1 |

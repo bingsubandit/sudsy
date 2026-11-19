@@ -39,7 +39,7 @@ token HeredocEnd #restyle
 token Eof
 token Unknown #error
 
-node Program = items:#el* Eof
+node Program #scope = items:#el* Eof
 // A simple command, assignments only, `[[ ... ]]`, or a declaration (`export x=1`): words and redirects.
 node Command #el = parts:#el*
 node Pipeline #el = parts:#el*

@@ -161,12 +161,3 @@ fn shfmt_options() {
         "case $x in\na) b ;;\n*)\n\tc\n\t;;\nesac\n"
     );
 }
-
-#[test]
-#[ignore]
-fn dump_tree_tmp() {
-    use provider_api::{LanguageProvider, SourceFile};
-    let src = std::fs::read_to_string(std::env::var("DUMP").unwrap()).unwrap();
-    let parsed = lang_shell::provider().parse(&SourceFile::new("a.sh", 1, &src)).unwrap();
-    print!("{}", core_syntax::dump_tree(&parsed.tree, core_syntax::grammars::SHELL.get()));
-}

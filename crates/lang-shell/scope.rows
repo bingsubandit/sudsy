@@ -1,0 +1,32 @@
+// What Shell says to the shared scope rules: a variable exists from its first assignment in the
+// file (functions share the names of the script, `local` is not told apart), words that bind names
+// are the operands of `read`, `local` and the like, and reads are written inside words
+// (core_rules::scope_rules: `expansions`). Format: core_semantics::scopes::rows.
+names Word
+unused-prefix _
+globals _
+// Assigned to steer the shell or the tools it runs, so never unused.
+conventions IFS OPTIND OPTARG OPTERR REPLY COLUMNS LINES LC_ALL LC_CTYPE LC_COLLATE LC_MESSAGES LC_NUMERIC LC_TIME PATH CDPATH HOME LANG TZ TERM TMOUT PS1 PS2 PS3 PS4 PROMPT_COMMAND COMPREPLY HISTSIZE HISTFILE HISTFILESIZE HISTCONTROL HISTIGNORE MAIL MAILPATH SHELLOPTS BASHOPTS GLOBIGNORE FIGNORE TIMEFORMAT POSIXLY_CORRECT
+set binders read mapfile readarray getopts local declare typeset readonly export
+set locals local declare typeset readonly
+set printers printf
+
+// A statement `name=value` writes; the assignments of a command are the environment of the command
+// (`A=1 cmd`, `export A=1`), which counts as used, unless the command declares them.
+Program var-scope child=kind.Assign/write
+Group child=kind.Assign/write token=all/?has-token."((":through:skip
+DoGroup child=kind.Assign/write
+CaseItem child=kind.Assign/write
+If child=kind.Assign/write
+Elif child=kind.Assign/write
+Else child=kind.Assign/write
+While child=kind.Assign/write
+List child=kind.Assign/write
+Pipeline child=kind.Assign/write
+Redirected child=kind.Assign/write
+Negated child=kind.Assign/write
+Subshell child=kind.Assign/write
+Subst child=kind.Assign/write
+Assign token=first/through token=all/skip implicit=value|let@var
+For token=first/write token=all/skip implicit=value|let@var
+Command child=kind.Assign/?head-in.locals:write:read-write token=first/skip token=after."-v"/?head-in.printers:read-write:skip token=all/?head-in.binders:read-write:skip implicit=value|let@var
