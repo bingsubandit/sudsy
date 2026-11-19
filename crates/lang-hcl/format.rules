@@ -1,0 +1,29 @@
+# Blanks between two tokens of a line (hclwrite's spacing); no row: none.
+# Brackets open and close the frames that indent a line (syntax: crates/core-format/src/frames.rs).
+[lines]
+open = Open
+close = Close
+
+[space]
+kind=Ident|Keyword|Bool|Null / kind=Open&text=( : no
+kind=LegacyIndex / * : no
+kind=Punct&text=.|.* / * : no
+* / kind=LegacyIndex : no
+* / kind=Punct&text=.|.*|,|... : no
+kind=Punct&text=, / * : yes
+kind=TemplateText|HeredocId|Strip|QuoteOpen / * : no
+kind=Punct&text=<<|<<- / * : no
+kind=Punct&parent=Unary / * : no
+* / kind=TemplateText|HeredocId|QuoteClose|Strip : no
+* / kind=Close&parent=Interpolation|TemplateDirective : no
+kind=Close&parent=Interpolation|TemplateDirective / kind=Open&parent=Interpolation|TemplateDirective : no
+kind=Ident|Bool|Null / text=[|[*] : no
+kind=Close&parent!=Interpolation|TemplateDirective / text=[|[*] : no
+kind=Open&parent=Interpolation|TemplateDirective / kind=Open&text={ : yes
+kind=Open&parent=Interpolation|TemplateDirective / * : no
+kind=Open&text={ / kind=Close&text=} : no
+kind=Open&text={ / * : yes
+* / kind=Close&text=}&parent!=Interpolation|TemplateDirective : yes
+kind=Open / * : no
+* / kind=Close : no
+* / * : yes

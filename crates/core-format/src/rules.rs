@@ -1,6 +1,6 @@
 //! A formatter that is only data: one rules file per language with the sections `[space]`,
 //! `[joined]`, `[at_least_one]`, `[op_first]` and `[flow]` ([`crate::spacing`]), `[rewrite]`
-//! ([`crate::rewrite`]), `[case]` ([`crate::case`]), `[layout]` ([`crate::layout`]), `[blank]`, `[file]` and `[comments]`
+//! ([`crate::rewrite`]), `[case]` ([`crate::case`]), `[lines]` ([`crate::frames`]), `[layout]` ([`crate::layout`]), `[blank]`, `[file]` and `[comments]`
 //! (here). [`LazyRules`] turns the file into the language's `NodeFormatter`.
 //!
 //! `[flow]`: `exact`, `source_hang` and `keep_blank_lines` (`yes`/`no`, see
@@ -22,6 +22,7 @@ use crate::comments::CommentStyle;
 use crate::context::NodeFormatter;
 use crate::doc::Doc;
 use crate::error::FormatError;
+use crate::frames::Brackets;
 use crate::layout::{File, Layout};
 use crate::rewrite::RewriteRules;
 use crate::seq::kids;
@@ -53,6 +54,7 @@ pub fn settings<'a>(text: &'a str, name: &str) -> Vec<(&'a str, &'a str)> {
 
 pub struct RuleFormatter {
     space: SpaceRules,
+    brackets: Brackets,
     cases: Cases,
     /// The `[call]`, `[hug]` and `[simple]` text, parsed when a call asks for it.
     call_text: &'static str,
@@ -96,6 +98,7 @@ impl RuleFormatter {
         let layout: Vec<&str> = section(text, "layout").collect();
         RuleFormatter {
             space: SpaceRules::parse(g, text),
+            brackets: Brackets::parse(g, text),
             cases: Cases::parse(g, section(text, "case")),
             call_text: text,
             calls: OnceLock::new(),
@@ -127,6 +130,11 @@ impl RuleFormatter {
     /// The `[case]` rows.
     pub fn cases(&self) -> &Cases {
         &self.cases
+    }
+
+    /// The `[lines]` kinds that open and close a frame.
+    pub fn brackets(&self) -> &Brackets {
+        &self.brackets
     }
 
     /// The token spacing rows.

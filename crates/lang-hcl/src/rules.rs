@@ -29,7 +29,7 @@ fn labels(block: &SyntaxNode) -> Vec<(String, SyntaxToken)> {
     block
         .tokens()
         .skip(1)
-        .take_while(|t| t.kind() != k::PUNCT)
+        .take_while(|t| t.kind() != k::OPEN)
         .filter(|t| matches!(t.kind(), k::STRING | k::IDENT))
         .map(|t| (t.text().trim_matches('"').to_string(), t))
         .collect()
@@ -74,7 +74,7 @@ rule! {
         }
         let Some(expr) = interp.child(k::EXPR) else { return };
         // The node's range includes the trivia after the closing quote.
-        let quotes: Vec<_> = node.tokens().filter(|t| t.kind() == k::PUNCT).collect();
+        let quotes: Vec<_> = node.tokens().filter(|t| matches!(t.kind(), k::QUOTE_OPEN | k::QUOTE_CLOSE)).collect();
         let (Some(open), Some(close)) = (quotes.first(), quotes.last()) else { return };
         let range = TextRange::new(open.text_range().start(), close.text_range().end());
         let message = "interpolation-only expressions are deprecated";

@@ -21,8 +21,14 @@ token Comment #trivia #comment
 token Ident #label
 // `for`, `in`, `if`, `else`, `endif`, `endfor`.
 token Keyword
-// Every other piece of syntax: `= : ? => ( ) [ ] { } , . ... .* [*]`, operators and `<<`.
+// Every other piece of syntax: `= : ? => , . ... .* [*]`, operators and `<<`.
 token Punct #punctuation
+// `( [ {` and the `${` and `%{` of a template, and their closers.
+token Open #punctuation
+token Close #punctuation
+// The quotes of a template.
+token QuoteOpen #punctuation
+token QuoteClose #punctuation
 // A string with no interpolation, quotes included.
 token String #literal #string #label
 token Number #literal
@@ -42,20 +48,20 @@ token Unknown #error
 node Document = Body? Object? Eof
 node Body #mapping = members:#member*
 node Attribute #member #key-value = key:Ident Punct value:Expr
-node Block #member = type:Ident labels:#label* Punct Body? Punct
+node Block #member = type:Ident labels:#label* Open Body? Close
 node Expr #term = #term*
 node VariableExpr #term = Ident
 node GetAttr #term = Punct Ident
-node NewIndex #term = Punct Expr Punct
-node FunctionCall #term = Ident Punct #term* Punct
+node NewIndex #term = Open Expr Close
+node FunctionCall #term = Ident Open #term* Close
 node Conditional #term = Expr Punct Expr Punct Expr
 node Binary #term = #term*
 node Unary #term = #term*
 node ForExpr #term = #term*
 node Tuple #term = #term*
-node Object #term #mapping = Punct pairs:ObjectElem* Punct
+node Object #term #mapping = Open pairs:ObjectElem* Close
 node ObjectElem #key-value = key:Expr Punct value:Expr
-node QuotedTemplate #term = Punct #template* Punct
+node QuotedTemplate #term = QuoteOpen #template* QuoteClose
 node Heredoc #term = Punct HeredocId #template* HeredocId
-node Interpolation #template = Punct Strip? Expr? Strip? Punct
+node Interpolation #template = Open Strip? Expr? Strip? Close
 node TemplateDirective #template = #term* #template*

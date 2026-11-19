@@ -26,5 +26,9 @@ mapping:
   TemplateText: template_literal
   Strip: strip_marker
   HeredocId: heredoc_identifier
-  Punct: 'heredoc_start quoted_template_start quoted_template_end template_interpolation_start template_interpolation_end template_directive_start template_directive_end block_start block_end object_start object_end tuple_start tuple_end ellipsis = : ? => , . .* [*] [ ] ( ) - ! * / % + > >= < <= == != && ||'
+  Open: 'block_start object_start tuple_start template_interpolation_start template_directive_start ( ['
+  Close: 'block_end object_end tuple_end template_interpolation_end template_directive_end ) ]'
+  QuoteOpen: quoted_template_start
+  QuoteClose: quoted_template_end
+  Punct: 'heredoc_start ellipsis = : ? => , . .* [*] - ! * / % + > >= < <= == != && ||'
   Keyword: for in if else endif endfor
