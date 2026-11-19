@@ -1,0 +1,12 @@
+# Google's C++ style guide as clang-format's Google style: two spaces, 80 columns, pointer next to the type, indented case labels.
+cpp:
+  format:
+    access_modifier_outdent: 1
+    align_escaped_newlines: left
+    short_ifs: without_else
+    short_loops: true
+    break_template_declarations: "yes"
+    indent_case_labels: true
+    penalty_return_type: 200
+    pointer_alignment: left
+    spaces_before_trailing_comments: 2

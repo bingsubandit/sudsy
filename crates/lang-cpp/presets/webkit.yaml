@@ -1,0 +1,12 @@
+# WebKit's C++ style as clang-format's WebKit style: four spaces, no column limit, operators first, function braces on their own line.
+cpp:
+  format:
+    access_modifier_outdent: 4
+    align_after_open_bracket: dont_align
+    break_before_binary_operators: all
+    brace_wrapping: [function]
+    break_constructor_initializers: before_comma
+    wrap_lines: false
+    indent_size: 4
+    namespace_indentation: inner
+    pointer_alignment: left

@@ -28,6 +28,34 @@ Verbatim for now: the text is printed back unchanged. The clang-format-compatibl
 | `indent_style` | `space`, `tab` | `space` | Indent with spaces or tabs. |
 | `final_newline` | bool | `true` | End the file with a newline. |
 | `end_of_line` | `auto`, `lf`, `crlf` | `auto` | Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first line break. |
+| `max_blank_lines` | int 0-10 | `1` | Largest number of blank lines kept between statements and comments. |
+| `wrap_lines` | bool | `true` | Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change). |
+| `continuation_indent` | int 0-16 | `4` | Columns a wrapped line is indented more than the line it continues, where it is not aligned to a bracket. |
+| `access_modifier_outdent` | int 0-16 | `2` | Columns `public:`, `private:` and `protected:` are outdented from the members of their class. |
+| `indent_case_labels` | bool | `false` | Indent `case` labels one level inside their `switch`. |
+| `namespace_indentation` | `none`, `inner`, `all` | `none` | Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`. |
+| `pointer_alignment` | `right`, `left`, `middle` | `right` | Where the `*` and `&` of a pointer or reference declarator go: next to the name (`right`), next to the type (`left`) or between them (`middle`). |
+| `brace_wrapping` | list of words | `[]` | Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct. |
+| `indent_braces` | bool | `false` | Indent a brace that is on its own line together with the block it opens. |
+| `short_functions` | `none`, `empty`, `inline`, `all` | `all` | Function bodies kept on the line of the signature when they fit: `none`, `empty` (`{}` only), `inline` (functions defined in a class, and empty ones) or `all`. |
+| `short_ifs` | `never`, `without_else`, `all` | `never` | An `if` with a simple statement is kept on one line when it fits: `never`, without an `else`, or with or without. |
+| `short_loops` | bool | `false` | A `for`, `while` or range-for with a simple statement is kept on one line when it fits. |
+| `short_lambdas` | `none`, `empty`, `inline`, `all` | `all` | Lambda bodies kept on the line of the lambda when they fit: `none`, `empty`, `inline` (a lambda that is an argument) or `all`. |
+| `short_case_labels` | bool | `false` | A `case` label and its simple statement are kept on one line when they fit. |
+| `bin_pack_arguments` | bool | `true` | Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line). |
+| `bin_pack_parameters` | bool | `true` | Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line). |
+| `align_after_open_bracket` | `align`, `dont_align`, `always_break` | `align` | Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). |
+| `break_before_binary_operators` | `none`, `non_assignment`, `all` | `none` | A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`). |
+| `break_constructor_initializers` | `before_colon`, `before_comma` | `before_colon` | Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`). |
+| `constructor_initializer_indent` | int 0-16 | `4` | Columns a constructor initializer list is indented more than its constructor. |
+| `break_after_return_type` | `none`, `top_level`, `all`, `top_level_definitions`, `all_definitions` | `none` | The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`). |
+| `short_enums` | bool | `true` | An enum whose body fits stays on one line. |
+| `penalty_return_type` | int 0-1000 | `60` | What a return type on a line of its own costs the layout; the higher, the longer the parameter list may wrap before the return type moves. |
+| `space_before_parens` | `never`, `control_statements`, `always` | `control_statements` | A blank before the parenthesis of `if`, `for`, `while`, `switch` and `catch` (`control_statements`), before every parenthesis (`always`) or never. |
+| `spaces_before_trailing_comments` | int 0-16 | `1` | Blanks between the code of a line and its `//` comment. |
+| `align_trailing_comments` | bool | `true` | Align the trailing comments of consecutive lines. |
+| `break_template_declarations` | `yes`, `multiline`, `no` | `multiline` | `template <...>` ends its line: always (`yes`), when the declaration is not on one line (`multiline`) or never. |
+| `align_escaped_newlines` | `right`, `left`, `dont_align` | `right` | The backslashes of a multi-line macro: aligned at `line_width` (`right`), one blank after the longest line (`left`) or one blank after each line. |
 <!-- /generated -->
 
 ## Conformance

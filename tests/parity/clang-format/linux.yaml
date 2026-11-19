@@ -1,0 +1,9 @@
+cpp:
+  format:
+    indent_style: tab
+    indent_size: 8
+    continuation_indent: 8
+    access_modifier_outdent: 4
+    brace_wrapping: [class, function, namespace]
+    short_functions: none
+    align_trailing_comments: false
