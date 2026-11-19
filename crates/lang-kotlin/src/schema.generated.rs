@@ -62,7 +62,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::int("function_signature_wrap_min_parameters", 2, (1, 1000), "A function or constructor with at least this many parameters puts each on a line of its own, even when the signature fits."),
         core_config::OptionDef::int("class_signature_wrap_min_parameters", 1, (1, 1000), "A class with at least this many primary-constructor parameters puts each on a line of its own, even when the signature fits."),
         core_config::OptionDef::int("class_signature_wrap_min_supertypes", 2, (1, 1000), "A class or object with at least this many supertypes puts each on a line of its own."),
-        core_config::shared::assignment_layout("break"),
+        core_config::shared::assignment_layout("multiline"),
         core_config::shared::assignment_conditional("always"),
         core_config::shared::assignment_indent(1),
         core_config::shared::assignment_keep_break_kinds(&["Property", "BinaryExpression"]),

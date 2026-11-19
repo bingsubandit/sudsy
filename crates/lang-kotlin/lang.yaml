@@ -24,7 +24,7 @@ options:
       range: [1, 1000]
       default: 2
       doc: "A class or object with at least this many supertypes puts each on a line of its own."
-  - assignment_layout: ["break"]
+  - assignment_layout: ["multiline"]
   - assignment_conditional: ["always"]
   - assignment_indent: [1]
   - assignment_keep_break_kinds: [["Property", "BinaryExpression"]]

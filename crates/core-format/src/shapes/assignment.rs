@@ -33,6 +33,8 @@ pub enum AssignStyle {
     Fluid,
     /// It moves below the operator when the whole does not fit.
     Break,
+    /// As `Break`, but a value with no place to break a line stays on the operator's line.
+    Multiline,
 }
 
 /// The layouts of an assignment, in Prettier's names.
@@ -67,6 +69,7 @@ impl AssignPolicy {
             style: match text(LAYOUT) {
                 "fluid" => AssignStyle::Fluid,
                 "break" => AssignStyle::Break,
+                "multiline" => AssignStyle::Multiline,
                 _ => AssignStyle::Compact,
             },
             conditional_always: text(CONDITIONAL) == "always",
@@ -87,6 +90,9 @@ pub struct Assign<'a> {
     pub right: Option<&'a SyntaxElement>,
     /// The key of an entry is short (the value stays on its line more often).
     pub short_key: bool,
+    /// The left side (a signature) spans lines: a value stays on the operator's line when it
+    /// spans lines too (`) = call(`).
+    pub left_broken: bool,
 }
 
 /// What the language prints or judges itself; every method has a default.
@@ -144,6 +150,14 @@ pub fn assignment(
         return Ok(a.left);
     };
     let right = hooks.right_doc(cx, right, layout)?;
+    let layout = if policy.style == AssignStyle::Multiline
+        && layout == AssignLayout::BreakAfterOperator
+        && !right.has_break_point()
+    {
+        AssignLayout::NeverBreakAfterOperator
+    } else {
+        layout
+    };
     Ok(render(layout, a.left, a.op, right, policy.indent))
 }
 
@@ -289,9 +303,12 @@ fn choose(
     if let Some(l) = hooks.layout(cx, a, right, policy) {
         return l;
     }
+    if a.left_broken {
+        return NeverBreakAfterOperator;
+    }
     match policy.style {
         AssignStyle::Compact => NeverBreakAfterOperator,
         AssignStyle::Fluid => Fluid,
-        AssignStyle::Break => BreakAfterOperator,
+        AssignStyle::Break | AssignStyle::Multiline => BreakAfterOperator,
     }
 }

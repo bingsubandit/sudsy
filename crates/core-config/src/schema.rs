@@ -541,9 +541,9 @@ pub mod shared {
     pub fn assignment_layout(default: &'static str) -> OptionDef {
         OptionDef::choice(
             "assignment_layout",
-            &["compact", "fluid", "break"],
+            &["compact", "fluid", "break", "multiline"],
             default,
-            "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit.",
+            "Where the value after `=` (or `=>`) goes when the line is too long: `compact` moves a binary expression, a conditional or a query to the next line and leaves any other value on the line; `fluid` also moves strings, collection expressions and property initializers, and any other value whose first line does not fit after the operator (a string that spans lines stays on the operator's line; the body of an expression lambda moves below `=>`; chains `a = b = c` get layouts of their own); `break` moves every value that does not fit; `multiline` does the same except for a value with no place to break a line, which stays.",
         )
     }
 

@@ -190,6 +190,7 @@ pub(crate) fn assign_like(
             op_token: None,
             right: right.as_ref(),
             short_key,
+            left_broken: false,
         },
         &AssignPolicy::of(cx.options),
         &Hooks,

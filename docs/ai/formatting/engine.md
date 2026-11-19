@@ -36,7 +36,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `array_bracket_spacing` | bool | json `false`, toml `false`, yaml `false`, github-actions `false` |
 | `assignment_conditional` | `always`, `binary_test` | java `always`, js `binary_test`, kotlin `always`, csharp `always` |
 | `assignment_indent` | int 1-4 | java `2`, js `1`, kotlin `1`, csharp `1` |
-| `assignment_layout` | `compact`, `fluid`, `break` | java `break`, js `fluid`, kotlin `break`, csharp `compact` |
+| `assignment_layout` | `compact`, `fluid`, `break`, `multiline` | java `break`, js `fluid`, kotlin `multiline`, csharp `compact` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
 | `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
 | `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |

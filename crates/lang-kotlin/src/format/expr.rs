@@ -116,7 +116,7 @@ fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     };
     let op_tok = first(cx, op);
     if let Some(t) = op_tok.as_ref().filter(|t| t.kind() == k::EQ) {
-        return super::decl::assign(cx, node, el(cx, left)?, t, right);
+        return super::decl::assign(cx, node, el(cx, left)?, t, right, false);
     }
     let elvis = op_tok.is_some_and(|t| t.kind() == k::ELVIS);
     let wraps = break_after(cx, left) || break_after(cx, op);
