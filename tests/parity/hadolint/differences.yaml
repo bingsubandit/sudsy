@@ -2,5 +2,5 @@ differences:
   user-variable: gap  a variable as the user is accepted whether or not an ARG defines it (hadolint reports it)
 files:
   instructions/cases hadolint:numeric-user-id 26: user-variable
-coverage: 35.7  # share of the default-set findings of hadolint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage hadolint; at least 85% is the bar)
-target: 35.7
+coverage: 49.4  # share of the default-set findings of hadolint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage hadolint; at least 85% is the bar)
+target: 49.4

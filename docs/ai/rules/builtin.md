@@ -141,6 +141,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `copy-from-unknown-stage` | dockerfile | correctness | warn | none | A `COPY --from` that names no earlier stage: not a stage name, not the index of an earlier stage, and not an image (no `:`). |
 | `copy-instead-of-add` | dockerfile | suspicious | off | none | An ADD with no URL and no archive (`.tar`, `.gz`, `.tgz`, `.xz` and the like) among its arguments, which ADD would extract or download. |
 | `copy-many-needs-directory` | dockerfile | correctness | error | none | A COPY with more than one source whose last argument does not end with `/`. |
+| `delete-apt-lists` | dockerfile | performance | off | none | A RUN that runs apt-get update (or apt update) and does not remove /var/lib/apt/lists, which stays in the image layer. A cache mount on that directory is fine. |
 | `dnf-clean` | dockerfile | performance | off | none | dnf install with no dnf clean all after it. |
 | `dnf-yes` | dockerfile | correctness | warn | none | dnf install without -y. |
 | `duplicate-stage-name` | dockerfile | correctness | error | none | Two FROM instructions name their stage alike. |
@@ -150,6 +151,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `go-pin-versions` | dockerfile | suspicious | off | none | A go install or get package without a version (or at latest). |
 | `json-cmd-entrypoint` | dockerfile | suspicious | warn | none | A CMD, ENTRYPOINT or HEALTHCHECK CMD in shell form, which runs under `sh -c` and does not get signals. |
 | `last-user-not-root` | dockerfile | correctness | warn | none | A stage whose last USER is root (`root`, `0`, `root:group`, `0:group`). |
+| `merge-consecutive-run` | dockerfile | performance | off | none | A RUN that is a single command, directly after another single-command RUN with the same flags (a comment in between does not count). |
 | `no-apt` | dockerfile | suspicious | off | none | A RUN that calls apt. |
 | `no-copy-whole-stage` | dockerfile | suspicious | off | none | A `COPY --from` with `/` as a source and as the target. |
 | `no-from-platform` | dockerfile | suspicious | off | none | A FROM with a fixed `--platform`; a variable such as `$BUILDPLATFORM` is fine. |
@@ -165,6 +167,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `npm-pin-versions` | dockerfile | suspicious | off | none | An npm install package without a version. |
 | `numeric-user-id` | dockerfile | suspicious | off | none | A USER that is a name rather than a numeric id (a variable is accepted). |
 | `pip-pin-versions` | dockerfile | suspicious | off | none | A pip install package without a version. |
+| `pipefail-shell` | dockerfile | suspicious | warn | none | A RUN with a pipe in a stage whose SHELL instruction does not set pipefail. |
 | `rpm-pin-versions` | dockerfile | suspicious | off | none | A yum or dnf install package without a version. |
 | `single-cmd` | dockerfile | suspicious | warn | none | A second CMD in one stage. |
 | `single-entrypoint` | dockerfile | suspicious | warn | none | A second ENTRYPOINT in one stage. |

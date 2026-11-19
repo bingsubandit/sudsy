@@ -65,7 +65,7 @@ pub use engine::{
     silence,
 };
 pub use extension::{ALL_LANGUAGES, ExtensionRule, Extensions};
-pub use family::{Family, Params};
+pub use family::{Checked, Family, Params};
 pub use fixes::{Analysis, FixOutcome, fix_loop};
 pub use hooks::{Accessor, DEFAULT_HOOKS, DefaultHooks, RuleHooks, Scalar};
 pub use layout::{Attach, LayoutRole, attached, run_layout};

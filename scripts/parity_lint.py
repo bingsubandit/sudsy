@@ -520,6 +520,15 @@ def target_numbers(tool, per, hit, total, owned, prefix="", wrong=0):
     return (round(1000 * hit / left) / 10 if left else 100.0), left, out
 
 
+def instruction_end(path, line, continuation):
+    """The last line of the instruction that starts on `line` of the file: it goes on while a line ends with the continuation character."""
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    end = line
+    while end <= len(lines) and lines[end - 1].rstrip().endswith(continuation):
+        end += 1
+    return min(end, len(lines))
+
+
 def target_line(tool, per, hit, total, owned, prefix="", wrong=0):
     """The target number of a coverage run (docs/ai/design/parity-target.md): `hit` is the findings the mapped rule reports on the
     same line (the column is not compared, as in the raw share); the findings of `wontfix` catalog entries (out of scope) and the reviewed `tool-wrong`
@@ -648,6 +657,7 @@ def coverage(tool, sudsy, version, prefix, exe):
         `per`: upstream rule -> [findings, covered]."""
         named = {r for (_, r), ms in ours.items() if any(message_name(m) for m, _ in ms)}  # rules whose messages quote a name
         per, wrong = {}, 0
+        instruction = (spec or {}).get("instruction")  # `{"rule_prefix", "continuation"}`: those codes are covered on any line of the instruction the tool's line starts
         offsets.clear()
         filehits[0] = 0
         for file, rule, message, line in found:
@@ -656,7 +666,8 @@ def coverage(tool, sudsy, version, prefix, exe):
             target = mapping.get(rule)
             n = message_name(message)
             reports = [(m, l) for m, l in ours.get((file, target), []) if target not in named or n is None or n in m] if target else []
-            on_line = any(l == line for _, l in reports)
+            last = instruction_end(work / file, line, instruction["continuation"]) if instruction and rule.startswith(instruction["rule_prefix"]) and line else line
+            on_line = any(line <= l <= last for _, l in reports) if line is not None else any(l == line for _, l in reports)
             row[1] += on_line
             filehits[0] += bool(reports)
             if not on_line and os.environ.get("COVERAGE_MISSES"):  # every finding Sudsy does not report on the tool's line: `file rule line`

@@ -27,3 +27,13 @@ description: >-
 example: 'RUN apt-get install -y curl'
 severity: off
 category: suspicious
+---
+id: delete-apt-lists
+family: run-command
+params: { program: 'apt-get|apt', args: 'update', cleaned-by: 'rm ^/var/lib/apt/lists', cache-dir: '/var/lib/apt/lists' }
+message: 'delete the apt lists (/var/lib/apt/lists) in the same RUN'
+description: >-
+  A RUN that runs apt-get update (or apt update) and does not remove /var/lib/apt/lists, which stays in the image layer. A cache mount on that directory is fine.
+example: 'RUN apt-get update && apt-get install -y curl'
+severity: off
+category: performance

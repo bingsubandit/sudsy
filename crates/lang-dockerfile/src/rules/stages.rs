@@ -7,7 +7,7 @@
 //! what: copy-from-own-stage: A `COPY --from` that names the stage it is in
 //! what: from-first: An instruction other than ARG before the first FROM
 //! what: build-stage-checks: What each FROM starts and what refers to it.
-//! tools: build-stage-checks: hadolint DL3006 DL3059
+//! tools: build-stage-checks: hadolint DL3006
 
 use crate::generated::kind as k;
 use core_rules::tree::significant_range;
@@ -15,9 +15,9 @@ use core_rules::{Family, Params, Rule, RuleContext, RuleMeta, rule};
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxNodeExt, TextRange};
 
 /// A top-level instruction: its upper-case name; the arguments are read when a rule asks.
-struct Inst {
-    name: String,
-    node: SyntaxNode,
+pub(super) struct Inst {
+    pub name: String,
+    pub node: SyntaxNode,
 }
 
 fn is_blank(kind: SyntaxKind) -> bool {
@@ -27,7 +27,7 @@ fn is_blank(kind: SyntaxKind) -> bool {
     )
 }
 
-fn instructions(doc: &SyntaxNode) -> Vec<Inst> {
+pub(super) fn instructions(doc: &SyntaxNode) -> Vec<Inst> {
     doc.children()
         .filter(|n| n.kind() == k::INSTRUCTION)
         .map(|node| {
@@ -41,13 +41,13 @@ fn instructions(doc: &SyntaxNode) -> Vec<Inst> {
 }
 
 impl Inst {
-    fn range(&self, ctx: &RuleContext<'_>) -> TextRange {
+    pub fn range(&self, ctx: &RuleContext<'_>) -> TextRange {
         significant_range(&self.node, ctx.file.grammar)
     }
 
     /// The arguments as written (no comments or line continuations); tokens with no blank between
     /// them are one word (`--platform=` and `$ARCH`).
-    fn words(&self) -> Vec<String> {
+    pub fn words(&self) -> Vec<String> {
         let mut words: Vec<String> = Vec::new();
         let mut end = None;
         for t in self.node.tokens() {

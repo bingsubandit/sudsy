@@ -14,6 +14,9 @@ dockerfile:
       single-healthcheck: error
       pip-pin-versions: warn
       apt-get-yes: warn
+      delete-apt-lists: warn
+      merge-consecutive-run: warn
+      pipefail-shell: warn
       apt-get-no-recommends: warn
       npm-pin-versions: warn
       apk-pin-versions: warn

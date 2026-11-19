@@ -24,7 +24,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | angular-eslint | - | - | 37 | 3 | 2 | 22 | 0 | 0 | 10 | 22 |
 | biome | - | - | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | buf | 85.8% | 85.8% | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
-| checkmake | 60.9% | 96.9% | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
+| checkmake | 60.9% | 100.0% | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
 | checkstyle | 25.2% | 23.1% | 126 | 36 | 12 | 72 | 0 | 6 | 0 | 72 |
 | clang-format | - | - | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | csharpier | - | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -35,7 +35,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | eslint-plugin-vue | 87.2% | 23.0% | 256 | 45 | 58 | 149 | 0 | 4 | 0 | 149 |
 | google-java-format | - | - | 14 | 2 | 5 | 1 | 0 | 6 | 0 | 1 |
 | graphql-eslint | - | - | 65 | 4 | 6 | 30 | 0 | 0 | 25 | 30 |
-| hadolint | 35.7% | 35.7% | 71 | 38 | 10 | 0 | 0 | 1 | 22 | 0 |
+| hadolint | 49.4% | 49.4% | 71 | 38 | 13 | 0 | 0 | 1 | 19 | 0 |
 | html-eslint | 0.2% | 0.2% | 66 | 13 | 12 | 41 | 0 | 0 | 0 | 41 |
 | html-validate | 61.5% | 62.9% | 97 | 34 | 30 | 26 | 0 | 1 | 6 | 26 |
 | htmlhint | 5.0% | 5.0% | 44 | 10 | 6 | 28 | 0 | 0 | 0 | 28 |
@@ -79,7 +79,7 @@ The share of the findings of each reference tool's default or recommended set on
 | HTML | htmlhint | `html/htmlhint` | 5.0% | 0.3% | 5.0% | `spec-char-escape` 1087, `tag-pair` 105, `doctype-first` 36, `src-not-empty` 6, `title-require` 1 |
 | HTML | html-eslint | `html/html-eslint-recommended` | 0.3% | 0.2% | 0.3% | `indent` 16182, `element-newline` 2175, `attrs-newline` 1158, `require-closing-tags` 146, `no-extra-spacing-tags` 132 |
 | Markdown | markdownlint | `markdown/markdownlint` | 82.7% | 0.0% | 82.7% | `MD010` 309, `MD037` 6, `MD041` 4, `MD051` 2, `MD028` 1 |
-| Dockerfile | hadolint | `dockerfile/hadolint` | 27.6% | 3.4% | 27.6% | `DL4006` 153, `DL3003` 64, `DL3008` 54, `DL3047` 50, `DL3018` 42 |
+| Dockerfile | hadolint | `dockerfile/hadolint` | 49.4% | 13.4% | 49.4% | `DL4006` 68, `DL3008` 38, `DL3003` 34, `DL3047` 34, `DL3066` 30 |
 | Shell | shellcheck | `shell/shellcheck` | 47.0% | 31.0% | 47.0% | `SC2140` 22, `SC2034` 14, `SC1091` 12, `SC2154` 11, `SC2206` 9 |
 | GitHub Actions | actionlint | `github-actions/actionlint` | 5.4% | 5.4% | 5.4% | `syntax-check` 235, `expression/types` 155, `events` 115, `action` 41, `glob` 22 |
 | Makefile | checkmake | `makefile/checkmake` | 73.5% | 0.0% | 73.5% | `uniquetargets` 88, `phonydeclared` 59, `minphony` 5 |

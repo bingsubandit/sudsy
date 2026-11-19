@@ -44,7 +44,7 @@ thread_local! {
 }
 
 /// The commands of the instruction's own `RUN` (not a nested `ONBUILD`'s).
-fn run_commands(node: &SyntaxNode, embedded: &[EmbeddedTree]) -> Option<Rc<Vec<Cmd>>> {
+pub(super) fn run_commands(node: &SyntaxNode, embedded: &[EmbeddedTree]) -> Option<Rc<Vec<Cmd>>> {
     let mut tokens = node.tokens();
     let keyword = tokens.find(|t| t.kind() == k::KEYWORD)?;
     if !keyword.text().eq_ignore_ascii_case("run") {

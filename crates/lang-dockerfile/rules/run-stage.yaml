@@ -1,0 +1,19 @@
+id: merge-consecutive-run
+family: consecutive-run
+params: {}
+message: 'merge this RUN with the one before it: each RUN adds a layer'
+description: >-
+  A RUN that is a single command, directly after another single-command RUN with the same flags (a comment in between does not count).
+example: 'RUN a   RUN b'
+severity: off
+category: performance
+---
+id: pipefail-shell
+family: run-pipe-shell
+params: { option: 'pipefail' }
+message: 'set the SHELL option -o pipefail before a RUN with a pipe: a failing command in the pipe is hidden'
+description: >-
+  A RUN with a pipe in a stage whose SHELL instruction does not set pipefail.
+example: 'RUN a | b'
+severity: warn
+category: suspicious

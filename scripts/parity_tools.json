@@ -391,7 +391,7 @@
         },
         "exe": "hadolint"
       },
-      "coverage": {"corpus": [{"dir": "tests/conformance/corpus/dockerfile", "glob": ["Dockerfile", "Dockerfile.*", "*.Dockerfile", "*.dockerfile"]}], "command": ["{exe}", "--no-fail", "--no-color", "-f", "json", "{files}"], "parse": {"format": "json", "levels": [""], "file": "0.file", "rule": "0.code", "message": "0.message", "line": "0.line"}, "map_also": ["shellcheck"]}
+      "coverage": {"corpus": [{"dir": "tests/conformance/corpus/dockerfile", "glob": ["Dockerfile", "Dockerfile.*", "*.Dockerfile", "*.dockerfile"]}], "command": ["{exe}", "--no-fail", "--no-color", "-f", "json", "{files}"], "parse": {"format": "json", "levels": [""], "file": "0.file", "rule": "0.code", "message": "0.message", "line": "0.line"}, "map_also": ["shellcheck"], "instruction": {"rule_prefix": "SC", "continuation": "\\"}}
     },
     "shellcheck": {"speed": {"language": "Shell", "label": "ShellCheck", "corpus": {"coverage": true, "text": "the shell script corpus"}, "lint": "coverage"}, 
       "preset": "shell/shellcheck",
