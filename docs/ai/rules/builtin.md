@@ -473,17 +473,17 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `useless-method-definition` | ruby | suspicious | off | none | A method whose whole body is a bare `super` (RuboCop Lint/UselessMethodDefinition). |
 | `useless-times` | ruby | suspicious | off | none | `0.times` and `1.times` with a block (RuboCop Lint/UselessTimes). |
 | `and-or-is-not-if-else` | shell | suspicious | off | none | A list `a && b \|\| c` of three commands, unless `c` is `echo`, `printf`, `true`, `:`, `return` or `exit`. |
-| `array-in-string` | shell | correctness | warn | none | A double-quoted argument that holds `$@` or `${array[@]}` among other text. |
-| `array-without-index` | shell | correctness | warn | none | `$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript. |
-| `assignment-not-seen` | shell | correctness | warn | none | `var=value cmd "$var"`: `$var` is expanded before the assignment takes effect. |
-| `assignment-space` | shell | correctness | warn | none | A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant. |
+| `array-in-string` | shell | correctness | off | none | A double-quoted argument that holds `$@` or `${array[@]}` among other text. |
+| `array-without-index` | shell | correctness | off | none | `$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript. |
+| `assignment-not-seen` | shell | correctness | off | none | `var=value cmd "$var"`: `$var` is expanded before the assignment takes effect. |
+| `assignment-space` | shell | correctness | off | none | A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant. |
 | `cd-without-exit` | shell | suspicious | warn | none | `cd`, `pushd` or `popd` whose failure is not handled (`cd dir \|\| exit`). Not reported with `set -e`, for `cd ..` or `cd /`, or for `popd -n`. |
 | `declare-and-assign-separately` | shell | suspicious | off | none | `export`, `local`, `declare`, `readonly` or `typeset` with a command substitution as the value reports the status of the declaration, not of the command. |
-| `echo-in-substitution` | shell | suspicious | warn | none | A command substitution that only runs `echo` on words. |
-| `eval-array` | shell | suspicious | warn | none | An `eval` whose argument expands an array with `[@]`. |
+| `echo-in-substitution` | shell | suspicious | off | none | A command substitution that only runs `echo` on words. |
+| `eval-array` | shell | suspicious | off | none | An `eval` whose argument expands an array with `[@]`. |
 | `find-xargs-print0` | shell | suspicious | warn | none | A pipeline from `find` into `xargs` without `-print0`/`-0`. |
 | `grep-count` | shell | style | off | none | A pipeline from `grep` into `wc -l`. |
-| `iterate-file-output` | shell | suspicious | warn | none | A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`. |
+| `iterate-file-output` | shell | suspicious | off | none | A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`. |
 | `iterate-find-output` | shell | suspicious | warn | none | A `for` loop over the output of `find`. |
 | `iterate-ls-output` | shell | suspicious | warn | none | A `for` loop over the output of `ls`. |
 | `no-backticks` | shell | style | off | safe | A command substitution written with backticks. |
@@ -492,21 +492,22 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `no-ps-grep` | shell | style | off | none | A pipeline from `ps` into `grep`. |
 | `no-which` | shell | style | off | none | A call of `which`. |
 | `printf-variable-format` | shell | suspicious | off | none | A `printf` whose format string contains an expansion and no `%`. |
-| `quote-array-element` | shell | suspicious | warn | none | An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed. |
+| `quote-array-element` | shell | suspicious | off | none | An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed. |
 | `quote-at-expansion` | shell | correctness | error | none | An unquoted `$@` or `${array[@]}` in a command's arguments. |
 | `quote-command-substitution` | shell | suspicious | warn | none | An unquoted `$(...)` or backtick substitution in a command's arguments is split into words and globbed. |
-| `quote-in-quotes` | shell | suspicious | warn | none | A word of two double-quoted strings with unquoted text between them, as `"a"b"c"`. |
+| `quote-in-quotes` | shell | suspicious | off | none | A word of two double-quoted strings with unquoted text between them, as `"a"b"c"`. |
 | `quote-star-expansion` | shell | suspicious | warn | none | An unquoted `$*` or `${array[*]}` in a command's arguments. |
 | `quote-variable` | shell | suspicious | warn | none | An unquoted `$var` or `${var}` in a command's arguments is split into words and globbed. Does not know which variables hold only a number or a single word. |
 | `read-without-raw` | shell | suspicious | off | none | A `read` without the `-r` flag. |
-| `split-command-output` | shell | suspicious | warn | none | An unquoted `$(...)` among the elements of an array assignment is split into words and globbed. |
+| `split-command-output` | shell | suspicious | off | none | An unquoted `$(...)` among the elements of an array assignment is split into words and globbed. |
 | `test-and-or` | shell | suspicious | warn | none | A `[ ]` test that joins conditions with `-a` or `-o`. |
 | `test-exit-status` | shell | style | off | none | A test that compares `$?` with a number. |
-| `test-grep-output` | shell | suspicious | warn | none | A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`. |
+| `test-grep-output` | shell | suspicious | off | none | A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`. |
 | `test-negated-empty` | shell | style | off | none | A test that negates `-z` or `-n`. |
 | `trap-expands-now` | shell | suspicious | warn | none | A `trap` whose double-quoted command contains an expansion. |
-| `unquoted-pattern` | shell | suspicious | warn | none | A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion. |
-| `unset-glob` | shell | suspicious | warn | none | `unset name[i]` with an unquoted subscript. |
+| `unassigned-variable` | shell | correctness | off | none | A lower case variable that the file reads and never assigns, reads with `read`, `getopts`, `local` or a `for` loop, or guards with a default (`${name:-x}`). Names with an upper case letter are the environment's and are left alone. |
+| `unquoted-pattern` | shell | suspicious | off | none | A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion. |
+| `unset-glob` | shell | suspicious | off | none | `unset name[i]` with an unquoted subscript. |
 | `useless-cat` | shell | style | off | none | A pipeline that starts with `cat file`. |
 | `useless-echo` | shell | style | off | none | An `echo` whose only argument is a command substitution. |
 | `count-star` | sql | style | off | none | A `COUNT` of the constant 1 or 0 (sqlfluff CV04). |
@@ -728,7 +729,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `tuple-element-names-in-signatures` | csharp | style | off | none | A tuple type in the signature of a method, constructor, property, indexer, conversion operator or delegate whose elements have no names. Overrides and implementations of interface members are left alone (their names are not the member's to choose). No fix. Equivalent: StyleCop SA1414. |
 | `unused-assignment` | csharp | cleanup | off | none | A value is stored in a local variable and no path reads it before it is overwritten or the variable goes out of scope (a dead store). Variables that are captured or whose address is taken are not checked; a variable that is never read at all is reported by `unused-variable` instead. Overlaps the SDK analyzer IDE0059 (unnecessary assignment). Equivalent: Roslynator RCS1179, Roslynator RCS1212. |
 | `unused-private-member` | csharp | cleanup | warn | none | A private field, method, property or event that no file of the project uses (`analysis: deep`). Members with attributes, overrides, interface implementations, `extern` and `partial` methods are left alone, and so are the private methods named in `reflection_methods` of a type derived from one of `reflection_base_types` (a framework calls them by reflection; the `csharp/unity` preset lists Unity's). Overlaps the SDK analyzers IDE0051 (unused private member) and IDE0052 (unread private member). Options: `reflection_base_types` (default `[]`): Names of base classes whose derived types are called by a framework through reflection (with `reflection_methods`). A base is matched by its simple name anywhere up the inheritance chain, also when the project does not load its assembly; `reflection_methods` (default `[]`): Names of private methods that count as used in a type derived from one of `reflection_base_types`. Equivalent: Roslynator RCS1213. |
-| `unused-variable` | csharp, js, python | cleanup | off | safe | A local variable or catch variable that is never used (the compiler's CS0168), or is only assigned constants and never read (CS0219). Variables captured by lambdas or local functions count as used. Off by default: the compiler already warns (CS0168, CS0219). Equivalent: eslint no-unused-vars (partial), typescript-eslint no-unused-vars (partial). |
+| `unused-variable` | csharp, js, python, shell | cleanup | off | safe | A local variable or catch variable that is never used (the compiler's CS0168), or is only assigned constants and never read (CS0219). Variables captured by lambdas or local functions count as used. Off by default: the compiler already warns (CS0168, CS0219). Equivalent: eslint no-unused-vars (partial), typescript-eslint no-unused-vars (partial). |
 | `use-lambda` | csharp | style | off | safe | A lambda instead of an anonymous method. The fix is offered when the anonymous method has a parameter list and no comment before its body; `delegate { }` without one converts to delegate types with any parameters, so it has no fix. Equivalent: StyleCop SA1130. |
 | `use-literal-suffix` | csharp | style | off | safe | A numeric literal cast to `long`, `ulong`, `uint`, `float`, `double` or `decimal` when the literal's own type differs: `(long)1` is `1L`. Not reported for hexadecimal and binary literals cast to a floating-point type, which have no suffix. Equivalent: StyleCop SA1139. |
 | `use-string-empty` | csharp | style | off | safe | `string.Empty` instead of `""` (or `@""`). Not reported where a constant is required: `const`, attribute arguments, default parameter values, `case` labels and patterns. Equivalent: StyleCop SA1122 (partial). |

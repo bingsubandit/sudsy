@@ -5,6 +5,7 @@
 
 mod format;
 mod rules;
+mod scope;
 
 pub use format::{ShellFormatter, option_schema};
 
