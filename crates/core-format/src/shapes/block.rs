@@ -195,6 +195,47 @@ pub fn open_comments(g: &Grammar, open: &SyntaxToken) -> Vec<Comment> {
     all
 }
 
+/// `{ head body }`: an opening brace, an optional head on its line, the body indented below and
+/// the closing brace. Comments after a head-less `{` move to the first body line and force the
+/// break; otherwise it breaks when the source did or the body does.
+pub fn headed_braces(
+    cx: &FormatCtx<'_>,
+    open: &SyntaxToken,
+    close: &SyntaxToken,
+    head: Option<Doc>,
+    body: Doc,
+    source_multiline: bool,
+) -> Doc {
+    let moved = if head.is_none() {
+        open_comments(cx.grammar, open)
+    } else {
+        Vec::new()
+    };
+    let broken = source_multiline || body.will_break() || !moved.is_empty();
+    let mut parts = vec![if moved.is_empty() {
+        cx.token(open)
+    } else {
+        cx.token_text(open)
+    }];
+    if let Some(h) = head {
+        parts.push(doc::lit(" "));
+        parts.push(h);
+    }
+    parts.push(doc::indent(doc::concat(vec![
+        super::dangling_comments(&moved, false),
+        doc::line(),
+        body,
+    ])));
+    parts.push(doc::line());
+    parts.push(cx.token(close));
+    let all = doc::concat(parts);
+    if broken {
+        doc::group_broken(all)
+    } else {
+        doc::group(all)
+    }
+}
+
 fn block_of(
     cx: &FormatCtx<'_>,
     c: super::Container,

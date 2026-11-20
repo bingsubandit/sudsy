@@ -89,36 +89,19 @@ fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let head = &inner[..inner.len() - 1];
-    // A comment after `{` goes to the first line of the body.
-    let moved = if head.is_empty() {
-        core_format::shapes::open_comments(cx.grammar, open)
+    let head = if head.is_empty() {
+        None
     } else {
-        Vec::new()
+        Some(seq(cx, head)?)
     };
-    let mut parts = vec![if moved.is_empty() {
-        cx.token(open)
-    } else {
-        cx.token_text(open)
-    }];
-    if !head.is_empty() {
-        parts.push(doc::lit(" "));
-        parts.push(seq(cx, head)?);
-    }
-    let body_doc = el(cx, body)?;
-    let broken = multiline(cx, node) || body_doc.will_break() || !moved.is_empty();
-    parts.push(doc::indent(doc::concat(vec![
-        core_format::shapes::dangling_comments(&moved, false),
-        doc::line(),
-        body_doc,
-    ])));
-    parts.push(doc::line());
-    parts.push(cx.token(close));
-    let lambda = doc::concat(parts);
-    Ok(if broken {
-        doc::group_broken(lambda)
-    } else {
-        doc::group(lambda)
-    })
+    Ok(core_format::shapes::headed_braces(
+        cx,
+        open,
+        close,
+        head,
+        el(cx, body)?,
+        multiline(cx, node),
+    ))
 }
 
 /// `a op b`: an operator that wraps stays at the end of its line, except `?:`, which starts the
@@ -129,12 +112,10 @@ fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let op_tok = first(cx, op);
-    if let Some(t) = op_tok.as_ref().filter(|t| {
-        matches!(
-            t.kind(),
-            k::EQ | k::PLUS_EQ | k::MINUS_EQ | k::MUL_EQ | k::DIV_EQ | k::PERC_EQ
-        )
-    }) {
+    if let Some(t) = op_tok
+        .as_ref()
+        .filter(|t| core_format::shapes::is_assign_op(cx, t))
+    {
         return super::decl::assign(cx, node, el(cx, left)?, t, right);
     }
     let elvis = op_tok.is_some_and(|t| t.kind() == k::ELVIS);

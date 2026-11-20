@@ -221,6 +221,14 @@ fn render(layout: AssignLayout, left: Doc, op: Doc, right: Doc, levels: usize) -
     }
 }
 
+/// Is the token a plain or compound assignment operator (`=`, `+=`, ...)?
+pub fn is_assign_op(cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
+    matches!(
+        cx.grammar.operator_kind(t.text()),
+        Some("assign" | "compound")
+    )
+}
+
 fn is_assignment(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
     cx.grammar.has_tag(n.kind(), "assignment")
 }
