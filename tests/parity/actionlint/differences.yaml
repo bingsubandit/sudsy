@@ -17,3 +17,19 @@ files:
   invalid-runs-on/cases actionlint:invalid-runs-on 7: self-hosted-labels
 coverage: 5.1  # share of the default-set findings of actionlint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage actionlint; at least 85% is the bar)
 target: 5.1
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  syntax-check: 235
+  expression/types: 155
+  events: 115
+  action: 41
+  glob: 22
+  if-cond: 21
+  matrix: 19
+  permissions: 19
+  syntax-check/duplicate-key: 16
+  credentials: 6
+  runner-label/conflict: 6
+  workflow-call: 6
+  runner-label/unknown: 5
+  expression/untrusted: 4
+  id/step: 4

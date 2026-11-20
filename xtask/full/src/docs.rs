@@ -116,6 +116,7 @@ pub fn generate(providers: &[Box<dyn LanguageProvider>]) -> Result<Vec<(PathBuf,
         out.retain(|(p, _)| *p != path);
         out.push((path, text));
     }
+    out.push(crate::queue::generate()?);
     Ok(out)
 }
 

@@ -4,3 +4,19 @@ files:
   instructions/cases hadolint:numeric-user-id 26: user-variable
 coverage: 78.2  # share of the default-set findings of hadolint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage hadolint; at least 85% is the bar)
 target: 78.2
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  DL3066: 30
+  SC2086: 28
+  SC2155: 24
+  SC1065: 14
+  SC2046: 12
+  SC2251: 12
+  SC1072: 9
+  SC1088: 8
+  SC2154: 8
+  DL1000: 5
+  DL3045: 4
+  DL3059: 4
+  SC3040: 4
+  DL3042: 2
+  SC2006: 2

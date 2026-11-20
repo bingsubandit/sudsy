@@ -287,7 +287,14 @@ class Differences:
         path = folder / "differences.yaml"
         data = (yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else None) or {}
         self.defs = {n: v.split(None, 1) for n, v in (data.get("differences") or {}).items()}
-        self.files = {k: [n.strip() for n in v.split(",")] for k, v in (data.get("files") or {}).items()}
+        self.files, self.listed = {}, {}  # `files` names (a name may end in `:N`: N files of the group have it as their first cause) and per key the files so attributed
+        for k, v in (data.get("files") or {}).items():
+            names = [n.strip() for n in v.split(",")]
+            self.files[k] = [n.partition(":")[0] for n in names]
+            self.listed[k] = sum(int(n.partition(":")[2] or 0) for n in names)
+        self.fixes = data.get("fixes") or {}  # gap name or lint rule -> where and what to change (the queue, docs/ai/parity/queue.md)
+        self.missed = data.get("missed") or {}  # lint rule -> findings of the corpus it misses (the coverage run checks it)
+        self.unclassified = data.get("unclassified")  # most differing files of the ratchet groups that no `name:N` of `files` explains
         self.ratchet = data.get("ratchet") or {}
         self.target_files = data.get("target-files") or {}  # group -> files of the target (all minus the intentional ones, tool-rejected included): the README table's denominator
         self.by_group = {}  # group -> [files of the target, files measured]
@@ -343,6 +350,9 @@ class Differences:
             bad += 1
         for n in sorted(set(self.defs) - used):
             print(f"UNUSED difference name: {n}")
+            bad += 1
+        for n in sorted(set(self.fixes) - set(self.defs) - set(self.missed)):
+            print(f"STALE fixes note: {n} is neither a difference name nor a rule of `missed`")
             bad += 1
         for n, kind in self.intentional.items():
             if n not in self.defs or kind not in INTENTIONAL:
@@ -536,6 +546,11 @@ def main():
             note = "at the recorded value" if top == target else f"STALE: set target-files {group} in differences.yaml to {target}"
             print(f"target-files {group}: {target} of {measured} files ({note}: {top})")
             bad += top != target
+        diff = {g: max(0, t - groups[g][0]) for g, (t, _) in known.by_group.items() if g in groups and g != "fixtures"}
+        now, top, left = sum(max(0, d - known.listed.get(g, 0)) for g, d in diff.items()), known.unclassified or 0, sum(diff.values())
+        note = "ABOVE the maximum" if now > top else f"lower `unclassified:` in differences.yaml to {now}" if now < top else "at the maximum"
+        print(f"unclassified: {now} of {left} differing files of the ratchet groups ({round(100 * now / left) if left else 0}%; {note}: {top}); name:N in `files` classifies")
+        bad += now > top
         ceilings = known.second_format
         for group in sorted(set(unstable) | set(ceilings)):
             now, top = unstable[group], ceilings.get(group, 0)

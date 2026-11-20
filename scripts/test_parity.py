@@ -52,6 +52,18 @@ class Runner(unittest.TestCase):
             _, diffs, _ = run_verdicts(self.folder(tmp, "ours"), [("ok.txt", "x", "x"), ("a.txt", "t", "ours"), ("b.txt", None, "o"), ("c.txt", "t", "u")])
         self.assertEqual(diffs.by_group, {"fixtures": [2, 4]})  # a.txt is tool-wrong, b.txt is invalid-input: both leave the target
 
+    def test_group_names_carry_counts_and_a_fixes_note_of_a_removed_name_is_stale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "differences.yaml").write_text("differences:\n  a: gap  one\n  b: gap  two\nfiles:\n  real-world: a:5, b\nfixes:\n  a: x\n  gone: y\nunclassified: 3\n", encoding="utf-8")
+            diffs = pf.Differences(folder)
+            diffs.known("real-world", 7)
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                bad = diffs.finish()
+        self.assertEqual((diffs.files["real-world"], diffs.listed["real-world"], diffs.unclassified), (["a", "b"], 5, 3))
+        self.assertEqual(bad, 1)
+        self.assertIn("STALE fixes note: gone", out.getvalue())
+
     def test_changed_output_of_a_pinned_file_is_reviewed_and_counts_against_sudsy(self):
         with tempfile.TemporaryDirectory() as tmp:
             bad, diffs, out = run_verdicts(self.folder(tmp, "ours"), [("ok.txt", "x", "x"), ("a.txt", "t", "changed")])

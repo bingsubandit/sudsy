@@ -225,3 +225,8 @@ intentional:
   variable-target: tool-wrong
 coverage: 60.9  # share of the default-set findings of checkmake on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage checkmake; at least 85% is the bar)
 target: 100.0
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  uniquetargets: 93
+  phonydeclared: 66
+  minphony: 63
+  maxbodylength: 2

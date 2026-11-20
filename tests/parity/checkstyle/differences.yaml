@@ -1,2 +1,18 @@
 coverage: 25.2  # share of the default-set findings of checkstyle on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage checkstyle; at least 85% is the bar)
 target: 23.1
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  MissingJavadocMethod: 18283
+  MethodName: 7887
+  JavadocParagraph: 5301
+  SummaryJavadoc: 1527
+  TodoFormat: 1498
+  MissingJavadocType: 894
+  AbbreviationAsWordInName: 868
+  ArrayBracketNoWhitespace: 835
+  IllegalTokenText: 833
+  AvoidEscapedUnicodeCharacters: 667
+  VariableDeclarationUsageDistance: 632
+  NonConstantFieldName: 416
+  SingleSpaceSeparator: 239
+  JavadocMissingLeadingAsterisk: 225
+  JavadocTagContinuationIndentation: 217

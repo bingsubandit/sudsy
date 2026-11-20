@@ -8,6 +8,7 @@ mod beyond;
 mod differences;
 mod docs;
 pub mod manifests;
+mod queue;
 mod rules;
 mod speed;
 pub mod support;

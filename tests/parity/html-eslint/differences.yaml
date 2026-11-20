@@ -1,2 +1,17 @@
 coverage: 0.2  # share of the default-set findings of html-eslint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage html-eslint; at least 85% is the bar)
 target: 0.2
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  indent: 16182
+  element-newline: 2175
+  attrs-newline: 1158
+  require-closing-tags: 153
+  no-extra-spacing-tags: 132
+  no-multiple-h1: 45
+  no-duplicate-attrs: 37
+  no-duplicate-id: 16
+  no-obsolete-attrs: 12
+  require-img-alt: 9
+  use-baseline: 4
+  require-lang: 1
+  require-li-container: 1
+  require-title: 1

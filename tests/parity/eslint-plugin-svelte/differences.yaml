@@ -2,3 +2,4 @@ differences: {}
 files: {}
 coverage: 100.0  # share of the default-set findings of eslint-plugin-svelte on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage eslint-plugin-svelte; at least 85% is the bar)
 target: 100.0
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)

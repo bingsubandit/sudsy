@@ -11,3 +11,19 @@ files:
   accessibility/elements sudsy:input-missing-label 15: aria-hidden
 coverage: 61.5  # share of the default-set findings of html-validate on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage html-validate; at least 85% is the bar)
 target: 62.9
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  wcag/h63: 48
+  element-permitted-content: 23
+  wcag/h30: 23
+  parser-error: 21
+  attribute-allowed-values: 20
+  element-required-content: 20
+  element-permitted-order: 19
+  no-implicit-close: 19
+  element-permitted-occurrences: 18
+  hidden-focusable: 16
+  no-inline-style: 15
+  wcag/h32: 15
+  attr-spacing: 14
+  no-dup-attr: 14
+  void-style: 13

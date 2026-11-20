@@ -704,7 +704,38 @@ def coverage(tool, sudsy, version, prefix, exe):
     print(target_line(tool, per, hit, total, owned, "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else "", wrong))
     print(f"{tool} {version}: {hit} of {total} findings of {len(per)} rules in {len(names) - len(fatal)} files covered = {share}% with preset:{preset} (informational: {default}% default config, {everything}% all mapped rules on)")
     target = target_numbers(tool, per, hit, total, owned, "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else "", wrong)[0]
-    return ratchet(tool, folder, share, "coverage") | ratchet(tool, folder, target, "target")
+    return ratchet(tool, folder, share, "coverage") | ratchet(tool, folder, target, "target") | missed_check(tool, folder, per)
+
+
+MISSED_TOP = 15
+
+
+def missed_check(tool, folder, per):
+    """The `missed:` ratchet of the tool's differences.yaml (rule -> findings it misses): the MISSED_TOP rules with most missed findings.
+    Fails when a recorded rule misses more or the key is absent; says when to lower it. `COVERAGE_WRITE=1` writes the block (the queue,
+    docs/ai/parity/queue.md, is generated from it)."""
+    top = sorted(((r, n - c) for r, (n, c) in per.items() if n > c), key=lambda kv: (-kv[1], kv[0]))[:MISSED_TOP]
+    path = folder / "differences.yaml"
+    text = path.read_text(encoding="utf-8") if path.exists() else ""
+    block = "missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)\n" + "".join(f"  {r}: {n}\n" for r, n in top)
+    if os.environ.get("COVERAGE_WRITE"):
+        text = re.sub(r"^missed:.*\n(?:[ \t]+.*\n)*", "", text, flags=re.M)
+        path.write_text(text + ("" if text.endswith("\n") or not text else "\n") + block, encoding="utf-8", newline="\n")
+        print(f"missed: written ({len(top)} rules)")
+        return 0
+    recorded = (yaml.safe_load(text) or {}).get("missed")
+    if recorded is None:
+        print(f"no `missed:` in tests/parity/{tool}/differences.yaml: COVERAGE_WRITE=1 scripts/parity.sh coverage {tool} writes it")
+        return 1
+    bad = 0
+    for rule, top_n in recorded.items():
+        now = per[rule][0] - per[rule][1] if rule in per else 0
+        if now > top_n:
+            print(f"MISSED above the ratchet: {rule} misses {now} findings > {top_n}")
+            bad = 1
+        elif now < top_n:
+            print(f"missed improved: {rule} misses {now}; COVERAGE_WRITE=1 rewrites `missed:`")
+    return bad
 
 
 def ratchet(tool, folder, share, key):
@@ -770,7 +801,7 @@ def rubocop_coverage(sudsy, version, prefix):
     print("input filters: none (the corpus is copied whole)")
     print(target_line("rubocop", per, hit, total, 0))
     print(f"rubocop {version}: {hit} of {total} findings of {len(per)} cops in {len(report['files'])} files covered = {share}% with preset:{preset} (informational: {default}% default config, {everything}% all mapped rules on)")
-    return ratchet("rubocop", folder, share, "coverage")
+    return ratchet("rubocop", folder, share, "coverage") | missed_check("rubocop", folder, per)
 
 
 def install_of(config):

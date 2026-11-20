@@ -13,3 +13,11 @@ files:
   corpus/protobuf/src/google/protobuf/unittest_custom_options.proto: option-comments, literal-field-blank
 coverage: 85.8  # share of the default-set findings of buf on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage buf; at least 85% is the bar)
 target: 85.8
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  RPC_REQUEST_RESPONSE_UNIQUE: 117
+  PACKAGE_DIRECTORY_MATCH: 98
+  RPC_RESPONSE_STANDARD_NAME: 65
+  FIELD_NOT_REQUIRED: 39
+  RPC_REQUEST_STANDARD_NAME: 9
+  IMPORT_USED: 5
+  PACKAGE_DEFINED: 2

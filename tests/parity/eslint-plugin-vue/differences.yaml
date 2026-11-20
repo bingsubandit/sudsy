@@ -2,3 +2,10 @@ differences: {}
 files: {}
 coverage: 87.2  # share of the default-set findings of eslint-plugin-vue on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage eslint-plugin-vue; at least 85% is the bar)
 target: 23.0
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  vue/attributes-order: 81
+  vue/html-self-closing: 71
+  vue/no-v-html: 25
+  vue/no-template-shadow: 3
+  vue/multi-word-component-names: 1
+  vue/return-in-computed-property: 1

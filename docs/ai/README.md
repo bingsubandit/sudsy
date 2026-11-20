@@ -39,6 +39,7 @@ Current state only; history is in git. Update the doc of the area you change in 
 | [formatting/cpp.md](formatting/cpp.md) | C and C++: lossless lexer, unwrapped-line structure, `#if` groups, formatter, conformance |
 | [formatting/presets.md](formatting/presets.md) | Preset list and notes |
 | [parity/README.md](parity/README.md) | Parity catalog: what yamllint, Prettier, Biome, eslint-plugin-jsonc, StyleCop, CSharpier do and where Sudsy stands |
+| [parity/queue.md](parity/queue.md) | Generated parity queue per tool: unclassified count, gaps by files, lint rules by missed findings, with fix notes |
 | [rules/engine.md](rules/engine.md) | Rule trait, scopes, layers and depth, levels, fixes, suppressions |
 | [rules/builtin.md](rules/builtin.md) | Built-in rules |
 | [rules/semantics.md](rules/semantics.md) | Flow graphs, analyses, summaries, compiler agreement |

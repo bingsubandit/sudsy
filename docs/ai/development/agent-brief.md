@@ -18,6 +18,7 @@ The standard brief of a build agent; a task prompt links it and adds only the ta
 
 ## Checks
 - While working: `scripts/gate.sh -p <crate>` per changed crate; `cargo xtask codegen --check` after lang.yaml, grammar or registration changes; `cargo xtask dupes --check` for shared code.
+- Parity step: start with the tool's section of [the queue](../parity/queue.md), classify before fixing (`name:N` in `files`, `fixes:` notes), keep unclassified under 15% of the differing files, take items from the top, commit the regenerated queue with each landing ([the queue](parity.md#the-queue)).
 - Formatters: lossless, idempotent, meaning-preserving; parity ratchets only go down; `second-format` 0.
 - Then `scripts/gate.sh --affected` once, then one finish: `scripts/finish.sh --start`, then `--wait` (foreground, `timeout: 600000`) until it is not `FINISH RUNNING`. No edits while it runs.
 - Budgets: a unification step +5% on every metric while the plan is open; everything else as in CLAUDE.md. Above budget: keep the bench line, stop, report the numbers.
