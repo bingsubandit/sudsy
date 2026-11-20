@@ -305,7 +305,7 @@ const HOT_TAGS: [&str; 30] = [
 
 /// The index of a hot tag in [`HOT_TAGS`]: a `match`, which compiles to a length switch where a scan
 /// of the table would compare every name (the rule dispatch asks for tags that are not hot too).
-#[inline]
+#[inline(always)]
 fn hot_index(tag: &str) -> Option<usize> {
     Some(match tag {
         "trivia" => 0,
@@ -809,11 +809,19 @@ impl Grammar {
         list.get(kind.index() as usize)
     }
 
-    #[inline]
+    /// Always inlined: at a call site with a literal tag the hot-tag lookup folds to one bit test,
+    /// and a cold tag becomes a call; left to the compiler's choice, the cost of every `has_tag` in
+    /// a language's lint flips with unrelated code growth elsewhere in the crate.
+    #[inline(always)]
     pub fn has_tag(&self, kind: SyntaxKind, tag: &str) -> bool {
         if let Some(bit) = hot_index(tag) {
             return self.flags_of(kind) & (1 << bit) != 0;
         }
+        self.has_cold_tag(kind, tag)
+    }
+
+    #[inline(never)]
+    fn has_cold_tag(&self, kind: SyntaxKind, tag: &str) -> bool {
         self.def(kind).is_some_and(|d| d.has_tag(tag))
     }
 
