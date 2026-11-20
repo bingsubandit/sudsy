@@ -24,6 +24,10 @@ pub const INDENT: &str = "assignment_indent";
 pub const LEFT_PARAMS: &str = "assignment_left_min_parameters";
 pub const LEFT_UNLESS: &str = "assignment_left_unless_kinds";
 pub const KEEP_BREAK: &str = "assignment_keep_break_kinds";
+pub const OP_SKIP: &str = "assignment_op_token_skip_kinds";
+pub const DESTRUCTURE: &str = "assignment_destructure_kinds";
+pub const GENERIC_CLOSURE: &str = "assignment_generic_closure_kinds";
+pub const TYPE_ARG_KINDS: &str = "type_argument_complex_kinds";
 
 /// How a right side that is not decided by its kind is laid out.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -106,10 +110,6 @@ pub trait AssignHooks {
     }
     /// A chain of operators on the right that stays on the operator's line (`a || {`).
     fn inline_binary(&self, _cx: &FormatCtx<'_>, _n: &SyntaxNode) -> bool {
-        false
-    }
-    /// Is the left side a destructuring that breaks in preference to the right side?
-    fn complex_target(&self, _cx: &FormatCtx<'_>, _node: &SyntaxNode) -> bool {
         false
     }
     /// What the language decides about the right side before the policy's default does.
@@ -238,6 +238,59 @@ fn own_line_comment_before(cx: &FormatCtx<'_>, e: &SyntaxElement) -> bool {
     })
 }
 
+/// The token in front of the right side (its line comment keeps the right side below it), unless
+/// the kind of the node is one that keeps such a comment where it is.
+fn operator_token(cx: &FormatCtx<'_>, a: &Assign<'_>) -> Option<SyntaxToken> {
+    let right = a.right?;
+    if cx.options.list_has(OP_SKIP, cx.grammar.name(a.node.kind())) {
+        return None;
+    }
+    let mut prev = None;
+    for e in a.node.children_with_tokens() {
+        if &e == right {
+            break;
+        }
+        if let SyntaxElement::Token(t) = &e
+            && !cx.grammar.is_trivia(t.kind())
+        {
+            prev = Some(t.clone());
+        }
+    }
+    prev
+}
+
+/// A destructuring on the left (`assignment_destructure_kinds`) of more than two entries, one of
+/// them renamed or defaulted: it breaks in preference to the right side.
+fn complex_target(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    let g = cx.grammar;
+    let Some(left) = node.first_child() else {
+        return false;
+    };
+    cx.options.list_has(DESTRUCTURE, g.name(left.kind()))
+        && left.children().count() > 2
+        && left.children().any(|p| {
+            !g.has_tag(p.kind(), "rest")
+                && (p
+                    .children_with_tokens()
+                    .any(|e| e.as_token().is_some_and(|t| !g.is_trivia(t.kind())))
+                    || p.children().any(|c| g.has_tag(c.kind(), "default-value")))
+        })
+}
+
+/// Type arguments that make a short call chain worth breaking inside: several, one of a kind in
+/// `type_argument_complex_kinds`, or one that breaks.
+pub fn complex_type_args(
+    cx: &FormatCtx<'_>,
+    args: Option<&SyntaxNode>,
+) -> Result<bool, FormatError> {
+    let Some(args) = args else { return Ok(false) };
+    let mut it = args.children();
+    let first = it.next();
+    Ok(it.next().is_some()
+        || first.is_some_and(|t| cx.options.list_has(TYPE_ARG_KINDS, cx.grammar.name(t.kind())))
+        || cx.format(args)?.will_break())
+}
+
 fn choose(
     cx: &FormatCtx<'_>,
     a: &Assign<'_>,
@@ -263,13 +316,14 @@ fn choose(
         }
         false
     };
-    if a.op_token
-        .is_some_and(|t| ends_in_line_comment(cx, t) || before_op(t))
+    let found = a.op_token.cloned().or_else(|| operator_token(cx, a));
+    let op_token = found.as_ref();
+    if op_token.is_some_and(|t| ends_in_line_comment(cx, t) || before_op(t))
     {
         return BreakAlways;
     }
     // A break the source has after the operator stays (`assignment_keep_break_kinds`).
-    if let Some(t) = a.op_token
+    if let Some(t) = op_token
         && comments::break_after(g, t)
         && cx.options.list_has(KEEP_BREAK, g.name(a.node.kind()))
     {
@@ -300,7 +354,7 @@ fn choose(
     if head_of_long_chain || own_line_comment_before(cx, right) {
         return BreakAfterOperator;
     }
-    if hooks.complex_target(cx, a.node) {
+    if complex_target(cx, a.node) {
         return BreakLhs;
     }
     if let Some(r) = &right_inner {
@@ -320,6 +374,15 @@ fn choose(
     }
     if let Some(l) = hooks.layout(cx, a, right, policy) {
         return l;
+    }
+    // A generic closure on a declarator hugs its left side when that can break.
+    if cx.options.list_has(GENERIC_CLOSURE, g.name(a.node.kind()))
+        && right_inner.as_ref().is_some_and(|r| {
+            g.has_tag(r.kind(), "huggable-function") && g.slot(r, "type_parameters").is_some()
+        })
+        && a.left.has_break_point()
+    {
+        return BreakLhs;
     }
     // A signature with a line per parameter keeps a value that spans lines on the operator's
     // line (`) = call(`).

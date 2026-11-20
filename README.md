@@ -105,7 +105,7 @@ Sudsy format options vs other tools:
 
 | Language | Sudsy options | Reference tool | Tool options |
 |---|---:|---|---:|
-| JavaScript / TypeScript | 28 | Prettier | [17](https://prettier.io/docs/options) |
+| JavaScript / TypeScript | 32 | Prettier | [17](https://prettier.io/docs/options) |
 | CSS / SCSS / Less | 7 | Prettier | [5](https://prettier.io/docs/options) |
 | YAML | 14 | Prettier | [7](https://prettier.io/docs/options) |
 | GraphQL | 6 | Prettier | [5](https://prettier.io/docs/options) |

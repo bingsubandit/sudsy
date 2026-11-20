@@ -34,6 +34,7 @@ pub mod tabular;
 pub use arrow::{ArrowStyle, arrow_body};
 pub use assignment::{
     Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
+    complex_type_args,
 };
 pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
