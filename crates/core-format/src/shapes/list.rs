@@ -420,6 +420,11 @@ fn list_of(
         && items
             .iter()
             .all(|i| !i.verbatim && !i.hole && i.blank_before == 0);
+    let hug_widths: Vec<Option<usize>> = if hug_ok {
+        items.iter().map(|i| i.doc.flat_width()).collect()
+    } else {
+        Vec::new()
+    };
     let hug_docs: Vec<Doc> = if hug_ok {
         items.iter().map(|i| doc::shared(i.doc.clone())).collect()
     } else {
@@ -482,9 +487,9 @@ fn list_of(
             widest = widest.max(w);
         }
         // (an item that is too long for a line breaks inside itself, where the source breaks)
-        // (the operands of a chain that is not the first item hang below its first operand)
+        // (the operands of a chain hang below its first operand)
         let item = if style.align_open
-            && i > 0
+            && (i > 0 || items.len() > 1)
             && c.slots
                 .get(i)
                 .is_some_and(|sl| g.has_tag(sl.node.kind(), "binary-chain"))
@@ -605,6 +610,20 @@ fn list_of(
         (0..style.indent_levels.max(1)).fold(inner, |d, _| doc::indent(d))
     };
     let hugged = hug_ok.then(|| {
+        // (all items on one line below the opening)
+        let mut row = vec![doc::softline()];
+        for (i, d) in hug_docs.iter().enumerate() {
+            if i > 0 {
+                row.push(sep.clone());
+                row.push(doc::lit(" "));
+            }
+            row.push(d.clone());
+        }
+        let below = doc::group(doc::concat(vec![
+            opening.clone(),
+            doc::align(style.hang_indent, doc::concat(row)),
+            closing.clone(),
+        ]));
         let mut parts = vec![opening.clone()];
         for (i, d) in hug_docs.into_iter().enumerate() {
             if i > 0 {
@@ -620,7 +639,7 @@ fn list_of(
             }
         }
         parts.push(closing.clone());
-        doc::concat(parts)
+        (doc::concat(parts), below)
     });
     body_parts.extend([opening, inner, close_pad, closing]);
     let body = doc::concat(body_parts);
@@ -665,9 +684,18 @@ fn list_of(
         doc::group(body)
     };
     let list = match hugged {
-        Some(h) => {
+        Some((h, below)) => {
             let list = doc::shared(list);
-            doc::conditional_group(vec![list.clone(), h, list])
+            // (items that fit on one line below the opening: no hug, the body stays on a line)
+            let flats: Option<Vec<usize>> = hug_widths.iter().copied().collect();
+            let total = flats.map(|w| {
+                w.iter().sum::<usize>() + 2 * w.len().saturating_sub(1) + 2 + style.hang_indent
+            });
+            let hug = doc::conditional_group(vec![list.clone(), h, list.clone()]);
+            match total {
+                Some(t) => doc::fits_below(0, t, below, hug),
+                None => hug,
+            }
         }
         None => list,
     };
