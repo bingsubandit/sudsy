@@ -422,7 +422,7 @@ fn comments_beside_dropped_parentheses_reach_a_fixed_point() {
         fmt(
             "x = [1, // a\n  2];\nfoo</* c */ T>();\ntype U =\n  | A // a\n  | B;\nconst g = // c\n  (a) => (b) => c;\n"
         ),
-        "x = [\n  1, // a\n  2,\n];\nfoo</* c */ T>();\ntype U =\n  | A // a\n  | B;\nconst g = (a) => (b) => c; // c\n"
+        "x = [\n  1, // a\n  2,\n];\nfoo</* c */ T>();\ntype U =\n  | A // a\n  | B;\nconst g = // c\n  (a) => (b) => c;\n"
     );
 }
 
@@ -476,5 +476,16 @@ fn a_template_body_is_not_on_its_own_line_for_trivia_after_it() {
             "const f = (level) => `calc(var(--spacing) * ${(level - 1) * config.perLevel + cfg.base})`\n"
         ),
         "const f = (level) =>\n  `calc(var(--spacing) * ${(level - 1) * config.perLevel + cfg.base})`;\n"
+    );
+}
+
+#[test]
+fn line_comments_after_operators_and_optional_chain_bodies() {
+    // Expected: Prettier 3 output.
+    assert_eq!(
+        fmt(
+            "type A<T> =\n  T extends X\n    ? // yes\n      Y\n    : // no\n      Z;\nconst k = // c\n  f(a);\nlet o // c\n= {a};\nxs.find((x) =>\n  someLongName?.includesTheValueOfSomething(xxxxxxxxxxxxxxxxxxxxxxxxx),\n);\n"
+        ),
+        "type A<T> = T extends X\n  ? // yes\n    Y\n  : // no\n    Z;\nconst k = // c\n  f(a);\nlet o = // c\n  { a };\nxs.find((x) =>\n  someLongName?.includesTheValueOfSomething(xxxxxxxxxxxxxxxxxxxxxxxxx),\n);\n"
     );
 }

@@ -310,11 +310,7 @@ pub(crate) fn rewrite(
                 }
             }
             // `typeof a[]` is `(typeof a)[]`.
-            k::TS_TYPE_QUERY
-                if node
-                    .parent()
-                    .is_some_and(|p| p.kind() == k::TS_ARRAY_TYPE) =>
-            {
+            k::TS_TYPE_QUERY if node.parent().is_some_and(|p| p.kind() == k::TS_ARRAY_TYPE) => {
                 if let (Some(first), Some(last)) =
                     (first_token(grammar, &node), last_token(grammar, &node))
                 {

@@ -124,12 +124,12 @@ impl AssignHooks for Hooks {
         if should_never_break_after_operator(cx, &right_u, a.short_key) {
             return Some(AssignLayout::NeverBreakAfterOperator);
         }
-        if (a.node.kind() == k::VARIABLE_DECLARATOR
-                && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
-                && right_u
-                    .children()
-                    .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
-                && can_break(&a.left))
+        if a.node.kind() == k::VARIABLE_DECLARATOR
+            && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
+            && right_u
+                .children()
+                .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
+            && can_break(&a.left)
         {
             return Some(AssignLayout::BreakLhs);
         }
@@ -186,20 +186,23 @@ pub(crate) fn assign_like(
     let right = right.map(|r| SyntaxElement::Node(r.clone()));
     // The token in front of the right side: its line comment keeps the right side below it.
     // (An assignment expression keeps the comment where it is: one inside parentheses moves.)
-    let op_token = right.as_ref().filter(|_| node.kind() != k::ASSIGNMENT_EXPRESSION).and_then(|r| {
-        let mut prev = None;
-        for e in node.children_with_tokens() {
-            if &e == r {
-                break;
+    let op_token = right
+        .as_ref()
+        .filter(|_| node.kind() != k::ASSIGNMENT_EXPRESSION)
+        .and_then(|r| {
+            let mut prev = None;
+            for e in node.children_with_tokens() {
+                if &e == r {
+                    break;
+                }
+                if let SyntaxElement::Token(t) = &e
+                    && !cx.grammar.is_trivia(t.kind())
+                {
+                    prev = Some(t.clone());
+                }
             }
-            if let SyntaxElement::Token(t) = &e
-                && !cx.grammar.is_trivia(t.kind())
-            {
-                prev = Some(t.clone());
-            }
-        }
-        prev
-    });
+            prev
+        });
     shapes::assignment(
         cx,
         Assign {

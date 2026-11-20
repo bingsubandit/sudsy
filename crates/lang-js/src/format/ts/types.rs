@@ -517,8 +517,7 @@ fn conditional(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let (q, colon) = (tok("?"), tok(":"));
     let ends = |text: &str| {
         kids(cx, node).iter().any(|e| {
-            token_of(e)
-                .is_some_and(|t| t.text() == text && shapes::ends_in_line_comment(cx, t))
+            token_of(e).is_some_and(|t| t.text() == text && shapes::ends_in_line_comment(cx, t))
         })
     };
     let branch = |marker: Doc, text: &str, branch: &SyntaxNode, d: Doc| {
