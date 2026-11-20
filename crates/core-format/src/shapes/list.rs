@@ -587,20 +587,24 @@ fn list_of(
     if style.leading_line {
         body_parts.push(doc::line());
     }
-    let close_pad = if style.hug_close && dangling.is_empty() {
+    // (a block comment after the last item that ended its line in the source keeps the closing
+    // delimiter on the next line: the next format would read the comment as one in front of the
+    // delimiter, not as a trailing one to align)
+    let ends_line = !flat
+        && dangling.is_empty()
+        && c.slots.last().is_some_and(|s| {
+            [s.last_token(cx), s.sep.clone()]
+                .iter()
+                .flatten()
+                .any(|t| comments::has_trailing_comment(g, t) && comments::break_after(g, t))
+        });
+    let close_pad = if ends_line {
+        doc::hardline()
+    } else if style.hug_close && dangling.is_empty() {
         Doc::Nil
     } else if style.align_open {
-        // (a comment pending after the last item ends the line before the closing delimiter; so
-        // does a block comment that ended its line in the source: the next format would read the
-        // comment as one in front of the delimiter, not as a trailing one to align)
-        let ends_line = c.slots.last().and_then(|s| s.last_token(cx)).is_some_and(|t| {
-            comments::has_trailing_comment(g, &t) && comments::break_after(g, &t)
-        });
-        if ends_line {
-            doc::hardline()
-        } else {
-            doc::line_suffix_boundary()
-        }
+        // (a comment pending after the last item ends the line before the closing delimiter)
+        doc::line_suffix_boundary()
     } else {
         pad
     };
