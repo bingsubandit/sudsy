@@ -886,7 +886,7 @@ fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
     };
     let g = cx.grammar;
     let (mut count, mut items) = (0, 0);
-    for e in inside {
+        if count > 1 {
         if let SyntaxElement::Token(t) = e
             && g.has_tag(t.kind(), "separator")
         {

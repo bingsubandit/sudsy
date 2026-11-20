@@ -82,4 +82,5 @@ CaseClause : case colon=Colon
 Block : block empty=as_written
 TemplateDeclaration : flow
 Arguments : list pack=option:bin_pack_arguments wrap=option:wrap_lines align=option:align_after_open_bracket=align
+InitList : list pack=option:bin_pack_arguments wrap=option:wrap_lines align=option:align_after_open_bracket=align
 ParameterList : list pack=option:bin_pack_parameters wrap=option:wrap_lines align=option:align_after_open_bracket=align
