@@ -437,13 +437,16 @@ impl<'a> Printer<'a> {
                 if let Some((widths, hang)) = &f.lines {
                     let width = self.opts.line_width as isize;
                     let aligned = width - self.pos as isize;
-                    let hung = width - self.indents.levels[indent].width as isize - *hang as isize;
+                    let hung = width - self.indents.levels[self.line_level].width as isize - *hang as isize;
                     if fill_lines(widths, aligned) > 3 + fill_lines(widths, hung) {
                         push(cmds, indent, mode, &f.otherwise);
                         return;
                     }
                 }
-                for _ in 0..if at_column { 0 } else { f.levels } {
+                if f.levels == crate::doc::FROM_LINE {
+                    below = self.line_level;
+                }
+                for _ in 0..if at_column || f.levels == crate::doc::FROM_LINE { 0 } else { f.levels } {
                     below = self.indents.indent(below);
                 }
                 let room = if at_column {

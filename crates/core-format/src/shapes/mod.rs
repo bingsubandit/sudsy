@@ -36,7 +36,7 @@ pub use assignment::{
     Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
 };
 pub use binary_chain::{
-    BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
+    BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens, widest_operand,
 };
 pub use block::{
     BlockStyle, Continuations, LabelStyle, annotation_line, blank_before, block, block_between,
