@@ -66,10 +66,10 @@ Each number is measured on real-world code against the reference tool with its d
 | Language | Format | Lint | Status |
 |---|---|---|---|
 | Protobuf | █████████░ 99% buf format | ████████░░ 85% buf | Ready |
-| GraphQL | █████████░ 99% Prettier | 20 rules · reference tool: none found | Ready |
-| TOML | █████████░ 98% taplo | 14 rules · reference tool: none found | Ready |
-| Angular templates | █████████░ 97% Prettier | 141 rules · reference tool: none found | Ready |
-| XML | █████████░ 99% CSharpier XML | 16 rules · reference tool: none found | Ready |
+| GraphQL | █████████░ 99% Prettier | 21 rules · reference tool: none found | Ready |
+| TOML | █████████░ 98% taplo | 15 rules · reference tool: none found | Ready |
+| Angular templates | █████████░ 97% Prettier | 142 rules · reference tool: none found | Ready |
+| XML | █████████░ 99% CSharpier XML | 17 rules · reference tool: none found | Ready |
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
 | Makefile | Sudsy formatter · reference tool: none found | █████████░ 96% checkmake | Lint only: Ready |
 | JavaScript / TypeScript | ████████░░ 84% Prettier | ██████████ 100% ESLint<br>██████████ 100% typescript-eslint | In progress |
@@ -91,7 +91,7 @@ Each number is measured on real-world code against the reference tool with its d
 | Dockerfile | Sudsy formatter · reference tool: none found | ███░░░░░░░ 35% hadolint | Lint only: In progress |
 | GitHub Actions | Sudsy formatter · reference tool: none found | ░░░░░░░░░░ 5% actionlint | Lint only: In progress |
 | PowerShell | not measured Invoke-Formatter | not measured PSScriptAnalyzer | not measured |
-| INI, EditorConfig, .gitignore | Sudsy formatter · reference tool: none found | 23 rules · reference tool: none found | not measured |
+| INI, EditorConfig, .gitignore | Sudsy formatter · reference tool: none found | 24 rules · reference tool: none found | not measured |
 
 How to read the numbers, what they leave out and how to reproduce one: [docs/languages.md](docs/languages.md#how-to-read-the-numbers). Presets: [configuration](docs/configuration.md#presets).
 <!-- /generated -->
