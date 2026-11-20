@@ -13066,6 +13066,45 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A declaration with a blank line the formatter would add or remove before it, among declarations with comments or annotations too (ktlint spacing-between-declarations-with-comments, spacing-between-declarations-with-annotations).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "val a = 1\n// about b\nval b = 2\n\n@Deprecated(\"x\")\nfun c() {}\n\nfun d(x: Int,\n      y: Int) {\n}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "blank-line-between-declarations",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "spacing-between-declarations-with-annotations",
+          "partial": false,
+          "tool": "ktlint"
+        },
+        {
+          "id": "spacing-between-declarations-with-comments",
+          "partial": false,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "A `when` entry with a blank line the formatter would add or remove before it (ktlint blank-line-between-when-conditions).",
       "example": {
         "config": null,
@@ -13212,6 +13251,40 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A `const val` whose name is not in `UPPER_SNAKE_CASE` (ktlint property-naming).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "const val maxCount = 1\nconst val MAX_COUNT = 1\nconst val serialVersionUID = 1L\nval Default = 1\nval a_b = 1\nvar Global = 1\n\nclass A {\n    val MAX = 1\n    val ok = 1\n    val _backing = 1\n    val trailing_ = 1\n    fun My_fun() {}\n    fun Factory(): A = A()\n    fun my_fun2(): Int = 1\n    fun `a test name`() {}\n    override fun other_name() {}\n}\n\nobject B {\n    val LIMIT = 1\n    val Mixed = 1\n}\n\nfun local() {\n    val LOCAL = 1\n}\n\n@Composable\nfun Screen() {}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 11,
+            "length": 8,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "const-property-naming",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "property-naming",
+          "partial": true,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "An enum entry whose name starts with a lowercase letter or an underscore (ktlint enum-entry-name-case).",
       "example": {
         "config": null,
@@ -13251,6 +13324,74 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A function with a declared return type whose name is not in camel case or, as a factory function, in Pascal case (ktlint function-naming).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "const val maxCount = 1\nconst val MAX_COUNT = 1\nconst val serialVersionUID = 1L\nval Default = 1\nval a_b = 1\nvar Global = 1\n\nclass A {\n    val MAX = 1\n    val ok = 1\n    val _backing = 1\n    val trailing_ = 1\n    fun My_fun() {}\n    fun Factory(): A = A()\n    fun my_fun2(): Int = 1\n    fun `a test name`() {}\n    override fun other_name() {}\n}\n\nobject B {\n    val LIMIT = 1\n    val Mixed = 1\n}\n\nfun local() {\n    val LOCAL = 1\n}\n\n@Composable\nfun Screen() {}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 9,
+            "length": 7,
+            "line": 15
+          }
+        ]
+      },
+      "fix": null,
+      "id": "factory-function-naming",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "function-naming",
+          "partial": true,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A `.kt` file whose name, up to its first dot, is not in PascalCase (ktlint filename; the check that a file with a single class is named after it is not made).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "package a\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "filename",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "filename",
+          "partial": true,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "A function whose body the formatter would write differently (ktlint function-expression-body).",
       "example": {
         "config": null,
@@ -13283,6 +13424,40 @@
         {
           "id": "function-expression-body",
           "partial": false,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A function whose name is not in camel case (ktlint function-naming); a name in backticks and a `@Composable` function are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "const val maxCount = 1\nconst val MAX_COUNT = 1\nconst val serialVersionUID = 1L\nval Default = 1\nval a_b = 1\nvar Global = 1\n\nclass A {\n    val MAX = 1\n    val ok = 1\n    val _backing = 1\n    val trailing_ = 1\n    fun My_fun() {}\n    fun Factory(): A = A()\n    fun my_fun2(): Int = 1\n    fun `a test name`() {}\n    override fun other_name() {}\n}\n\nobject B {\n    val LIMIT = 1\n    val Mixed = 1\n}\n\nfun local() {\n    val LOCAL = 1\n}\n\n@Composable\nfun Screen() {}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 9,
+            "length": 6,
+            "line": 13
+          }
+        ]
+      },
+      "fix": null,
+      "id": "function-naming",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "function-naming",
+          "partial": true,
           "tool": "ktlint"
         }
       ]
@@ -13442,7 +13617,51 @@
       ],
       "upstream": [
         {
+          "id": "if-else-wrapping",
+          "partial": false,
+          "tool": "ktlint"
+        },
+        {
           "id": "multiline-if-else",
+          "partial": false,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A bracket, comma or arrow where the formatter would break the line, or add a trailing comma (ktlint wrapping).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "val a = 1\n// about b\nval b = 2\n\n@Deprecated(\"x\")\nfun c() {}\n\nfun d(x: Int,\n      y: Int) {\n}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 7,
+            "length": 1,
+            "line": 8
+          },
+          {
+            "column": 12,
+            "length": 1,
+            "line": 9
+          }
+        ]
+      },
+      "fix": null,
+      "id": "newline-wrapping",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "wrapping",
           "partial": false,
           "tool": "ktlint"
         }
@@ -13639,6 +13858,84 @@
         {
           "id": "parameter-list-wrapping",
           "partial": false,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A property in `UPPER_SNAKE_CASE` that is not a constant: a member of a class, or a local (ktlint property-naming).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "const val maxCount = 1\nconst val MAX_COUNT = 1\nconst val serialVersionUID = 1L\nval Default = 1\nval a_b = 1\nvar Global = 1\n\nclass A {\n    val MAX = 1\n    val ok = 1\n    val _backing = 1\n    val trailing_ = 1\n    fun My_fun() {}\n    fun Factory(): A = A()\n    fun my_fun2(): Int = 1\n    fun `a test name`() {}\n    override fun other_name() {}\n}\n\nobject B {\n    val LIMIT = 1\n    val Mixed = 1\n}\n\nfun local() {\n    val LOCAL = 1\n}\n\n@Composable\nfun Screen() {}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 9,
+            "length": 3,
+            "line": 9
+          },
+          {
+            "column": 9,
+            "length": 5,
+            "line": 26
+          }
+        ]
+      },
+      "fix": null,
+      "id": "property-constant-naming",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "property-naming",
+          "partial": true,
+          "tool": "ktlint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A property whose name is not in camel case (ktlint property-naming). A backing property may start with `_`; an `UPPER_SNAKE_CASE` name is the next two rules' business.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "const val maxCount = 1\nconst val MAX_COUNT = 1\nconst val serialVersionUID = 1L\nval Default = 1\nval a_b = 1\nvar Global = 1\n\nclass A {\n    val MAX = 1\n    val ok = 1\n    val _backing = 1\n    val trailing_ = 1\n    fun My_fun() {}\n    fun Factory(): A = A()\n    fun my_fun2(): Int = 1\n    fun `a test name`() {}\n    override fun other_name() {}\n}\n\nobject B {\n    val LIMIT = 1\n    val Mixed = 1\n}\n\nfun local() {\n    val LOCAL = 1\n}\n\n@Composable\nfun Screen() {}\n",
+        "language": "kotlin",
+        "spans": [
+          {
+            "column": 5,
+            "length": 6,
+            "line": 6
+          },
+          {
+            "column": 9,
+            "length": 9,
+            "line": 12
+          }
+        ]
+      },
+      "fix": null,
+      "id": "property-naming",
+      "languages": [
+        "kotlin"
+      ],
+      "options": [],
+      "presets": [
+        "kotlin/ktlint"
+      ],
+      "upstream": [
+        {
+          "id": "property-naming",
+          "partial": true,
           "tool": "ktlint"
         }
       ]

@@ -615,6 +615,14 @@ pub mod shared {
         )
     }
 
+    pub fn wrapped_body_indent_words(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            opt::CTOR_OWN_LINE_KINDS,
+            default,
+            "Words (`constructor`) that start a primary constructor which, when the supertypes go one per line, puts the body one level further in (its closing brace under the supertypes).",
+        )
+    }
+
     pub fn comment_trim_lines(default: bool) -> OptionDef {
         OptionDef::boolean(
             opt::COMMENT_TRIM_LINES,

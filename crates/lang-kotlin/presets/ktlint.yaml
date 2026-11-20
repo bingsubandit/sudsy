@@ -14,10 +14,18 @@ kotlin:
       multiline-if-else: warn
       when-entry-bracing: warn
       statement-wrapping: warn
+      newline-wrapping: warn
       import-ordering: warn
       no-single-line-block-comment: warn
       blank-line-between-when-conditions: warn
+      blank-line-between-declarations: warn
       class-naming: warn
+      filename: warn
+      function-naming: warn
+      factory-function-naming: warn
+      property-naming: warn
+      property-constant-naming: warn
+      const-property-naming: warn
       comment-space: warn
       curly:
         level: warn

@@ -492,6 +492,10 @@
               "$ref": "#/definitions/rule",
               "description": "`x == x`, `a && a` and other comparison, logical and bitwise operators whose two sides are the same code (RuboCop Lint/BinaryOperatorWithIdenticalOperands)."
             },
+            "blank-line-between-declarations": {
+              "$ref": "#/definitions/rule",
+              "description": "A declaration with a blank line the formatter would add or remove before it, among declarations with comments or annotations too (ktlint spacing-between-declarations-with-comments, spacing-between-declarations-with-annotations)."
+            },
             "blank-line-between-when-conditions": {
               "$ref": "#/definitions/rule",
               "description": "A `when` entry with a blank line the formatter would add or remove before it (ktlint blank-line-between-when-conditions)."
@@ -712,6 +716,10 @@
             "consistent-type-imports": {
               "$ref": "#/definitions/rule",
               "description": "An import of a TypeScript file whose names are only used as types is written `import type`, and a type is not imported with `import(\"a\")`. Names that are not used at all are left alone; the separate `import type` fix style is the only one."
+            },
+            "const-property-naming": {
+              "$ref": "#/definitions/rule",
+              "description": "A `const val` whose name is not in `UPPER_SNAKE_CASE` (ktlint property-naming)."
             },
             "constant-definition-in-block": {
               "$ref": "#/definitions/rule",
@@ -1417,6 +1425,10 @@
               "$ref": "#/definitions/rule",
               "description": "An f-string with no replacement field in any of its parts."
             },
+            "factory-function-naming": {
+              "$ref": "#/definitions/rule",
+              "description": "A function with a declared return type whose name is not in camel case or, as a factory function, in Pascal case (ktlint function-naming)."
+            },
             "fenced-code-language": {
               "$ref": "#/definitions/rule",
               "description": "A fenced code block without an info string (markdownlint MD040); name the language, or `text`."
@@ -1436,6 +1448,10 @@
             "file-name-matches-type": {
               "$ref": "#/definitions/rule",
               "description": "The file name, up to its first dot and ignoring case, is the name of the first type in the file; a generic type may also be written `Name{T,U}`. Not checked when that type is partial. No fix."
+            },
+            "filename": {
+              "$ref": "#/definitions/rule",
+              "description": "A `.kt` file whose name, up to its first dot, is not in PascalCase (ktlint filename; the check that a file with a single class is named after it is not made)."
             },
             "find-xargs-print0": {
               "$ref": "#/definitions/rule",
@@ -1635,6 +1651,10 @@
             "function-name-case": {
               "$ref": "#/definitions/rule",
               "description": "A function name with capitals (`translateX` and the like keep theirs)."
+            },
+            "function-naming": {
+              "$ref": "#/definitions/rule",
+              "description": "A function whose name is not in camel case (ktlint function-naming); a name in backticks and a `@Composable` function are left alone."
             },
             "function-no-unknown": {
               "description": "A function in a declaration value that no CSS specification lists. Not checked in SCSS and Less, whose built-in functions are not in the table.",
@@ -2960,6 +2980,10 @@
             "nested-with": {
               "$ref": "#/definitions/rule",
               "description": "A `with` whose only statement is another `with` (both sync or both async)."
+            },
+            "newline-wrapping": {
+              "$ref": "#/definitions/rule",
+              "description": "A bracket, comma or arrow where the formatter would break the line, or add a trailing comma (ktlint wrapping)."
             },
             "no-abstract-role": {
               "$ref": "#/definitions/rule",
@@ -4401,6 +4425,10 @@
                 }
               ]
             },
+            "property-constant-naming": {
+              "$ref": "#/definitions/rule",
+              "description": "A property in `UPPER_SNAKE_CASE` that is not a constant: a member of a class, or a local (ktlint property-naming)."
+            },
             "property-disallowed-list": {
               "description": "A property that is in the `list` option (names, or `/regex/`). Custom properties are left out.",
               "oneOf": [
@@ -4434,6 +4462,10 @@
                   "type": "object"
                 }
               ]
+            },
+            "property-naming": {
+              "$ref": "#/definitions/rule",
+              "description": "A property whose name is not in camel case (ktlint property-naming). A backing property may start with `_`; an `UPPER_SNAKE_CASE` name is the next two rules' business."
             },
             "property-no-deprecated": {
               "description": "A deprecated property (`clip`, `word-wrap`, `grid-gap`, the `box-*` of the old flexbox, ...).",
@@ -9885,9 +9917,9 @@
             },
             "ctor_own_line_kinds": {
               "default": [
-                "AnnotationEntry"
+                "constructor"
               ],
-              "description": "Node kinds among the modifiers of a primary constructor (annotations) that put the constructor below the type name, one level in, with the supertypes and the body under that level.",
+              "description": "Words (`constructor`) that start a primary constructor which, when the supertypes go one per line, puts the body one level further in (its closing brace under the supertypes).",
               "items": {
                 "type": "string"
               },
@@ -13247,9 +13279,9 @@
                   },
                   "ctor_own_line_kinds": {
                     "default": [
-                      "AnnotationEntry"
+                      "constructor"
                     ],
-                    "description": "Node kinds among the modifiers of a primary constructor (annotations) that put the constructor below the type name, one level in, with the supertypes and the body under that level.",
+                    "description": "Words (`constructor`) that start a primary constructor which, when the supertypes go one per line, puts the body one level further in (its closing brace under the supertypes).",
                     "items": {
                       "type": "string"
                     },

@@ -11,6 +11,8 @@
 //!   (code it adds, changes or removes), `comma` (a comma it adds or removes), `blank` (a blank
 //!   line it adds or removes); default `split join`;
 //! - `at` (`start`): only the changes at the first character of the node;
+//! - `leading` (`comments`): the region also takes the comments right above the node (no blank
+//!   line between them and it), so a blank line added before them is the node's;
 //! - `multiline` (`true`): only a node that spans lines in the source;
 //! - `skip` (words): kind names of nested nodes whose inside is not the region's (a lambda body in
 //!   an argument list).
@@ -134,6 +136,7 @@ struct FormatDiff {
     skip: Vec<String>,
     multiline: bool,
     at_start: bool,
+    leading: bool,
     mask: u8,
 }
 
@@ -153,6 +156,7 @@ fn build(meta: &'static RuleMeta, mut p: Params) -> Result<Box<dyn Rule>, String
         skip: words(&mut p, "skip"),
         multiline: p.optional("multiline").is_some_and(|v| v == "true"),
         at_start: p.optional("at").is_some_and(|v| v == "start"),
+        leading: p.optional("leading").is_some_and(|v| v == "comments"),
         mask: Change::Split as u8 | Change::Join as u8,
     };
     let change = words(&mut p, "change");
@@ -214,6 +218,26 @@ impl FormatDiff {
         (start, stop.unwrap_or(whole))
     }
 
+    /// The offset of the first comment right above `node`, the node's own start when there is none.
+    fn lead_start(&self, node: &SyntaxNode, start: u32, file: &FileContext<'_>) -> u32 {
+        let g = file.grammar;
+        let mut from = start;
+        for t in node
+            .descendants_with_tokens()
+            .filter_map(|e| e.into_token())
+        {
+            if u32::from(t.text_range().start()) >= start {
+                break;
+            }
+            if g.has_tag(t.kind(), "comment") {
+                from = from.min(u32::from(t.text_range().start()));
+            } else if t.text().matches('\n').count() > 1 {
+                from = start;
+            }
+        }
+        from
+    }
+
     /// The ranges of the nested nodes of the `skip` kinds.
     fn skipped(&self, node: &SyntaxNode, file: &FileContext<'_>) -> Vec<(u32, u32)> {
         let g = file.grammar;
@@ -257,7 +281,12 @@ impl Rule for FormatDiff {
             }
             let skipped = self.skipped(&node, file);
             let end = if self.at_start { start } else { end };
-            for at in changes.within(start, end, self.mask) {
+            let from = if self.leading {
+                self.lead_start(&node, start, file)
+            } else {
+                start
+            };
+            for at in changes.within(from, end, self.mask) {
                 if skipped.iter().any(|&(s, e)| at > s && at < e) {
                     continue;
                 }

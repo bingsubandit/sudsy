@@ -62,6 +62,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `conditional_layout` | `indented`, `chained` | java `indented`, js `chained`, csharp `indented` |
 | `constructor_initializer_indent` | int 0-16 | cpp `4`, c `4` |
 | `continuation_indent` | int 0-16 | cpp `4`, c `4` |
+| `ctor_own_line_kinds` | list of words | kotlin `[AnnotationEntry]`, kotlin `[constructor]` |
 | `dialect` | json: `auto`, `json`, `jsonc`; sql: `ansi`, `postgres`, `mysql`, `tsql` | json `auto`, sql `ansi` |
 | `document_end` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |
 | `document_start` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |

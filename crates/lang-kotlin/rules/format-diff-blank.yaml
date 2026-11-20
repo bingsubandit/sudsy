@@ -7,3 +7,14 @@ description: >-
 example: 'val a = when (b) {\n    1 -> c()\n\n    else -> d()\n}'
 severity: off
 category: style
+---
+id: blank-line-between-declarations
+family: format-diff
+params: { kind: "Fun Property Class ObjectDeclaration Typealias", change: blank, at: start, leading: comments, message: "the blank line before the declaration is as the formatter writes it" }
+description: >-
+  A declaration with a blank line the formatter would add or remove before it, among
+  declarations with comments or annotations too (ktlint spacing-between-declarations-with-comments,
+  spacing-between-declarations-with-annotations).
+example: 'val a = 1\nfun f() {}'
+severity: off
+category: style

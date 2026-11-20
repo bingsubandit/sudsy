@@ -33,19 +33,19 @@ entries:
   enum-entry-name-case: rule enum-entry-name-case
   enum-wrapping: planned
   expression-operand-wrapping: planned
-  filename: planned
+  filename: rule filename | A file with a single class is not checked against the class name
   final-newline: option kotlin.format.final_newline
   fun-keyword-spacing: planned
   function-expression-body: rule function-expression-body
   function-literal: planned
-  function-naming: planned | exceptions (`@Composable`, factory functions, tests) need annotations and types
+  function-naming: rule function-naming, factory-function-naming | `@Composable`, `override` and backtick names are left alone; a factory function is a capitalised name with a declared return type
   function-return-type-spacing: formatter
   function-signature: rule function-signature
   function-start-of-body-spacing: formatter
   function-type-modifier-spacing: planned
   function-type-reference-spacing: planned
   if-else-bracing: planned
-  if-else-wrapping: planned
+  if-else-wrapping: rule multiline-if-else
   import-ordering: rule import-ordering
   indent: formatter | Continuation lines after the wrapping rules below are not forced; the closing quote of a raw string is not re-indented.
   kdoc: planned
@@ -83,12 +83,12 @@ entries:
   parameter-list-wrapping: rule parameter-list-wrapping
   parameter-wrapping: planned
   paren-spacing: formatter
-  property-naming: planned | constants and backing properties need modifiers and a scan of the class
+  property-naming: rule property-naming, property-constant-naming, const-property-naming | `override` properties are left alone; `_name` backing properties are not matched to a property
   property-wrapping: planned
   range-spacing: formatter
   spacing-around-angle-brackets: formatter
-  spacing-between-declarations-with-annotations: planned
-  spacing-between-declarations-with-comments: planned
+  spacing-between-declarations-with-annotations: rule blank-line-between-declarations
+  spacing-between-declarations-with-comments: rule blank-line-between-declarations
   spacing-between-function-name-and-opening-parenthesis: formatter
   square-brackets-spacing: formatter
   statement-wrapping: rule statement-wrapping
@@ -105,3 +105,4 @@ entries:
   unary-op-spacing: formatter
   value-argument-comment: planned
   value-parameter-comment: planned
+  wrapping: rule newline-wrapping

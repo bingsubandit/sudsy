@@ -73,3 +73,13 @@ description: >-
 example: 'fun f() { a(); b() }'
 severity: off
 category: style
+---
+id: newline-wrapping
+family: format-diff
+params: { kind: "ValueArgumentList ValueParameterList Block FunctionLiteral ClassBody WhenEntry", change: "split comma", skip: "Block FunctionLiteral ClassBody LambdaArgument ObjectLiteral", message: "a line break is missing where the formatter writes one" }
+description: >-
+  A bracket, comma or arrow where the formatter would break the line, or add a trailing comma
+  (ktlint wrapping).
+example: 'fun f(a: Int,\n    b: Int) {}'
+severity: off
+category: style

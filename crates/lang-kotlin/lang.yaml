@@ -39,6 +39,7 @@ options:
   - single_line_body_kinds: [["EnumEntry"]]
   - raw_string_calls: [["trimIndent", "trimMargin"]]
   - ctor_own_line_kinds: [["AnnotationEntry"]]
+  - wrapped_body_indent_words: [["constructor"]]
   - comment_trim_lines: [true]
   - comment_reindent_lines: [true]
   - format_rules: [["curly", "redundant-return-type", "comment-space"]]

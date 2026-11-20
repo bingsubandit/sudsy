@@ -1,0 +1,83 @@
+id: property-naming
+message: 'a property name starts with a lowercase letter and uses camel case'
+description: >-
+  A property whose name is not in camel case (ktlint property-naming). A backing property
+  may start with `_`; an `UPPER_SNAKE_CASE` name is the next two rules' business.
+example: 'val My_value = 1'
+severity: off
+category: style
+rule:
+  kind: Property
+  not:
+    any:
+      - { has: { kind: ModifierList, regex: '\bconst\b|\boverride\b' } }
+      - { parent: { any: [{ kind: KtFile }, { kind: ClassBody, parent: { kind: ObjectDeclaration } }] }, not: { regex: '^(?:[^=:]*\s)?var\s' } }
+token: { kind: [Identifier], not-regex: '^(?:[a-z][A-Za-z0-9]*|_[A-Za-z0-9_]*|[A-Z][A-Z0-9_]*|`.*)$' }
+---
+id: property-constant-naming
+message: 'only a constant is named in UPPER_SNAKE_CASE: a top-level or object value, or a `const val`'
+description: >-
+  A property in `UPPER_SNAKE_CASE` that is not a constant: a member of a class, or a local
+  (ktlint property-naming).
+example: 'class A { val MAX = 1 }'
+severity: off
+category: style
+rule:
+  kind: Property
+  not:
+    any:
+      - { has: { kind: ModifierList, regex: '\bconst\b' } }
+      - { parent: { kind: KtFile } }
+      - { parent: { kind: ClassBody, parent: { kind: ObjectDeclaration } } }
+token: { kind: [Identifier], regex: '^[A-Z][A-Z0-9_]*$' }
+---
+id: const-property-naming
+message: 'a constant is named in UPPER_SNAKE_CASE'
+description: >-
+  A `const val` whose name is not in `UPPER_SNAKE_CASE` (ktlint property-naming).
+example: 'const val maxCount = 1'
+severity: off
+category: style
+rule: { kind: Property, has: { kind: ModifierList, regex: '\bconst\b' } }
+token: { kind: [Identifier], not-regex: '^(?:[A-Z][A-Z0-9_]*|serialVersionUID)$' }
+---
+id: function-naming
+message: 'a function name starts with a lowercase letter and uses camel case'
+description: >-
+  A function whose name is not in camel case (ktlint function-naming); a name in backticks and
+  a `@Composable` function are left alone.
+example: 'fun My_function() {}'
+severity: off
+category: style
+rule:
+  kind: Fun
+  not:
+    any:
+      - { has: { kind: ModifierList, regex: '@Composable|\boverride\b' } }
+      - { regex: '^[^{]*\)\s*:' }
+token: { kind: [Identifier], not-regex: '^(?:[a-z][A-Za-z0-9]*|`.*)$' }
+---
+id: factory-function-naming
+message: 'a function name starts with a letter and uses camel or Pascal case'
+description: >-
+  A function with a declared return type whose name is not in camel case or, as a factory
+  function, in Pascal case (ktlint function-naming).
+example: 'fun My_function(): Int = 1'
+severity: off
+category: style
+rule: { kind: Fun, regex: '^[^{]*\)\s*:', not: { has: { kind: ModifierList, regex: '@Composable|\boverride\b' } } }
+token: { kind: [Identifier], not-regex: '^(?:[A-Za-z][A-Za-z0-9]*|`.*)$' }
+---
+id: filename
+message: 'the file name is in PascalCase'
+description: >-
+  A `.kt` file whose name, up to its first dot, is not in PascalCase (ktlint filename; the
+  check that a file with a single class is named after it is not made).
+example: 'path: my-file.kt'
+severity: off
+category: style
+rule:
+  kind: KtFile
+  path: '\.kt$'
+  not: { path: '(^|/)[A-Z][A-Za-z0-9]*(\.[^/]*)?\.kt$' }
+report-on: start

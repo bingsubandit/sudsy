@@ -910,16 +910,31 @@ fn option_int(cx: &FormatCtx<'_>, row: &Row, key: &str) -> usize {
 /// first stays on the line of the `)`.
 fn heritage(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -> Option<R> {
     let els = kids(cx, node);
-    if let Some(r) = ctor_own_line(cx, &els, row, flow) {
-        return Some(r);
-    }
-    let colon = els
+    let own = match ctor_own_line(cx, &els, row) {
+        Some(Ok(own)) => Some(own),
+        Some(Err(e)) => return Some(Err(e)),
+        None => None,
+    };
+    let supertypes = els
         .iter()
-        .position(|e| row.kinds_arg("colon").contains(&e.kind()))?;
-    let list = els
-        .get(colon + 1)
-        .and_then(|e| e.as_node())
-        .filter(|n| row.kinds_arg("list").contains(&n.kind()))?;
+        .position(|e| row.kinds_arg("colon").contains(&e.kind()))
+        .and_then(|colon| {
+            let list = els.get(colon + 1).and_then(|e| e.as_node())?;
+            row.kinds_arg("list")
+                .contains(&list.kind())
+                .then(|| (colon, list.clone()))
+        });
+    let Some((colon, list)) = supertypes else {
+        // (no supertypes: what follows the constructor stays on its line)
+        let (at, mut parts) = own?;
+        return Some(flow.seq(cx, &els[..at]).and_then(|head| {
+            if at + 1 < els.len() {
+                parts.extend([doc::lit(" "), flow.seq(cx, &els[at + 1..])?]);
+            }
+            Ok(doc::concat(vec![head, doc::indent(doc::concat(parts))]))
+        }));
+    };
+    let list = &list;
     let entries: Vec<SyntaxElement> = kids(cx, list)
         .into_iter()
         .filter(|e| !cx.grammar.has_tag(e.kind(), "separator"))
@@ -946,22 +961,51 @@ fn heritage(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -
         .iter()
         .map(|e| el(cx, e))
         .collect::<Result<Vec<_>, _>>();
-    let tail = (colon + 2 < els.len()).then(|| flow.seq(cx, &els[colon + 2..]));
+    // (a constructor that starts with a word of `wrapped_body_indent_words` puts the body of a
+    // wrapped supertype list one level further in)
+    let deeper = layout == shapes::HeritageLayout::Wrapped
+        && own.is_none()
+        && els[..colon]
+            .iter()
+            .filter_map(|e| e.as_node())
+            .filter(|n| row.kinds_arg("ctor").contains(&n.kind()))
+            .flat_map(|c| c.children_with_tokens())
+            .filter_map(|e| e.into_token())
+            .any(|t| cx.options.list_has(core_config::opt::CTOR_OWN_LINE_KINDS, t.text()));
+    let tail = (colon + 2 < els.len()).then(|| {
+        flow.seq(cx, &els[colon + 2..])
+            .map(|t| if deeper { doc::indent(t) } else { t })
+    });
     Some((|| {
-        let mut head_breaks = false;
-        for e in &els[..colon] {
-            if row.kinds_arg("ctor").contains(&e.kind()) {
-                head_breaks = el(cx, e)?.will_break();
+        let mut head_breaks = own.is_some();
+        let mut at = None;
+        let mut head = None;
+        if let Some((i, parts)) = own {
+            // (the constructor below the name: it is the head, and the whole clause is one level in)
+            at = Some(i);
+            head = Some(doc::concat(parts));
+        } else {
+            for e in &els[..colon] {
+                if row.kinds_arg("ctor").contains(&e.kind()) {
+                    head_breaks = el(cx, e)?.will_break();
+                }
             }
         }
-        Ok(shapes::heritage(
-            flow.seq(cx, &els[..colon])?,
+        let clause = shapes::heritage(
+            match head {
+                Some(h) => h,
+                None => flow.seq(cx, &els[..colon])?,
+            },
             head_breaks,
             el(cx, &els[colon])?,
             items?,
             layout,
             tail.transpose()?,
-        ))
+        );
+        Ok(match at {
+            Some(i) => doc::concat(vec![flow.seq(cx, &els[..i])?, doc::indent(clause)]),
+            None => clause,
+        })
     })())
 }
 
@@ -971,8 +1015,7 @@ fn ctor_own_line(
     cx: &FormatCtx<'_>,
     els: &[SyntaxElement],
     row: &Row,
-    flow: &Flow<'_>,
-) -> Option<R> {
+) -> Option<Result<(usize, Vec<Doc>), FormatError>> {
     let g = cx.grammar;
     let at = els
         .iter()
@@ -1008,13 +1051,7 @@ fn ctor_own_line(
                 None => parts.push(el(cx, &e)?),
             }
         }
-        if at + 1 < els.len() {
-            parts.extend([doc::lit(" "), flow.seq(cx, &els[at + 1..])?]);
-        }
-        Ok(doc::concat(vec![
-            flow.seq(cx, &els[..at])?,
-            doc::indent(doc::concat(parts)),
-        ]))
+        Ok((at, parts))
     })())
 }
 

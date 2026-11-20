@@ -217,24 +217,23 @@ Lint: coverage 5%, target 5%; rules by missed findings:
 35. `kt-if-else-braced` (4 files): ktlint braces an `if`/`else` that Sudsy leaves bare, or the reverse; fix: the shared curly rule
 36. `kt-lambda-other` (3 files): a lambda is laid out differently, cause not classified yet; fix: classify further
 37. `kt-break-after-s` (2 files): Sudsy breaks after `=` where ktlint does not; fix: see break-after-=/->(sudsy)
-38. `kt-closing-paren-line` (1 files): a closing parenthesis is on its own line in one output only; fix: classify further
-39. `kt-ctor-annot-header` (1 files): the annotated constructor header differs; fix: classify further
-Lint: coverage 90.2%, target 86%; rules by missed findings:
+38. `kt-ctor-annot-header` (1 files): the annotated constructor header differs; fix: classify further
+Lint: coverage 92.7%, target 92.3%; rules by missed findings:
 1. `function-signature` (1666 missed)
-2. `wrapping` (948 missed)
-3. `multiline-expression-wrapping` (904 missed)
-4. `blank-line-between-when-conditions` (725 missed)
-5. `property-naming` (565 missed)
-6. `string-template-indent` (534 missed)
-7. `filename` (525 missed)
-8. `if-else-wrapping` (419 missed)
-9. `multiline-if-else` (417 missed)
-10. `argument-list-wrapping` (406 missed)
-11. `annotation` (392 missed)
-12. `spacing-between-declarations-with-comments` (388 missed)
-13. `trailing-comma-on-declaration-site` (374 missed)
-14. `function-naming` (356 missed)
-15. `spacing-between-declarations-with-annotations` (329 missed)
+2. `multiline-expression-wrapping` (904 missed)
+3. `blank-line-between-when-conditions` (725 missed)
+4. `string-template-indent` (534 missed)
+5. `multiline-if-else` (417 missed)
+6. `argument-list-wrapping` (406 missed)
+7. `annotation` (392 missed)
+8. `trailing-comma-on-declaration-site` (374 missed)
+9. `no-consecutive-comments` (319 missed)
+10. `statement-wrapping` (295 missed)
+11. `function-literal` (264 missed)
+12. `multiline-loop` (211 missed)
+13. `no-unit-return` (188 missed)
+14. `if-else-wrapping` (162 missed)
+15. `function-naming` (160 missed)
 
 ## prettier
 

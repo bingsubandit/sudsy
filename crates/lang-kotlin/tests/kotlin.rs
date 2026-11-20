@@ -234,6 +234,24 @@ fn ktlint_class_header_raw_string_and_enum_semicolon() {
     );
 }
 
+/// Supertypes one per line after a `constructor` keyword put the body one level further in; a
+/// constructor below the name keeps a single supertype on the line of its `)`.
+#[test]
+fn ktlint_body_after_wrapped_supertypes_and_own_line_constructor() {
+    assert_eq!(
+        fmt("class A private constructor() : B(), C {\n    fun f() {}\n}\n"),
+        "class A private constructor() :\n    B(),\n    C {\n        fun f() {}\n    }\n"
+    );
+    assert_eq!(
+        fmt("class A(val a: Int) : B(), C {\n    fun f() {}\n}\n"),
+        "class A(\n    val a: Int,\n) : B(),\n    C {\n    fun f() {}\n}\n"
+    );
+    assert_eq!(
+        fmt("class A\n@Inject\nconstructor(a: Int) :\n    B {\n    fun f() {}\n}\n"),
+        "class A\n    @Inject\n    constructor(\n        a: Int,\n    ) : B {\n        fun f() {}\n    }\n"
+    );
+}
+
 /// A raw string without a `trimIndent()`-like call keeps its bytes, and the safety check refuses
 /// a re-indent of it; the same re-indent before `trimIndent()` is allowed.
 #[test]

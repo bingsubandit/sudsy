@@ -41,6 +41,7 @@ Failure modes of the parser itself: it follows the compiler of Kotlin 2.4.20 and
 | `single_line_body_kinds` | list of words | `[EnumEntry]` | Node kinds of entries a braced body made only of them keeps on one line when the source has it on one line (`enum class E { A, B }`). |
 | `raw_string_calls` | list of words | `[trimIndent, trimMargin]` | Names of the calls (`trimIndent`) that strip the common indentation of a multi-line raw string they follow: its lines are written at the indentation of the code around it. |
 | `ctor_own_line_kinds` | list of words | `[AnnotationEntry]` | Node kinds among the modifiers of a primary constructor (annotations) that put the constructor below the type name, one level in, with the supertypes and the body under that level. |
+| `ctor_own_line_kinds` | list of words | `[constructor]` | Words (`constructor`) that start a primary constructor which, when the supertypes go one per line, puts the body one level further in (its closing brace under the supertypes). |
 | `comment_trim_lines` | bool | `true` | The lines of a block comment lose their trailing blanks. |
 | `comment_reindent_lines` | bool | `true` | The lines of a block comment keep their indentation relative to the comment's own line when the comment moves. |
 | `format_rules` | list of words | `[curly, redundant-return-type, comment-space]` | Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`. |

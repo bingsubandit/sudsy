@@ -34,6 +34,8 @@ pub const RAW_STRING_CALLS: core_config::OptId = core_config::opt::RAW_STRING_CA
 #[allow(dead_code)]
 pub const CTOR_OWN_LINE_KINDS: core_config::OptId = core_config::opt::CTOR_OWN_LINE_KINDS;
 #[allow(dead_code)]
+pub const WRAPPED_BODY_INDENT_WORDS: core_config::OptId = core_config::opt::WRAPPED_BODY_INDENT_WORDS;
+#[allow(dead_code)]
 pub const COMMENT_TRIM_LINES: core_config::OptId = core_config::opt::COMMENT_TRIM_LINES;
 #[allow(dead_code)]
 pub const COMMENT_REINDENT_LINES: core_config::OptId = core_config::opt::COMMENT_REINDENT_LINES;
@@ -106,6 +108,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::single_line_body_kinds(&["EnumEntry"]),
         core_config::shared::raw_string_calls(&["trimIndent", "trimMargin"]),
         core_config::shared::ctor_own_line_kinds(&["AnnotationEntry"]),
+        core_config::shared::wrapped_body_indent_words(&["constructor"]),
         core_config::shared::comment_trim_lines(true),
         core_config::shared::comment_reindent_lines(true),
         core_config::shared::format_rules(&["curly", "redundant-return-type", "comment-space"]),

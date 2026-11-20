@@ -167,10 +167,11 @@ pub const TYPE_USE_ANNOTATIONS: OptId = OptId(164);
 pub const UNBREAKABLE_SINGLE_ITEM_LISTS: OptId = OptId(165);
 pub const WHITESPACE_SENSITIVITY: OptId = OptId(166);
 pub const WRAP_LINES: OptId = OptId(167);
-pub const WRAPPED_BRACE_LINE: OptId = OptId(168);
+pub const WRAPPED_BODY_INDENT_WORDS: OptId = OptId(168);
+pub const WRAPPED_BRACE_LINE: OptId = OptId(169);
 
 /// Option names sorted; an id is the index.
-pub static NAMES: [&str; 169] = [
+pub static NAMES: [&str; 170] = [
     "access_modifier_outdent",
     "accessor_blank_lines",
     "align_after_open_bracket",
@@ -339,5 +340,6 @@ pub static NAMES: [&str; 169] = [
     "unbreakable_single_item_lists",
     "whitespace_sensitivity",
     "wrap_lines",
+    "wrapped_body_indent_words",
     "wrapped_brace_line",
 ];
