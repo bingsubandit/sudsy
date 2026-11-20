@@ -3,7 +3,7 @@ cpp:
   format:
     access_modifier_outdent: 4
     align_after_open_bracket: dont_align
-    break_before_binary_operators: all
+    binary_operator_line: start
     brace_wrapping: [function]
     break_constructor_initializers: before_comma
     wrap_lines: false

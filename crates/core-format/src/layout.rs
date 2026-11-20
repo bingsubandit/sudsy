@@ -351,6 +351,15 @@ impl Layout {
         flows: (&Flow<'_>, &Flow<'_>),
         file: &File,
     ) -> Option<R> {
+        // The kinds a language binds to an operator chain (`binary_chain` role of its options).
+        if let Some(b) = self.bound("binary_chain", node.kind())
+            && cx.options.flag(&b.option, true)
+        {
+            let policy = shapes::BinaryPolicy::of(cx.options);
+            return shapes::binary_chain(cx, node, &policy, &shapes::NoBinaryHooks)
+                .ok()
+                .map(Ok);
+        }
         let row = self
             .by_kind
             .get(node.kind().index() as usize)?
@@ -858,14 +867,6 @@ fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         items += 1;
         let text = e.to_string();
         if count > 1 || text.contains("//") || text.contains("/*") {
-            return false;
-        }
-        // (an operator chain written on several lines keeps the source's line breaks: no shape
-        // lays it out yet, so the list around it keeps them too)
-        if let SyntaxElement::Node(n) = e
-            && text.contains('\n')
-            && !n.descendants().any(|d| g.has_tag(d.kind(), "block"))
-        {
             return false;
         }
     }
