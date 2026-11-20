@@ -287,7 +287,10 @@ pub fn complex_type_args(
     let mut it = args.children();
     let first = it.next();
     Ok(it.next().is_some()
-        || first.is_some_and(|t| cx.options.list_has(TYPE_ARG_KINDS, cx.grammar.name(t.kind())))
+        || first.is_some_and(|t| {
+            cx.options
+                .list_has(TYPE_ARG_KINDS, cx.grammar.name(t.kind()))
+        })
         || cx.format(args)?.will_break())
 }
 
@@ -318,8 +321,7 @@ fn choose(
     };
     let found = a.op_token.cloned().or_else(|| operator_token(cx, a));
     let op_token = found.as_ref();
-    if op_token.is_some_and(|t| ends_in_line_comment(cx, t) || before_op(t))
-    {
+    if op_token.is_some_and(|t| ends_in_line_comment(cx, t) || before_op(t)) {
         return BreakAlways;
     }
     // A break the source has after the operator stays (`assignment_keep_break_kinds`).
