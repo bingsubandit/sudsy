@@ -52,6 +52,10 @@ impl Rule for NodeCheck {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn kinds(&self) -> &[SyntaxKind] {
         self.kinds
     }

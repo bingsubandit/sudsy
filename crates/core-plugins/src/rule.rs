@@ -297,6 +297,10 @@ impl Rule for WasmRule {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn layout_role(&self) -> LayoutRole {
         self.role
     }

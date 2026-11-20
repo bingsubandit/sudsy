@@ -83,6 +83,10 @@ impl Rule for Script {
             ctx.report(hit.range, self.message.replace("{name}", &hit.name));
         }
     }
+
+    fn reads_embedded(&self) -> bool {
+        true
+    }
 }
 
 thread_local! {

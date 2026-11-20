@@ -286,6 +286,19 @@ pub trait Rule: Send + Sync {
         None
     }
 
+    /// Whether the rule reads the parsed code of other languages in the file
+    /// (`FileContext::embedded`). The code is parsed for the rules of its own language, and for
+    /// the host's rules only when one of them says so.
+    fn reads_embedded(&self) -> bool {
+        false
+    }
+
+    /// Whether [`Rule::check_body`] does anything: a rule that returns false is not called at body
+    /// nodes. The default is true; a rule with no body check says false to cost nothing there.
+    fn bodies(&self) -> bool {
+        true
+    }
+
     fn check(&self, _node: &SyntaxNode, _ctx: &mut RuleContext<'_>) {}
 
     /// File scope: once per file.

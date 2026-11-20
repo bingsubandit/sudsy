@@ -14,6 +14,8 @@ use core_rules::{Diagnostic, Edit, FileContext, LineIndex, activate, run_file};
 use core_syntax::{SyntaxNode, TextRange};
 use provider_api::embedded::{EmbeddedParse, Resolved, parse_regions, resolve};
 use provider_api::{LanguageProvider, SourceFile, format_file, resolve_dialect};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Names the host's option that turns the formatting of embedded code off (Prettier's
 /// `embeddedLanguageFormatting`: `auto` formats what it knows, `off` keeps all as written).
@@ -23,14 +25,71 @@ fn lookup<'a>(db: &'a dyn Db, name: &str) -> Resolved<'a> {
     resolve(db.providers().iter().map(|p| p.as_ref()), name)
 }
 
-/// The parses of the code of other languages in the file.
+/// The rules that are on for each embedded language of a file, activated once per language and
+/// only when a region of that language is looked at.
+#[derive(Default)]
+pub(crate) struct EmbeddedRules {
+    by_language: RefCell<Vec<(String, Rc<Vec<ActiveRule<'static>>>)>>,
+}
+
+impl EmbeddedRules {
+    fn get(
+        &self,
+        db: &dyn Db,
+        file: File,
+        provider: &dyn LanguageProvider,
+    ) -> Result<Rc<Vec<ActiveRule<'static>>>, Failure> {
+        let language = provider.language();
+        if let Some((_, rules)) = self
+            .by_language
+            .borrow()
+            .iter()
+            .find(|(l, _)| l == language)
+        {
+            return Ok(rules.clone());
+        }
+        // Read only now: a file with no embedded code does not depend on the config here.
+        let config = config(db).as_ref().map_err(Clone::clone)?;
+        let extensions = ExtensionSet::get(db).extensions(db);
+        let input = FileInput::language(language)
+            .with_base(provider.config_base())
+            .with_path(file.path(db));
+        let rules = (config.rules(&input, provider.option_schema()))
+            .map_err(|e| Failure::new(Stage::Config, &e))?;
+        let mut rules = activate(
+            extensions.with_own(provider.rules(), language),
+            &rules,
+            |_| false,
+        )
+        .map_err(|e| Failure::new(Stage::Config, &e))?;
+        rules.retain(|a| a.rule.layout_role().reports());
+        let rules = Rc::new(rules);
+        self.by_language
+            .borrow_mut()
+            .push((language.to_string(), rules.clone()));
+        Ok(rules)
+    }
+
+    fn any(&self, db: &dyn Db, file: File, provider: &dyn LanguageProvider) -> bool {
+        !matches!(self.get(db, file, provider), Ok(r) if r.is_empty())
+    }
+}
+
+/// The parses of the code of other languages in the file. A region is parsed when the host has a
+/// rule that reads it (`host_reads`) or a rule of its own language is on; otherwise nothing could
+/// look at the tree.
 pub(crate) fn parse_embedded<'a>(
     db: &'a dyn Db,
+    file: File,
     host: &dyn LanguageProvider,
+    host_reads: bool,
+    rules: &EmbeddedRules,
     root: &SyntaxNode,
     text: &str,
 ) -> Vec<EmbeddedParse<'a>> {
-    parse_regions(host, root, text, &|name| lookup(db, name))
+    parse_regions(host, root, text, &|name| {
+        lookup(db, name).filter(|(p, _)| host_reads || rules.any(db, file, *p))
+    })
 }
 
 /// What the rules of each embedded language report, in host offsets. Suppression comments inside
@@ -38,35 +97,16 @@ pub(crate) fn parse_embedded<'a>(
 pub(crate) fn lint_embedded(
     db: &dyn Db,
     file: File,
+    rules: &EmbeddedRules,
     parses: &[EmbeddedParse<'_>],
 ) -> Result<Vec<Diagnostic>, Failure> {
-    let mut active: Vec<(&str, Vec<ActiveRule<'static>>)> = Vec::new();
     let mut out = Vec::new();
     for e in parses.iter().filter(|e| e.region.lint) {
-        let language = e.provider.language();
-        if !active.iter().any(|(l, _)| *l == language) {
-            // Read only now: a file with no embedded code does not depend on the config here.
-            let config = config(db).as_ref().map_err(Clone::clone)?;
-            let extensions = ExtensionSet::get(db).extensions(db);
-            let input = FileInput::language(language)
-                .with_base(e.provider.config_base())
-                .with_path(file.path(db));
-            let rules = (config.rules(&input, e.provider.option_schema()))
-                .map_err(|e| Failure::new(Stage::Config, &e))?;
-            let mut rules = activate(
-                extensions.with_own(e.provider.rules(), language),
-                &rules,
-                |_| false,
-            )
-            .map_err(|e| Failure::new(Stage::Config, &e))?;
-            rules.retain(|a| a.rule.layout_role().reports());
-            active.push((language, rules));
+        let rules = rules.get(db, file, e.provider)?;
+        if rules.is_empty() {
+            continue;
         }
-        let rules = &active
-            .iter()
-            .find(|(l, _)| *l == language)
-            .expect("just added")
-            .1;
+        let rules = &rules[..];
         let lines = LineIndex::new(&e.code);
         let context = FileContext {
             path: file.path(db),

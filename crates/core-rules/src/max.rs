@@ -79,6 +79,10 @@ impl Rule for Max {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn tags(&self) -> &[&'static str] {
         &self.tags
     }

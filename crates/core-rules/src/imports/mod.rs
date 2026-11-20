@@ -153,6 +153,10 @@ impl<L: ImportLang> Rule for Imports<L> {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn tags(&self) -> &[&'static str] {
         &["import"]
     }

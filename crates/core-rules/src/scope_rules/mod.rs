@@ -516,6 +516,10 @@ impl Rule for ScopeRule {
         }
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
         let lang = self.lang;
         let m = model(lang, file);

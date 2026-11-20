@@ -11,10 +11,15 @@ Three rule sources (built-in Rust, pattern files, Wasm plugins) report into one 
 - Providers hand rules over via `LanguageProvider::rules()` and `body_kinds()`. `rules()` includes the built-in pattern files, which are read on the first call; `rust_rules()` does not (layout lookups for `format`).
 - Rules compile regexes through `core_rules::Re`: `new` builds the ASCII form at once (a pattern file's rule compiles when it first runs; a pattern with a counted repetition `{n,m}` is also built in full, so one over the regex size limit is an error there, not a panic when matching), the full form on the first non-ASCII match (one still over the size limit then matches non-ASCII text with its ASCII form, never a panic); `lazy` checks the syntax only and builds on the first match (family params); ASCII text is matched by the ASCII form, other text by the full one ([patterns.md](patterns.md#matching)). `RuleContext::ranges()` is the `TraversalCache` of a file's traversal: the last `tree::significant_range` (rules run on one node share it) and whether the file is ASCII. Every regex of the workspace is built there (`Re`, or `meta_regex` for a fixed pattern that needs `find_iter` or captures): the build turns on `regex-automata`'s full DFA for every `regex::Regex` (a dependency such as `fancy-regex` can turn it on), which costs build time and misses matches without Unicode, so they are built with it off, and `clippy.toml` fails the gate on `regex::Regex::new`.
 
+## Cost of unused rules
+- The active rule set of a file is the query `active_rules` (core-incremental `rules.rs`): lint, layers and the project phase share one activation, which re-runs only when the file's rule settings or the extension set change.
+- A rule costs a file nothing at nodes whose kinds it does not declare (`kinds()`, `tags()`), nor at body nodes when `bodies()` is false.
+- Embedded code (`FileContext::embedded`) is parsed only when a host rule says it reads the trees (`Rule::reads_embedded`: html script rules, dockerfile `run_command`) or a rule of the embedded language is on; the rules of each embedded language are activated once per file.
+
 ## Scopes
 - Node: `kinds()` and `tags()` + `check`. One traversal per file dispatches nodes to subscribed rules; files run in parallel. A rule subscribes by kind and/or by grammar tag (`Rule::tags`); the engine resolves each tag to the node kinds carrying it in the file's grammar (`Grammar::nodes_with_tag`, a table built when the grammar loads) before the traversal, so dispatch stays a lookup by kind.
 - File: `check_file`.
-- Body: `check_body`, once per node whose kind the provider lists in `body_kinds`; `BodyContext.flow` carries the flow graph.
+- Body: `check_body`, once per node whose kind the provider lists in `body_kinds`, for the rules whose `bodies()` is true (the default; pattern, plugin and shared rules without a body check say false); `BodyContext.flow` carries the flow graph.
 - Project: `collect(file)` gathers string facts, `finish(project)` reports across files; runs only at `analysis: deep`. Project diagnostics ignore suppression comments; project options come from the first file of the language.
 
 ## Language hooks

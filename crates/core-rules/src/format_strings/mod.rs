@@ -141,6 +141,10 @@ impl Rule for FormatRule {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn tags(&self) -> &[&'static str] {
         &["binary", "call"]
     }

@@ -1036,6 +1036,10 @@ impl Rule for PatternRule {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     /// Empty when the patterns cannot compile now (the worker is down): the rule is skipped
     /// for the file and [`Rule::unavailable`] says why.
     fn kinds(&self) -> &[SyntaxKind] {

@@ -122,6 +122,10 @@ impl<T: Targets> Rule for Names<T> {
         self.meta
     }
 
+    fn bodies(&self) -> bool {
+        false
+    }
+
     fn kinds(&self) -> &[SyntaxKind] {
         T::kinds(self.target)
     }

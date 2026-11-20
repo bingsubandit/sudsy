@@ -150,8 +150,10 @@ pub(crate) fn traverse(
                 node: &node,
                 flow,
             };
-            for i in 0..active.len() {
-                run(i, &mut |rule, ctx| rule.check_body(&body, ctx));
+            for (i, a) in active.iter().enumerate() {
+                if a.rule.bodies() {
+                    run(i, &mut |rule, ctx| rule.check_body(&body, ctx));
+                }
             }
         }
     }

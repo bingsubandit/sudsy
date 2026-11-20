@@ -4,7 +4,7 @@
 //! concept: none (infrastructure: rule queries)
 
 use crate::db::Db;
-use crate::embedded::{lint_embedded, parse_embedded};
+use crate::embedded::{EmbeddedRules, lint_embedded, parse_embedded};
 use crate::failure::{Failure, Stage, guarded};
 use crate::inputs::{ExtensionSet, File, WorkspaceRevision};
 use crate::queries::{config, parse, parse_settings, provider_of, selection, source_file};
@@ -89,7 +89,10 @@ pub fn lint_settings(db: &dyn Db, file: File) -> Result<LintSettings, Failure> {
 }
 
 /// The rules that run on `file`: the provider's, the shared ones and the project's pattern and
-/// plugin rules for its language, as configured.
+/// plugin rules for its language, as configured. A query, so that the lint, the layers and the
+/// project phase of a file share one activation; it re-runs only when the file's rule settings or
+/// the extension set change.
+#[salsa::tracked(returns(ref), no_eq)]
 fn active_rules(db: &dyn Db, file: File) -> Result<(Vec<ActiveRule<'static>>, Depth), Failure> {
     let provider = provider_of(db, file)?;
     let settings = lint_settings(db, file).as_ref().map_err(Clone::clone)?;
@@ -149,8 +152,9 @@ pub fn layout(db: &dyn Db, file: File) -> Result<DirectiveTable, Failure> {
 /// provider's capabilities allow.
 fn wanted_layers(db: &dyn Db, file: File) -> Result<Layers, Failure> {
     let provider = provider_of(db, file)?;
-    let (active, depth) = active_rules(db, file)?;
-    let (needed, caps) = (layers_needed(&active), provider.capabilities());
+    let (active, depth) = active_rules(db, file).as_ref().map_err(Clone::clone)?;
+    let depth = *depth;
+    let (needed, caps) = (layers_needed(active), provider.capabilities());
     let allowed = |layer| has_layer(depth, caps, layer);
     Ok(Layers {
         binding: needed.binding && allowed(Layer::Binding),
@@ -196,7 +200,8 @@ fn lint_body(db: &dyn Db, file: File) -> Result<Linted, Failure> {
             semantics_unavailable: None,
         });
     }
-    let (active, depth) = active_rules(db, file)?;
+    let (active, depth) = active_rules(db, file).as_ref().map_err(Clone::clone)?;
+    let depth = *depth;
     let (data, semantics_unavailable) = match semantics(db, file) {
         Ok(data) => (data.as_ref(), None),
         Err(failure) => (None, Some(failure.message.clone())),
@@ -211,7 +216,9 @@ fn lint_body(db: &dyn Db, file: File) -> Result<Linted, Failure> {
     let text = file.text(db);
     let root = parsed.root();
     let lines = LineIndex::new(text);
-    let embedded = parse_embedded(db, provider, &root, text);
+    let embedded_rules = EmbeddedRules::default();
+    let host_reads = active.iter().any(|a| a.rule.reads_embedded());
+    let embedded = parse_embedded(db, file, provider, host_reads, &embedded_rules, &root, text);
     let trees = provider_api::embedded::trees(&embedded);
     let context = FileContext {
         path: file.path(db),
@@ -230,8 +237,8 @@ fn lint_body(db: &dyn Db, file: File) -> Result<Linted, Failure> {
     let FileReport {
         mut diagnostics,
         facts,
-    } = run_rules(&context, &active, depth == Depth::Deep);
-    diagnostics.extend(lint_embedded(db, file, &embedded)?);
+    } = run_rules(&context, active, depth == Depth::Deep);
+    diagnostics.extend(lint_embedded(db, file, &embedded_rules, &embedded)?);
     diagnostics.sort_by(|a, b| {
         (a.range.start(), a.range.end(), &a.rule).cmp(&(b.range.start(), b.range.end(), &b.rule))
     });
@@ -262,8 +269,8 @@ pub fn project_diagnostics(
             continue;
         }
         done.push(sel.provider);
-        let (active, depth) = active_rules(db, file)?;
-        if depth != Depth::Deep {
+        let (active, depth) = active_rules(db, file).as_ref().map_err(Clone::clone)?;
+        if *depth != Depth::Deep {
             return Ok(out);
         }
         let mut facts = ProjectFacts::default();
@@ -274,7 +281,7 @@ pub fn project_diagnostics(
                 facts.extend(&linted.facts);
             }
         }
-        out.extend(run_project(&active, &facts));
+        out.extend(run_project(active, &facts));
     }
     Ok(out)
 }

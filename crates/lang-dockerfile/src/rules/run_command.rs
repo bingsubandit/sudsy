@@ -106,6 +106,10 @@ impl Rule for RunCommand {
         &[k::INSTRUCTION]
     }
 
+    fn reads_embedded(&self) -> bool {
+        true
+    }
+
     fn check(&self, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
         let Some(cmds) = run_commands(node, ctx.file.embedded) else {
             return;
