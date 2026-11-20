@@ -94,6 +94,20 @@ pub fn shell_commands(root: &SyntaxNode) -> Vec<Cmd> {
     out
 }
 
+/// The flags (leading `--` words) of an instruction's `words` when its script is a single command,
+/// else `None`: the shape two adjacent instructions are compared by.
+pub fn single_command_flags(
+    cmds: &[Cmd],
+    words: impl IntoIterator<Item = String>,
+) -> Option<Vec<String>> {
+    (cmds.len() == 1).then(|| {
+        words
+            .into_iter()
+            .take_while(|w| w.starts_with("--"))
+            .collect()
+    })
+}
+
 /// Whether the script has a pipeline (`a | b`).
 pub fn has_pipeline(root: &SyntaxNode) -> bool {
     let shell = SHELL.get();

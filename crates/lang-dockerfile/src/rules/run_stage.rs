@@ -7,7 +7,8 @@
 use super::run_command::run_commands;
 use super::stages::{Inst, instructions};
 use crate::generated::kind as k;
-use core_rules::commands::has_pipeline;
+use core_rules::commands::{has_pipeline, single_command_flags};
+use core_rules::unique::Adjacent;
 use core_rules::{Checked, Family, Params, Rule, RuleContext, RuleMeta};
 use core_syntax::SyntaxNode;
 
@@ -44,30 +45,18 @@ fn checked<S: Send + Sync + 'static>(
     })
 }
 
-/// The flags of a `RUN` when it is a single command, else `None`.
-fn single_command_flags(i: &Inst, ctx: &RuleContext<'_>) -> Option<Vec<String>> {
-    let cmds = run_commands(&i.node, ctx.file.embedded)?;
-    (cmds.len() == 1).then(|| {
-        i.words()
-            .into_iter()
-            .take_while(|w| w.starts_with("--"))
-            .collect()
-    })
-}
-
 /// A `RUN` that is one command and has the same flags as the `RUN` before it.
 fn consecutive(_: &(), doc: &SyntaxNode, ctx: &mut RuleContext<'_>, message: &str) {
-    let mut before: Option<Vec<String>> = None;
+    let mut before = Adjacent::default();
     for i in instructions(doc) {
-        let flags = if i.name == "RUN" {
-            single_command_flags(&i, ctx)
-        } else {
-            None
-        };
-        if flags.is_some() && flags == before {
+        let flags = (i.name == "RUN")
+            .then(|| run_commands(&i.node, ctx.file.embedded))
+            .flatten()
+            .and_then(|cmds| single_command_flags(&cmds, i.words()));
+        let same = before.repeats(flags.clone());
+        if flags.is_some() && same {
             ctx.report(i.range(ctx), message);
         }
-        before = flags;
     }
 }
 

@@ -41,6 +41,25 @@ impl<K: Hash + Eq> Repeats<K> {
     }
 }
 
+/// The key of the item before: [`Adjacent::repeats`] tells whether an item has the same key as the
+/// one just before it (a repeat right after, not anywhere earlier).
+pub struct Adjacent<K>(Option<K>);
+
+impl<K> Default for Adjacent<K> {
+    fn default() -> Self {
+        Self(None)
+    }
+}
+
+impl<K: PartialEq> Adjacent<K> {
+    /// Whether `key` equals the key of the previous call; `key` becomes the previous one.
+    pub fn repeats(&mut self, key: K) -> bool {
+        let same = self.0.as_ref() == Some(&key);
+        self.0 = Some(key);
+        same
+    }
+}
+
 pub const FAMILY: Family = Family {
     name: "unique-names",
     build,

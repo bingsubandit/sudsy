@@ -103,7 +103,7 @@ fn duplicate_properties(c: &Check, block: &SyntaxNode, ctx: &mut RuleContext<'_>
     let fallbacks = ctx.options.bool("ignore_consecutive_different_values");
     let value = |d: &SyntaxNode| model::value(d).map(|v| plain(&v));
     let mut last: HashMap<String, SyntaxNode> = HashMap::new();
-    let mut previous = String::new();
+    let mut previous = core_rules::unique::Adjacent::default();
     for decl in declarations(block) {
         let Some((name, at)) = model::property(&decl) else {
             continue;
@@ -111,7 +111,7 @@ fn duplicate_properties(c: &Check, block: &SyntaxNode, ctx: &mut RuleContext<'_>
         if model::is_custom(&name) || name == "src" {
             continue;
         }
-        let consecutive = std::mem::replace(&mut previous, name.clone()) == name;
+        let consecutive = previous.repeats(name.clone());
         let Some(before) = last.get(&name).cloned() else {
             last.insert(name, decl);
             continue;
