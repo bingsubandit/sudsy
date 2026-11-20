@@ -477,7 +477,7 @@ fn list_of(
             .slots
             .get(i)
             .and_then(|sl| {
-                super::widest_operand(cx, &sl.node)
+                item.chain_widest()
                     .or_else(|| chain_head(cx, &sl.node))
                     .or_else(|| block_head(cx, &sl.node))
             })
