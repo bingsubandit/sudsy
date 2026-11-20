@@ -60,10 +60,17 @@ rule! {
         if !ctx.options.bool("line") {
             return;
         }
-        if !file.text.contains(marker) {
+        let repeated = marker.chars().last().unwrap_or(' ');
+        // (no marker with text right after it: no walk of the comments)
+        let tight = file.text.match_indices(marker).any(|(at, _)| {
+            let rest = &file.text[at + marker.len()..];
+            rest.chars()
+                .next()
+                .is_some_and(|c| !c.is_whitespace() && c != repeated)
+        });
+        if !tight {
             return;
         }
-        let repeated = marker.chars().last().unwrap_or(' ');
         for token in comments(file) {
             let Some(rest) = token.text().strip_prefix(marker) else {
                 continue;
