@@ -179,7 +179,8 @@ fn link(
     );
     let slot = |field: &str| cx.grammar.slot_in(node.kind(), buf, field);
     match (slot("left"), slot("operator"), slot("right")) {
-        (Some(left), Some(SyntaxElement::Token(op)), Some(right)) => Ok(Link {
+        // (an element beyond the three, which a parse error leaves in the node, would be lost)
+        (Some(left), Some(SyntaxElement::Token(op)), Some(right)) if buf.len() <= 3 => Ok(Link {
             node: node.clone(),
             left,
             op,
