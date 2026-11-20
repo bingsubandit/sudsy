@@ -38,12 +38,13 @@ rule! {
             return;
         };
         let words = options.strings("redundant_return_types");
-        // (no such type after a colon in the text: no walk of the functions)
+        // (no such type between a colon and an opening brace in the text: no walk of the functions)
         let typed = |w: &String| {
             file.text.match_indices(w.as_str()).any(|(at, _)| {
-                file.text[..at]
-                    .trim_end_matches([' ', '\t'])
-                    .ends_with(':')
+                file.text[at + w.len()..].trim_start().starts_with('{')
+                    && file.text[..at]
+                        .trim_end_matches([' ', '\t'])
+                        .ends_with(':')
             })
         };
         if !words.iter().any(typed) {

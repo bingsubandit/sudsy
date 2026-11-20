@@ -99,6 +99,24 @@ fn block_space(file: &FileContext<'_>, ctx: &mut RuleContext<'_>, open: &str, cl
         open.chars().last().unwrap_or(' '),
         close.chars().next().unwrap_or(' '),
     );
+    // (no delimiter with text right against it: no walk of the comments)
+    let tight_open = file.text.match_indices(open).any(|(at, _)| {
+        file.text[at + open.len()..]
+            .chars()
+            .next()
+            .is_some_and(|c| !c.is_whitespace() && c != first)
+    });
+    let tight_close = || {
+        file.text.match_indices(close).any(|(at, _)| {
+            file.text[..at]
+                .chars()
+                .next_back()
+                .is_some_and(|c| !c.is_whitespace() && c != last)
+        })
+    };
+    if !tight_open && !tight_close() {
+        return;
+    }
     for token in comments(file) {
         let text = token.text();
         let Some(inner) = text.strip_prefix(open).and_then(|t| t.strip_suffix(close)) else {
