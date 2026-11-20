@@ -541,6 +541,10 @@ pub struct SpaceRules {
     /// The `tight_after` and `tight_behind` kind sets: no blank after a token of the first when the
     /// token before it is of the second (`Args &&...rest`).
     tight: (Vec<SyntaxKind>, Vec<SyntaxKind>),
+    /// The `pointer` tokens (`*`, `&`) in nodes of the `pointer_in` kinds are declarator marks: the
+    /// blank before one (after a token of `pointer_type`) and after one (before a token of
+    /// `pointer_name`) follows the language's pointer alignment.
+    pointer: [Vec<SyntaxKind>; 4],
 }
 
 fn row(grammar: &Grammar, line: &str) -> Row {
@@ -623,6 +627,12 @@ impl SpaceRules {
         SpaceRules {
             attach,
             tight: (set("tight_after"), set("tight_behind")),
+            pointer: [
+                set("pointer"),
+                set("pointer_in"),
+                set("pointer_type"),
+                set("pointer_name"),
+            ],
             index: Index::build(&space),
             space,
             joined: rows("joined"),
@@ -674,6 +684,31 @@ impl SpaceRules {
             prev = p.prev_token();
         }
         prev.is_some_and(|p| self.tight.1.contains(&p.kind()))
+    }
+
+    /// The blank between `a` and `b` when one of them is a declarator mark (`T *x`, `T& x`):
+    /// `before` stands for the blank in front of the mark, `after` for the one behind it.
+    pub fn pointer_gap(
+        &self,
+        a: &SyntaxToken,
+        b: &SyntaxToken,
+        before: bool,
+        after: bool,
+    ) -> Option<bool> {
+        let [marks, within, types, names] = &self.pointer;
+        if marks.is_empty() {
+            return None;
+        }
+        let mark = |t: &SyntaxToken| {
+            marks.contains(&t.kind()) && t.parent().is_some_and(|n| within.contains(&n.kind()))
+        };
+        if mark(b) {
+            if mark(a) {
+                return Some(false);
+            }
+            return types.contains(&a.kind()).then_some(before);
+        }
+        (mark(a) && names.contains(&b.kind())).then_some(after)
     }
 
     /// `Flow::want`: a blank between the tokens (`None`: as the source has it).
