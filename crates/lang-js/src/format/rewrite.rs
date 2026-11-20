@@ -28,6 +28,7 @@ pub(crate) fn rewrite(
     options: &ResolvedOptions,
     rows: &'static core_format::rules::RuleFormatter,
 ) -> Option<String> {
+    let pairs = options.strings(core_format::rewrite::PARENTHESIZE);
     let avoid_parens = super::arrow_parens(options) == super::ArrowParens::Avoid;
     let mut edits: Vec<Edit> = Vec::new();
     // Comments in front of a cut token lead what follows it; ones after it would move.
@@ -229,6 +230,10 @@ pub(crate) fn rewrite(
                 }
             }
         }
+        if let Some((from, to)) = core_format::rewrite::parenthesize(grammar, &pairs, &node) {
+            inserts.push((from, Some("(")));
+            inserts.push((to, Some(")")));
+        }
         match node.kind() {
             k::TS_PARENTHESIZED_TYPE | k::TS_UNION_TYPE | k::TS_INTERSECTION_TYPE => {
                 for t in super::ts::redundant_type_tokens(&node, grammar) {
@@ -240,16 +245,6 @@ pub(crate) fn rewrite(
                     if let Some(b) = blank {
                         cut(b);
                     }
-                }
-                // `A & B | C` is `(A & B) | C`.
-                if node.kind() == k::TS_INTERSECTION_TYPE
-                    && node.children().count() > 1
-                    && node.parent().is_some_and(|p| p.kind() == k::TS_UNION_TYPE)
-                    && let (Some(first), Some(last)) =
-                        (first_token(grammar, &node), last_token(grammar, &node))
-                {
-                    inserts.push((usize::from(first.text_range().start()), Some("(")));
-                    inserts.push((usize::from(last.text_range().end()), Some(")")));
                 }
             }
             // `(): () => void => x`: a function type returned by an arrow takes parentheses.
@@ -305,15 +300,6 @@ pub(crate) fn rewrite(
                     node.first_child().and_then(|c| first_token(grammar, &c)),
                     node.first_child().and_then(|c| last_token(grammar, &c)),
                 ) {
-                    inserts.push((usize::from(first.text_range().start()), Some("(")));
-                    inserts.push((usize::from(last.text_range().end()), Some(")")));
-                }
-            }
-            // `typeof a[]` is `(typeof a)[]`.
-            k::TS_TYPE_QUERY if node.parent().is_some_and(|p| p.kind() == k::TS_ARRAY_TYPE) => {
-                if let (Some(first), Some(last)) =
-                    (first_token(grammar, &node), last_token(grammar, &node))
-                {
                     inserts.push((usize::from(first.text_range().start()), Some("(")));
                     inserts.push((usize::from(last.text_range().end()), Some(")")));
                 }

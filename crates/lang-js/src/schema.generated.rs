@@ -40,6 +40,8 @@ pub const ASSIGNMENT_DESTRUCTURE_KINDS: &str = "assignment_destructure_kinds";
 #[allow(dead_code)]
 pub const ASSIGNMENT_GENERIC_CLOSURE_KINDS: &str = "assignment_generic_closure_kinds";
 #[allow(dead_code)]
+pub const REWRITE_PARENTHESIZE_PAIRS: &str = "rewrite_parenthesize_pairs";
+#[allow(dead_code)]
 pub const TYPE_ARGUMENT_COMPLEX_KINDS: &str = "type_argument_complex_kinds";
 #[allow(dead_code)]
 pub const CONDITIONAL_INDENT: &str = "conditional_indent";
@@ -135,6 +137,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::assignment_op_token_skip_kinds(&["AssignmentExpression"]),
         core_config::shared::assignment_destructure_kinds(&["ObjectPattern", "ObjectAssignmentTarget"]),
         core_config::shared::assignment_generic_closure_kinds(&["VariableDeclarator"]),
+        core_config::shared::rewrite_parenthesize_pairs(&["TSIntersectionType", "TSUnionType", "TSTypeQuery", "TSArrayType"]),
         core_config::shared::type_argument_complex_kinds(&["TSUnionType", "TSIntersectionType", "TSTypeLiteral"]),
         core_config::shared::conditional_indent(1),
         core_config::shared::conditional_layout("chained"),

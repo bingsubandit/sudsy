@@ -9060,6 +9060,19 @@
               ],
               "type": "string"
             },
+            "rewrite_parenthesize_pairs": {
+              "default": [
+                "TSIntersectionType",
+                "TSUnionType",
+                "TSTypeQuery",
+                "TSArrayType"
+              ],
+              "description": "Pairs of node kinds (child, parent, child, parent, ...): a node of the first kind directly inside one of the second gets parentheses around it.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "semi": {
               "default": true,
               "description": "End statements with `;`. When false a statement that starts with `(`, `[`, a backtick, `+`, `-`, `/` or `<` gets a `;` in front, as a class property does before a member that starts with `[`, `(` or `*`.",
@@ -12359,6 +12372,19 @@
                       "single"
                     ],
                     "type": "string"
+                  },
+                  "rewrite_parenthesize_pairs": {
+                    "default": [
+                      "TSIntersectionType",
+                      "TSUnionType",
+                      "TSTypeQuery",
+                      "TSArrayType"
+                    ],
+                    "description": "Pairs of node kinds (child, parent, child, parent, ...): a node of the first kind directly inside one of the second gets parentheses around it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "semi": {
                     "default": true,

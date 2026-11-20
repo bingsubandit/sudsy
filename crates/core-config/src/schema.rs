@@ -721,6 +721,14 @@ pub mod shared {
         )
     }
 
+    pub fn rewrite_parenthesize_pairs(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "rewrite_parenthesize_pairs",
+            default,
+            "Pairs of node kinds (child, parent, child, parent, ...): a node of the first kind directly inside one of the second gets parentheses around it.",
+        )
+    }
+
     pub fn assignment_indent(default: i64) -> OptionDef {
         OptionDef::int(
             "assignment_indent",

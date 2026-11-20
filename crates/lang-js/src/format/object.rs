@@ -130,14 +130,9 @@ pub(crate) fn pattern_with_annotation(param: &SyntaxNode) -> bool {
 /// A lone parameter `{ a, b }: { a: A; b: B }`: the pattern and the type literal break together,
 /// as one group of the parameter.
 pub(crate) fn pattern_with_type_literal(param: &SyntaxNode) -> bool {
-    param.kind() == k::FORMAL_PARAMETER
+    pattern_with_annotation(param)
         && param.parent().is_some_and(|fp| fp.children().count() == 1)
-        && !param
-            .children_with_tokens()
-            .any(|e| e.as_token().is_some_and(|t| t.text() == "="))
-        && param
-            .first_child()
-            .is_some_and(|c| c.kind() == k::OBJECT_PATTERN)
+        && !param.children_with_tokens().any(|e| is_tok(&e, "="))
         && param
             .children()
             .find(|c| c.kind() == k::TS_TYPE_ANNOTATION)
