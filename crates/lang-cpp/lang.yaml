@@ -11,6 +11,7 @@ options:
       doc: "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change)."
       kinds:
         binary_chain: [Binary]
+        aligned_lines: [StringConcat]
   - continuation_indent:
       range: [0, 16]
       default: 4

@@ -360,6 +360,26 @@ impl Layout {
                 .ok()
                 .map(Ok);
         }
+        // The kinds of items written one after another that line up under the first
+        // (`aligned_lines` role: adjacent string literals).
+        if self.bound("aligned_lines", node.kind()).is_some() {
+            let els = kids(cx, node);
+            let mut parts = Vec::with_capacity(els.len() * 2);
+            for (i, e) in els.iter().enumerate() {
+                if i > 0 {
+                    parts.push(if break_after(cx, &els[i - 1]) {
+                        doc::hardline()
+                    } else {
+                        doc::lit(" ")
+                    });
+                }
+                match el(cx, e) {
+                    Ok(d) => parts.push(d),
+                    Err(err) => return Some(Err(err)),
+                }
+            }
+            return Some(Ok(doc::align(doc::ALIGN_TO_COLUMN, doc::concat(parts))));
+        }
         let row = self
             .by_kind
             .get(node.kind().index() as usize)?
