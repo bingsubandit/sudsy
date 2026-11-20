@@ -404,6 +404,7 @@ impl NodeFormatter for LazyRules {
             style.keep_gap = false;
             style.align_lines =
                 o.flag(core_config::opt::ALIGN_TRAILING_COMMENTS, false) && style.gap > 0;
+            style.align_within_width = true;
         }
         style
     }

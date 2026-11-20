@@ -184,3 +184,11 @@ fn keeps_a_table_whose_row_has_more_cells_than_its_header() {
     let md = "| A | B |\n|---|---|\n| x | `a|b` |\n";
     assert_eq!(fmt(md), md);
 }
+
+#[test]
+fn html_blocks_on_consecutive_lines_stay_together() {
+    assert_eq!(
+        fmt("<!-- a -->\n<!-- /a -->\n\ntext\n"),
+        "<!-- a -->\n<!-- /a -->\n\ntext\n"
+    );
+}

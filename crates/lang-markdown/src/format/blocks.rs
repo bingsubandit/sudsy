@@ -45,12 +45,14 @@ impl Render<'_> {
             if lines.is_empty() {
                 continue;
             }
-            // Consecutive link reference definitions stay together.
+            // Consecutive link reference definitions, and HTML blocks on consecutive lines, stay together.
             let defs = matches!((&prev, &e), (Some(SyntaxElement::Token(a)), SyntaxElement::Token(b))
                 if a.kind() == k::LINK_DEF && b.kind() == k::LINK_DEF)
-                && prev
-                    .as_ref()
-                    .is_some_and(|p| !self.blank_between(p, &e, &chain));
+                || matches!((&prev, &e), (Some(SyntaxElement::Node(a)), SyntaxElement::Node(b))
+                    if a.kind() == k::HTML && b.kind() == k::HTML)
+                    && prev
+                        .as_ref()
+                        .is_some_and(|p| !self.blank_between(p, &e, &chain));
             if !out.is_empty() && !tight && !defs {
                 out.push(String::new());
             }

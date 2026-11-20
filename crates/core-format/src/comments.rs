@@ -90,6 +90,9 @@ pub struct CommentStyle {
     /// A comment after code starts one blank after it, or in the column of the trailing comments
     /// of the lines around it (`comment_column`); the source's blanks do not count.
     pub align_lines: bool,
+    /// Aligned comments stay within the line width: a line that would push a comment of the run
+    /// past it ends the run (`align_trailing_comments`); without it the width does not matter.
+    pub align_within_width: bool,
     /// Blank lines kept after a comment in front of code.
     pub max_blank_after: usize,
     /// The width at which an own-line `//` comment wraps onto more `//` lines; every `//x` comment
@@ -123,6 +126,7 @@ impl Default for CommentStyle {
             keep_gap: false,
             keep_attached: false,
             align_lines: false,
+            align_within_width: false,
             max_blank_after: 1,
             reflow_width: None,
             trailing_counts_after: &[],

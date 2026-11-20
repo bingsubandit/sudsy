@@ -1,7 +1,7 @@
 ratchet:
   graphql: 123
   json: 4
-  markdown: 93
+  markdown: 95
   yaml: 5
 target-files:
   graphql: 124
