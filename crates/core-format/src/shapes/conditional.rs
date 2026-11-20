@@ -135,6 +135,23 @@ fn gap(cx: &FormatCtx<'_>, hooks: &dyn ConditionalHooks, t: &SyntaxToken) -> Doc
     }
 }
 
+/// The marker (`?` or `:`) and its branch aligned after it. A line comment after the marker
+/// (`ends_line`) puts the branch on the next line; a `nested` conditional in the branch keeps
+/// its own alignment.
+pub fn marked_branch(marker: Doc, ends_line: bool, nested: bool, branch: Doc) -> Doc {
+    let (gap, lead) = if ends_line {
+        (Doc::Nil, doc::hardline())
+    } else {
+        (doc::lit(" "), Doc::Nil)
+    };
+    let branch = if nested && !ends_line {
+        branch
+    } else {
+        doc::align(2, doc::concat(vec![lead, branch]))
+    };
+    doc::concat(vec![marker, gap, branch])
+}
+
 /// `test ? a : b` on one line if it fits, else one branch per line.
 pub fn conditional(
     cx: &FormatCtx<'_>,

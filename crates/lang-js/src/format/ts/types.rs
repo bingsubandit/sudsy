@@ -514,24 +514,11 @@ fn conditional(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             .unwrap_or_else(|| lit(text))
     };
     // A line comment after `?` or `:` ends the line: the branch starts on the next one.
-    let (q, colon) = (tok("?"), tok(":"));
-    let ends = |text: &str| {
-        kids(cx, node).iter().any(|e| {
+    let marked = |marker: Doc, text: &str, branch: &SyntaxNode, d: Doc| {
+        let ends = kids(cx, node).iter().any(|e| {
             token_of(e).is_some_and(|t| t.text() == text && shapes::ends_in_line_comment(cx, t))
-        })
-    };
-    let branch = |marker: Doc, text: &str, branch: &SyntaxNode, d: Doc| {
-        let (gap, lead) = if ends(text) {
-            (Doc::Nil, doc::hardline())
-        } else {
-            (lit(" "), Doc::Nil)
-        };
-        let d = if branch.kind() == k::TS_CONDITIONAL_TYPE && matches!(lead, Doc::Nil) {
-            d
-        } else {
-            align(2, concat(vec![lead, d]))
-        };
-        concat(vec![marker, gap, d])
+        });
+        shapes::marked_branch(marker, ends, branch.kind() == k::TS_CONDITIONAL_TYPE, d)
     };
     let body = concat(vec![
         cx.format(check)?,
@@ -541,9 +528,9 @@ fn conditional(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         cx.format(ext)?,
         indent(concat(vec![
             line(),
-            branch(q, "?", yes, cx.format(yes)?),
+            marked(tok("?"), "?", yes, cx.format(yes)?),
             line(),
-            branch(colon, ":", no, alt),
+            marked(tok(":"), ":", no, alt),
         ])),
     ]);
     // A conditional in a branch breaks with the one around it; one in a check or extends type
