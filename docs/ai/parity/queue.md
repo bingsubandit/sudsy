@@ -202,6 +202,7 @@ Lint: coverage 5%, target 5%; rules by missed findings:
 
 ## prettier-js
 
+Format: unclassified 567 of 567 differing files (100%).
 1. `project-options` (- files): real-world projects run under Prettier's defaults (`--no-config`), not their own Prettier options; the corpus fetches no config files and Sudsy's JS options are not mapped yet
 
 ## ruff

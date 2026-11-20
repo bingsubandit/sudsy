@@ -90,7 +90,7 @@ Raw and target of every run (`scripts/parity.sh format <tool>`, `scripts/parity.
 | prettier-angular | 96.0% (1191 of 1241) | 97.7% (1191 of 1219) |
 | prettier-css | 87.2% (714 of 819) | 87.4% (714 of 817) |
 | prettier-html | 84.8% (2185 of 2576) | 86.1% (2185 of 2539) |
-| prettier-js | 81.6% (3403 of 4169) | 84.0% (3403 of 4051) |
+| prettier-js | 83.6% (3484 of 4169) | 86.0% (3484 of 4051) |
 | prettier | 92.1% (223 of 242) | 95.3% (223 of 234) |
 | ruff | 78.3% (1303 of 1664) | 79.4% (1303 of 1641) |
 | shfmt | 86.6% (71 of 82) | 86.6% (71 of 82) |

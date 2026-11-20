@@ -106,6 +106,10 @@ impl AssignHooks for Hooks {
         n.kind() == k::PRIVATE_IN_EXPRESSION || should_inline_logical(n)
     }
 
+    fn complex_target(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+        is_complex_destructuring(node)
+    }
+
     fn layout(
         &self,
         cx: &FormatCtx<'_>,
@@ -120,13 +124,12 @@ impl AssignHooks for Hooks {
         if should_never_break_after_operator(cx, &right_u, a.short_key) {
             return Some(AssignLayout::NeverBreakAfterOperator);
         }
-        if is_complex_destructuring(a.node)
-            || (a.node.kind() == k::VARIABLE_DECLARATOR
-                && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
-                && right_u
-                    .children()
-                    .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
-                && can_break(&a.left))
+        if a.node.kind() == k::VARIABLE_DECLARATOR
+            && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
+            && right_u
+                .children()
+                .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
+            && can_break(&a.left)
         {
             return Some(AssignLayout::BreakLhs);
         }
@@ -181,13 +184,32 @@ pub(crate) fn assign_like(
     short_key: bool,
 ) -> R {
     let right = right.map(|r| SyntaxElement::Node(r.clone()));
+    // The token in front of the right side: its line comment keeps the right side below it.
+    // (An assignment expression keeps the comment where it is: one inside parentheses moves.)
+    let op_token = right
+        .as_ref()
+        .filter(|_| node.kind() != k::ASSIGNMENT_EXPRESSION)
+        .and_then(|r| {
+            let mut prev = None;
+            for e in node.children_with_tokens() {
+                if &e == r {
+                    break;
+                }
+                if let SyntaxElement::Token(t) = &e
+                    && !cx.grammar.is_trivia(t.kind())
+                {
+                    prev = Some(t.clone());
+                }
+            }
+            prev
+        });
     shapes::assignment(
         cx,
         Assign {
             node,
             left,
             op,
-            op_token: None,
+            op_token: op_token.as_ref(),
             right: right.as_ref(),
             short_key,
         },
@@ -327,7 +349,7 @@ fn poorly_breakable(cx: &FormatCtx<'_>, n: &SyntaxNode, deep: bool) -> Result<bo
             };
             let short = c.args.is_empty()
                 || (c.args.len() == 1 && is_lone_short_argument(cx, &un(&c.args[0].0)));
-            if !short {
+            if !short || complex_type_args(cx, c.type_args.as_ref())? {
                 return Ok(false);
             }
             go(Some(c.callee))
@@ -335,6 +357,21 @@ fn poorly_breakable(cx: &FormatCtx<'_>, n: &SyntaxNode, deep: bool) -> Result<bo
         k::IDENTIFIER_REFERENCE | k::THIS_EXPRESSION => Ok(deep),
         _ => Ok(false),
     }
+}
+
+/// Several type arguments, or one that is a union, intersection or object type, or breaks.
+fn complex_type_args(cx: &FormatCtx<'_>, args: Option<&SyntaxNode>) -> Result<bool, FormatError> {
+    let Some(args) = args else { return Ok(false) };
+    let mut it = args.children();
+    let first = it.next();
+    Ok(it.next().is_some()
+        || first.is_some_and(|t| {
+            matches!(
+                t.kind(),
+                k::TS_UNION_TYPE | k::TS_INTERSECTION_TYPE | k::TS_TYPE_LITERAL
+            )
+        })
+        || cx.format(args)?.will_break())
 }
 
 fn is_lone_short_argument(cx: &FormatCtx<'_>, arg: &SyntaxNode) -> bool {

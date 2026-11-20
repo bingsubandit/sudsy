@@ -151,7 +151,12 @@ impl shapes::BinaryHooks for Hooks {
             || (pk == k::CONDITIONAL_EXPRESSION
                 && !matches!(
                     gk,
-                    Some(k::RETURN_STATEMENT | k::THROW_STATEMENT | k::CALL_EXPRESSION)
+                    Some(
+                        k::RETURN_STATEMENT
+                            | k::THROW_STATEMENT
+                            | k::CALL_EXPRESSION
+                            | k::CONDITIONAL_EXPRESSION
+                    )
                 ))
             || pk == k::TEMPLATE_LITERAL;
         flush.then_some(Place::Flush)

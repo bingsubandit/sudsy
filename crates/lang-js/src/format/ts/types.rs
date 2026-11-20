@@ -123,7 +123,10 @@ pub(super) fn should_hug(n: &SyntaxNode) -> bool {
         .iter()
         .filter(|m| matches!(m.kind(), k::TS_VOID_KEYWORD | k::TS_NULL_KEYWORD))
         .count();
-    members.len() - 1 == voids && members.iter().any(is_object_type)
+    members.len() - 1 == voids
+        && members
+            .iter()
+            .any(|m| is_object_type(m) || m.kind() == k::TS_TYPE_REFERENCE)
 }
 
 /// `<A, B>`: on one line, or one per line with a trailing comma (declarations only); a lone
@@ -335,7 +338,7 @@ fn union(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         )
     );
     let parenthesized = parent == Some(k::TS_PARENTHESIZED_TYPE);
-    let start = if parenthesized { line() } else { Doc::Nil };
+    let start = Doc::Nil;
     let mut code = Vec::new();
     for (i, (op, m)) in members.iter().enumerate() {
         let d = align(2, cx.format(m)?);
@@ -368,7 +371,11 @@ fn union(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     }
     let code = concat(code);
     Ok(if parenthesized {
-        group(concat(vec![indent(code), softline()]))
+        // The members stay on a line of their own when they fit there.
+        group(concat(vec![
+            indent(concat(vec![softline(), group(code)])),
+            softline(),
+        ]))
     } else if indented {
         // Too long for its line: all members on the next line, else one `| member` per line.
         group(indent(concat(vec![softline(), group(code)])))
@@ -506,6 +513,26 @@ fn conditional(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
             })
             .unwrap_or_else(|| lit(text))
     };
+    // A line comment after `?` or `:` ends the line: the branch starts on the next one.
+    let (q, colon) = (tok("?"), tok(":"));
+    let ends = |text: &str| {
+        kids(cx, node).iter().any(|e| {
+            token_of(e).is_some_and(|t| t.text() == text && shapes::ends_in_line_comment(cx, t))
+        })
+    };
+    let branch = |marker: Doc, text: &str, branch: &SyntaxNode, d: Doc| {
+        let (gap, lead) = if ends(text) {
+            (Doc::Nil, doc::hardline())
+        } else {
+            (lit(" "), Doc::Nil)
+        };
+        let d = if branch.kind() == k::TS_CONDITIONAL_TYPE && matches!(lead, Doc::Nil) {
+            d
+        } else {
+            align(2, concat(vec![lead, d]))
+        };
+        concat(vec![marker, gap, d])
+    };
     let body = concat(vec![
         cx.format(check)?,
         lit(" "),
@@ -514,22 +541,9 @@ fn conditional(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
         cx.format(ext)?,
         indent(concat(vec![
             line(),
-            tok("?"),
-            lit(" "),
-            // A conditional in this branch indents its own branches once.
-            if yes.kind() == k::TS_CONDITIONAL_TYPE {
-                cx.format(yes)?
-            } else {
-                align(2, cx.format(yes)?)
-            },
+            branch(q, "?", yes, cx.format(yes)?),
             line(),
-            tok(":"),
-            lit(" "),
-            if no.kind() == k::TS_CONDITIONAL_TYPE {
-                alt
-            } else {
-                align(2, alt)
-            },
+            branch(colon, ":", no, alt),
         ])),
     ]);
     // A conditional in a branch breaks with the one around it; one in a check or extends type

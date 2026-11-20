@@ -362,7 +362,7 @@ node PostIncrementExpression #expression #unary =
     operand:#expression operator:#postfix-unary-operator
 node PostDecrementExpression #expression #unary =
     operand:#expression operator:#postfix-unary-operator
-node SuppressNullableWarningExpression #expression #member-chain #unary =
+node SuppressNullableWarningExpression #expression #member-chain #unary #tail-wrapper =
     operand:#expression operator:#postfix-unary-operator
 node SimpleMemberAccessExpression #expression #member-chain #member-access =
     expression=object:#expression operator:#member-access-operator name=member:#simple-name

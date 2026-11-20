@@ -241,6 +241,16 @@ pub(crate) fn rewrite(
                         cut(b);
                     }
                 }
+                // `A & B | C` is `(A & B) | C`.
+                if node.kind() == k::TS_INTERSECTION_TYPE
+                    && node.children().count() > 1
+                    && node.parent().is_some_and(|p| p.kind() == k::TS_UNION_TYPE)
+                    && let (Some(first), Some(last)) =
+                        (first_token(grammar, &node), last_token(grammar, &node))
+                {
+                    inserts.push((usize::from(first.text_range().start()), Some("(")));
+                    inserts.push((usize::from(last.text_range().end()), Some(")")));
+                }
             }
             // `(): () => void => x`: a function type returned by an arrow takes parentheses.
             k::TS_FUNCTION_TYPE
@@ -295,6 +305,15 @@ pub(crate) fn rewrite(
                     node.first_child().and_then(|c| first_token(grammar, &c)),
                     node.first_child().and_then(|c| last_token(grammar, &c)),
                 ) {
+                    inserts.push((usize::from(first.text_range().start()), Some("(")));
+                    inserts.push((usize::from(last.text_range().end()), Some(")")));
+                }
+            }
+            // `typeof a[]` is `(typeof a)[]`.
+            k::TS_TYPE_QUERY if node.parent().is_some_and(|p| p.kind() == k::TS_ARRAY_TYPE) => {
+                if let (Some(first), Some(last)) =
+                    (first_token(grammar, &node), last_token(grammar, &node))
+                {
                     inserts.push((usize::from(first.text_range().start()), Some("(")));
                     inserts.push((usize::from(last.text_range().end()), Some(")")));
                 }
