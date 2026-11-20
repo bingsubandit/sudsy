@@ -379,10 +379,23 @@ impl<'a> Printer<'a> {
 
     fn write(&mut self, s: &str) {
         self.out.push_str(s);
-        match s.rfind('\n') {
-            Some(i) => self.pos = str_width(&s[i + 1..], self.opts.indent_width),
-            None => self.pos += str_width(s, self.opts.indent_width),
-        }
+        let (start, tail) = match s.rfind('\n') {
+            Some(i) => (0, &s[i + 1..]),
+            None => (self.pos, s),
+        };
+        self.pos = if tail.contains('\t') {
+            // (a tab goes to the next tab stop)
+            let tab = self.opts.indent_width.max(1);
+            tail.chars().fold(start, |col, c| {
+                if c == '\t' {
+                    (col / tab + 1) * tab
+                } else {
+                    col + c.width().unwrap_or(0)
+                }
+            })
+        } else {
+            start + str_width(tail, self.opts.indent_width)
+        };
     }
 
     fn step(&mut self, cmd: Cmd<'a>, cmds: &mut Vec<Cmd<'a>>) {
