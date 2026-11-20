@@ -389,6 +389,66 @@ pub fn binary_chain(
     })
 }
 
+/// The width of the widest operand of the chain at `node` (flattened by precedence, an operand
+/// that is a chain of another precedence counts whole) and the operator after it, from the source
+/// text with runs of blanks as one: the line a chain filled to the line width cannot go below.
+pub fn widest_operand(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
+    let g = cx.grammar;
+    let mut buf = Vec::with_capacity(6);
+    let mut cur = link(cx, node, &mut buf).ok()?;
+    let top_op = cur.op.text().to_string();
+    let width = |e: &SyntaxElement| -> usize {
+        // (literals written one after another, which break between them)
+        if let SyntaxElement::Node(n) = e
+            && g.has_tag(n.kind(), "opaque")
+        {
+            return n
+                .children_with_tokens()
+                .filter(|c| !g.is_trivia(c.kind()))
+                .map(|c| c.to_string().trim().chars().count())
+                .max()
+                .unwrap_or(0);
+        }
+        let text = e.to_string();
+        let mut w = 0;
+        let mut blank = false;
+        for ch in text.trim().chars() {
+            if ch.is_whitespace() {
+                if !blank {
+                    w += 1;
+                }
+                blank = true;
+            } else {
+                w += 1;
+                blank = false;
+            }
+        }
+        w
+    };
+    let mut widest = 0;
+    loop {
+        widest = widest.max(width(&cur.right) + 1 + cur.op.text().len());
+        match &cur.left {
+            SyntaxElement::Node(n) => {
+                let inner = roles::un(n);
+                match link(cx, &inner, &mut buf) {
+                    Ok(l) if g.has_tag(inner.kind(), "binary-chain") && flattens(g, &top_op, l.op.text()) => {
+                        cur = l;
+                    }
+                    _ => {
+                        widest = widest.max(width(&cur.left) + 1 + top_op.len());
+                        return Some(widest);
+                    }
+                }
+            }
+            left => {
+                widest = widest.max(width(left) + 1 + top_op.len());
+                return Some(widest);
+            }
+        }
+    }
+}
+
 fn node_nested(g: &Grammar, parent: Option<&SyntaxNode>) -> bool {
     parent.is_some_and(|p| g.has_tag(p.kind(), "binary-chain"))
 }
@@ -413,11 +473,27 @@ fn filled(policy: &BinaryPolicy, contents: Vec<Doc>, all_start: bool, nested: bo
             .collect()
     };
     if all_start && !rest.is_empty() {
-        return doc::concat(vec![
-            first,
+        let first_width = first.flat_width();
+        let beside = doc::concat(vec![
+            first.clone(),
             doc::lit(" "),
             doc::align(doc::ALIGN_TO_COLUMN, doc::concat(lines(false))),
         ]);
+        // (the first operator moves to a line of its own when it, and the text after it up to
+        // the next break, do not fit beside the first operand)
+        let below = doc::align(
+            doc::ALIGN_TO_COLUMN,
+            doc::concat(vec![
+                first,
+                doc::hardline(),
+                rest[0].clone(),
+                doc::concat(lines(true).into_iter().skip(1).collect()),
+            ]),
+        );
+        return match (first_width, rest[0].flat_width()) {
+            (Some(f), Some(w)) => doc::fits_at_column_rest(f + 1 + w, beside, below),
+            _ => beside,
+        };
     }
     let mut body = doc::concat(lines(true));
     match policy.align {

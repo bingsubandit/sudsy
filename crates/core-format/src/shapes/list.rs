@@ -476,7 +476,11 @@ fn list_of(
         let w = if let Some(h) = c
             .slots
             .get(i)
-            .and_then(|sl| chain_head(cx, &sl.node).or_else(|| block_head(cx, &sl.node)))
+            .and_then(|sl| {
+                super::widest_operand(cx, &sl.node)
+                    .or_else(|| chain_head(cx, &sl.node))
+                    .or_else(|| block_head(cx, &sl.node))
+            })
         {
             h
         } else if chain || items.len() == 1 {
@@ -596,7 +600,10 @@ fn list_of(
     } else if style.align_open {
         let inner = doc::shared(inner);
         // (every item fits up to its separator; the last one with the text after the list too)
-        let hang = doc::align(style.hang_indent, doc::concat(vec![doc::line(), inner.clone()]));
+        let hang = doc::align(
+            doc::ALIGN_FROM_LINE | style.hang_indent,
+            doc::concat(vec![doc::line(), inner.clone()]),
+        );
         let aligned = doc::align(doc::ALIGN_TO_COLUMN, inner);
         let last_fit = match last_flat {
             // (a lone item that fits on a line of its own below the opening: a nested call
@@ -604,7 +611,7 @@ fn list_of(
             Some(w) if items.len() == 1 => doc::fits_at_column_rest(
                 w + 1,
                 aligned.clone(),
-                doc::fits_below(0, w + 1 + style.hang_indent, hang.clone(), aligned),
+                doc::fits_below(doc::FROM_LINE, w + 1 + style.hang_indent, hang.clone(), aligned),
             ),
             Some(w) => doc::fits_at_column_rest(w, aligned, hang.clone()),
             None => doc::fits_at_column(widest_last + 1, aligned, hang.clone()),
@@ -634,7 +641,7 @@ fn list_of(
         }
         let below = doc::group(doc::concat(vec![
             opening.clone(),
-            doc::align(style.hang_indent, doc::concat(row)),
+            doc::align(doc::ALIGN_FROM_LINE | style.hang_indent, doc::concat(row)),
             closing.clone(),
         ]));
         let mut parts = vec![opening.clone()];
@@ -706,7 +713,7 @@ fn list_of(
             });
             let hug = doc::conditional_group(vec![list.clone(), h, list.clone()]);
             match total {
-                Some(t) => doc::fits_below(0, t, below, hug),
+                Some(t) => doc::fits_below(doc::FROM_LINE, t, below, hug),
                 None => hug,
             }
         }
