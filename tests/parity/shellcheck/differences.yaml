@@ -1,2 +1,18 @@
 coverage: 86.6  # share of the default-set findings of shellcheck on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage shellcheck; at least 85% is the bar)
 target: 86.6
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  SC1091: 12
+  SC1090: 2
+  SC2235: 2
+  SC2001: 1
+  SC2004: 1
+  SC2016: 1
+  SC2097: 1
+  SC2098: 1
+  SC2102: 1
+  SC2124: 1
+  SC2128: 1
+  SC2148: 1
+  SC2154: 1
+  SC2181: 1
+  SC2221: 1

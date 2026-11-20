@@ -208,6 +208,25 @@ Lint: coverage 5%, target 5%; rules by missed findings:
 
 1. `layout-gaps` (- files): ruff layouts not ported yet (comments in unusual places, parenthesized right-hand sides with comments, fmt skip on headers, quotes inside f-string replacement fields, docstring code, preview-only fixtures)
 
+## shellcheck
+
+Lint: coverage 86.6%, target 86.6%; rules by missed findings:
+1. `SC1091` (12 missed)
+2. `SC1090` (2 missed)
+3. `SC2235` (2 missed)
+4. `SC2001` (1 missed)
+5. `SC2004` (1 missed)
+6. `SC2016` (1 missed)
+7. `SC2097` (1 missed)
+8. `SC2098` (1 missed)
+9. `SC2102` (1 missed)
+10. `SC2124` (1 missed)
+11. `SC2128` (1 missed)
+12. `SC2148` (1 missed)
+13. `SC2154` (1 missed)
+14. `SC2181` (1 missed)
+15. `SC2221` (1 missed)
+
 ## shfmt
 
 1. `arith-spacing` (3 files): `i++ ))` (a blank before `))` after `++`, which tree-sitter-bash lexes as one word) and the subscripts `${a[i+1]}` are kept as written; shfmt writes `i++))` and `${a[i + 1]}`
