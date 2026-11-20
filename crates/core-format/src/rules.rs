@@ -210,6 +210,7 @@ impl RuleFormatter {
             source_hang,
             keep_blank_lines: self.keep_blank_lines,
             keep_comment_gap: self.keep_comment_gap,
+            reflow: crate::shapes::flow::reflowing(),
             rules: Some(&self.space),
         }
     }

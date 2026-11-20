@@ -113,6 +113,11 @@ pub struct ListStyle {
     /// The items are filled (as with `ListLayout::Fill`) when each is shorter than this many
     /// characters in the source (0: never).
     pub fill_below: usize,
+    /// The lines of the items start under the first item, not one indent in; when the widest
+    /// item does not fit there, the items start on the line after the opening delimiter, this
+    /// many columns in.
+    pub align_open: bool,
+    pub hang_indent: usize,
 }
 
 impl Default for ListStyle {
@@ -143,6 +148,8 @@ impl Default for ListStyle {
             ignore_marks: true,
             rows: false,
             fill_below: 0,
+            align_open: false,
+            hang_indent: 4,
         }
     }
 }
@@ -365,7 +372,13 @@ fn list_of(
     } else {
         (doc::line(), doc::softline())
     };
-    let pad = if style.padding { line.clone() } else { soft };
+    let pad = if style.padding {
+        line.clone()
+    } else if style.align_open {
+        Doc::Nil
+    } else {
+        soft
+    };
     let broken = style.broken_separator.unwrap_or(style.separator);
     let sep = match style.broken_separator {
         Some(b) => doc::if_break(doc::lit(b), doc::lit(style.separator)),
@@ -391,6 +404,7 @@ fn list_of(
         lead.push(doc::lit(" "));
     }
     let mut inner = Vec::new();
+    let mut widest = 0;
     for i in 0..items.len() {
         if i > 0 {
             // (a blank line in a fill is a hard break: the fill must not print `, ` before it)
@@ -421,7 +435,10 @@ fn list_of(
                 inner.push(between);
             }
         }
-        inner.push(std::mem::replace(&mut items[i].doc, Doc::Nil));
+        let item = std::mem::replace(&mut items[i].doc, Doc::Nil);
+        widest = widest.max(item.flat_width().unwrap_or(0));
+        // (an item that is too long for a line breaks inside itself, where the source breaks)
+        inner.push(if style.align_open { doc::group(item) } else { item });
         // (`x: y,` kept as written in a list of `;` members ends with its separator too)
         let own_sep = !style.separator.is_empty()
             && items[i].verbatim
@@ -455,7 +472,19 @@ fn list_of(
     inner.push(dangling_comments(&dangling, blank_before_close));
     let inner = if fill {
         fill_parts.push(doc::concat(inner));
-        doc::fill(fill_parts)
+        if style.align_open {
+            // Each item after the first with the line before it in a group of its own: it moves to
+            // the next line when it, and the text that follows it up to the next possible break
+            // (the `)` and what stands after it, for the last), do not fit.
+            let mut parts = fill_parts.into_iter();
+            let mut out: Vec<Doc> = parts.next().into_iter().collect();
+            while let (Some(between), Some(item)) = (parts.next(), parts.next()) {
+                out.push(doc::group(doc::concat(vec![between, item])));
+            }
+            doc::concat(out)
+        } else {
+            doc::fill(fill_parts)
+        }
     } else {
         doc::concat(inner)
     };
@@ -486,6 +515,13 @@ fn list_of(
     // A flat list has no line breaks of its own to indent; a list nested in it indents itself.
     let inner = if flat {
         inner
+    } else if style.align_open {
+        let inner = doc::shared(inner);
+        doc::fits_at_column(
+            widest + 1,
+            doc::align(doc::ALIGN_TO_COLUMN, inner.clone()),
+            doc::align(style.hang_indent, doc::concat(vec![doc::line(), inner])),
+        )
     } else {
         (0..style.indent_levels.max(1)).fold(inner, |d, _| doc::indent(d))
     };

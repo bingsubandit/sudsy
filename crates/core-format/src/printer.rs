@@ -428,11 +428,15 @@ impl<'a> Printer<'a> {
             Doc::Reserve(_) => {}
             Doc::FitsBelow(f) => {
                 let mut below = indent;
-                for _ in 0..f.levels {
+                let at_column = f.levels == crate::doc::AT_COLUMN;
+                for _ in 0..if at_column { 0 } else { f.levels } {
                     below = self.indents.indent(below);
                 }
-                let room =
-                    self.opts.line_width as isize - self.indents.levels[below].width as isize;
+                let room = if at_column {
+                    self.opts.line_width as isize - self.pos as isize
+                } else {
+                    self.opts.line_width as isize - self.indents.levels[below].width as isize
+                };
                 let probe = Cmd {
                     indent: below,
                     mode: Mode::Flat,

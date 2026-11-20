@@ -43,9 +43,30 @@ pub struct Flow<'a> {
     /// The blank between a block comment and the token after it is as the source has it
     /// (`f(/*name=*/x)`), also where `exact` is off.
     pub keep_comment_gap: bool,
+    /// A line break of the source is a breakable line (the group around decides), not a hard one:
+    /// the items of a list that is filled to the line width.
+    pub reflow: bool,
     /// Rows that decide `want`, `joined`, `at_least_one`, `op_first`, `flat_after`, `closers`
     /// and `unhang` instead of the fields of those names.
     pub rules: Option<&'a SpaceRules>,
+}
+
+thread_local! {
+    static REFLOW: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Runs `f` with the flows it creates breaking at the source's line breaks as soft lines (`on`) or
+/// as hard ones.
+pub fn with_reflow<T>(on: bool, f: impl FnOnce() -> T) -> T {
+    let before = REFLOW.with(|c| c.replace(on));
+    let out = f();
+    REFLOW.with(|c| c.set(before));
+    out
+}
+
+/// Do the flows created now reflow ([`with_reflow`])?
+pub fn reflowing() -> bool {
+    REFLOW.with(|c| c.get())
 }
 
 /// Columns of blanks in front of the first token on the source line of `t` (a tab is `tab`).
@@ -168,10 +189,10 @@ impl Flow<'_> {
             return Some(doc::lit(" "));
         }
         if !broken && self.op_first(b) && comments::break_after(cx.grammar, b) {
-            return Some(self.line_break(cx, b));
+            return Some(self.line_break(cx, a, b));
         }
         if broken && !self.joined(a, b) {
-            return Some(self.line_break(cx, b));
+            return Some(self.line_break(cx, a, b));
         }
         let gap = a.text_range().end() != b.text_range().start();
         // `f(a, /*name=*/b)`: the blank between a block comment and `b` is as the source has it.
@@ -202,14 +223,22 @@ impl Flow<'_> {
     }
 
     /// A line break, and the blank lines the source has in front of `b`.
-    fn line_break(&self, cx: &FormatCtx<'_>, b: &SyntaxToken) -> Doc {
+    fn line_break(&self, cx: &FormatCtx<'_>, a: &SyntaxToken, b: &SyntaxToken) -> Doc {
         let blank = if self.keep_blank_lines {
             comments::blank_lines_before(cx.grammar, b)
         } else {
             0
         };
         if blank == 0 {
-            return doc::hardline();
+            let ends_line = comments::trailing_comments(cx.grammar, a)
+                .iter()
+                .any(|c| c.kind != comments::CommentKind::Block)
+                || !comments::leading_comments(cx.grammar, b).is_empty();
+            return if self.reflow && !ends_line {
+                doc::line()
+            } else {
+                doc::hardline()
+            };
         }
         doc::concat((0..=blank).map(|_| doc::hardline()).collect())
     }
