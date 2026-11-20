@@ -376,6 +376,7 @@ impl Layout {
         }
         let doc = match row.shape.as_str() {
             "verbatim" => Ok(shapes::verbatim(cx, node)),
+            "flat" => flow.flat(cx, node),
             "document" if file.verbatim(node) => Ok(doc::verbatim(node.text().to_string())),
             "document" => shapes::document(
                 cx,
@@ -921,8 +922,15 @@ fn heritage(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -
         .collect::<Result<Vec<_>, _>>();
     let tail = (colon + 2 < els.len()).then(|| flow.seq(cx, &els[colon + 2..]));
     Some((|| {
+        let mut head_breaks = false;
+        for e in &els[..colon] {
+            if row.kinds_arg("ctor").contains(&e.kind()) {
+                head_breaks = el(cx, e)?.will_break();
+            }
+        }
         Ok(shapes::heritage(
             flow.seq(cx, &els[..colon])?,
+            head_breaks,
             el(cx, &els[colon])?,
             items?,
             layout,

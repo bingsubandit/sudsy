@@ -89,14 +89,30 @@ fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let head = &inner[..inner.len() - 1];
-    let mut parts = vec![cx.token(open)];
+    // A comment after `{` goes to the first line of the body.
+    let moved = if head.is_empty() {
+        let mut all = comments::leading_comments(cx.grammar, open);
+        all.extend(comments::trailing_comments(cx.grammar, open));
+        all
+    } else {
+        Vec::new()
+    };
+    let mut parts = vec![if moved.is_empty() {
+        cx.token(open)
+    } else {
+        cx.token_text(open)
+    }];
     if !head.is_empty() {
         parts.push(doc::lit(" "));
         parts.push(seq(cx, head)?);
     }
     let body_doc = el(cx, body)?;
-    let broken = multiline(cx, node) || body_doc.will_break();
-    parts.push(doc::indent(doc::concat(vec![doc::line(), body_doc])));
+    let broken = multiline(cx, node) || body_doc.will_break() || !moved.is_empty();
+    parts.push(doc::indent(doc::concat(vec![
+        core_format::shapes::dangling_comments(&moved, false),
+        doc::line(),
+        body_doc,
+    ])));
     parts.push(doc::line());
     parts.push(cx.token(close));
     let lambda = doc::concat(parts);
@@ -115,7 +131,12 @@ fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let op_tok = first(cx, op);
-    if let Some(t) = op_tok.as_ref().filter(|t| t.kind() == k::EQ) {
+    if let Some(t) = op_tok.as_ref().filter(|t| {
+        matches!(
+            t.kind(),
+            k::EQ | k::PLUS_EQ | k::MINUS_EQ | k::MUL_EQ | k::DIV_EQ | k::PERC_EQ
+        )
+    }) {
         return super::decl::assign(cx, node, el(cx, left)?, t, right);
     }
     let elvis = op_tok.is_some_and(|t| t.kind() == k::ELVIS);

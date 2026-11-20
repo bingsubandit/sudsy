@@ -105,7 +105,7 @@ fn body(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
             el(cx, close)?,
         ]));
     }
-    shapes::block(cx, node, &body_style()).or_else(|_| generic(cx, node))
+    shapes::block_open_inside(cx, node, &body_style()).or_else(|_| generic(cx, node))
 }
 
 /// A block with braces is a body; one without (a lambda's statements) is a sequence.

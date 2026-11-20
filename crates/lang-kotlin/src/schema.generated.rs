@@ -96,7 +96,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::raw_string_calls(&["trimIndent", "trimMargin"]),
         core_config::shared::ctor_own_line_kinds(&["AnnotationEntry"]),
         core_config::shared::comment_trim_lines(true),
-        core_config::shared::format_rules(&["curly", "redundant-return-type"]),
+        core_config::shared::format_rules(&["curly", "redundant-return-type", "comment-space"]),
         core_config::shared::redundant_return_types(&["Unit"]),
         core_config::shared::curly_style("chain"),
         core_config::shared::settle_keywords(&["if", "else", "for", "while"]),

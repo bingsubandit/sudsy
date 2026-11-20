@@ -195,7 +195,10 @@ fn block_of(
 ) -> Result<Doc, FormatError> {
     let g = cx.grammar;
     let moved: Vec<Comment> = if open_inside {
-        comments::trailing_comments(g, &c.open)
+        // (comments in front of the delimiter too: `if (c) // x` newline `{`)
+        let mut all = comments::leading_comments(g, &c.open);
+        all.extend(comments::trailing_comments(g, &c.open));
+        all
     } else {
         Vec::new()
     };
@@ -273,7 +276,7 @@ fn ends_of(cx: &FormatCtx<'_>, open: &SyntaxToken, close: &SyntaxToken, moved: &
     let opening = if moved.is_empty() {
         cx.token(open)
     } else {
-        doc::concat(vec![cx.leading_comments_doc(open), cx.token_text(open)])
+        cx.token_text(open)
     };
     let closing = doc::concat(vec![cx.token_text(close), cx.trailing_comments_doc(close)]);
     Ends { opening, closing }

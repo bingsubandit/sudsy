@@ -45,6 +45,7 @@ rule! {
                       closing delimiter is reported (`/*a*/`). Exempt: an empty comment, and a \
                       delimiter repeated (`/**`, `/***/`). The fix inserts the space.",
         }],
+        format: true,
     }
 
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
