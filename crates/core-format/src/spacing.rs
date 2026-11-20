@@ -686,6 +686,11 @@ impl SpaceRules {
         prev.is_some_and(|p| self.tight.1.contains(&p.kind()))
     }
 
+    /// Does the language have declarator marks (`pointer` kind set)?
+    pub fn has_pointer(&self) -> bool {
+        !self.pointer[0].is_empty()
+    }
+
     /// The blank between `a` and `b` when one of them is a declarator mark (`T *x`, `T& x`):
     /// `before` stands for the blank in front of the mark, `after` for the one behind it.
     pub fn pointer_gap(

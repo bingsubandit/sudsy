@@ -452,7 +452,8 @@ impl<'a> Printer<'a> {
             Doc::Reserve(_) => {}
             Doc::FitsBelow(f) => {
                 let mut below = indent;
-                let at_column = f.levels == crate::doc::AT_COLUMN || f.levels == crate::doc::AT_COLUMN_REST;
+                let at_column =
+                    f.levels == crate::doc::AT_COLUMN || f.levels == crate::doc::AT_COLUMN_REST;
                 if at_column && mode == Mode::Flat {
                     // (the group around is flat: nothing here may break)
                     push(cmds, indent, mode, &f.fits);
@@ -461,7 +462,9 @@ impl<'a> Printer<'a> {
                 if let Some((widths, hang)) = &f.lines {
                     let width = self.opts.line_width as isize;
                     let aligned = width - self.pos as isize;
-                    let hung = width - self.indents.levels[self.line_level].width as isize - *hang as isize;
+                    let hung = width
+                        - self.indents.levels[self.line_level].width as isize
+                        - *hang as isize;
                     // Aligning under the opening delimiter is kept unless it costs more than three
                     // extra lines against hanging. The 3 is fitted to the llvm corpus (the value
                     // that matched clang-format on most files); it is a measured threshold, not a
@@ -474,7 +477,11 @@ impl<'a> Printer<'a> {
                 if f.levels == crate::doc::FROM_LINE {
                     below = self.line_level;
                 }
-                for _ in 0..if at_column || f.levels == crate::doc::FROM_LINE { 0 } else { f.levels } {
+                for _ in 0..if at_column || f.levels == crate::doc::FROM_LINE {
+                    0
+                } else {
+                    f.levels
+                } {
                     below = self.indents.indent(below);
                 }
                 let room = if at_column {
@@ -491,7 +498,11 @@ impl<'a> Printer<'a> {
                     &mut self.measure,
                     probe,
                     // (at a column the text after the items is counted by the caller's width)
-                    if at_column && f.levels == crate::doc::AT_COLUMN { &[] } else { cmds },
+                    if at_column && f.levels == crate::doc::AT_COLUMN {
+                        &[]
+                    } else {
+                        cmds
+                    },
                     room,
                     false,
                     &self.group_modes,

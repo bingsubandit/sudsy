@@ -400,8 +400,12 @@ fn access_specifiers_cases_and_labels_are_outdented() {
 
 #[test]
 fn wrapped_lines_keep_their_hang_under_a_chain() {
+    // (the hang under the chain stays; the arguments fill the line)
     let src = "void f() {\n  P = U(S)\n          .format(A, false,\n                  0);\n#if X\n  g();\n#endif\n}\n";
-    assert_eq!(fmt(src), src);
+    assert_eq!(
+        fmt(src),
+        "void f() {\n  P = U(S)\n          .format(A, false, 0);\n#if X\n  g();\n#endif\n}\n"
+    );
 }
 
 #[test]

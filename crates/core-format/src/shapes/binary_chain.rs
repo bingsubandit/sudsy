@@ -344,7 +344,13 @@ pub fn binary_chain(
 
     if let Some(last) = current {
         contents.push(last);
-        return Ok(filled(policy, contents, &hard, all_start, node_nested(g, parent.as_ref())));
+        return Ok(filled(
+            policy,
+            contents,
+            &hard,
+            all_start,
+            node_nested(g, parent.as_ref()),
+        ));
     }
     let inline = end && hooks.inline_right(cx, node);
     let same_precedence_left = steps > 1;
@@ -438,7 +444,10 @@ pub fn widest_operand(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
             SyntaxElement::Node(n) => {
                 let inner = roles::un(n);
                 match link(cx, &inner, &mut buf) {
-                    Ok(l) if g.has_tag(inner.kind(), "binary-chain") && flattens(g, &top_op, l.op.text()) => {
+                    Ok(l)
+                        if g.has_tag(inner.kind(), "binary-chain")
+                            && flattens(g, &top_op, l.op.text()) =>
+                    {
                         cur = l;
                     }
                     _ => {

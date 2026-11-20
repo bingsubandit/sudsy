@@ -824,7 +824,8 @@ pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
             for _ in 0..c.breaks_after.saturating_sub(1).min(max_blank) {
                 parts.push(doc::hardline());
             }
-        } else if (!(st.keep_gap || st.keep_attached) || gap_follows(c)) && !st.is_glued(&c.text()) {
+        } else if (!(st.keep_gap || st.keep_attached) || gap_follows(c)) && !st.is_glued(&c.text())
+        {
             parts.push(doc::lit(" "));
         }
     }

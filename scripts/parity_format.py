@@ -471,10 +471,10 @@ def hunk_cause(their, our):
 
 
 def wrap_report(found, results, unwrapped, report):
-    """`--nowrap`: identical files per group with both tools at a column limit of 10000, second-format and refused counts.
+    """`--nowrap`: identical files per group with both tools at a column limit of 1000 (Sudsy's `line_width` maximum), second-format and refused counts.
     `--wrap-report`: the normal run with each hunk sorted into `wrap` (a statement laid out over lines) or another cause,
     the files whose hunks are all wrap, and the ceiling: files whose output has no wrapped statement (the tool's output is
-    the same at a column limit of 10000)."""
+    the same at a column limit of 1000 (Sudsy's `line_width` maximum))."""
     groups = {}
     for (name, _, group, _), (theirs, ours, unstable, refused) in zip(found, results):
         g = groups.setdefault(group or "fixtures", Counter())
@@ -530,23 +530,23 @@ def main():
         (work / f"style-{style}").mkdir()
         shutil.copy(folder / f"{style}.yaml", work / f"style-{style}" / "sudsy.yaml")
 
-    nowrap = "--nowrap" in sys.argv or "--wrap-report" in sys.argv  # a column limit of 10000 for both tools (the report also needs the reference output without wrapping)
-    wrapless = work / "nowrap-styles"  # the tool's style files with `ColumnLimit: 10000`; ColumnLimit 0 would keep the source's breaks
+    nowrap = "--nowrap" in sys.argv or "--wrap-report" in sys.argv  # a column limit of 1000 (Sudsy's `line_width` maximum) for both tools (the report also needs the reference output without wrapping)
+    wrapless = work / "nowrap-styles"  # the tool's style files with `ColumnLimit: 1000`; ColumnLimit 0 would keep the source's breaks
     if nowrap:
         wrapless.mkdir()
         for style in {f[3].get("style") for f in found if f[3].get("style")}:
             text = (folder / f"{style}.clang-format").read_text(encoding="utf-8")
             kept = [l for l in text.splitlines() if not l.startswith("ColumnLimit:")]
-            (wrapless / f"{style}.clang-format").write_text("\n".join(kept + ["ColumnLimit: 10000"]) + "\n", encoding="utf-8")
-    if "--nowrap" in sys.argv:  # Sudsy gets `line_width: 10000` in every style's sudsy.yaml
+            (wrapless / f"{style}.clang-format").write_text("\n".join(kept + ["ColumnLimit: 1000"]) + "\n", encoding="utf-8")
+    if "--nowrap" in sys.argv:  # Sudsy gets `line_width: 1000` in every style's sudsy.yaml
         for path in [work / "sudsy.yaml", *work.glob("style-*/sudsy.yaml")]:
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-            data.setdefault("cpp", {}).setdefault("format", {})["line_width"] = 10000
+            data.setdefault("cpp", {}).setdefault("format", {})["line_width"] = 1000
             path.write_text(yaml.safe_dump(data), encoding="utf-8")
 
     batch = upstream_batch(config, prefix, found, work) if config["input"] == "batch" else None
 
-    unwrapped = {}  # `--wrap-report`: name -> the tool's output with a column limit of 10000
+    unwrapped = {}  # `--wrap-report`: name -> the tool's output with a column limit of 1000 (Sudsy's `line_width` maximum)
     flagged = Counter()  # flag -> files the flag changed the result of
 
     def compare(item):

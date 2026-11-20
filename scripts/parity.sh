@@ -18,7 +18,7 @@ test=
 if [ "${1:-}" = --test ]; then test=1; shift; fi
 if [ "${1:-}" = --pin ]; then mode=format; extra=(--pin); shift; fi
 if [ "${1:-}" = format ]; then mode=format; shift; fi
-# format mode: `--nowrap` (both tools with a column limit of 10000) and `--wrap-report` (hunks sorted into wrap and other)
+# format mode: `--nowrap` (both tools with a column limit of 1000) and `--wrap-report` (hunks sorted into wrap and other)
 while [ "${1:-}" = --nowrap ] || [ "${1:-}" = --wrap-report ]; do extra+=("$1"); shift; done
 if [ "${1:-}" = coverage ]; then extra=(--coverage); shift; fi
 tool=${1:-}

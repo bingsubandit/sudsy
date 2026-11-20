@@ -353,17 +353,25 @@ impl Layout {
             .map(|&i| &self.rows[i])
             .find(|r| r.matches(node))
             .is_some_and(|r| {
-                r.shape == "list" && self.bound("pack", node.kind()).is_some() && !packable(cx, node)
+                r.shape == "list"
+                    && self.bound("pack", node.kind()).is_some()
+                    && !packable(cx, node)
             })
     }
 
     /// A packable list whose opening token the language binds to the `flat_open` role (the `[ ]`
     /// of an index or an array bound): it stays on one line, nothing breaks inside it.
     fn flat_list(&self, cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<R> {
+        if self.bindings.is_empty() {
+            return None;
+        }
         let open = node.first_token()?;
         self.bound("flat_open", open.kind())?;
         let rows = self.by_kind.get(node.kind().index() as usize)?;
-        let row = rows.iter().map(|&i| &self.rows[i]).find(|r| r.matches(node))?;
+        let row = rows
+            .iter()
+            .map(|&i| &self.rows[i])
+            .find(|r| r.matches(node))?;
         (row.shape == "list" && packable(cx, node)).then_some(())?;
         let style = ListStyle {
             layout: ListLayout::Flat,

@@ -28,12 +28,15 @@ files:
   gnu: wrap-misc, wrap-args, wrap-brace, template-break, indent, content, define, directive-wrap, ws-tab, wrap-assign, wrap-binary, ws-other, wrap-comment, wrap-ctor-init, ws-comment-gap
   microsoft: wrap-misc, wrap-args, wrap-brace, template-break, indent, content, define, directive-wrap, ws-tab, wrap-assign, wrap-binary, ws-other, wrap-comment, wrap-ctor-init, ws-comment-gap
 ratchet:
-  llvm: 231
-  fmt: 34
-  range-v3: 73
-  folly: 430
-  linux: 443
-  sqlite: 8
+  # llvm 231 -> 164 and fmt 34 -> 28 (lead decision, landing 3): arguments, parameters, braced lists and binary chains
+  # go through the shared list and binary_chain shapes, which fill to the column limit with second-format and refused at 0;
+  # files that matched by keeping the source's breaks no longer match. The miss classes are the wrap-* gaps above.
+  llvm: 164
+  fmt: 28
+  range-v3: 97
+  folly: 764
+  linux: 645
+  sqlite: 14
   google: 0
   chromium: 0
   mozilla: 0

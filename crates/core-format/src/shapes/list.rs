@@ -282,7 +282,8 @@ fn list_of(
             .iter()
             .all(|c| c.kind == comments::CommentKind::Block && c.breaks_after == 0)
         // (one on a line of its own stays there)
-        && dangling[0].element.as_token().is_none_or(|t| !comments::starts_line(t));
+        && !(style.align_open
+            && dangling[0].element.as_token().is_some_and(comments::starts_line));
     if inline_close {
         dangling.clear();
     }
@@ -293,7 +294,9 @@ fn list_of(
         && !style.open_comments_own_line
         && !items.is_empty()
         && !open_cs.is_empty()
-        && open_cs.iter().all(|c| c.kind == comments::CommentKind::Block)
+        && open_cs
+            .iter()
+            .all(|c| c.kind == comments::CommentKind::Block)
     {
         let mut parts = Vec::new();
         for c in &open_cs {
@@ -426,9 +429,15 @@ fn list_of(
         lead.push(cx.format(prefix)?);
         lead.push(doc::lit(" "));
     }
-    let item_widths: Vec<Option<usize>> = items.iter().map(|i| i.doc.flat_width()).collect();
-    let mut item_ids: Vec<Option<doc::GroupId>> = vec![None; items.len()];
-    let mut head_ws: Vec<Option<usize>> = vec![None; items.len()];
+    let aligned = style.align_open;
+    let item_widths: Vec<Option<usize>> = if aligned {
+        items.iter().map(|i| i.doc.flat_width()).collect()
+    } else {
+        Vec::new()
+    };
+    let n_aligned = if aligned { items.len() } else { 0 };
+    let mut item_ids: Vec<Option<doc::GroupId>> = vec![None; n_aligned];
+    let mut head_ws: Vec<Option<usize>> = vec![None; n_aligned];
     let has_block = |i: usize| {
         c.slots
             .get(i)
@@ -441,11 +450,9 @@ fn list_of(
     // The items on one line with the last one (a lambda) broken at its body, as a candidate.
     let hug_ok = style.align_open
         && !flat
-        && c.slots.last().is_some_and(|sl| {
-            sl.node
-                .descendants()
-                .any(|n| g.has_tag(n.kind(), "block"))
-        })
+        && c.slots
+            .last()
+            .is_some_and(|sl| sl.node.descendants().any(|n| g.has_tag(n.kind(), "block")))
         && !commented(cx, node, &c.open, &c.close)
         && items
             .iter()
@@ -469,7 +476,9 @@ fn list_of(
                 let cs = comments::trailing_comments(g, t);
                 cs.iter().any(|c| c.kind != comments::CommentKind::Block)
                     || (!cs.is_empty() && comments::break_after(g, t))
-            }) || tail_comments.iter().any(|(j, d)| *j == i - 1 && !d.is_nil());
+            }) || tail_comments
+                .iter()
+                .any(|(j, d)| *j == i - 1 && !d.is_nil());
             let base = if fill && (items[i].blank_before > 0 || line_comment) {
                 doc::hardline()
             } else {
@@ -492,60 +501,65 @@ fn list_of(
             }
         }
         let item = std::mem::replace(&mut items[i].doc, Doc::Nil);
-        // (a chain of operators breaks at its operators, an item with a block (a lambda) at the
-        // block: its first line is what must fit)
-        let chain = c.slots.get(i).is_some_and(|sl| {
-            let k = sl.node.kind();
-            g.has_tag(k, "binary-chain")
-                || g.has_tag(k, "conditional")
-                || sl
-                    .node
-                    .descendants()
-                    .any(|n| g.has_tag(n.kind(), "block"))
-        });
-        head_ws[i] = has_block(i).then(|| item.width_to_brace()).flatten();
-        let w = if let Some(h) = c
-            .slots
-            .get(i)
-            .and_then(|sl| {
+        // (the widths decide how an aligned list lays out: no other list measures its items)
+        if style.align_open {
+            // (a chain of operators breaks at its operators, an item with a block (a lambda) at the
+            // block: its first line is what must fit)
+            let chain = c.slots.get(i).is_some_and(|sl| {
+                let k = sl.node.kind();
+                g.has_tag(k, "binary-chain")
+                    || g.has_tag(k, "conditional")
+                    || sl.node.descendants().any(|n| g.has_tag(n.kind(), "block"))
+            });
+            head_ws[i] = has_block(i).then(|| item.width_to_brace()).flatten();
+            let w = if let Some(h) = c.slots.get(i).and_then(|sl| {
                 item.chain_widest()
                     .or_else(|| chain_head(cx, &sl.node))
                     .or_else(|| has_block(i).then(|| item.width_to_brace()).flatten())
-            })
-        {
-            h
-        } else if chain || items.len() == 1 {
-            item.head_width()
-        } else {
-            item.flat_width().unwrap_or_else(|| item.width_to_hardline())
-        };
-        // (a line comment after the item takes room on its line)
-        let w = w + c.slots.get(i).map_or(0, |sl| {
-            [sl.sep.clone(), sl.last_token(cx)]
-                .iter()
-                .flatten()
-                .flat_map(|t| comments::trailing_comments(g, t))
-                .filter(|c| c.kind != comments::CommentKind::Block)
-                .map(|c| 1 + c.text().chars().count())
-                .next()
-                .unwrap_or(0)
-        });
-        if i == last {
-            // (a block comment after the last item's separator ends the line it is on, as one
-            // after the item itself does)
-            let tail = c.slots.get(i).and_then(|sl| sl.sep.as_ref()).map_or(0, |t| {
-                comments::trailing_comments(g, t)
+            }) {
+                h
+            } else if chain || items.len() == 1 {
+                item.head_width()
+            } else {
+                item.flat_width()
+                    .unwrap_or_else(|| item.width_to_hardline())
+            };
+            // (a line comment after the item takes room on its line)
+            let w = w + c.slots.get(i).map_or(0, |sl| {
+                [sl.sep.clone(), sl.last_token(cx)]
                     .iter()
-                    .filter(|c| c.kind == comments::CommentKind::Block)
+                    .flatten()
+                    .flat_map(|t| comments::trailing_comments(g, t))
+                    .filter(|c| c.kind != comments::CommentKind::Block)
                     .map(|c| 1 + c.text().chars().count())
                     .next()
                     .unwrap_or(0)
             });
-            widest_last = w + tail;
-            // (the text after the list counts for an item that cannot break before its end)
-            last_flat = if chain { None } else { item.flat_width().map(|f| f + tail) };
-        } else {
-            widest = widest.max(w);
+            if i == last {
+                // (a block comment after the last item's separator ends the line it is on, as one
+                // after the item itself does)
+                let tail = c
+                    .slots
+                    .get(i)
+                    .and_then(|sl| sl.sep.as_ref())
+                    .map_or(0, |t| {
+                        comments::trailing_comments(g, t)
+                            .iter()
+                            .filter(|c| c.kind == comments::CommentKind::Block)
+                            .map(|c| 1 + c.text().chars().count())
+                            .next()
+                            .unwrap_or(0)
+                    });
+                widest_last = w + tail;
+                // (the text after the list counts for an item that cannot break before its end)
+                last_flat = if chain {
+                    None
+                } else {
+                    item.flat_width().map(|f| f + tail)
+                };
+            } else {
+                widest = widest.max(w);
+            }
         }
         // (an item that is too long for a line breaks inside itself, where the source breaks)
         // (the operands of a chain hang below its first operand)
@@ -674,6 +688,7 @@ fn list_of(
     // delimiter on the next line: the next format would read the comment as one in front of the
     // delimiter, not as a trailing one to align)
     let ends_line = !flat
+        && style.align_open
         && dangling.is_empty()
         && c.slots.last().is_some_and(|s| {
             [s.last_token(cx), s.sep.clone()]
@@ -722,7 +737,12 @@ fn list_of(
             Some(w) if items.len() == 1 => doc::fits_at_column_rest(
                 w + 1,
                 aligned.clone(),
-                doc::fits_below(doc::FROM_LINE, w + 1 + style.hang_indent, hang.clone(), aligned),
+                doc::fits_below(
+                    doc::FROM_LINE,
+                    w + 1 + style.hang_indent,
+                    hang.clone(),
+                    aligned,
+                ),
             ),
             Some(w) => doc::fits_at_column_rest(w, aligned, hang.clone()),
             None => doc::fits_at_column(widest_last + 1, aligned, hang.clone()),

@@ -187,6 +187,22 @@ impl Flow<'_> {
         Some(!cx.options.strings(name).iter().any(|w| w == word))
     }
 
+    /// The blank between a declarator mark (`*`, `&`) and its neighbour per the language's pointer
+    /// alignment, `None` when `a` and `b` are no such pair.
+    fn pointer_blank(&self, cx: &FormatCtx<'_>, a: &SyntaxToken, b: &SyntaxToken) -> Option<bool> {
+        self.rules.filter(|r| r.has_pointer()).and_then(|r| {
+            let (before, after) = match cx.options.get("pointer_alignment") {
+                Some(core_config::OptionValue::String(s)) => match s.as_str() {
+                    "left" => (false, true),
+                    "middle" => (true, true),
+                    _ => (true, false),
+                },
+                _ => return None,
+            };
+            r.pointer_gap(a, b, before, after)
+        })
+    }
+
     /// What stands between two neighbouring tokens: a line break the source has, else a blank
     /// where the spacing rule or the source wants one.
     pub fn between(&self, cx: &FormatCtx<'_>, a: &SyntaxToken, b: &SyntaxToken) -> Option<Doc> {
@@ -198,6 +214,17 @@ impl Flow<'_> {
             });
         }
         let broken = comments::break_after(cx.grammar, a);
+        // (a parameter's declarator mark stays against its name over a line break: `T &\n x` is `T &x`)
+        if broken
+            && self.rules.is_some_and(|r| r.has_pointer())
+            && a.parent()
+                .is_some_and(|p| cx.grammar.has_tag(p.kind(), "parameter"))
+            && self.pointer_blank(cx, a, b) == Some(false)
+            && comments::trailing_comments(cx.grammar, a).is_empty()
+            && comments::leading_comments(cx.grammar, b).is_empty()
+        {
+            return None;
+        }
         if broken && self.op_first(a) {
             return Some(doc::lit(" "));
         }
@@ -226,17 +253,7 @@ impl Flow<'_> {
                 return (space && !glued).then(|| doc::lit(" "));
             }
         }
-        let pointer = self.rules.and_then(|r| {
-            let (before, after) = match cx.options.get("pointer_alignment") {
-                Some(core_config::OptionValue::String(s)) => match s.as_str() {
-                    "left" => (false, true),
-                    "middle" => (true, true),
-                    _ => (true, false),
-                },
-                _ => return None,
-            };
-            r.pointer_gap(a, b, before, after)
-        });
+        let pointer = self.pointer_blank(cx, a, b);
         match pointer.or_else(|| self.want(a, b)) {
             Some(blank) => blank.then(|| doc::lit(" ")),
             None if broken => Some(doc::lit(" ")),
@@ -254,12 +271,15 @@ impl Flow<'_> {
             0
         };
         if blank == 0 {
-            let ends_line = comments::trailing_comments(cx.grammar, a)
-                .iter()
-                .any(|c| c.kind != comments::CommentKind::Block)
-                || !comments::leading_comments(cx.grammar, b).is_empty()
-                // (adjacent string literals: each stays on its own line)
-                || (cx.grammar.has_tag(a.kind(), "string") && cx.grammar.has_tag(b.kind(), "string"));
+            // (only a reflowed list asks whether the line ends for a reason of its own)
+            let ends_line = self.reflow
+                && (comments::trailing_comments(cx.grammar, a)
+                    .iter()
+                    .any(|c| c.kind != comments::CommentKind::Block)
+                    || !comments::leading_comments(cx.grammar, b).is_empty()
+                    // (adjacent string literals: each stays on its own line)
+                    || (cx.grammar.has_tag(a.kind(), "string")
+                        && cx.grammar.has_tag(b.kind(), "string")));
             return if self.reflow && !ends_line {
                 // (where the spacing rows want no blank, a flat break is none: `{` `.x`)
                 if self.want(a, b) == Some(false) {
