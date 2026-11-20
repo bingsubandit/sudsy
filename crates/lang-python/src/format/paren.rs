@@ -448,9 +448,10 @@ impl Visit {
                 }
             }
             k::EXPR_COMPARE => {
+                // (`not in` and `is not` are one operator: the `not` does not count)
                 let ops = kids(cx, n)
                     .iter()
-                    .filter(|e| e.as_token().is_some())
+                    .filter(|e| e.as_token().is_some() && tok_kind(e) != Some(k::NOT))
                     .count();
                 self.update(4, ops.max(1));
                 for c in n.children() {

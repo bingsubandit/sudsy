@@ -52,7 +52,12 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                     let mut inner = Vec::new();
                     for c in &cases {
                         let first = cx.first_token(c).ok_or_else(|| shape_error("case"))?;
-                        inner.push(clause_break(cx, &first, false));
+                        // (no blank line between `match x:` and its first case)
+                        inner.push(if inner.is_empty() {
+                            concat(vec![hardline(), cx.lead(&first)])
+                        } else {
+                            clause_break(cx, &first, false)
+                        });
                         inner.push(compound(cx, c)?);
                     }
                     if let Some(last) = cases.last() {

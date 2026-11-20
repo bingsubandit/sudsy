@@ -150,6 +150,9 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
                     for _ in 0..before {
                         parts.push(hardline());
                     }
+                } else if seq == Seq::Function && src > 0 {
+                    // A function body keeps a blank line in front of its first comment.
+                    parts.push(hardline());
                 }
                 own_doc = core_format::comment_lines(&cs[..=j]);
                 parts.push(own_doc.clone());
