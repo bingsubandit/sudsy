@@ -284,8 +284,28 @@ fn list_of(
     if inline_close {
         dangling.clear();
     }
-    let open_comments = !comments::trailing_comments(g, &c.open).is_empty();
-    let open_line_comment = comments::trailing_comments(g, &c.open)
+    let mut open_cs = comments::trailing_comments(g, &c.open);
+    // Block comments after the opening delimiter of an aligned list stand in front of the first
+    // item, like those the source has on its line: both read the same on the next format.
+    if style.align_open
+        && !style.open_comments_own_line
+        && !items.is_empty()
+        && !open_cs.is_empty()
+        && open_cs.iter().all(|c| c.kind == comments::CommentKind::Block)
+    {
+        let mut parts = Vec::new();
+        for c in &open_cs {
+            parts.push(crate::context::verbatim_text(&c.text()));
+            if !(cx.comment_style.keep_attached && !crate::context::gap_follows(c)) {
+                parts.push(doc::lit(" "));
+            }
+        }
+        parts.push(std::mem::replace(&mut items[0].doc, Doc::Nil));
+        items[0].doc = doc::concat(parts);
+        open_cs.clear();
+    }
+    let open_comments = !open_cs.is_empty();
+    let open_line_comment = open_cs
         .iter()
         .any(|c| c.kind != comments::CommentKind::Block);
     // Comments before the opening and after the closing delimiter belong outside the group: a
@@ -295,14 +315,11 @@ fn list_of(
     let opening = doc::concat(vec![
         cx.token_text(&c.open),
         if style.open_comments_own_line && open_comments {
-            doc::indent(dangling_comments(
-                &comments::trailing_comments(g, &c.open),
-                false,
-            ))
+            doc::indent(dangling_comments(&open_cs, false))
         } else {
             open_comments_doc(
                 cx,
-                &comments::trailing_comments(g, &c.open),
+                &open_cs,
                 !items.is_empty(),
                 style.padding && !items.is_empty(),
             )
@@ -492,6 +509,17 @@ fn list_of(
         } else {
             item.flat_width().unwrap_or_else(|| item.width_to_hardline())
         };
+        // (a line comment after the item takes room on its line)
+        let w = w + c.slots.get(i).map_or(0, |sl| {
+            [sl.sep.clone(), sl.last_token(cx)]
+                .iter()
+                .flatten()
+                .flat_map(|t| comments::trailing_comments(g, t))
+                .filter(|c| c.kind != comments::CommentKind::Block)
+                .map(|c| 1 + c.text().chars().count())
+                .next()
+                .unwrap_or(0)
+        });
         if i == last {
             widest_last = w;
             // (the text after the list counts for an item that cannot break before its end)
