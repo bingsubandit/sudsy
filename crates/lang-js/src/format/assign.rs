@@ -327,7 +327,7 @@ fn poorly_breakable(cx: &FormatCtx<'_>, n: &SyntaxNode, deep: bool) -> Result<bo
             };
             let short = c.args.is_empty()
                 || (c.args.len() == 1 && is_lone_short_argument(cx, &un(&c.args[0].0)));
-            if !short {
+            if !short || complex_type_args(cx, c.type_args.as_ref())? {
                 return Ok(false);
             }
             go(Some(c.callee))
@@ -335,6 +335,21 @@ fn poorly_breakable(cx: &FormatCtx<'_>, n: &SyntaxNode, deep: bool) -> Result<bo
         k::IDENTIFIER_REFERENCE | k::THIS_EXPRESSION => Ok(deep),
         _ => Ok(false),
     }
+}
+
+/// Several type arguments, or one that is a union, intersection or object type, or breaks.
+fn complex_type_args(cx: &FormatCtx<'_>, args: Option<&SyntaxNode>) -> Result<bool, FormatError> {
+    let Some(args) = args else { return Ok(false) };
+    let mut it = args.children();
+    let first = it.next();
+    Ok(it.next().is_some()
+        || first.is_some_and(|t| {
+            matches!(
+                t.kind(),
+                k::TS_UNION_TYPE | k::TS_INTERSECTION_TYPE | k::TS_TYPE_LITERAL
+            )
+        })
+        || cx.format(args)?.will_break())
 }
 
 fn is_lone_short_argument(cx: &FormatCtx<'_>, arg: &SyntaxNode) -> bool {

@@ -137,7 +137,7 @@ pub(crate) fn function(
     if let Some(tp) = kids.get(at).and_then(node_of)
         && tp.kind() == k::TS_TYPE_PARAMETER_DECLARATION
     {
-        signature.push(cx.format(tp)?);
+        parts.push(cx.format(tp)?);
         at += 1;
     }
     let object_return = kids.iter().filter_map(node_of).any(|n| {
