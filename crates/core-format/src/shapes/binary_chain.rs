@@ -284,6 +284,8 @@ pub fn binary_chain(
     // before it, one that starts a line (`binary_start_operators`) with the operand after it.
     let filling = end && policy.fill;
     let mut contents: Vec<Doc> = Vec::new();
+    // (a line comment ends the line: the next content starts a line)
+    let mut hard: Vec<bool> = Vec::new();
     let mut current = filling.then(|| first_doc.clone());
     let mut all_start = true;
     for k in 0..steps {
@@ -300,12 +302,15 @@ pub fn binary_chain(
         let target_doc = operand(cx, hooks, target)?;
         if let Some(cur) = current.take() {
             let op = hooks.token(cx, &l.op);
+            let ends = last_token(cx, prev).is_some_and(|t| ends_in_line_comment(cx, &t));
             if policy.start_operators.iter().any(|o| o == l.op.text()) {
                 contents.push(cur);
+                hard.push(ends);
                 current = Some(doc::concat(vec![op, doc::lit(" "), target_doc]));
             } else {
                 all_start = false;
                 contents.push(doc::concat(vec![cur, doc::lit(" "), op]));
+                hard.push(ends || hooks.comment_ends_line(cx, &l.op));
                 current = Some(target_doc);
             }
             prev = target;
@@ -339,7 +344,7 @@ pub fn binary_chain(
 
     if let Some(last) = current {
         contents.push(last);
-        return Ok(filled(policy, contents, all_start, node_nested(g, parent.as_ref())));
+        return Ok(filled(policy, contents, &hard, all_start, node_nested(g, parent.as_ref())));
     }
     let inline = end && hooks.inline_right(cx, node);
     let same_precedence_left = steps > 1;
@@ -457,7 +462,13 @@ fn node_nested(g: &Grammar, parent: Option<&SyntaxNode>) -> bool {
 /// The lines of a chain filled to the line width: each line after the first is a group of its
 /// own, so that it breaks before it when it, and the text that follows it, do not fit. A chain of
 /// operators that start a line (`<<`) lines them up under the first one.
-fn filled(policy: &BinaryPolicy, contents: Vec<Doc>, all_start: bool, nested: bool) -> Doc {
+fn filled(
+    policy: &BinaryPolicy,
+    contents: Vec<Doc>,
+    hard: &[bool],
+    all_start: bool,
+    nested: bool,
+) -> Doc {
     let mut it = contents.into_iter();
     let first = it.next().unwrap_or(Doc::Nil);
     let rest: Vec<Doc> = it.collect();
@@ -465,7 +476,9 @@ fn filled(policy: &BinaryPolicy, contents: Vec<Doc>, all_start: bool, nested: bo
         rest.iter()
             .enumerate()
             .map(|(i, c)| {
-                if i == 0 && !lead_break {
+                if hard.get(i).copied().unwrap_or(false) {
+                    doc::concat(vec![doc::hardline(), c.clone()])
+                } else if i == 0 && !lead_break {
                     c.clone()
                 } else {
                     doc::group(doc::concat(vec![doc::line(), c.clone()]))

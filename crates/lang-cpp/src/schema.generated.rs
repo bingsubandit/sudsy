@@ -68,6 +68,7 @@ pub const BREAK_TEMPLATE_DECLARATIONS: &str = "break_template_declarations";
 #[allow(dead_code)]
 pub const ALIGN_ESCAPED_NEWLINES: &str = "align_escaped_newlines";
 pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
+    ("wrap_lines", "aligned_lines", "", &["StringConcat"]),
     ("wrap_lines", "binary_chain", "", &["Binary"]),
     ("access_modifier_outdent", "outdent", "", &["AccessSpecifier"]),
     ("indent_case_labels", "outdent_unless", "", &["CaseClause"]),
