@@ -404,6 +404,8 @@ pub(crate) struct Rendered {
     hole: bool,
     /// The last token of an item that is a bare token or a run (see [`Slot`]).
     tail: Option<SyntaxToken>,
+    /// The block comment of its separator is printed in front of the next item.
+    sep_comment_moved: bool,
 }
 
 impl Rendered {
@@ -486,6 +488,7 @@ pub(crate) fn render_slots(
                 sep: slots[i].sep.clone(),
                 hole: true,
                 tail: None,
+                sep_comment_moved: false,
             });
             i += 1;
             continue;
@@ -500,6 +503,7 @@ pub(crate) fn render_slots(
                 sep: slots[i].sep.clone(),
                 hole: false,
                 tail: slots[i].last_token(cx),
+                sep_comment_moved: false,
             });
             i += 1;
             continue;
@@ -521,6 +525,7 @@ pub(crate) fn render_slots(
                 sep: slots[j].sep.clone(),
                 hole: false,
                 tail: Some(last),
+                sep_comment_moved: false,
             });
             i = j + 1;
         } else {
@@ -538,6 +543,7 @@ pub(crate) fn render_slots(
                 sep: slots[i].sep.clone(),
                 hole: false,
                 tail: run.then(|| slots[i].last_token(cx)).flatten(),
+                sep_comment_moved: false,
             });
             i += 1;
         }
@@ -598,6 +604,9 @@ pub(crate) fn separator_comments(cx: &FormatCtx<'_>, item: &Rendered) -> Doc {
     let Some(sep) = item.sep.as_ref() else {
         return Doc::Nil;
     };
+    if item.sep_comment_moved {
+        return Doc::Nil;
+    }
     let g = cx.grammar;
     let leading = if item.hole {
         Vec::new()

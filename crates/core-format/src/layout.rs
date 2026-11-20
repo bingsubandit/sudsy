@@ -786,8 +786,8 @@ fn trailing(cx: &FormatCtx<'_>, row: &Row, when: bool) -> TrailingComma {
 /// Arguments and parameters: all on one line, or, when the source breaks between them, one per
 /// line with a trailing comma.
 fn list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
-    if let Some(r) = packed_list(cx, node, row) {
-        return Some(r);
+    if row.arg("pack").is_some() {
+        return packed_list(cx, node, row);
     }
     node.children().next()?;
     let broken = own_break(cx, node);
@@ -848,7 +848,7 @@ fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         if let SyntaxElement::Token(t) = e
             && g.has_tag(t.kind(), "separator")
         {
-            if count != 1 {
+            if count != 1 || t.text() != "," {
                 return false;
             }
             count = 0;
@@ -857,7 +857,7 @@ fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         count += 1;
         items += 1;
         let text = e.to_string();
-        if count > 1 || text.trim().contains(['\n', '\r']) || text.contains("//") || text.contains("/*") {
+        if count > 1 || text.contains("//") || text.contains("/*") {
             return false;
         }
     }

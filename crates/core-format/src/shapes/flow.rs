@@ -71,6 +71,22 @@ pub fn reflowing() -> bool {
 
 /// Columns of blanks in front of the first token on the source line of `t` (a tab is `tab`).
 fn line_indent(t: &SyntaxToken, tab: usize) -> usize {
+    line_prefix(t)
+        .chars()
+        .take_while(|c| matches!(c, ' ' | '\t'))
+        .map(|c| if c == '\t' { tab } else { 1 })
+        .sum()
+}
+
+/// Columns in front of `t` on its source line (a tab is `tab`).
+fn column_of(t: &SyntaxToken, tab: usize) -> usize {
+    line_prefix(t)
+        .chars()
+        .map(|c| if c == '\t' { tab } else { 1 })
+        .sum()
+}
+
+fn line_prefix(t: &SyntaxToken) -> String {
     let mut line = String::new();
     let mut cur = t.prev_token();
     while let Some(p) = cur {
@@ -90,10 +106,7 @@ fn line_indent(t: &SyntaxToken, tab: usize) -> usize {
         line.insert_str(0, text);
         cur = p.prev_token();
     }
-    line.chars()
-        .take_while(|c| matches!(c, ' ' | '\t'))
-        .map(|c| if c == '\t' { tab } else { 1 })
-        .sum()
+    line
 }
 
 /// The next token that is not trivia.
@@ -233,7 +246,9 @@ impl Flow<'_> {
             let ends_line = comments::trailing_comments(cx.grammar, a)
                 .iter()
                 .any(|c| c.kind != comments::CommentKind::Block)
-                || !comments::leading_comments(cx.grammar, b).is_empty();
+                || !comments::leading_comments(cx.grammar, b).is_empty()
+                // (adjacent string literals: each stays on its own line)
+                || (cx.grammar.has_tag(a.kind(), "string") && cx.grammar.has_tag(b.kind(), "string"));
             return if self.reflow && !ends_line {
                 doc::line()
             } else {
@@ -284,7 +299,16 @@ impl Flow<'_> {
         let mut parts: Vec<Doc> = Vec::with_capacity(els.len() * 2);
         let mut hung: Vec<Hung> = Vec::new();
         let mut prev: Option<(&SyntaxElement, SyntaxToken)> = None;
-        let base = |first_el: &SyntaxElement| first(cx, first_el).map(|t| line_indent(&t, tab));
+        // (the hangs of a reflowed list count from the column its first item starts in)
+        let base = |first_el: &SyntaxElement| {
+            first(cx, first_el).map(|t| {
+                if self.reflow {
+                    column_of(&t, tab)
+                } else {
+                    line_indent(&t, tab)
+                }
+            })
+        };
         for e in els {
             let mut d = doc(e)?;
             if let (Some((p, a)), Some(b)) = (prev.take(), first(cx, e)) {
