@@ -10,7 +10,7 @@ use crate::FormatCtx;
 use crate::comments::{self, Comment};
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 #[derive(Clone, Debug)]
 pub struct BlockStyle {
@@ -187,6 +187,14 @@ pub fn block_between(
     )
 }
 
+/// Comments in front of or after an opening delimiter, which move to the first body line
+/// (`if (c) // x` newline `{`).
+pub fn open_comments(g: &Grammar, open: &SyntaxToken) -> Vec<Comment> {
+    let mut all = comments::leading_comments(g, open);
+    all.extend(comments::trailing_comments(g, open));
+    all
+}
+
 fn block_of(
     cx: &FormatCtx<'_>,
     c: super::Container,
@@ -195,7 +203,7 @@ fn block_of(
 ) -> Result<Doc, FormatError> {
     let g = cx.grammar;
     let moved: Vec<Comment> = if open_inside {
-        comments::trailing_comments(g, &c.open)
+        open_comments(g, &c.open)
     } else {
         Vec::new()
     };
@@ -273,7 +281,7 @@ fn ends_of(cx: &FormatCtx<'_>, open: &SyntaxToken, close: &SyntaxToken, moved: &
     let opening = if moved.is_empty() {
         cx.token(open)
     } else {
-        doc::concat(vec![cx.leading_comments_doc(open), cx.token_text(open)])
+        cx.token_text(open)
     };
     let closing = doc::concat(vec![cx.token_text(close), cx.trailing_comments_doc(close)]);
     Ends { opening, closing }

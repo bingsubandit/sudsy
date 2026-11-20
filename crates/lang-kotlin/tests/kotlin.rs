@@ -259,3 +259,19 @@ fn a_plain_raw_string_keeps_its_bytes() {
     let trim_moved = moved.replace("\"\"\"\n}", "\"\"\".trimIndent()\n}");
     assert!(verify(&trim, &trim_moved).is_ok());
 }
+
+/// A `when` entry with several conditions keeps them at its own level; a comment after `{` or
+/// between `)` and a braced body moves inside; `+=` moves a multi-line value below the operator.
+#[test]
+fn when_entries_comments_in_braces_and_compound_assignment() {
+    let when = "fun f() {\n    when (x) {\n        B,\n        C,\n        -> {\n            g()\n        }\n    }\n}\n";
+    assert_eq!(fmt(when), when);
+    assert_eq!(
+        fmt("fun f() {\n    if (a) { // c\n        b()\n    }\n}\n"),
+        "fun f() {\n    if (a) {\n        // c\n        b()\n    }\n}\n"
+    );
+    assert_eq!(
+        fmt("fun f() {\n    t += g(1) {\n        h()\n    }\n}\n"),
+        "fun f() {\n    t +=\n        g(1) {\n            h()\n        }\n}\n"
+    );
+}

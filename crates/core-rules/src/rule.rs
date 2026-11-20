@@ -267,6 +267,19 @@ pub trait Rule: Send + Sync {
         Vec::new()
     }
 
+    /// For a [`Rule::formats`] rule: a cheap look at the text (a substring scan, no tree) that
+    /// says whether the rule can have anything to fix. When it says no, the formatter neither
+    /// walks for the rule's kinds nor runs it. `own`: the rule's options.
+    fn format_applies(
+        &self,
+        _grammar: &Grammar,
+        _text: &str,
+        _own: &RuleOptions,
+        _format: &core_config::ResolvedOptions,
+    ) -> bool {
+        true
+    }
+
     /// Node scope: the kinds [`Rule::check`] is called for.
     fn kinds(&self) -> &[SyntaxKind] {
         &[]

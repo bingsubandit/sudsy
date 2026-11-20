@@ -32,6 +32,8 @@ pub const COMMENT_TRIM_LINES: &str = "comment_trim_lines";
 #[allow(dead_code)]
 pub const FORMAT_RULES: &str = "format_rules";
 #[allow(dead_code)]
+pub const REDUNDANT_RETURN_TYPES: &str = "redundant_return_types";
+#[allow(dead_code)]
 pub const CURLY_STYLE: &str = "curly_style";
 #[allow(dead_code)]
 pub const SETTLE_KEYWORDS: &str = "settle_keywords";
@@ -94,7 +96,8 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::raw_string_calls(&["trimIndent", "trimMargin"]),
         core_config::shared::ctor_own_line_kinds(&["AnnotationEntry"]),
         core_config::shared::comment_trim_lines(true),
-        core_config::shared::format_rules(&["curly"]),
+        core_config::shared::format_rules(&["curly", "redundant-return-type", "comment-space"]),
+        core_config::shared::redundant_return_types(&["Unit"]),
         core_config::shared::curly_style("chain"),
         core_config::shared::settle_keywords(&["if", "else", "for", "while"]),
         core_config::shared::signature_wrap_annotated(true),

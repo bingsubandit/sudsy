@@ -65,7 +65,7 @@ pub fn run_rules(file: &FileContext<'_>, active: &[ActiveRule<'_>], collect: boo
 /// look at the file as a whole.
 pub fn run_file_rules<'a>(
     file: &'a FileContext<'a>,
-    active: &[ActiveRule<'_>],
+    active: &[&ActiveRule<'_>],
     format: crate::rule::FormatInput<'a>,
     index: Option<Vec<Vec<core_syntax::SyntaxNode>>>,
 ) -> Vec<Diagnostic> {

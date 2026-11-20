@@ -40,8 +40,8 @@ pub use binary_chain::{
 };
 pub use block::{
     BlockStyle, Continuations, LabelStyle, annotation_line, blank_before, block, block_between,
-    block_open_inside, braces, document, labeled, labeled_statement, spread_cases_style,
-    statement_sequence, statement_sequence_with,
+    block_open_inside, braces, document, labeled, labeled_statement, open_comments,
+    spread_cases_style, statement_sequence, statement_sequence_with,
 };
 pub use call_arguments::{
     Args, CallStyle, Expanded, HugLast, Item, Plan, call_arguments, can_hug, expression_of,

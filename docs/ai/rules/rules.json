@@ -701,6 +701,19 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A function with a block body declares the return type the language gives it anyway (`: Unit`). The fix leaves out the colon and the type.",
+      "fix": "safe",
+      "id": "redundant-return-type",
+      "languages": [
+        "all"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": []
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "The items of a sequence of only strings or only numbers are not in order (ascending by default; numbers compare as numbers). Sequences of other or mixed items are skipped. The items that would have to move (the fewest) are reported and the first report carries the fix; the fix is unsafe because sequence order can be data.",
       "example": {
         "config": "sorted-array-values:\n  level: warn\n  options:\n    direction: desc\n",
