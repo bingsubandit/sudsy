@@ -126,7 +126,7 @@ node AssignmentTargetPropertyProperty #opaque
 node SequenceExpression #expression #opaque #sequence #pure
 node Super #expression #opaque
 node AwaitExpression #expression #unary #await = operator:Keyword operand:#expression
-node ChainExpression #expression #opaque
+node ChainExpression #expression #opaque #tail-wrapper
 node ParenthesizedExpression #expression #parenthesized #transparent
 node Directive #statement #opaque
 node BlockStatement #statement #block #scope = LBrace items:#statement* RBrace
