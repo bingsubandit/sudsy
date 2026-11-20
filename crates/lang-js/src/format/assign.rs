@@ -181,13 +181,28 @@ pub(crate) fn assign_like(
     short_key: bool,
 ) -> R {
     let right = right.map(|r| SyntaxElement::Node(r.clone()));
+    // The token in front of the right side: its line comment keeps the right side below it.
+    let op_token = right.as_ref().and_then(|r| {
+        let mut prev = None;
+        for e in node.children_with_tokens() {
+            if &e == r {
+                break;
+            }
+            if let SyntaxElement::Token(t) = &e
+                && !cx.grammar.is_trivia(t.kind())
+            {
+                prev = Some(t.clone());
+            }
+        }
+        prev
+    });
     shapes::assignment(
         cx,
         Assign {
             node,
             left,
             op,
-            op_token: None,
+            op_token: op_token.as_ref(),
             right: right.as_ref(),
             short_key,
         },

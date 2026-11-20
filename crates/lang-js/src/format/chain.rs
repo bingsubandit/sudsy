@@ -85,7 +85,10 @@ fn member(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
                 && p.first_child()
                     .is_some_and(|l| un(&l).kind() != k::IDENTIFIER_REFERENCE))
     }) || node.kind() == k::COMPUTED_MEMBER_EXPRESSION
-        || simple_names;
+        || simple_names
+        // `a.b(c).d`: the member chain of the call breaks inside its arguments first.
+        || (un(&object).kind() == k::CALL_EXPRESSION
+            && un(&object).first_child().is_some_and(|c| is_member(un(&c).kind())));
     Ok(concat(vec![
         object_doc,
         if inline {
