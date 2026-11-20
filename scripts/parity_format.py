@@ -190,7 +190,7 @@ def fixtures(config, folder, filters):
     return out
 
 
-def upstream(config, prefix, version, copy, work, style=None):
+def upstream(config, prefix, version, copy, work, style=None, folder=None):
     """The tool's output for the copy of a fixture, or None when it rejects the file."""
     exe = executable(prefix, config.get("install", {}).get("exe", ""))
     mode = config["input"]
@@ -200,7 +200,7 @@ def upstream(config, prefix, version, copy, work, style=None):
         copy.parent.mkdir(exist_ok=True)
         shutil.copy(work / copy.name, copy)
     group = re.search(config["group"], copy.name) if "group" in config else None  # `{group}`: the first group of the fixture name (sqlfluff: its dialect)
-    command, env = tool_command(config, prefix, exe=exe, file=copy.name, group=group.group(1) if group else "", style=style, folder=ROOT / "tests/parity" / config.get("folder", ""))
+    command, env = tool_command(config, prefix, exe=exe, file=copy.name, group=group.group(1) if group else "", style=style, folder=folder or ROOT / "tests/parity" / config.get("folder", ""))
     r = run(command, copy.parent if mode == "in-place" else work, text if mode == "stdin" else None, check=False, env=env)
     if r.returncode != 0:
         if config.get("tool_may_reject"):
@@ -451,6 +451,61 @@ def prepare(config, parity):
     return version, prefix
 
 
+def hunks(theirs, ours):
+    """The differing hunks of two outputs as (their lines, our lines)."""
+    a, b = theirs.split("\n"), ours.split("\n")
+    return [(a[i1:i2], b[j1:j2]) for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes() if tag != "equal"]
+
+
+def hunk_cause(their, our):
+    """`wrap` when both sides hold the same tokens and one of them spans several lines (a statement laid out over lines);
+    else what differs: blank lines, spacing of one line, comments or tokens."""
+    squash = lambda lines: re.sub(r"\s+", "", "".join(lines))
+    if squash(their) == squash(our):
+        if not squash(their):
+            return "blank-lines"
+        return "wrap" if len(their) > 1 or len(our) > 1 else "spacing"
+    if any("//" in l or "/*" in l for l in their + our):
+        return "comment"
+    return "tokens"
+
+
+def wrap_report(found, results, unwrapped, report):
+    """`--nowrap`: identical files per group with both tools at a column limit of 10000, second-format and refused counts.
+    `--wrap-report`: the normal run with each hunk sorted into `wrap` (a statement laid out over lines) or another cause,
+    the files whose hunks are all wrap, and the ceiling: files whose output has no wrapped statement (the tool's output is
+    the same at a column limit of 10000)."""
+    groups = {}
+    for (name, _, group, _), (theirs, ours, unstable, refused) in zip(found, results):
+        g = groups.setdefault(group or "fixtures", Counter())
+        g["files"] += 1
+        if theirs is None:
+            g["rejected"] += 1
+            continue
+        g["identical"] += theirs == ours
+        g["second-format"] += bool(unstable)
+        g["refused"] += bool(refused)
+        if not report or ours is None or theirs == ours:
+            continue
+        causes = Counter(hunk_cause(t, o) for t, o in hunks(theirs, ours))
+        g["hunks"] += sum(causes.values())
+        for c, n in causes.items():
+            g["hunk-" + c] += n
+            g["files-with-" + c] += 1
+        g["wrap-only"] += set(causes) == {"wrap"}
+        g["only-wrap-and-spacing"] += set(causes) <= {"wrap", "spacing", "blank-lines"}
+    if report:
+        for (name, _, group, _), (theirs, _, _, _) in zip(found, results):
+            if theirs is not None and unwrapped.get(name) == theirs:
+                groups[group or "fixtures"]["no-wrapped-statement"] += 1
+    total = Counter()
+    for group, g in sorted(groups.items()):
+        total.update(g)
+        print(f"{group}: " + ", ".join(f"{k} {v}" for k, v in sorted(g.items())))
+    print("total: " + ", ".join(f"{k} {v}" for k, v in sorted(total.items())))
+    return 0
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     tool, sudsy, target = sys.argv[1:4]
@@ -475,8 +530,23 @@ def main():
         (work / f"style-{style}").mkdir()
         shutil.copy(folder / f"{style}.yaml", work / f"style-{style}" / "sudsy.yaml")
 
+    nowrap = "--nowrap" in sys.argv or "--wrap-report" in sys.argv  # a column limit of 10000 for both tools (the report also needs the reference output without wrapping)
+    wrapless = work / "nowrap-styles"  # the tool's style files with `ColumnLimit: 10000`; ColumnLimit 0 would keep the source's breaks
+    if nowrap:
+        wrapless.mkdir()
+        for style in {f[3].get("style") for f in found if f[3].get("style")}:
+            text = (folder / f"{style}.clang-format").read_text(encoding="utf-8")
+            kept = [l for l in text.splitlines() if not l.startswith("ColumnLimit:")]
+            (wrapless / f"{style}.clang-format").write_text("\n".join(kept + ["ColumnLimit: 10000"]) + "\n", encoding="utf-8")
+    if "--nowrap" in sys.argv:  # Sudsy gets `line_width: 10000` in every style's sudsy.yaml
+        for path in [work / "sudsy.yaml", *work.glob("style-*/sudsy.yaml")]:
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            data.setdefault("cpp", {}).setdefault("format", {})["line_width"] = 10000
+            path.write_text(yaml.safe_dump(data), encoding="utf-8")
+
     batch = upstream_batch(config, prefix, found, work) if config["input"] == "batch" else None
 
+    unwrapped = {}  # `--wrap-report`: name -> the tool's output with a column limit of 10000
     flagged = Counter()  # flag -> files the flag changed the result of
 
     def compare(item):
@@ -489,7 +559,9 @@ def main():
         if "copy_suffix" in config:  # the file name selects the language (Angular: `*.component.html`)
             copy = copy.with_name(copy.name.removesuffix(".html") + config["copy_suffix"])
         shutil.copy(fixture, copy)
-        theirs = batch[name] if batch is not None else upstream(config, prefix, version, copy, here, style)
+        theirs = batch[name] if batch is not None else upstream(config, prefix, version, copy, here, style, wrapless if "--nowrap" in sys.argv else None)
+        if "--wrap-report" in sys.argv:
+            unwrapped[name] = upstream(config, prefix, version, copy, here, style, wrapless)
         ours, refused = sudsy_format(sudsy, copy, here, config.get("sudsy_command", "format"))
         # Sudsy's own output must be a fixed point; the files that change on a second format are counted.
         again = None if ours is None else sudsy_format(sudsy, copy, here, config.get("sudsy_command", "format"))[0]
@@ -504,6 +576,8 @@ def main():
 
     with ThreadPoolExecutor(os.cpu_count() if config.get("parallel") else 1) as pool:
         results = list(pool.map(compare, found))
+    if "--nowrap" in sys.argv or "--wrap-report" in sys.argv:
+        return wrap_report(found, results, unwrapped, "--wrap-report" in sys.argv)
     bad, groups = 0, {}  # a ratchet group is counted: [identical, different, rejected by the tool]
     unstable = Counter()  # group (or "fixtures") -> files that change on a second format
     refusals = Counter()  # group (or "fixtures") -> files Sudsy's safety check refuses

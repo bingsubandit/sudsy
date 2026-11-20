@@ -13,6 +13,7 @@ options:
         binary_chain: [Binary]
         aligned_lines: [StringConcat]
         flat_open: [Lsqb]
+        wrap: [Arguments, InitList, ParameterList]
   - continuation_indent:
       range: [0, 16]
       default: 4
@@ -109,13 +110,19 @@ options:
       doc: "A `case` label and its simple statement are kept on one line when they fit."
   - bin_pack_arguments:
       default: true
+      kinds:
+        pack: [Arguments, InitList]
       doc: "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line)."
   - bin_pack_parameters:
       default: true
+      kinds:
+        pack: [ParameterList]
       doc: "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line)."
   - align_after_open_bracket:
       values: ["align", "dont_align", "always_break"]
       default: "align"
+      kinds:
+        align: [Arguments, InitList, ParameterList]
       doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."
   - binary_operator_line:
       values: ["end", "start"]

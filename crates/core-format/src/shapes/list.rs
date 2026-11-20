@@ -427,6 +427,12 @@ fn list_of(
         lead.push(doc::lit(" "));
     }
     let item_widths: Vec<Option<usize>> = items.iter().map(|i| i.doc.flat_width()).collect();
+    let mut item_ids: Vec<Option<doc::GroupId>> = vec![None; items.len()];
+    let has_block = |i: usize| {
+        c.slots
+            .get(i)
+            .is_some_and(|sl| sl.node.descendants().any(|n| g.has_tag(n.kind(), "block")))
+    };
     let mut inner = Vec::new();
     let mut widest = 0;
     let mut widest_last = 0;
@@ -502,7 +508,7 @@ fn list_of(
             .and_then(|sl| {
                 item.chain_widest()
                     .or_else(|| chain_head(cx, &sl.node))
-                    .or_else(|| block_head(cx, &sl.node))
+                    .or_else(|| has_block(i).then(|| item.width_to_brace()).flatten())
             })
         {
             h
@@ -551,7 +557,16 @@ fn list_of(
         } else {
             item
         };
-        inner.push(if style.align_open { doc::group(item) } else { item });
+        inner.push(if style.align_open && fill && i < last && has_block(i) {
+            // (the group's id tells the next item whether this one, a lambda, spans lines)
+            let id = doc::new_group_id();
+            item_ids[i] = Some(id);
+            doc::group_with_id(id, item)
+        } else if style.align_open {
+            doc::group(item)
+        } else {
+            item
+        });
         // (`x: y,` kept as written in a list of `;` members ends with its separator too)
         let own_sep = !style.separator.is_empty()
             && items[i].verbatim
@@ -592,7 +607,14 @@ fn list_of(
             let mut parts = fill_parts.into_iter();
             let mut out: Vec<Doc> = parts.next().into_iter().collect();
             let mut prev_breaks = out.first().is_some_and(Doc::will_break);
+            let mut k = 0;
             while let (Some(between), Some(item)) = (parts.next(), parts.next()) {
+                // (an item with a block that is printed over several lines ends its line)
+                let between = match item_ids.get(k).copied().flatten() {
+                    Some(id) if !prev_breaks => doc::if_break_in(id, doc::hardline(), between),
+                    _ => between,
+                };
+                k += 1;
                 let breaks = item.will_break();
                 out.push(if prev_breaks {
                     // (the item before spans lines: this one starts a line of its own)
@@ -931,35 +953,29 @@ fn chain_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
     head_width(node, op.text_range().end())
 }
 
-/// The width of an item (a lambda) up to the opening brace of its first block: what must fit on
-/// the line the item starts on.
-fn block_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
-    let g = cx.grammar;
-    let block = node.descendants().find(|n| g.has_tag(n.kind(), "block"))?;
-    // (to the end of the opening brace: blanks and comments in front of it belong to the block)
-    let open = block
-        .descendants_with_tokens()
-        .filter_map(|e| e.into_token())
-        .find(|t| !g.is_trivia(t.kind()))?;
-    head_width(node, open.text_range().end())
-}
-
-/// The width of the source text of `node` up to `end`, runs of blanks as one.
+/// The width of the source text of `node` up to `end`, runs of blanks as one, none after an
+/// opening bracket or before a closing one, a comma or a semicolon (where a line break in the
+/// source, which the layout decides, would add one).
 fn head_width(node: &SyntaxNode, end: TextSize) -> Option<usize> {
     let text = node.text().to_string();
     let end = usize::from(end - node.text_range().start());
-    let mut width = 0;
-    let mut blank = false;
     // (blanks in front of the node, its leading trivia, are not part of it)
-    for ch in text.get(..end)?.trim_start().chars() {
+    let chars: Vec<char> = text.get(..end)?.trim_start().chars().collect();
+    let mut width = 0;
+    let mut prev = ' ';
+    for (i, ch) in chars.iter().enumerate() {
         if ch.is_whitespace() {
-            if !blank {
+            let next = chars[i..].iter().find(|c| !c.is_whitespace()).copied();
+            let skip = prev.is_whitespace()
+                || matches!(prev, '(' | '[')
+                || next.is_some_and(|n| matches!(n, ')' | ']' | ',' | ';'));
+            if !skip {
                 width += 1;
             }
-            blank = true;
+            prev = ' ';
         } else {
             width += 1;
-            blank = false;
+            prev = *ch;
         }
     }
     Some(width)

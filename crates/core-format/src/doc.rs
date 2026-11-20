@@ -251,6 +251,40 @@ impl Doc {
         w
     }
 
+    /// The width of the document printed on one line up to and with its first `{` (a lambda up to
+    /// the opening brace of its body); `None` when a forced line break or the end comes first.
+    pub fn width_to_brace(&self) -> Option<usize> {
+        // Some(true): found; Some(false): stopped by a forced break; None: keep walking.
+        fn walk(d: &Doc, w: &mut usize) -> Option<bool> {
+            match d {
+                Doc::Text(s) => {
+                    *w += s.chars().count();
+                    (s.as_ref() == "{").then_some(true)
+                }
+                Doc::Verbatim(s) => {
+                    *w += s.chars().count();
+                    None
+                }
+                Doc::Line => {
+                    *w += 1;
+                    None
+                }
+                Doc::HardLine | Doc::LineStart(_) => Some(false),
+                Doc::Concat(ps) | Doc::Fill(ps) => ps.iter().find_map(|p| walk(p, w)),
+                Doc::Group(g) => walk(&g.contents, w),
+                Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
+                    walk(d, w)
+                }
+                Doc::IfBreak { flat, .. } => walk(flat, w),
+                Doc::Shared(s) => walk(&s.doc, w),
+                Doc::FitsBelow(f) => walk(&f.fits, w),
+                _ => None,
+            }
+        }
+        let mut w = 0;
+        (walk(self, &mut w) == Some(true)).then_some(w)
+    }
+
     /// The width of the document printed on one line up to its first forced line break (the whole
     /// document when it has none).
     pub fn width_to_hardline(&self) -> usize {

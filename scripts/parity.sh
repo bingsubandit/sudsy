@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Differential test against an upstream tool. Usage: scripts/parity.sh [format|coverage] <tool> | --pin <format tool> | --test
+# `--nowrap` / `--wrap-report` (format, clang-format): docs/ai/parity/clang-format.md.
 # `--pin`: a format run that also prints the pins (hashes of Sudsy's output) of the `tool-wrong` entries, for the lead to paste;
 # `--test`: the runner's own tests (scripts/test_parity.py, no tool or build needed).
 # Lint mode runs the tool and `sudsy lint` on tests/parity/<tool>/ (or the rule fixtures) and compares
@@ -17,6 +18,8 @@ test=
 if [ "${1:-}" = --test ]; then test=1; shift; fi
 if [ "${1:-}" = --pin ]; then mode=format; extra=(--pin); shift; fi
 if [ "${1:-}" = format ]; then mode=format; shift; fi
+# format mode: `--nowrap` (both tools with a column limit of 10000) and `--wrap-report` (hunks sorted into wrap and other)
+while [ "${1:-}" = --nowrap ] || [ "${1:-}" = --wrap-report ]; do extra+=("$1"); shift; done
 if [ "${1:-}" = coverage ]; then extra=(--coverage); shift; fi
 tool=${1:-}
 py=

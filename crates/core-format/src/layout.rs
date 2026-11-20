@@ -353,7 +353,7 @@ impl Layout {
             .map(|&i| &self.rows[i])
             .find(|r| r.matches(node))
             .is_some_and(|r| {
-                r.shape == "list" && r.arg("pack").is_some() && !packable(cx, node)
+                r.shape == "list" && self.bound("pack", node.kind()).is_some() && !packable(cx, node)
             })
     }
 
@@ -535,7 +535,17 @@ impl Layout {
             "compound" => compound(cx, node, self, flow).unwrap_or_else(generic),
             "case" => case(cx, node, row, flow).unwrap_or_else(generic),
             "colon_body" => colon_body(cx, node, row, flow).unwrap_or_else(generic),
-            "list" => list(cx, node, row).unwrap_or_else(generic),
+            "list" => match self.bound("pack", node.kind()) {
+                // (the kinds a language packs to the line width: `pack` role of its options)
+                Some(pack) => {
+                    let wrap = self.bound("wrap", node.kind()).map(|b| b.option.as_str());
+                    let align = (self.bound("align", node.kind()))
+                        .is_some_and(|b| cx.options.is(&b.option, "align"));
+                    packed_list(cx, node, &pack.option, wrap, align)
+                }
+                None => list(cx, node, row),
+            }
+            .unwrap_or_else(generic),
             "array" => array(cx, node, row, level),
             "braced_list" => braced_list(cx, node, row, flow).unwrap_or_else(generic),
             "heritage" => heritage(cx, node, row, flow).unwrap_or_else(generic),
@@ -872,9 +882,6 @@ fn trailing(cx: &FormatCtx<'_>, row: &Row, when: bool) -> TrailingComma {
 /// Arguments and parameters: all on one line, or, when the source breaks between them, one per
 /// line with a trailing comma.
 fn list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
-    if row.arg("pack").is_some() {
-        return packed_list(cx, node, row);
-    }
     node.children().next()?;
     let broken = own_break(cx, node);
     let stops = node.children().last().is_some_and(|c| {
@@ -894,17 +901,20 @@ fn list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
     shapes::delimited_list(cx, node, &style).ok().map(Ok)
 }
 
-/// `pack=option:NAME` of a `list` row: the items are filled to the line width (`NAME` true) or go
-/// all on one line or one per line (false), under the first item (`align=option:NAME` is `align`)
-/// or indented; `wrap=option:NAME` false keeps the source breaks.
-fn packed_list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
-    let pack = row.arg("pack")?.strip_prefix("option:")?;
-    let wrap = row.arg("wrap").and_then(|v| v.strip_prefix("option:"));
+/// A `list` of the kinds of the `pack` role: the items are filled to the line width (the option
+/// `pack` is true) or go all on one line or one per line (false), under the first item (`align`)
+/// or indented; the `wrap` option false keeps the source breaks.
+fn packed_list(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    pack: &str,
+    wrap: Option<&str>,
+    align: bool,
+) -> Option<R> {
     if wrap.is_some_and(|w| !cx.options.flag(w, true)) {
         return None;
     }
     packable(cx, node).then_some(())?;
-    let align = row.option_is(cx, "align");
     let style = ListStyle {
         layout: if cx.options.flag(pack, true) {
             ListLayout::Fill
