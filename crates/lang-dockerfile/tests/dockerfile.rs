@@ -7,7 +7,7 @@ fn fmt(input: &str) -> String {
 }
 
 /// Every file of the pinned corpus (.NET samples and images, official images, moby, buildx)
-/// parses (but for the grammar gap below), formats with the same instructions and arguments (case
+/// parses (but for the grammar gaps below), formats with the same instructions and arguments (case
 /// and blanks aside: the safety check) and formats idempotently.
 ///
 /// `cargo test --profile corpus -p lang-dockerfile --test integration -- --ignored --nocapture conformance`
@@ -15,9 +15,7 @@ fn fmt(input: &str) -> String {
 #[ignore]
 fn conformance() {
     let (_, unparsed) = check_corpus(lang_dockerfile::provider(), "Dockerfile", "dockerfile", &[]);
-    // The grammar fails on a continuation line that starts with `[` after another one
-    // (docker-library/python, the Windows images of golang): see docs/ai/formatting/dockerfile.md.
-    assert!(unparsed.len() <= 40, "{}", unparsed.join("\n"));
+    assert!(unparsed.is_empty(), "{}", unparsed.join("\n"));
 }
 
 #[test]
@@ -69,6 +67,12 @@ fn the_escape_directive_changes_the_continuation_character() {
         out,
         "# escape=`\nFROM x\nRUN a `\n    b `\n    c\nCOPY a `\n    b\nCMD a `\n    b\n"
     );
+}
+
+#[test]
+fn a_script_line_that_starts_with_a_bracket_after_a_continuation_parses() {
+    let out = fmt("FROM a\nRUN set -eux; \\\n\t[ -s x ]; \\\n\t[ ! -e y ]; \\\n\tz\n");
+    assert!(out.contains("[ ! -e y ]"), "{out}");
 }
 
 #[test]

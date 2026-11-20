@@ -100,7 +100,7 @@ Raw and target of every run (`scripts/parity.sh format <tool>`, `scripts/parity.
 | eslint-plugin-svelte | 100.0% (67 of 67) | 100.0% (67 of 67) |
 | eslint-plugin-vue | 87.2% (1241 of 1423) | 23.0% (1241 of 5404) |
 | eslint | 100.0% (4411 of 4413) | 100.0% (4411 of 4413) |
-| hadolint | 49.4% (390 of 790) | 49.4% (390 of 790) |
+| hadolint | 78.2% (618 of 790) | 78.2% (618 of 790) |
 | html-eslint | 0.2% (37 of 19963) | 0.2% (37 of 19963) |
 | html-validate | 61.5% (616 of 1001) | 62.9% (616 of 980) |
 | htmlhint | 5.0% (65 of 1301) | 5.0% (65 of 1301) |
@@ -116,7 +116,7 @@ Raw and target of every run (`scripts/parity.sh format <tool>`, `scripts/parity.
 | stylelint-less | not run here (no corpus, or the tool is not installed) | - |
 | stylelint-scss | not run here (no corpus, or the tool is not installed) | - |
 | stylelint | 94.7% (12012 of 12686) | 94.7% (12012 of 12686) |
-| tflint | 18.9% (27 of 143) | 18.9% (27 of 143) |
+| tflint | 58.7% (84 of 143) | 58.7% (84 of 143) |
 | typescript-eslint | 100.0% (3644 of 3644) | 100.0% (3644 of 3644) |
 | yamllint | 74.3% (2232 of 3004) | 74.1% (2232 of 3013) |
 

@@ -1,5 +1,5 @@
 id: typed-variables
-message: 'the variable has no `type`'
+message: 'the variable has no type'
 description: >-
   A `variable` block with no `type` argument (tflint terraform_typed_variables).
 example: 'variable "x" {}'

@@ -1,2 +1,2 @@
-coverage: 18.9  # share of the default-set findings of tflint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage tflint; at least 85% is the bar)
-target: 18.9
+coverage: 58.7  # share of the default-set findings of tflint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage tflint; at least 85% is the bar)
+target: 58.7

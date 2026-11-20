@@ -61,7 +61,7 @@ mago-span = "=1.59.0"
 ruby-prism-sys = "=2.1.0"
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 # generated:grammars
-tree-sitter-containerfile = "0.9"
+tree-sitter-containerfile = { path = "grammars/tree-sitter-containerfile" }
 konomanoasa-tree-sitter-editorconfig = "0.9"
 konomanoasa-tree-sitter-gitignore = "0.7"
 tree-sitter-graphql = { path = "grammars/tree-sitter-graphql" }
