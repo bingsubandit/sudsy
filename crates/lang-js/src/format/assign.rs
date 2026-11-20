@@ -106,6 +106,10 @@ impl AssignHooks for Hooks {
         n.kind() == k::PRIVATE_IN_EXPRESSION || should_inline_logical(n)
     }
 
+    fn complex_target(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+        is_complex_destructuring(node)
+    }
+
     fn layout(
         &self,
         cx: &FormatCtx<'_>,
@@ -120,8 +124,7 @@ impl AssignHooks for Hooks {
         if should_never_break_after_operator(cx, &right_u, a.short_key) {
             return Some(AssignLayout::NeverBreakAfterOperator);
         }
-        if is_complex_destructuring(a.node)
-            || (a.node.kind() == k::VARIABLE_DECLARATOR
+        if (a.node.kind() == k::VARIABLE_DECLARATOR
                 && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
                 && right_u
                     .children()

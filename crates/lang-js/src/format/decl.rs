@@ -16,7 +16,7 @@ use core_syntax::{SyntaxElement, SyntaxNode};
 pub(crate) fn format(node: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<Option<Doc>, FormatError> {
     let doc = match node.kind() {
         k::VARIABLE_DECLARATION => variable_declaration(node, cx)?,
-        k::FORMAL_PARAMETER if super::object::pattern_with_type_literal(node) => {
+        k::FORMAL_PARAMETER if super::object::pattern_with_annotation(node) => {
             group(inline(cx, &kids(cx, node))?)
         }
         k::FORMAL_PARAMETER | k::EXPORT_DECLARATION => inline(cx, &kids(cx, node))?,

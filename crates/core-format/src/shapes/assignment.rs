@@ -108,6 +108,10 @@ pub trait AssignHooks {
     fn inline_binary(&self, _cx: &FormatCtx<'_>, _n: &SyntaxNode) -> bool {
         false
     }
+    /// Is the left side a destructuring that breaks in preference to the right side?
+    fn complex_target(&self, _cx: &FormatCtx<'_>, _node: &SyntaxNode) -> bool {
+        false
+    }
     /// What the language decides about the right side before the policy's default does.
     fn layout(
         &self,
@@ -279,6 +283,9 @@ fn choose(
             .is_some_and(|n| is_assignment(cx, &n));
     if head_of_long_chain || own_line_comment_before(cx, right) {
         return BreakAfterOperator;
+    }
+    if hooks.complex_target(cx, a.node) {
+        return BreakLhs;
     }
     if let Some(r) = &right_inner {
         if g.has_tag(r.kind(), "binary-chain") && !hooks.inline_binary(cx, r) {
