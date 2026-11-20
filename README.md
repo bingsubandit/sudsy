@@ -66,10 +66,10 @@ Each number is measured on real-world code against the reference tool with its d
 | Language | Format | Lint | Status |
 |---|---|---|---|
 | Protobuf | █████████░ 99% buf format | ████████░░ 85% buf | Ready |
-| GraphQL | █████████░ 99% Prettier | 20 rules · reference tool: none found | Ready |
-| TOML | █████████░ 98% taplo | 14 rules · reference tool: none found | Ready |
-| Angular templates | █████████░ 97% Prettier | 141 rules · reference tool: none found | Ready |
-| XML | █████████░ 99% CSharpier XML | 16 rules · reference tool: none found | Ready |
+| GraphQL | █████████░ 99% Prettier | 21 rules · reference tool: none found | Ready |
+| TOML | █████████░ 98% taplo | 15 rules · reference tool: none found | Ready |
+| Angular templates | █████████░ 97% Prettier | 142 rules · reference tool: none found | Ready |
+| XML | █████████░ 99% CSharpier XML | 17 rules · reference tool: none found | Ready |
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
 | Makefile | Sudsy formatter · reference tool: none found | ██████████ 100% checkmake | Lint only: Ready |
 | JavaScript / TypeScript | ████████░░ 84% Prettier | ██████████ 100% ESLint<br>██████████ 100% typescript-eslint | In progress |
@@ -83,15 +83,15 @@ Each number is measured on real-world code against the reference tool with its d
 | JSON / JSONC | ██████████ 100% Prettier<br>██████████ 100% Biome | not measured eslint-plugin-jsonc | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | not measured PHPStan | In progress |
 | Java | █████████░ 91% google-java-format | ██░░░░░░░░ 23% Checkstyle | In progress |
-| Kotlin | ███████░░░ 78% ktlint | █░░░░░░░░░ 11% ktlint | In progress |
+| Kotlin | ████████░░ 80% ktlint | █░░░░░░░░░ 11% ktlint | In progress |
 | Shell | ████████░░ 81% shfmt | ████████░░ 86% ShellCheck | In progress |
 | SQL | ███████░░░ 78% sqlfluff | ░░░░░░░░░░ 3% sqlfluff | In progress |
 | C# | ██████████ 100% CSharpier | not measured StyleCop<br>not measured Roslynator | In progress |
-| C / C++ | █░░░░░░░░░ 18% clang-format | 24 rules · reference tool: none found | In progress |
+| C / C++ | █░░░░░░░░░ 18% clang-format | 25 rules · reference tool: none found | In progress |
 | Dockerfile | Sudsy formatter · reference tool: none found | ███████░░░ 78% hadolint | Lint only: In progress |
 | GitHub Actions | Sudsy formatter · reference tool: none found | ░░░░░░░░░░ 5% actionlint | Lint only: In progress |
 | PowerShell | not measured Invoke-Formatter | not measured PSScriptAnalyzer | not measured |
-| INI, EditorConfig, .gitignore | Sudsy formatter · reference tool: none found | 23 rules · reference tool: none found | not measured |
+| INI, EditorConfig, .gitignore | Sudsy formatter · reference tool: none found | 24 rules · reference tool: none found | not measured |
 
 How to read the numbers, what they leave out and how to reproduce one: [docs/languages.md](docs/languages.md#how-to-read-the-numbers). Presets: [configuration](docs/configuration.md#presets).
 <!-- /generated -->

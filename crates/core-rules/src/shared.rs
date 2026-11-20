@@ -28,6 +28,7 @@ pub static RULES: &[&dyn Rule] = &[
     &crate::suppress::UnknownRuleInDirective,
     &crate::modifiers::ModifierOrder,
     &crate::curly::Curly,
+    &crate::redundant_return_type::RedundantReturnType,
     &crate::heading_style::HeadingStyle,
 ];
 

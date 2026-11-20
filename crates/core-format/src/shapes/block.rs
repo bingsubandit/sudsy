@@ -10,7 +10,7 @@ use crate::FormatCtx;
 use crate::comments::{self, Comment};
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 #[derive(Clone, Debug)]
 pub struct BlockStyle {
@@ -187,6 +187,55 @@ pub fn block_between(
     )
 }
 
+/// Comments in front of or after an opening delimiter, which move to the first body line
+/// (`if (c) // x` newline `{`).
+pub fn open_comments(g: &Grammar, open: &SyntaxToken) -> Vec<Comment> {
+    let mut all = comments::leading_comments(g, open);
+    all.extend(comments::trailing_comments(g, open));
+    all
+}
+
+/// `{ head body }`: an opening brace, an optional head on its line, the body indented below and
+/// the closing brace. Comments after a head-less `{` move to the first body line and force the
+/// break; otherwise it breaks when the source did or the body does.
+pub fn headed_braces(
+    cx: &FormatCtx<'_>,
+    open: &SyntaxToken,
+    close: &SyntaxToken,
+    head: Option<Doc>,
+    body: Doc,
+    source_multiline: bool,
+) -> Doc {
+    let moved = if head.is_none() {
+        open_comments(cx.grammar, open)
+    } else {
+        Vec::new()
+    };
+    let broken = source_multiline || body.will_break() || !moved.is_empty();
+    let mut parts = vec![if moved.is_empty() {
+        cx.token(open)
+    } else {
+        cx.token_text(open)
+    }];
+    if let Some(h) = head {
+        parts.push(doc::lit(" "));
+        parts.push(h);
+    }
+    parts.push(doc::indent(doc::concat(vec![
+        super::dangling_comments(&moved, false),
+        doc::line(),
+        body,
+    ])));
+    parts.push(doc::line());
+    parts.push(cx.token(close));
+    let all = doc::concat(parts);
+    if broken {
+        doc::group_broken(all)
+    } else {
+        doc::group(all)
+    }
+}
+
 fn block_of(
     cx: &FormatCtx<'_>,
     c: super::Container,
@@ -195,7 +244,7 @@ fn block_of(
 ) -> Result<Doc, FormatError> {
     let g = cx.grammar;
     let moved: Vec<Comment> = if open_inside {
-        comments::trailing_comments(g, &c.open)
+        open_comments(g, &c.open)
     } else {
         Vec::new()
     };
@@ -273,7 +322,7 @@ fn ends_of(cx: &FormatCtx<'_>, open: &SyntaxToken, close: &SyntaxToken, moved: &
     let opening = if moved.is_empty() {
         cx.token(open)
     } else {
-        doc::concat(vec![cx.leading_comments_doc(open), cx.token_text(open)])
+        cx.token_text(open)
     };
     let closing = doc::concat(vec![cx.token_text(close), cx.trailing_comments_doc(close)]);
     Ends { opening, closing }

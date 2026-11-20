@@ -152,6 +152,10 @@ pub fn assignment(
     let layout = if policy.style == AssignStyle::Multiline
         && layout == AssignLayout::BreakAfterOperator
         && !right.has_break_point()
+        && !a
+            .node
+            .children()
+            .any(|p| cx.grammar.has_tag(p.kind(), "parameter-list"))
     {
         AssignLayout::NeverBreakAfterOperator
     } else {
@@ -215,6 +219,14 @@ fn render(layout: AssignLayout, left: Doc, op: Doc, right: Doc, levels: usize) -
         ]),
         OnlyLeft => left,
     }
+}
+
+/// Is the token a plain or compound assignment operator (`=`, `+=`, ...)?
+pub fn is_assign_op(cx: &FormatCtx<'_>, t: &SyntaxToken) -> bool {
+    matches!(
+        cx.grammar.operator_kind(t.text()),
+        Some("assign" | "compound")
+    )
 }
 
 fn is_assignment(cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {

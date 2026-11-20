@@ -89,22 +89,19 @@ fn lambda(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let head = &inner[..inner.len() - 1];
-    let mut parts = vec![cx.token(open)];
-    if !head.is_empty() {
-        parts.push(doc::lit(" "));
-        parts.push(seq(cx, head)?);
-    }
-    let body_doc = el(cx, body)?;
-    let broken = multiline(cx, node) || body_doc.will_break();
-    parts.push(doc::indent(doc::concat(vec![doc::line(), body_doc])));
-    parts.push(doc::line());
-    parts.push(cx.token(close));
-    let lambda = doc::concat(parts);
-    Ok(if broken {
-        doc::group_broken(lambda)
+    let head = if head.is_empty() {
+        None
     } else {
-        doc::group(lambda)
-    })
+        Some(seq(cx, head)?)
+    };
+    Ok(core_format::shapes::headed_braces(
+        cx,
+        open,
+        close,
+        head,
+        el(cx, body)?,
+        multiline(cx, node),
+    ))
 }
 
 /// `a op b`: an operator that wraps stays at the end of its line, except `?:`, which starts the
@@ -115,7 +112,10 @@ fn binary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         return generic(cx, node);
     };
     let op_tok = first(cx, op);
-    if let Some(t) = op_tok.as_ref().filter(|t| t.kind() == k::EQ) {
+    if let Some(t) = op_tok
+        .as_ref()
+        .filter(|t| core_format::shapes::is_assign_op(cx, t))
+    {
         return super::decl::assign(cx, node, el(cx, left)?, t, right);
     }
     let elvis = op_tok.is_some_and(|t| t.kind() == k::ELVIS);

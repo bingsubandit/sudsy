@@ -4228,6 +4228,10 @@
               "$ref": "#/definitions/rule",
               "description": "A name pattern such as `foo` already matches files and directories called `foo` at every level, so a later `foo/` or `/foo` adds nothing (no `!` pattern in between)."
             },
+            "redundant-return-type": {
+              "$ref": "#/definitions/rule",
+              "description": "A function with a block body declares the return type the language gives it anyway (`: Unit`). The fix leaves out the colon and the type."
+            },
             "redundant-string-coercion": {
               "$ref": "#/definitions/rule",
               "description": "`to_s` on the last expression of a `#{...}` and on an argument of `puts`, `print` or `warn` (RuboCop Lint/RedundantStringCoercion)."
@@ -9335,7 +9339,9 @@
             },
             "format_rules": {
               "default": [
-                "curly"
+                "curly",
+                "redundant-return-type",
+                "comment-space"
               ],
               "description": "Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`.",
               "items": {
@@ -9411,6 +9417,16 @@
                 "trimMargin"
               ],
               "description": "Names of the calls (`trimIndent`) that strip the common indentation of a multi-line raw string they follow: its lines are written at the indentation of the code around it.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "redundant_return_types": {
+              "default": [
+                "Unit"
+              ],
+              "description": "Return types (`Unit`) that a function with a block body has anyway: the rule `redundant-return-type` leaves them out when the formatter runs it (`format_rules`).",
               "items": {
                 "type": "string"
               },
@@ -12592,7 +12608,9 @@
                   },
                   "format_rules": {
                     "default": [
-                      "curly"
+                      "curly",
+                      "redundant-return-type",
+                      "comment-space"
                     ],
                     "description": "Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`.",
                     "items": {
@@ -12668,6 +12686,16 @@
                       "trimMargin"
                     ],
                     "description": "Names of the calls (`trimIndent`) that strip the common indentation of a multi-line raw string they follow: its lines are written at the indentation of the code around it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "redundant_return_types": {
+                    "default": [
+                      "Unit"
+                    ],
+                    "description": "Return types (`Unit`) that a function with a block body has anyway: the rule `redundant-return-type` leaves them out when the formatter runs it (`format_rules`).",
                     "items": {
                       "type": "string"
                     },

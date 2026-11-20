@@ -137,8 +137,13 @@ fn rewrite_loop(
             Some((f, p)) => (&f.text, &p.tree),
             None => (&file.text, &parsed.tree),
         };
-        // One walk of the nodes serves the rules' kinds and the rows' scan.
+        // One walk of the nodes serves the rules' kinds and the rows' scan; a rule whose cheap
+        // look at the text finds nothing to do takes no part in it.
         let rules = format_rules(provider.formatter().rows(), &listed);
+        let rules: Vec<&ActiveRule<'static>> = rules
+            .iter()
+            .filter(|r| r.rule.format_applies(grammar, text, &r.options, options))
+            .collect();
         let wanted: Vec<_> = rules
             .iter()
             .flat_map(|r| r.rule.format_kinds(grammar))
@@ -175,7 +180,7 @@ fn rewrite_loop(
                 }
             }
         }
-        let Some(next) = rule_rewrite(provider, &file.id, tree, text, options, index)
+        let Some(next) = rule_rewrite(provider, &file.id, tree, text, options, &rules, index)
             .or_else(|| {
                 provider
                     .formatter()
@@ -252,11 +257,9 @@ fn rule_rewrite(
     tree: &SyntaxNode,
     text: &str,
     options: &ResolvedOptions,
+    active: &[&ActiveRule<'static>],
     index: Vec<Vec<SyntaxNode>>,
 ) -> Option<String> {
-    let formatter = provider.formatter();
-    let rows = formatter.rows();
-    let active = format_rules(rows, &options.strings("format_rules"));
     if active.is_empty() {
         return None;
     }
@@ -273,7 +276,7 @@ fn rule_rewrite(
         semantics: None,
     };
     let diagnostics =
-        core_rules::run_file_rules(&context, &active, FormatInput { options }, Some(index));
+        core_rules::run_file_rules(&context, active, FormatInput { options }, Some(index));
     let chosen = core_rules::fixes::select(&diagnostics, |_| true);
     if chosen.is_empty() {
         return None;

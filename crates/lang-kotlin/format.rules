@@ -12,8 +12,8 @@ kind=Property / kind=Property : parent=KtFile|ClassBody commented=yes comment_bl
 kind!=Typealias / kind=Typealias : parent=KtFile|ClassBody comment_blank=no
 kind=Typealias / kind=Typealias : parent=KtFile|ClassBody commented=yes comment_blank=no
 kind!=SecondaryConstructor / kind=SecondaryConstructor : parent=KtFile|ClassBody comment_blank=no
-kind=SecondaryConstructor / kind=SecondaryConstructor : parent=KtFile|ClassBody comment_blank=no has=Block|ConstructorDelegationCall
-kind=SecondaryConstructor / kind=SecondaryConstructor : parent=KtFile|ClassBody comment_blank=no prev.has=Block|ConstructorDelegationCall
+kind=SecondaryConstructor / kind=SecondaryConstructor : parent=KtFile|ClassBody comment_blank=no has=Block
+kind=SecondaryConstructor / kind=SecondaryConstructor : parent=KtFile|ClassBody comment_blank=no prev.has=Block
 * / kind=Class|Fun|ObjectDeclaration|SecondaryConstructor|Typealias|ClassInitializer : parent=Block
 
 [layout]
@@ -21,6 +21,7 @@ Class : heritage colon=Colon list=SuperTypeList ctor=PrimaryConstructor params=V
 ObjectDeclaration : heritage colon=Colon list=SuperTypeList
 DotQualifiedExpression|SafeAccessExpression&parent!=ImportDirective|PackageDirective : chain spaced=LambdaArgument
 When : cases open=Lbrace
+WhenEntry : flat
 
 # Blanks between two tokens of a line (ktlint's spacing rules); no row: the source's blanks (none
 # stay none, any become one).
