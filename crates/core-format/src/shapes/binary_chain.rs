@@ -22,6 +22,10 @@ pub const OPERATOR_LINE: &str = "binary_operator_line";
 pub const INDENT: &str = "binary_indent";
 pub const INDENT_NESTED: &str = "indent_nested_binary";
 pub const HUG: &str = "binary_hug";
+pub const FILL: &str = "binary_fill";
+pub const ALIGN: &str = "align_operands";
+pub const START_OPERATORS: &str = "binary_start_operators";
+pub const CONTINUATION: &str = "continuation_indent";
 
 /// Which end of a broken line the operator is on.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -51,6 +55,15 @@ pub struct BinaryPolicy {
     /// A chain that is an operand of a chain of another precedence indents its continuation lines.
     pub indent_nested: bool,
     pub hug: Hug,
+    /// With the operator at the end of the line: the operands (each followed by its operator) are
+    /// filled to the line width, one line break at a time, instead of every operator breaking at
+    /// once.
+    pub fill: bool,
+    /// The continuation lines start under the first operand; a chain that is an operand of a
+    /// chain of another precedence starts them this many columns further in.
+    pub align: Option<usize>,
+    /// Operators that start the line they break before, though the chain's operators end lines.
+    pub start_operators: Vec<String>,
 }
 
 impl BinaryPolicy {
@@ -69,6 +82,11 @@ impl BinaryPolicy {
                 "statement" => Hug::Statement,
                 _ => Hug::Never,
             },
+            fill: options.flag(FILL, false),
+            align: options
+                .flag(ALIGN, false)
+                .then(|| options.uint(CONTINUATION, 4)),
+            start_operators: options.strings(START_OPERATORS),
         }
     }
 }
@@ -261,6 +279,12 @@ pub fn binary_chain(
     };
     let mut tail: Vec<Doc> = Vec::with_capacity(steps * if end { 2 } else { 4 } + 1);
     let mut prev = first;
+    // With `fill`: the contents of the lines, an operator at the end of a line with the operand
+    // before it, one that starts a line (`binary_start_operators`) with the operand after it.
+    let filling = end && policy.fill;
+    let mut contents: Vec<Doc> = Vec::new();
+    let mut current = filling.then(|| first_doc.clone());
+    let mut all_start = true;
     for k in 0..steps {
         let l = &spine[order(k)];
         let target = operand_of(order(k));
@@ -273,6 +297,19 @@ pub fn binary_chain(
             cx.detach_trailing(t);
         }
         let target_doc = operand(cx, hooks, target)?;
+        if let Some(cur) = current.take() {
+            let op = hooks.token(cx, &l.op);
+            if policy.start_operators.iter().any(|o| o == l.op.text()) {
+                contents.push(cur);
+                current = Some(doc::concat(vec![op, doc::lit(" "), target_doc]));
+            } else {
+                all_start = false;
+                contents.push(doc::concat(vec![cur, doc::lit(" "), op]));
+                current = Some(target_doc);
+            }
+            prev = target;
+            continue;
+        }
         if end {
             let inline = hooks.inline_right(cx, &l.node);
             tail.push(doc::lit(" "));
@@ -299,6 +336,10 @@ pub fn binary_chain(
         prev = target;
     }
 
+    if let Some(last) = current {
+        contents.push(last);
+        return Ok(filled(policy, contents, all_start, node_nested(g, parent.as_ref())));
+    }
     let inline = end && hooks.inline_right(cx, node);
     let same_precedence_left = steps > 1;
     let flush = match place {
@@ -346,6 +387,48 @@ pub fn binary_chain(
             }
         }
     })
+}
+
+fn node_nested(g: &Grammar, parent: Option<&SyntaxNode>) -> bool {
+    parent.is_some_and(|p| g.has_tag(p.kind(), "binary-chain"))
+}
+
+/// The lines of a chain filled to the line width: each line after the first is a group of its
+/// own, so that it breaks before it when it, and the text that follows it, do not fit. A chain of
+/// operators that start a line (`<<`) lines them up under the first one.
+fn filled(policy: &BinaryPolicy, contents: Vec<Doc>, all_start: bool, nested: bool) -> Doc {
+    let mut it = contents.into_iter();
+    let first = it.next().unwrap_or(Doc::Nil);
+    let rest: Vec<Doc> = it.collect();
+    let lines = |lead_break: bool| -> Vec<Doc> {
+        rest.iter()
+            .enumerate()
+            .map(|(i, c)| {
+                if i == 0 && !lead_break {
+                    c.clone()
+                } else {
+                    doc::group(doc::concat(vec![doc::line(), c.clone()]))
+                }
+            })
+            .collect()
+    };
+    if all_start && !rest.is_empty() {
+        return doc::concat(vec![
+            first,
+            doc::lit(" "),
+            doc::align(doc::ALIGN_TO_COLUMN, doc::concat(lines(false))),
+        ]);
+    }
+    let mut body = doc::concat(lines(true));
+    match policy.align {
+        Some(hang) => {
+            if nested {
+                body = doc::align(hang, body);
+            }
+            doc::align(doc::ALIGN_TO_COLUMN, doc::concat(vec![first, body]))
+        }
+        None => doc::concat(vec![first, doc::indent(body)]),
+    }
 }
 
 fn node_kind(e: &SyntaxElement) -> Option<core_syntax::SyntaxKind> {

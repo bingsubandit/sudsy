@@ -8,6 +8,8 @@ options:
   - wrap_lines:
       default: true
       doc: "Break lines that are longer than `line_width`. When false, every line keeps the line breaks of the source (only indentation and spacing change)."
+      kinds:
+        binary_chain: [Binary]
   - continuation_indent:
       range: [0, 16]
       default: 4
@@ -112,10 +114,20 @@ options:
       values: ["align", "dont_align", "always_break"]
       default: "align"
       doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."
-  - break_before_binary_operators:
-      values: ["none", "non_assignment", "all"]
-      default: "none"
-      doc: "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`)."
+  - binary_operator_line:
+      values: ["end", "start"]
+      default: "end"
+      doc: "A wrapped binary expression breaks after the operator (`end`) or before it (`start`)."
+  - binary_fill:
+      default: true
+      doc: "With the operator at the end of the line, the operands of a wrapped binary expression are filled to the line width; when false every operator of a chain that does not fit breaks."
+  - binary_start_operators:
+      kind: "words"
+      default: ["<<"]
+      doc: "Operators that start the line they break before, in a wrapped binary expression whose other operators end lines (stream insertion); they line up under the first one."
+  - align_operands:
+      default: true
+      doc: "The lines of a wrapped binary expression start under its first operand (a chain nested in a chain of another precedence `continuation_indent` columns further in); when false they are indented by `continuation_indent`."
   - break_constructor_initializers:
       values: ["before_colon", "before_comma"]
       default: "before_colon"

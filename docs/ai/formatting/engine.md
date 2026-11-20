@@ -36,6 +36,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `access_modifier_outdent` | int 0-16 | cpp `2`, c `2` |
 | `align_after_open_bracket` | `align`, `dont_align`, `always_break` | cpp `align`, c `align` |
 | `align_escaped_newlines` | `right`, `left`, `dont_align` | cpp `right`, c `right` |
+| `align_operands` | bool | cpp `true`, c `true` |
 | `align_trailing_comments` | bool | cpp `true`, c `true` |
 | `align_with_tabs` | bool | cpp `false`, c `false` |
 | `array_bracket_spacing` | bool | json `false`, toml `false`, yaml `false`, github-actions `false` |
@@ -44,15 +45,16 @@ Options declared by more than one language, generated from the option schemas; p
 | `assignment_layout` | `compact`, `fluid`, `break`, `multiline` | java `break`, js `fluid`, kotlin `multiline`, csharp `compact` |
 | `bin_pack_arguments` | bool | cpp `true`, c `true` |
 | `bin_pack_parameters` | bool | cpp `true`, c `true` |
+| `binary_fill` | bool | cpp `true`, c `true` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
 | `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
-| `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |
+| `binary_operator_line` | cpp: `end`, `start`; c: `end`, `start`; java: `start`, `end`; js: `start`, `end`; csharp: `start`, `end` | cpp `end`, c `end`, java `start`, js `end`, csharp `start` |
+| `binary_start_operators` | list of words | cpp `[<<]`, c `[<<]` |
 | `blank_lines_after_key` | `preserve`, `remove` | yaml `preserve`, github-actions `preserve` |
 | `brace_wrapping` | list of words | cpp `[]`, c `[]` |
 | `bracket_same_line` | bool | html `false`, js `false`, angular `false`, vue `false`, svelte `false` |
 | `bracket_spacing` | bool | json `true`, graphql `true`, js `true`, toml `true`, yaml `true`, github-actions `true` |
 | `break_after_return_type` | `none`, `top_level`, `all`, `top_level_definitions`, `all_definitions` | cpp `none`, c `none` |
-| `break_before_binary_operators` | `none`, `non_assignment`, `all` | cpp `none`, c `none` |
 | `break_constructor_initializers` | `before_colon`, `before_comma` | cpp `before_colon`, c `before_colon` |
 | `break_template_declarations` | `yes`, `multiline`, `no` | cpp `multiline`, c `multiline` |
 | `collapse` | json: `preserve`, `always`, `never`, `opening_break`; toml: `preserve`, `always`, `never` | json `preserve`, toml `preserve` |

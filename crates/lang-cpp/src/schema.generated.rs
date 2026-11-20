@@ -40,7 +40,13 @@ pub const BIN_PACK_PARAMETERS: &str = "bin_pack_parameters";
 #[allow(dead_code)]
 pub const ALIGN_AFTER_OPEN_BRACKET: &str = "align_after_open_bracket";
 #[allow(dead_code)]
-pub const BREAK_BEFORE_BINARY_OPERATORS: &str = "break_before_binary_operators";
+pub const BINARY_OPERATOR_LINE: &str = "binary_operator_line";
+#[allow(dead_code)]
+pub const BINARY_FILL: &str = "binary_fill";
+#[allow(dead_code)]
+pub const BINARY_START_OPERATORS: &str = "binary_start_operators";
+#[allow(dead_code)]
+pub const ALIGN_OPERANDS: &str = "align_operands";
 #[allow(dead_code)]
 pub const BREAK_CONSTRUCTOR_INITIALIZERS: &str = "break_constructor_initializers";
 #[allow(dead_code)]
@@ -62,6 +68,7 @@ pub const BREAK_TEMPLATE_DECLARATIONS: &str = "break_template_declarations";
 #[allow(dead_code)]
 pub const ALIGN_ESCAPED_NEWLINES: &str = "align_escaped_newlines";
 pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
+    ("wrap_lines", "binary_chain", "", &["Binary"]),
     ("access_modifier_outdent", "outdent", "", &["AccessSpecifier"]),
     ("indent_case_labels", "outdent_unless", "", &["CaseClause"]),
     ("indent_goto_labels", "flush_unless", "", &["LabelStatement"]),
@@ -221,14 +228,21 @@ pub fn align_after_open_bracket(o: &core_config::ResolvedOptions) -> AlignAfterO
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BreakBeforeBinaryOperators { None, NonAssignment, All }
+pub enum BinaryOperatorLine { End, Start }
 #[allow(dead_code)]
-pub fn break_before_binary_operators(o: &core_config::ResolvedOptions) -> BreakBeforeBinaryOperators {
-    match o.text(BREAK_BEFORE_BINARY_OPERATORS) {
-        "non_assignment" => BreakBeforeBinaryOperators::NonAssignment,
-        "all" => BreakBeforeBinaryOperators::All,
-        _ => BreakBeforeBinaryOperators::None,
+pub fn binary_operator_line(o: &core_config::ResolvedOptions) -> BinaryOperatorLine {
+    match o.text(BINARY_OPERATOR_LINE) {
+        "start" => BinaryOperatorLine::Start,
+        _ => BinaryOperatorLine::End,
     }
+}
+#[allow(dead_code)]
+pub fn binary_fill(o: &core_config::ResolvedOptions) -> bool {
+    o.flag(BINARY_FILL, true)
+}
+#[allow(dead_code)]
+pub fn align_operands(o: &core_config::ResolvedOptions) -> bool {
+    o.flag(ALIGN_OPERANDS, true)
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -337,7 +351,10 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::boolean("bin_pack_arguments", true, "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line)."),
         core_config::OptionDef::boolean("bin_pack_parameters", true, "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line)."),
         core_config::OptionDef::choice("align_after_open_bracket", &["align", "dont_align", "always_break"], "align", "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."),
-        core_config::OptionDef::choice("break_before_binary_operators", &["none", "non_assignment", "all"], "none", "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`)."),
+        core_config::OptionDef::choice("binary_operator_line", &["end", "start"], "end", "A wrapped binary expression breaks after the operator (`end`) or before it (`start`)."),
+        core_config::OptionDef::boolean("binary_fill", true, "With the operator at the end of the line, the operands of a wrapped binary expression are filled to the line width; when false every operator of a chain that does not fit breaks."),
+        core_config::OptionDef::words("binary_start_operators", &["<<"], "Operators that start the line they break before, in a wrapped binary expression whose other operators end lines (stream insertion); they line up under the first one."),
+        core_config::OptionDef::boolean("align_operands", true, "The lines of a wrapped binary expression start under its first operand (a chain nested in a chain of another precedence `continuation_indent` columns further in); when false they are indented by `continuation_indent`."),
         core_config::OptionDef::choice("break_constructor_initializers", &["before_colon", "before_comma"], "before_colon", "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`)."),
         core_config::OptionDef::int("constructor_initializer_indent", 4, (0, 16), "Columns a constructor initializer list is indented more than its constructor."),
         core_config::OptionDef::choice("break_after_return_type", &["none", "top_level", "all", "top_level_definitions", "all_definitions"], "none", "The function name goes on a new line after its return type: never, for declarations and definitions outside classes (`top_level`), for all, or for definitions only (`top_level_definitions`, `all_definitions`)."),

@@ -2,7 +2,7 @@
 cpp:
   format:
     break_after_return_type: all_definitions
-    break_before_binary_operators: all
+    binary_operator_line: start
     brace_wrapping: [class, struct, union, enum, function, namespace, extern, control, case, else, catch, while]
     indent_braces: true
     line_width: 79

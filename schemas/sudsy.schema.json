@@ -6508,6 +6508,11 @@
               ],
               "type": "string"
             },
+            "align_operands": {
+              "default": true,
+              "description": "The lines of a wrapped binary expression start under its first operand (a chain nested in a chain of another precedence `continuation_indent` columns further in); when false they are indented by `continuation_indent`.",
+              "type": "boolean"
+            },
             "align_trailing_comments": {
               "default": true,
               "description": "Align the trailing comments of consecutive lines.",
@@ -6528,6 +6533,30 @@
               "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
               "type": "boolean"
             },
+            "binary_fill": {
+              "default": true,
+              "description": "With the operator at the end of the line, the operands of a wrapped binary expression are filled to the line width; when false every operator of a chain that does not fit breaks.",
+              "type": "boolean"
+            },
+            "binary_operator_line": {
+              "default": "end",
+              "description": "A wrapped binary expression breaks after the operator (`end`) or before it (`start`).",
+              "enum": [
+                "end",
+                "start"
+              ],
+              "type": "string"
+            },
+            "binary_start_operators": {
+              "default": [
+                "<<"
+              ],
+              "description": "Operators that start the line they break before, in a wrapped binary expression whose other operators end lines (stream insertion); they line up under the first one.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "brace_wrapping": {
               "default": [],
               "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
@@ -6545,16 +6574,6 @@
                 "all",
                 "top_level_definitions",
                 "all_definitions"
-              ],
-              "type": "string"
-            },
-            "break_before_binary_operators": {
-              "default": "none",
-              "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
-              "enum": [
-                "none",
-                "non_assignment",
-                "all"
               ],
               "type": "string"
             },
@@ -6824,6 +6843,11 @@
               ],
               "type": "string"
             },
+            "align_operands": {
+              "default": true,
+              "description": "The lines of a wrapped binary expression start under its first operand (a chain nested in a chain of another precedence `continuation_indent` columns further in); when false they are indented by `continuation_indent`.",
+              "type": "boolean"
+            },
             "align_trailing_comments": {
               "default": true,
               "description": "Align the trailing comments of consecutive lines.",
@@ -6844,6 +6868,30 @@
               "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
               "type": "boolean"
             },
+            "binary_fill": {
+              "default": true,
+              "description": "With the operator at the end of the line, the operands of a wrapped binary expression are filled to the line width; when false every operator of a chain that does not fit breaks.",
+              "type": "boolean"
+            },
+            "binary_operator_line": {
+              "default": "end",
+              "description": "A wrapped binary expression breaks after the operator (`end`) or before it (`start`).",
+              "enum": [
+                "end",
+                "start"
+              ],
+              "type": "string"
+            },
+            "binary_start_operators": {
+              "default": [
+                "<<"
+              ],
+              "description": "Operators that start the line they break before, in a wrapped binary expression whose other operators end lines (stream insertion); they line up under the first one.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "brace_wrapping": {
               "default": [],
               "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
@@ -6861,16 +6909,6 @@
                 "all",
                 "top_level_definitions",
                 "all_definitions"
-              ],
-              "type": "string"
-            },
-            "break_before_binary_operators": {
-              "default": "none",
-              "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
-              "enum": [
-                "none",
-                "non_assignment",
-                "all"
               ],
               "type": "string"
             },
@@ -9843,6 +9881,11 @@
                     ],
                     "type": "string"
                   },
+                  "align_operands": {
+                    "default": true,
+                    "description": "The lines of a wrapped binary expression start under its first operand (a chain nested in a chain of another precedence `continuation_indent` columns further in); when false they are indented by `continuation_indent`.",
+                    "type": "boolean"
+                  },
                   "align_trailing_comments": {
                     "default": true,
                     "description": "Align the trailing comments of consecutive lines.",
@@ -9863,6 +9906,30 @@
                     "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
                     "type": "boolean"
                   },
+                  "binary_fill": {
+                    "default": true,
+                    "description": "With the operator at the end of the line, the operands of a wrapped binary expression are filled to the line width; when false every operator of a chain that does not fit breaks.",
+                    "type": "boolean"
+                  },
+                  "binary_operator_line": {
+                    "default": "end",
+                    "description": "A wrapped binary expression breaks after the operator (`end`) or before it (`start`).",
+                    "enum": [
+                      "end",
+                      "start"
+                    ],
+                    "type": "string"
+                  },
+                  "binary_start_operators": {
+                    "default": [
+                      "<<"
+                    ],
+                    "description": "Operators that start the line they break before, in a wrapped binary expression whose other operators end lines (stream insertion); they line up under the first one.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "brace_wrapping": {
                     "default": [],
                     "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
@@ -9880,16 +9947,6 @@
                       "all",
                       "top_level_definitions",
                       "all_definitions"
-                    ],
-                    "type": "string"
-                  },
-                  "break_before_binary_operators": {
-                    "default": "none",
-                    "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
-                    "enum": [
-                      "none",
-                      "non_assignment",
-                      "all"
                     ],
                     "type": "string"
                   },
@@ -10159,6 +10216,11 @@
                     ],
                     "type": "string"
                   },
+                  "align_operands": {
+                    "default": true,
+                    "description": "The lines of a wrapped binary expression start under its first operand (a chain nested in a chain of another precedence `continuation_indent` columns further in); when false they are indented by `continuation_indent`.",
+                    "type": "boolean"
+                  },
                   "align_trailing_comments": {
                     "default": true,
                     "description": "Align the trailing comments of consecutive lines.",
@@ -10179,6 +10241,30 @@
                     "description": "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line).",
                     "type": "boolean"
                   },
+                  "binary_fill": {
+                    "default": true,
+                    "description": "With the operator at the end of the line, the operands of a wrapped binary expression are filled to the line width; when false every operator of a chain that does not fit breaks.",
+                    "type": "boolean"
+                  },
+                  "binary_operator_line": {
+                    "default": "end",
+                    "description": "A wrapped binary expression breaks after the operator (`end`) or before it (`start`).",
+                    "enum": [
+                      "end",
+                      "start"
+                    ],
+                    "type": "string"
+                  },
+                  "binary_start_operators": {
+                    "default": [
+                      "<<"
+                    ],
+                    "description": "Operators that start the line they break before, in a wrapped binary expression whose other operators end lines (stream insertion); they line up under the first one.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "brace_wrapping": {
                     "default": [],
                     "description": "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct.",
@@ -10196,16 +10282,6 @@
                       "all",
                       "top_level_definitions",
                       "all_definitions"
-                    ],
-                    "type": "string"
-                  },
-                  "break_before_binary_operators": {
-                    "default": "none",
-                    "description": "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`).",
-                    "enum": [
-                      "none",
-                      "non_assignment",
-                      "all"
                     ],
                     "type": "string"
                   },
