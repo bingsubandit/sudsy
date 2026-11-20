@@ -14,6 +14,34 @@
 use crate::spacing::{EndSet, Pattern};
 use core_syntax::{Grammar, SyntaxNode, SyntaxToken};
 
+/// The option listing kind pairs: a node of the first kind directly inside one of the second.
+pub const PARENTHESIZE: &str = "rewrite_parenthesize_pairs";
+
+/// Where the parentheses go (`(start, end)` byte offsets) when `node` is the first kind of a
+/// pair of `pairs` (the strings of `rewrite_parenthesize_pairs`) and its parent the second.
+pub fn parenthesize(
+    grammar: &Grammar,
+    pairs: &[String],
+    node: &SyntaxNode,
+) -> Option<(usize, usize)> {
+    let parent = grammar.name(node.parent()?.kind());
+    let own = grammar.name(node.kind());
+    pairs
+        .chunks(2)
+        .any(|p| p[0] == own && p.get(1).is_some_and(|q| *q == parent))
+        .then_some(())?;
+    let mut tokens = node
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .filter(|t| !grammar.is_trivia(t.kind()));
+    let first = tokens.next()?;
+    let last = tokens.last().unwrap_or_else(|| first.clone());
+    Some((
+        usize::from(first.text_range().start()),
+        usize::from(last.text_range().end()),
+    ))
+}
+
 enum Action {
     Replace(String),
     ReplaceThroughNext(String),

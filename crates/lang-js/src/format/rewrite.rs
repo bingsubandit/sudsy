@@ -28,6 +28,7 @@ pub(crate) fn rewrite(
     options: &ResolvedOptions,
     rows: &'static core_format::rules::RuleFormatter,
 ) -> Option<String> {
+    let pairs = options.strings(core_format::rewrite::PARENTHESIZE);
     let avoid_parens = super::arrow_parens(options) == super::ArrowParens::Avoid;
     let mut edits: Vec<Edit> = Vec::new();
     // Comments in front of a cut token lead what follows it; ones after it would move.
@@ -228,6 +229,10 @@ pub(crate) fn rewrite(
                     inserts.push((usize::from(first.text_range().end()), Some(")")));
                 }
             }
+        }
+        if let Some((from, to)) = core_format::rewrite::parenthesize(grammar, &pairs, &node) {
+            inserts.push((from, Some("(")));
+            inserts.push((to, Some(")")));
         }
         match node.kind() {
             k::TS_PARENTHESIZED_TYPE | k::TS_UNION_TYPE | k::TS_INTERSECTION_TYPE => {

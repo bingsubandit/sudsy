@@ -13,6 +13,7 @@
 
 use super::chain::ends_in_line_comment;
 use crate::FormatCtx;
+use crate::comments;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
 use core_config::ResolvedOptions;
@@ -134,6 +135,23 @@ fn gap(cx: &FormatCtx<'_>, hooks: &dyn ConditionalHooks, t: &SyntaxToken) -> Doc
     }
 }
 
+/// The marker (`?` or `:`) and its branch aligned after it. A line comment after the marker
+/// (`ends_line`) puts the branch on the next line; a `nested` conditional in the branch keeps
+/// its own alignment.
+pub fn marked_branch(marker: Doc, ends_line: bool, nested: bool, branch: Doc) -> Doc {
+    let (gap, lead) = if ends_line {
+        (Doc::Nil, doc::hardline())
+    } else {
+        (doc::lit(" "), Doc::Nil)
+    };
+    let branch = if nested && !ends_line {
+        branch
+    } else {
+        doc::align(2, doc::concat(vec![lead, branch]))
+    };
+    doc::concat(vec![marker, gap, branch])
+}
+
 /// `test ? a : b` on one line if it fits, else one branch per line.
 pub fn conditional(
     cx: &FormatCtx<'_>,
@@ -212,6 +230,27 @@ fn chained(
     let is_cond = |n: &Option<SyntaxNode>| n.as_ref().is_some_and(|n| n.kind() == kind);
     let (then_u, other_u) = (inner_of(&p.then), inner_of(&p.other));
     let wrap_mode = hooks.wrap_branches(cx, node, &top);
+    // Comments in front of `?` and `:` move to the front of their branch.
+    let moved = |t: &SyntaxToken| {
+        let cs = comments::leading_comments(g, t);
+        if cs.is_empty() || cs.iter().any(|c| c.kind != comments::CommentKind::Line) {
+            return Doc::Nil;
+        }
+        cx.hold_leading(t);
+        let mut parts = Vec::new();
+        for c in &comments::leading_comments(g, t) {
+            parts.push(crate::context::comment_doc(c));
+            parts.push(
+                if c.kind == comments::CommentKind::Block && c.breaks_after == 0 {
+                    lit(" ")
+                } else {
+                    hardline()
+                },
+            );
+        }
+        concat(parts)
+    };
+    let (q_moved, colon_moved) = (moved(&p.q), moved(&p.colon));
     let (q, colon) = (hooks.token(cx, &p.q), hooks.token(cx, &p.colon));
     let (then_doc, other_doc) = (operand(cx, hooks, &p.then)?, operand(cx, hooks, &p.other)?);
     let mut out = Vec::new();
@@ -245,16 +284,20 @@ fn chained(
         };
         // A line comment after `?` ends the line: the branch starts on the next one. A
         // conditional in a branch indents its own branches once.
-        let branch = |t: &SyntaxToken, cond: bool, d: Doc| {
+        let branch = |t: &SyntaxToken, cond: bool, mv: Doc, d: Doc| {
             let lead = if hooks.comment_ends_line(cx, t) {
                 hardline()
             } else {
                 Doc::Nil
             };
             if cond {
-                concat(vec![lead, d])
+                if matches!(lead, Doc::Nil) {
+                    concat(vec![align(2, concat(vec![lead, mv])), d])
+                } else {
+                    align(2, concat(vec![lead, mv, d]))
+                }
             } else {
-                align(2, concat(vec![lead, d]))
+                align(2, concat(vec![lead, mv, d]))
             }
         };
         let space = |t: &SyntaxToken| {
@@ -269,12 +312,12 @@ fn chained(
             q,
             space(&p.q),
             paren(true),
-            branch(&p.q, then_cond, then_doc),
+            branch(&p.q, then_cond, q_moved, then_doc),
             paren(false),
             doc::line(),
             colon,
             space(&p.colon),
-            branch(&p.colon, is_cond(&other_u), other_doc),
+            branch(&p.colon, is_cond(&other_u), colon_moved, other_doc),
         ]);
         out.push(if !same_parent || is_alt_of_parent || is_parent_test {
             branches
@@ -282,6 +325,16 @@ fn chained(
             align(policy.tab_width.saturating_sub(2), branches)
         });
     }
+    let after_comment = same_parent
+        && !is_parent_test
+        && parent.as_ref().is_some_and(|up| {
+            let t = if is_alt_of_parent {
+                parts(cx, up).ok().map(|u| u.colon)
+            } else {
+                parts(cx, up).ok().map(|u| u.q)
+            };
+            t.is_some_and(|t| hooks.comment_ends_line(cx, &t))
+        });
     let test_doc = {
         let d = operand(cx, hooks, &p.test)?;
         if is_alt_of_parent { align(2, d) } else { d }
@@ -290,7 +343,8 @@ fn chained(
     let closing = !wrap_mode && around.member_operand && !around.indent;
     let body = concat(vec![
         test_doc,
-        if wrap_mode {
+        // A branch that follows a line comment is aligned by its parent already.
+        if wrap_mode || after_comment {
             concat(out)
         } else {
             indent(concat(out))

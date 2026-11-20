@@ -36,6 +36,11 @@ options:
   - assignment_layout: ["fluid"]
   - assignment_conditional: ["binary_test"]
   - assignment_indent: [1]
+  - assignment_op_token_skip_kinds: [["AssignmentExpression"]]
+  - assignment_destructure_kinds: [["ObjectPattern", "ObjectAssignmentTarget"]]
+  - assignment_generic_closure_kinds: [["VariableDeclarator"]]
+  - rewrite_parenthesize_pairs: [["TSIntersectionType", "TSUnionType", "TSTypeQuery", "TSArrayType"]]
+  - type_argument_complex_kinds: [["TSUnionType", "TSIntersectionType", "TSTypeLiteral"]]
   - conditional_indent: [1]
   - conditional_layout: ["chained"]
   - bracket_spacing: true

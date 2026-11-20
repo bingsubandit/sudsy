@@ -131,6 +131,11 @@ pub fn can_hug(cx: &FormatCtx<'_>, n: &SyntaxNode, arrow_chain: bool) -> bool {
         true
     } else if g.has_tag(bk, "huggable-function") {
         can_hug(cx, &body, true)
+    } else if g.has_tag(bk, "hug-wrapper") {
+        can_hug(cx, &body, false)
+    } else if g.has_tag(bk, "tail-wrapper") {
+        let inner = body.first_child().map(|c| un(&c));
+        !arrow_chain && inner.is_some_and(|c| g.has_tag(c.kind(), "huggable-tail"))
     } else {
         g.has_tag(bk, "huggable-tail") && !arrow_chain
     }

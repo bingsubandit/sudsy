@@ -38,33 +38,6 @@ fn chain_contains_jsx(top: &SyntaxNode) -> bool {
     false
 }
 
-/// The part of `parent` its text starts with (what Prettier calls its left side).
-fn left_side(parent: &SyntaxNode) -> Option<SyntaxNode> {
-    match parent.kind() {
-        k::EXPRESSION_STATEMENT
-        | k::SEQUENCE_EXPRESSION
-        | k::BINARY_EXPRESSION
-        | k::LOGICAL_EXPRESSION
-        | k::ASSIGNMENT_EXPRESSION
-        | k::CONDITIONAL_EXPRESSION
-        | k::TAGGED_TEMPLATE_EXPRESSION
-        | k::CALL_EXPRESSION
-        | k::NEW_EXPRESSION
-        | k::AWAIT_EXPRESSION
-        | k::TS_AS_EXPRESSION
-        | k::TS_SATISFIES_EXPRESSION
-        | k::TS_NON_NULL_EXPRESSION
-        | k::CHAIN_EXPRESSION => parent.first_child(),
-        kind if is_member(kind) => parent.first_child(),
-        k::UNARY_EXPRESSION
-        | k::SPREAD_ELEMENT
-        | k::YIELD_EXPRESSION
-        | k::RETURN_STATEMENT
-        | k::THROW_STATEMENT => parent.last_child(),
-        _ => None,
-    }
-}
-
 /// `(a ? b : c).d()`: the parenthesized chain breaks inside its parentheses, indented.
 fn should_extra_indent(node: &SyntaxNode) -> bool {
     let mut child = node.clone();
@@ -80,15 +53,27 @@ fn should_extra_indent(node: &SyntaxNode) -> bool {
             k::NEW_EXPRESSION | k::TS_AS_EXPRESSION | k::TS_SATISFIES_EXPRESSION if first => {
                 let gp = parent(&p);
                 child = p;
+                if gp.as_ref().is_some_and(|g| {
+                    matches!(g.kind(), k::TS_AS_EXPRESSION | k::TS_SATISFIES_EXPRESSION)
+                }) {
+                    return false;
+                }
                 break gp;
             }
             _ => break Some(p),
         }
     };
+    // Only where the chain is the value of a declaration, assignment, `return` or `throw`.
     child != *node
-        && chain_parent
-            .and_then(|p| left_side(&p))
-            .is_some_and(|l| l == outer(&child))
+        && chain_parent.is_some_and(|p| {
+            matches!(
+                p.kind(),
+                k::VARIABLE_DECLARATOR
+                    | k::ASSIGNMENT_EXPRESSION
+                    | k::RETURN_STATEMENT
+                    | k::THROW_STATEMENT
+            ) && p.last_child().is_some_and(|l| l == outer(&child))
+        })
 }
 
 struct Hooks;
@@ -105,15 +90,9 @@ impl shapes::ConditionalHooks for Hooks {
     }
 
     fn around(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> Around {
-        let held = outer(node);
         let p = parent(node);
-        // `(a ? b : c) as T`: the parentheses break around the conditional.
-        let cast = p.as_ref().is_some_and(|p| {
-            matches!(p.kind(), k::TS_AS_EXPRESSION | k::TS_SATISFIES_EXPRESSION)
-                && p.first_child().as_ref() == Some(&held)
-        });
         Around {
-            indent: cast || should_extra_indent(node),
+            indent: should_extra_indent(node),
             member_operand: p.as_ref().is_some_and(|p| {
                 matches!(
                     p.kind(),
