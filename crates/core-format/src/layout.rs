@@ -355,14 +355,6 @@ impl Layout {
         if let Some(b) = self.bound("binary_chain", node.kind())
             && cx.options.flag(&b.option, true)
         {
-            // (inside a construct no shape lays out yet the chain stays as written)
-            if node
-                .ancestors()
-                .skip(1)
-                .any(|a| self.bound("binary_chain_not_in", a.kind()).is_some())
-            {
-                return None;
-            }
             // (a comment inside keeps the chain as written)
             let text = node.text().to_string();
             if text.contains("//") || text.contains("/*") {
@@ -885,7 +877,7 @@ fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
     };
     let g = cx.grammar;
     let (mut count, mut items) = (0, 0);
-        if count > 1 {
+    for e in inside {
         if let SyntaxElement::Token(t) = e
             && g.has_tag(t.kind(), "separator")
         {

@@ -434,12 +434,13 @@ fn list_of(
     for i in 0..items.len() {
         if i > 0 {
             // (a blank line in a fill is a hard break: the fill must not print `, ` before it)
-            // (and after a line comment, which ends its line)
+            // (and after an item with a comment, which ends its line: where a fill packs the
+            // next item depends on the width the comment gets, so a second format would move it)
             let line_comment = items[i - 1].sep.as_ref().is_some_and(|t| {
-                comments::trailing_comments(g, t)
-                    .iter()
-                    .any(|c| c.kind != comments::CommentKind::Block)
-            });
+                let cs = comments::trailing_comments(g, t);
+                cs.iter().any(|c| c.kind != comments::CommentKind::Block)
+                    || (!cs.is_empty() && comments::break_after(g, t))
+            }) || tail_comments.iter().any(|(j, d)| *j == i - 1 && !d.is_nil());
             let base = if fill && (items[i].blank_before > 0 || line_comment) {
                 doc::hardline()
             } else {
@@ -589,8 +590,17 @@ fn list_of(
     let close_pad = if style.hug_close && dangling.is_empty() {
         Doc::Nil
     } else if style.align_open {
-        // (a comment pending after the last item ends the line before the closing delimiter)
-        doc::line_suffix_boundary()
+        // (a comment pending after the last item ends the line before the closing delimiter; so
+        // does a block comment that ended its line in the source: the next format would read the
+        // comment as one in front of the delimiter, not as a trailing one to align)
+        let ends_line = c.slots.last().and_then(|s| s.last_token(cx)).is_some_and(|t| {
+            comments::has_trailing_comment(g, &t) && comments::break_after(g, &t)
+        });
+        if ends_line {
+            doc::hardline()
+        } else {
+            doc::line_suffix_boundary()
+        }
     } else {
         pad
     };

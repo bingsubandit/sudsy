@@ -261,7 +261,12 @@ impl Flow<'_> {
                 // (adjacent string literals: each stays on its own line)
                 || (cx.grammar.has_tag(a.kind(), "string") && cx.grammar.has_tag(b.kind(), "string"));
             return if self.reflow && !ends_line {
-                doc::line()
+                // (where the spacing rows want no blank, a flat break is none: `{` `.x`)
+                if self.want(a, b) == Some(false) {
+                    doc::softline()
+                } else {
+                    doc::line()
+                }
             } else {
                 doc::hardline()
             };

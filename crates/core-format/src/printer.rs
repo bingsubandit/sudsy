@@ -451,6 +451,10 @@ impl<'a> Printer<'a> {
                     let width = self.opts.line_width as isize;
                     let aligned = width - self.pos as isize;
                     let hung = width - self.indents.levels[self.line_level].width as isize - *hang as isize;
+                    // Aligning under the opening delimiter is kept unless it costs more than three
+                    // extra lines against hanging. The 3 is fitted to the llvm corpus (the value
+                    // that matched clang-format on most files); it is a measured threshold, not a
+                    // cost model.
                     if fill_lines(widths, aligned) > 3 + fill_lines(widths, hung) {
                         push(cmds, indent, mode, &f.otherwise);
                         return;
