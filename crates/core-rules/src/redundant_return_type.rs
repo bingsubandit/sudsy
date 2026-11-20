@@ -37,7 +37,16 @@ rule! {
         let Some(options) = ctx.format.as_ref().map(|f| f.options) else {
             return;
         };
-        if options.strings("redundant_return_types").is_empty() {
+        let words = options.strings("redundant_return_types");
+        // (no such type after a colon in the text: no walk of the functions)
+        let typed = |w: &String| {
+            file.text.match_indices(w.as_str()).any(|(at, _)| {
+                file.text[..at]
+                    .trim_end_matches([' ', '\t'])
+                    .ends_with(':')
+            })
+        };
+        if !words.iter().any(typed) {
             return;
         }
         let kinds = self.format_kinds(g);
