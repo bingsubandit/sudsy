@@ -76,7 +76,7 @@ Each number is measured on real-world code against the reference tool with its d
 | Python | ███████░░░ 79% ruff format | █████████░ 94% ruff | In progress |
 | Terraform (HCL) | █████████░ 99% terraform fmt | █░░░░░░░░░ 18% tflint | In progress |
 | HTML | █████████░ 91% Prettier | ░░░░░░░░░░ 0% html-eslint<br>██████░░░░ 62% html-validate<br>░░░░░░░░░░ 5% htmlhint | In progress |
-| Vue / Svelte | ████████░░ 85% Prettier | ██░░░░░░░░ 23% eslint-plugin-vue<br>██████████ 100% eslint-plugin-svelte | In progress |
+| Vue / Svelte | ████████░░ 89% Prettier | ██░░░░░░░░ 23% eslint-plugin-vue<br>██████████ 100% eslint-plugin-svelte | In progress |
 | CSS / SCSS / Less | ████████░░ 87% Prettier | █████████░ 94% stylelint<br>not measured stylelint-scss<br>not measured stylelint-less | In progress |
 | Markdown | ████████░░ 89% Prettier | ████████░░ 83% markdownlint | In progress |
 | YAML | ██████████ 100% Prettier | ███████░░░ 74% yamllint | In progress |
