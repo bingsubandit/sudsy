@@ -281,6 +281,7 @@ fn parenthesized_node(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     // `((x))` is `(x)`: a pair around a pair is redundant.
     if let [_, SyntaxElement::Node(inner), _] = ks.as_slice()
         && inner.kind() == k::PARENTHESIZED
+        && !node.descendants_with_tokens().any(|e| e.kind() == k::COMMENT)
         && !has_comments(cx, open)
         && !has_comments(cx, close)
     {

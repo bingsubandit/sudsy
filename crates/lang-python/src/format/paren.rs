@@ -100,11 +100,14 @@ fn maybe_parenthesize_inner(
         return expr::expr(cx, &inner);
     }
     match inner.kind() {
+        k::EXPR_TUPLE if list::is_bare(cx, &inner) && list::is_one_item_tuple(cx, &inner) => {
+            list::bare_tuple(cx, &inner)
+        }
         k::EXPR_TUPLE if list::is_bare(cx, &inner) => {
             if can_omit(cx, &inner) {
                 list::bare_tuple_flat(cx, &inner)
             } else {
-                expanded(|| list::bare_tuple(cx, &inner))
+                expanded(|| list::bare_tuple_ungrouped(cx, &inner))
             }
         }
         k::EXPR_BIN_OP | k::EXPR_BOOL_OP | k::EXPR_COMPARE | k::EXPR_UNARY_OP => {
@@ -311,8 +314,11 @@ pub(crate) fn rhs(cx: &FormatCtx<'_>, value: &SyntaxNode, prefix: usize) -> R {
 
 /// An assignment target: a tuple without parentheses gets them when it does not fit.
 pub(crate) fn target(cx: &FormatCtx<'_>, n: &SyntaxNode) -> R {
+    if n.kind() == k::EXPR_TUPLE && list::is_bare(cx, n) && list::is_one_item_tuple(cx, n) {
+        return list::bare_tuple(cx, n);
+    }
     if n.kind() == k::EXPR_TUPLE && list::is_bare(cx, n) {
-        return with_open(false, || expanded(|| list::bare_tuple(cx, n)));
+        return with_open(false, || expanded(|| list::bare_tuple_ungrouped(cx, n)));
     }
     expr::expr(cx, n)
 }
@@ -487,7 +493,7 @@ impl Visit {
                     .iter()
                     .filter(|e| e.as_token().is_some())
                     .count();
-                self.update(0, ops.saturating_sub(1).max(1));
+                self.update(0, ops.max(1));
                 for c in n.children() {
                     self.visit(cx, &c);
                 }

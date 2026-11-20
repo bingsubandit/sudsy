@@ -192,6 +192,11 @@ pub(crate) fn is_bare(cx: &FormatCtx<'_>, tuple: &SyntaxNode) -> bool {
     first_kid(cx, tuple).and_then(|e| tok_kind(&e)) != Some(k::LPAR)
 }
 
+/// A tuple of one item (it brings its own parentheses).
+pub(crate) fn is_one_item_tuple(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    split(cx, node).runs.len() == 1
+}
+
 /// The items of a tuple without parentheses, a comma after the last one when broken.
 pub(crate) fn bare_tuple(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     bare_tuple_with(cx, node, true, true, true)
@@ -226,7 +231,7 @@ fn bare_tuple_with(
     let n = p.runs.len();
     if n == 1 && single_parens {
         // A one-item tuple is always parenthesized: `(a,)`.
-        let item = concat(vec![run_doc(cx, &p.runs[0])?, lit(",")]);
+        let item = concat(vec![with_open(true, || run_doc(cx, &p.runs[0]))?, lit(",")]);
         return Ok(parenthesized(lit("("), item, lit(")")));
     }
     let mut parts = Vec::new();

@@ -381,7 +381,6 @@ fn is_primary(kind: SyntaxKind) -> bool {
             | k::EXPR_ATTRIBUTE
             | k::EXPR_CALL
             | k::EXPR_SUBSCRIPT
-            | k::EXPR_AWAIT
             | k::EXPR_NUMBER_LITERAL
             | k::EXPR_STRING_LITERAL
             | k::EXPR_BYTES_LITERAL
