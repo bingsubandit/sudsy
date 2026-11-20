@@ -434,6 +434,15 @@ impl<'a> Printer<'a> {
                     push(cmds, indent, mode, &f.fits);
                     return;
                 }
+                if let Some((widths, hang)) = &f.lines {
+                    let width = self.opts.line_width as isize;
+                    let aligned = width - self.pos as isize;
+                    let hung = width - self.indents.levels[indent].width as isize - *hang as isize;
+                    if fill_lines(widths, aligned) > 3 + fill_lines(widths, hung) {
+                        push(cmds, indent, mode, &f.otherwise);
+                        return;
+                    }
+                }
                 for _ in 0..if at_column { 0 } else { f.levels } {
                     below = self.indents.indent(below);
                 }
@@ -770,6 +779,23 @@ struct Measure<'a> {
 
 /// Takes the width of `s` off `width`. Only the first line of text with a line break counts
 /// against the current line: then the answer to "does it fit" is known (`Some`).
+/// The lines that items of the given widths take when filled greedily into `room` columns (each
+/// followed by a separator and a blank, the last by the closing delimiter).
+fn fill_lines(widths: &[usize], room: isize) -> usize {
+    let mut lines = 1;
+    let mut used = 0isize;
+    for w in widths {
+        let need = *w as isize + 1 + isize::from(used > 0);
+        if used > 0 && used + need > room {
+            lines += 1;
+            used = *w as isize + 1;
+        } else {
+            used += need;
+        }
+    }
+    lines
+}
+
 fn measure(s: &str, width: &mut isize) -> Option<bool> {
     match s.find('\n') {
         Some(i) => Some(*width - (str_width(&s[..i], 1) as isize) >= 0),

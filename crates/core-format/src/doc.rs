@@ -101,6 +101,10 @@ pub struct FitsBelow {
     pub probe: Doc,
     pub fits: Doc,
     pub otherwise: Doc,
+    /// With the widths of the items of a list and the hang indent: `fits` only when filling the
+    /// items from the current column takes no more lines than breaking after the opening
+    /// delimiter and filling them at the hang indent.
+    pub lines: Option<(Vec<usize>, usize)>,
 }
 
 /// Names a group so that [`Doc::IndentIfBreak`] can ask whether it was printed broken.
@@ -756,6 +760,20 @@ pub fn fits_below(levels: usize, width: usize, fits: Doc, otherwise: Doc) -> Doc
         probe: Doc::Reserve(width),
         fits,
         otherwise,
+        lines: None,
+    }))
+}
+
+/// `fits` when filling items of the given flat `widths` from the current column takes no more
+/// lines than a break after the opening delimiter and filling them `hang` columns in, else
+/// `otherwise`.
+pub fn fits_fewer_lines(widths: Vec<usize>, hang: usize, fits: Doc, otherwise: Doc) -> Doc {
+    Doc::FitsBelow(Box::new(FitsBelow {
+        levels: AT_COLUMN,
+        probe: Doc::Reserve(0),
+        fits,
+        otherwise,
+        lines: Some((widths, hang)),
     }))
 }
 

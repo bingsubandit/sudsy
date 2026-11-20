@@ -12,7 +12,7 @@ use crate::comments;
 use crate::directives::Directive;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
-use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
+use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, TextSize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TrailingComma {
@@ -404,6 +404,7 @@ fn list_of(
         lead.push(cx.format(prefix)?);
         lead.push(doc::lit(" "));
     }
+    let item_widths: Vec<Option<usize>> = items.iter().map(|i| i.doc.flat_width()).collect();
     let mut inner = Vec::new();
     let mut widest = 0;
     let mut widest_last = 0;
@@ -472,7 +473,11 @@ fn list_of(
                     .descendants()
                     .any(|n| g.has_tag(n.kind(), "block"))
         });
-        let w = if let Some(h) = c.slots.get(i).and_then(|sl| chain_head(cx, &sl.node)) {
+        let w = if let Some(h) = c
+            .slots
+            .get(i)
+            .and_then(|sl| chain_head(cx, &sl.node).or_else(|| block_head(cx, &sl.node)))
+        {
             h
         } else if chain || items.len() == 1 {
             item.head_width()
@@ -605,7 +610,12 @@ fn list_of(
             None => doc::fits_at_column(widest_last + 1, aligned, hang.clone()),
         };
         if items.len() > 1 {
-            doc::fits_at_column(widest + 1, last_fit, hang)
+            let widths: Option<Vec<usize>> = item_widths.iter().copied().collect();
+            let fit = doc::fits_at_column(widest + 1, last_fit, hang.clone());
+            match widths {
+                Some(w) => doc::fits_fewer_lines(w, style.hang_indent, fit, hang),
+                None => fit,
+            }
         } else {
             last_fit
         }
@@ -834,8 +844,21 @@ fn chain_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
         .children_with_tokens()
         .filter_map(|e| e.into_token())
         .find(|t| g.has_tag(t.kind(), "operator") || t.text() == "?")?;
+    head_width(node, op.text_range().end())
+}
+
+/// The width of an item (a lambda) up to the opening brace of its first block: what must fit on
+/// the line the item starts on.
+fn block_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
+    let g = cx.grammar;
+    let block = node.descendants().find(|n| g.has_tag(n.kind(), "block"))?;
+    head_width(node, block.text_range().start() + TextSize::from(1))
+}
+
+/// The width of the source text of `node` up to `end`, runs of blanks as one.
+fn head_width(node: &SyntaxNode, end: TextSize) -> Option<usize> {
     let text = node.text().to_string();
-    let end = usize::from(op.text_range().end() - node.text_range().start());
+    let end = usize::from(end - node.text_range().start());
     let mut width = 0;
     let mut blank = false;
     for ch in text.get(..end)?.chars() {
