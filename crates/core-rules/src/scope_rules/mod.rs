@@ -372,6 +372,10 @@ pub fn build(
     }
     let message = p.text("message")?;
     p.done()?;
+    if meta.default_level != Level::Off {
+        // A rule that is on will run: its table is read with the rule, not in the first file.
+        lang.spec();
+    }
     Ok(Box::new(ScopeRule {
         check,
         lang,
