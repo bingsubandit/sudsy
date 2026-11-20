@@ -579,6 +579,9 @@ fn list_of(
     }
     let close_pad = if style.hug_close && dangling.is_empty() {
         Doc::Nil
+    } else if style.align_open {
+        // (a comment pending after the last item ends the line before the closing delimiter)
+        doc::line_suffix_boundary()
     } else {
         pad
     };
@@ -598,7 +601,7 @@ fn list_of(
                 aligned.clone(),
                 doc::fits_below(0, w + 1 + style.hang_indent, hang.clone(), aligned),
             ),
-            Some(w) => doc::fits_at_column_rest(w + 1, aligned, hang.clone()),
+            Some(w) => doc::fits_at_column_rest(w, aligned, hang.clone()),
             None => doc::fits_at_column(widest_last + 1, aligned, hang.clone()),
         };
         if items.len() > 1 {
