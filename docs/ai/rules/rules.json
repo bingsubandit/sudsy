@@ -84,32 +84,32 @@
         "spans": [
           {
             "column": 5,
-            "length": 2,
+            "length": 1,
             "line": 3
           },
           {
             "column": 5,
-            "length": 2,
+            "length": 1,
             "line": 4
           },
           {
             "column": 5,
-            "length": 3,
+            "length": 1,
             "line": 14
           },
           {
             "column": 5,
-            "length": 3,
+            "length": 1,
             "line": 15
           },
           {
             "column": 5,
-            "length": 5,
+            "length": 1,
             "line": 16
           },
           {
             "column": 5,
-            "length": 2,
+            "length": 1,
             "line": 17
           }
         ]
@@ -8350,12 +8350,17 @@
         },
         {
           "id": "MethodName",
-          "partial": false,
+          "partial": true,
           "tool": "checkstyle"
         },
         {
           "id": "MemberName",
           "partial": false,
+          "tool": "checkstyle"
+        },
+        {
+          "id": "NonConstantFieldName",
+          "partial": true,
           "tool": "checkstyle"
         },
         {
@@ -9007,6 +9012,112 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A name has two or more capital letters in a row (Checkstyle AbbreviationAsWordInName with `allowedAbbreviationLength` 0): write `XmlParser`, not `XMLParser`. Constants and overridden methods are left out.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class XMLParser {\n  static final int MAX_SIZE = 1;\n  int fooBAR;\n  int goodName;\n  int endsWithB;\n\n  void getURL(int httpID) {\n    int myURL = 1;\n    int fine = 2;\n  }\n\n  @Override\n  public void toJSON() {}\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 7,
+            "length": 9,
+            "line": 1
+          },
+          {
+            "column": 7,
+            "length": 6,
+            "line": 3
+          },
+          {
+            "column": 8,
+            "length": 6,
+            "line": 7
+          },
+          {
+            "column": 19,
+            "length": 6,
+            "line": 7
+          },
+          {
+            "column": 9,
+            "length": 5,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "abbreviation-in-name",
+      "languages": [
+        "java"
+      ],
+      "options": [
+        {
+          "default": "",
+          "description": "Regular expression a type, method, parameter, field or local variable name must match; empty: not checked.",
+          "name": "names",
+          "type": "string"
+        },
+        {
+          "default": "^.*$",
+          "description": "Regular expression matched for the names that are left out (constants, overridden methods): every name by default.",
+          "name": "ignored",
+          "type": "string"
+        }
+      ],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "AbbreviationAsWordInName",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "An array creation whose `{` follows the `]` right away, `new int[]{1}` (Checkstyle ArrayBracketNoWhitespace).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  Object a = new int[]{1};\n  Object b = new int[] {1};\n  Object c = new String[]{\"a]{\"};\n  Object d = new int[2];\n  int[] e = {1};\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 14,
+            "length": 12,
+            "line": 2
+          },
+          {
+            "column": 14,
+            "length": 19,
+            "line": 4
+          }
+        ]
+      },
+      "fix": null,
+      "id": "array-bracket-space",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "ArrayBracketNoWhitespace",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "A declarator or parameter with C-style brackets after the name (Checkstyle ArrayTypeStyle).",
       "example": {
         "config": null,
@@ -9043,6 +9154,235 @@
       "upstream": [
         {
           "id": "ArrayTypeStyle",
+          "partial": false,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A string or character literal writes a visible character as a `\\uXXXX` escape, and the line has no trailing comment (Checkstyle AvoidEscapedUnicodeCharacters). Escapes of control, space and format characters are fine.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  String a = \"\\u00e9\";\n  String b = \"\\u00e9\"; // c with acute\n  String c = \"\\u0009\\u200b\";\n  char d = '\\u2603';\n  String e = \"plain\";\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 15,
+            "length": 6,
+            "line": 2
+          },
+          {
+            "column": 13,
+            "length": 6,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "avoid-unicode-escape",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "AvoidEscapedUnicodeCharacters",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A line of a Javadoc comment after the first starts with an asterisk (Checkstyle JavadocMissingLeadingAsterisk). Empty lines are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "/**\n * Fine.\n */\nclass A {\n  /**\n     No star here.\n\n   * Star again.\n   */\n  void f() {}\n\n  /** One line. */\n  void g() {}\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 6,
+            "length": 1,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "doc-asterisk",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "JavadocMissingLeadingAsterisk",
+          "partial": false,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "The paragraphs of a Javadoc comment: a `<p>` tag stands right before the first word of its paragraph (no space) and after an empty line, an empty line between paragraphs is followed by `<p>`, and the comment does not start with `<p>` (Checkstyle JavadocParagraph). Text inside `<pre>`, `<ul>` and the like, and after the first block tag, is left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "/**\n * Good.\n *\n * <p>Fine paragraph.\n *\n * <p> Space after.\n *\n * Missing tag.\n * <p>Not after an empty line.\n *\n * <ul>\n *   <li>item\n * </ul>\n *\n * {@snippet :\n * code();\n *\n * more();\n * }\n *\n * <pre>\n *\n * kept\n * </pre>\n *\n * @param x text\n *\n * after the tags\n */\nclass A {\n  /** <p>First thing. */\n  void f() {}\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 4,
+            "length": 3,
+            "line": 6
+          },
+          {
+            "column": 3,
+            "length": 1,
+            "line": 7
+          },
+          {
+            "column": 4,
+            "length": 3,
+            "line": 9
+          },
+          {
+            "column": 7,
+            "length": 3,
+            "line": 31
+          }
+        ]
+      },
+      "fix": null,
+      "id": "doc-paragraph",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "JavadocParagraph",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A Javadoc comment starts with a summary: a first sentence that ends with a period (followed by a blank or the end of the text) and does not start with a forbidden fragment (Checkstyle SummaryJavadoc). A comment of `{@inheritDoc}` or `{@return ...}` needs none.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "/** Good summary. Then more */\nclass A {\n  /** No period */\n  void a() {}\n\n  /** lowercase start. */\n  void b() {}\n\n  /**\n   * Two lines\n   * of summary.\n   */\n  void c() {}\n\n  /** {@inheritDoc} */\n  void d() {}\n\n  /** Version 1.5 is fine. */\n  void e() {}\n\n  /**\n   * @param x only a tag\n   */\n  void f() {}\n\n  /** A {@code Foo} is a thing. */\n  void g() {}\n\n  /** Ends with a question? */\n  void h() {}\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 3,
+            "length": 3,
+            "line": 3
+          },
+          {
+            "column": 3,
+            "length": 3,
+            "line": 6
+          },
+          {
+            "column": 3,
+            "length": 3,
+            "line": 21
+          },
+          {
+            "column": 3,
+            "length": 3,
+            "line": 26
+          },
+          {
+            "column": 3,
+            "length": 3,
+            "line": 29
+          }
+        ]
+      },
+      "fix": null,
+      "id": "doc-summary",
+      "languages": [
+        "java"
+      ],
+      "options": [
+        {
+          "default": "",
+          "description": "Regular expression a summary must not match at its start; empty: no check.",
+          "name": "forbidden_fragments",
+          "type": "string"
+        }
+      ],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "SummaryJavadoc",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A line that continues a block tag (`@param x`) is indented by at least `indent` blanks after the asterisk (Checkstyle JavadocTagContinuationIndentation: its offset of 4 is 5 blanks here). Lines that start HTML and lines inside `<pre>` and the like are left alone.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "/**\n * Summary.\n *\n * @param a first\n * continued with one blank\n * @param b first\n *     continued with five blanks\n * @param c first\n *    four blanks are not enough\n * @return x\n *   <pre>\n *   html is left alone\n *   </pre>\n */\nclass A {}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 4,
+            "length": 1,
+            "line": 5
+          },
+          {
+            "column": 7,
+            "length": 1,
+            "line": 9
+          }
+        ]
+      },
+      "fix": null,
+      "id": "doc-tag-indent",
+      "languages": [
+        "java"
+      ],
+      "options": [
+        {
+          "default": 5,
+          "description": "Blanks after the asterisk that a continuation line needs.",
+          "name": "indent",
+          "type": "int"
+        }
+      ],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "JavadocTagContinuationIndentation",
           "partial": false,
           "tool": "checkstyle"
         }
@@ -9107,6 +9447,154 @@
       "upstream": [
         {
           "id": "EqualsHashCode",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A string or character literal writes backspace, tab, line feed, form feed, carriage return, a quote or a backslash as an octal or unicode escape (Checkstyle IllegalTokenText).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  String a = \"\\u0009\";\n  String b = \"\\011\";\n  String c = \"\\t\\u0041\";\n  char d = '\\u0027';\n  String e = \"\\134\";\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 14,
+            "length": 8,
+            "line": 2
+          },
+          {
+            "column": 14,
+            "length": 6,
+            "line": 3
+          },
+          {
+            "column": 12,
+            "length": 8,
+            "line": 5
+          },
+          {
+            "column": 14,
+            "length": 6,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "illegal-escape-text",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "IllegalTokenText",
+          "partial": true,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A public or protected method, constructor or type has no `/** */` comment before it (Checkstyle MissingJavadocMethod and MissingJavadocType). Members of an interface are public. A method of a type that is not public (itself or an enclosing one), a type nested in a type that is not visible, and a declaration inside a method or an anonymous class are left out.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "/** Documented. */\npublic class Api {\n  private int x;\n  public Api() {}\n\n  /** Documented. */\n  public void ok() {}\n\n  public void f() {}\n\n  @Deprecated\n  protected void g() {}\n\n  @Override\n  public String toString() { return \"\"; }\n\n  @Test\n  public void t() {}\n\n  public int getX() { return x; }\n  public void setX(int x) { this.x = x; }\n  public int getY(int y) { return y; }\n\n  void packagePrivate() {}\n  private void hidden() {}\n  /** Nested. */\n  public interface Inner {\n    void member();\n  }\n\n  public static class NoDoc {\n    public void inNested() {}\n  }\n\n  public enum Kind {\n    A;\n\n    public void inEnum() {}\n  }\n\n  protected static class Prot {\n    public void inProt() {}\n  }\n\n  void run() {\n    Object o = new Object() {\n      public void anon() {}\n    };\n    class Local {\n      public void local() {}\n    }\n  }\n}\n\nclass PackagePrivate {\n  public void notPublicType() {}\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 3,
+            "length": 6,
+            "line": 4
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 9
+          },
+          {
+            "column": 3,
+            "length": 1,
+            "line": 11
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 22
+          },
+          {
+            "column": 5,
+            "length": 4,
+            "line": 28
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 31
+          },
+          {
+            "column": 5,
+            "length": 6,
+            "line": 32
+          },
+          {
+            "column": 3,
+            "length": 6,
+            "line": 35
+          },
+          {
+            "column": 5,
+            "length": 6,
+            "line": 38
+          },
+          {
+            "column": 3,
+            "length": 9,
+            "line": 41
+          }
+        ]
+      },
+      "fix": null,
+      "id": "missing-doc-comment",
+      "languages": [
+        "java"
+      ],
+      "options": [
+        {
+          "default": [
+            "Override"
+          ],
+          "description": "Names of annotations (`*` matches any run of characters) that excuse a declaration.",
+          "name": "allowed_annotations",
+          "type": "list"
+        },
+        {
+          "default": false,
+          "description": "Leave out getters and setters: `getX`, `isX` with no parameter and one `return`, `setX` with one parameter and one statement.",
+          "name": "property_accessors",
+          "type": "bool"
+        }
+      ],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "MissingJavadocMethod",
+          "partial": true,
+          "tool": "checkstyle"
+        },
+        {
+          "id": "MissingJavadocType",
           "partial": true,
           "tool": "checkstyle"
         }
@@ -9251,6 +9739,60 @@
         {
           "id": "StringLiteralEquality",
           "partial": false,
+          "tool": "checkstyle"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A line of a comment starts with `todo` in any other case, or with `TODO` and no colon (Checkstyle TodoComment with the Google format). Javadoc comments are not read.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "class A {\n  // TODO fix\n  // todo: lower\n  // TODO: good\n  // fix TODO later\n  // TODOS fix\n  /* line one\n     TODO second */\n  /**\n   * TODO javadoc\n   */\n  void f() {} // Todo trailing\n}\n",
+        "language": "java",
+        "spans": [
+          {
+            "column": 3,
+            "length": 11,
+            "line": 2
+          },
+          {
+            "column": 3,
+            "length": 14,
+            "line": 3
+          },
+          {
+            "column": 3,
+            "length": 1,
+            "line": 7
+          },
+          {
+            "column": 15,
+            "length": 16,
+            "line": 12
+          }
+        ]
+      },
+      "fix": null,
+      "id": "todo-comment",
+      "languages": [
+        "java"
+      ],
+      "options": [],
+      "presets": [
+        "java/google"
+      ],
+      "upstream": [
+        {
+          "id": "TodoComment",
+          "partial": true,
+          "tool": "checkstyle"
+        },
+        {
+          "id": "TodoFormat",
+          "partial": true,
           "tool": "checkstyle"
         }
       ]

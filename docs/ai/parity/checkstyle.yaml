@@ -15,14 +15,18 @@ entries:
   EmptyStatement: rule empty-statement | Only the body of an `if` or a loop.
   UpperEll: rule upper-ell
   ArrayTypeStyle: rule array-type-style
+  ArrayBracketNoWhitespace: rule array-bracket-space | Only the `{` of an array creation right after the `]`.
   AvoidStarImport: rule no-wildcard-imports | No allow-list option.
   NeedBraces: rule curly | No option for single-line bodies.
   ModifierOrder: rule modifier-order | Annotations are not checked against the modifiers.
   UnusedImports: rule unused-import | Names in Javadoc count as used; no option to turn that off.
   PackageName: rule naming-convention
   TypeName: rule naming-convention
-  MethodName: rule naming-convention
+  MethodName: rule naming-convention | Google's camel segments and `@Test` method names are patterns of the options `methods` and `test_methods`.
   MemberName: rule naming-convention
+  NonConstantFieldName: rule naming-convention | The member pattern of Google's name rule.
+  IllegalTokenText: rule illegal-escape-text | Only the special-escape message of the Google config.
+  AvoidEscapedUnicodeCharacters: rule avoid-unicode-escape | Printable-escape rule with control characters and tail comments allowed; no options.
   ConstantName: rule naming-convention | A `static final` field or an interface field; no exceptions list.
   ParameterName: rule naming-convention
   CatchParameterName: rule naming-convention
@@ -55,7 +59,7 @@ entries:
   MultipleVariableDeclarations: planned
   OverloadMethodsDeclarationOrder: planned
   VariableDeclarationUsageDistance: planned
-  AbbreviationAsWordInName: planned
+  AbbreviationAsWordInName: rule abbreviation-in-name | Only more than one capital in a row; no allowed length or ignore options.
   LambdaParameterName: planned
   ClassTypeParameterName: planned
   MethodTypeParameterName: planned
@@ -93,7 +97,8 @@ entries:
   FinalParameters: planned
   FinalLocalVariable: planned
   DesignForExtension: planned
-  TodoComment: planned
+  TodoComment: rule todo-comment | The Google format only, no option.
+  TodoFormat: rule todo-comment | The check id of the Google TodoComment instance.
   ArrayTrailingComma: planned
   AvoidNestedBlocks: planned
   AvoidInlineConditionals: planned
@@ -112,16 +117,17 @@ entries:
   JavadocType: planned
   JavadocVariable: planned
   JavadocStyle: planned
-  JavadocParagraph: planned
-  JavadocTagContinuationIndentation: planned
+  JavadocParagraph: rule doc-paragraph | `<p>` and empty-line placement; not `allowNewlineParagraph`.
+  JavadocTagContinuationIndentation: rule doc-tag-indent
+  JavadocMissingLeadingAsterisk: rule doc-asterisk
   JavadocPackage: planned
-  SummaryJavadoc: planned
+  SummaryJavadoc: rule doc-summary | Period and forbidden fragments; the summary is read from the lines of the comment, not from parsed HTML.
   SingleLineJavadoc: planned
   AtclauseOrder: planned
   NonEmptyAtclauseDescription: planned
   InvalidJavadocPosition: planned
-  MissingJavadocMethod: planned
-  MissingJavadocType: planned
+  MissingJavadocMethod: rule missing-doc-comment | Only methods and constructors, no minimum line count.
+  MissingJavadocType: rule missing-doc-comment | Only types, no scope option.
   MissingJavadocPackage: planned
   TrailingComment: wontfix a style a comment can break
   CommentsIndentation: formatter

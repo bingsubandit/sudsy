@@ -25,7 +25,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | biome | - | - | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | buf | 85.8% | 85.8% | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
 | checkmake | 60.9% | 100.0% | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
-| checkstyle | 25.2% | 23.1% | 126 | 36 | 12 | 72 | 0 | 6 | 0 | 72 |
+| checkstyle | 96.7% | 95.0% | 132 | 37 | 24 | 65 | 0 | 6 | 0 | 65 |
 | clang-format | - | - | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | csharpier | - | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
 | dotnet-format-editorconfig | - | - | 56 | 50 | 3 | 0 | 1 | 1 | 1 | 0 |

@@ -1,0 +1,4 @@
+abbreviation-in-name:
+  level: warn
+  options:
+    names: '^(?:[^A-Z]|[A-Z][^A-Z])*[A-Z]?$'

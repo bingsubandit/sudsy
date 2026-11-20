@@ -1,0 +1,51 @@
+id: doc-paragraph
+family: doc-comment
+params:
+  check: paragraph
+description: >-
+  The paragraphs of a Javadoc comment: a `<p>` tag stands right before the first word of its
+  paragraph (no space) and after an empty line, an empty line between paragraphs is followed by
+  `<p>`, and the comment does not start with `<p>` (Checkstyle JavadocParagraph). Text inside
+  `<pre>`, `<ul>` and the like, and after the first block tag, is left alone.
+example: "/**\n * One.\n * <p> Two.\n */\nclass A {}"
+severity: off
+category: style
+---
+id: doc-summary
+family: doc-comment
+params:
+  check: summary
+description: >-
+  A Javadoc comment starts with a summary: a first sentence that ends with a period (followed by
+  a blank or the end of the text) and does not start with a forbidden fragment (Checkstyle
+  SummaryJavadoc). A comment of `{@inheritDoc}` or `{@return ...}` needs none.
+example: "/** no period */\nclass A {}"
+severity: off
+category: style
+options:
+  - { name: forbidden_fragments, type: regex, default: "", description: "Regular expression a summary must not match at its start; empty: no check." }
+---
+id: doc-asterisk
+family: doc-comment
+params:
+  check: asterisk
+description: >-
+  A line of a Javadoc comment after the first starts with an asterisk (Checkstyle
+  JavadocMissingLeadingAsterisk). Empty lines are left alone.
+example: "/**\n   text\n */\nclass A {}"
+severity: off
+category: style
+---
+id: doc-tag-indent
+family: doc-comment
+params:
+  check: tag-indent
+description: >-
+  A line that continues a block tag (`@param x`) is indented by at least `indent` blanks after
+  the asterisk (Checkstyle JavadocTagContinuationIndentation: its offset of 4 is 5 blanks here).
+  Lines that start HTML and lines inside `<pre>` and the like are left alone.
+example: "/**\n * @param x a\n * b\n */\nclass A {}"
+severity: off
+category: style
+options:
+  - { name: indent, type: int, default: 5, description: "Blanks after the asterisk that a continuation line needs." }

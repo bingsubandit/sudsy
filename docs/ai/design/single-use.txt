@@ -40,6 +40,7 @@ concept directive-keyword-space # users: csharp
 concept distinct-group-by # users: sql
 concept doc-comment-model # users: csharp
 concept doc-comment-space # users: csharp
+concept doc-comment-style # users: java (shared)
 concept doc-partial-required # users: csharp
 concept doc-partial-typeparams # users: csharp
 concept doc-text-ends-with-period # users: csharp
@@ -153,6 +154,7 @@ concept trailing-comment-alignment # users: toml (shared)
 concept type-expression-layout # users: js
 concept typescript-type-checks # users: js
 concept unary-expression-layout # users: js
+concept unicode-escape # users: java (shared)
 concept unique-landmark # users: html
 concept unique-targets # users: makefile
 concept unknown-needs # users: github-actions

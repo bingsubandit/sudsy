@@ -1,0 +1,5 @@
+missing-doc-comment:
+  level: warn
+  options:
+    allowed_annotations: [Override, Test]
+    property_accessors: true

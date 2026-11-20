@@ -1,6 +1,6 @@
 {
   "description": "Formatter and linter for 27 languages in one binary and one config file",
-  "headline": "Ready for 9 languages, early support for 18 more.",
+  "headline": "Ready for 10 languages, early support for 17 more.",
   "keywords": [
     "formatter",
     "linter",
@@ -23,5 +23,5 @@
     "tflint",
     "javascript"
   ],
-  "ready": "Ready: JavaScript / TypeScript, Python, Protobuf, GraphQL, TOML, Angular templates, XML, Ruby and Makefile. The rest are in progress."
+  "ready": "Ready: JavaScript / TypeScript, Python, Protobuf, GraphQL, TOML, Angular templates, Java, XML, Ruby and Makefile. The rest are in progress."
 }

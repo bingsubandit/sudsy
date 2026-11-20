@@ -1,0 +1,17 @@
+id: abbreviation-in-name
+family: naming-convention
+params:
+  match: regex
+  names: type-declaration|method-declaration=Identifier:last|parameter-declaration=Identifier:last|declaration<field-declaration|declaration<local-declaration
+  ignored: declaration<constant-declaration|declaration<field-declaration&static&final|method-declaration&@Override=Identifier:last
+  message: "abbreviation in name `{name}` must contain no more than one consecutive capital letter"
+description: >-
+  A name has two or more capital letters in a row (Checkstyle AbbreviationAsWordInName with
+  `allowedAbbreviationLength` 0): write `XmlParser`, not `XMLParser`. Constants and overridden
+  methods are left out.
+example: "class XMLParser {}"
+severity: off
+category: style
+options:
+  - { name: names, type: regex, default: "", description: "Regular expression a type, method, parameter, field or local variable name must match; empty: not checked." }
+  - { name: ignored, type: regex, default: "^.*$", description: "Regular expression matched for the names that are left out (constants, overridden methods): every name by default." }

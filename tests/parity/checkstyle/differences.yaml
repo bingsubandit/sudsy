@@ -1,18 +1,34 @@
-coverage: 25.2  # share of the default-set findings of checkstyle on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage checkstyle; at least 85% is the bar)
-target: 23.1
+coverage: 96.7  # share of the default-set findings of checkstyle on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage checkstyle; at least 85% is the bar)
+target: 95.0
+fixes:  # gap name or lint rule -> one line: where and what to change
+  MissingJavadocMethod: "cause: no rule. Shared family `missing-doc-comment` (core-rules): public or protected method and constructor of public types without a `/** */` before it; Java as rows and options (allowed annotations, accessors)"
+  MethodName: "cause: preset pattern too loose. Google's check splits camel segments (no single letter, no `aB`, no `getURL`) and allows `_` only in `@Test` methods; naming-convention rows with an annotation condition and a `test_methods` option"
+  JavadocParagraph: "cause: no rule. Shared doc-comment parser (core-rules) and a `doc-paragraph` check: `<p>` preceded by an empty line and glued to the first word"
+  SummaryJavadoc: "cause: no rule. `doc-summary` check on the shared doc-comment parser: first sentence ends with a period, no forbidden fragment"
+  TodoFormat: "cause: no rule. Pattern rule on comments: `TODO` in capitals followed by a colon"
+  MissingJavadocType: "cause: no rule. `missing-doc-comment` on types (all enclosing types public or protected)"
+  AbbreviationAsWordInName: "cause: no rule. Naming family check: more than N consecutive capitals in a name"
+  ArrayBracketNoWhitespace: "cause: no rule. Token pattern rule on `[` and `]` spacing"
+  IllegalTokenText: "cause: no rule. Pattern rule on string and char literals: octal or Unicode escapes that have a short escape, whitespace other than the ASCII space"
+  AvoidEscapedUnicodeCharacters: "cause: no rule. Pattern rule on string and char literals: a `\\uXXXX` escape of a printable character"
+  VariableDeclarationUsageDistance: "cause: no rule. Scope family: statements between a local's declaration and its first use"
+  NonConstantFieldName: "cause: no rule. Naming rows: Google's pattern for non-constant fields (`static` non-final)"
+  SingleSpaceSeparator: "cause: no rule. Token pattern rule: one space between tokens on a line"
+  JavadocMissingLeadingAsterisk: "cause: no rule. Check on the shared doc-comment parser"
+  JavadocTagContinuationIndentation: "cause: no rule. Check on the shared doc-comment parser"
 missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
-  MissingJavadocMethod: 18283
-  MethodName: 7887
-  JavadocParagraph: 5301
-  SummaryJavadoc: 1527
-  TodoFormat: 1498
-  MissingJavadocType: 894
-  AbbreviationAsWordInName: 868
-  ArrayBracketNoWhitespace: 835
-  IllegalTokenText: 833
-  AvoidEscapedUnicodeCharacters: 667
   VariableDeclarationUsageDistance: 632
-  NonConstantFieldName: 416
   SingleSpaceSeparator: 239
-  JavadocMissingLeadingAsterisk: 225
-  JavadocTagContinuationIndentation: 217
+  LineLength: 186
+  AtclauseOrder: 85
+  OverloadMethodsDeclarationOrder: 72
+  OperatorWrapNL: 71
+  LocalFinalVariableName: 56
+  MissingJavadocMethod: 38
+  JavadocLeadingAsteriskAlign: 33
+  JavadocMissingLeadingAsterisk: 29
+  SummaryJavadoc: 29
+  LocalVariableName: 28
+  PatternVariableName: 28
+  JavadocTagContinuationIndentation: 27
+  OneTopLevelClass: 26

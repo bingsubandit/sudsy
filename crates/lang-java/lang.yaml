@@ -2,7 +2,7 @@ vscode-languages: [java]
 extensions: [java]
 formatter: JavaFormatter
 parse: parser::parse_file
-families: "&[core_rules::regex_source::FAMILY, core_rules::naming::FAMILY]"
+families: "&[core_rules::regex_source::FAMILY, core_rules::naming::FAMILY, core_rules::doc_comments::FAMILY, core_rules::doc_style::FAMILY, core_rules::unicode_escape::FAMILY]"
 options:
   - indent_size: 2
   - line_width: 100

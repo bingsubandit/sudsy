@@ -1,0 +1,4 @@
+doc-summary:
+  level: warn
+  options:
+    forbidden_fragments: '^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )|^[a-z]'

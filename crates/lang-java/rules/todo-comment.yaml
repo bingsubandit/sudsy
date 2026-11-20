@@ -1,0 +1,15 @@
+id: todo-comment
+message: '`TODO:` must be written in all caps and followed by a colon'
+description: >-
+  A line of a comment starts with `todo` in any other case, or with `TODO` and no colon
+  (Checkstyle TodoComment with the Google format). Javadoc comments are not read.
+example: '// todo fix'
+severity: off
+category: style
+rule:
+  kind: Program
+token:
+  kind: [Comment]
+  deep: true
+  needs: 'oO'
+  regex: '(?:^//|^/\*|\n)[ \t]*(?:(?:t[oO][dD][oO]|To[dD][oO]|TOd[oO]|TODo)\b|TODO\b(?:[^:]|$))'

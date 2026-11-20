@@ -4,7 +4,7 @@
 
 <p align="center"><b>One formatter and linter for your whole repo.</b><br>
 One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest, measured file by file against each of them.<br>
-<b><!-- generated:support-headline -->Ready for 9 languages, early support for 18 more.<!-- /generated --></b></p>
+<b><!-- generated:support-headline -->Ready for 10 languages, early support for 17 more.<!-- /generated --></b></p>
 
 <p align="center">
 <a href="https://github.com/bingsubandit/sudsy/releases"><img alt="release" src="https://img.shields.io/github/v/release/bingsubandit/sudsy"></a>
@@ -13,7 +13,7 @@ One binary and one config file in place of Prettier, ESLint, ruff, buf, terrafor
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: JavaScript / TypeScript, Python, Protobuf, GraphQL, TOML, Angular templates, XML, Ruby and Makefile. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
+> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: JavaScript / TypeScript, Python, Protobuf, GraphQL, TOML, Angular templates, Java, XML, Ruby and Makefile. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
 > **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: Python, Protobuf, GraphQL, TOML, Angular templates, XML, Ruby and Makefile. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
 
 ## Install
@@ -72,6 +72,7 @@ Each number is measured on real-world code against the reference tool with its d
 | GraphQL | █████████░ 99% Prettier | 21 rules · reference tool: none found | Ready |
 | TOML | █████████░ 98% taplo | 15 rules · reference tool: none found | Ready |
 | Angular templates | █████████░ 97% Prettier | 142 rules · reference tool: none found | Ready |
+| Java | █████████░ 91% google-java-format | █████████░ 95% Checkstyle | Ready |
 | XML | █████████░ 99% CSharpier XML | 17 rules · reference tool: none found | Ready |
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
 | Makefile | Sudsy formatter · reference tool: none found | ██████████ 100% checkmake | Lint only: Ready |
@@ -83,7 +84,6 @@ Each number is measured on real-world code against the reference tool with its d
 | YAML | ██████████ 100% Prettier | ███████░░░ 74% yamllint | In progress |
 | JSON / JSONC | ██████████ 100% Prettier<br>██████████ 100% Biome | not measured eslint-plugin-jsonc | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | not measured PHPStan | In progress |
-| Java | █████████░ 91% google-java-format | ██░░░░░░░░ 23% Checkstyle | In progress |
 | Kotlin | ████████░░ 82% ktlint | █░░░░░░░░░ 11% ktlint | In progress |
 | Shell | ████████░░ 81% shfmt | ████████░░ 86% ShellCheck | In progress |
 | SQL | ███████░░░ 78% sqlfluff | ░░░░░░░░░░ 3% sqlfluff | In progress |

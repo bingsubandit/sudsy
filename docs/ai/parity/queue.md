@@ -46,22 +46,22 @@ Lint: coverage 60.9%, target 100%; rules by missed findings:
 
 ## checkstyle
 
-Lint: coverage 25.2%, target 23.1%; rules by missed findings:
-1. `MissingJavadocMethod` (18283 missed)
-2. `MethodName` (7887 missed)
-3. `JavadocParagraph` (5301 missed)
-4. `SummaryJavadoc` (1527 missed)
-5. `TodoFormat` (1498 missed)
-6. `MissingJavadocType` (894 missed)
-7. `AbbreviationAsWordInName` (868 missed)
-8. `ArrayBracketNoWhitespace` (835 missed)
-9. `IllegalTokenText` (833 missed)
-10. `AvoidEscapedUnicodeCharacters` (667 missed)
-11. `VariableDeclarationUsageDistance` (632 missed)
-12. `NonConstantFieldName` (416 missed)
-13. `SingleSpaceSeparator` (239 missed)
-14. `JavadocMissingLeadingAsterisk` (225 missed)
-15. `JavadocTagContinuationIndentation` (217 missed)
+Lint: coverage 96.7%, target 95%; rules by missed findings:
+1. `VariableDeclarationUsageDistance` (632 missed) Fix: cause: no rule. Scope family: statements between a local's declaration and its first use
+2. `SingleSpaceSeparator` (239 missed) Fix: cause: no rule. Token pattern rule: one space between tokens on a line
+3. `LineLength` (186 missed)
+4. `AtclauseOrder` (85 missed)
+5. `OverloadMethodsDeclarationOrder` (72 missed)
+6. `OperatorWrapNL` (71 missed)
+7. `LocalFinalVariableName` (56 missed)
+8. `MissingJavadocMethod` (38 missed) Fix: cause: no rule. Shared family `missing-doc-comment` (core-rules): public or protected method and constructor of public types without a `/** */` before it; Java as rows and options (allowed annotations, accessors)
+9. `JavadocLeadingAsteriskAlign` (33 missed)
+10. `JavadocMissingLeadingAsterisk` (29 missed) Fix: cause: no rule. Check on the shared doc-comment parser
+11. `SummaryJavadoc` (29 missed) Fix: cause: no rule. `doc-summary` check on the shared doc-comment parser: first sentence ends with a period, no forbidden fragment
+12. `LocalVariableName` (28 missed)
+13. `PatternVariableName` (28 missed)
+14. `JavadocTagContinuationIndentation` (27 missed) Fix: cause: no rule. Check on the shared doc-comment parser
+15. `OneTopLevelClass` (26 missed)
 
 ## clang-format
 

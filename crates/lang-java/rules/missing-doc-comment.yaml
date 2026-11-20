@@ -1,0 +1,23 @@
+id: missing-doc-comment
+family: missing-doc-comment
+params:
+  message: "missing a Javadoc comment for `{name}`"
+  visible: public protected
+  implicit-public-in: interface @interface
+  getters: get is
+  setters: set
+  methods: method-declaration|constructor-declaration
+  outer.methods: public
+  types: type-declaration
+  outer.types: public protected
+description: >-
+  A public or protected method, constructor or type has no `/** */` comment before it
+  (Checkstyle MissingJavadocMethod and MissingJavadocType). Members of an interface are public.
+  A method of a type that is not public (itself or an enclosing one), a type nested in a type
+  that is not visible, and a declaration inside a method or an anonymous class are left out.
+example: "public class A {\n  public void f() {}\n}"
+severity: off
+category: style
+options:
+  - { name: allowed_annotations, type: list, default: ["Override"], description: "Names of annotations (`*` matches any run of characters) that excuse a declaration." }
+  - { name: property_accessors, type: bool, default: false, description: "Leave out getters and setters: `getX`, `isX` with no parameter and one `return`, `setX` with one parameter and one statement." }

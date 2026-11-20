@@ -5,6 +5,7 @@ params:
   packages: namespace=ScopedIdentifier|Identifier
   types: type-declaration
   methods: method-declaration=Identifier:last
+  test_methods: method-declaration&@*Test=Identifier:last
   members: declaration<field-declaration
   constants: declaration<constant-declaration|declaration<field-declaration&static&final
   parameters: parameter-declaration=Identifier:last
@@ -24,6 +25,7 @@ options:
   - { name: packages, type: regex, default: "", description: "Regular expression a package name must match; empty: not checked." }
   - { name: types, type: regex, default: "", description: "Regular expression a class, interface, enum, record or annotation type name must match; empty: not checked." }
   - { name: methods, type: regex, default: "", description: "Regular expression a method name must match; empty: not checked." }
+  - { name: test_methods, type: regex, default: "", description: "Regular expression the name of a method annotated `@Test`, or with an annotation whose name ends in `Test`, must match; empty: the `methods` pattern applies." }
   - { name: members, type: regex, default: "", description: "Regular expression a field name must match; empty: not checked." }
   - { name: constants, type: regex, default: "", description: "Regular expression a constant name must match; empty: not checked." }
   - { name: parameters, type: regex, default: "", description: "Regular expression a method parameter name must match; empty: not checked." }

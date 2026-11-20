@@ -1,0 +1,11 @@
+id: array-bracket-space
+message: 'put a space between `]` and the `{` of the array initializer'
+description: >-
+  An array creation whose `{` follows the `]` right away, `new int[]{1}` (Checkstyle
+  ArrayBracketNoWhitespace).
+example: 'int[] a = new int[]{1};'
+severity: off
+category: style
+rule:
+  kind: ArrayCreationExpression
+  regex: '^[^{"]*\]\{'

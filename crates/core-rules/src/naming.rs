@@ -1,8 +1,7 @@
 //! The `naming-convention` family: the name of a kind of declaration follows the convention an
 //! option sets. Each param but `message` and `match` is `<option>: <rows>`: the rows are
-//! `|`-separated and a row is a grammar tag, optionally `<parent-tag` (the parent has that tag),
-//! then `&word` for each modifier keyword the declaration (the parent, with a parent tag) must
-//! have, then `=path` (a [`SlotPath`]; the node's `name` slot, or its `key` slot, by default). The
+//! `|`-separated declaration rows ([`crate::decl_rows`]: a grammar tag, `<parent-tag`, `&modifier`,
+//! `&@annotation`, `=path`; the node's `name` slot, or its `key` slot, by default). The
 //! option's value is a convention (`PascalCase`, `camelCase`, `snake_case`, `UPPER_CASE`) or
 //! `off`; leading `$` and `_` are ignored. With `match: regex` the value is a regular expression
 //! the name must match instead (empty: not checked). The message has `{name}` and
@@ -13,9 +12,10 @@
 //! rules: naming-convention
 //! reads: family:naming-convention
 
+use crate::decl_rows::Row;
 use crate::slot_path::SlotPath;
 use crate::{Family, Params, RegexCache, Rule, RuleContext, RuleMeta};
-use core_syntax::{Grammar, SyntaxNode};
+use core_syntax::SyntaxNode;
 
 pub const FAMILY: Family = Family {
     name: "naming-convention",
@@ -34,65 +34,6 @@ pub fn follows(convention: &str, name: &str) -> bool {
         "UPPER_CASE" => !name.chars().any(|c| c.is_ascii_lowercase()),
         _ => true,
     }
-}
-
-struct Row {
-    option: String,
-    tag: String,
-    parent: Option<String>,
-    modifiers: Vec<String>,
-    path: Option<SlotPath>,
-}
-
-impl Row {
-    fn parse(option: &str, alt: &str) -> Result<Row, String> {
-        let (alt, path) = match alt.split_once('=') {
-            Some((a, p)) => (a, Some(SlotPath::parse(p)?)),
-            None => (alt, None),
-        };
-        let mut parts = alt.split('&');
-        let head = parts.next().unwrap_or_default();
-        let (tag, parent) = match head.split_once('<') {
-            Some((t, par)) => (t, Some(par.to_string())),
-            None => (head, None),
-        };
-        Ok(Row {
-            option: option.to_string(),
-            tag: tag.to_string(),
-            parent,
-            modifiers: parts.map(str::to_string).collect(),
-            path,
-        })
-    }
-
-    fn conditions(&self) -> usize {
-        usize::from(self.parent.is_some()) + self.modifiers.len()
-    }
-
-    fn matches(&self, g: &Grammar, node: &SyntaxNode) -> bool {
-        if !g.has_tag(node.kind(), &self.tag) {
-            return false;
-        }
-        let holder = match &self.parent {
-            Some(tag) => match node.parent().filter(|p| g.has_tag(p.kind(), tag)) {
-                Some(p) => p,
-                None => return false,
-            },
-            None => node.clone(),
-        };
-        self.modifiers.iter().all(|m| has_modifier(g, &holder, m))
-    }
-}
-
-/// Whether `node` has a `modifiers` child with the keyword `word`.
-fn has_modifier(g: &Grammar, node: &SyntaxNode, word: &str) -> bool {
-    node.children()
-        .filter(|c| g.has_tag(c.kind(), "modifiers"))
-        .any(|m| {
-            m.children_with_tokens()
-                .filter_map(|e| e.into_token())
-                .any(|t| t.text() == word)
-        })
 }
 
 struct Naming {
@@ -152,7 +93,11 @@ impl Rule for Naming {
 
     fn check(&self, node: &SyntaxNode, ctx: &mut RuleContext<'_>) {
         let g = ctx.file.grammar;
-        let Some(row) = self.rows.iter().find(|r| r.matches(g, node)) else {
+        // a more specific row whose option is empty (regex mode: not checked) leaves the node to the next row
+        let regex = self.regex.is_some();
+        let Some(row) = (self.rows.iter())
+            .find(|r| r.matches(g, node) && !(regex && ctx.options.string(&r.option).is_empty()))
+        else {
             return;
         };
         let default = SlotPath::parse("name|key").unwrap_or_else(|_| unreachable!());

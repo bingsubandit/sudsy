@@ -14,13 +14,34 @@ java:
         level: warn
         options:
           max: 100
+      doc-paragraph: warn
+      doc-asterisk: warn
+      doc-tag-indent: warn
+      doc-summary:
+        level: warn
+        options:
+          forbidden_fragments: '^@return the *|^This method returns |^A [{]@code [a-zA-Z0-9]+[}]( is a )|^[a-z]'
+      todo-comment: warn
+      avoid-unicode-escape: warn
+      illegal-escape-text: warn
+      array-bracket-space: warn
+      abbreviation-in-name:
+        level: warn
+        options:
+          names: '^(?:[^A-Z]|[A-Z][^A-Z])*[A-Z]?$'
+      missing-doc-comment:
+        level: warn
+        options:
+          allowed_annotations: [Override, Test]
+          property_accessors: true
       naming-convention:
         level: warn
         options:
           packages: '^[a-z]+(\.[a-z][a-z0-9]*)*$'
           types: '^[A-Z][a-zA-Z0-9]*$'
-          methods: '^[a-z][a-z0-9]\w*$'
-          members: '^[a-z][a-z0-9][a-zA-Z0-9]*$'
+          methods: '^[a-z](?:[a-z]|[0-9]+(?:_[0-9]+)*)+(?:[A-Z](?:[a-z]|[0-9]+(?:_[0-9]+)*)+)*[A-Z]?$'
+          test_methods: '^[a-z][a-z0-9]+(?:[A-Z][a-z0-9]+)*[A-Z]?(?:_[a-z][a-z0-9]+(?:[A-Z][a-z0-9]+)*[A-Z]?)*$'
+          members: '^[a-z](?:[a-z]|[0-9]+(?:_[0-9]+)*)(?:[a-zA-Z]|[0-9]+(?:_[0-9]+)*)*$'
           parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
           catch_parameters: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'
           locals: '^[a-z]([a-z0-9][a-zA-Z0-9]*)?$'

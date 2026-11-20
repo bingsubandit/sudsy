@@ -1,0 +1,27 @@
+id: avoid-unicode-escape
+family: unicode-escape
+params:
+  message: "write the character itself instead of its unicode escape, or explain the escape in a comment on the line"
+description: >-
+  A string or character literal writes a visible character as a `\uXXXX` escape, and the line has
+  no trailing comment (Checkstyle AvoidEscapedUnicodeCharacters). Escapes of control, space and
+  format characters are fine.
+example: 'String s = "é";'
+severity: off
+category: style
+---
+id: illegal-escape-text
+message: "use the special escape sequence (`\\n`, `\\t`, `\\\"`) instead of an octal or unicode escape of the same character"
+description: >-
+  A string or character literal writes backspace, tab, line feed, form feed, carriage return,
+  a quote or a backslash as an octal or unicode escape (Checkstyle IllegalTokenText).
+example: 'String s = "\u0009";'
+severity: off
+category: style
+rule:
+  kind: Program
+token:
+  kind: [String, Char]
+  deep: true
+  needs: '\'
+  regex: '\\u00(?:08|09|0[aAcCdD]|22|27|5[cC])|\\(?:0(?:10|11|12|14|15|42|47)|134)'

@@ -1,0 +1,5 @@
+naming-convention:
+  level: warn
+  options:
+    methods: '^[a-z](?:[a-z]|[0-9]+(?:_[0-9]+)*)+(?:[A-Z](?:[a-z]|[0-9]+(?:_[0-9]+)*)+)*[A-Z]?$'
+    test_methods: '^[a-z][a-z0-9]+(?:[A-Z][a-z0-9]+)*[A-Z]?(?:_[a-z][a-z0-9]+(?:[A-Z][a-z0-9]+)*[A-Z]?)*$'
