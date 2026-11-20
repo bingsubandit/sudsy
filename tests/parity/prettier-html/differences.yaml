@@ -27,7 +27,7 @@ ratchet:
   prettier-vue-html: 10
   real-world: 216
   real-world-svelte: 941
-  real-world-vue: 782
+  real-world-vue: 874
 target-files:
   prettier-html: 144
   prettier-svelte: 76
