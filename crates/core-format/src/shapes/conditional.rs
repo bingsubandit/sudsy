@@ -215,7 +215,8 @@ fn chained(
     let wrap_mode = hooks.wrap_branches(cx, node, &top);
     // Comments in front of `?` and `:` move to the front of their branch.
     let moved = |t: &SyntaxToken| {
-        if comments::leading_comments(g, t).is_empty() {
+        let cs = comments::leading_comments(g, t);
+        if cs.is_empty() || cs.iter().any(|c| c.kind != comments::CommentKind::Line) {
             return Doc::Nil;
         }
         cx.hold_leading(t);
@@ -273,7 +274,7 @@ fn chained(
                 Doc::Nil
             };
             if cond {
-                concat(vec![lead, align(2, mv), d])
+                concat(vec![align(2, concat(vec![lead, mv])), d])
             } else {
                 align(2, concat(vec![lead, mv, d]))
             }
