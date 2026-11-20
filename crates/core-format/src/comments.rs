@@ -164,7 +164,10 @@ impl CommentStyle {
     /// The gap before `c`: `gap`, or the blanks the source has when `keep_gap` and they are more.
     pub fn gap_before(&self, c: &Comment) -> crate::Doc {
         if self.align_lines {
-            return crate::doc::lit(GAP_MARK);
+            return match self.gap {
+                1 => crate::doc::lit(GAP_MARK),
+                n => crate::doc::text(format!("{}\u{1}", " ".repeat(n))),
+            };
         }
         let source = match (&c.element, self.keep_gap) {
             (SyntaxElement::Token(t), true) => t

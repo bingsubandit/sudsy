@@ -384,7 +384,16 @@ impl NodeFormatter for LazyRules {
         }
     }
 
-    fn comment_style(&self, _: &ResolvedOptions) -> CommentStyle {
-        self.get().comment_style()
+    /// The facts' style; a language that declares `spaces_before_trailing_comments` and
+    /// `align_trailing_comments` has them: the gap is that many blanks, and the comments of
+    /// consecutive lines start in one column when the second is true.
+    fn comment_style(&self, o: &ResolvedOptions) -> CommentStyle {
+        let mut style = self.get().comment_style();
+        if o.get("spaces_before_trailing_comments").is_some() {
+            style.gap = o.uint("spaces_before_trailing_comments", 1);
+            style.keep_gap = false;
+            style.align_lines = o.flag("align_trailing_comments", false) && style.gap > 0;
+        }
+        style
     }
 }
