@@ -109,7 +109,7 @@ fn chain(cx: &FormatCtx<'_>, elems: &[SyntaxElement], breakable: bool) -> R {
                     expr(cx, n)?
                 };
                 let d = concat(vec![d, held.map_or(Doc::Nil, |l| cx.held_trailing(&l))]);
-                if pairs {
+                if pairs && i > 0 {
                     pair.push(d);
                 } else {
                     parts.extend(std::mem::take(&mut pair));
