@@ -274,7 +274,11 @@ fn chained(
                 Doc::Nil
             };
             if cond {
-                concat(vec![align(2, concat(vec![lead, mv])), d])
+                if matches!(lead, Doc::Nil) {
+                    concat(vec![align(2, concat(vec![lead, mv])), d])
+                } else {
+                    align(2, concat(vec![lead, mv, d]))
+                }
             } else {
                 align(2, concat(vec![lead, mv, d]))
             }
@@ -304,6 +308,16 @@ fn chained(
             align(policy.tab_width.saturating_sub(2), branches)
         });
     }
+    let after_comment = same_parent
+        && !is_parent_test
+        && parent.as_ref().is_some_and(|up| {
+            let t = if is_alt_of_parent {
+                parts(cx, up).ok().map(|u| u.colon)
+            } else {
+                parts(cx, up).ok().map(|u| u.q)
+            };
+            t.is_some_and(|t| hooks.comment_ends_line(cx, &t))
+        });
     let test_doc = {
         let d = operand(cx, hooks, &p.test)?;
         if is_alt_of_parent { align(2, d) } else { d }
@@ -312,7 +326,8 @@ fn chained(
     let closing = !wrap_mode && around.member_operand && !around.indent;
     let body = concat(vec![
         test_doc,
-        if wrap_mode {
+        // A branch that follows a line comment is aligned by its parent already.
+        if wrap_mode || after_comment {
             concat(out)
         } else {
             indent(concat(out))
