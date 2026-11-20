@@ -226,7 +226,18 @@ impl Flow<'_> {
                 return (space && !glued).then(|| doc::lit(" "));
             }
         }
-        match self.want(a, b) {
+        let pointer = self.rules.and_then(|r| {
+            let (before, after) = match cx.options.get("pointer_alignment") {
+                Some(core_config::OptionValue::String(s)) => match s.as_str() {
+                    "left" => (false, true),
+                    "middle" => (true, true),
+                    _ => (true, false),
+                },
+                _ => return None,
+            };
+            r.pointer_gap(a, b, before, after)
+        });
+        match pointer.or_else(|| self.want(a, b)) {
             Some(blank) => blank.then(|| doc::lit(" ")),
             None if broken => Some(doc::lit(" ")),
             None if !gap => self.at_least_one(a, b).then(|| doc::lit(" ")),

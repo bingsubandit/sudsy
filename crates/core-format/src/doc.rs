@@ -737,6 +737,13 @@ pub fn label(tag: &'static str, d: Doc) -> Doc {
 /// See [`Doc::FitsBelow`]: `fits` when `width` columns fit `levels` levels below the current
 /// indentation, else `otherwise`.
 pub const AT_COLUMN: usize = usize::MAX;
+/// Like [`AT_COLUMN`], and the text after the document up to its first possible line break counts.
+pub const AT_COLUMN_REST: usize = usize::MAX - 1;
+
+/// [`fits_at_column`] with the text that follows counted.
+pub fn fits_at_column_rest(width: usize, fits: Doc, otherwise: Doc) -> Doc {
+    fits_below(AT_COLUMN_REST, width, fits, otherwise)
+}
 
 /// [`fits_below`] counting from the column the printer is at (`levels` [`AT_COLUMN`]).
 pub fn fits_at_column(width: usize, fits: Doc, otherwise: Doc) -> Doc {

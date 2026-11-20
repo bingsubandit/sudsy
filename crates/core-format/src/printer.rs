@@ -428,7 +428,7 @@ impl<'a> Printer<'a> {
             Doc::Reserve(_) => {}
             Doc::FitsBelow(f) => {
                 let mut below = indent;
-                let at_column = f.levels == crate::doc::AT_COLUMN;
+                let at_column = f.levels == crate::doc::AT_COLUMN || f.levels == crate::doc::AT_COLUMN_REST;
                 if at_column && mode == Mode::Flat {
                     // (the group around is flat: nothing here may break)
                     push(cmds, indent, mode, &f.fits);
@@ -451,7 +451,7 @@ impl<'a> Printer<'a> {
                     &mut self.measure,
                     probe,
                     // (at a column the text after the items is counted by the caller's width)
-                    if at_column { &[] } else { cmds },
+                    if at_column && f.levels == crate::doc::AT_COLUMN { &[] } else { cmds },
                     room,
                     false,
                     &self.group_modes,

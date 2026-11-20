@@ -50,6 +50,10 @@ options:
       kinds:
         tight_after: [Ellipsis]
         tight_behind: [Star, Amp, AmpAmp]
+        pointer: [Star, Amp, AmpAmp]
+        pointer_in: [Parameter, Declarator, FunctionDeclaration, SimpleDeclaration, TemplateArguments, DeclaratorGroup, Cast]
+        pointer_type: [Ident, Keyword, Greater]
+        pointer_name: [Ident, Keyword]
   - brace_wrapping:
       kind: "words"
       doc: "Constructs whose opening brace goes on its own line: `class`, `struct`, `union`, `enum`, `function`, `namespace`, `extern`, `control` (if, for, while, switch, do, try), `case`, `else` (the `else` after a block starts a line), `catch` (the `catch` after a block starts a line), `while` (the `while` of a do loop starts a line). Empty: every brace stays on the line of its construct."

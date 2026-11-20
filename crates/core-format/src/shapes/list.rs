@@ -406,6 +406,8 @@ fn list_of(
     }
     let mut inner = Vec::new();
     let mut widest = 0;
+    let mut widest_last = 0;
+    let mut last_flat: Option<usize> = None;
     // The items on one line with the last one (a lambda) broken at its body, as a candidate.
     let hug_ok = style.align_open
         && !flat
@@ -465,11 +467,20 @@ fn list_of(
                     .descendants()
                     .any(|n| g.has_tag(n.kind(), "block"))
         });
-        widest = widest.max(if chain || items.len() == 1 {
+        let w = if let Some(h) = c.slots.get(i).and_then(|sl| chain_head(cx, &sl.node)) {
+            h
+        } else if chain || items.len() == 1 {
             item.head_width()
         } else {
             item.flat_width().unwrap_or_else(|| item.width_to_hardline())
-        });
+        };
+        if i == last {
+            widest_last = w;
+            // (the text after the list counts for an item that cannot break before its end)
+            last_flat = if chain { None } else { item.flat_width() };
+        } else {
+            widest = widest.max(w);
+        }
         // (an item that is too long for a line breaks inside itself, where the source breaks)
         // (the operands of a chain that is not the first item hang below its first operand)
         let item = if style.align_open
@@ -571,11 +582,25 @@ fn list_of(
         inner
     } else if style.align_open {
         let inner = doc::shared(inner);
-        doc::fits_at_column(
-            widest + 1,
-            doc::align(doc::ALIGN_TO_COLUMN, inner.clone()),
-            doc::align(style.hang_indent, doc::concat(vec![doc::line(), inner])),
-        )
+        // (every item fits up to its separator; the last one with the text after the list too)
+        let hang = doc::align(style.hang_indent, doc::concat(vec![doc::line(), inner.clone()]));
+        let aligned = doc::align(doc::ALIGN_TO_COLUMN, inner);
+        let last_fit = match last_flat {
+            // (a lone item that fits on a line of its own below the opening: a nested call
+            // breaks there, not inside its arguments)
+            Some(w) if items.len() == 1 => doc::fits_at_column_rest(
+                w + 1,
+                aligned.clone(),
+                doc::fits_below(0, w + 1 + style.hang_indent, hang.clone(), aligned),
+            ),
+            Some(w) => doc::fits_at_column_rest(w + 1, aligned, hang.clone()),
+            None => doc::fits_at_column(widest_last + 1, aligned, hang.clone()),
+        };
+        if items.len() > 1 {
+            doc::fits_at_column(widest + 1, last_fit, hang)
+        } else {
+            last_fit
+        }
     } else {
         (0..style.indent_levels.max(1)).fold(inner, |d, _| doc::indent(d))
     };
@@ -759,4 +784,39 @@ fn attach_comments(cx: &FormatCtx<'_>, items: &mut [super::Rendered]) {
         let item = std::mem::replace(&mut after.doc, Doc::Nil);
         after.doc = doc::concat(vec![text, item]);
     }
+}
+
+/// The width of a chain of operators (or a conditional) up to its first operator, through the
+/// leftmost nested chain: what must fit on the line the chain starts on.
+fn chain_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
+    let g = cx.grammar;
+    let is_chain =
+        |n: &SyntaxNode| g.has_tag(n.kind(), "binary-chain") || g.has_tag(n.kind(), "conditional");
+    if !is_chain(node) {
+        return None;
+    }
+    let mut n = node.clone();
+    while let Some(first) = n.first_child().filter(|c| is_chain(c)) {
+        n = first;
+    }
+    let op = n
+        .children_with_tokens()
+        .filter_map(|e| e.into_token())
+        .find(|t| g.has_tag(t.kind(), "operator") || t.text() == "?")?;
+    let text = node.text().to_string();
+    let end = usize::from(op.text_range().end() - node.text_range().start());
+    let mut width = 0;
+    let mut blank = false;
+    for ch in text.get(..end)?.chars() {
+        if ch.is_whitespace() {
+            if !blank {
+                width += 1;
+            }
+            blank = true;
+        } else {
+            width += 1;
+            blank = false;
+        }
+    }
+    Some(width)
 }
