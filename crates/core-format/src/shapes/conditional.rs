@@ -13,6 +13,7 @@
 
 use super::chain::ends_in_line_comment;
 use crate::FormatCtx;
+use crate::comments;
 use crate::doc::{self, Doc};
 use crate::error::FormatError;
 use core_config::ResolvedOptions;
@@ -212,6 +213,26 @@ fn chained(
     let is_cond = |n: &Option<SyntaxNode>| n.as_ref().is_some_and(|n| n.kind() == kind);
     let (then_u, other_u) = (inner_of(&p.then), inner_of(&p.other));
     let wrap_mode = hooks.wrap_branches(cx, node, &top);
+    // Comments in front of `?` and `:` move to the front of their branch.
+    let moved = |t: &SyntaxToken| {
+        if comments::leading_comments(g, t).is_empty() {
+            return Doc::Nil;
+        }
+        cx.hold_leading(t);
+        let mut parts = Vec::new();
+        for c in &comments::leading_comments(g, t) {
+            parts.push(crate::context::comment_doc(c));
+            parts.push(
+                if c.kind == comments::CommentKind::Block && c.breaks_after == 0 {
+                    lit(" ")
+                } else {
+                    hardline()
+                },
+            );
+        }
+        concat(parts)
+    };
+    let (q_moved, colon_moved) = (moved(&p.q), moved(&p.colon));
     let (q, colon) = (hooks.token(cx, &p.q), hooks.token(cx, &p.colon));
     let (then_doc, other_doc) = (operand(cx, hooks, &p.then)?, operand(cx, hooks, &p.other)?);
     let mut out = Vec::new();
@@ -245,16 +266,16 @@ fn chained(
         };
         // A line comment after `?` ends the line: the branch starts on the next one. A
         // conditional in a branch indents its own branches once.
-        let branch = |t: &SyntaxToken, cond: bool, d: Doc| {
+        let branch = |t: &SyntaxToken, cond: bool, mv: Doc, d: Doc| {
             let lead = if hooks.comment_ends_line(cx, t) {
                 hardline()
             } else {
                 Doc::Nil
             };
             if cond {
-                concat(vec![lead, d])
+                concat(vec![lead, align(2, mv), d])
             } else {
-                align(2, concat(vec![lead, d]))
+                align(2, concat(vec![lead, mv, d]))
             }
         };
         let space = |t: &SyntaxToken| {
@@ -269,12 +290,12 @@ fn chained(
             q,
             space(&p.q),
             paren(true),
-            branch(&p.q, then_cond, then_doc),
+            branch(&p.q, then_cond, q_moved, then_doc),
             paren(false),
             doc::line(),
             colon,
             space(&p.colon),
-            branch(&p.colon, is_cond(&other_u), other_doc),
+            branch(&p.colon, is_cond(&other_u), colon_moved, other_doc),
         ]);
         out.push(if !same_parent || is_alt_of_parent || is_parent_test {
             branches
