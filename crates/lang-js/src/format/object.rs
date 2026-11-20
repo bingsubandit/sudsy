@@ -94,7 +94,7 @@ fn object(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     let shared = is_pattern
         && match (&p, pk) {
             (Some(p), Some(k::FORMAL_PARAMETER)) => {
-                pattern_with_type_literal(p)
+                pattern_with_annotation(p)
                     || (!p.children_with_tokens().any(|e| is_tok(&e, "="))
                         && hugs_only_param(p)
                         && p.parent().is_some_and(|fp| fp.children().count() == 1))
@@ -117,13 +117,22 @@ fn object(node: &SyntaxNode, cx: &FormatCtx<'_>) -> R {
     shapes::delimited_list(cx, node, &list)
 }
 
-/// A parameter `{ a, b }: { a: A; b: B }`: the pattern and the type literal break together,
-/// as one group of the parameter.
-pub(crate) fn pattern_with_type_literal(param: &SyntaxNode) -> bool {
+/// A parameter `{ a, b }: T`: the pattern breaks when the parameter does not fit on a line, as
+/// one group with its type.
+pub(crate) fn pattern_with_annotation(param: &SyntaxNode) -> bool {
     param.kind() == k::FORMAL_PARAMETER
         && param
             .first_child()
             .is_some_and(|c| c.kind() == k::OBJECT_PATTERN)
+        && param.children().any(|c| c.kind() == k::TS_TYPE_ANNOTATION)
+}
+
+/// A lone parameter `{ a, b }: { a: A; b: B }`: the pattern and the type literal break together,
+/// as one group of the parameter.
+pub(crate) fn pattern_with_type_literal(param: &SyntaxNode) -> bool {
+    pattern_with_annotation(param)
+        && param.parent().is_some_and(|fp| fp.children().count() == 1)
+        && !param.children_with_tokens().any(|e| is_tok(&e, "="))
         && param
             .children()
             .find(|c| c.kind() == k::TS_TYPE_ANNOTATION)

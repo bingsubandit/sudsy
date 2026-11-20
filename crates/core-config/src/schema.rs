@@ -689,6 +689,46 @@ pub mod shared {
         )
     }
 
+    pub fn assignment_op_token_skip_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "assignment_op_token_skip_kinds",
+            default,
+            "Node kinds of assignments whose operator is not searched for a line comment after it (the comment stays where it is); every other assignment keeps its value below the operator when a line comment follows the operator.",
+        )
+    }
+
+    pub fn assignment_destructure_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "assignment_destructure_kinds",
+            default,
+            "Node kinds of a destructuring on the left of an assignment: one of more than two entries with a renamed or defaulted entry breaks in preference to the value.",
+        )
+    }
+
+    pub fn assignment_generic_closure_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "assignment_generic_closure_kinds",
+            default,
+            "Node kinds of declarations whose generic closure value (`const f = <T>(a: T) => b`) stays on the operator's line while the left side breaks.",
+        )
+    }
+
+    pub fn type_argument_complex_kinds(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "type_argument_complex_kinds",
+            default,
+            "Node kinds of a lone type argument that make a call chain worth breaking inside (several type arguments always do).",
+        )
+    }
+
+    pub fn rewrite_parenthesize_pairs(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "rewrite_parenthesize_pairs",
+            default,
+            "Pairs of node kinds (child, parent, child, parent, ...): a node of the first kind directly inside one of the second gets parentheses around it.",
+        )
+    }
+
     pub fn assignment_indent(default: i64) -> OptionDef {
         OptionDef::int(
             "assignment_indent",

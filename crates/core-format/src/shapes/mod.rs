@@ -34,6 +34,7 @@ pub mod tabular;
 pub use arrow::{ArrowStyle, arrow_body};
 pub use assignment::{
     Assign, AssignHooks, AssignLayout, AssignPolicy, AssignStyle, NoAssignHooks, assignment,
+    complex_type_args,
 };
 pub use binary_chain::{
     BinaryHooks, BinaryPolicy, Hug, NoBinaryHooks, OperatorLine, Place, binary_chain, flattens,
@@ -54,7 +55,7 @@ pub use call_chain::{
 pub use chain::{MemberChain, ends_in_line_comment, gap_after_operator, member_chain};
 pub use compound::{Join, body as compound_body, continuation as compound_continuation};
 pub use conditional::{
-    Around, ConditionalHooks, ConditionalPolicy, NoConditionalHooks, conditional,
+    Around, ConditionalHooks, ConditionalPolicy, NoConditionalHooks, conditional, marked_branch,
 };
 pub use declaration::{
     Annotations, Clause, HeaderStyle, Printer, annotated, annotations_above, enum_body,

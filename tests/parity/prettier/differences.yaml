@@ -1,12 +1,12 @@
 ratchet:
   graphql: 123
   json: 4
-  markdown: 90
+  markdown: 93
   yaml: 5
 target-files:
   graphql: 124
   json: 4
-  markdown: 101
+  markdown: 104
   yaml: 5
 differences:
   code-span-backticks: gap  a code span with three backticks (tree-sitter-md does not read it as code) is kept; Prettier writes one backtick

@@ -120,16 +120,6 @@ impl AssignHooks for Hooks {
         if should_never_break_after_operator(cx, &right_u, a.short_key) {
             return Some(AssignLayout::NeverBreakAfterOperator);
         }
-        if is_complex_destructuring(a.node)
-            || (a.node.kind() == k::VARIABLE_DECLARATOR
-                && right_u.kind() == k::ARROW_FUNCTION_EXPRESSION
-                && right_u
-                    .children()
-                    .any(|c| c.kind() == k::TS_TYPE_PARAMETER_DECLARATION)
-                && can_break(&a.left))
-        {
-            return Some(AssignLayout::BreakLhs);
-        }
         (right_u.kind() == k::STRING_LITERAL || is_member_expression_chain(&right_u))
             .then_some(AssignLayout::BreakAfterOperator)
     }
@@ -196,20 +186,6 @@ pub(crate) fn assign_like(
     )
 }
 
-fn can_break(d: &Doc) -> bool {
-    match d {
-        Doc::Line | Doc::SoftLine | Doc::HardLine => true,
-        Doc::Concat(p) | Doc::Fill(p) => p.iter().any(can_break),
-        Doc::Group(g) => can_break(&g.contents),
-        Doc::Indent(x) | Doc::Align(_, x) | Doc::Label(_, x) | Doc::IndentIfBreak(_, x) => {
-            can_break(x)
-        }
-        Doc::IfBreak { broken, flat, .. } => can_break(broken) || can_break(flat),
-        Doc::Shared(s) => can_break(&s.doc),
-        _ => false,
-    }
-}
-
 fn is_member_expression_chain(n: &SyntaxNode) -> bool {
     if !super::ast::is_member(n.kind()) {
         return false;
@@ -219,34 +195,6 @@ fn is_member_expression_chain(n: &SyntaxNode) -> bool {
         Some(o) => is_member_expression_chain(&o),
         None => false,
     }
-}
-
-/// `const { a: b, c = 1, d } = x` (three or more properties, one renamed or defaulted).
-fn is_complex_destructuring(node: &SyntaxNode) -> bool {
-    if !matches!(
-        node.kind(),
-        k::VARIABLE_DECLARATOR | k::ASSIGNMENT_EXPRESSION
-    ) {
-        return false;
-    }
-    let Some(left) = node.first_child() else {
-        return false;
-    };
-    if !matches!(left.kind(), k::OBJECT_PATTERN | k::OBJECT_ASSIGNMENT_TARGET) {
-        return false;
-    }
-    left.children().count() > 2
-        && left.children().any(|p| match p.kind() {
-            k::BINDING_PROPERTY | k::ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER => {
-                p.children_with_tokens()
-                    .any(|e| e.as_token().is_some_and(|t| t.kind() == k::COLON))
-                    || p.children().any(|c| c.kind() == k::ASSIGNMENT_PATTERN)
-                    || p.children_with_tokens()
-                        .any(|e| e.as_token().is_some_and(|t| t.text() == "="))
-            }
-            k::ASSIGNMENT_TARGET_PROPERTY_PROPERTY => true,
-            _ => false,
-        })
 }
 
 fn should_never_break_after_operator(
@@ -327,7 +275,7 @@ fn poorly_breakable(cx: &FormatCtx<'_>, n: &SyntaxNode, deep: bool) -> Result<bo
             };
             let short = c.args.is_empty()
                 || (c.args.len() == 1 && is_lone_short_argument(cx, &un(&c.args[0].0)));
-            if !short {
+            if !short || shapes::complex_type_args(cx, c.type_args.as_ref())? {
                 return Ok(false);
             }
             go(Some(c.callee))

@@ -8857,6 +8857,27 @@
               ],
               "type": "string"
             },
+            "assignment_destructure_kinds": {
+              "default": [
+                "ObjectPattern",
+                "ObjectAssignmentTarget"
+              ],
+              "description": "Node kinds of a destructuring on the left of an assignment: one of more than two entries with a renamed or defaulted entry breaks in preference to the value.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "assignment_generic_closure_kinds": {
+              "default": [
+                "VariableDeclarator"
+              ],
+              "description": "Node kinds of declarations whose generic closure value (`const f = <T>(a: T) => b`) stays on the operator's line while the left side breaks.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "assignment_indent": {
               "default": 1,
               "description": "Levels of indentation of a value that moves below the operator of an assignment.",
@@ -8874,6 +8895,16 @@
                 "multiline"
               ],
               "type": "string"
+            },
+            "assignment_op_token_skip_kinds": {
+              "default": [
+                "AssignmentExpression"
+              ],
+              "description": "Node kinds of assignments whose operator is not searched for a line comment after it (the comment stays where it is); every other assignment keeps its value below the operator when a line comment follows the operator.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             },
             "binary_hug": {
               "default": "statement",
@@ -9041,6 +9072,19 @@
               ],
               "type": "string"
             },
+            "rewrite_parenthesize_pairs": {
+              "default": [
+                "TSIntersectionType",
+                "TSUnionType",
+                "TSTypeQuery",
+                "TSArrayType"
+              ],
+              "description": "Pairs of node kinds (child, parent, child, parent, ...): a node of the first kind directly inside one of the second gets parentheses around it.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "semi": {
               "default": true,
               "description": "End statements with `;`. When false a statement that starts with `(`, `[`, a backtick, `+`, `-`, `/` or `<` gets a `;` in front, as a class property does before a member that starts with `[`, `(` or `*`.",
@@ -9055,6 +9099,18 @@
                 "none"
               ],
               "type": "string"
+            },
+            "type_argument_complex_kinds": {
+              "default": [
+                "TSUnionType",
+                "TSIntersectionType",
+                "TSTypeLiteral"
+              ],
+              "description": "Node kinds of a lone type argument that make a call chain worth breaking inside (several type arguments always do).",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "type": "object"
@@ -12114,6 +12170,27 @@
                     ],
                     "type": "string"
                   },
+                  "assignment_destructure_kinds": {
+                    "default": [
+                      "ObjectPattern",
+                      "ObjectAssignmentTarget"
+                    ],
+                    "description": "Node kinds of a destructuring on the left of an assignment: one of more than two entries with a renamed or defaulted entry breaks in preference to the value.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "assignment_generic_closure_kinds": {
+                    "default": [
+                      "VariableDeclarator"
+                    ],
+                    "description": "Node kinds of declarations whose generic closure value (`const f = <T>(a: T) => b`) stays on the operator's line while the left side breaks.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "assignment_indent": {
                     "default": 1,
                     "description": "Levels of indentation of a value that moves below the operator of an assignment.",
@@ -12131,6 +12208,16 @@
                       "multiline"
                     ],
                     "type": "string"
+                  },
+                  "assignment_op_token_skip_kinds": {
+                    "default": [
+                      "AssignmentExpression"
+                    ],
+                    "description": "Node kinds of assignments whose operator is not searched for a line comment after it (the comment stays where it is); every other assignment keeps its value below the operator when a line comment follows the operator.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "binary_hug": {
                     "default": "statement",
@@ -12298,6 +12385,19 @@
                     ],
                     "type": "string"
                   },
+                  "rewrite_parenthesize_pairs": {
+                    "default": [
+                      "TSIntersectionType",
+                      "TSUnionType",
+                      "TSTypeQuery",
+                      "TSArrayType"
+                    ],
+                    "description": "Pairs of node kinds (child, parent, child, parent, ...): a node of the first kind directly inside one of the second gets parentheses around it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "semi": {
                     "default": true,
                     "description": "End statements with `;`. When false a statement that starts with `(`, `[`, a backtick, `+`, `-`, `/` or `<` gets a `;` in front, as a class property does before a member that starts with `[`, `(` or `*`.",
@@ -12312,6 +12412,18 @@
                       "none"
                     ],
                     "type": "string"
+                  },
+                  "type_argument_complex_kinds": {
+                    "default": [
+                      "TSUnionType",
+                      "TSIntersectionType",
+                      "TSTypeLiteral"
+                    ],
+                    "description": "Node kinds of a lone type argument that make a call chain worth breaking inside (several type arguments always do).",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   }
                 },
                 "type": "object"

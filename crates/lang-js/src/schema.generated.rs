@@ -34,6 +34,16 @@ pub const ASSIGNMENT_CONDITIONAL: &str = "assignment_conditional";
 #[allow(dead_code)]
 pub const ASSIGNMENT_INDENT: &str = "assignment_indent";
 #[allow(dead_code)]
+pub const ASSIGNMENT_OP_TOKEN_SKIP_KINDS: &str = "assignment_op_token_skip_kinds";
+#[allow(dead_code)]
+pub const ASSIGNMENT_DESTRUCTURE_KINDS: &str = "assignment_destructure_kinds";
+#[allow(dead_code)]
+pub const ASSIGNMENT_GENERIC_CLOSURE_KINDS: &str = "assignment_generic_closure_kinds";
+#[allow(dead_code)]
+pub const REWRITE_PARENTHESIZE_PAIRS: &str = "rewrite_parenthesize_pairs";
+#[allow(dead_code)]
+pub const TYPE_ARGUMENT_COMPLEX_KINDS: &str = "type_argument_complex_kinds";
+#[allow(dead_code)]
 pub const CONDITIONAL_INDENT: &str = "conditional_indent";
 #[allow(dead_code)]
 pub const CONDITIONAL_LAYOUT: &str = "conditional_layout";
@@ -124,6 +134,11 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::assignment_layout("fluid"),
         core_config::shared::assignment_conditional("binary_test"),
         core_config::shared::assignment_indent(1),
+        core_config::shared::assignment_op_token_skip_kinds(&["AssignmentExpression"]),
+        core_config::shared::assignment_destructure_kinds(&["ObjectPattern", "ObjectAssignmentTarget"]),
+        core_config::shared::assignment_generic_closure_kinds(&["VariableDeclarator"]),
+        core_config::shared::rewrite_parenthesize_pairs(&["TSIntersectionType", "TSUnionType", "TSTypeQuery", "TSArrayType"]),
+        core_config::shared::type_argument_complex_kinds(&["TSUnionType", "TSIntersectionType", "TSTypeLiteral"]),
         core_config::shared::conditional_indent(1),
         core_config::shared::conditional_layout("chained"),
         core_config::shared::bracket_spacing(true),

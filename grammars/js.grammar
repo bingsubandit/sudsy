@@ -126,7 +126,7 @@ node AssignmentTargetPropertyProperty #opaque
 node SequenceExpression #expression #opaque #sequence #pure
 node Super #expression #opaque
 node AwaitExpression #expression #unary #await = operator:Keyword operand:#expression
-node ChainExpression #expression #opaque
+node ChainExpression #expression #opaque #tail-wrapper
 node ParenthesizedExpression #expression #parenthesized #transparent
 node Directive #statement #opaque
 node BlockStatement #statement #block #scope = LBrace items:#statement* RBrace
@@ -278,12 +278,12 @@ node TSFunctionType #scope #signature
 node TSConstructorType #scope #signature
 node TSMappedType #scope
 node TSTemplateLiteralType #opaque
-node TSAsExpression #expression #opaque #hug-wrapper #huggable-body
-node TSSatisfiesExpression #expression #opaque #hug-wrapper #huggable-body
+node TSAsExpression #expression #opaque #hug-wrapper
+node TSSatisfiesExpression #expression #opaque #hug-wrapper
 node TSTypeAssertion #expression #opaque #hug-wrapper
 node TSImportEqualsDeclaration #statement #opaque
 node TSExternalModuleReference #opaque
-node TSNonNullExpression #expression #unary = operand:#expression operator:#operator
+node TSNonNullExpression #expression #unary #tail-wrapper = operand:#expression operator:#operator
 node Decorator #statement #opaque #decorator #annotation
 node TSExportAssignment #statement #opaque #export-list
 node TSNamespaceExportDeclaration #statement #opaque
