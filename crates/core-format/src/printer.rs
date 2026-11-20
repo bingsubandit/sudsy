@@ -429,6 +429,11 @@ impl<'a> Printer<'a> {
             Doc::FitsBelow(f) => {
                 let mut below = indent;
                 let at_column = f.levels == crate::doc::AT_COLUMN;
+                if at_column && mode == Mode::Flat {
+                    // (the group around is flat: nothing here may break)
+                    push(cmds, indent, mode, &f.fits);
+                    return;
+                }
                 for _ in 0..if at_column { 0 } else { f.levels } {
                     below = self.indents.indent(below);
                 }
@@ -445,7 +450,8 @@ impl<'a> Printer<'a> {
                 let fits_below = fits(
                     &mut self.measure,
                     probe,
-                    cmds,
+                    // (at a column the text after the items is counted by the caller's width)
+                    if at_column { &[] } else { cmds },
                     room,
                     false,
                     &self.group_modes,

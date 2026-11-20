@@ -268,6 +268,7 @@ fn list_of(
         }
     }
     let mut items = render_slots(cx, &c.slots, style.ignore_marks)?;
+    attach_comments(cx, &mut items);
     let mut tail_comments: Vec<(usize, Doc)> = tails
         .iter()
         .map(|(i, t)| (*i, cx.reattach_trailing(t)))
@@ -405,6 +406,23 @@ fn list_of(
     }
     let mut inner = Vec::new();
     let mut widest = 0;
+    // The items on one line with the last one (a lambda) broken at its body, as a candidate.
+    let hug_ok = style.align_open
+        && !flat
+        && c.slots.last().is_some_and(|sl| {
+            sl.node
+                .descendants()
+                .any(|n| g.has_tag(n.kind(), "block"))
+        })
+        && !commented(cx, node, &c.open, &c.close)
+        && items
+            .iter()
+            .all(|i| !i.verbatim && !i.hole && i.blank_before == 0);
+    let hug_docs: Vec<Doc> = if hug_ok {
+        items.iter().map(|i| doc::shared(i.doc.clone())).collect()
+    } else {
+        Vec::new()
+    };
     for i in 0..items.len() {
         if i > 0 {
             // (a blank line in a fill is a hard break: the fill must not print `, ` before it)
@@ -436,8 +454,34 @@ fn list_of(
             }
         }
         let item = std::mem::replace(&mut items[i].doc, Doc::Nil);
-        widest = widest.max(item.flat_width().unwrap_or(0));
+        // (a chain of operators breaks at its operators, an item with a block (a lambda) at the
+        // block: its first line is what must fit)
+        let chain = c.slots.get(i).is_some_and(|sl| {
+            let k = sl.node.kind();
+            g.has_tag(k, "binary-chain")
+                || g.has_tag(k, "conditional")
+                || sl
+                    .node
+                    .descendants()
+                    .any(|n| g.has_tag(n.kind(), "block"))
+        });
+        widest = widest.max(if chain || items.len() == 1 {
+            item.head_width()
+        } else {
+            item.flat_width().unwrap_or_else(|| item.width_to_hardline())
+        });
         // (an item that is too long for a line breaks inside itself, where the source breaks)
+        // (the operands of a chain that is not the first item hang below its first operand)
+        let item = if style.align_open
+            && i > 0
+            && c.slots
+                .get(i)
+                .is_some_and(|sl| g.has_tag(sl.node.kind(), "binary-chain"))
+        {
+            doc::align(style.hang_indent, item)
+        } else {
+            item
+        };
         inner.push(if style.align_open { doc::group(item) } else { item });
         // (`x: y,` kept as written in a list of `;` members ends with its separator too)
         let own_sep = !style.separator.is_empty()
@@ -479,7 +523,17 @@ fn list_of(
             let mut parts = fill_parts.into_iter();
             let mut out: Vec<Doc> = parts.next().into_iter().collect();
             while let (Some(between), Some(item)) = (parts.next(), parts.next()) {
-                out.push(doc::group(doc::concat(vec![between, item])));
+                out.push(if item.will_break() && !between.will_break() {
+                    // (an item with a forced break, a lambda body: it stays on the line when its
+                    // first line fits, the group around would break at once)
+                    let item = doc::shared(item);
+                    doc::conditional_group(vec![
+                        doc::concat(vec![doc::lit(" "), item.clone()]),
+                        doc::concat(vec![between, item]),
+                    ])
+                } else {
+                    doc::group(doc::concat(vec![between, item]))
+                });
             }
             doc::concat(out)
         } else {
@@ -525,6 +579,24 @@ fn list_of(
     } else {
         (0..style.indent_levels.max(1)).fold(inner, |d, _| doc::indent(d))
     };
+    let hugged = hug_ok.then(|| {
+        let mut parts = vec![opening.clone()];
+        for (i, d) in hug_docs.into_iter().enumerate() {
+            if i > 0 {
+                parts.push(sep.clone());
+                parts.push(doc::lit(" "));
+                parts.push(d.clone());
+            } else {
+                parts.push(d.clone());
+            }
+            if i == last {
+                parts.pop();
+                parts.push(d.break_last_group());
+            }
+        }
+        parts.push(closing.clone());
+        doc::concat(parts)
+    });
     body_parts.extend([opening, inner, close_pad, closing]);
     let body = doc::concat(body_parts);
 
@@ -567,6 +639,13 @@ fn list_of(
     } else {
         doc::group(body)
     };
+    let list = match hugged {
+        Some(h) => {
+            let list = doc::shared(list);
+            doc::conditional_group(vec![list.clone(), h, list])
+        }
+        None => list,
+    };
     Ok(doc::concat(vec![before, list, after]))
 }
 
@@ -585,7 +664,8 @@ fn open_comments_doc(
                 parts.push(doc::lit(" "));
             }
             parts.push(crate::context::verbatim_text(&c.text()));
-            if items_follow && !padded {
+            let attached = cx.comment_style.keep_attached && !crate::context::gap_follows(c);
+            if items_follow && !padded && !attached {
                 parts.push(doc::if_break(Doc::Nil, doc::lit(" ")));
             }
         } else {
@@ -645,4 +725,38 @@ fn breaks_after_open(cx: &FormatCtx<'_>, node: &SyntaxNode, open: &SyntaxToken) 
     }
     let end = next.map_or(node.text_range().end(), |t| t.text_range().start());
     cx.has_line_break(node, TextRange::new(open.text_range().end(), end))
+}
+
+/// A block comment glued to the item after its separator (`f(a, /*b=*/c)`) moves in front of
+/// that item, so that a line break falls before the comment, not between it and the item.
+fn attach_comments(cx: &FormatCtx<'_>, items: &mut [super::Rendered]) {
+    if !cx.comment_style.keep_attached {
+        return;
+    }
+    let g = cx.grammar;
+    for i in 1..items.len() {
+        let [before, after] = &mut items[i - 1..=i] else {
+            continue;
+        };
+        let Some(sep) = before.sep.as_ref() else {
+            continue;
+        };
+        let own = comments::trailing_comments(g, sep);
+        let [c] = own.as_slice() else {
+            continue;
+        };
+        if c.kind != comments::CommentKind::Block
+            || c.breaks_after > 0
+            || crate::context::gap_follows(c)
+            || !comments::leading_comments(g, sep).is_empty()
+            || after.hole
+            || after.verbatim
+        {
+            continue;
+        }
+        before.sep_comment_moved = true;
+        let text = crate::context::verbatim_text(&c.text());
+        let item = std::mem::replace(&mut after.doc, Doc::Nil);
+        after.doc = doc::concat(vec![text, item]);
+    }
 }

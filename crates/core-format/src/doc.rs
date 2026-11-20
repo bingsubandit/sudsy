@@ -300,6 +300,33 @@ impl Doc {
         w
     }
 
+    /// The document with its last group (the body of a lambda that ends it) broken.
+    pub fn break_last_group(mut self) -> Doc {
+        fn walk(d: &mut Doc) -> bool {
+            match d {
+                Doc::Group(g) => {
+                    g.broken = true;
+                    true
+                }
+                Doc::Concat(ps) => ps.iter_mut().rev().any(walk),
+                Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
+                    walk(d)
+                }
+                Doc::Shared(s) => {
+                    let mut inner = s.doc.clone();
+                    let found = walk(&mut inner);
+                    if found {
+                        *d = shared(inner);
+                    }
+                    found
+                }
+                _ => false,
+            }
+        }
+        walk(&mut self);
+        self
+    }
+
     /// The document printed on one line: no group breaks, a line is a blank.
     pub fn flattened(self) -> Doc {
         crate::deep(|| match self {

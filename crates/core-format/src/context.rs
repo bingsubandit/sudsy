@@ -824,7 +824,7 @@ pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
             for _ in 0..c.breaks_after.saturating_sub(1).min(max_blank) {
                 parts.push(doc::hardline());
             }
-        } else if (!st.keep_gap || gap_follows(c)) && !st.is_glued(&c.text()) {
+        } else if (!(st.keep_gap || st.keep_attached) || gap_follows(c)) && !st.is_glued(&c.text()) {
             parts.push(doc::lit(" "));
         }
     }
@@ -877,7 +877,7 @@ pub(crate) fn continues_trailing(c: &Comment) -> bool {
 }
 
 /// Is the comment followed by a blank in the source (`/*x=*/0` has none)?
-fn gap_follows(c: &Comment) -> bool {
+pub(crate) fn gap_follows(c: &Comment) -> bool {
     match &c.element {
         SyntaxElement::Token(t) => t
             .next_token()
