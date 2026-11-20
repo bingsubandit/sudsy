@@ -862,8 +862,8 @@ fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         // (an operator chain written on several lines keeps the source's line breaks: no shape
         // lays it out yet, so the list around it keeps them too)
         if let SyntaxElement::Node(n) = e
-            && (g.has_tag(n.kind(), "binary-chain") || g.has_tag(n.kind(), "conditional"))
             && text.contains('\n')
+            && !n.descendants().any(|d| g.has_tag(d.kind(), "block"))
         {
             return false;
         }
