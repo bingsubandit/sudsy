@@ -952,11 +952,19 @@ fn ctor_own_line(
         .iter()
         .position(|e| row.kinds_arg("ctor").contains(&e.kind()))?;
     let ctor = els[at].as_node()?;
-    ctor.children()
-        .filter(|m| g.has_tag(m.kind(), "modifiers"))
-        .flat_map(|m| m.children())
-        .any(|c| cx.options.list_has("ctor_own_line_kinds", g.name(c.kind())))
-        .then_some(())?;
+    // (a constructor the source has below the name stays there)
+    let mut prev = cx.first_token(ctor).and_then(|t| t.prev_token());
+    while let Some(p) = prev.as_ref().filter(|p| g.is_trivia(p.kind())) {
+        prev = p.prev_token();
+    }
+    let below = prev.is_some_and(|t| comments::break_after(g, &t));
+    (below
+        || ctor
+            .children()
+            .filter(|m| g.has_tag(m.kind(), "modifiers"))
+            .flat_map(|m| m.children())
+            .any(|c| cx.options.list_has("ctor_own_line_kinds", g.name(c.kind()))))
+    .then_some(())?;
     Some((|| {
         let mut parts = vec![doc::hardline()];
         for e in kids(cx, ctor) {

@@ -100,6 +100,9 @@ pub struct CommentStyle {
     pub trailing_counts_after: &'static [&'static str],
     /// The lines of a block comment lose their trailing blanks (`comment_trim_lines`).
     pub trim_lines: bool,
+    /// The lines of a block comment keep their indentation relative to the comment's own line
+    /// (`comment_reindent_lines`).
+    pub reindent: bool,
     /// Block comments that end with one of these (`=*/`) have no blank before the token after them.
     pub glued: &'static [&'static str],
 }
@@ -124,6 +127,7 @@ impl Default for CommentStyle {
             reflow_width: None,
             trailing_counts_after: &[],
             trim_lines: false,
+            reindent: false,
             glued: &[],
         }
     }

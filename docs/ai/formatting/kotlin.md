@@ -42,6 +42,7 @@ Failure modes of the parser itself: it follows the compiler of Kotlin 2.4.20 and
 | `raw_string_calls` | list of words | `[trimIndent, trimMargin]` | Names of the calls (`trimIndent`) that strip the common indentation of a multi-line raw string they follow: its lines are written at the indentation of the code around it. |
 | `ctor_own_line_kinds` | list of words | `[AnnotationEntry]` | Node kinds among the modifiers of a primary constructor (annotations) that put the constructor below the type name, one level in, with the supertypes and the body under that level. |
 | `comment_trim_lines` | bool | `true` | The lines of a block comment lose their trailing blanks. |
+| `comment_reindent_lines` | bool | `true` | The lines of a block comment keep their indentation relative to the comment's own line when the comment moves. |
 | `format_rules` | list of words | `[curly, redundant-return-type, comment-space]` | Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`. |
 | `redundant_return_types` | list of words | `[Unit]` | Return types (`Unit`) that a function with a block body has anyway: the rule `redundant-return-type` leaves them out when the formatter runs it (`format_rules`). |
 | `curly_style` | `always`, `chain` | `chain` | How the `curly` rule braces a body when the formatter runs it: `always` every body, `chain` the branches of a chain where one has braces, spans lines or passes the line width, and a loop body on its own line. |

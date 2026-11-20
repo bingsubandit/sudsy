@@ -613,6 +613,14 @@ pub mod shared {
         )
     }
 
+    pub fn comment_reindent_lines(default: bool) -> OptionDef {
+        OptionDef::boolean(
+            "comment_reindent_lines",
+            default,
+            "The lines of a block comment keep their indentation relative to the comment's own line when the comment moves.",
+        )
+    }
+
     pub fn format_rules(default: &[&str]) -> OptionDef {
         OptionDef::words(
             "format_rules",

@@ -174,6 +174,8 @@ pub trait NodeFormatter: Send + Sync {
         CommentStyle {
             trim_lines: options.get("comment_trim_lines")
                 == Some(&core_config::OptionValue::Bool(true)),
+            reindent: options.get("comment_reindent_lines")
+                == Some(&core_config::OptionValue::Bool(true)),
             ..CommentStyle::default()
         }
     }
@@ -766,6 +768,7 @@ fn comment_doc_in(c: &Comment, st: &CommentStyle) -> Doc {
             Some(width) => doc::reflow(st.line_text(c), width),
             None => verbatim_text(&text),
         },
+        CommentKind::Block if st.reindent && text.contains('\n') => reindented_doc(c, &text, st),
         CommentKind::Block if st.trim_lines && text.contains('\n') => verbatim_text(
             &text
                 .lines()
@@ -775,6 +778,57 @@ fn comment_doc_in(c: &Comment, st: &CommentStyle) -> Doc {
         ),
         CommentKind::Block => verbatim_text(&text),
     }
+}
+
+/// The column the comment starts at in the source, when only blanks stand before it on its line.
+fn source_column(c: &Comment) -> Option<usize> {
+    let (start, root) = match &c.element {
+        SyntaxElement::Token(t) => (t.text_range().start(), t.parent()?.ancestors().last()?),
+        SyntaxElement::Node(n) => (n.text_range().start(), n.ancestors().last()?),
+    };
+    let text = root.text();
+    let mut col = 0;
+    let mut at = usize::from(start);
+    while at > 0 {
+        at -= 1;
+        match text.char_at(TextSize::from(u32::try_from(at).ok()?))? {
+            '\n' => return Some(col),
+            ' ' | '\t' => col += 1,
+            _ => return None,
+        }
+    }
+    Some(col)
+}
+
+/// A block comment that starts in an indented column: a line after the first that starts with
+/// `*` goes one column right of the comment's start, the others keep their indentation relative
+/// to the comment's own. A comment at column 0 stays at column 0.
+fn reindented_doc(c: &Comment, text: &str, st: &CommentStyle) -> Doc {
+    let col = source_column(c).unwrap_or(0);
+    let lines = text
+        .lines()
+        .map(|l| if st.trim_lines { l.trim_end() } else { l });
+    if col == 0 {
+        return doc::concat(vec![
+            doc::line_start(lines.collect::<Vec<_>>().join("\n")),
+            doc::break_parent(),
+        ]);
+    }
+    let mut parts = Vec::new();
+    for (i, line) in lines.enumerate() {
+        if i == 0 {
+            parts.push(doc::text(line.to_string()));
+            continue;
+        }
+        parts.push(doc::hardline());
+        let bare = line.trim_start_matches([' ', '\t']);
+        if bare.starts_with('*') {
+            parts.push(doc::text(format!(" {bare}")));
+        } else {
+            parts.push(verbatim_text(&line[(line.len() - bare.len()).min(col)..]));
+        }
+    }
+    doc::concat(parts)
 }
 
 /// The lines of `text` with their indentation replaced by the current one.

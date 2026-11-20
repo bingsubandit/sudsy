@@ -36,6 +36,8 @@ pub const CTOR_OWN_LINE_KINDS: &str = "ctor_own_line_kinds";
 #[allow(dead_code)]
 pub const COMMENT_TRIM_LINES: &str = "comment_trim_lines";
 #[allow(dead_code)]
+pub const COMMENT_REINDENT_LINES: &str = "comment_reindent_lines";
+#[allow(dead_code)]
 pub const FORMAT_RULES: &str = "format_rules";
 #[allow(dead_code)]
 pub const REDUNDANT_RETURN_TYPES: &str = "redundant_return_types";
@@ -105,6 +107,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::raw_string_calls(&["trimIndent", "trimMargin"]),
         core_config::shared::ctor_own_line_kinds(&["AnnotationEntry"]),
         core_config::shared::comment_trim_lines(true),
+        core_config::shared::comment_reindent_lines(true),
         core_config::shared::format_rules(&["curly", "redundant-return-type", "comment-space"]),
         core_config::shared::redundant_return_types(&["Unit"]),
         core_config::shared::curly_style("chain"),

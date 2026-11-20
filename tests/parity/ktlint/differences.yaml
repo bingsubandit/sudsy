@@ -1,5 +1,5 @@
 ratchet:
-  real-world: 4762
+  real-world: 4769
 target-files:
   real-world: 5776
 second-format:
@@ -9,7 +9,7 @@ refused:
 coverage: 13.0  # share of the default-set findings of ktlint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage ktlint; at least 85% is the bar)
 target: 11.9
 differences:
-  kt-dot-chain-ktlint-breaks: "gap  ktlint breaks a chain at its dots, Sudsy keeps it on a line (or keeps the head with its first accesses); fix: the wrapped chain policy: break property accesses too when the chain breaks"
+  kt-dot-chain-ktlint-breaks: "gap  ktlint breaks a chain below `=` in place (named gap: depends on source-line width after signature wrapping); ktlint breaks a chain at its dots, Sudsy keeps it on a line (or keeps the head with its first accesses); fix: the wrapped chain policy: break property accesses too when the chain breaks"
   kt-comment-indent: "gap  continuation lines of a block comment are aligned differently; fix: align `*` lines of a block comment to the comment's column plus one, as ktlint does, in the cases it does"
   kt-semi-or-comma: "gap  `;` and `,` placement: single-line `enum class` kept on one line, trailing comma or `;` after enum entries; fix: keep a single-line enum body on its line when it fits (shared option), then check `;` after entries"
   kt-comment-placement: "gap  a comment moves to another line or position (trailing comment, comment before `{` or `else`); fix: keep a trailing comment on the line it follows (shared comment placement option)"
@@ -205,7 +205,6 @@ files:
   corpus/kotlin/libraries/stdlib/native-wasm/src/kotlin/text/regex/sets/SequenceSet.kt: kt-ws-other
   corpus/kotlin/libraries/stdlib/native-wasm/src/kotlin/text/regex/sets/SurrogateCharSets.kt: kt-ws-other
   corpus/kotlin/libraries/stdlib/native-wasm/test/harmony_regex/MatchResultTest.kt: kt-binary-chain
-  corpus/kotlin/libraries/stdlib/native-wasm/test/harmony_regex/MatchResultTest2.kt: kt-comment-indent
   corpus/kotlin/libraries/stdlib/native-wasm/wasi/kotlin/text/StringBuilder.kt: kt-ws-other
   corpus/kotlin/libraries/stdlib/samples/test/samples/misc/contextParameters.kt: kt-ws-other
   corpus/kotlin/libraries/stdlib/samples/test/samples/misc/preconditions.kt: kt-break-after-sudsy
@@ -222,7 +221,6 @@ files:
   corpus/kotlin/libraries/stdlib/src/kotlin/collections/SequenceBuilder.kt: kt-blank-sudsy-extra
   corpus/kotlin/libraries/stdlib/src/kotlin/collections/Sequences.kt: kt-declaration-body-nesting
   corpus/kotlin/libraries/stdlib/src/kotlin/comparisons/Comparisons.kt: kt-comment-placement
-  corpus/kotlin/libraries/stdlib/src/kotlin/contracts/ContractBuilder.kt: kt-comment-indent
   corpus/kotlin/libraries/stdlib/src/kotlin/coroutines/ContinuationInterceptor.kt: kt-block-comment-to-line
   corpus/kotlin/libraries/stdlib/src/kotlin/coroutines/CoroutineContextImpl.kt: kt-comment-placement
   corpus/kotlin/libraries/stdlib/src/kotlin/coroutines/debug/StackTraceRecoverable.kt: kt-comment-indent
@@ -296,7 +294,6 @@ files:
   corpus/kotlin/libraries/stdlib/wasm/js/builtins/kotlin/String.kt: kt-other
   corpus/kotlin/libraries/stdlib/wasm/js/builtins/kotlin/Throwable.kt: kt-blank-ktlint-extra
   corpus/kotlin/libraries/stdlib/wasm/js/internal/ExternalWrapper.kt: kt-comment-placement
-  corpus/kotlin/libraries/stdlib/wasm/js/src/kotlin/js/Promise.kt: kt-declaration-body-nesting
   corpus/kotlin/libraries/stdlib/wasm/js/src/kotlin/js/annotations.kt: kt-parens
   corpus/kotlin/libraries/stdlib/wasm/js/src/kotlin/text/StringBuilder.kt: kt-indent-other
   corpus/kotlin/libraries/stdlib/wasm/js/src/kotlin/time/TimeSources.kt: kt-brace-placement
@@ -369,7 +366,6 @@ files:
   corpus/kotlinx.coroutines/buildSrc/src/main/kotlin/dokka-conventions.gradle.kts: kt-blank-ktlint-extra
   corpus/kotlinx.coroutines/buildSrc/src/main/kotlin/kotlin-jvm-conventions.gradle.kts: kt-import
   corpus/kotlinx.coroutines/buildSrc/src/main/kotlin/kover-conventions.gradle.kts: kt-blank-sudsy-extra
-  corpus/kotlinx.coroutines/integration-testing/build.gradle.kts: kt-comment-indent
   corpus/kotlinx.coroutines/integration-testing/src/mavenTest/kotlin/MavenPublicationAtomicfuValidator.kt: kt-closer-indent
   corpus/kotlinx.coroutines/integration/kotlinx-coroutines-guava/src/ListenableFuture.kt: kt-if-else-other
   corpus/kotlinx.coroutines/integration/kotlinx-coroutines-guava/test/ListenableFutureTest.kt: kt-comment-placement
@@ -480,7 +476,6 @@ files:
   corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/channels/DoubleChannelCloseStressTest.kt: kt-dot-chain-sudsy
   corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/channels/TickerChannelCommonTest.kt: kt-ws-other
   corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/exceptions/CoroutineExceptionHandlerJvmTest.kt: kt-lambda-arg-hug
-  corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/exceptions/JobExceptionHandlingTest.kt: kt-comment-indent
   corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/exceptions/JobExceptionsStressTest.kt: kt-comment-placement
   corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/exceptions/StackTraceRecoverySelectTest.kt: kt-unit
   corpus/kotlinx.coroutines/kotlinx-coroutines-core/jvm/test/exceptions/StackTraceRecoveryStdlibInterfaceWithTypeBoundsTest.kt: kt-brace-placement
@@ -805,9 +800,7 @@ files:
   corpus/ktor/ktor-http/ktor-http-cio/jvm/test/io/ktor/tests/http/cio/MultipartTest.kt: kt-dot-chain-sudsy
   corpus/ktor/ktor-io/common/src/io/ktor/utils/io/ByteReadChannelOperations.kt: kt-expr-vs-block-body
   corpus/ktor/ktor-io/js/src/io/ktor/utils/io/charsets/Charset.js.kt: kt-other
-  corpus/ktor/ktor-io/jvm/src/io/ktor/utils/io/charsets/CharsetJVM.kt: kt-declaration-body-nesting
   corpus/ktor/ktor-io/jvm/src/io/ktor/utils/io/pool/DefaultPool.kt: kt-line-added-removed
-  corpus/ktor/ktor-io/web/src/io/ktor/utils/io/pool/DefaultPool.kt: kt-declaration-body-nesting
   corpus/ktor/ktor-network/common/src/io/ktor/network/sockets/SocketBase.kt: kt-other
   corpus/ktor/ktor-network/jvm/src/io/ktor/network/selector/SelectorManagerSupport.kt: kt-dot-chain-sudsy
   corpus/ktor/ktor-network/jvm/src/io/ktor/network/sockets/DatagramSocketImpl.kt: kt-other

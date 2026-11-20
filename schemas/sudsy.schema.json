@@ -9374,6 +9374,11 @@
               "minimum": 1,
               "type": "integer"
             },
+            "comment_reindent_lines": {
+              "default": true,
+              "description": "The lines of a block comment keep their indentation relative to the comment's own line when the comment moves.",
+              "type": "boolean"
+            },
             "comment_trim_lines": {
               "default": true,
               "description": "The lines of a block comment lose their trailing blanks.",
@@ -12730,6 +12735,11 @@
                     "maximum": 1000,
                     "minimum": 1,
                     "type": "integer"
+                  },
+                  "comment_reindent_lines": {
+                    "default": true,
+                    "description": "The lines of a block comment keep their indentation relative to the comment's own line when the comment moves.",
+                    "type": "boolean"
                   },
                   "comment_trim_lines": {
                     "default": true,
