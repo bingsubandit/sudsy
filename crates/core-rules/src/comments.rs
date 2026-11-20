@@ -45,6 +45,29 @@ rule! {
                       closing delimiter is reported (`/*a*/`). Exempt: an empty comment, and a \
                       delimiter repeated (`/**`, `/***/`). The fix inserts the space.",
         }],
+        format: true,
+    }
+
+    fn format_applies(
+        &self,
+        grammar: &Grammar,
+        text: &str,
+        own: &crate::options::RuleOptions,
+        _format: &core_config::ResolvedOptions,
+    ) -> bool {
+        let block = own.bool("block")
+            && grammar
+                .comments
+                .block
+                .as_ref()
+                .is_some_and(|(open, close)| block_tight(text, open, close));
+        let line = own.bool("line")
+            && grammar
+                .comments
+                .line
+                .as_deref()
+                .is_some_and(|marker| line_tight(text, marker));
+        block || line
     }
 
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
@@ -59,11 +82,20 @@ rule! {
         if !ctx.options.bool("line") {
             return;
         }
-        if !file.text.contains(marker) {
-            return;
-        }
         let repeated = marker.chars().last().unwrap_or(' ');
-        for token in comments(file) {
+        // (only the comments that start at a marker with text right after it)
+        for at in tight_markers(file.text, marker) {
+            let Some(token) = file
+                .root
+                .token_at_offset(core_syntax::TextSize::from(u32::try_from(at).unwrap_or(u32::MAX)))
+                .right_biased()
+                .filter(|t| {
+                    usize::from(t.text_range().start()) == at
+                        && file.grammar.has_tag(t.kind(), "comment")
+                })
+            else {
+                continue;
+            };
             let Some(rest) = token.text().strip_prefix(marker) else {
                 continue;
             };
@@ -85,12 +117,49 @@ rule! {
     }
 }
 
+/// The offsets of a line comment marker followed right away by text.
+fn tight_markers<'a>(text: &'a str, marker: &'a str) -> impl Iterator<Item = usize> + 'a {
+    let repeated = marker.chars().last().unwrap_or(' ');
+    text.match_indices(marker).filter_map(move |(at, _)| {
+        text[at + marker.len()..]
+            .chars()
+            .next()
+            .is_some_and(|c| !c.is_whitespace() && c != repeated)
+            .then_some(at)
+    })
+}
+
+/// Is a line comment marker followed right away by text?
+fn line_tight(text: &str, marker: &str) -> bool {
+    tight_markers(text, marker).next().is_some()
+}
+
+/// Is a block delimiter right against text (no walk of the comments without it)?
+fn block_tight(text: &str, open: &str, close: &str) -> bool {
+    let first = open.chars().last().unwrap_or(' ');
+    let last = close.chars().next().unwrap_or(' ');
+    text.match_indices(open).any(|(at, _)| {
+        text[at + open.len()..]
+            .chars()
+            .next()
+            .is_some_and(|c| !c.is_whitespace() && c != first)
+    }) || text.match_indices(close).any(|(at, _)| {
+        text[..at]
+            .chars()
+            .next_back()
+            .is_some_and(|c| !c.is_whitespace() && c != last)
+    })
+}
+
 /// The space of block comments: `/*a*/` wants `/* a */`.
 fn block_space(file: &FileContext<'_>, ctx: &mut RuleContext<'_>, open: &str, close: &str) {
     let (first, last) = (
         open.chars().last().unwrap_or(' '),
         close.chars().next().unwrap_or(' '),
     );
+    if !block_tight(file.text, open, close) {
+        return;
+    }
     for token in comments(file) {
         let text = token.text();
         let Some(inner) = text.strip_prefix(open).and_then(|t| t.strip_suffix(close)) else {

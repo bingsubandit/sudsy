@@ -1,0 +1,11 @@
+# TASK (Kotlin formatter agent, slot /scratch/slots/sudsy/6; rules: CLAUDE.md, docs/ai/development/agent-brief.md; HARD RULE; no Lead-approved lines; report via SubagentHandback)
+Worktree resumed after container restart; HEAD = 10854c16 (WIP incl. shared rule redundant_return_type = fix for gap kt-unit; kept, it is formatter work).
+State: ktlint 4537/5848 identical (goal 85% of 5776 parsable ~ 4910). Causes (first hunk): other 238, indent-only 163, comment-placement 110, semi-or-comma 95, break-after-= 82+43, dot-chain 74+33, class-header 74.
+1. Ranked causes in tests/parity/ktlint/differences.yaml as named gaps (file under first cause, each gap with one-line fix: note). Commit with each landing; delete gap when fixed. Add classifiers until "other" < 80, then rank.
+2. Top causes in order, measure each fix separately, keep only if identical count rises. Candidates: actual-constructor body nesting, `}.onSuccess {` continuation, single-line `enum class X { A, B }`. Fixes in shared shapes; Kotlin sets options/kind sets only.
+3. Land at +100 files or causes out: gate, one finish (kt format +5%, others +1%), land.sh. second-format 0, refused 0. Report hash, new count, ranked list with counts.
+# PROGRESS
+- Restart 2: reset to 6f1250b6, rebased onto origin/main (HEAD 3e630a58 WIP chain); README conflict resolved to origin. Old count 4666. Re-running parity (iter.sh; JRE+ktlint auto-install, corpus copied from old worktree).
+- After rebase parity 4666 identical (confirmed), second-format 0, refused 0. kt-other 72 (<80 ok). Gaps top: dot-chain-ktlint-breaks 90, comment-indent 88, semi-or-comma 87, comment-placement 72, other 72, break-after-ktlint 71. Next: gate --affected, finish, land.
+- finish: gate OK, bench kt.format instr +8.60% (70674899 -> 76751426), allocs +2.76% (33081 -> 33993), format-query same; others within budget. Over +5% budget -> stopped, reported to lead. Commit 91a7a0f3b snapshot; bench line in bench/history.jsonl uncommitted.
+- Restart 3: cost cut: Rule::format_applies (text prescan) filters rules before walk/run; comment-space visits only tight markers via token_at_offset. kt format allocs 33983 -> 33590 (base 33081); wall total +1.3% vs base (was +5%). Parity 4666, second-format 0. Next: finish.

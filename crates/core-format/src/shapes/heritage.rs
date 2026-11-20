@@ -23,9 +23,11 @@ pub enum HeritageLayout {
 }
 
 /// `head : first, second tail`: `head` and `colon` are printed, then the supertypes in `layout`,
-/// then `tail` (the body) after a blank.
+/// then `tail` (the body) after a blank. `head_breaks`: the parameters in the head span lines
+/// (other line breaks in it, annotations on a line of their own, do not count).
 pub fn heritage(
     head: Doc,
+    head_breaks: bool,
     colon: Doc,
     items: Vec<Doc>,
     layout: HeritageLayout,
@@ -40,17 +42,18 @@ pub fn heritage(
             all.push(d);
         }
         // A head that spans lines (the parameters) keeps the supertypes on the line of its end.
-        let mut parts = if head.will_break() {
+        let mut parts = if head_breaks {
             all[0] = doc::lit(" ");
             // (the arguments of a call among them go one level in, like the closing parenthesis)
             vec![head, doc::lit(" "), colon, doc::indent(doc::concat(all))]
         } else {
-            vec![doc::group(doc::concat(vec![
+            // (the group measures from the column of the colon: lines above the head do not count)
+            vec![
                 head,
                 doc::lit(" "),
                 colon,
-                doc::indent(doc::concat(all)),
-            ]))]
+                doc::group(doc::indent(doc::concat(all))),
+            ]
         };
         if let Some(t) = tail {
             parts.push(doc::lit(" "));

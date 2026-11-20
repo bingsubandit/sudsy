@@ -586,6 +586,14 @@ pub mod shared {
         )
     }
 
+    pub fn redundant_return_types(default: &[&str]) -> OptionDef {
+        OptionDef::words(
+            "redundant_return_types",
+            default,
+            "Return types (`Unit`) that a function with a block body has anyway: the rule `redundant-return-type` leaves them out when the formatter runs it (`format_rules`).",
+        )
+    }
+
     pub fn curly_style(default: &'static str) -> OptionDef {
         OptionDef::choice(
             "curly_style",
