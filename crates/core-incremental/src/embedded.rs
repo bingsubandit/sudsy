@@ -15,6 +15,7 @@ use core_syntax::{SyntaxNode, TextRange};
 use provider_api::embedded::{EmbeddedParse, Resolved, parse_regions, resolve};
 use provider_api::{LanguageProvider, SourceFile, format_file, resolve_dialect};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 /// Names the host's option that turns the formatting of embedded code off (Prettier's
@@ -244,21 +245,22 @@ fn regions_agree(
 /// The formatted code, if its language is known and it parses; `None` also when nothing changes.
 fn format_code(db: &dyn Db, file: File, language: &str, code: &str) -> Option<String> {
     let code = code.replace("\r\n", "\n");
-    let out = format_with(db, file, language, EmbedMode::Program, &code, None, false)?;
+    let prepared = prepare(db, file, language, EmbedMode::Program, None, false);
+    let out = format_with(db, language, &prepared, &code)?;
     (!out.is_empty() && out != code.trim_end_matches('\n')).then_some(out)
 }
 
-/// `code` formatted by the provider of `language` (`width` overrides its `line_width`), without
-/// the final line break.
-fn format_with(
+/// The options an embedded `language` is formatted with and its language version.
+type Prepared = Option<Rc<(ResolvedOptions, Option<String>)>>;
+
+fn prepare(
     db: &dyn Db,
     file: File,
     language: &str,
     mode: EmbedMode,
-    code: &str,
     width: Option<usize>,
     single_quotes: bool,
-) -> Option<String> {
+) -> Prepared {
     let (provider, dialect) = lookup(db, language)?;
     let input = FileInput::language(provider.language())
         .with_base(provider.config_base())
@@ -279,23 +281,44 @@ fn format_with(
             options.set("single_quote", OptionValue::Bool(true));
         }
     }
-    let mut source = SourceFile::new(format!("embedded.{language}"), 1, code.to_string());
-    source.language_version = if mode == EmbedMode::Program {
+    let version = if mode == EmbedMode::Program {
         language_version
     } else {
         // The provider's parse and layout read the mode: the code is not a whole file.
         options.set("embed_mode", OptionValue::String(mode.name().into()));
         Some(mode.name().into())
     };
-    let out = format_file(provider, &source, &options, &DirectiveTable::default()).ok()?;
+    Some(Rc::new((options, version)))
+}
+
+/// `code` formatted by the provider of `language` with prepared options, without the final
+/// line break.
+fn format_with(db: &dyn Db, language: &str, prepared: &Prepared, code: &str) -> Option<String> {
+    let (provider, _) = lookup(db, language)?;
+    let (options, version) = &**prepared.as_ref()?;
+    let mut source = SourceFile::new(format!("embedded.{language}"), 1, code.to_string());
+    source.language_version = version.clone();
+    let out = format_file(provider, &source, options, &DirectiveTable::default()).ok()?;
     Some(out.trim_end_matches('\n').to_string())
 }
 
 /// The embedder a host formatter runs under: other languages' code, formatted by their
 /// providers with the config of the file.
 pub(crate) struct Engine<'a> {
-    pub db: &'a dyn Db,
-    pub file: File,
+    db: &'a dyn Db,
+    file: File,
+    /// Options per (language, mode, width, quotes): resolved once per file, not per snippet.
+    prepared: RefCell<HashMap<(String, EmbedMode, usize, bool), Prepared>>,
+}
+
+impl<'a> Engine<'a> {
+    pub(crate) fn new(db: &'a dyn Db, file: File) -> Self {
+        Engine {
+            db,
+            file,
+            prepared: RefCell::default(),
+        }
+    }
 }
 
 impl Embedder for Engine<'_> {
@@ -307,15 +330,15 @@ impl Embedder for Engine<'_> {
         width: usize,
         single_quotes: bool,
     ) -> Option<String> {
-        format_with(
-            self.db,
-            self.file,
-            language,
-            mode,
-            code,
-            Some(width),
-            single_quotes,
-        )
+        let prepared = self
+            .prepared
+            .borrow_mut()
+            .entry((language.to_string(), mode, width, single_quotes))
+            .or_insert_with(|| {
+                prepare(self.db, self.file, language, mode, Some(width), single_quotes)
+            })
+            .clone();
+        format_with(self.db, language, &prepared, code)
     }
 }
 

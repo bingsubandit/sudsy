@@ -195,7 +195,7 @@ fn format_body(db: &dyn Db, file: File) -> Result<String, Failure> {
         tree: parsed.root(),
         errors: parsed.errors.clone(),
     };
-    let engine = crate::embedded::Engine { db, file };
+    let engine = crate::embedded::Engine::new(db, file);
     let text = format_parsed_with(
         provider,
         &source,

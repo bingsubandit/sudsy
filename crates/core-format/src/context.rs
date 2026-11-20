@@ -16,7 +16,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 /// What an embedded region holds (see [`Embedder`]).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum EmbedMode {
     /// A whole file of the language.
     Program,

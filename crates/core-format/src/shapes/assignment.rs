@@ -245,18 +245,15 @@ fn operator_token(cx: &FormatCtx<'_>, a: &Assign<'_>) -> Option<SyntaxToken> {
     if cx.options.list_has(OP_SKIP, cx.grammar.name(a.node.kind())) {
         return None;
     }
-    let mut prev = None;
-    for e in a.node.children_with_tokens() {
-        if &e == right {
-            break;
-        }
-        if let SyntaxElement::Token(t) = &e
-            && !cx.grammar.is_trivia(t.kind())
-        {
-            prev = Some(t.clone());
+    let mut prev = right.prev_sibling_or_token();
+    while let Some(e) = prev {
+        match e {
+            SyntaxElement::Token(t) if !cx.grammar.is_trivia(t.kind()) => return Some(t),
+            SyntaxElement::Token(t) => prev = t.prev_sibling_or_token(),
+            SyntaxElement::Node(n) => prev = n.prev_sibling_or_token(),
         }
     }
-    prev
+    None
 }
 
 /// A destructuring on the left (`assignment_destructure_kinds`) of more than two entries, one of
@@ -267,7 +264,7 @@ fn complex_target(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         return false;
     };
     cx.options.list_has(DESTRUCTURE, g.name(left.kind()))
-        && left.children().count() > 2
+        && left.children().nth(2).is_some()
         && left.children().any(|p| {
             !g.has_tag(p.kind(), "rest")
                 && (p
