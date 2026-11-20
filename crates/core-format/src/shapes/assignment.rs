@@ -249,7 +249,23 @@ fn choose(
     let Some(right) = a.right else {
         return OnlyLeft;
     };
-    if a.op_token.is_some_and(|t| ends_in_line_comment(cx, t)) {
+    // A line comment after the operator, or after the left side in front of it.
+    let before_op = |t: &SyntaxToken| {
+        let mut cur = t.prev_token();
+        while let Some(p) = cur {
+            if !g.is_trivia(p.kind()) {
+                return comments::trailing_comments(g, &p).iter().any(|c| {
+                    c.kind != comments::CommentKind::Block
+                        && c.element.text_range().start() >= p.text_range().end()
+                });
+            }
+            cur = p.prev_token();
+        }
+        false
+    };
+    if a.op_token
+        .is_some_and(|t| ends_in_line_comment(cx, t) || before_op(t))
+    {
         return BreakAlways;
     }
     // A break the source has after the operator stays (`assignment_keep_break_kinds`).

@@ -185,7 +185,8 @@ pub(crate) fn assign_like(
 ) -> R {
     let right = right.map(|r| SyntaxElement::Node(r.clone()));
     // The token in front of the right side: its line comment keeps the right side below it.
-    let op_token = right.as_ref().and_then(|r| {
+    // (An assignment expression keeps the comment where it is: one inside parentheses moves.)
+    let op_token = right.as_ref().filter(|_| node.kind() != k::ASSIGNMENT_EXPRESSION).and_then(|r| {
         let mut prev = None;
         for e in node.children_with_tokens() {
             if &e == r {
