@@ -21,6 +21,7 @@ Class : heritage colon=Colon list=SuperTypeList ctor=PrimaryConstructor params=V
 ObjectDeclaration : heritage colon=Colon list=SuperTypeList
 DotQualifiedExpression|SafeAccessExpression&parent!=ImportDirective|PackageDirective : chain spaced=LambdaArgument
 When : cases open=Lbrace
+WhenEntry : flat
 
 # Blanks between two tokens of a line (ktlint's spacing rules); no row: the source's blanks (none
 # stay none, any become one).

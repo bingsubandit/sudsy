@@ -9224,7 +9224,8 @@
             "format_rules": {
               "default": [
                 "curly",
-                "redundant-return-type"
+                "redundant-return-type",
+                "comment-space"
               ],
               "description": "Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`.",
               "items": {
@@ -12444,7 +12445,8 @@
                   "format_rules": {
                     "default": [
                       "curly",
-                      "redundant-return-type"
+                      "redundant-return-type",
+                      "comment-space"
                     ],
                     "description": "Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`.",
                     "items": {

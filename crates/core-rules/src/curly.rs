@@ -137,10 +137,12 @@ fn in_chain(g: &Grammar, n: &SyntaxNode) -> bool {
     })
 }
 
-/// The blanks (with a line break) between the code before `n` and `n`.
-fn break_before(g: &Grammar, n: &SyntaxNode, text: &str) -> Option<(usize, usize)> {
+/// The blanks (with a line break) between the code before `n` and `n`; with a comment in between,
+/// the end of the code before it (the brace goes there and the comment ends up inside) and `true`.
+fn break_before(g: &Grammar, n: &SyntaxNode, text: &str) -> Option<(usize, usize, bool)> {
     let start = code_start(g, n)?;
     let mut at = start;
+    let mut commented = false;
     let mut tok = n
         .descendants_with_tokens()
         .filter_map(|e| e.into_token())
@@ -150,14 +152,14 @@ fn break_before(g: &Grammar, n: &SyntaxNode, text: &str) -> Option<(usize, usize
         if !trivia(g, &t) {
             break;
         }
-        if !t.text().trim().is_empty() {
-            // The branch stays below the comment.
-            return Some((start, start));
-        }
+        commented |= !t.text().trim().is_empty();
         at = t.text_range().start().into();
         tok = t.prev_token();
     }
-    text[at..start].contains('\n').then_some((at, start))
+    if commented {
+        return Some((at, start, true));
+    }
+    text[at..start].contains('\n').then_some((at, start, false))
 }
 
 fn wrap(g: &Grammar, n: &SyntaxNode, text: &str, edits: &mut Vec<Edit>) {
@@ -167,10 +169,22 @@ fn wrap(g: &Grammar, n: &SyntaxNode, text: &str, edits: &mut Vec<Edit>) {
     let range =
         |a: usize, b: usize| TextRange::new(TextSize::from(a as u32), TextSize::from(b as u32));
     match break_before(g, n, text) {
-        Some((at, _)) => edits.push(Edit::replace(range(at, start), " { ")),
+        Some((at, _, true)) => edits.push(Edit::insert(TextSize::from(at as u32), " {")),
+        Some((at, _, false)) => edits.push(Edit::replace(range(at, start), " { ")),
         None => edits.push(Edit::insert(TextSize::from(start as u32), "{ ")),
     }
-    edits.push(Edit::insert(TextSize::from(end as u32), " }"));
+    // A line comment after the body stays on its line: the brace follows below it.
+    let line_end = text[end..].find('\n').map_or(text.len(), |i| end + i);
+    let commented = g
+        .comments
+        .line
+        .as_deref()
+        .is_some_and(|m| text[end..line_end].trim_start().starts_with(m));
+    if commented {
+        edits.push(Edit::insert(TextSize::from(line_end as u32), "\n}"));
+    } else {
+        edits.push(Edit::insert(TextSize::from(end as u32), " }"));
+    }
 }
 
 /// Does the text from `start` to `end`, on one line, go past the line width?

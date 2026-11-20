@@ -152,6 +152,10 @@ pub fn assignment(
     let layout = if policy.style == AssignStyle::Multiline
         && layout == AssignLayout::BreakAfterOperator
         && !right.has_break_point()
+        && !a
+            .node
+            .children()
+            .any(|p| cx.grammar.has_tag(p.kind(), "parameter-list"))
     {
         AssignLayout::NeverBreakAfterOperator
     } else {
