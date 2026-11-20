@@ -70,7 +70,6 @@ pub const ALIGN_ESCAPED_NEWLINES: &str = "align_escaped_newlines";
 pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
     ("wrap_lines", "aligned_lines", "", &["StringConcat"]),
     ("wrap_lines", "binary_chain", "", &["Binary"]),
-    ("wrap_lines", "binary_chain_not_in", "", &["InitList"]),
     ("access_modifier_outdent", "outdent", "", &["AccessSpecifier"]),
     ("indent_case_labels", "outdent_unless", "", &["CaseClause"]),
     ("indent_goto_labels", "flush_unless", "", &["LabelStatement"]),
