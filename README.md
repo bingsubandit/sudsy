@@ -87,7 +87,7 @@ Each number is measured on real-world code against the reference tool with its d
 | Shell | ████████░░ 81% shfmt | ████░░░░░░ 47% ShellCheck | In progress |
 | SQL | ███████░░░ 78% sqlfluff | ░░░░░░░░░░ 3% sqlfluff | In progress |
 | C# | ██████████ 100% CSharpier | not measured StyleCop<br>not measured Roslynator | In progress |
-| C / C++ | █░░░░░░░░░ 18% clang-format | 24 rules · reference tool: none found | In progress |
+| C / C++ | █░░░░░░░░░ 18% clang-format | 25 rules · reference tool: none found | In progress |
 | Dockerfile | Sudsy formatter · reference tool: none found | ███░░░░░░░ 35% hadolint | Lint only: In progress |
 | GitHub Actions | Sudsy formatter · reference tool: none found | ░░░░░░░░░░ 5% actionlint | Lint only: In progress |
 | PowerShell | not measured Invoke-Formatter | not measured PSScriptAnalyzer | not measured |
