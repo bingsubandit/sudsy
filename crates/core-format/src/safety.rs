@@ -334,6 +334,7 @@ pub fn verify(
     after: &str,
     reparse: impl FnOnce(&str) -> Result<SyntaxNode, String>,
 ) -> Result<(), FormatError> {
+    if std::env::var_os("DBGAFTER").is_some() { eprintln!("{after}"); }
     let after_tree = reparse(after)
         .map_err(|e| FormatError::Safety(format!("the output does not parse: {e}")))?;
     if compare(g, before_tree, &after_tree, formatter.reflows_comments())

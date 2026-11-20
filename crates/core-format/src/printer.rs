@@ -216,6 +216,7 @@ pub fn print_counting(doc: &mut Doc, opts: &PrintOptions) -> (String, usize, Pri
         remeasure: false,
         group_modes: HashMap::new(),
         keep: 0,
+        after_line_start: false,
         measure: Measure::default(),
     };
     p.run(doc);
@@ -241,6 +242,8 @@ struct Printer<'a> {
     group_modes: HashMap<GroupId, Mode>,
     /// Output before this length ends with significant blanks (see [`Doc::Verbatim`]).
     keep: usize,
+    /// A [`Doc::LineStart`] ended the output: text that follows it starts a new line.
+    after_line_start: bool,
     /// Work list of [`fits`], kept between calls.
     measure: Measure<'a>,
 }
@@ -308,6 +311,7 @@ impl<'a> Printer<'a> {
         let trimmed = self.out.trim_end_matches([' ', '\t']).len().max(self.keep);
         self.out.truncate(trimmed);
         self.out.push('\n');
+        self.after_line_start = false;
         self.line_level = indent;
         let level = &self.indents.levels[indent];
         self.out.push_str(&level.text);
@@ -361,6 +365,7 @@ impl<'a> Printer<'a> {
             self.newline(0);
         }
         self.write(s);
+        self.after_line_start = true;
     }
 
     /// See [`Doc::Outdent`]: moves the current line (or a new one) to indentation level `indent`.
@@ -437,7 +442,13 @@ impl<'a> Printer<'a> {
                 };
                 push(cmds, i, mode, d);
             }
-            Doc::Text(s) => self.write(s),
+            Doc::Text(s) => {
+                if self.after_line_start && !s.is_empty() {
+                    // (a line of its own text, a directive, ends its line)
+                    self.newline(indent);
+                }
+                self.write(s)
+            }
             Doc::Reserve(_) => {}
             Doc::FitsBelow(f) => {
                 let mut below = indent;
