@@ -213,6 +213,7 @@ impl Doc {
             }
             Doc::IfBreak { flat, .. } => flat.flat_width()?,
             Doc::Shared(s) => s.doc.flat_width()?,
+            Doc::FitsBelow(f) => f.fits.flat_width()?,
             _ => return None,
         })
     }
@@ -237,6 +238,7 @@ impl Doc {
                 }
                 Doc::IfBreak { flat, .. } => walk(flat, w),
                 Doc::Shared(s) => walk(&s.doc, w),
+                Doc::FitsBelow(f) => walk(&f.fits, w),
                 _ => false,
             }
         }
@@ -262,6 +264,7 @@ impl Doc {
                 }
                 Doc::IfBreak { flat, .. } => return walk(flat, w),
                 Doc::Shared(s) => return walk(&s.doc, w),
+                Doc::FitsBelow(f) => return walk(&f.fits, w),
                 _ => {}
             }
             false
@@ -288,6 +291,7 @@ impl Doc {
                 }
                 Doc::IfBreak { flat, .. } => walk(flat, w),
                 Doc::Shared(s) => walk(&s.doc, w),
+                Doc::FitsBelow(f) => walk(&f.fits, w),
                 _ => {}
             }
         }
@@ -705,6 +709,13 @@ pub fn label(tag: &'static str, d: Doc) -> Doc {
 
 /// See [`Doc::FitsBelow`]: `fits` when `width` columns fit `levels` levels below the current
 /// indentation, else `otherwise`.
+pub const AT_COLUMN: usize = usize::MAX;
+
+/// [`fits_below`] counting from the column the printer is at (`levels` [`AT_COLUMN`]).
+pub fn fits_at_column(width: usize, fits: Doc, otherwise: Doc) -> Doc {
+    fits_below(AT_COLUMN, width, fits, otherwise)
+}
+
 pub fn fits_below(levels: usize, width: usize, fits: Doc, otherwise: Doc) -> Doc {
     Doc::FitsBelow(Box::new(FitsBelow {
         levels,

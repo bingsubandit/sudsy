@@ -456,7 +456,8 @@ impl Layout {
                     }
                     style.expand_empty |= multiline && as_written;
                 }
-                shapes::block(cx, node, &style).or_else(|_| generic())
+                shapes::flow::with_reflow(false, || shapes::block(cx, node, &style))
+                    .or_else(|_| generic())
             }
             "compound" => compound(cx, node, self, flow).unwrap_or_else(generic),
             "case" => case(cx, node, row, flow).unwrap_or_else(generic),
@@ -784,6 +785,9 @@ fn trailing(cx: &FormatCtx<'_>, row: &Row, when: bool) -> TrailingComma {
 /// Arguments and parameters: all on one line, or, when the source breaks between them, one per
 /// line with a trailing comma.
 fn list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
+    if let Some(r) = packed_list(cx, node, row) {
+        return Some(r);
+    }
     node.children().next()?;
     let broken = own_break(cx, node);
     let stops = node.children().last().is_some_and(|c| {
@@ -801,6 +805,62 @@ fn list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
         ..ListStyle::default()
     };
     shapes::delimited_list(cx, node, &style).ok().map(Ok)
+}
+
+/// `pack=option:NAME` of a `list` row: the items are filled to the line width (`NAME` true) or go
+/// all on one line or one per line (false), under the first item (`align=option:NAME` is `align`)
+/// or indented; `wrap=option:NAME` false keeps the source breaks.
+fn packed_list(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row) -> Option<R> {
+    let pack = row.arg("pack")?.strip_prefix("option:")?;
+    let wrap = row.arg("wrap").and_then(|v| v.strip_prefix("option:"));
+    if wrap.is_some_and(|w| !cx.options.flag(w, true)) {
+        return None;
+    }
+    packable(cx, node).then_some(())?;
+    let align = row.option_is(cx, "align");
+    let style = ListStyle {
+        layout: if cx.options.flag(pack, true) {
+            ListLayout::Fill
+        } else {
+            ListLayout::Fit
+        },
+        align_open: align,
+        hang_indent: cx.options.uint("continuation_indent", 4),
+        max_blank_lines: usize::MAX,
+        ..ListStyle::default()
+    };
+    shapes::flow::with_reflow(true, || shapes::delimited_list(cx, node, &style))
+        .ok()
+        .map(Ok)
+}
+
+/// Is the list a `(`, items of one element each on one line each, separators and `)`, with no
+/// comment inside (the lists whose layout the source does not decide)?
+fn packable(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    let els = kids(cx, node);
+    let [_, inside @ .., _] = els.as_slice() else {
+        return false;
+    };
+    let g = cx.grammar;
+    let (mut count, mut items) = (0, 0);
+    for e in inside {
+        if let SyntaxElement::Token(t) = e
+            && g.has_tag(t.kind(), "separator")
+        {
+            if count != 1 {
+                return false;
+            }
+            count = 0;
+            continue;
+        }
+        count += 1;
+        items += 1;
+        let text = e.to_string();
+        if count > 1 || text.trim().contains(['\n', '\r']) || text.contains("//") || text.contains("/*") {
+            return false;
+        }
+    }
+    items > 0
 }
 
 /// `[a, b]` as written, with a trailing comma when the closing bracket is on a line of its own.
