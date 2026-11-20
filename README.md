@@ -73,7 +73,7 @@ Each number is measured on real-world code against the reference tool with its d
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
 | Makefile | Sudsy formatter · reference tool: none found | ██████████ 100% checkmake | Lint only: Ready |
 | JavaScript / TypeScript | ████████░░ 84% Prettier | ██████████ 100% ESLint<br>██████████ 100% typescript-eslint | In progress |
-| Python | ███████░░░ 79% ruff format | █████████░ 94% ruff | In progress |
+| Python | ████████░░ 83% ruff format | █████████░ 94% ruff | In progress |
 | Terraform (HCL) | █████████░ 99% terraform fmt | █████░░░░░ 58% tflint | In progress |
 | HTML | █████████░ 91% Prettier | ░░░░░░░░░░ 0% html-eslint<br>██████░░░░ 62% html-validate<br>░░░░░░░░░░ 5% htmlhint | In progress |
 | Vue / Svelte | ████████░░ 85% Prettier | ██░░░░░░░░ 23% eslint-plugin-vue<br>██████████ 100% eslint-plugin-svelte | In progress |

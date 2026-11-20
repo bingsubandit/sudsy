@@ -233,7 +233,16 @@ Lint: coverage 5%, target 5%; rules by missed findings:
 
 ## ruff
 
-1. `layout-gaps` (- files): ruff layouts not ported yet (comments in unusual places, parenthesized right-hand sides with comments, fmt skip on headers, quotes inside f-string replacement fields, docstring code, preview-only fixtures)
+Format: unclassified 0 of 263 differing files (0%).
+1. `comment-placement` (63 files): 63 files first differ here: comments in unusual places (after an operator, between `lambda` and its body, after a bracket, around keywords) and trailing comments that count for the width. fix: dangling-comment placement in the shared comments engine with a per-construct option
+2. `fmt-directives` (58 files): 58 files first differ here: `# fmt: off` / `# fmt: on` / `# fmt: skip` regions: skip on compound headers and bodies on the header line, off inside brackets, blank lines around a region. fix: extend the shared ignore rows to ruff region rules (header skip, bracket-level off) and read the blank-line policy of a region from lang.yaml
+3. `blank-lines` (32 files): 32 files first differ here: blank lines around comments, decorators, stub bodies and after a block opener that ruff keeps or adds differently. fix: blank-line rules per comment placement in the shared block layout, read as options
+4. `binary-layout` (25 files): 25 files first differ here: binary and boolean chains: which operator breaks, mixed operator levels and implicit string operands, long `**` chains, comparisons whose last operand is a bracket. fix: finish the port of the can-omit-optional-parentheses visitor (attribute precedence, first and last operand) in the shared maybe_parenthesize shape
+5. `misc` (22 files): 22 files first differ here: single-cause layouts: return annotations, lambda bodies, subscripts, del and return tuples, type parameter defaults, unicode escapes, power operand spacing. fix: one shape rule each
+6. `docstring` (19 files): 19 files first differ here: docstring edge cases: the closing quotes of a docstring that fills the line, quotes and escapes at the end, code in docstrings. fix: docstring exact-fit rule and a docstring-code option in the shared string layout
+7. `implicit-concat` (16 files): 16 files first differ here: implicit string concatenation inside a binary operand, argument or assignment: join, split and parenthesization differ. fix: the implicit-concatenation group of the shared binary chain
+8. `bracket-split` (14 files): 14 files first differ here: which bracket splits first when a call, subscript or collection ends a line (hugging, nested subscripts, first-line width). fix: best-fit layout of the last bracket in the shared delimited_list shape
+9. `fstring-quotes` (13 files): 13 files first differ here: quotes of strings inside f-string replacement fields and nested f-strings. fix: f-string replacement field normalisation in the shared string literal code
 
 ## shellcheck
 

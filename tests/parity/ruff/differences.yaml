@@ -1,13 +1,21 @@
 differences:
-  layout-gaps: gap  ruff layouts not ported yet (comments in unusual places, parenthesized right-hand sides with comments, fmt skip on headers, quotes inside f-string replacement fields, docstring code, preview-only fixtures)
+  fmt-directives: "gap  58 files first differ here: `# fmt: off` / `# fmt: on` / `# fmt: skip` regions: skip on compound headers and bodies on the header line, off inside brackets, blank lines around a region. fix: extend the shared ignore rows to ruff region rules (header skip, bracket-level off) and read the blank-line policy of a region from lang.yaml"
+  blank-lines: "gap  32 files first differ here: blank lines around comments, decorators, stub bodies and after a block opener that ruff keeps or adds differently. fix: blank-line rules per comment placement in the shared block layout, read as options"
+  comment-placement: "gap  63 files first differ here: comments in unusual places (after an operator, between `lambda` and its body, after a bracket, around keywords) and trailing comments that count for the width. fix: dangling-comment placement in the shared comments engine with a per-construct option"
+  binary-layout: "gap  25 files first differ here: binary and boolean chains: which operator breaks, mixed operator levels and implicit string operands, long `**` chains, comparisons whose last operand is a bracket. fix: finish the port of the can-omit-optional-parentheses visitor (attribute precedence, first and last operand) in the shared maybe_parenthesize shape"
+  misc: "gap  22 files first differ here: single-cause layouts: return annotations, lambda bodies, subscripts, del and return tuples, type parameter defaults, unicode escapes, power operand spacing. fix: one shape rule each"
+  docstring: "gap  19 files first differ here: docstring edge cases: the closing quotes of a docstring that fills the line, quotes and escapes at the end, code in docstrings. fix: docstring exact-fit rule and a docstring-code option in the shared string layout"
+  implicit-concat: "gap  16 files first differ here: implicit string concatenation inside a binary operand, argument or assignment: join, split and parenthesization differ. fix: the implicit-concatenation group of the shared binary chain"
+  bracket-split: "gap  14 files first differ here: which bracket splits first when a call, subscript or collection ends a line (hugging, nested subscripts, first-line width). fix: best-fit layout of the last bracket in the shared delimited_list shape"
+  fstring-quotes: "gap  13 files first differ here: quotes of strings inside f-string replacement fields and nested f-strings. fix: f-string replacement field normalisation in the shared string literal code"
 files:
-  black-tests: layout-gaps
-  ruff-fixtures: layout-gaps
-  real-world: layout-gaps
+  black-tests: fmt-directives:25, comment-placement:17, blank-lines:11, binary-layout:9, misc:9, implicit-concat:8, docstring:7, fstring-quotes:4, bracket-split:4
+  ruff-fixtures: comment-placement:41, fmt-directives:31, blank-lines:21, misc:12, docstring:10, bracket-split:7, binary-layout:6, fstring-quotes:5, implicit-concat:4
+  real-world: binary-layout:10, comment-placement:5, implicit-concat:4, fstring-quotes:4, bracket-split:3, fmt-directives:2, docstring:2, misc:1
 ratchet:
-  black-tests: 190
-  ruff-fixtures: 107
-  real-world: 1006
+  black-tests: 203
+  ruff-fixtures: 122
+  real-world: 1053
 target-files:
   black-tests: 297
   real-world: 1085
@@ -16,6 +24,7 @@ second-format:
   black-tests: 0
   real-world: 0
   ruff-fixtures: 0
+unclassified: 0
 refused:
   black-tests: 0
   ruff-fixtures: 0
