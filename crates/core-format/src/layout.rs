@@ -343,6 +343,20 @@ impl Layout {
         ))
     }
 
+    /// Is the node a list whose row packs it, that `packed_list` does not lay out (its items stay
+    /// as written)?
+    fn unlaid_list(&self, cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+        let Some(rows) = self.by_kind.get(node.kind().index() as usize) else {
+            return false;
+        };
+        rows.iter()
+            .map(|&i| &self.rows[i])
+            .find(|r| r.matches(node))
+            .is_some_and(|r| {
+                r.shape == "list" && r.arg("pack").is_some() && !packable(cx, node)
+            })
+    }
+
     /// The node laid out by the first row that matches it, `None` when no row does.
     pub(crate) fn format(
         &self,
@@ -355,6 +369,10 @@ impl Layout {
         if let Some(b) = self.bound("binary_chain", node.kind())
             && cx.options.flag(&b.option, true)
         {
+            // (inside a list that stays as written, the chain does too)
+            if node.ancestors().skip(1).any(|a| self.unlaid_list(cx, &a)) {
+                return None;
+            }
             // (a comment inside keeps the chain as written)
             let text = node.text().to_string();
             if text.contains("//") || text.contains("/*") {

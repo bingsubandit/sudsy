@@ -515,9 +515,14 @@ fn filled(
             if nested {
                 body = doc::align(hang, body);
             }
+            // (the lines the first operand keeps from the source count from its line, not from
+            // the column the chain aligns its operands to)
             doc::label(
                 "chain",
-                doc::align(doc::ALIGN_TO_COLUMN, doc::concat(vec![first, body])),
+                doc::align(
+                    doc::ALIGN_TO_COLUMN,
+                    doc::concat(vec![doc::align(doc::ALIGN_FROM_LINE, first), body]),
+                ),
             )
         }
         None => doc::concat(vec![first, doc::indent(body)]),
