@@ -324,6 +324,17 @@ impl ResolvedOptions {
             if items.iter().any(|i| matches!(i, OptionValue::String(s) if s == item)))
     }
 
+    /// Is `(first, second)` a consecutive pair of the strings of a list option (no copy)?
+    pub fn list_has_pair(&self, name: &str, first: &str, second: &str) -> bool {
+        let Some(OptionValue::List(items)) = self.0.get(name) else {
+            return false;
+        };
+        items.chunks(2).any(|p| {
+            matches!(&p[0], OptionValue::String(a) if a == first)
+                && matches!(p.get(1), Some(OptionValue::String(b)) if b == second)
+        })
+    }
+
     /// The lists of strings of a list-of-lists option; empty when the option is absent.
     pub fn string_lists(&self, name: &str) -> Vec<Vec<String>> {
         match self.0.get(name) {

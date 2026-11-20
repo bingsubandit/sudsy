@@ -18,17 +18,16 @@ use core_syntax::{Grammar, SyntaxNode, SyntaxToken};
 pub const PARENTHESIZE: &str = "rewrite_parenthesize_pairs";
 
 /// Where the parentheses go (`(start, end)` byte offsets) when `node` is the first kind of a
-/// pair of `pairs` (the strings of `rewrite_parenthesize_pairs`) and its parent the second.
+/// pair of `rewrite_parenthesize_pairs` and its parent the second.
 pub fn parenthesize(
     grammar: &Grammar,
-    pairs: &[String],
+    options: &core_config::ResolvedOptions,
     node: &SyntaxNode,
 ) -> Option<(usize, usize)> {
     let parent = grammar.name(node.parent()?.kind());
     let own = grammar.name(node.kind());
-    pairs
-        .chunks(2)
-        .any(|p| p[0] == own && p.get(1).is_some_and(|q| *q == parent))
+    options
+        .list_has_pair(PARENTHESIZE, own, parent)
         .then_some(())?;
     let mut tokens = node
         .descendants_with_tokens()
