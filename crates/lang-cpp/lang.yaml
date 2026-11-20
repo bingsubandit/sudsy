@@ -12,6 +12,7 @@ options:
       kinds:
         binary_chain: [Binary]
         aligned_lines: [StringConcat]
+        flat_open: [Lsqb]
   - continuation_indent:
       range: [0, 16]
       default: 4

@@ -984,6 +984,22 @@ pub fn blank_lines_before(g: &Grammar, tok: &SyntaxToken) -> usize {
         .sum()
 }
 
+/// Does only blanks stand in front of the token on its line (the first token of a file counts)?
+pub fn starts_line(tok: &SyntaxToken) -> bool {
+    let mut prev = tok.prev_token();
+    while let Some(t) = prev {
+        let text = t.text();
+        if let Some(i) = text.rfind(['\n', '\r']) {
+            return text[i + 1..].trim().is_empty();
+        }
+        if !text.trim().is_empty() {
+            return false;
+        }
+        prev = t.prev_token();
+    }
+    true
+}
+
 /// The column of a token in its line, in characters.
 pub fn column(tok: &SyntaxToken) -> usize {
     let mut col = 0;

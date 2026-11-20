@@ -280,7 +280,9 @@ fn list_of(
         && !dangling.is_empty()
         && dangling
             .iter()
-            .all(|c| c.kind == comments::CommentKind::Block && c.breaks_after == 0);
+            .all(|c| c.kind == comments::CommentKind::Block && c.breaks_after == 0)
+        // (one on a line of its own stays there)
+        && dangling[0].element.as_token().is_none_or(|t| !comments::starts_line(t));
     if inline_close {
         dangling.clear();
     }
@@ -521,9 +523,19 @@ fn list_of(
                 .unwrap_or(0)
         });
         if i == last {
-            widest_last = w;
+            // (a block comment after the last item's separator ends the line it is on, as one
+            // after the item itself does)
+            let tail = c.slots.get(i).and_then(|sl| sl.sep.as_ref()).map_or(0, |t| {
+                comments::trailing_comments(g, t)
+                    .iter()
+                    .filter(|c| c.kind == comments::CommentKind::Block)
+                    .map(|c| 1 + c.text().chars().count())
+                    .next()
+                    .unwrap_or(0)
+            });
+            widest_last = w + tail;
             // (the text after the list counts for an item that cannot break before its end)
-            last_flat = if chain { None } else { item.flat_width() };
+            last_flat = if chain { None } else { item.flat_width().map(|f| f + tail) };
         } else {
             widest = widest.max(w);
         }
@@ -924,7 +936,12 @@ fn chain_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
 fn block_head(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<usize> {
     let g = cx.grammar;
     let block = node.descendants().find(|n| g.has_tag(n.kind(), "block"))?;
-    head_width(node, block.text_range().start() + TextSize::from(1))
+    // (to the end of the opening brace: blanks and comments in front of it belong to the block)
+    let open = block
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .find(|t| !g.is_trivia(t.kind()))?;
+    head_width(node, open.text_range().end())
 }
 
 /// The width of the source text of `node` up to `end`, runs of blanks as one.
@@ -933,7 +950,8 @@ fn head_width(node: &SyntaxNode, end: TextSize) -> Option<usize> {
     let end = usize::from(end - node.text_range().start());
     let mut width = 0;
     let mut blank = false;
-    for ch in text.get(..end)?.chars() {
+    // (blanks in front of the node, its leading trivia, are not part of it)
+    for ch in text.get(..end)?.trim_start().chars() {
         if ch.is_whitespace() {
             if !blank {
                 width += 1;

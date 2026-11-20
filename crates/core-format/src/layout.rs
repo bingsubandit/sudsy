@@ -357,6 +357,22 @@ impl Layout {
             })
     }
 
+    /// A packable list whose opening token the language binds to the `flat_open` role (the `[ ]`
+    /// of an index or an array bound): it stays on one line, nothing breaks inside it.
+    fn flat_list(&self, cx: &FormatCtx<'_>, node: &SyntaxNode) -> Option<R> {
+        let open = node.first_token()?;
+        self.bound("flat_open", open.kind())?;
+        let rows = self.by_kind.get(node.kind().index() as usize)?;
+        let row = rows.iter().map(|&i| &self.rows[i]).find(|r| r.matches(node))?;
+        (row.shape == "list" && packable(cx, node)).then_some(())?;
+        let style = ListStyle {
+            layout: ListLayout::Flat,
+            max_blank_lines: usize::MAX,
+            ..ListStyle::default()
+        };
+        shapes::delimited_list(cx, node, &style).ok().map(Ok)
+    }
+
     /// The node laid out by the first row that matches it, `None` when no row does.
     pub(crate) fn format(
         &self,
@@ -365,6 +381,9 @@ impl Layout {
         flows: (&Flow<'_>, &Flow<'_>),
         file: &File,
     ) -> Option<R> {
+        if let Some(r) = self.flat_list(cx, node) {
+            return Some(r);
+        }
         // The kinds a language binds to an operator chain (`binary_chain` role of its options).
         if let Some(b) = self.bound("binary_chain", node.kind())
             && cx.options.flag(&b.option, true)
@@ -502,6 +521,7 @@ impl Layout {
                                 .descendants_with_tokens()
                                 .take_while(|e| e.text_range().start() < start);
                             line_break_inside(header)
+                                || header_comment(cx, node)
                                 || p.children().any(|c| with.contains(&c.kind()))
                                 || (p.parent()).is_some_and(|g| under.contains(&g.kind()))
                         });
@@ -825,6 +845,20 @@ fn colon_body(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>)
         }
         Ok(doc::concat(parts))
     })())
+}
+
+/// A comment stands between the header and the block (it ends the header's line, which the
+/// next format sees as a header over several lines).
+fn header_comment(cx: &FormatCtx<'_>, block: &SyntaxNode) -> bool {
+    let g = cx.grammar;
+    let mut prev = block.first_token().and_then(|t| t.prev_token());
+    while let Some(p) = prev {
+        if !g.is_trivia(p.kind()) {
+            return comments::has_trailing_comment(g, &p);
+        }
+        prev = p.prev_token();
+    }
+    false
 }
 
 fn trailing(cx: &FormatCtx<'_>, row: &Row, when: bool) -> TrailingComma {

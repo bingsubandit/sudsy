@@ -137,6 +137,10 @@ impl Cx<'_> {
 
     fn probe_declarators(&mut self, a: usize, b: usize) -> Option<(usize, usize)> {
         let q = self.type_end(a, b)?;
+        // (`[a, b]` names a structured binding of an `auto` type; after any other name it is an index)
+        if self.open(q, b, k::LSQB) && !(a..q).any(|p| self.word(p, b, "auto")) {
+            return None;
+        }
         let id = self.declarator_id(q, b)?;
         let follows = id >= b
             || matches!(
