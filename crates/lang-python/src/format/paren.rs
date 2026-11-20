@@ -81,15 +81,6 @@ pub(crate) fn maybe_parenthesize_test(cx: &FormatCtx<'_>, e: &SyntaxNode) -> R {
     maybe_parenthesize(cx, e)
 }
 
-/// An annotated assignment's target: a name loses its parentheses.
-pub(crate) fn ann_target(cx: &FormatCtx<'_>, n: &SyntaxNode) -> R {
-    let inner = strip(cx, n);
-    if inner.kind() == k::EXPR_NAME {
-        return expr::expr(cx, &inner);
-    }
-    expr::expr(cx, n)
-}
-
 /// The expression inside parentheses that show when it does not fit: operators may break.
 fn expanded(f: impl FnOnce() -> R) -> R {
     Ok(parenthesize_if_expands(with_open(true, f)?))
@@ -118,7 +109,15 @@ fn maybe_parenthesize_inner(
         }
         k::EXPR_BIN_OP | k::EXPR_BOOL_OP | k::EXPR_COMPARE | k::EXPR_UNARY_OP => {
             if can_omit(cx, &inner) {
-                op::binary_like(cx, &inner, false)
+                // The brackets split instead of the operators when the line up to the first one fits
+                //.
+                let d = op::binary_like(cx, &inner, false)?;
+                let lead = if prefix == 0 { lead_width(cx, e) } else { prefix };
+                if depth() * style(cx).indent + lead + d.head_width() <= style(cx).width {
+                    Ok(d)
+                } else {
+                    expanded(|| expr::expr(cx, &inner))
+                }
             } else {
                 expanded(|| expr::expr(cx, &inner))
             }
@@ -173,6 +172,23 @@ fn maybe_parenthesize_inner(
         | k::EXPR_NONE_LITERAL => best_fit(cx, &inner, prefix, e),
         _ => expr::expr(cx, &inner),
     }
+}
+
+/// The width of the keywords in front of `e` on its line (`return `, `if `).
+fn lead_width(cx: &FormatCtx<'_>, e: &SyntaxNode) -> usize {
+    let mut w = 0;
+    let mut prev = e.prev_sibling_or_token();
+    while let Some(p) = prev {
+        match &p {
+            core_syntax::SyntaxElement::Token(t) if !cx.grammar.is_trivia(t.kind()) => {
+                w += t.text().chars().count() + 1;
+            }
+            core_syntax::SyntaxElement::Token(_) => {}
+            core_syntax::SyntaxElement::Node(_) => return 0,
+        }
+        prev = p.prev_sibling_or_token();
+    }
+    w
 }
 
 /// Parentheses around an implicit concatenation of strings that end the logical line: a comment
@@ -327,7 +343,10 @@ pub(crate) fn for_target(cx: &FormatCtx<'_>, n: &SyntaxNode) -> R {
             }
         });
     }
-    expr::expr(cx, n)
+    if inner.kind() == k::EXPR_TUPLE {
+        return expr::expr(cx, n);
+    }
+    expr::expr(cx, &inner)
 }
 
 /// Comments on the tokens of `n` itself or at the edges of its first and last element.
@@ -386,6 +405,13 @@ impl Visit {
         self.last = Some(n.clone());
     }
 
+    /// An expression that starts with a token of its own (`not a`, `await a`) starts the whole one.
+    fn token_first(&mut self, n: &SyntaxNode) {
+        if self.first.is_none() {
+            self.first = Some(n.clone());
+        }
+    }
+
     fn visit(&mut self, cx: &FormatCtx<'_>, n: &SyntaxNode) {
         match n.kind() {
             k::EXPR_BIN_OP | k::EXPR_BOOL_OP | k::EXPR_COMPARE
@@ -410,11 +436,7 @@ impl Visit {
             k::EXPR_BOOL_OP => {
                 let ks = kids(cx, n);
                 let ops = ks.iter().filter(|e| e.as_token().is_some()).count();
-                let prec = ks
-                    .iter()
-                    .find_map(tok_kind)
-                    .map_or(1, |o| if o == k::AND { 2 } else { 1 });
-                self.update(prec, ops);
+                self.update(2, ops);
                 for c in n.children() {
                     self.visit(cx, &c);
                 }
@@ -440,13 +462,22 @@ impl Visit {
                     self.comments = true;
                     return;
                 }
-                let o = ks.first().and_then(tok_kind);
-                self.update(if o == Some(k::NOT) { 3 } else { 11 }, 1);
+                if ks.first().and_then(tok_kind) == Some(k::TILDE) {
+                    self.update(11, 1);
+                }
+                self.token_first(n);
+                for c in n.children() {
+                    self.visit(cx, &c);
+                }
+            }
+            k::EXPR_IF => {
+                self.update(1, 2);
                 for c in n.children() {
                     self.visit(cx, &c);
                 }
             }
             k::EXPR_AWAIT => {
+                self.token_first(n);
                 for c in n.children() {
                     self.visit(cx, &c);
                 }

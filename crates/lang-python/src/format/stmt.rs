@@ -104,7 +104,7 @@ fn ann_assign(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
             SyntaxElement::Node(n) => {
                 nodes += 1;
                 parts.push(match nodes {
-                    1 => paren::ann_target(cx, n)?,
+                    1 => expr_doc(cx, n)?,
                     2 => paren::maybe_parenthesize(cx, n)?,
                     _ => paren::rhs(cx, n, prefix_width(&parts))?,
                 });
@@ -145,7 +145,13 @@ fn assert(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
             SyntaxElement::Token(t) => parts.push(cx.token(t)),
             SyntaxElement::Node(n) => {
                 parts.push(sp());
-                parts.push(paren::maybe_parenthesize(cx, n)?);
+                // The message follows the test on its line, like the value of an assignment.
+                let d = if parts.len() > 3 {
+                    paren::rhs(cx, n, prefix_width(&parts))?
+                } else {
+                    paren::maybe_parenthesize(cx, n)?
+                };
+                parts.push(d);
             }
         }
     }

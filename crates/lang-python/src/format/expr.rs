@@ -278,6 +278,14 @@ fn parenthesized_node(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     else {
         return Err(shape_error("Parenthesized"));
     };
+    // `((x))` is `(x)`: a pair around a pair is redundant.
+    if let [_, SyntaxElement::Node(inner), _] = ks.as_slice()
+        && inner.kind() == k::PARENTHESIZED
+        && !has_comments(cx, open)
+        && !has_comments(cx, close)
+    {
+        return parenthesized_node(cx, inner);
+    }
     if let [_, SyntaxElement::Node(inner), _] = ks.as_slice()
         && inner.kind() == k::EXPR_TUPLE
         && list::is_bare(cx, inner)
@@ -408,7 +416,7 @@ fn subscript_tail_inner(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let inner = &ks[2..ks.len() - 1];
     let inner_doc = match inner {
         [SyntaxElement::Node(t)] if t.kind() == k::EXPR_TUPLE && list::is_bare(cx, t) => {
-            list::bare_tuple(cx, t)?
+            list::subscript_tuple(cx, t)?
         }
         _ => concat(
             inner

@@ -46,7 +46,7 @@ pub(crate) fn rewrite(tree: &SyntaxNode, text: &str) -> Option<String> {
                 let rest = &trimmed[1..];
                 let fixed = match rest.chars().next() {
                     None => "#".to_string(),
-                    Some(c) if " !:#'".contains(c) => trimmed.to_string(),
+                    Some(c) if " !:#'|".contains(c) => trimmed.to_string(),
                     Some('\u{a0}') if !rest.trim_start().starts_with("type:") => {
                         format!("# {}", &rest['\u{a0}'.len_utf8()..])
                     }

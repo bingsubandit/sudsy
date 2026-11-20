@@ -180,7 +180,10 @@ fn power(cx: &FormatCtx<'_>, ks: &[SyntaxElement]) -> R {
 
 fn is_simple_power_operand(n: &SyntaxNode) -> bool {
     match n.kind() {
-        k::EXPR_NAME | k::EXPR_NUMBER_LITERAL => true,
+        k::EXPR_NAME
+        | k::EXPR_NUMBER_LITERAL
+        | k::EXPR_BOOLEAN_LITERAL
+        | k::EXPR_NONE_LITERAL => true,
         k::EXPR_ATTRIBUTE => n
             .children()
             .next()
@@ -355,7 +358,36 @@ pub(crate) fn prefix(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         if i > 0 {
             parts.push(lit(" "));
         }
+        // `await (x)`: the parentheses go unless the operand needs them.
+        if node.kind() == k::EXPR_AWAIT
+            && let SyntaxElement::Node(n) = e
+        {
+            let inner = super::paren::strip(cx, n);
+            if is_primary(inner.kind()) {
+                parts.push(elem(cx, &SyntaxElement::Node(inner))?);
+                continue;
+            }
+        }
         parts.push(elem(cx, e)?);
     }
     Ok(concat(parts))
+}
+
+/// An operand that binds tighter than `await` needs no parentheses after it.
+fn is_primary(kind: SyntaxKind) -> bool {
+    matches!(
+        kind,
+        k::EXPR_NAME
+            | k::EXPR_ATTRIBUTE
+            | k::EXPR_CALL
+            | k::EXPR_SUBSCRIPT
+            | k::EXPR_AWAIT
+            | k::EXPR_NUMBER_LITERAL
+            | k::EXPR_STRING_LITERAL
+            | k::EXPR_BYTES_LITERAL
+            | k::EXPR_F_STRING
+            | k::EXPR_LIST
+            | k::EXPR_DICT
+            | k::EXPR_SET
+    )
 }
