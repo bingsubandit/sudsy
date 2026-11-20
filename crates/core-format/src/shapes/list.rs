@@ -285,6 +285,9 @@ fn list_of(
         dangling.clear();
     }
     let open_comments = !comments::trailing_comments(g, &c.open).is_empty();
+    let open_line_comment = comments::trailing_comments(g, &c.open)
+        .iter()
+        .any(|c| c.kind != comments::CommentKind::Block);
     // Comments before the opening and after the closing delimiter belong outside the group: a
     // comment must not force the list itself to break.
     let before = cx.leading_comments_doc(&c.open);
@@ -611,6 +614,12 @@ fn list_of(
     // A flat list has no line breaks of its own to indent; a list nested in it indents itself.
     let inner = if flat {
         inner
+    } else if style.align_open && open_line_comment && !items.is_empty() {
+        // (a line comment after the opening delimiter ends its line: the items hang below it)
+        doc::align(
+            doc::ALIGN_FROM_LINE | style.hang_indent,
+            doc::concat(vec![doc::hardline(), inner]),
+        )
     } else if style.align_open {
         let inner = doc::shared(inner);
         // (every item fits up to its separator; the last one with the text after the list too)
