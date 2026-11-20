@@ -803,6 +803,9 @@ pub fn fits_below(levels: usize, width: usize, fits: Doc, otherwise: Doc) -> Doc
 /// `fits` when filling items of the given flat `widths` from the current column takes no more
 /// lines than a break after the opening delimiter and filling them `hang` columns in, else
 /// `otherwise`.
+///
+/// The threshold is 3 lines (see the printer): aligning is kept unless it costs more than three
+/// extra lines. It is fitted to the llvm corpus, not derived from a cost model.
 pub fn fits_fewer_lines(widths: Vec<usize>, hang: usize, fits: Doc, otherwise: Doc) -> Doc {
     Doc::FitsBelow(Box::new(FitsBelow {
         levels: AT_COLUMN,

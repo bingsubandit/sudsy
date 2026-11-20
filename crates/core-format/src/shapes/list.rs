@@ -579,8 +579,13 @@ fn list_of(
             // (the `)` and what stands after it, for the last), do not fit.
             let mut parts = fill_parts.into_iter();
             let mut out: Vec<Doc> = parts.next().into_iter().collect();
+            let mut prev_breaks = out.first().is_some_and(Doc::will_break);
             while let (Some(between), Some(item)) = (parts.next(), parts.next()) {
-                out.push(if item.will_break() && !between.will_break() {
+                let breaks = item.will_break();
+                out.push(if prev_breaks {
+                    // (the item before spans lines: this one starts a line of its own)
+                    doc::group_broken(doc::concat(vec![between, item]))
+                } else if breaks && !between.will_break() {
                     // (an item with a forced break, a lambda body: it stays on the line when its
                     // first line fits, the group around would break at once)
                     let item = doc::shared(item);
@@ -591,6 +596,7 @@ fn list_of(
                 } else {
                     doc::group(doc::concat(vec![between, item]))
                 });
+                prev_breaks = breaks;
             }
             doc::concat(out)
         } else {
@@ -633,6 +639,14 @@ fn list_of(
         doc::hardline()
     } else if style.hug_close && dangling.is_empty() {
         Doc::Nil
+    } else if style.align_open
+        && dangling
+            .last()
+            .is_some_and(|c| c.kind != comments::CommentKind::Block)
+    {
+        // (a line comment or directive on a line of its own ends it: the closing delimiter
+        // cannot follow on it)
+        doc::hardline()
     } else if style.align_open {
         // (a comment pending after the last item ends the line before the closing delimiter)
         doc::line_suffix_boundary()
