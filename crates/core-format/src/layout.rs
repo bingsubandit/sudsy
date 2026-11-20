@@ -355,6 +355,11 @@ impl Layout {
         if let Some(b) = self.bound("binary_chain", node.kind())
             && cx.options.flag(&b.option, true)
         {
+            // (a comment inside keeps the chain as written)
+            let text = node.text().to_string();
+            if text.contains("//") || text.contains("/*") {
+                return None;
+            }
             let policy = shapes::BinaryPolicy::of(cx.options);
             return shapes::binary_chain(cx, node, &policy, &shapes::NoBinaryHooks)
                 .ok()

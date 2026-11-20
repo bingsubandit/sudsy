@@ -304,6 +304,40 @@ impl Doc {
         w
     }
 
+    /// For a document that holds an operator chain (a [`label`] `"chain"`): the width of its widest
+    /// line when it is filled, the operands with their operators. `None` when it holds none, or
+    /// an operand has a forced break.
+    pub fn chain_widest(&self) -> Option<usize> {
+        fn unit(d: &Doc) -> Option<usize> {
+            match d {
+                Doc::Group(g) => unit(&g.contents),
+                Doc::Indent(d) | Doc::Align(_, d) => unit(d),
+                Doc::Concat(ps) => match ps.first() {
+                    Some(Doc::Line | Doc::HardLine) => Doc::Concat(ps[1..].to_vec()).flat_width(),
+                    _ => d.flat_width(),
+                },
+                _ => d.flat_width(),
+            }
+        }
+        fn parts(d: &Doc) -> Option<usize> {
+            match d {
+                Doc::Concat(ps) => ps.iter().map(unit).try_fold(0, |m, w| Some(m.max(w?))),
+                Doc::Indent(d) | Doc::Align(_, d) => parts(d),
+                _ => unit(d),
+            }
+        }
+        match self {
+            Doc::Label("chain", d) => parts(d),
+            Doc::Label(_, d) | Doc::Indent(d) | Doc::Align(_, d) | Doc::IndentIfBreak(_, d) => {
+                d.chain_widest()
+            }
+            Doc::Group(g) => g.contents.chain_widest(),
+            Doc::Shared(s) => s.doc.chain_widest(),
+            Doc::Concat(ps) => ps.iter().find_map(Doc::chain_widest),
+            _ => None,
+        }
+    }
+
     /// The document with its last group (the body of a lambda that ends it) broken.
     pub fn break_last_group(mut self) -> Doc {
         fn walk(d: &mut Doc) -> bool {
