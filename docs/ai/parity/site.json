@@ -2,7 +2,7 @@
 {"format":[{"catalog":"prettier","name":"Prettier","share":84.00394964206369}],"ids":["js"],"lint":[{"catalog":"eslint","name":"ESLint","share":100.0},{"catalog":"typescript-eslint","name":"typescript-eslint","share":100.0}],"name":"JavaScript / TypeScript","presets":["java/google","js/biome","js/biome-recommended","js/eslint-recommended","js/oxlint","js/typescript-eslint-recommended","kotlin/ktlint","php/phpstan","powershell/psscriptanalyzer","python/ruff","ruby/rubocop","shell/shellcheck"],"rules":94,"slug":"js","speed":[["JS/TS","Format","Prettier","23× faster","0.21 s / 4.87 s","172 / 298 MB"],["JS/TS","Lint","ESLint","16× faster","0.27 s / 4.30 s","189 / 451 MB"],["JS/TS","Lint","typescript-eslint","24× faster","0.32 s / 7.54 s","240 / 730 MB"],["JS/TS","Format","Biome","1.5× slower","0.27 s / 0.18 s","158 / 104 MB"],["JS/TS","Lint","Biome","1.4× faster","0.27 s / 0.38 s","205 / 146 MB"],["JS/TS","Lint","oxlint","4.2× slower","0.24 s / 0.057 s","199 / 160 MB"]],"status":"In progress"},
 {"format":[{"catalog":"ruff","name":"ruff format","share":79.40280316879951}],"ids":["python"],"lint":[{"catalog":"ruff","name":"ruff","share":94.6}],"name":"Python","presets":["java/google","js/biome-recommended","js/eslint-recommended","js/oxlint","js/typescript-eslint-recommended","kotlin/ktlint","php/phpstan","powershell/psscriptanalyzer","python/ruff","ruby/rubocop","shell/shellcheck"],"rules":146,"slug":"python","speed":[["Python","Format","ruff","4.8× slower","0.31 s / 0.066 s","224 / 58 MB"],["Python","Lint","ruff","2.1× slower","0.34 s / 0.17 s","245 / 57 MB"]],"status":"In progress"},
 {"format":[{"catalog":"buf","name":"buf format","share":99.07120743034056}],"ids":["protobuf"],"lint":[{"catalog":"buf","name":"buf","share":85.8}],"name":"Protobuf","presets":["protobuf/buf-standard"],"rules":35,"slug":"protobuf","speed":[["Protobuf","Format","buf","3.6× faster","0.069 s / 0.25 s","118 / 74 MB"],["Protobuf","Lint","buf","not measured: the analysis runs per module, not on a folder of unrelated files","-","-"]],"status":"Ready"},
-{"format":[{"catalog":"terraform","name":"terraform fmt","share":99.05362776025237}],"ids":["hcl"],"lint":[{"catalog":"tflint","name":"tflint","share":18.9}],"name":"Terraform (HCL)","presets":["hcl/tflint-recommended","java/google"],"rules":25,"slug":"hcl","speed":[["HCL","Format","terraform fmt","3.5× faster","0.11 s / 0.40 s","123 / 87 MB"],["HCL","Lint","tflint","23× faster","0.20 s / 4.69 s","120 / 89 MB"]],"status":"In progress"},
+{"format":[{"catalog":"terraform","name":"terraform fmt","share":99.05362776025237}],"ids":["hcl"],"lint":[{"catalog":"tflint","name":"tflint","share":58.7}],"name":"Terraform (HCL)","presets":["hcl/tflint-recommended","java/google"],"rules":25,"slug":"hcl","speed":[["HCL","Format","terraform fmt","3.5× faster","0.11 s / 0.40 s","123 / 87 MB"],["HCL","Lint","tflint","23× faster","0.20 s / 4.69 s","120 / 89 MB"]],"status":"In progress"},
 {"format":[{"catalog":"prettier","name":"Prettier","share":99.19354838709677}],"ids":["graphql"],"lint":[],"name":"GraphQL","presets":["java/google"],"rules":20,"slug":"graphql","speed":[],"status":"Ready"},
 {"format":[{"catalog":"taplo","name":"taplo","share":98.06763285024155}],"ids":["toml"],"lint":[],"name":"TOML","presets":["toml/taplo-compat"],"rules":14,"slug":"toml","speed":[["TOML","Format","taplo","1.6× faster","0.012 s / 0.019 s","45 / 40 MB"]],"status":"Ready"},
 {"format":[{"catalog":"prettier","name":"Prettier","share":91.51193633952255}],"ids":["html"],"lint":[{"catalog":"html-eslint","name":"html-eslint","share":0.2},{"catalog":"html-validate","name":"html-validate","share":62.9},{"catalog":"htmlhint","name":"htmlhint","share":5.0}],"name":"HTML","presets":["html/eslint-plugin-svelte-recommended","html/eslint-plugin-vue-recommended","html/html-eslint-recommended","html/html-validate-recommended","html/html-validate-standard","html/htmlhint"],"rules":141,"slug":"html","speed":[["HTML","Format","Prettier","54× faster","0.026 s / 1.40 s","98 / 169 MB"],["HTML","Lint","html-validate","25× faster","0.090 s / 2.27 s","104 / 285 MB"],["HTML","Lint","HTMLHint","4.0× faster","0.066 s / 0.26 s","82 / 100 MB"],["HTML","Lint","html-eslint","2.0× faster","0.062 s / 0.12 s","82 / 75 MB"]],"status":"In progress"},
@@ -22,8 +22,8 @@
 {"format":[{"catalog":"csharpier","name":"CSharpier XML","share":99.69135802469135}],"ids":["xml"],"lint":[],"name":"XML","presets":["xml/csharpier-compat"],"rules":16,"slug":"xml","speed":[["XML","Format","CSharpier","4.0× faster","0.11 s / 0.44 s","104 / 97 MB"]],"status":"Ready"},
 {"format":[{"catalog":"clang-format","name":"clang-format","share":18.36119897574936}],"ids":["c","cpp"],"lint":[],"name":"C / C++","presets":["cpp/chromium","cpp/gnu","cpp/google","cpp/microsoft","cpp/mozilla","cpp/webkit","js/biome-recommended","js/eslint-recommended","js/oxlint","powershell/psscriptanalyzer","python/ruff","ruby/rubocop"],"rules":24,"slug":"c","speed":[],"status":"In progress"},
 {"format":[],"ids":["ruby"],"lint":[{"catalog":"rubocop","name":"RuboCop","share":96.2}],"name":"Ruby","presets":["js/biome-recommended","js/eslint-recommended","js/oxlint","powershell/psscriptanalyzer","python/ruff","ruby/rubocop"],"rules":52,"slug":"ruby","speed":[["Ruby","Lint","RuboCop","88× faster","3.00 s / 264.55 s","1180 / 377 MB"]],"status":"Lint only: Ready"},
-{"format":[],"ids":["dockerfile"],"lint":[{"catalog":"hadolint","name":"hadolint","share":35.7}],"name":"Dockerfile","presets":["dockerfile/hadolint"],"rules":61,"slug":"dockerfile","speed":[["Dockerfile","Lint","hadolint","36× faster","0.071 s / 2.57 s","70 / 74 MB"]],"status":"Lint only: In progress"},
-{"format":[],"ids":["makefile"],"lint":[{"catalog":"checkmake","name":"checkmake","share":96.9}],"name":"Makefile","presets":["makefile/checkmake"],"rules":19,"slug":"makefile","speed":[["Makefile","Lint","checkmake","3.7× slower","0.059 s / 0.016 s","70 / 28 MB"]],"status":"Lint only: Ready"},
+{"format":[],"ids":["dockerfile"],"lint":[{"catalog":"hadolint","name":"hadolint","share":78.2}],"name":"Dockerfile","presets":["dockerfile/hadolint"],"rules":64,"slug":"dockerfile","speed":[["Dockerfile","Lint","hadolint","36× faster","0.071 s / 2.57 s","70 / 74 MB"]],"status":"Lint only: In progress"},
+{"format":[],"ids":["makefile"],"lint":[{"catalog":"checkmake","name":"checkmake","share":100.0}],"name":"Makefile","presets":["makefile/checkmake"],"rules":19,"slug":"makefile","speed":[["Makefile","Lint","checkmake","3.7× slower","0.059 s / 0.016 s","70 / 28 MB"]],"status":"Lint only: Ready"},
 {"format":[],"ids":["github-actions"],"lint":[{"catalog":"actionlint","name":"actionlint","share":5.1}],"name":"GitHub Actions","presets":["github-actions/actionlint","yaml/yamllint"],"rules":35,"slug":"github-actions","speed":[["GitHub Actions","Lint","actionlint","2.1× slower","0.14 s / 0.065 s","76 / 71 MB"]],"status":"Lint only: In progress"},
 {"format":[],"ids":["ini","editorconfig","gitignore"],"lint":[],"name":"INI, EditorConfig, .gitignore","presets":[],"rules":23,"slug":"ini","speed":[],"status":"not measured"}
 ],
@@ -180,7 +180,7 @@
 ["RPC_NO_CLIENT_STREAMING","deferred","deferred","Not in the default categories (UNARY_RPC)."],
 ["RPC_NO_SERVER_STREAMING","deferred","deferred","Not in the default categories (UNARY_RPC)."]
 ]},
-{"coverage":60.9,"languages":["makefile"],"target":96.9,"tool":"checkmake","version":"0.3.2","entries":[
+{"coverage":60.9,"languages":["makefile"],"target":100.0,"tool":"checkmake","version":"0.3.2","entries":[
 ["minphony","covered","rule: min-phony",""],
 ["phonydeclared","covered","rule: phony-declared",""],
 ["timestampexpanded","covered","rule: timestamp-expanded",""],
@@ -1163,7 +1163,7 @@
 ["require-selections","deferred","deferred","Needs a schema, the other files of the project or operation usage."],
 ["strict-id-in-types","deferred","deferred","Needs a schema, the other files of the project or operation usage."]
 ]},
-{"coverage":35.7,"languages":["dockerfile"],"target":35.7,"tool":"hadolint","version":"2.15.1","entries":[
+{"coverage":78.2,"languages":["dockerfile"],"target":78.2,"tool":"hadolint","version":"2.15.1","entries":[
 ["DL1001","wontfix","wontfix: Sudsy has its own suppression comments; a rule against inline pragmas is not planned.",""],
 ["DL3000","covered","rule: workdir-absolute",""],
 ["DL3001","covered","rule: no-interactive-commands",""],
@@ -1180,6 +1180,7 @@
 ["DL3015","covered","rule: apt-get-no-recommends",""],
 ["DL3016","partial","rule: npm-pin-versions","A package is judged by its text (`@`, `#`, tarball, path); git and scoped forms follow hadolint's cases only."],
 ["DL3018","covered","rule: apk-pin-versions",""],
+["DL3009","partial","rule: delete-apt-lists","Only the RUN that runs `apt-get update` is checked, and any `rm` of a path under /var/lib/apt/lists in it counts, as hadolint does."],
 ["DL3019","covered","rule: apk-no-cache",""],
 ["DL3020","partial","rule: copy-instead-of-add","Reports an ADD with no URL and no archive among its arguments; hadolint reports one source that is neither."],
 ["DL3021","partial","rule: copy-many-needs-directory","The shell form only; the JSON form is not checked."],
@@ -1203,6 +1204,7 @@
 ["DL3043","covered","rule: no-nested-onbuild",""],
 ["DL3047","covered","rule: wget-progress",""],
 ["DL3061","covered","rule: from-first",""],
+["DL3059","partial","rule: merge-consecutive-run","Both RUNs must be a single command with the same flags."],
 ["DL3062","partial","rule: go-pin-versions","`go install` and `go get`; `go run` is not checked."],
 ["DL3063","covered","rule: no-reserved-stage-name",""],
 ["DL3064","partial","rule: no-secret-in-env","Names are matched in the text of the instruction, so a later pair of a multi-pair ENV with quoted values may be missed."],
@@ -1213,7 +1215,7 @@
 ["DL4003","covered","rule: single-cmd",""],
 ["DL4004","covered","rule: single-entrypoint",""],
 ["DL4005","covered","rule: no-shell-symlink",""],
-["DL3009","deferred","deferred","Needs the stage analysis of which RUN leaves the lists in an image that is kept."],
+["DL4006","partial","rule: pipefail-shell","A SHELL instruction with a word that contains `pipefail` ends the check for the rest of the stage."],
 ["DL3010","deferred","deferred","Needs to match a COPY'd archive against the extraction in a later RUN."],
 ["DL3026","deferred","deferred","Needs a configured list of trusted registries."],
 ["DL3042","deferred","deferred","Needs PIP_NO_CACHE_DIR tracked across ENV, ARG and stages."],
@@ -1231,10 +1233,8 @@
 ["DL3058","deferred","deferred","Needs the configured label schema."],
 ["DL3054","deferred","deferred","Needs the configured label schema and the SPDX list."],
 ["DL3057","deferred","deferred","Off in hadolint by default; a file-level check that is not built."],
-["DL3059","deferred","deferred","Needs the commands of each RUN counted."],
 ["DL3060","deferred","deferred","Needs the yarn commands of a RUN ordered."],
-["DL4001","deferred","deferred","Needs the commands of all RUNs of a stage compared."],
-["DL4006","deferred","deferred","Needs pipes in RUN found by a real shell parser and the SHELL option tracked."]
+["DL4001","deferred","deferred","Needs the commands of all RUNs of a stage compared."]
 ]},
 {"coverage":0.2,"languages":["html"],"target":0.2,"tool":"html-eslint","version":"0.68.0","entries":[
 ["attrs-newline","missing","planned",""],
@@ -4326,7 +4326,7 @@
 ["format","partial","formatter","Files with a rewrite of `\"${x}\"` to `x` or of a quoted `variable` type are listed with their reasons in tests/parity/terraform/differences.yaml: the formatter never changes tokens; the rule `deprecated-interpolation` does it as a fix."],
 ["check","covered","config: `sudsy format --check`",""]
 ]},
-{"coverage":18.9,"languages":["hcl"],"target":18.9,"tool":"tflint","version":"0.17.0 (tflint-ruleset-terraform)","entries":[
+{"coverage":58.7,"languages":["hcl"],"target":58.7,"tool":"tflint","version":"0.17.0 (tflint-ruleset-terraform)","entries":[
 ["terraform_comment_syntax","covered","rule: comment-syntax",""],
 ["terraform_deprecated_index","covered","rule: deprecated-index",""],
 ["terraform_deprecated_interpolation","covered","rule: deprecated-interpolation",""],

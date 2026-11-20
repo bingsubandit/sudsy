@@ -4,6 +4,7 @@
 //! concept: none (glue: rule registration)
 
 mod run_command;
+mod run_stage;
 mod stages;
 
 use core_rules::{Family, Rule};
@@ -18,6 +19,8 @@ pub static RULES: &[&dyn Rule] = &[
 
 pub static FAMILIES: &[Family] = &[
     run_command::FAMILY,
+    run_stage::CONSECUTIVE,
+    run_stage::PIPE_SHELL,
     stages::ONCE_PER_STAGE,
     core_rules::unique::FAMILY,
 ];

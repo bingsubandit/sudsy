@@ -2,5 +2,27 @@ differences:
   user-variable: gap  a variable as the user is accepted whether or not an ARG defines it (hadolint reports it)
 files:
   instructions/cases hadolint:numeric-user-id 26: user-variable
-coverage: 35.7  # share of the default-set findings of hadolint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage hadolint; at least 85% is the bar)
-target: 35.7
+coverage: 78.2  # share of the default-set findings of hadolint on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage hadolint; at least 85% is the bar)
+target: 78.2
+fixes:  # gap name or lint rule -> one line: where and what to change
+  DL3066: user-variable gap of numeric-user-id, report a USER with a variable whose ARG default is not numeric (lang-dockerfile rules, stage facts)
+  SC2086: shell rule on embedded RUN code, map to the shared shell quoting rule once the shell preset checks embedded code
+  SC2155: local x=$(cmd) masks the exit status, needs the shell preset rule on embedded RUN code
+  DL3059: crates/lang-dockerfile/rules/run-stage.yaml, 4 consecutive-RUN findings still missed; check against the corpus lines
+  DL3045: COPY to a relative path needs WORKDIR tracked per stage (deferred in the catalog), stage facts in lang-dockerfile
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  DL3066: 30
+  SC2086: 28
+  SC2155: 24
+  SC1065: 14
+  SC2046: 12
+  SC2251: 12
+  SC1072: 9
+  SC1088: 8
+  SC2154: 8
+  DL1000: 5
+  DL3045: 4
+  DL3059: 4
+  SC3040: 4
+  DL3042: 2
+  SC2006: 2

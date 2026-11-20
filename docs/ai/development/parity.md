@@ -102,13 +102,13 @@ Raw and target of every run (`scripts/parity.sh format <tool>`, `scripts/parity.
 |---|---:|---:|
 | actionlint | 5.1% (37 of 721) | 5.1% (37 of 721) |
 | buf | 85.8% (2027 of 2362) | 85.8% (2027 of 2362) |
-| checkmake | 60.9% (349 of 573) | 96.9% (349 of 360) |
+| checkmake | 60.9% (349 of 573) | 100.0% (349 of 349) |
 | checkstyle | 25.2% (13871 of 54940) | 23.1% (13871 of 59978) |
 | eslint-jsonc | not run here (no corpus, or the tool is not installed) | - |
 | eslint-plugin-svelte | 100.0% (67 of 67) | 100.0% (67 of 67) |
 | eslint-plugin-vue | 87.2% (1241 of 1423) | 23.0% (1241 of 5404) |
 | eslint | 100.0% (4411 of 4413) | 100.0% (4411 of 4413) |
-| hadolint | 35.7% (282 of 790) | 35.7% (282 of 790) |
+| hadolint | 78.2% (618 of 790) | 78.2% (618 of 790) |
 | html-eslint | 0.2% (37 of 19963) | 0.2% (37 of 19963) |
 | html-validate | 61.5% (616 of 1001) | 62.9% (616 of 980) |
 | htmlhint | 5.0% (65 of 1301) | 5.0% (65 of 1301) |
@@ -124,7 +124,7 @@ Raw and target of every run (`scripts/parity.sh format <tool>`, `scripts/parity.
 | stylelint-less | not run here (no corpus, or the tool is not installed) | - |
 | stylelint-scss | not run here (no corpus, or the tool is not installed) | - |
 | stylelint | 94.7% (12012 of 12686) | 94.7% (12012 of 12686) |
-| tflint | 18.9% (27 of 143) | 18.9% (27 of 143) |
+| tflint | 58.7% (84 of 143) | 58.7% (84 of 143) |
 | typescript-eslint | 100.0% (3644 of 3644) | 100.0% (3644 of 3644) |
 | yamllint | 74.3% (2232 of 3004) | 74.1% (2232 of 3013) |
 
@@ -175,7 +175,7 @@ A tool is an entry of `scripts/parity_tools.json`, under `lint` or `format` (`pa
 - `catalog`: the catalog file whose `version` pins the tool (`version_command` instead: the SDK's own, for `dotnet-format`); `install`: an `npm` package (`with`: more packages), a `pip` package, a `dotnet-tool`, a `psmodule`, a `jar` (a Maven Central jar with its `sha256`, run with the pinned Temurin JRE that `scripts/lib/jre.sh <dir>` installs next to it, checksum verified; the runner writes a launcher script as the `exe`) or a `release` (URL template, per-platform `assets`: a zip or tar archive, a gzip or the executable itself) and its `exe`, installed into `<target>/parity/<catalog>-<version>/` on first use (a lint entry may name a format entry whose install it shares: `"install": "buf"`);
 - `version`: the tool's release when the catalog pins something else (tflint: the ruleset's version);
 - `needs`: `worker` builds the C# worker; `fetch`: scripts that fetch corpora;
-- `coverage`: the entry of the coverage mode, run by `scripts/parity_coverage.py` for every tool without code of its own in `parity_lint.coverage`: `corpus` (`dir`, `glob`, `skip`; `as` or `into` name where the files go in the work folder), `command` (`{exe}`, `{prefix}`, `{python}`, `{work}`, `{root}`, `{group}`, `{files}`; without `{files}` it runs once per group), `group` (a regex whose first group splits the files into runs, `cwd: group` runs one in the folder of its name), `chunk`, `timeout`, `memory_gb`, `ok_codes`, `env`, `stream` (`stderr` where the report is there), `files` (config files written into the work folder), `parse` (`format` `regex` with named groups `file`, `rule`, `message`; or `json`/`jsonl` with `levels`, the lists to walk, and `file`, `rule`, `message` as `<level>.<key>.<key>`; `rule_prefix`, `rule_sub`, `rule_fn`, `json_line`), `map_also` (catalogs whose mapping also applies: hadolint runs ShellCheck), `unreadable` (rules that mean the tool could not read the file) and `sudsy` (`extends`, or `mapped_rules: <language>`). The tool reports into files, not pipes: a Node tool that exits after a write cuts a pipe at 64 KiB.
+- `coverage`: the entry of the coverage mode, run by `scripts/parity_coverage.py` for every tool without code of its own in `parity_lint.coverage`: `corpus` (`dir`, `glob`, `skip`; `as` or `into` name where the files go in the work folder), `command` (`{exe}`, `{prefix}`, `{python}`, `{work}`, `{root}`, `{group}`, `{files}`; without `{files}` it runs once per group), `group` (a regex whose first group splits the files into runs, `cwd: group` runs one in the folder of its name), `chunk`, `timeout`, `memory_gb`, `ok_codes`, `env`, `stream` (`stderr` where the report is there), `files` (config files written into the work folder), `parse` (`format` `regex` with named groups `file`, `rule`, `message`; or `json`/`jsonl` with `levels`, the lists to walk, and `file`, `rule`, `message` as `<level>.<key>.<key>`; `rule_prefix`, `rule_sub`, `rule_fn`, `json_line`), `map_also` (catalogs whose mapping also applies: hadolint runs ShellCheck), `instruction` (`rule_prefix`, `continuation`: findings whose code starts with the prefix count as covered when Sudsy reports the same rule on any line of the instruction that starts at the tool's line, an instruction going on while a line ends with `continuation`; hadolint reports ShellCheck codes at the first line of a `RUN`, ShellCheck at the line of the command), `unreadable` (rules that mean the tool could not read the file) and `sudsy` (`extends`, or `mapped_rules: <language>`). The tool reports into files, not pipes: a Node tool that exits after a write cuts a pipe at 64 KiB.
 
 ## Speed
 `scripts/speed.sh [<tool>...]` ([plan](../design/speed-comparison.md)) measures the entries that have a `speed` key (one object, or a list: one per language), run by `.github/workflows/speed.yml`; a tool with no parity run (oxlint, dprint, `biome-js`) is an entry of the `speed` section, with no `command` and no `coverage`. A tool with a format and a lint entry carries the key on the format entry. The key:

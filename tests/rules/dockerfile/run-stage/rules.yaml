@@ -1,0 +1,3 @@
+merge-consecutive-run: warn
+pipefail-shell: warn
+delete-apt-lists: warn

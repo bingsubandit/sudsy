@@ -8,8 +8,9 @@
 //!   must match `pinned` and must not match `unpinned`; `skip-flag-args`: flags whose value is
 //!   not a package.
 //! - `unless`: words (flags with a dash) that exempt the command: `-r .`.
-//! - `cleaned-by`: alternatives `a b c | d e`, each a command name with arguments it must have;
-//!   the host needs one of them after the selected command.
+//! - `cleaned-by`: alternatives `a b c | d e`, each a command name with arguments it must have (an
+//!   argument written `^/dir` matches any argument that starts with `/dir`); the host needs one of
+//!   them after the selected command.
 //!
 //! concept: embedded-code
 //! what: Code of another language inside a file, reported by the host provider and parsed by that language.
@@ -91,6 +92,13 @@ pub fn shell_commands(root: &SyntaxNode) -> Vec<Cmd> {
         }
     }
     out
+}
+
+/// Whether the script has a pipeline (`a | b`).
+pub fn has_pipeline(root: &SyntaxNode) -> bool {
+    let shell = SHELL.get();
+    let pipeline = shell.kind_by_name("Pipeline");
+    root.descendants().any(|n| Some(n.kind()) == pipeline)
 }
 
 /// The selection and the check of one rule, read from its params.
@@ -199,7 +207,10 @@ impl CommandCheck {
         self.cleaned_by.iter().any(|alt| {
             cmds[from..].iter().any(|c| {
                 alt.first().is_some_and(|n| *n == c.name)
-                    && alt[1..].iter().all(|a| c.args.contains(a))
+                    && alt[1..].iter().all(|a| match a.strip_prefix('^') {
+                        Some(prefix) => c.args.iter().any(|x| x.starts_with(prefix)),
+                        None => c.args.contains(a),
+                    })
             })
         })
     }

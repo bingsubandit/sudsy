@@ -24,7 +24,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | angular-eslint | - | - | 37 | 3 | 2 | 22 | 0 | 0 | 10 | 22 |
 | biome | - | - | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | buf | 85.8% | 85.8% | 47 | 20 | 3 | 0 | 0 | 0 | 24 | 0 |
-| checkmake | 60.9% | 96.9% | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
+| checkmake | 60.9% | 100.0% | 5 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
 | checkstyle | 25.2% | 23.1% | 126 | 36 | 12 | 72 | 0 | 6 | 0 | 72 |
 | clang-format | - | - | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | csharpier | - | - | 16 | 11 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -35,7 +35,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | eslint-plugin-vue | 87.2% | 23.0% | 256 | 45 | 58 | 149 | 0 | 4 | 0 | 149 |
 | google-java-format | - | - | 14 | 2 | 5 | 1 | 0 | 6 | 0 | 1 |
 | graphql-eslint | - | - | 65 | 4 | 6 | 30 | 0 | 0 | 25 | 30 |
-| hadolint | 35.7% | 35.7% | 71 | 38 | 10 | 0 | 0 | 1 | 22 | 0 |
+| hadolint | 78.2% | 78.2% | 71 | 38 | 13 | 0 | 0 | 1 | 19 | 0 |
 | html-eslint | 0.2% | 0.2% | 66 | 13 | 12 | 41 | 0 | 0 | 0 | 41 |
 | html-validate | 61.5% | 62.9% | 97 | 34 | 30 | 26 | 0 | 1 | 6 | 26 |
 | htmlhint | 5.0% | 5.0% | 44 | 10 | 6 | 28 | 0 | 0 | 0 | 28 |
@@ -57,7 +57,7 @@ The catalog of a lint tool lists every rule of the pinned version (`scripts/pari
 | stylelint-scss | - | - | 71 | 1 | 2 | 67 | 0 | 0 | 1 | 67 |
 | taplo | - | - | 23 | 11 | 7 | 0 | 0 | 0 | 5 | 0 |
 | terraform | - | - | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
-| tflint | 18.9% | 18.9% | 20 | 8 | 4 | 0 | 0 | 0 | 8 | 0 |
+| tflint | 58.7% | 58.7% | 20 | 8 | 4 | 0 | 0 | 0 | 8 | 0 |
 | typescript-eslint | 100.0% | 100.0% | 136 | 10 | 16 | 34 | 0 | 9 | 67 | 34 |
 | yamllint | 74.3% | 74.1% | 66 | 61 | 4 | 1 | 0 | 0 | 0 | 1 |
 <!-- /generated -->
@@ -79,14 +79,14 @@ The share of the findings of each reference tool's default or recommended set on
 | HTML | htmlhint | `html/htmlhint` | 5.0% | 0.3% | 5.0% | `spec-char-escape` 1087, `tag-pair` 105, `doctype-first` 36, `src-not-empty` 6, `title-require` 1 |
 | HTML | html-eslint | `html/html-eslint-recommended` | 0.3% | 0.2% | 0.3% | `indent` 16182, `element-newline` 2175, `attrs-newline` 1158, `require-closing-tags` 146, `no-extra-spacing-tags` 132 |
 | Markdown | markdownlint | `markdown/markdownlint` | 82.7% | 0.0% | 82.7% | `MD010` 309, `MD037` 6, `MD041` 4, `MD051` 2, `MD028` 1 |
-| Dockerfile | hadolint | `dockerfile/hadolint` | 27.6% | 3.4% | 27.6% | `DL4006` 153, `DL3003` 64, `DL3008` 54, `DL3047` 50, `DL3018` 42 |
+| Dockerfile | hadolint | `dockerfile/hadolint` | 78.2% | 24.3% | 78.2% | `DL3066` 30, `SC2086` 28, `SC2155` 24, `SC1065` 14, `SC2046` 12 |
 | Shell | shellcheck | `shell/shellcheck` | 47.0% | 31.0% | 47.0% | `SC2140` 22, `SC2034` 14, `SC1091` 12, `SC2154` 11, `SC2206` 9 |
 | GitHub Actions | actionlint | `github-actions/actionlint` | 5.4% | 5.4% | 5.4% | `syntax-check` 235, `expression/types` 155, `events` 115, `action` 41, `glob` 22 |
 | Makefile | checkmake | `makefile/checkmake` | 73.5% | 0.0% | 73.5% | `uniquetargets` 88, `phonydeclared` 59, `minphony` 5 |
 | Protobuf | buf | `protobuf/buf-standard` | 85.9% | 0.1% | 85.9% | `RPC_REQUEST_RESPONSE_UNIQUE` 117, `PACKAGE_DIRECTORY_MATCH` 98, `RPC_RESPONSE_STANDARD_NAME` 64, `FIELD_NOT_REQUIRED` 39, `RPC_REQUEST_STANDARD_NAME` 9 |
 | PowerShell | psscriptanalyzer | `powershell/psscriptanalyzer` | 34.4% | 3.6% | 34.4% | `PSUseShouldProcessForStateChangingFunctions` 140, `PSUseDeclaredVarsMoreThanAssignments` 130, `PSUseCmdletCorrectly` 123, `PSReviewUnusedParameter` 123, `PSUseSingularNouns` 59 |
 | Kotlin | ktlint | `kotlin/ktlint` | 13.2% | 12.0% | 13.2% | `function-signature` 30800, `argument-list-wrapping` 24113, `multiline-expression-wrapping` 15169, `class-signature` 4591, `trailing-comma-on-call-site` 4162 |
-| HCL | tflint | `hcl/tflint-recommended` | 19.6% | 0.0% | 19.6% | `terraform_required_providers` 37, `terraform_unused_declarations` 31, `terraform_typed_variables` 27, `terraform_required_version` 20 |
+| HCL | tflint | `hcl/tflint-recommended` | 58.7% | 0.0% | 58.7% | `terraform_required_providers` 37, `terraform_required_version` 20, `terraform_unused_declarations` 2 |
 | Java | checkstyle | `java/google` | 25.5% | 0.5% | 25.5% | `MissingJavadocMethod` 18283, `MethodName` 7887, `JavadocParagraph` 5301, `SummaryJavadoc` 1527, `TodoFormat` 1498 |
 | PHP | phpstan | `php/phpstan` | 0.0% | 0.0% | 0.0% | `class.notFound` 7407, `variable.undefined` 591, `classConstant.notFound` 511, `staticMethod.notFound` 401, `function.notFound` 323 |
 | SQL | sqlfluff | `sql/sqlfluff` | 4.4% | 0.1% | 4.4% | `CP02` 5770, `CP01` 3992, `LT05` 1368, `AM04` 1121, `AL03` 1061 |

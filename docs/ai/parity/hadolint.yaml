@@ -21,6 +21,7 @@ entries:
   DL3015: rule apt-get-no-recommends
   DL3016: rule npm-pin-versions | A package is judged by its text (`@`, `#`, tarball, path); git and scoped forms follow hadolint's cases only.
   DL3018: rule apk-pin-versions
+  DL3009: rule delete-apt-lists | Only the RUN that runs `apt-get update` is checked, and any `rm` of a path under /var/lib/apt/lists in it counts, as hadolint does.
   DL3019: rule apk-no-cache
   DL3020: rule copy-instead-of-add | Reports an ADD with no URL and no archive among its arguments; hadolint reports one source that is neither.
   DL3021: rule copy-many-needs-directory | The shell form only; the JSON form is not checked.
@@ -44,6 +45,7 @@ entries:
   DL3043: rule no-nested-onbuild
   DL3047: rule wget-progress
   DL3061: rule from-first
+  DL3059: rule merge-consecutive-run | Both RUNs must be a single command with the same flags.
   DL3062: rule go-pin-versions | `go install` and `go get`; `go run` is not checked.
   DL3063: rule no-reserved-stage-name
   DL3064: rule no-secret-in-env | Names are matched in the text of the instruction, so a later pair of a multi-pair ENV with quoted values may be missed.
@@ -54,9 +56,8 @@ entries:
   DL4003: rule single-cmd
   DL4004: rule single-entrypoint
   DL4005: rule no-shell-symlink
+  DL4006: rule pipefail-shell | A SHELL instruction with a word that contains `pipefail` ends the check for the rest of the stage.
 deferred:
-  - gap: "Needs the stage analysis of which RUN leaves the lists in an image that is kept."
-    ids: [DL3009]
   - gap: "Needs to match a COPY'd archive against the extraction in a later RUN."
     ids: [DL3010]
   - gap: "Needs a configured list of trusted registries."
@@ -77,11 +78,7 @@ deferred:
     ids: [DL3054]
   - gap: "Off in hadolint by default; a file-level check that is not built."
     ids: [DL3057]
-  - gap: "Needs the commands of each RUN counted."
-    ids: [DL3059]
   - gap: "Needs the yarn commands of a RUN ordered."
     ids: [DL3060]
   - gap: "Needs the commands of all RUNs of a stage compared."
     ids: [DL4001]
-  - gap: "Needs pipes in RUN found by a real shell parser and the SHELL option tracked."
-    ids: [DL4006]

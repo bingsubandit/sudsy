@@ -71,10 +71,10 @@ Each number is measured on real-world code against the reference tool with its d
 | Angular templates | █████████░ 97% Prettier | 141 rules · reference tool: none found | Ready |
 | XML | █████████░ 99% CSharpier XML | 16 rules · reference tool: none found | Ready |
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
-| Makefile | Sudsy formatter · reference tool: none found | █████████░ 96% checkmake | Lint only: Ready |
+| Makefile | Sudsy formatter · reference tool: none found | ██████████ 100% checkmake | Lint only: Ready |
 | JavaScript / TypeScript | ████████░░ 84% Prettier | ██████████ 100% ESLint<br>██████████ 100% typescript-eslint | In progress |
 | Python | ███████░░░ 79% ruff format | █████████░ 94% ruff | In progress |
-| Terraform (HCL) | █████████░ 99% terraform fmt | █░░░░░░░░░ 18% tflint | In progress |
+| Terraform (HCL) | █████████░ 99% terraform fmt | █████░░░░░ 58% tflint | In progress |
 | HTML | █████████░ 91% Prettier | ░░░░░░░░░░ 0% html-eslint<br>██████░░░░ 62% html-validate<br>░░░░░░░░░░ 5% htmlhint | In progress |
 | Vue / Svelte | ████████░░ 85% Prettier | ██░░░░░░░░ 23% eslint-plugin-vue<br>██████████ 100% eslint-plugin-svelte | In progress |
 | CSS / SCSS / Less | ████████░░ 87% Prettier | █████████░ 94% stylelint<br>not measured stylelint-scss<br>not measured stylelint-less | In progress |
@@ -88,7 +88,7 @@ Each number is measured on real-world code against the reference tool with its d
 | SQL | ███████░░░ 78% sqlfluff | ░░░░░░░░░░ 3% sqlfluff | In progress |
 | C# | ██████████ 100% CSharpier | not measured StyleCop<br>not measured Roslynator | In progress |
 | C / C++ | █░░░░░░░░░ 18% clang-format | 24 rules · reference tool: none found | In progress |
-| Dockerfile | Sudsy formatter · reference tool: none found | ███░░░░░░░ 35% hadolint | Lint only: In progress |
+| Dockerfile | Sudsy formatter · reference tool: none found | ███████░░░ 78% hadolint | Lint only: In progress |
 | GitHub Actions | Sudsy formatter · reference tool: none found | ░░░░░░░░░░ 5% actionlint | Lint only: In progress |
 | PowerShell | not measured Invoke-Formatter | not measured PSScriptAnalyzer | not measured |
 | INI, EditorConfig, .gitignore | Sudsy formatter · reference tool: none found | 23 rules · reference tool: none found | not measured |

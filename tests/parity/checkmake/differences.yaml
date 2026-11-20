@@ -6,6 +6,9 @@ differences:
   comment-before-recipe: choice  the tool reads a target whose recipe follows comment lines as having none; make attaches the recipe to the target
   phony-line-after: choice  the tool reports a missing .PHONY target on the line after the last `.PHONY` line; Sudsy reports the `.PHONY` line itself
   rule-in-define: choice  the tool reads the lines inside a `define` block as rules; they are the text of a macro
+  rule-in-variable-value: choice  the tool reads `name:VAR` lines inside a multi-line variable value as rules; they are the text of a variable
+  phony-continuation: choice  the tool does not read the lines a `.PHONY` list continues over with a backslash; they declare targets
+  variable-target: choice  a rule whose target is a variable that expands to file names only adds a prerequisite; the tool reports it as needing PHONY
 files:
   phony-declared/cases checkmake:phony-declared 9: empty-recipe
   timestamp-expanded/cases sudsy:timestamp-expanded 8: target-specific-variable
@@ -198,6 +201,17 @@ files:
   makefile/redis/modules/vector-sets/Makefile checkmake:minphony 93: phony-line-after
   makefile/redis/src/Makefile checkmake:minphony 550: phony-line-after
   makefile/redis/tests/modules/Makefile checkmake:minphony 113: phony-line-after
+  makefile/redis/Makefile checkmake:uniquetargets 98: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 104: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 114: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 118: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 146: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 150: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 155: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 159: rule-in-variable-value
+  makefile/redis/Makefile checkmake:uniquetargets 173: rule-in-variable-value
+  makefile/cli/vendor/google.golang.org/grpc/Makefile checkmake:phonydeclared 1: phony-continuation
+  makefile/git/Makefile checkmake:phonydeclared 2823: variable-target
 intentional:
   empty-recipe: tool-wrong
   target-specific-variable: tool-wrong
@@ -206,5 +220,15 @@ intentional:
   comment-before-recipe: tool-wrong
   phony-line-after: tool-wrong
   rule-in-define: tool-wrong
+  rule-in-variable-value: tool-wrong
+  phony-continuation: tool-wrong
+  variable-target: tool-wrong
 coverage: 60.9  # share of the default-set findings of checkmake on its corpus that Sudsy also reports with the preset that mirrors it (scripts/parity.sh coverage checkmake; at least 85% is the bar)
-target: 96.9
+target: 100.0
+fixes:  # gap name or lint rule -> one line: where and what to change
+  uniquetargets: missed findings are tool-wrong (the target counts only the rest), nothing to fix
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  uniquetargets: 93
+  phonydeclared: 66
+  minphony: 63
+  maxbodylength: 2

@@ -76,3 +76,27 @@ impl Params {
         }
     }
 }
+
+/// A family rule whose check is one function over the nodes of `kinds`, with the family's own
+/// `state` (read from its params) and the rule's message: the rest of a family is then its `build`.
+pub struct Checked<S> {
+    pub meta: &'static RuleMeta,
+    pub message: String,
+    pub state: S,
+    pub kinds: &'static [core_syntax::SyntaxKind],
+    pub run: fn(&S, &core_syntax::SyntaxNode, &mut crate::RuleContext<'_>, &str),
+}
+
+impl<S: Send + Sync> Rule for Checked<S> {
+    fn meta(&self) -> &'static RuleMeta {
+        self.meta
+    }
+
+    fn kinds(&self) -> &[core_syntax::SyntaxKind] {
+        self.kinds
+    }
+
+    fn check(&self, node: &core_syntax::SyntaxNode, ctx: &mut crate::RuleContext<'_>) {
+        (self.run)(&self.state, node, ctx, &self.message);
+    }
+}

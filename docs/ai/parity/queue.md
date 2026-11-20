@@ -36,6 +36,14 @@ Lint: coverage 85.8%, target 85.8%; rules by missed findings:
 6. `IMPORT_USED` (5 missed)
 7. `PACKAGE_DEFINED` (2 missed)
 
+## checkmake
+
+Lint: coverage 60.9%, target 100%; rules by missed findings:
+1. `uniquetargets` (93 missed) Fix: missed findings are tool-wrong (the target counts only the rest), nothing to fix
+2. `phonydeclared` (66 missed)
+3. `minphony` (63 missed)
+4. `maxbodylength` (2 missed)
+
 ## checkstyle
 
 Lint: coverage 25.2%, target 23.1%; rules by missed findings:
@@ -94,6 +102,25 @@ Lint: coverage 87.2%, target 23%; rules by missed findings:
 ## google-java-format
 
 1. `layout-gaps` (- files): about 8% of the real-world files differ in a detail (a method chain whose head is a field access or that sits in a lambda or ternary, `@A()` keeps its parentheses, a text block's closing quotes are re-indented, a long trailing comment is not wrapped, and comments in unusual places (inside arguments, between modifiers) stay where the source has them)
+
+## hadolint
+
+Lint: coverage 78.2%, target 78.2%; rules by missed findings:
+1. `DL3066` (30 missed) Fix: user-variable gap of numeric-user-id, report a USER with a variable whose ARG default is not numeric (lang-dockerfile rules, stage facts)
+2. `SC2086` (28 missed) Fix: shell rule on embedded RUN code, map to the shared shell quoting rule once the shell preset checks embedded code
+3. `SC2155` (24 missed) Fix: local x=$(cmd) masks the exit status, needs the shell preset rule on embedded RUN code
+4. `SC1065` (14 missed)
+5. `SC2046` (12 missed)
+6. `SC2251` (12 missed)
+7. `SC1072` (9 missed)
+8. `SC1088` (8 missed)
+9. `SC2154` (8 missed)
+10. `DL1000` (5 missed)
+11. `DL3045` (4 missed) Fix: COPY to a relative path needs WORKDIR tracked per stage (deferred in the catalog), stage facts in lang-dockerfile
+12. `DL3059` (4 missed) Fix: crates/lang-dockerfile/rules/run-stage.yaml, 4 consecutive-RUN findings still missed; check against the corpus lines
+13. `SC3040` (4 missed)
+14. `DL3042` (2 missed)
+15. `SC2006` (2 missed)
 
 ## html-eslint
 

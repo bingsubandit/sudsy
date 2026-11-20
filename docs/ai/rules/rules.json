@@ -6330,6 +6330,50 @@
     {
       "category": "performance",
       "default_level": "off",
+      "description": "A RUN that runs apt-get update (or apt update) and does not remove /var/lib/apt/lists, which stays in the image layer. A cache mount on that directory is fine.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "FROM debian:12\nRUN a\nRUN b\n# a comment between does not matter\nRUN c\nENV A=1\nRUN d\nRUN e && f\nRUN g\nRUN h $(i)\nRUN j\nRUN --mount=type=cache,target=/x k\nRUN --mount=type=cache,target=/x l\nRUN m\nRUN [\"n\", \"o\"]\nRUN [\"p\"]\n\nRUN a | b\nRUN a || b\nRUN [\"a\", \"b\"]\nSHELL [\"/bin/bash\", \"-o\", \"pipefail\", \"-c\"]\nRUN a | b\nFROM debian:12\nRUN a | b\nRUN apt-get update\nRUN apt-get update && apt-get install -y a\nRUN apt update\nRUN apt-get update && rm -rf /var/lib/apt/lists/*\nRUN apt-get update && apt-get install -y a && rm -fr \"/var/lib/apt/lists\"\nRUN --mount=type=cache,target=/var/lib/apt/lists apt-get update\nRUN apt-get install -y a\n",
+        "language": "dockerfile",
+        "spans": [
+          {
+            "column": 1,
+            "length": 18,
+            "line": 25
+          },
+          {
+            "column": 1,
+            "length": 42,
+            "line": 26
+          },
+          {
+            "column": 1,
+            "length": 14,
+            "line": 27
+          }
+        ]
+      },
+      "fix": null,
+      "id": "delete-apt-lists",
+      "languages": [
+        "dockerfile"
+      ],
+      "options": [],
+      "presets": [
+        "dockerfile/hadolint"
+      ],
+      "upstream": [
+        {
+          "id": "DL3009",
+          "partial": true,
+          "tool": "hadolint"
+        }
+      ]
+    },
+    {
+      "category": "performance",
+      "default_level": "off",
       "description": "dnf install with no dnf clean all after it.",
       "example": {
         "config": null,
@@ -6654,6 +6698,60 @@
         {
           "id": "DL3002",
           "partial": false,
+          "tool": "hadolint"
+        }
+      ]
+    },
+    {
+      "category": "performance",
+      "default_level": "off",
+      "description": "A RUN that is a single command, directly after another single-command RUN with the same flags (a comment in between does not count).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "FROM debian:12\nRUN a\nRUN b\n# a comment between does not matter\nRUN c\nENV A=1\nRUN d\nRUN e && f\nRUN g\nRUN h $(i)\nRUN j\nRUN --mount=type=cache,target=/x k\nRUN --mount=type=cache,target=/x l\nRUN m\nRUN [\"n\", \"o\"]\nRUN [\"p\"]\n\nRUN a | b\nRUN a || b\nRUN [\"a\", \"b\"]\nSHELL [\"/bin/bash\", \"-o\", \"pipefail\", \"-c\"]\nRUN a | b\nFROM debian:12\nRUN a | b\nRUN apt-get update\nRUN apt-get update && apt-get install -y a\nRUN apt update\nRUN apt-get update && rm -rf /var/lib/apt/lists/*\nRUN apt-get update && apt-get install -y a && rm -fr \"/var/lib/apt/lists\"\nRUN --mount=type=cache,target=/var/lib/apt/lists apt-get update\nRUN apt-get install -y a\n",
+        "language": "dockerfile",
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 3
+          },
+          {
+            "column": 1,
+            "length": 5,
+            "line": 5
+          },
+          {
+            "column": 1,
+            "length": 34,
+            "line": 13
+          },
+          {
+            "column": 1,
+            "length": 14,
+            "line": 15
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 16
+          }
+        ]
+      },
+      "fix": null,
+      "id": "merge-consecutive-run",
+      "languages": [
+        "dockerfile"
+      ],
+      "options": [],
+      "presets": [
+        "dockerfile/hadolint"
+      ],
+      "upstream": [
+        {
+          "id": "DL3059",
+          "partial": true,
           "tool": "hadolint"
         }
       ]
@@ -7203,6 +7301,45 @@
       "upstream": [
         {
           "id": "DL3013",
+          "partial": true,
+          "tool": "hadolint"
+        }
+      ]
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "A RUN with a pipe in a stage whose SHELL instruction does not set pipefail.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "FROM debian:12\nRUN a\nRUN b\n# a comment between does not matter\nRUN c\nENV A=1\nRUN d\nRUN e && f\nRUN g\nRUN h $(i)\nRUN j\nRUN --mount=type=cache,target=/x k\nRUN --mount=type=cache,target=/x l\nRUN m\nRUN [\"n\", \"o\"]\nRUN [\"p\"]\n\nRUN a | b\nRUN a || b\nRUN [\"a\", \"b\"]\nSHELL [\"/bin/bash\", \"-o\", \"pipefail\", \"-c\"]\nRUN a | b\nFROM debian:12\nRUN a | b\nRUN apt-get update\nRUN apt-get update && apt-get install -y a\nRUN apt update\nRUN apt-get update && rm -rf /var/lib/apt/lists/*\nRUN apt-get update && apt-get install -y a && rm -fr \"/var/lib/apt/lists\"\nRUN --mount=type=cache,target=/var/lib/apt/lists apt-get update\nRUN apt-get install -y a\n",
+        "language": "dockerfile",
+        "spans": [
+          {
+            "column": 1,
+            "length": 9,
+            "line": 18
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 24
+          }
+        ]
+      },
+      "fix": null,
+      "id": "pipefail-shell",
+      "languages": [
+        "dockerfile"
+      ],
+      "options": [],
+      "presets": [
+        "dockerfile/hadolint"
+      ],
+      "upstream": [
+        {
+          "id": "DL4006",
           "partial": true,
           "tool": "hadolint"
         }

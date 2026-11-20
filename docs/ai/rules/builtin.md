@@ -141,6 +141,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `copy-from-unknown-stage` | dockerfile | correctness | warn | none | A `COPY --from` that names no earlier stage: not a stage name, not the index of an earlier stage, and not an image (no `:`). Equivalent: hadolint DL3022. |
 | `copy-instead-of-add` | dockerfile | suspicious | off | none | An ADD with no URL and no archive (`.tar`, `.gz`, `.tgz`, `.xz` and the like) among its arguments, which ADD would extract or download. Equivalent: hadolint DL3020 (partial). |
 | `copy-many-needs-directory` | dockerfile | correctness | error | none | A COPY with more than one source whose last argument does not end with `/`. Equivalent: hadolint DL3021 (partial). |
+| `delete-apt-lists` | dockerfile | performance | off | none | A RUN that runs apt-get update (or apt update) and does not remove /var/lib/apt/lists, which stays in the image layer. A cache mount on that directory is fine. Equivalent: hadolint DL3009 (partial). |
 | `dnf-clean` | dockerfile | performance | off | none | dnf install with no dnf clean all after it. Equivalent: hadolint DL3040. |
 | `dnf-yes` | dockerfile | correctness | warn | none | dnf install without -y. Equivalent: hadolint DL3038. |
 | `duplicate-stage-name` | dockerfile | correctness | error | none | Two FROM instructions name their stage alike. Equivalent: hadolint DL3024. |
@@ -150,6 +151,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `go-pin-versions` | dockerfile | suspicious | off | none | A go install or get package without a version (or at latest). Equivalent: hadolint DL3062 (partial). |
 | `json-cmd-entrypoint` | dockerfile | suspicious | warn | none | A CMD, ENTRYPOINT or HEALTHCHECK CMD in shell form, which runs under `sh -c` and does not get signals. Equivalent: hadolint DL3025. |
 | `last-user-not-root` | dockerfile | correctness | warn | none | A stage whose last USER is root (`root`, `0`, `root:group`, `0:group`). Equivalent: hadolint DL3002. |
+| `merge-consecutive-run` | dockerfile | performance | off | none | A RUN that is a single command, directly after another single-command RUN with the same flags (a comment in between does not count). Equivalent: hadolint DL3059 (partial). |
 | `no-apt` | dockerfile | suspicious | off | none | A RUN that calls apt. Equivalent: hadolint DL3027. |
 | `no-copy-whole-stage` | dockerfile | suspicious | off | none | A `COPY --from` with `/` as a source and as the target. Equivalent: hadolint DL3067. |
 | `no-from-platform` | dockerfile | suspicious | off | none | A FROM with a fixed `--platform`; a variable such as `$BUILDPLATFORM` is fine. Equivalent: hadolint DL3029. |
@@ -165,6 +167,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `npm-pin-versions` | dockerfile | suspicious | off | none | An npm install package without a version. Equivalent: hadolint DL3016 (partial). |
 | `numeric-user-id` | dockerfile | suspicious | off | none | A USER that is a name rather than a numeric id (a variable is accepted). Equivalent: hadolint DL3066 (partial). |
 | `pip-pin-versions` | dockerfile | suspicious | off | none | A pip install package without a version. Equivalent: hadolint DL3013 (partial). |
+| `pipefail-shell` | dockerfile | suspicious | warn | none | A RUN with a pipe in a stage whose SHELL instruction does not set pipefail. Equivalent: hadolint DL4006 (partial). |
 | `rpm-pin-versions` | dockerfile | suspicious | off | none | A yum or dnf install package without a version. Equivalent: hadolint DL3033 (partial), hadolint DL3041 (partial). |
 | `single-cmd` | dockerfile | suspicious | warn | none | A second CMD in one stage. Equivalent: hadolint DL4003. |
 | `single-entrypoint` | dockerfile | suspicious | warn | none | A second ENTRYPOINT in one stage. Equivalent: hadolint DL4004. |

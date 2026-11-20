@@ -12,6 +12,7 @@ use core_rules::diagnostic::Edit;
 use core_rules::options::{Check, Opt, OptionDecl};
 use core_rules::rule::FileContext;
 use core_rules::{Rule, RuleContext, rule};
+use core_syntax::roles::code_tokens;
 use core_syntax::{SyntaxNode, SyntaxNodeExt, SyntaxToken, TextRange};
 use std::collections::HashSet;
 
@@ -26,8 +27,7 @@ pub static RULES: &[&dyn Rule] = &[
 /// The labels of a block (`resource "a" "b"`: `a`, `b`) as written between the quotes, and the
 /// token of each.
 fn labels(block: &SyntaxNode) -> Vec<(String, SyntaxToken)> {
-    block
-        .tokens()
+    code_tokens(block)
         .skip(1)
         .take_while(|t| t.kind() != k::OPEN)
         .filter(|t| matches!(t.kind(), k::STRING | k::IDENT))

@@ -40,6 +40,7 @@ Not ranked: INI, EditorConfig and `.gitignore` have no reference tool. Measured 
 - perf-bench builds the base tree with the candidate's tools/perf-bench, so a `FileContext`/`parse_regions` API change fails the base build; build the base with its own perf-bench.
 - `Flow::seq` wraps only flows with a hung part in the `ALIGN_FROM_LINE` align (php.format +1.43% under `source_hang`); prove it with a cpp parity run.
 - Read shared rule specs once per process, not per embedded language.
+- Pattern rules capture a string label (`variable "$NAME"`), then name the variable in the `typed-variables` message (`crates/lang-hcl/rules/declarations.yaml`).
 - Human docs (docs/*.md, README.md) carry numbers copied from docs/ai; refresh them when a parity or performance number changes.
 - Format-string family: dispatch once per node instead of 16 `MEMO.names` calls (py.lint +3.6%).
 - The 13 pattern rules of `lang-shell/rules/words.yaml` cost +194% shell lint (6.5 M to 19.2 M instructions) when on: measure the matching cost of pattern rules (regexes on the text of every `Command`, `deep` token scans of the whole program) before any of them goes default-on.
