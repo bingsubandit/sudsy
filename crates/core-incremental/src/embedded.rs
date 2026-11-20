@@ -335,7 +335,14 @@ impl Embedder for Engine<'_> {
             .borrow_mut()
             .entry((language.to_string(), mode, width, single_quotes))
             .or_insert_with(|| {
-                prepare(self.db, self.file, language, mode, Some(width), single_quotes)
+                prepare(
+                    self.db,
+                    self.file,
+                    language,
+                    mode,
+                    Some(width),
+                    single_quotes,
+                )
             })
             .clone();
         format_with(self.db, language, &prepared, code)
