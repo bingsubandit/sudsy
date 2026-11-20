@@ -118,6 +118,11 @@ impl ScopeLang {
         self
     }
 
+    /// Has the language an `ordered` row? Read from the text: building a rule must not parse the table.
+    fn is_ordered(&self) -> bool {
+        Spec::is_ordered(self.source)
+    }
+
     fn spec(&self) -> &Spec {
         self.spec
             .get_or_init(|| Spec::parse(self.source).unwrap_or_else(|e| panic!("scope table: {e}")))
@@ -343,8 +348,8 @@ pub fn build(
         ("unused-variable", Some("unpacked")) => Check::UnusedUnpacked,
         (_, Some(mode)) => return Err(format!("param `mode`: unknown mode `{mode}`")),
         (name, None) => match name {
-            "unused-import" if lang.spec().ordered.is_some() => Check::UnusedImport,
-            "undefined-export" if lang.spec().ordered.is_some() => Check::UndefinedExport,
+            "unused-import" if lang.is_ordered() => Check::UnusedImport,
+            "undefined-export" if lang.is_ordered() => Check::UndefinedExport,
             "undefined-variable" => Check::UndefinedVariable,
             "unused-variable" => Check::UnusedVariable,
             "unused-local-variable" => Check::UnusedLocal,
@@ -355,7 +360,7 @@ pub fn build(
             other => return Err(format!("param `check`: unknown check `{other}`")),
         },
     };
-    if lang.spec().ordered.is_none()
+    if !lang.is_ordered()
         && check.which().is_some_and(|_| {
             matches!(
                 check,

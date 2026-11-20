@@ -372,6 +372,17 @@ fn ordered(attrs: &[&'static str]) -> Result<Ordered, String> {
 }
 
 impl Spec {
+    /// Whether a `scope.rows` file has an `ordered` line, read without parsing the file (a rule
+    /// that is built for a language that never lints reads no more than this).
+    pub fn is_ordered(source: &str) -> bool {
+        source.lines().any(|l| {
+            l.split("//")
+                .next()
+                .and_then(|l| l.split_whitespace().next())
+                == Some("ordered")
+        })
+    }
+
     /// Read the text of a `scope.rows` file.
     pub fn parse(source: &'static str) -> Result<Spec, String> {
         let mut spec = Spec::default();
