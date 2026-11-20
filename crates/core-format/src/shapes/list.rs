@@ -428,6 +428,7 @@ fn list_of(
     }
     let item_widths: Vec<Option<usize>> = items.iter().map(|i| i.doc.flat_width()).collect();
     let mut item_ids: Vec<Option<doc::GroupId>> = vec![None; items.len()];
+    let mut head_ws: Vec<Option<usize>> = vec![None; items.len()];
     let has_block = |i: usize| {
         c.slots
             .get(i)
@@ -502,6 +503,7 @@ fn list_of(
                     .descendants()
                     .any(|n| g.has_tag(n.kind(), "block"))
         });
+        head_ws[i] = has_block(i).then(|| item.width_to_brace()).flatten();
         let w = if let Some(h) = c
             .slots
             .get(i)
@@ -615,7 +617,10 @@ fn list_of(
                     _ => between,
                 };
                 k += 1;
+                // (a lambda stays on the line when its head fits: whether its body breaks depends
+                // on the width, not on the source)
                 let breaks = item.will_break();
+                let head = head_ws.get(k).copied().flatten();
                 out.push(if prev_breaks {
                     // (the item before spans lines: this one starts a line of its own)
                     doc::group_broken(doc::concat(vec![between, item]))
@@ -623,10 +628,17 @@ fn list_of(
                     // (an item with a forced break, a lambda body: it stays on the line when its
                     // first line fits, the group around would break at once)
                     let item = doc::shared(item);
-                    doc::conditional_group(vec![
-                        doc::concat(vec![doc::lit(" "), item.clone()]),
-                        doc::concat(vec![between, item]),
-                    ])
+                    let own = doc::concat(vec![between, item.clone()]);
+                    let hug = doc::conditional_group(vec![
+                        doc::concat(vec![doc::lit(" "), item]),
+                        own.clone(),
+                    ]);
+                    // (a lambda whose head does not fit on the line goes to a line of its own,
+                    // whether or not its body breaks in the source)
+                    match head {
+                        Some(h) => doc::fits_at_column(h + 1, hug, own),
+                        None => hug,
+                    }
                 } else {
                     doc::group(doc::concat(vec![between, item]))
                 });
