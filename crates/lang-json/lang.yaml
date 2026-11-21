@@ -19,4 +19,4 @@ options:
       values: ["auto", "json", "jsonc"]
       default: "auto"
       doc: "JSON or JSONC (comments, trailing commas); `auto` decides by file name."
-presets: [biome, dprint, prettier-compat]
+presets: [biome, dprint, eslint-plugin-jsonc-recommended, prettier-compat]

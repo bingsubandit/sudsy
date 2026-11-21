@@ -1,0 +1,20 @@
+# The rules of graphql-eslint's `flat/schema-recommended` and `flat/operations-recommended` that Sudsy has and that need
+# no schema or document set, at ESLint's severity (error), with the options the recommended configs set: operation and
+# fragment names in PascalCase, variables in camelCase; the other names are not checked.
+graphql:
+  lint:
+    rules:
+      naming-convention:
+        level: error
+        options:
+          operations: PascalCase
+          fragments: PascalCase
+          variables: camelCase
+          fields: "off"
+          arguments: "off"
+          types: "off"
+          enum_values: "off"
+          directives: "off"
+      no-anonymous-operations: error
+      no-duplicate-keys: error
+      no-typename-prefix: error

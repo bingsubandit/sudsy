@@ -217,7 +217,7 @@ The status and the headline numbers of every language are in the generated table
 - Covers JSONC. Config section: `json`.
 - **Formatter:** Prettier and Biome, on fixtures only. No real-world corpus.
 - **Linter:** eslint-plugin-jsonc, no findings run.
-- **Presets:** `json/prettier-compat`, `json/biome`, `json/dprint`.
+- **Presets:** `json/prettier-compat`, `json/biome`, `json/dprint`, `json/eslint-plugin-jsonc-recommended`.
 - **Options:** `collapse` (`preserve`, `always`, `never`, `opening_break`), `trailing_commas` (JSONC), `dialect` (`auto`, `json`, `jsonc`), `bracket_spacing`. Default `line_width` is 80.
 - **Differences:** not compared on real-world files.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh format biome`.

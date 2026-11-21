@@ -12,6 +12,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         shared::end_of_line(),
         ])
         .with_presets(vec![
+        core_config::Preset::new("graphql/graphql-eslint-recommended", include_str!("../presets/graphql-eslint-recommended.yaml")),
         ])
     })
 }

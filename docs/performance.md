@@ -19,19 +19,24 @@ Corpus of each row ([docs/languages.md](languages.md) has the sources):
 - JS/TS: three.js src, express lib and test, 8 copies and TypeScript sources of vuejs/core, docusaurus, excalidraw and MUI
 - CSS: the CSS, SCSS and Less corpus and the CSS corpus (css-tricks, Bootstrap, and others)
 - HTML: the HTML corpus (mdn learning-area and others), without 37 files Sudsy cannot parse and the HTML corpus (Prettier tests, mdn learning-area)
+- Angular: 453 files, without 7 files Sudsy cannot parse
 - TOML: the toml-test valid files and the TOML fixtures of the repository
 - Python: the Python corpus (Django, Requests, Flask, Click, HTTPX, pytest, Black)
 - SQL: the ANSI dialect fixtures of sqlfluff, without 3 files Sudsy cannot parse
 - Shell: the shell script corpus
 - Java: the Java corpus (5 projects)
 - Kotlin: the Kotlin corpus
-- PHP: the PHP corpus
+- PHP: the PHP corpus and 10390 files, without 1 files Sudsy cannot parse
 - PowerShell: 211 files, without 1 files Sudsy cannot parse and 210 files
-- Protobuf: the Protobuf corpus
+- Protobuf: the Protobuf corpus and the Protobuf corpus, one module per project
 - HCL: the Terraform corpus
 - C#: dotnet/runtime CoreLib, without 14 files Sudsy cannot parse
 - XML: the XML fixtures and the project files of dotnet/aspnetcore, without 1 files Sudsy cannot parse
 - Ruby: the Ruby corpus
+- Vue: the .vue files of Vue core, VitePress, Pinia and Nuxt UI
+- Svelte: the .svelte files of SvelteKit and the RealWorld app
+- SCSS: the SCSS files of the CSS corpus (Bootstrap and others)
+- Less: the Less files of the CSS corpus
 - Markdown: the dotnet/runtime documentation
 - Dockerfile: the Dockerfile corpus
 - GitHub Actions: the GitHub Actions workflows of real repositories

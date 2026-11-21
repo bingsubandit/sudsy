@@ -1,7 +1,7 @@
 {
  "runner": "Linux aarch64, 8 cores",
  "runs": 5,
- "commit": "2fb54a53",
+ "commit": "155e8b56",
  "rows": [
   {
    "id": "prettier/JSON/format",
@@ -99,7 +99,17 @@
    "task": "Format",
    "tool": "Prettier",
    "version": "3.9.10",
-   "not_measured": "Prettier picks its Angular parser from the .component.html name, which the corpus files do not carry"
+   "corpus": "453 files, without 7 files Sudsy cannot parse",
+   "files": 446,
+   "bytes": 806607,
+   "sudsy": {
+    "s": 0.096,
+    "mb": 83
+   },
+   "other": {
+    "s": 7.543,
+    "mb": 248
+   }
   },
   {
    "id": "biome/JSON/format",
@@ -328,11 +338,11 @@
    "bytes": 2312295,
    "sudsy": {
     "s": 0.069,
-    "mb": 118
+    "mb": 115
    },
    "other": {
-    "s": 0.246,
-    "mb": 74
+    "s": 0.229,
+    "mb": 75
    }
   },
   {
@@ -341,7 +351,17 @@
    "task": "Lint",
    "tool": "buf",
    "version": "1.75.0",
-   "not_measured": "the analysis runs per module, not on a folder of unrelated files"
+   "corpus": "the Protobuf corpus, one module per project",
+   "files": 322,
+   "bytes": 2311623,
+   "sudsy": {
+    "s": 0.091,
+    "mb": 123
+   },
+   "other": {
+    "s": 0.119,
+    "mb": 39
+   }
   },
   {
    "id": "terraform/HCL/format",
@@ -483,7 +503,17 @@
    "task": "Lint",
    "tool": "eslint-plugin-vue",
    "version": "10.12.1",
-   "not_measured": "no runner yet: the flat config for .vue files needs vue-eslint-parser and a corpus of .vue files"
+   "corpus": "the .vue files of Vue core, VitePress, Pinia and Nuxt UI",
+   "files": 944,
+   "bytes": 2728241,
+   "sudsy": {
+    "s": 0.114,
+    "mb": 154
+   },
+   "other": {
+    "s": 8.266,
+    "mb": 634
+   }
   },
   {
    "id": "eslint-plugin-svelte/Svelte/lint",
@@ -491,7 +521,17 @@
    "task": "Lint",
    "tool": "eslint-plugin-svelte",
    "version": "3.24.1",
-   "not_measured": "no runner yet: the flat config for .svelte files needs svelte-eslint-parser and a corpus of .svelte files"
+   "corpus": "the .svelte files of SvelteKit and the RealWorld app",
+   "files": 1057,
+   "bytes": 233930,
+   "sudsy": {
+    "s": 0.1,
+    "mb": 71
+   },
+   "other": {
+    "s": 4.908,
+    "mb": 600
+   }
   },
   {
    "id": "eslint-jsonc/JSON/lint",
@@ -525,7 +565,17 @@
    "task": "Lint",
    "tool": "stylelint-scss",
    "version": "7.4.0",
-   "not_measured": "no mirroring preset"
+   "corpus": "the SCSS files of the CSS corpus (Bootstrap and others)",
+   "files": 194,
+   "bytes": 669198,
+   "sudsy": {
+    "s": 0.052,
+    "mb": 89
+   },
+   "other": {
+    "s": 2.434,
+    "mb": 273
+   }
   },
   {
    "id": "stylelint-less/Less/lint",
@@ -533,7 +583,17 @@
    "task": "Lint",
    "tool": "stylelint-less",
    "version": "4.2.2",
-   "not_measured": "no mirroring preset"
+   "corpus": "the Less files of the CSS corpus",
+   "files": 265,
+   "bytes": 1279582,
+   "sudsy": {
+    "s": 0.08,
+    "mb": 120
+   },
+   "other": {
+    "s": 4.294,
+    "mb": 440
+   }
   },
   {
    "id": "html-validate/HTML/lint",
@@ -739,7 +799,17 @@
    "task": "Lint",
    "tool": "PHPStan",
    "version": "2.3.6",
-   "not_measured": "the analysis runs per project folder, not on a folder of unrelated files"
+   "corpus": "10390 files, without 1 files Sudsy cannot parse",
+   "files": 10389,
+   "bytes": 98358487,
+   "sudsy": {
+    "s": 1.437,
+    "mb": 1194
+   },
+   "other": {
+    "s": 120.932,
+    "mb": 499
+   }
   },
   {
    "id": "stylecop/C#/lint",

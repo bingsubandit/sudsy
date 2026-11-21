@@ -145,7 +145,7 @@ All languages: <!-- generated:languages -->C#, C/C++, CSS, Dockerfile, EditorCon
 |  | Lint | html-validate | 25× faster | 0.090 s / 2.27 s | 104 / 285 MB |
 |  |  | HTMLHint | 4.0× faster | 0.066 s / 0.26 s | 82 / 100 MB |
 |  |  | html-eslint | 2.0× faster | 0.062 s / 0.12 s | 82 / 75 MB |
-| Angular | Format | Prettier | not measured | - | - |
+| Angular | Format | Prettier | 79× faster | 0.096 s / 7.54 s | 83 / 248 MB |
 | TOML | Format | taplo | 1.6× faster | 0.012 s / 0.019 s | 45 / 40 MB |
 | Python | Format | ruff | 4.8× slower | 0.31 s / 0.066 s | 224 / 58 MB |
 |  | Lint | ruff | 2.1× slower | 0.34 s / 0.17 s | 245 / 57 MB |
@@ -158,11 +158,11 @@ All languages: <!-- generated:languages -->C#, C/C++, CSS, Dockerfile, EditorCon
 | Kotlin | Format | ktlint | 30× faster | 1.61 s / 48.42 s | 501 / 715 MB |
 |  | Lint | ktlint | 42× faster | 1.14 s / 48.01 s | 485 / 683 MB |
 | PHP | Format | PHP-CS-Fixer | 161× faster | 1.77 s / 285.46 s | 1161 / 70 MB |
-|  | Lint | PHPStan | not measured | - | - |
+|  | Lint | PHPStan | 84× faster | 1.44 s / 120.93 s | 1194 / 499 MB |
 | PowerShell | Format | Invoke-Formatter | 38× faster | 0.11 s / 4.38 s | 165 / 163 MB |
 |  | Lint | PSScriptAnalyzer | 151× faster | 0.13 s / 20.17 s | 136 / 313 MB |
-| Protobuf | Format | buf | 3.6× faster | 0.069 s / 0.25 s | 118 / 74 MB |
-|  | Lint | buf | not measured | - | - |
+| Protobuf | Format | buf | 3.3× faster | 0.069 s / 0.23 s | 115 / 75 MB |
+|  | Lint | buf | 1.3× faster | 0.091 s / 0.12 s | 123 / 39 MB |
 | HCL | Format | terraform fmt | 3.5× faster | 0.11 s / 0.40 s | 123 / 87 MB |
 |  | Lint | tflint | 23× faster | 0.20 s / 4.69 s | 120 / 89 MB |
 | C# | Format | CSharpier | 3.3× faster | 4.36 s / 14.38 s | 572 / 456 MB |
@@ -170,10 +170,10 @@ All languages: <!-- generated:languages -->C#, C/C++, CSS, Dockerfile, EditorCon
 | XML | Format | CSharpier | 4.0× faster | 0.11 s / 0.44 s | 104 / 97 MB |
 | C# (.editorconfig) | Format | dotnet format | not measured | - | - |
 | Ruby | Lint | RuboCop | 88× faster | 3.00 s / 264.55 s | 1180 / 377 MB |
-| Vue | Lint | eslint-plugin-vue | not measured | - | - |
-| Svelte | Lint | eslint-plugin-svelte | not measured | - | - |
-| SCSS | Lint | stylelint-scss | not measured | - | - |
-| Less | Lint | stylelint-less | not measured | - | - |
+| Vue | Lint | eslint-plugin-vue | 73× faster | 0.11 s / 8.27 s | 154 / 634 MB |
+| Svelte | Lint | eslint-plugin-svelte | 49× faster | 0.10 s / 4.91 s | 71 / 600 MB |
+| SCSS | Lint | stylelint-scss | 47× faster | 0.052 s / 2.43 s | 89 / 273 MB |
+| Less | Lint | stylelint-less | 54× faster | 0.080 s / 4.29 s | 120 / 440 MB |
 | Markdown | Lint | markdownlint | 7.5× faster | 0.096 s / 0.72 s | 87 / 198 MB |
 | Dockerfile | Lint | hadolint | 36× faster | 0.071 s / 2.57 s | 70 / 74 MB |
 | GitHub Actions | Lint | actionlint | 2.1× slower | 0.14 s / 0.065 s | 76 / 71 MB |
