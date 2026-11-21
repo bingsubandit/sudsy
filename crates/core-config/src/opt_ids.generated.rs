@@ -323,6 +323,7 @@ pub static NAMES: [&str; 173] = [
     "short_loops",
     "signature_wrap_annotated",
     "single_attribute_per_line",
+    "single_block_comment_as_line",
     "single_line_body_kinds",
     "single_quote",
     "sort_usings",

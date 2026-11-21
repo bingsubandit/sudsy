@@ -252,7 +252,7 @@ pub fn headed_braces(
         parts.push(h);
     }
     parts.push(doc::indent(doc::concat(vec![
-        super::dangling_comments(&moved, false),
+        super::dangling_comments_in(&cx.comment_style, &moved, false),
         doc::line(),
         body,
         super::dangling_comments_in(&cx.comment_style, &dangling, false),
@@ -394,7 +394,7 @@ fn braces_of(
         (Some(_), false) => doc::hardline(),
     };
     let inner = doc::concat(vec![
-        dangling_comments(moved, false),
+        super::dangling_comments_in(&cx.comment_style, moved, false),
         first_hardline,
         body.unwrap_or(Doc::Nil),
         super::dangling_comments_in(&cx.comment_style, &dangling, blank_before_close),

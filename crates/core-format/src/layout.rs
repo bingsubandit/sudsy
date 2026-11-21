@@ -840,7 +840,7 @@ fn array(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, level: &Flow<'_>) -> 
         if !dangling.is_empty() {
             return Ok(doc::concat(vec![
                 el(cx, open)?,
-                doc::indent(shapes::dangling_comments(&dangling, false)),
+                doc::indent(shapes::dangling_comments_in(&cx.comment_style, &dangling, false)),
                 doc::hardline(),
                 cx.token_text(close),
             ]));

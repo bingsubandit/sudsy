@@ -38,6 +38,8 @@ pub const WRAPPED_BODY_INDENT_WORDS: core_config::OptId = core_config::opt::WRAP
 #[allow(dead_code)]
 pub const COMMENT_TRIM_LINES: core_config::OptId = core_config::opt::COMMENT_TRIM_LINES;
 #[allow(dead_code)]
+pub const SINGLE_BLOCK_COMMENT_AS_LINE: core_config::OptId = core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE;
+#[allow(dead_code)]
 pub const COMMENT_REINDENT_LINES: core_config::OptId = core_config::opt::COMMENT_REINDENT_LINES;
 #[allow(dead_code)]
 pub const FORMAT_RULES: core_config::OptId = core_config::opt::FORMAT_RULES;
@@ -110,6 +112,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::ctor_own_line_kinds(&["AnnotationEntry"]),
         core_config::shared::wrapped_body_indent_words(&["constructor"]),
         core_config::shared::comment_trim_lines(true),
+        core_config::shared::single_block_comment_as_line(true),
         core_config::shared::comment_reindent_lines(true),
         core_config::shared::format_rules(&["curly", "redundant-return-type", "comment-space"]),
         core_config::shared::redundant_return_types(&["Unit"]),

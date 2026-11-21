@@ -106,6 +106,9 @@ pub struct CommentStyle {
     /// The lines of a block comment keep their indentation relative to the comment's own line
     /// (`comment_reindent_lines`).
     pub reindent: bool,
+    /// A block comment on one line that ends its line is written as a line comment
+    /// (`single_block_comment_as_line`).
+    pub block_as_line: bool,
     /// Block comments that end with one of these (`=*/`) have no blank before the token after them.
     pub glued: &'static [&'static str],
 }
@@ -132,6 +135,7 @@ impl Default for CommentStyle {
             trailing_counts_after: &[],
             trim_lines: false,
             reindent: false,
+            block_as_line: false,
             glued: &[],
         }
     }
@@ -162,6 +166,9 @@ impl CommentStyle {
     /// The text of the line comment `c` as the style writes it.
     pub fn line_text<'a>(&self, c: &'a Comment) -> Cow<'a, str> {
         let text = c.text();
+        if let Some(line) = self.as_line(c, &text) {
+            return Cow::Owned(line);
+        }
         match text.strip_prefix("//") {
             Some(rest)
                 if self.reflow_width.is_some()
@@ -173,6 +180,27 @@ impl CommentStyle {
             }
             _ => text,
         }
+    }
+
+    /// The kind `c` has once written: a block comment written as a line comment is a line comment.
+    pub fn kind_of(&self, c: &Comment) -> CommentKind {
+        if self.block_as_line && c.kind == CommentKind::Block && self.as_line(c, &c.text()).is_some() {
+            CommentKind::Line
+        } else {
+            c.kind
+        }
+    }
+
+    /// The line comment `c` is written as under `block_as_line`: `/* a */` is `// a`.
+    fn as_line(&self, c: &Comment, text: &str) -> Option<String> {
+        let inner = text.strip_prefix("/*")?.strip_suffix("*/")?;
+        let single = self.block_as_line
+            && c.kind == CommentKind::Block
+            && !text.contains(['\n', '\r'])
+            && !inner.starts_with('*')
+            && !inner.trim().is_empty()
+            && ends_its_line(c);
+        single.then(|| format!("// {}", inner.trim()))
     }
 
     /// Is `c` preceded by a blank (or a line start) in the source?

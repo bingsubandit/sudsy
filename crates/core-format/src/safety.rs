@@ -250,6 +250,13 @@ fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode, words: bool) -> Result<u
 /// multi-line comment; the end of a one-line comment is trimmed.
 fn comment_key(text: &str) -> String {
     let text = text.replace("\r\n", "\n");
+    // (a block comment on one line may be written as a line comment: `single_block_comment_as_line`)
+    if let Some(inner) = text.strip_prefix("/*").and_then(|t| t.strip_suffix("*/"))
+        && !inner.contains('\n')
+        && !inner.starts_with('*')
+    {
+        return format!("// {}", inner.trim());
+    }
     if text.contains('\n') {
         text.lines().map(str::trim).collect::<Vec<_>>().join("\n")
     } else {
