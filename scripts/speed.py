@@ -53,6 +53,26 @@ def commands_for(command, values, paths):
     return [[*map(fill, command[:i]), *paths[k:k + CHUNK], *map(fill, command[i + 1:])] for k in range(0, len(paths), CHUNK)]
 
 
+def grouped_commands(spec, command, values, paths, base):
+    """`[(command, cwd)]` of a tool that runs once per project of the corpus (`group`: a regex over a file's path whose first
+    group names the project's folder; `cwd: group` runs the command inside it, with `{files}` relative to it), `chunk` files
+    per command."""
+    groups = {}
+    for p in paths:
+        m = re.search(spec["group"], p)
+        groups.setdefault(m.group(1) if m else "", []).append(p)
+    fill = lambda a: str(a).format(**values)  # noqa: E731
+    out = []
+    for group, names in groups.items():
+        folder = group if spec.get("cwd") == "group" else ""
+        size = spec.get("chunk", CHUNK)
+        for i in range(0, len(names), size) if "{files}" in command else [0]:
+            files = [n[len(folder) + 1:] if folder else n for n in names[i:i + size]]
+            expanded = [x for a in command for x in (files if a == "{files}" else [fill(a)])]
+            out.append((expanded, base / folder if folder else base))
+    return out
+
+
 def sudsy_config(name, speed, task, lint_presets):
     """(the sudsy.yaml text of the Sudsy side, None) or (None, why the task is not measured). The mirroring preset of a
     format run is the `preset` of the speed key (one name or a list), else the `sudsy.yaml` of the tool's parity folder;
@@ -111,12 +131,16 @@ def corpus(name, config, speed, work):
     size, paths = 0, []
     for i in range(copies):
         for rel, path, *_ in found:
+            if "copy_suffix" in config:  # the file name selects the language (Angular: `*.component.html`)
+                rel = rel.removesuffix(".html") + config["copy_suffix"]
             inside = (f"c{i + 1}/" if copies > 1 else "") + rel
             dest = work / "c" / inside
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, dest)
             size += path.stat().st_size
             paths.append(inside)
+    for name, text in speed.get("corpus_files", {}).items():  # config files both tools read from the corpus folder (`.editorconfig`)
+        (work / "c" / name).write_text(text, encoding="utf-8", newline="\n")
     return len(found) * copies, size, spec.get("text") or f"{len(found)} files", paths
 
 
@@ -168,20 +192,21 @@ def measure(command, cwd, env, capture=False):
     return seconds, usage.ru_maxrss / 1024, p.returncode, text  # ru_maxrss is KiB on Linux
 
 
-def measure_all(commands, cwd, env, capture=False):
-    """The commands one after the other (a tool given `{files}` runs once per chunk): the seconds add up, the memory is the peak."""
-    runs = [measure(c, cwd, env, capture) for c in commands]
+def measure_all(commands, env, capture=False):
+    """The `(command, cwd)` pairs one after the other (a tool given `{files}` runs once per chunk, a grouped one once per
+    project): the seconds add up, the memory is the peak."""
+    runs = [measure(c, cwd, env, capture) for c, cwd in commands]
     return sum(r[0] for r in runs), max(r[1] for r in runs), max(r[2] for r in runs), runs[-1][3]
 
 
-def best_of(sudsy_cmd, tool_cmds, sudsy_cwd, tool_cwd, sudsy_env, tool_env):
+def best_of(sudsy_cmd, tool_cmds, sudsy_cwd, sudsy_env, tool_env, runs=RUNS):
     """Alternates Sudsy and the tool; the best run of each by wall time, as {"s", "mb"}."""
     best = {}
-    for _ in range(RUNS):
-        for key, commands, cwd, env in (("sudsy", [sudsy_cmd], sudsy_cwd, sudsy_env), ("other", tool_cmds, tool_cwd, tool_env)):
-            seconds, mb, code, summary = measure_all(commands, cwd, env, capture=key == "sudsy")
+    for _ in range(runs):
+        for key, commands, env in (("sudsy", [(sudsy_cmd, sudsy_cwd)], sudsy_env), ("other", tool_cmds, tool_env)):
+            seconds, mb, code, summary = measure_all(commands, env, capture=key == "sudsy")
             if key == "sudsy":
-                check_sudsy_run(commands[0], cwd, code, summary)
+                check_sudsy_run(sudsy_cmd, sudsy_cwd, code, summary)
             if key not in best or seconds < best[key]["s"]:
                 best[key] = {"s": round(seconds, 3), "mb": round(mb)}
     return best
@@ -258,8 +283,12 @@ def main():
                     corpus_info = (len(kept), kept_bytes, corpus_info[2], kept)
                     row.update(corpus=corpus_info[2] + (f", without {dropped} files Sudsy cannot parse" if dropped else ""), files=len(kept), bytes=kept_bytes)
                     paths = ["c/" + p for p in kept] if coverage else kept
-                    cmds = commands_for(command, {**values, "work": work}, paths)
-                    row.update(best_of(fill(sudsy_cmd), cmds, work / "c", cwd, os.environ, env))
+                    group_spec = speed if "group" in speed else (coverage_of(name, config) if coverage else {})
+                    if "group" in group_spec:  # a tool that runs once per project of the corpus
+                        cmds = grouped_commands(group_spec, command, {**values, "work": work}, kept, work / "c")
+                    else:
+                        cmds = [(c, cwd) for c in commands_for(command, {**values, "work": work}, paths)]
+                    row.update(best_of(fill(sudsy_cmd), cmds, work / "c", os.environ, env, speed.get("runs", RUNS)))
                   except (SystemExit, Exception) as e:  # a run that fails is a row "not measured", with the error
                     print(f"{name}/{speed['language']}/{task}: {e}", file=sys.stderr, flush=True)
                     row = {k: v for k, v in row.items() if k not in ("corpus", "files", "bytes", "sudsy", "other")}

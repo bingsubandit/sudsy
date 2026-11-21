@@ -46,11 +46,12 @@ A preset is an ordinary config file built into the binary. Write its values by h
 | CSS, SCSS, Less | `css/stylelint-recommended`, `css/stylelint-standard` |
 | Dockerfile | `dockerfile/hadolint` (add `shell/shellcheck`: hadolint runs ShellCheck on every `RUN`) |
 | GitHub Actions | `github-actions/actionlint` |
+| GraphQL | `graphql/graphql-eslint-recommended` |
 | HCL (Terraform) | `hcl/tflint-recommended` |
 | HTML, Vue, Svelte | `html/html-validate-recommended`, `html/html-validate-standard`, `html/htmlhint`, `html/html-eslint-recommended`, `html/eslint-plugin-vue-recommended`, `html/eslint-plugin-svelte-recommended` |
 | Java | `java/google` |
 | JavaScript, TypeScript | `js/eslint-recommended`, `js/typescript-eslint-recommended`, `js/biome`, `js/biome-recommended`, `js/oxlint` |
-| JSON | `json/prettier-compat`, `json/biome`, `json/dprint` |
+| JSON | `json/prettier-compat`, `json/biome`, `json/dprint`, `json/eslint-plugin-jsonc-recommended` |
 | Kotlin | `kotlin/ktlint` |
 | Makefile | `makefile/checkmake` |
 | Markdown | `markdown/prettier-compat`, `markdown/markdownlint` |

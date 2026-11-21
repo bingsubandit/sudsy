@@ -57,6 +57,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         .with_presets(vec![
         core_config::Preset::new("json/biome", include_str!("../presets/biome.yaml")),
         core_config::Preset::new("json/dprint", include_str!("../presets/dprint.yaml")),
+        core_config::Preset::new("json/eslint-plugin-jsonc-recommended", include_str!("../presets/eslint-plugin-jsonc-recommended.yaml")),
         core_config::Preset::new("json/prettier-compat", include_str!("../presets/prettier-compat.yaml")),
         ])
     })

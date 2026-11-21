@@ -472,10 +472,12 @@
         }
       ],
       "presets": [
+        "json/eslint-plugin-jsonc-recommended",
         "html/html-validate-standard",
         "html/htmlhint",
         "html/html-eslint-recommended",
         "html/eslint-plugin-vue-recommended",
+        "graphql/graphql-eslint-recommended",
         "hcl/tflint-recommended",
         "js/eslint-recommended",
         "js/biome-recommended",
@@ -8386,6 +8388,7 @@
         }
       ],
       "presets": [
+        "graphql/graphql-eslint-recommended",
         "java/google"
       ],
       "upstream": [
@@ -8479,7 +8482,9 @@
         "graphql"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "graphql/graphql-eslint-recommended"
+      ],
       "upstream": [
         {
           "id": "no-anonymous-operations",
@@ -8516,7 +8521,9 @@
         "graphql"
       ],
       "options": [],
-      "presets": [],
+      "presets": [
+        "graphql/graphql-eslint-recommended"
+      ],
       "upstream": [
         {
           "id": "no-typename-prefix",
