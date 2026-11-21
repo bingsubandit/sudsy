@@ -41,6 +41,7 @@ options:
   - ctor_own_line_kinds: [["AnnotationEntry"]]
   - wrapped_body_indent_words: [["constructor"]]
   - comment_trim_lines: [true]
+  - single_block_comment_as_line: [true]
   - comment_reindent_lines: [true]
   - format_rules: [["curly", "redundant-return-type", "comment-space"]]
   - redundant_return_types: [["Unit"]]

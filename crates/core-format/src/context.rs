@@ -176,6 +176,8 @@ pub trait NodeFormatter: Send + Sync {
                 == Some(&core_config::OptionValue::Bool(true)),
             reindent: options.get(core_config::opt::COMMENT_REINDENT_LINES)
                 == Some(&core_config::OptionValue::Bool(true)),
+            block_as_line: options.get(core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE)
+                == Some(&core_config::OptionValue::Bool(true)),
             ..CommentStyle::default()
         }
     }
@@ -831,7 +833,7 @@ pub fn comment_doc(c: &Comment) -> Doc {
 }
 
 /// [`comment_doc`] in a comment style.
-fn comment_doc_in(c: &Comment, st: &CommentStyle) -> Doc {
+pub(crate) fn comment_doc_in(c: &Comment, st: &CommentStyle) -> Doc {
     let text = c.text();
     match c.kind {
         CommentKind::Lines => lines_doc(&text),
@@ -848,7 +850,7 @@ fn comment_doc_in(c: &Comment, st: &CommentStyle) -> Doc {
                 .collect::<Vec<_>>()
                 .join("\n"),
         ),
-        CommentKind::Block => verbatim_text(&text),
+        CommentKind::Block => verbatim_text(&st.line_text(c)),
     }
 }
 
@@ -945,7 +947,7 @@ pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
             }
             parts.push(comment_doc_in(c, st));
         }
-        if c.kind == CommentKind::Line || c.breaks_after > 0 {
+        if st.kind_of(c) == CommentKind::Line || c.breaks_after > 0 {
             parts.push(doc::hardline());
             for _ in 0..c.breaks_after.saturating_sub(1).min(max_blank) {
                 parts.push(doc::hardline());
@@ -1025,7 +1027,7 @@ pub fn trailing_comments_doc(st: &CommentStyle, cs: &[Comment]) -> Doc {
     for c in cs {
         let text = st.line_text(c);
         let body = doc::concat(vec![st.gap_before(c), verbatim_text(&text)]);
-        match c.kind {
+        match st.kind_of(c) {
             CommentKind::Line | CommentKind::Lines | CommentKind::Directive => {
                 parts.push(doc::line_suffix(body));
                 if !st.trailing_counts_after.is_empty() {

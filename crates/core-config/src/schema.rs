@@ -631,6 +631,14 @@ pub mod shared {
         )
     }
 
+    pub fn single_block_comment_as_line(default: bool) -> OptionDef {
+        OptionDef::boolean(
+            opt::SINGLE_BLOCK_COMMENT_AS_LINE,
+            default,
+            "A block comment that sits on one line and ends its line is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) stay.",
+        )
+    }
+
     pub fn comment_reindent_lines(default: bool) -> OptionDef {
         OptionDef::boolean(
             opt::COMMENT_REINDENT_LINES,

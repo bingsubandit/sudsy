@@ -10204,6 +10204,11 @@
               "description": "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
               "type": "boolean"
             },
+            "single_block_comment_as_line": {
+              "default": true,
+              "description": "A block comment that sits on one line and ends its line is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) stay.",
+              "type": "boolean"
+            },
             "single_line_body_kinds": {
               "default": [
                 "EnumEntry"
@@ -13585,6 +13590,11 @@
                   "signature_wrap_annotated": {
                     "default": true,
                     "description": "A signature with an annotated parameter puts each parameter on a line of its own, even when it fits.",
+                    "type": "boolean"
+                  },
+                  "single_block_comment_as_line": {
+                    "default": true,
+                    "description": "A block comment that sits on one line and ends its line is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) stay.",
                     "type": "boolean"
                   },
                   "single_line_body_kinds": {

@@ -43,6 +43,7 @@ Failure modes of the parser itself: it follows the compiler of Kotlin 2.4.20 and
 | `ctor_own_line_kinds` | list of words | `[AnnotationEntry]` | Node kinds among the modifiers of a primary constructor (annotations) that put the constructor below the type name, one level in, with the supertypes and the body under that level. |
 | `wrapped_body_indent_words` | list of words | `[constructor]` | Words (`constructor`) that start a primary constructor which, when the supertypes go one per line, puts the body one level further in (its closing brace under the supertypes). |
 | `comment_trim_lines` | bool | `true` | The lines of a block comment lose their trailing blanks. |
+| `single_block_comment_as_line` | bool | `true` | A block comment that sits on one line and ends its line is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) stay. |
 | `comment_reindent_lines` | bool | `true` | The lines of a block comment keep their indentation relative to the comment's own line when the comment moves. |
 | `format_rules` | list of words | `[curly, redundant-return-type, comment-space]` | Ids of shared rules that rewrite the source before the layout (their fixes), besides those the language has a section for in `format.rules`. |
 | `redundant_return_types` | list of words | `[Unit]` | Return types (`Unit`) that a function with a block body has anyway: the rule `redundant-return-type` leaves them out when the formatter runs it (`format_rules`). |

@@ -452,7 +452,7 @@ fn list_of(
     let blank_before_close = style.keep_blank_before_end_comments
         && !dangling.is_empty()
         && comments::blank_lines_before(g, &c.close) > 0;
-    inner.push(dangling_comments(&dangling, blank_before_close));
+    inner.push(super::dangling_comments_in(&cx.comment_style, &dangling, blank_before_close));
     let inner = if fill {
         fill_parts.push(doc::concat(inner));
         doc::fill(fill_parts)

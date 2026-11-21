@@ -659,7 +659,7 @@ pub fn dangling_comments_in(
         if (i == 0 && blank_before) || (i > 0 && cs[i - 1].breaks_after >= 2) {
             parts.push(doc::hardline());
         }
-        parts.push(crate::context::comment_doc(c));
+        parts.push(crate::context::comment_doc_in(c, st));
     }
     doc::concat(parts)
 }
