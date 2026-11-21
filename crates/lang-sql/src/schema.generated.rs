@@ -4,6 +4,8 @@ pub const DIALECT: core_config::OptId = core_config::opt::DIALECT;
 #[allow(dead_code)]
 pub const COMMA_POSITION: core_config::OptId = core_config::opt::COMMA_POSITION;
 #[allow(dead_code)]
+pub const ALTER_TABLE_INDENT: core_config::OptId = core_config::opt::ALTER_TABLE_INDENT;
+#[allow(dead_code)]
 pub const KEYWORD_CASE: core_config::OptId = core_config::opt::KEYWORD_CASE;
 #[allow(dead_code)]
 pub const IDENTIFIER_CASE: core_config::OptId = core_config::opt::IDENTIFIER_CASE;
@@ -34,6 +36,10 @@ pub fn comma_position(o: &core_config::ResolvedOptions) -> CommaPosition {
         "leading" => CommaPosition::Leading,
         _ => CommaPosition::Trailing,
     }
+}
+#[allow(dead_code)]
+pub fn alter_table_indent(o: &core_config::ResolvedOptions) -> bool {
+    o.flag(ALTER_TABLE_INDENT, false)
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -107,6 +113,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::final_newline(true),
         shared::end_of_line(),
         core_config::OptionDef::choice(core_config::opt::COMMA_POSITION, &["trailing", "leading"], "trailing", "Where a comma goes when a list is broken over lines: at the end of a line, or at the start of the next one."),
+        core_config::OptionDef::boolean(core_config::opt::ALTER_TABLE_INDENT, false, "Indent the actions of `ALTER TABLE name` one level under the statement."),
         core_config::OptionDef::choice(core_config::opt::KEYWORD_CASE, &["consistent", "upper", "lower", "capitalise"], "consistent", "Case of keywords: `consistent` follows the first one written (all that follow are brought to its case once one differs), the others set it."),
         core_config::OptionDef::choice(core_config::opt::IDENTIFIER_CASE, &["consistent", "upper", "lower", "capitalise"], "consistent", "Case of unquoted identifiers: `consistent` follows the first one written (all that follow are brought to its case once one differs), the others set it."),
         core_config::OptionDef::choice(core_config::opt::FUNCTION_CASE, &["consistent", "upper", "lower", "capitalise"], "consistent", "Case of function names: `consistent` follows the first one written (all that follow are brought to its case once one differs), the others set it."),

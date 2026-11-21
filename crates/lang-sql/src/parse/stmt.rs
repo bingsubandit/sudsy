@@ -125,12 +125,15 @@ impl P<'_> {
         if self.d == Dialect::Tsql && self.tsql_statement() {
             return;
         }
+        if self.d == Dialect::Mysql && self.block_opener() {
+            return;
+        }
         match self.text(0).to_ascii_lowercase().as_str() {
             "insert" | "replace" if self.is_t(0, T::Word) => self.insert(),
             "update" => self.update(),
             "delete" => self.delete(),
             "merge" => self.merge(),
-            "if" if self.d == Dialect::Mysql => self.if_block(),
+            "if" | "case" if self.d == Dialect::Mysql => self.arm_block(),
             "set" if self.d == Dialect::Mysql && self.is_assignment() => self.set_assign(),
             _ if self.is_t(0, T::Word) && !self.keyword_like(0) && !self.is_t(1, T::Colon) => {
                 self.skip_statement()

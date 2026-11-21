@@ -1,59 +1,77 @@
-//! MySQL stored-program statements that have a structure of their own (`IF`); `BEGIN`, `LOOP`,
-//! `WHILE` and `REPEAT` stay flat and get their indents in the layout.
+//! MySQL stored-program statements that have a structure of their own (`IF`, `CASE`, labelled
+//! blocks): the words are the frames of `layout::SPEC`, the shared block parse does the rest.
 //!
-//! concept: recursive-descent-parser
+//! concept: none (glue: the parser as a block-parse cursor)
 
 use super::P;
 use super::lexer::T;
 use crate::generated::kind as k;
+use crate::layout::SPEC;
+use core_syntax::block_parse::{self, Cursor};
+
+impl Cursor for P<'_> {
+    fn text_at(&self, n: usize) -> &str {
+        self.text(n)
+    }
+
+    fn at_end(&self) -> bool {
+        self.eof()
+    }
+
+    fn at_separator(&self) -> bool {
+        self.is_t(0, T::Semi)
+    }
+
+    fn at_label(&self) -> bool {
+        self.is_t(1, T::Colon)
+    }
+
+    fn bump_label(&mut self) {
+        self.bump_as(k::IDENTIFIER);
+        self.bump();
+    }
+
+    fn bump_keyword(&mut self) {
+        self.bump_as(k::KEYWORD);
+    }
+
+    fn bump_any(&mut self) {
+        self.bump();
+    }
+
+    fn expression(&mut self) {
+        P::expression(self);
+    }
+
+    fn statement(&mut self) {
+        let m = self.mark();
+        if self.at_query_start() {
+            self.query();
+        } else {
+            self.statement_body();
+        }
+        self.close(k::STATEMENT, m);
+    }
+
+    fn position(&self) -> usize {
+        self.pos
+    }
+}
 
 impl P<'_> {
-    /// `IF cond THEN stmts [ELSEIF cond THEN stmts]... [ELSE stmts] END IF`.
-    pub fn if_block(&mut self) {
-        self.bump_as(k::KEYWORD);
-        self.then_branch();
-        while self.at("elseif") {
-            self.bump_as(k::KEYWORD);
-            self.then_branch();
-        }
-        if self.at("else") {
-            self.bump_as(k::KEYWORD);
-            self.branch_body();
-        }
-        if self.at("end") && self.is(1, "if") {
-            self.bump_as(k::KEYWORD);
-            self.bump_as(k::KEYWORD);
+    /// A statement with arms (`IF`, `CASE`): the frame of `SPEC` that opens at the cursor.
+    pub fn arm_block(&mut self) {
+        if let Some(f) = SPEC
+            .frames
+            .iter()
+            .find(|f| self.is(0, f.open) && !f.arms.is_empty())
+        {
+            block_parse::arm_block(self, f, SPEC.end);
         }
     }
 
-    fn then_branch(&mut self) {
-        self.expression();
-        if self.at("then") {
-            self.bump_as(k::KEYWORD);
-        }
-        self.branch_body();
-    }
-
-    /// Statements up to the next `ELSEIF`, `ELSE` or `END`, indented.
-    fn branch_body(&mut self) {
-        self.indent();
-        while !self.eof() && !self.at_any(&["elseif", "else", "end"]) {
-            if self.is_t(0, T::Semi) {
-                self.bump();
-                continue;
-            }
-            let before = self.pos;
-            let m = self.mark();
-            if self.at_query_start() {
-                self.query();
-            } else {
-                self.statement_body();
-            }
-            self.close(k::STATEMENT, m);
-            if self.pos == before {
-                self.bump();
-            }
-        }
-        self.dedent();
+    /// A flat block opener, labelled or not; false when none opens here.
+    pub fn block_opener(&mut self) -> bool {
+        block_parse::block_opener(self, SPEC.frames, SPEC.end)
     }
 }

@@ -7,6 +7,7 @@
 //! tools: sqlfluff layout rules
 
 mod blocks;
+pub(crate) use blocks::SPEC;
 mod breaks;
 mod indent;
 mod seq;
@@ -45,8 +46,10 @@ fn signature(seq: &Seq) -> u64 {
 
 pub fn format(root: &SyntaxNode, grammar: &Grammar, options: &ResolvedOptions) -> Doc {
     let mut seq = Seq::build(root, grammar, ROWS.get().space());
-    if options.text(core_config::opt::DIALECT) == "mysql" {
-        blocks::add_indents(&mut seq);
+    let flat = options.text(core_config::opt::DIALECT) == "mysql";
+    let hanging = options.flag(core_config::opt::ALTER_TABLE_INDENT, false);
+    if flat || hanging {
+        blocks::add_indents(&mut seq, flat, hanging);
     }
     let mut recase = ROWS.get().cases().recaser(options);
     for block in &mut seq.blocks {

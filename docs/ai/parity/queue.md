@@ -349,7 +349,7 @@ Lint: target 86.6%; rules by missed findings:
 1. `non-utf8-input` (1 files): "sqlfluff reads a file in another encoding (postgres collate.windows.win1252.sql, Windows-1252); sudsy reads UTF-8 only, so the file stays unformatted and its layout findings count"
 2. `layout-gap` (- files): "the layout of our own does not yet cover every construct (expressions, joins, CASE, CTEs, comments), those parts stay as written"
 3. `parse-gap` (- files): "our parser does not parse what sqlfluff's does (a statement it lacks, `DELIMITER`, template tags), so the file is refused"
-Lint: target 82.6%; rules by missed findings:
+Lint: target 82.8%; rules by missed findings:
 1. `PRS` (380 missed) Fix: sqlfluff's own parse error on files it cannot read (162 files); Sudsy parses them, nothing to report
 2. `CP05` (199 missed) Fix: bit strings (b'..'), ::regclass and tsql int column types in files Sudsy cannot parse; remaining parse errors (JSON_TABLE PATH .. ON EMPTY options of postgres and mysql, tsql BIT VARYING parameters, RETURNING WITH (OLD AS o), COPY (query INTO), psql variables)
 3. `CP02` (180 missed) Fix: misses are in files with a parse error (the constructs listed under CP05)

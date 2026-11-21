@@ -79,6 +79,8 @@ concept invalid-runs-on # users: github-actions
 concept jsx-layout # users: js
 concept keep-together-neighbours # users: markdown (shared)
 concept key-shape # users: github-actions (shared)
+concept keyword-block-frames # users: sql (shared)
+concept keyword-block-parse # users: sql (shared)
 concept known-names-table # users: css
 concept last-user-not-root # users: dockerfile
 concept layout-directives # users:  (shared)
@@ -317,7 +319,6 @@ local lang-sql/parse/generic.rs recursive-descent-parser # lang: sql
 local lang-sql/parse/lexer.rs source-lexer # lang: sql
 local lang-sql/parse/merge.rs recursive-descent-parser # lang: sql
 local lang-sql/parse/mod.rs recursive-descent-parser # lang: sql
-local lang-sql/parse/mysql.rs recursive-descent-parser # lang: sql
 local lang-sql/parse/postgres.rs recursive-descent-parser # lang: sql
 local lang-sql/parse/stmt.rs recursive-descent-parser # lang: sql
 local lang-sql/parse/tsql.rs recursive-descent-parser # lang: sql

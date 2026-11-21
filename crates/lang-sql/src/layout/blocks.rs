@@ -1,84 +1,100 @@
-//! The indentation of procedural blocks. The MySQL parse leaves `BEGIN ... END`, `LOOP`,
-//! `WHILE` and `REPEAT` as flat statements with no indent, so the indents sqlfluff's dialect has are put
-//! on the points here, from the keywords and statements.
+//! The indentation of procedural blocks. The MySQL parse leaves `BEGIN ... END`, `LOOP`, `WHILE`,
+//! `REPEAT`, `IF` and `CASE` as flat statements with no indent, so the indents sqlfluff's dialect
+//! has are put on the points here: the words are this table, the shared frames do the rest.
 //!
-//! concept: new indent-balance-layout
-//! what: Indentation from the indent and dedent balance of each line.
-//! tools: sqlfluff LT02
+//! concept: none (glue: the words of the frames, applied to the points)
 
 use super::seq::Seq;
 use crate::generated::kind as k;
+use core_format::block_frames::{Arm, Frame, Hanging, NameKind, Spec, Tok, points};
 
-fn word(seq: &Seq, i: usize) -> String {
-    seq.blocks
-        .get(i)
-        .map_or(String::new(), |b| b.text.to_ascii_uppercase())
-}
+pub static SPEC: Spec = Spec {
+    statement_after: &["BEGIN", "LOOP", "THEN", "ELSE", "DO", "REPEAT"],
+    frames: &[
+        Frame {
+            open: "BEGIN",
+            not_before: &["WORK", "TRANSACTION", "TRAN", ";", ""],
+            ..Frame::NONE
+        },
+        Frame {
+            open: "LOOP",
+            not_after: &["END"],
+            ..Frame::NONE
+        },
+        Frame {
+            open: "REPEAT",
+            statement_start: true,
+            until: Some("UNTIL"),
+            ..Frame::NONE
+        },
+        Frame {
+            open: "WHILE",
+            statement_start: true,
+            not_after: &["END"],
+            body_after: Some("DO"),
+            ..Frame::NONE
+        },
+        Frame {
+            open: "IF",
+            statement_start: true,
+            body_after: Some("THEN"),
+            arms: &[
+                Arm {
+                    word: "ELSEIF",
+                    body_after: Some("THEN"),
+                },
+                Arm {
+                    word: "ELSE",
+                    body_after: None,
+                },
+            ],
+            ..Frame::NONE
+        },
+        Frame {
+            open: "CASE",
+            statement_start: true,
+            arms: &[
+                Arm {
+                    word: "WHEN",
+                    body_after: Some("THEN"),
+                },
+                Arm {
+                    word: "ELSE",
+                    body_after: None,
+                },
+            ],
+            arm_indent: true,
+            ..Frame::NONE
+        },
+    ],
+    end: "END",
+    hanging: &[Hanging {
+        head: &["ALTER", "TABLE"],
+        optional: &["IF", "EXISTS", "ONLY"],
+    }],
+};
 
-/// Is block `i` the first word of a statement (after `;`, a label, or an opening keyword)?
-fn starts_statement(seq: &Seq, i: usize) -> bool {
-    i == 0
-        || matches!(seq.blocks[i - 1].kind, k::SEMICOLON | k::COLON)
-        || matches!(
-            word(seq, i - 1).as_str(),
-            "BEGIN" | "LOOP" | "THEN" | "ELSE" | "DO" | "REPEAT"
-        )
-}
-
-fn indent(seq: &mut Seq, at: usize) {
-    if at < seq.points.len() {
-        seq.points[at].metas.push(1);
-    }
-}
-
-fn dedent(seq: &mut Seq, at: usize) {
-    seq.points[at].metas.push(-1);
-}
-
-pub fn add_indents(seq: &mut Seq) {
-    let (mut depth, mut cases) = (0usize, 0usize);
-    let (mut do_pending, mut after_until) = (false, false);
-    for i in 0..seq.blocks.len() {
-        if seq.blocks[i].kind != k::KEYWORD {
-            continue;
-        }
-        let stmt = starts_statement(seq, i);
-        let next = word(seq, i + 1);
-        match word(seq, i).as_str() {
-            "BEGIN" if !matches!(next.as_str(), "WORK" | "TRANSACTION" | "TRAN" | ";" | "") => {
-                depth += 1;
-                indent(seq, i + 1);
-            }
-            "LOOP" if word(seq, i.wrapping_sub(1)) != "END" => {
-                depth += 1;
-                indent(seq, i + 1);
-            }
-            "REPEAT" if stmt => {
-                depth += 1;
-                indent(seq, i + 1);
-            }
-            "WHILE" if stmt && word(seq, i.wrapping_sub(1)) != "END" => do_pending = true,
-            "CASE" if stmt => cases += 1,
-            "DO" if do_pending => {
-                do_pending = false;
-                depth += 1;
-                indent(seq, i + 1);
-            }
-            "UNTIL" if stmt && depth > 0 => {
-                dedent(seq, i);
-                depth -= 1;
-                after_until = true;
-            }
-            "END" if stmt => match next.as_str() {
-                "CASE" => cases = cases.saturating_sub(1),
-                "REPEAT" if after_until => after_until = false,
-                _ if depth > 0 => {
-                    dedent(seq, i);
-                    depth -= 1;
-                }
-                _ => {}
+/// Puts the indents of the flat blocks (`blocks`) and of the hanging statements (`hanging`) on
+/// the points.
+pub fn add_indents(seq: &mut Seq, blocks: bool, hanging: bool) {
+    let toks: Vec<Tok> = seq
+        .blocks
+        .iter()
+        .map(|b| Tok {
+            text: &b.text,
+            keyword: b.kind == k::KEYWORD,
+            separator: matches!(b.kind, k::SEMICOLON | k::COLON),
+            name: match b.kind {
+                k::DOT => NameKind::Dot,
+                k::IDENTIFIER | k::WORD | k::QUOTED_IDENTIFIER => NameKind::Part,
+                _ => NameKind::None,
             },
-            _ => {}
+        })
+        .collect();
+    let found = points(&toks, &SPEC, blocks, hanging);
+    for (at, meta) in found {
+        if let Some(point) = seq.points.get_mut(at) {
+            point.metas.push(meta);
         }
     }
 }

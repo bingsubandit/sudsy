@@ -2,7 +2,9 @@
 //! an indent that no line break follows is untaken and does not count for the lines after it,
 //! and an indent that is taken but whose dedent has no line break forces one.
 //!
-//! concept: indent-balance-layout
+//! concept: new indent-balance-layout
+//! what: Indentation from the indent and dedent balance of each line.
+//! tools: sqlfluff LT02
 
 use super::seq::{Point, Seq};
 use std::borrow::Cow;

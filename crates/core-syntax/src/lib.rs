@@ -16,6 +16,7 @@
 //! concept: none (glue: crate root)
 
 pub mod ast;
+pub mod block_parse;
 pub mod codegen;
 pub mod containers;
 pub mod embed_rows;

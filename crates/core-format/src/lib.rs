@@ -13,6 +13,7 @@
 pub mod adjacent;
 mod align;
 pub mod blank;
+pub mod block_frames;
 pub mod calls;
 pub mod case;
 pub mod columns;

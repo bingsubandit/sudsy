@@ -121,7 +121,7 @@ The target of every run (`scripts/parity.sh format <tool>`, `scripts/parity.sh c
 | rubocop | 96.2% (7717 of 8022) |
 | ruff | 94.6% (4132 of 4367) |
 | shellcheck | 86.6% (201 of 232) |
-| sqlfluff | 82.6% (16772 of 20300) |
+| sqlfluff | 82.8% (16772 of 20265) |
 | stylecop | - |
 | stylelint-less | - |
 | stylelint-scss | - |

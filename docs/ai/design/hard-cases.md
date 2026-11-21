@@ -108,7 +108,7 @@ F12d (measured, not built): the passes were run in reduced forms and the sqlfluf
 
 ### SQL: F12c MySQL block indents
 
-F12c: the MySQL `BEGIN`/`LOOP`/`REPEAT`/`WHILE .. DO`/`UNTIL`/`END` scan (`add_indents`, 50 lines) reads flat statements by keyword; a parse of the blocks would be a MySQL parser feature of about the same size, so it stays until `Doc` indent (F12d) can read block nodes
+F12c: the MySQL `BEGIN`/`LOOP`/`REPEAT`/`WHILE .. DO`/`UNTIL`/`END` scan is `core_format::block_frames` (a shared scan of flat statements by keyword, the words are a table in `blocks.rs`)
 
 ### String literals (F1b/F1c rest)
 

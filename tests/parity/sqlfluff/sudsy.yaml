@@ -4,6 +4,6 @@ overrides:
   - files: ["postgres__*"]
     sql: { format: { dialect: postgres } }
   - files: ["mysql__*"]
-    sql: { format: { dialect: mysql } }
+    sql: { format: { dialect: mysql, alter_table_indent: true } }
   - files: ["tsql__*"]
     sql: { format: { dialect: tsql } }

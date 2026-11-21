@@ -18,6 +18,9 @@ options:
       values: ["trailing", "leading"]
       default: "trailing"
       doc: "Where a comma goes when a list is broken over lines: at the end of a line, or at the start of the next one."
+  - alter_table_indent:
+      default: false
+      doc: "Indent the actions of `ALTER TABLE name` one level under the statement."
   - keyword_case:
       values: ["consistent", "upper", "lower", "capitalise"]
       default: "consistent"
