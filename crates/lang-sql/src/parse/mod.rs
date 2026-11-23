@@ -89,6 +89,8 @@ pub(crate) struct P<'a> {
     pub row: Option<&'static std::collections::HashSet<&'static str>>,
     /// The row says non-keyword words inside brackets are plain words (`@paren=w`).
     pub paren_word: bool,
+    /// Inside the brackets of a statement list: a generic statement ends at the closing bracket.
+    pub in_brackets: usize,
 }
 
 /// The deepest nesting parsed structurally; deeper text is taken as a flat run of tokens.
@@ -119,6 +121,7 @@ impl<'a> P<'a> {
             type_first: false,
             row: None,
             paren_word: false,
+            in_brackets: 0,
         };
         for i in open {
             let l = p.lex[i as usize];

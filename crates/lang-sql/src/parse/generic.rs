@@ -260,7 +260,7 @@ impl P<'_> {
         let create_table = self.at("create") && (1..6).any(|i| self.is(i, "table"));
         let table_stmt = self.at_any(&["create", "alter"]) && (1..4).any(|i| self.is(i, "table"));
         self.generic_run(
-            0,
+            self.in_brackets,
             Walk {
                 create_table,
                 table_stmt,
@@ -544,6 +544,32 @@ impl P<'_> {
             });
             return;
         }
+        // `DO INSTEAD (stmt; stmt)`: the statements of a rule.
+        if word && matches!(up.as_str(), "INSTEAD" | "ALSO") && self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            self.in_brackets += 1;
+            self.bracketed(|p| {
+                while !p.eof() && !p.is_t(0, T::RParen) {
+                    if p.is_t(0, T::Semi) {
+                        p.bump();
+                        continue;
+                    }
+                    let before = p.pos;
+                    let m = p.mark();
+                    if p.at_query_start() {
+                        p.query();
+                    } else {
+                        p.statement_body();
+                    }
+                    p.close(k::STATEMENT, m);
+                    if p.pos == before {
+                        p.bump();
+                    }
+                }
+            });
+            self.in_brackets -= 1;
+            return;
+        }
         // `PREPARE p AS UPDATE ...`: a statement of its own.
         if word
             && !dotted
@@ -674,6 +700,7 @@ impl P<'_> {
         if word
             && !dotted
             && up != "CHECK"
+            && !CONSTRAINT_STARTS.contains(&up.as_str())
             && w.after_name
             && w.columns
             && self.is_t(1, T::LParen)

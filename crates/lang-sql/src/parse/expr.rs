@@ -303,7 +303,8 @@ impl P<'_> {
     }
 
     pub fn at_query_start(&self) -> bool {
-        self.at_any(&["select", "with", "values", "table"]) && !self.is_t(1, T::Dot)
+        self.at_any(&["select", "with", "table"]) && !self.is_t(1, T::Dot)
+            || self.at("values") && (self.is_t(1, T::LParen) || self.is(1, "row"))
             || (self.is_t(0, T::LParen) && self.paren_starts_query())
     }
 
@@ -315,7 +316,7 @@ impl P<'_> {
         }
         if !(self.is(n, "select")
             || self.is(n, "with")
-            || self.is(n, "values")
+            || (self.is(n, "values") && (self.is_t(n + 1, T::LParen) || self.is(n + 1, "row")))
             || (self.is(n, "table") && self.starts_name(n + 1)))
         {
             return false;
@@ -386,8 +387,14 @@ impl P<'_> {
                 c.lone = false;
                 return true;
             }
-            "INTERVAL" if matches!(self.t(1), Some(T::Str | T::Number)) => {
+            "INTERVAL"
+                if matches!(self.t(1), Some(T::Str | T::Number))
+                    || ((self.is_op(1, "-") || self.is_op(1, "+")) && self.is_t(2, T::Number)) =>
+            {
                 self.bump_as(k::KEYWORD);
+                if self.is_t(0, T::Op) {
+                    self.bump();
+                }
                 self.bump();
                 if self.is_t(0, T::Word) && self.keyword_like(0) && !self.reserved(0) {
                     self.bump_as(k::KEYWORD);
@@ -606,27 +613,40 @@ impl P<'_> {
         }
         self.bump_as(k::KEYWORD);
         while let Some(T::Word) = self.t(0) {
-            if self.at_any(&[
-                "between",
-                "and",
-                "unbounded",
-                "preceding",
-                "following",
-                "current",
-                "row",
-                "exclude",
-                "no",
-                "others",
-                "ties",
-                "group",
-            ]) {
+            if !self.is_t(1, T::Dot)
+                && self.at_any(&[
+                    "between",
+                    "and",
+                    "unbounded",
+                    "preceding",
+                    "following",
+                    "current",
+                    "row",
+                    "exclude",
+                    "no",
+                    "others",
+                    "ties",
+                    "group",
+                ])
+            {
                 self.bump_as(k::KEYWORD);
             } else if self.chain(true).terms == 0 {
                 break;
             }
         }
         while self.chain(true).terms > 0 {
-            while self.at_any(&["preceding", "following", "and"]) {
+            while self.at_any(&[
+                "preceding",
+                "following",
+                "and",
+                "exclude",
+                "no",
+                "others",
+                "ties",
+                "current",
+                "row",
+                "group",
+            ]) {
                 self.bump_as(k::KEYWORD);
             }
         }
@@ -788,6 +808,7 @@ impl P<'_> {
             loop {
                 if self.is_t(0, T::Colon) {
                     self.bump_as(k::SLICE);
+                    continue;
                 } else if !self.element() {
                     break;
                 }
@@ -885,6 +906,11 @@ impl P<'_> {
                     self.bracketed(|p| {
                         if p.at_query_start() {
                             p.query();
+                            // `IN ((select 1), (select 2))`: the first one was a list element
+                            if p.is_t(0, T::Comma) {
+                                p.bump();
+                                p.list(|p| p.element());
+                            }
                         } else {
                             p.list(|p| p.element());
                         }
@@ -904,7 +930,7 @@ impl P<'_> {
                     self.eat("of");
                 }
             }
-            "SIMILAR" if self.is(1, "to") || self.is_t(1, T::Str) => {
+            "SIMILAR" if self.is(1, "to") || self.is(1, "null") || self.is_t(1, T::Str) => {
                 self.bump_as(k::KEYWORD);
                 self.eat("to");
             }

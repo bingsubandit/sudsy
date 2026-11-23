@@ -27,6 +27,23 @@ impl P<'_> {
         true
     }
 
+    /// A name with subscripts, the target of an assignment or an insert column: `a`, `a[1:5]`.
+    pub fn assign_target(&mut self) -> bool {
+        if !self.obj_ref() {
+            return false;
+        }
+        loop {
+            if self.is_t(0, T::LSquare) {
+                self.array_accessor();
+            } else if self.is_t(0, T::Dot) && self.starts_name(1) {
+                self.bump();
+                self.eat_name();
+            } else {
+                return true;
+            }
+        }
+    }
+
     /// Does a name (or `*`) start `n` tokens ahead?
     pub fn starts_name(&self, n: usize) -> bool {
         match self.t(n) {

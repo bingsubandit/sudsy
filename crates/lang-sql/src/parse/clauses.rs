@@ -48,7 +48,7 @@ impl P<'_> {
         }
         if self.is_t(0, T::LParen) {
             self.bracketed(|p| {
-                if p.at_any(&["insert", "update", "delete"]) {
+                if p.at_any(&["insert", "update", "delete", "merge"]) {
                     p.statement_body();
                 } else {
                     p.query();
@@ -57,9 +57,9 @@ impl P<'_> {
         }
         // `SEARCH DEPTH FIRST BY id SET col`, `CYCLE id SET c USING path`.
         while self.at_any(&["search", "cycle"]) {
+            let mut list = self.at("cycle");
             self.bump_as(k::KEYWORD);
-            let mut list = false;
-            while self.is_t(0, T::Word)
+            while (self.is_t(0, T::Word) || self.is_t(0, T::Str))
                 && !self.at_any(&["search", "cycle", "select", "insert", "update", "delete"])
             {
                 if self.at_any(&[
@@ -67,6 +67,8 @@ impl P<'_> {
                 ]) {
                     list = self.at("by") || self.at("cycle");
                     self.bump_as(k::KEYWORD);
+                } else if self.is_t(0, T::Str) {
+                    self.bump();
                 } else {
                     self.bump_as(k::IDENTIFIER);
                 }
@@ -157,6 +159,12 @@ impl P<'_> {
             return;
         }
         self.select_clause();
+        if self.at("into") && self.d != Dialect::Tsql {
+            // `SELECT .. INTO [TEMP] tbl`, `INTO @var, @var`
+            self.bump_as(k::KEYWORD);
+            self.eat_any(&["temp", "temporary", "unlogged", "table"]);
+            self.list(|p| p.element());
+        }
         if self.at("from") {
             self.table_clause();
         }
@@ -352,6 +360,10 @@ impl P<'_> {
         self.table_element();
         self.dedent();
         if !unconditional {
+            // `a LEFT JOIN b FULL JOIN c ON .. ON ..`: the joins of `b` come first
+            while self.at_join() {
+                self.join();
+            }
             if self.at("on") {
                 self.indent();
                 let o = self.mark();
@@ -368,6 +380,9 @@ impl P<'_> {
                 self.bracketed(|p| {
                     p.list(|p| p.eat_name());
                 });
+                if self.at("as") {
+                    self.alias();
+                }
                 self.dedent();
                 self.dedent();
             }
@@ -596,6 +611,7 @@ impl P<'_> {
             self.eat_any(&["bernoulli", "system"]);
             self.bracketed(|p| {
                 p.element();
+                p.eat_any(&["percent", "rows"]);
             });
             if self.at("repeatable") {
                 self.bump_as(k::KEYWORD);
@@ -646,7 +662,16 @@ impl P<'_> {
             if self.at("all") {
                 self.bump_as(k::KEYWORD);
             } else {
-                self.list(|p| p.element());
+                self.list(|p| {
+                    if p.at("grouping") && p.is(1, "sets") {
+                        p.bump_as(k::KEYWORD);
+                        p.bump_as(k::KEYWORD);
+                        return p.bracketed(|p| {
+                            p.list(|p| p.element());
+                        });
+                    }
+                    p.element()
+                });
                 if self.at("with") && self.at_any_at(1, &["rollup", "cube"]) {
                     self.bump_as(k::KEYWORD);
                     self.bump_as(k::KEYWORD);

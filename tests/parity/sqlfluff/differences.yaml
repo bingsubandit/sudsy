@@ -11,9 +11,9 @@ files:
   sql/postgres/src/test/regress/sql/collate.windows.win1252.sql: non-utf8-input
 ratchet:
   sqlfluff-ansi: 204
-  sqlfluff-mysql: 213
+  sqlfluff-mysql: 215
   sqlfluff-postgres: 122
-  sqlfluff-tsql: 107
+  sqlfluff-tsql: 108
   postgres-regress: 37
 target-files:
   postgres-regress: 115
@@ -21,7 +21,7 @@ target-files:
   sqlfluff-mysql: 248
   sqlfluff-postgres: 142
   sqlfluff-tsql: 152
-target: 83.0
+target: 83.2
 
 fixes:  # gap name or lint rule -> one line: where and what to change
   PRS: sqlfluff's own parse error on files it cannot read (162 files); Sudsy parses them, nothing to report
