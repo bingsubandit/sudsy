@@ -1,0 +1,24 @@
+differences:
+  error-directive: gap  the preprocessor symbols of the platform are not set, so no branch of the `#if` chain is active (an `#error` or a missing value) and Sudsy refuses the file; Roslyn reads it
+files:
+  runtime/src/libraries/System.Private.CoreLib/src/System/OperatingSystem.cs: error-directive
+  runtime/src/libraries/System.Private.CoreLib/src/System/Threading/PortableThreadPool.cs: error-directive
+  runtime/src/libraries/System.Private.CoreLib/src/System/Runtime/InteropServices/RuntimeInformation.cs: error-directive
+  runtime/src/libraries/System.Private.CoreLib/src/System/Runtime/InteropServices/RuntimeInformation.Browser.cs: error-directive
+target: 23.5
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  SA1101: 108918
+  SA1600: 59930
+  SA1611: 45566
+  SA1200: 25732
+  SX1101: 12181
+  SA1309: 9589
+  SA1633: 7626
+  SA1602: 7380
+  SA1119_p: 6440
+  SA1503: 6318
+  SA1609: 5219
+  SA1623: 3892
+  SA1119: 3220
+  SA1316: 3089
+  SA1305: 1954

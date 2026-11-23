@@ -11,7 +11,7 @@
 # of the selection. SUDSY_FINISH_REF: the ref whose finish.yml is dispatched (default main; a
 # branch to try a changed workflow). `finish.sh --stop` cancels this slot's run.
 # Agents: `finish.sh --start [args]` dispatches the run and returns; `finish.sh --wait` then waits at
-# most 9 minutes (under the tool's 10-minute foreground limit) and either prints the result as above
+# most 4 minutes (under the 5-minute prompt cache) and either prints the result as above
 # or ends in `FINISH RUNNING` with exit 3: call --wait again. No background job, Monitor or sleep.
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -31,7 +31,7 @@ case "${1:-}" in
   --start) mode=start; shift ;;
   --wait)
     [ -f "$state" ] || { echo "FINISH FAILED: no started run (scripts/finish.sh --start first)"; exit 1; }
-    read -r id branch <"$state"; mode=wait; deadline=$(( $(date +%s) + 540 )) ;;
+    read -r id branch <"$state"; mode=wait; deadline=$(( $(date +%s) + 240 )) ;;
 esac
 if [ $mode != wait ]; then
 gate=--affected bench=() pkg= base_rev=

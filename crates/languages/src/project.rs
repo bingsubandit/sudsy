@@ -54,7 +54,7 @@ impl Project {
         chain.validate(&schemas).map_err(fail)?;
         let mut preset_files = Vec::new();
         for (language, schema) in &schemas {
-            preset_files.extend(chain.preset_files(language, schema).map_err(fail)?);
+            preset_files.extend(chain.preset_files(language, None, schema).map_err(fail)?);
         }
         let extensions = crate::load_extensions(&chain, providers, &root).map_err(fail)?;
         chain

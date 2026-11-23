@@ -8,33 +8,33 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 | # | Language | Format identical (tool) | Lint coverage (tool, preset) | Biggest causes |
 |---|---|---|---|---|
 | 1 | C / C++ | 16.2% (statements and blocks landed, vs clang-format 20.1.8: 1,075 of 6,639 files, LLVM 230/420, folly 395/2,299, Linux 352/2,872, range-v3 70/593, fmt 24/70, SQLite 4/325, presets 0/10 each) | none (no clang-tidy catalog) | no layout yet: formatter on shared shapes in progress ([design/cpp-formatter.md](design/cpp-formatter.md)); no lint rules |
-| 2 | JSON | ? (fixtures only, no real-world corpus) | ? (eslint-plugin-jsonc; corpus is JSONTestSuite) | no real-world corpus; no coverage run |
-| 3 | XML | ? (CSharpier XML, 372 project files, count not recorded) | none | no corpus count; no reference linter |
+| 2 | JSON | 99.1% of 3,212 (Prettier 3.9.10; SchemaStore, VS Code samples) | 0.0% (eslint-plugin-jsonc, `json/eslint-plugin-jsonc-recommended`; 14 findings, all `no-useless-escape`) | `no-useless-escape` (string escapes are not checked); number arrays fill (10 files), arrays of arrays (14), a `.json` with a trailing comma is refused |
+| 3 | XML | 99.7% of 324 (CSharpier XML 1.3.0, 374 project files) | none | no reference linter |
 | 4 | GitHub Actions | none (YAML formatter, no reference) | 85.2% (actionlint, `github-actions/actionlint`) | `action` 12, `syntax-check` sub-ids 40, `expression/types` 15 findings |
 | 5 | Dockerfile | none (no reference) | 27.6% (hadolint, `dockerfile/hadolint`) | `DL4006` 153, `DL3003` 64, `DL3008` 54 |
-| 6 | C# | 72.1% of 7,615 (CSharpier 1.3.0; not re-run, corpus absent on the host) | ? (StyleCop; corpus does not compile) | lists differing by a comma, `#if` comments (252 files), wrapped arguments and chains (299) |
+| 6 | C# | 72.1% of 7,615 (CSharpier 1.3.0; not re-run, corpus absent on the host) | 23.5% (StyleCop 1.2.0-beta.556 through `scripts/stylecop-driver`, `csharp/stylecop`; 100,884 of 428,560) | lists differing by a comma, `#if` comments (252 files), wrapped arguments and chains (299) |
 | 7 | Makefile | none (no reference) | 73.5% (checkmake, `makefile/checkmake`) | `uniquetargets` 88, `phonydeclared` 59 |
-| 8 | YAML | ? (no Prettier corpus count) | 99.5% (yamllint, `yaml/yamllint`) | no real-world format corpus; `comments-indentation` 2 after the proof run |
+| 8 | YAML | 94.6% of 849 (Prettier 3.9.10; Kubernetes website, awesome-compose, GitHub workflows) | 99.5% (yamllint, `yaml/yamllint`) | flow sequences without a trailing comma (13 files), comment indentation (15); `comments-indentation` 2 after the proof run |
 | 9 | Kotlin | 82.8% of 5,776 (ktlint 1.8.0) | 92.7% (ktlint, `kotlin/ktlint`; 92.3% with the formatter's own findings counted) | layout rules come from the formatter (`format-diff`, `multiline-start`); misses: `string-template-indent`, `annotation`, `no-consecutive-comments`, `function-literal`, `multiline-loop`, `blank-line-between-when-conditions` (264 of 989), `filename` (single-class check) |
 | 10 | SQL | 78.2% of 867 (sqlfluff 4.5.0) | 88.0% (sqlfluff, `sql/sqlfluff`; target 82.6%) | `PRS` 380, `CP05` 227, `CP02` 187, `RF05` 131, `CV06` 126; 189 parse gaps and 189 layout gaps |
 | 11 | PHP | 88.5% of 10,382 (PHP-CS-Fixer 3.95.31) | 0.0% (PHPStan, `php/phpstan`) | type analysis (`class.notFound` 7,407, `variable.undefined` 591); inline-text files (~790) |
 | 12 | Ruby | none (no reference) | 96.2% (RuboCop Lint, `ruby/rubocop`) | no formatter run |
-| 13 | GraphQL | 97.7% of 132 (Prettier) | ? (graphql-eslint, no coverage run) | no coverage run |
+| 13 | GraphQL | 97.7% of 132 (Prettier) | 53.7% (graphql-eslint, `graphql/graphql-eslint-recommended`; 20 schema-free rules) | `naming-convention` 80 of 149 missed, `description-style` 11, `require-deprecation-reason` 10; the schema-bound rules cannot run |
 | 14 | Terraform (HCL) | 98.1% of 318 (terraform fmt) | 19.6% (tflint, `hcl/tflint-recommended`) | module-level rules: `terraform_required_providers` 37, `unused_declarations` 31, `typed_variables` 27 |
 | 15 | Java | 82.5% of 5,337 (google-java-format 2.0.0) | 96.7% (Checkstyle, `java/google`) | at the lint bar; 934 files with layout gaps (line comments, chains in ternaries) |
-| 16 | PowerShell | 92.9% of 211 (Invoke-Formatter; not re-run, no `pwsh` on the host) | 34.4% (PSScriptAnalyzer) | `PSUseShouldProcessForStateChangingFunctions` 140, `PSUseDeclaredVarsMoreThanAssignments` 130 |
+| 16 | PowerShell | 92.9% of 210 (Invoke-Formatter 1.25.0, PowerShell 7.7.0) | 33.8% (PSScriptAnalyzer) | `PSUseShouldProcessForStateChangingFunctions` 140, `PSUseDeclaredVarsMoreThanAssignments` 130 |
 | 17 | Shell | 86.6% of 82 (shfmt 3.14.1) | 86.6% (ShellCheck, `shell/shellcheck`) | `SC1091` 12 and `SC1090` 2 (source following), `SC2235` 2; backticks, `case` in `if`, arithmetic spacing |
 | 18 | HTML | 92.7% of 233 (Prettier) | 63.7% (html-validate; htmlhint 5.0%, html-eslint 0.3%) | `wcag/h63` 48, `parser-error` 21; html-eslint `indent` 16,182 planned; embedded code 56 files |
 | 19 | Markdown | 85.9% of 64 (Prettier; small corpus) | 82.7% (markdownlint, `markdown/markdownlint`) | `MD010` 309 (tabs); corpus of 64 files |
 | 20 | Vue | 83.1% of 941 (Prettier) | 87.2% (eslint-plugin-vue) | `vue-js-layout` 183 files; `vue/attributes-order` 81 |
 | 21 | Svelte | 89.2% of 1,055 (Prettier + plugin) | 100.0% (eslint-plugin-svelte) | `svelte-attributes` 139 files; second-format not measured |
 | 22 | Protobuf | 99.1% of 323 (buf format) | 85.9% (buf, `protobuf/buf-standard`) | at the bar; `RPC_REQUEST_RESPONSE_UNIQUE` 117 (cross-file) |
-| 23 | CSS / SCSS / Less | 92.7% of 533 (Prettier, `--no-config`) | 94.1% (stylelint, `css/stylelint-standard`) | at the bar; `media-feature-range-notation` 415, `value-keyword-case` 127, `no-descending-specificity` 74; SCSS layout and comments |
+| 23 | CSS / SCSS / Less | 92.7% of 533 (Prettier, `--no-config`) | 94.1% (stylelint, `css/stylelint-standard`); SCSS 20.6% (stylelint-config-standard-scss), Less 78.0% (stylelint-less) | CSS at the bar; SCSS `scss/` plugin rules (`dollar-variable-colon-space-after` 857, `no-global-function-names` 289) have no rules; Less `declaration-property-value-no-unknown` 806, `import-notation` 424; SCSS layout and comments |
 | 24 | TOML | 95.3% of 213 (taplo; fixtures) | no reference linter | at the bar; second-format not measured |
 | 25 | JavaScript / TypeScript | 93.2% of 2,456 (Prettier) | 100% (ESLint, typescript-eslint) | at the bar; Prettier options of the projects (168 files) |
 | 26 | Python | 97.7% of 1,085 (ruff format 0.17.4) | 95.6% (ruff, `python/ruff`) | at the bar; `RUF100` 83 |
 
-Not ranked: INI, EditorConfig and `.gitignore` have no reference tool. Measured by a re-run on this host: JS, CSS, HTML, Vue, Svelte, Java, Python, Shell, Protobuf, Terraform, TOML, SQL, Kotlin, PHP; recorded and not re-run: C#, PowerShell, Markdown, GraphQL, XML and all lint shares.
+Not ranked: INI, EditorConfig and `.gitignore` have no reference tool. Measured by a re-run on this host: JS, CSS, HTML, Vue, Svelte, Java, Python, Shell, Protobuf, Terraform, TOML, SQL, Kotlin, PHP, JSON, YAML, XML, PowerShell, Markdown and the lint shares of JSON, YAML, GraphQL, StyleCop, PSScriptAnalyzer, SCSS and Less; recorded and not re-run: the C# format share (the corpus differential needs the CSharpier baseline) and the other lint shares.
 
 ## Small tasks
 - Input encoding support: a source in another encoding (the sqlfluff corpus file `collate.windows.win1252.sql`, Windows-1252) is read as UTF-8 only, so sudsy rejects it; gap `non-utf8-input` in `tests/parity/sqlfluff/differences.yaml` (201 layout findings count as missing).

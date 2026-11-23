@@ -197,6 +197,12 @@ def fixtures(config, folder, filters):
     return out
 
 
+def placed(folder, name, source):
+    """Where a fixture is copied: a flat name (`/` as `__`), or with its folders for a source with `nested` (the file's
+    place selects the language or dialect: `tsconfig.json`, `.vscode/*.json`)."""
+    return folder / (name if source.get("nested") else name.replace("/", "__"))
+
+
 def upstream(config, prefix, version, copy, work, style=None):
     """The tool's output for the copy of a fixture, or None when it rejects the file."""
     exe = executable(prefix, config.get("install", {}).get("exe", ""))
@@ -207,7 +213,7 @@ def upstream(config, prefix, version, copy, work, style=None):
         copy.parent.mkdir(exist_ok=True)
         shutil.copy(work / copy.name, copy)
     group = re.search(config["group"], copy.name) if "group" in config else None  # `{group}`: the first group of the fixture name (sqlfluff: its dialect)
-    command, env = tool_command(config, prefix, exe=exe, file=copy.name, group=group.group(1) if group else "", style=style, folder=ROOT / "tests/parity" / config.get("folder", ""))
+    command, env = tool_command(config, prefix, exe=exe, file=(copy.name if mode == "in-place" else copy.relative_to(work).as_posix()), group=group.group(1) if group else "", style=style, folder=ROOT / "tests/parity" / config.get("folder", ""))
     r = run(command, copy.parent if mode == "in-place" else work, text if mode == "stdin" else None, check=False, env=env)
     if r.returncode != 0:
         if config.get("tool_may_reject"):
@@ -266,7 +272,7 @@ def check_reference(spec, parity, known, rejected):
 
 
 def sudsy_format(sudsy, fixture, work, command="format"):
-    r = run([sudsy, command, fixture.name], work, check=False)
+    r = run([sudsy, command, fixture.relative_to(work).as_posix()], work, check=False)
     # None: Sudsy rejects the file; `refused`: its safety check did (an internal error, not a syntax error)
     return (fixture.read_bytes().decode("utf-8") if r.returncode == 0 else None), b"internal error" in r.stderr
 
@@ -490,7 +496,8 @@ def main():
         name, fixture, _, source = item
         style = source.get("style")
         here = work / f"style-{style}" if style else work  # a style has its own folder and `sudsy.yaml` (`<style>.yaml` of the tool's folder)
-        copy = here / name.replace("/", "__")
+        copy = placed(here, name, source)
+        copy.parent.mkdir(parents=True, exist_ok=True)
         if "copy_as" in source:  # the language comes from the extension: `.h` of a C++ project is `.cpp`
             copy = copy.with_name(copy.name + source["copy_as"])
         if "copy_suffix" in config:  # the file name selects the language (Angular: `*.component.html`)
@@ -515,7 +522,7 @@ def main():
     unstable = Counter()  # group (or "fixtures") -> files that change on a second format
     refusals = Counter()  # group (or "fixtures") -> files Sudsy's safety check refuses
     if "reference_parser" in config and only is None:  # Sudsy rejects a file the reference parser accepts: a Sudsy bug, not invalid input
-        check_reference(config["reference_parser"], parity, known, [(n, work / n.replace("/", "__")) for (n, _, _, _), (_, o, _, _) in zip(found, results) if o is None])
+        check_reference(config["reference_parser"], parity, known, [(n, placed(work, n, src)) for (n, _, _, src), (_, o, _, _) in zip(found, results) if o is None])
     for (name, path, group, _), (_, _, again, refused) in zip(found, results):
         if again:
             unstable[group or "fixtures"] += 1

@@ -387,15 +387,17 @@ impl ConfigChain {
     pub fn preset_files(
         &self,
         language: &str,
+        base: Option<&str>,
         schema: &OptionSchema,
     ) -> Result<Vec<Loaded>, ConfigError> {
         let mut out = Vec::new();
-        for r in self
-            .presets
-            .iter()
-            .filter(|r| language_of(&r.name) == language)
-        {
+        let applies = |name: &str| language_of(name) == language || Some(language_of(name)) == base;
+        for r in self.presets.iter().filter(|r| applies(&r.name)) {
             if schema.find_preset(&r.name).is_none() {
+                // A dialect's schema may not carry the presets of its base language.
+                if language_of(&r.name) != language {
+                    continue;
+                }
                 return Err(ConfigError::at(
                     r.line,
                     r.column,
@@ -403,7 +405,7 @@ impl ConfigChain {
                 )
                 .in_file(r.file.as_ref()));
             }
-            self.read_preset(&r.name, schema, language, &mut Vec::new(), &mut out)
+            self.read_preset(&r.name, schema, &applies, &mut Vec::new(), &mut out)
                 .map_err(|e| e.in_file(r.file.as_ref()))?;
         }
         Ok(out)
@@ -417,7 +419,7 @@ impl ConfigChain {
         &self,
         name: &str,
         schema: &OptionSchema,
-        language: &str,
+        applies: &dyn Fn(&str) -> bool,
         stack: &mut Vec<String>,
         out: &mut Vec<Loaded>,
     ) -> Result<(), ConfigError> {
@@ -443,8 +445,8 @@ impl ConfigChain {
         stack.push(name.to_string());
         for entry in &config.extends {
             match entry.value.strip_prefix(PRESET_PREFIX) {
-                Some(n) if language_of(n) == language => {
-                    self.read_preset(n, schema, language, stack, out)?;
+                Some(n) if applies(n) => {
+                    self.read_preset(n, schema, applies, stack, out)?;
                 }
                 Some(_) => {}
                 None => {
@@ -484,8 +486,14 @@ impl ConfigChain {
                     )));
                 }
                 let mut files = Vec::new();
-                self.read_preset(&preset.name, schema, language, &mut Vec::new(), &mut files)
-                    .map_err(|e| at(e.to_string()))?;
+                self.read_preset(
+                    &preset.name,
+                    schema,
+                    &|n| language_of(n) == language,
+                    &mut Vec::new(),
+                    &mut files,
+                )
+                .map_err(|e| at(e.to_string()))?;
                 for loaded in &files {
                     check_loaded(loaded, schemas).map_err(|e| at(e.to_string()))?;
                 }

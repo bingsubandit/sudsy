@@ -205,6 +205,19 @@ fn config_errors_name_the_file_and_position_and_suggest() {
 }
 
 #[test]
+fn a_preset_applies_to_the_dialects_of_its_language() {
+    let t = tempfile::tempdir().unwrap();
+    write(
+        t.path(),
+        "sudsy.yaml",
+        "extends: [preset:css/stylelint-standard]\n",
+    );
+    write(t.path(), "a.scss", "a {\n  margin: 0px;\n}\n");
+    let out = sudsy(t.path(), &["lint", "."]);
+    assert!(String::from_utf8_lossy(&out.stdout).contains("length-zero-no-unit"));
+}
+
+#[test]
 fn extends_a_file_in_another_directory() {
     let t = tempfile::tempdir().unwrap();
     write(

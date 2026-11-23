@@ -214,7 +214,7 @@ impl ConfigChain {
             }
         }
 
-        let presets = self.preset_files(input.language, schema)?;
+        let presets = self.preset_files(input.language, input.base, schema)?;
         // Presets are a base layer: all their tiers sit below those of the chain's files.
         for files in [
             presets.iter().collect::<Vec<_>>(),
@@ -319,7 +319,7 @@ impl ConfigChain {
         input: &FileInput<'_>,
         schema: &OptionSchema,
     ) -> Result<BTreeMap<String, ResolvedRule>, ConfigError> {
-        let presets = self.preset_files(input.language, schema)?;
+        let presets = self.preset_files(input.language, input.base, schema)?;
         let mut out: BTreeMap<String, ResolvedRule> = BTreeMap::new();
         let mut put = |lint: &crate::model::LintSection, loaded: &Loaded, section: &str| {
             for (id, rule) in &lint.rules {

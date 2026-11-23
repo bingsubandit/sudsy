@@ -1,0 +1,5 @@
+differences: {}
+files: {}
+target: 0.0
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  jsonc/no-useless-escape: 14

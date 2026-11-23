@@ -74,12 +74,12 @@ The status and the headline numbers of every language are in the generated table
 
 ## GraphQL
 
-- No linter preset.
+- **Presets:** `graphql/graphql-eslint-recommended`.
 - **Formatter:** Prettier 3.9.10. Corpus: Prettier tests, graphql-js, GraphiQL, Apollo Federation, graphql-eslint.
-- **Linter:** a few schema-free graphql-eslint rules exist. Coverage is not measured.
+- **Linter:** graphql-eslint recommended, the 20 rules that need no schema (6 of them fire on the corpus). 53.7% of its findings (117 of 218): `naming-convention` is half covered, `description-style` and `require-deprecation-reason` are missing.
 - **Options:** `line_width` (80), `bracket_spacing`.
 - **Differences:** the files that differ are listed in the source checkout.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh coverage graphql-eslint`.
 
 ## TOML
 
@@ -180,7 +180,7 @@ The status and the headline numbers of every language are in the generated table
 
 - Needs the .NET 10 runtime. Config section: `csharp`.
 - **Formatter:** CSharpier 1.3.0. Corpus: aspnetcore, Roslyn and runtime; the files CSharpier leaves alone are not compared.
-- **Linter:** StyleCop and Roslynator rules exist. There is no findings run, because the corpus does not compile.
+- **Linter:** StyleCop and Roslynator rules. StyleCop (1.2.0-beta.556, run as an analyzer driver over the corpus) is covered at 23.5% of its findings (100,884 of 428,560): `SA1101`, `SA1600`, `SA1611`, `SA1200` are not rules yet. Roslynator has no findings run.
 - **Presets:** `csharp/csharpier-compat`, `csharp/stylecop`, `csharp/dotnet-runtime`, `csharp/google`, `csharp/unity`.
 - **Options:** `brace_newline`, `brace_same_line`, `trailing_commas`, `sort_usings`, `member_chain_*`, `preprocessor_symbols`, `derive_symbol_sets`, `blank_lines_between_members`, `empty_braces`. Default `line_width` is 120.
 - **Differences:**
@@ -188,7 +188,7 @@ The status and the headline numbers of every language are in the generated table
   - Comment placement and text next to `#if` directives .
   - Wrapped arguments and member chains .
   - CSharpier formats interpolated string holes. Sudsy does not.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh format csharpier`, `scripts/parity.sh format dotnet-format`. Both need the .NET SDK.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format csharpier`, `scripts/parity.sh format dotnet-format`, `scripts/parity.sh coverage stylecop`. All need the .NET SDK.
 
 ## Kotlin
 
@@ -205,35 +205,41 @@ The status and the headline numbers of every language are in the generated table
 ## YAML
 
 - Config section: `yaml`.
-- **Formatter:** Prettier. No corpus run. The yaml-test-suite valid cases parse, round-trip and keep their data model.
+- **Formatter:** Prettier 3.9.10. Corpus: 849 YAML files of real projects (awesome-compose, the Kubernetes website, GitHub starter workflows, actionlint); 803 identical (94.6%). The yaml-test-suite valid cases parse, round-trip and keep their data model.
 - **Linter:** yamllint.
 - **Presets:** `yaml/prettier-compat`, `yaml/yamllint`.
 - **Options:** `quote_style`, `sequence_indent`, `document_start`, `document_end`, `max_blank_lines`, `comment_spacing`, `bracket_spacing`. Default `line_width` is 80.
-- **Differences:** long scalars and comments are not re-wrapped.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh coverage yamllint`.
+- **Differences:**
+  - Long scalars and comments are not re-wrapped.
+  - A broken flow sequence has no trailing comma; Prettier writes one.
+  - A comment before a dedented item takes the next line's column; Prettier keeps its own.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh coverage yamllint`.
 
 ## JSON
 
 - Covers JSONC. Config section: `json`.
-- **Formatter:** Prettier and Biome, on fixtures only. No real-world corpus.
-- **Linter:** eslint-plugin-jsonc, no findings run.
+- **Formatter:** Prettier 3.9.10 on 3,212 JSON files (SchemaStore, VS Code extension samples): 3,184 identical (99.1%). Biome on fixtures.
+- **Linter:** eslint-plugin-jsonc recommended: on the corpus only `no-useless-escape` fires (14 findings) and Sudsy does not check string escapes yet, so 0.0%.
 - **Presets:** `json/prettier-compat`, `json/biome`, `json/dprint`, `json/eslint-plugin-jsonc-recommended`.
 - **Options:** `collapse` (`preserve`, `always`, `never`, `opening_break`), `trailing_commas` (JSONC), `dialect` (`auto`, `json`, `jsonc`), `bracket_spacing`. Default `line_width` is 80.
-- **Differences:** not compared on real-world files.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh format biome`.
+- **Differences:**
+  - An array of numbers that does not fit gets one number per line; Prettier fills lines.
+  - An array of arrays that fits stays on one line; Prettier breaks the outer array.
+  - A `.json` file with a trailing comma is refused (the `jsonc` dialect allows it).
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh format biome`, `scripts/parity.sh coverage eslint-jsonc`.
 
 ## CSS, SCSS, Less
 
 - Config section: `css` (also `scss`, `less`).
 - **Formatter:** Prettier 3.9.10 (`--no-config`). Corpus: real-world projects and Prettier's own CSS, SCSS and Less tests; the conformance corpus (Bootstrap, Bulma and others).
-- **Linter:** stylelint standard. The SCSS and Less plugins have no findings run.
+- **Linter:** stylelint standard. Coverage of stylelint-config-standard-scss: 20.6% (599 of 2,904; the `scss/` plugin rules have no Sudsy rule yet). Of stylelint-less: 78.0% (7,834 of 10,039).
 - **Presets:** `css/stylelint-recommended`, `css/stylelint-standard`.
 - **Options:** `single_quote`, `max_blank_lines`. Default `line_width` is 80.
 - **Differences:**
   - Some SCSS maps and `@include` with comments stay as written.
   - Less mixin calls with `{ }` arguments stay as written.
   - A comment inside a selector or between property and value keeps the statement as written.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier-css`, `scripts/parity.sh coverage stylelint`.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier-css`, `scripts/parity.sh coverage stylelint`, `scripts/parity.sh coverage stylelint-scss`, `scripts/parity.sh coverage stylelint-less`.
 
 ## XML
 

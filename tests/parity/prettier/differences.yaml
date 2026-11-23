@@ -1,12 +1,17 @@
 ratchet:
   graphql: 123
   json: 4
-  markdown: 96
+  markdown: 95
+  real-world-json: 3184
+  real-world-yaml: 803
   yaml: 5
+unclassified: 10
 target-files:
   graphql: 124
   json: 4
   markdown: 104
+  real-world-json: 3212
+  real-world-yaml: 849
   yaml: 5
 differences:
   code-span-backticks: gap  a code span with three backticks (tree-sitter-md does not read it as code) is kept; Prettier writes one backtick
@@ -16,6 +21,18 @@ differences:
   code-trailing-blanks: gap  trailing blanks inside a code block are code and stay; Prettier removes them
   html-after-table: gap  an HTML block right after a table gets a blank line in front; Prettier keeps it on the next line (both parse it as HTML)
   graphql-comment-position: gap  comments between the interfaces and the `{` stay in front of the `{` where Prettier moves them into the body
+  emphasis-in-table: gap  a table cell with a regular expression that holds `*` and `|` in code spans; Prettier turns the `*` into `_`, Sudsy keeps it
+  json-number-fill: gap  an array of numbers that does not fit; Prettier fills the lines, Sudsy writes one number per line
+  json-nested-arrays: gap  an array whose items are all arrays of two or more items; Prettier breaks the outer array and keeps each inner one on a line; Sudsy writes the outer one on a line when it fits
+  json-comment-before-comma: gap  a block comment between a value and its comma; Prettier keeps the comma after the comment, Sudsy writes it before
+  json-trailing-comma: gap  a `.json` file with a trailing comma is refused (the dialect is json, `jsonc` allows it); Prettier's parser accepts it
+  yaml-flow-trailing-comma: gap  a flow sequence broken over lines ends its last item with a comma in Prettier; Sudsy writes none
+  yaml-flow-layout: gap  a flow collection after a key with a trailing comment, or one that starts on the key's line; Sudsy moves it to its own line
+  yaml-comment-indent: gap  a comment line before an item of a lower indentation keeps its own column in Prettier; Sudsy aligns it with the next line
+  yaml-comment-position: gap  a comment on the line of an anchor or a `-` moves to the next line in Sudsy; Prettier keeps it
+  yaml-blank-line: gap  Sudsy adds a blank line that Prettier does not write, or drops the blank line at the end of the file that Prettier keeps
+  yaml-multiline-plain: gap  a plain scalar over several lines after a key; Prettier keeps the first line on the key, Sudsy moves it below or joins the lines
+  yaml-block-indicator: gap  a block scalar header with an indent and a chomp indicator (`>2-`) is written in the other order (`>-2`)
 files:
   runtime-docs/coding-guidelines/adding-api-guidelines.md: code-span-backticks
   runtime-docs/coding-guidelines/coding-style.md: code-span-backticks
@@ -26,6 +43,9 @@ files:
   runtime-docs/coding-guidelines/vectorization-guidelines.md: code-trailing-blanks
   docs/ai/formatting/csharp.md: html-after-table
   graphql/prettier/tests/format/graphql/interface/separator-detection.graphql: graphql-comment-position
+  docs/ai/rules/builtin.md: emphasis-in-table
+  real-world-json: json-number-fill:10, json-nested-arrays:14, json-comment-before-comma:3, json-trailing-comma:1
+  real-world-yaml: yaml-flow-trailing-comma:13, yaml-comment-indent:15, yaml-flow-layout:5, yaml-comment-position:5, yaml-blank-line:5, yaml-multiline-plain:2, yaml-block-indicator:1
 flags:
   no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet
   embedded-language-formatting-off: "Prettier runs with `--embedded-language-formatting=off` and the folder's sudsy.yaml sets `embedded_language_formatting: off`: the formatters of the fenced languages make other choices than Prettier's"

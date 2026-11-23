@@ -1,0 +1,19 @@
+differences: {}
+files: {}
+target: 20.6
+missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
+  scss/dollar-variable-colon-space-after: 857
+  scss/no-global-function-names: 289
+  scss/dollar-variable-empty-line-before: 271
+  scss/comment-no-empty: 223
+  scss/double-slash-comment-empty-line-before: 198
+  no-invalid-position-at-import-rule: 70
+  function-name-case: 54
+  scss/at-mixin-argumentless-call-parentheses: 51
+  declaration-block-no-redundant-longhand-properties: 44
+  at-rule-empty-line-before: 30
+  custom-property-empty-line-before: 30
+  scss/at-rule-conditional-no-parentheses: 27
+  selector-not-notation: 20
+  scss/at-extend-no-missing-placeholder: 19
+  scss/at-if-no-null: 18
