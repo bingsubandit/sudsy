@@ -13,8 +13,8 @@
 //!
 //! concept: query-scope
 //! what: The sources, references and select-element aliases of a select, for rules that need to know which table a column belongs to.
-//! tools: sqlfluff AM04, RF02, RF03
-//! reads: rule:unknown-columns, rule:reference-qualification, rule:reference-consistency
+//! tools: sqlfluff AM04, AL05, RF02, RF03
+//! reads: rule:unknown-columns, rule:reference-qualification, rule:reference-consistency, rule:unused-alias
 
 use crate::{Family, Params, Rule, RuleContext, RuleMeta};
 use core_syntax::{Grammar, SyntaxKind, SyntaxNode, SyntaxToken, TextRange};
@@ -34,6 +34,11 @@ pub const UNIQUE_ALIASES: Family = Family {
     build: |meta, p| build(meta, p, Check::UniqueAliases),
 };
 
+pub const UNUSED_ALIAS: Family = Family {
+    name: "unused-alias",
+    build: |meta, p| build(meta, p, Check::UnusedAlias),
+};
+
 pub const REFERENCE_CONSISTENCY: Family = Family {
     name: "reference-consistency",
     build: |meta, p| build(meta, p, Check::Consistency),
@@ -45,6 +50,7 @@ enum Check {
     Qualification,
     Consistency,
     UniqueAliases,
+    UnusedAlias,
 }
 
 struct Names {
@@ -129,6 +135,8 @@ struct Source {
     standalone: bool,
     /// The name a column reference qualifies it with: its alias, else its table name.
     name: Option<String>,
+    /// The alias written for it, with its range.
+    alias: Option<(String, TextRange)>,
     /// The query inside it (a subquery), or the common table it names.
     query: Option<SyntaxNode>,
 }
@@ -241,6 +249,7 @@ impl Kinds {
                 standalone: table.is_none()
                     && query.is_none()
                     && alias.as_ref().is_none_or(|a| a.children().next().is_some()),
+                alias: alias.as_ref().and_then(|a| last_part(a, self, g)),
                 name: alias_name.or(table_name),
                 query,
             });
@@ -457,6 +466,26 @@ impl Rule for QueryRule {
                     let Some((name, range)) = named else { continue };
                     let key = (u32::from(clause.text_range().start()), name);
                     if !seen.insert(key) {
+                        let text = file.text[range].to_string();
+                        ctx.report(range, self.message.replace("{name}", &text));
+                    }
+                }
+            }
+            Check::UnusedAlias => {
+                for select in ctx.nodes(&[k.select]) {
+                    let used: Vec<String> = (select.descendants())
+                        .filter(|n| n.kind() == k.reference)
+                        .filter(|n| n.parent().is_none_or(|p| p.kind() != k.table))
+                        .filter(is_qualified)
+                        .filter_map(|n| parts(&n, &k, g).into_iter().next())
+                        .collect();
+                    for s in k.sources(&select, g) {
+                        let Some((name, range)) = s.alias else {
+                            continue;
+                        };
+                        if s.standalone || used.contains(&name) {
+                            continue;
+                        }
                         let text = file.text[range].to_string();
                         ctx.report(range, self.message.replace("{name}", &text));
                     }

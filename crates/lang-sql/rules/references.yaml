@@ -38,3 +38,13 @@ description: >-
 example: "select a, b as a from t"
 severity: off
 category: style
+---
+id: unused-alias
+family: unused-alias
+params: { message: "the alias `{name}` is never used in this select", select: SelectStatement, queries: "SelectStatement,SetExpression,WithCompoundStatement", element: SelectClauseElement, source: FromExpressionElement, alias: AliasExpression, reference: ObjectReference, table: TableExpression, cte: CommonTableExpression, from: FromClause, wildcard: "*" }
+description: >-
+  A table alias in a `FROM` clause that no qualified reference of the select (nested queries
+  included) uses (sqlfluff AL05).
+example: "select a from t as x"
+severity: off
+category: style

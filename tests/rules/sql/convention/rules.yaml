@@ -5,3 +5,4 @@ right-join: warn
 else-null: warn
 implicit-alias: warn
 inner-join: warn
+detached-semicolon: warn

@@ -546,6 +546,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `useless-cat` | shell | style | off | none | A pipeline that starts with `cat file`. Equivalent: shellcheck SC2002. |
 | `useless-echo` | shell | style | off | none | An `echo` whose only argument is a command substitution. Equivalent: shellcheck SC2005. |
 | `count-star` | sql | style | off | none | A `COUNT` of the constant 1 or 0 (sqlfluff CV04). Equivalent: sqlfluff CV04. |
+| `detached-semicolon` | sql | style | off | none | A `;` written after a space, a line break or another `;` instead of right after its statement (sqlfluff CV06). Equivalent: sqlfluff CV06. |
 | `distinct-group-by` | sql | suspicious | warn | none | `SELECT DISTINCT` in a query that has `GROUP BY`: the grouping already makes the rows distinct (sqlfluff AM01). Equivalent: sqlfluff AM01. |
 | `duplicate-column-alias` | sql | style | off | none | Two select elements with the same column name: an alias, or the last part of a plain column reference, compared without case and quotes (sqlfluff AL08). Equivalent: sqlfluff AL08. |
 | `duplicate-table-alias` | sql | correctness | warn | none | Two tables of one `FROM` clause with the same alias (or name when there is no alias) (sqlfluff AL04). Equivalent: sqlfluff AL04. |
@@ -570,6 +571,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `union-distinct` | sql | suspicious | warn | none | A `UNION` that names neither `DISTINCT` nor `ALL` (sqlfluff AM02). Equivalent: sqlfluff AM02. |
 | `unknown-columns` | sql | style | off | none | A wildcard of the outermost query that resolves to a table, so the columns of the result change when the table does: a `*` over a table, or over a subquery or common table that has one itself (sqlfluff AM04). Equivalent: sqlfluff AM04. |
 | `unqualified-reference` | sql | style | off | none | A column reference without a table in a select over more than one table or view; a name that an alias of another select element or a `USING` list gives is left alone (sqlfluff RF02). Equivalent: sqlfluff RF02. |
+| `unused-alias` | sql | style | off | none | A table alias in a `FROM` clause that no qualified reference of the select (nested queries included) uses (sqlfluff AL05). Equivalent: sqlfluff AL05. |
 | `unused-cte` | sql | suspicious | warn | none | A common table expression that nothing in the `WITH` statement refers to (sqlfluff ST03). Equivalent: sqlfluff ST03. |
 | `no-duplicate-include` | xml | correctness | warn | none | An element of a project file (`PackageReference`, `ProjectReference`, `Compile`, ...) has the same `Include` as an earlier element of the same name in the same parent. The duplicate is a restore warning or a build error. |
 | `no-floating-package-version` | xml | suspicious | off | none | A `PackageReference` (or `PackageVersion`) whose `Version` contains `*` restores a different package as new versions appear. Reported on the attribute; no fix, because the version to pin is a decision. |

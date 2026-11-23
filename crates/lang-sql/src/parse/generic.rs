@@ -260,7 +260,7 @@ impl P<'_> {
         let create_table = self.at("create") && (1..6).any(|i| self.is(i, "table"));
         let table_stmt = self.at_any(&["create", "alter"]) && (1..4).any(|i| self.is(i, "table"));
         self.generic_run(
-            0,
+            self.in_brackets,
             Walk {
                 create_table,
                 table_stmt,
@@ -544,6 +544,12 @@ impl P<'_> {
             });
             return;
         }
+        // `DO INSTEAD (stmt; stmt)`: the statements of a rule.
+        if word && matches!(up.as_str(), "INSTEAD" | "ALSO") && self.is_t(1, T::LParen) {
+            self.bump_as(k::KEYWORD);
+            self.bracketed(core_syntax::block_parse::statement_list);
+            return;
+        }
         // `PREPARE p AS UPDATE ...`: a statement of its own.
         if word
             && !dotted
@@ -662,7 +668,6 @@ impl P<'_> {
         // The word after a column name is its type.
         if std::mem::take(&mut w.type_slot)
             && word
-            && !dotted
             && !self.reserved(0)
             && !CONSTRAINT_STARTS.contains(&up.as_str())
         {
@@ -674,6 +679,7 @@ impl P<'_> {
         if word
             && !dotted
             && up != "CHECK"
+            && !CONSTRAINT_STARTS.contains(&up.as_str())
             && w.after_name
             && w.columns
             && self.is_t(1, T::LParen)
@@ -814,7 +820,7 @@ impl P<'_> {
             && calls
             && !keyword_bracket
             && (self.is_t(1, T::LParen) || (w.expr && self.name_then_paren()))
-            && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN")
+            && !matches!(up.as_str(), "CHECK" | "ROW" | "THAN" | "COLUMNS")
         {
             self.chain(false);
             w.expr = false;
@@ -941,7 +947,9 @@ impl P<'_> {
             if exec_call {
                 w.expect_name = false;
             }
-            w.expr = exec_call || EXPR_AFTER.contains(&up.as_str()) || (up == "AS" && w.columns);
+            w.expr = exec_call
+                || EXPR_AFTER.contains(&up.as_str())
+                || (up == "AS" && w.columns && !self.is(2, "columns"));
             let pg_returns = up == "RETURNS"
                 && self.d == super::Dialect::Postgres
                 && self.is_t(0, T::Word)

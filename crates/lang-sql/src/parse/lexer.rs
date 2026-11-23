@@ -349,6 +349,16 @@ fn token(src: &str, i: usize, d: Dialect, open: &mut bool) -> (T, usize) {
         while j < b.len() && is_word_char(src[j..].chars().next().unwrap_or(' '), d) {
             j += src[j..].chars().next().map_or(1, char::len_utf8);
         }
+        // `@@global.time_zone`: a dotted system variable
+        if d == Dialect::Mysql && start == i + 2 && b.get(j) == Some(&b'.') && j > start {
+            let mut e = j + 1;
+            while e < b.len() && is_word_char(src[e..].chars().next().unwrap_or(' '), d) {
+                e += src[e..].chars().next().map_or(1, char::len_utf8);
+            }
+            if e > j + 1 {
+                j = e;
+            }
+        }
         if j > start {
             return (T::Var, j);
         }

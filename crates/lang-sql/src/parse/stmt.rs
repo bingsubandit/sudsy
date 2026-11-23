@@ -180,13 +180,15 @@ impl P<'_> {
         } else {
             self.obj_ref();
         }
-        if !(self.at("default") && self.is(1, "values")) {
+        if !(self.at("default") && self.is(1, "values"))
+            && !(self.at("value") && self.is_t(1, T::LParen))
+        {
             self.alias();
         }
         self.table_hints();
         if self.is_t(0, T::LParen) && !self.at_query_start() {
             self.bracketed(|p| {
-                p.list(|p| p.obj_ref());
+                p.list(|p| p.assign_target());
             });
         }
         if self.at("overriding") {
@@ -197,7 +199,7 @@ impl P<'_> {
         if self.d == Dialect::Tsql && self.at("output") {
             self.output_clause();
         }
-        if self.at("values") {
+        if self.at_any(&["values", "value"]) && self.is_t(1, T::LParen) {
             self.values_clause();
         } else if self.at_query_start() {
             self.query();
@@ -217,6 +219,17 @@ impl P<'_> {
         while !self.eof() && !self.is_t(0, T::Semi) {
             if self.at("returning") {
                 self.bump_as(k::KEYWORD);
+                if self.at("with") && self.is_t(1, T::LParen) {
+                    // `RETURNING WITH (OLD AS o, NEW AS n)`
+                    self.bump_as(k::KEYWORD);
+                    self.bracketed(|p| {
+                        p.list(|p| {
+                            let ok = p.eat_name();
+                            p.alias();
+                            ok
+                        });
+                    });
+                }
                 self.indent();
                 self.list(|p| {
                     if p.at_op("*") {
@@ -268,7 +281,19 @@ impl P<'_> {
         self.bump_as(k::KEYWORD);
         if self.is_t(0, T::LParen) {
             self.bracketed(|p| {
-                p.list(|p| p.element());
+                p.list(|p| {
+                    let ok = p.element();
+                    // `name opclass (options)`, `name COLLATE c DESC`
+                    while p.is_t(0, T::Word) {
+                        p.bump_as(k::KEYWORD);
+                        if p.is_t(0, T::LParen) {
+                            p.bracketed(|p| {
+                                p.list(|p| p.element());
+                            });
+                        }
+                    }
+                    ok
+                });
             });
             self.conflict_where();
         } else if self.at("on") {
@@ -316,7 +341,7 @@ impl P<'_> {
                 p.bracketed(|p| {
                     p.list(|p| p.obj_ref());
                 });
-            } else if !p.obj_ref() {
+            } else if !p.assign_target() {
                 return false;
             }
             if p.is_t(0, T::Op) {

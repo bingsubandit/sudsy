@@ -22,6 +22,10 @@ impl Cursor for P<'_> {
         self.is_t(n, T::Semi)
     }
 
+    fn at_close(&self) -> bool {
+        self.is_t(0, T::RParen)
+    }
+
     fn at_label(&self) -> bool {
         self.is_t(1, T::Colon)
     }
@@ -43,7 +47,8 @@ impl Cursor for P<'_> {
         P::expression(self);
     }
 
-    fn statement(&mut self) {
+    fn statement(&mut self, bracketed: bool) {
+        self.in_brackets += usize::from(bracketed);
         let m = self.mark();
         if self.at_query_start() {
             self.query();
@@ -51,6 +56,7 @@ impl Cursor for P<'_> {
             self.statement_body();
         }
         self.close(k::STATEMENT, m);
+        self.in_brackets -= usize::from(bracketed);
     }
 
     fn position(&self) -> usize {

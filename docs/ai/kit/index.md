@@ -120,6 +120,7 @@ One row per concept (one behavior). `turned on by`: the data the shared module r
 | deprecated-index | lang-hcl/rules.rs | A list item read with the legacy dot syntax, `a.0` (tflint terraform_deprecated_index) | tflint terraform_deprecated_index |  | hcl | SINGLE-USE |
 | deprecated-interpolation | lang-hcl/rules.rs | A string that is one interpolation, `"${var.a}"`, where the expression alone does (tflint terraform_deprecated_interpolation) | tflint terraform_deprecated_interpolation |  | hcl | SINGLE-USE |
 | destructor-summary-standard-text | lang-csharp/rules/doc_wording.rs | The summary of a finalizer starts with "Finalizes an instance of the <see cref="T"/> class." | stylecop SA1643 |  | csharp | SINGLE-USE |
+| detached-token-family | core-rules/detached_token.rs | Reports a terminator token written after white space or another terminator instead of right after the code. | sqlfluff CV06 |  | sql | SINGLE-USE |
 | directive-keyword-space | lang-csharp/rules/directives.rs | No space between `#` and the directive keyword (`#if`, not `# if`) | stylecop SA1006 |  | csharp | SINGLE-USE |
 | directory-facts | core-rules/directory_facts.rs | A declaration no file of the directory uses, a need no file provides, a requirement the directory never states. | tflint terraform_unused_declarations, terraform_required_providers, terraform_required_version |  |  | SINGLE-USE |
 | distinct-group-by | lang-sql/rules.rs | `SELECT DISTINCT` in a query that has `GROUP BY`: the grouping already makes the rows distinct (sqlfluff AM01) | sqlfluff AM01 |  | sql | SINGLE-USE |
@@ -210,7 +211,7 @@ One row per concept (one behavior). `turned on by`: the data the shared module r
 | prefer-rest-params | lang-js/rules/binder.rs | Rest parameters instead of arguments. | eslint prefer-rest-params |  | js | SINGLE-USE |
 | property-summary-matches-accessors | lang-csharp/rules/doc_wording.rs | A property summary starts with "Gets", "Sets" or "Gets or sets" ("Gets a value indicating whether" and so on for `bool`), as the property's accessors reachable from outsi | stylecop SA1623 |  | csharp | SINGLE-USE |
 | property-summary-omits-restricted-accessor | lang-csharp/rules/doc_wording.rs | A property summary says "Gets or sets" while one of the accessors is not reachable from outside the type (`private set`, `internal get` on a public property) | stylecop SA1624 |  | csharp | SINGLE-USE |
-| query-scope | core-rules/query_scope.rs | The sources, references and select-element aliases of a select, for rules that need to know which table a column belongs to. | sqlfluff AM04, RF02, RF03 | rule:reference-consistency, rule:reference-qualification, rule:unknown-columns | sql | SINGLE-USE |
+| query-scope | core-rules/query_scope.rs | The sources, references and select-element aliases of a select, for rules that need to know which table a column belongs to. | sqlfluff AM04, AL05, RF02, RF03 | rule:reference-consistency, rule:reference-qualification, rule:unknown-columns, rule:unused-alias | sql | SINGLE-USE |
 | redeclared-variable | core-rules/scope_rules/ordering.rs | A reference before its declaration, and a name declared again in one scope. | eslint no-redeclare, no-use-before-define; ruff F811, F823; typescript-eslint no-redeclare, no-use-before-define | rule:use-before-define | js, python |  |
 | redundant-pattern | lang-gitignore/rules.rs | A name pattern such as `foo` already matches files and directories called `foo` at every level, so a later `foo/` or `/foo` adds nothing (no `!` pattern in between) |  |  | gitignore | SINGLE-USE |
 | redundant-return-type | core-rules/redundant_return_type.rs | The return type a block-body function has by default is left out. | ktlint no-unit-return | tag:block, tag:function | cpp, csharp, java, js, json, kotlin, php, python, ruby, yaml |  |
@@ -302,6 +303,7 @@ One row per concept (one behavior). `turned on by`: the data the shared module r
 
 | id | module | what | tools | turned on by | used by | flags |
 |---|---|---|---|---|---|---|
+| access-chain-parse | core-syntax/access.rs | Loops of subscripts, members and suffixes, subscript items with slices, and keyword words that are names when qualified. | none (parser plumbing) | path:access::Access, path:access::Subscript | java, sql |  |
 | adapter-replay | provider-api/adapter.rs | The lossless tree from the tokens and AST spans of an external parser, with the text between tokens. | none (adapters to oxc, ruff, mago, prism) | grammar:trivia | cpp, html, java, js, kotlin, php, python, ruby, sql, yaml |  |
 | container-rows | core-syntax/containers.rs | Nodes whose content lines all carry a prefix (quote marker, list indent), and fenced blocks inside them. | CommonMark container blocks | grammar:container | markdown | SINGLE-USE |
 | dialect-keyword-tables | lang-sql/parse/dialect.rs | Keyword tables and syntax switches of the dialects of one parser. | sqlfluff dialects |  | sql | SINGLE-USE |

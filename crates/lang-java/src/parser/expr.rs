@@ -116,23 +116,7 @@ impl P<'_> {
     pub(super) fn postfix(&mut self) {
         let cp = self.cp();
         self.primary();
-        loop {
-            match self.cur() {
-                T::Dot => {
-                    if !self.dot_suffix(cp) {
-                        return;
-                    }
-                }
-                T::LBracket => self.wrap(cp, k::ARRAY_ACCESS, |p| {
-                    p.bump();
-                    p.nested_expr();
-                    p.expect(T::RBracket, "`]`");
-                }),
-                T::PlusPlus | T::MinusMinus => self.wrap(cp, k::UPDATE_EXPRESSION, |p| p.bump()),
-                T::ColonColon => self.wrap(cp, k::METHOD_REFERENCE, |p| p.method_reference_rest()),
-                _ => return,
-            }
-        }
+        core_syntax::access::access_chain(&mut Chain { p: self, cp });
     }
 
     /// An expression inside brackets: lambdas are allowed again.
@@ -464,5 +448,40 @@ impl Pratt for P<'_> {
                 climb(p, op.rhs_min());
             });
         }
+    }
+}
+
+/// The access chain of the expression that starts at `cp`.
+struct Chain<'a, 'b> {
+    p: &'a mut P<'b>,
+    cp: core_syntax::Checkpoint,
+}
+
+impl core_syntax::access::Access for Chain<'_, '_> {
+    fn at_subscript(&self) -> bool {
+        self.p.cur() == T::LBracket
+    }
+    fn subscript(&mut self) {
+        self.p.wrap(self.cp, k::ARRAY_ACCESS, |p| {
+            p.bump();
+            p.nested_expr();
+            p.expect(T::RBracket, "`]`");
+        });
+    }
+    fn at_member(&self) -> bool {
+        self.p.cur() == T::Dot
+    }
+    fn member(&mut self) -> bool {
+        self.p.dot_suffix(self.cp)
+    }
+    fn suffix(&mut self) -> bool {
+        match self.p.cur() {
+            T::PlusPlus | T::MinusMinus => self.p.wrap(self.cp, k::UPDATE_EXPRESSION, |p| p.bump()),
+            T::ColonColon => self
+                .p
+                .wrap(self.cp, k::METHOD_REFERENCE, |p| p.method_reference_rest()),
+            _ => return false,
+        }
+        true
     }
 }

@@ -36,6 +36,7 @@ concept deprecated-commands # users: github-actions
 concept deprecated-index # users: hcl
 concept deprecated-interpolation # users: hcl
 concept destructor-summary-standard-text # users: csharp
+concept detached-token-family # users: sql (shared)
 concept dialect-keyword-tables # users: sql
 concept directive-keyword-space # users: csharp
 concept directory-facts # users:  (shared)

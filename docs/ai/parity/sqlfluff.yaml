@@ -41,7 +41,7 @@ entries:
   ST01: rule else-null
   ST03: rule unused-cte
   AL03: rule expression-alias
-  AL05: planned
+  AL05: rule unused-alias
   AL06: planned
   AL07: planned
   AL08: rule duplicate-column-alias
@@ -52,7 +52,7 @@ entries:
   AM07: planned
   CV01: planned
   CV03: planned
-  CV06: planned
+  CV06: rule detached-semicolon
   CV07: planned
   CV09: planned
   CV10: planned

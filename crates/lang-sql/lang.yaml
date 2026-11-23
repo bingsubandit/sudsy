@@ -2,7 +2,7 @@ vscode-languages: [sql]
 extensions: [sql]
 formatter: SqlFormatter
 parse: parse::parse_file
-families: "&[core_rules::unique::FAMILY, core_rules::token_case::FAMILY, core_rules::word_names::KEYWORD_NAME, core_rules::word_names::NEEDLESS_QUOTES, core_rules::query_scope::UNKNOWN_COLUMNS, core_rules::query_scope::REFERENCE_QUALIFICATION, core_rules::query_scope::REFERENCE_CONSISTENCY, core_rules::query_scope::UNIQUE_ALIASES, core_rules::clause_style::FAMILY]"
+families: "&[core_rules::unique::FAMILY, core_rules::token_case::FAMILY, core_rules::word_names::KEYWORD_NAME, core_rules::word_names::NEEDLESS_QUOTES, core_rules::query_scope::UNKNOWN_COLUMNS, core_rules::query_scope::REFERENCE_QUALIFICATION, core_rules::query_scope::REFERENCE_CONSISTENCY, core_rules::query_scope::UNIQUE_ALIASES, core_rules::query_scope::UNUSED_ALIAS, core_rules::detached_token::FAMILY, core_rules::clause_style::FAMILY]"
 hooks: hooks::SqlHooks
 options:
   - dialect:

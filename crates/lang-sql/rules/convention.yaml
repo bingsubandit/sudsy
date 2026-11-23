@@ -69,3 +69,13 @@ rule:
   kind: JoinClause
   regex: '(?i)^join\b'
 report-on: first-token
+---
+id: detached-semicolon
+family: detached-token
+params: { kind: Semicolon, message: "the semicolon belongs right after its statement" }
+description: >-
+  A `;` written after a space, a line break or another `;` instead of right after its
+  statement (sqlfluff CV06).
+example: "select 1\n;"
+severity: off
+category: style

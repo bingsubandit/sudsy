@@ -21,6 +21,7 @@ pub mod configure;
 pub mod curly;
 pub mod decl_rows;
 mod declare;
+pub mod detached_token;
 pub mod diagnostic;
 pub mod directory_facts;
 pub mod doc_comments;

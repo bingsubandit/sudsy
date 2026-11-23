@@ -88,7 +88,7 @@ Each number is measured on real-world code against the reference tool with its d
 | PowerShell | █████████░ 92% Invoke-Formatter | ███░░░░░░░ 33% PSScriptAnalyzer | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | ░░░░░░░░░░ 0% PHPStan | In progress |
 | Kotlin | ████████░░ 84% ktlint | █████████░ 92% ktlint | In progress |
-| SQL | ███████░░░ 78% sqlfluff | ████████░░ 83% sqlfluff | In progress |
+| SQL | ███████░░░ 79% sqlfluff | ████████░░ 85% sqlfluff | In progress |
 | C# | ██████████ 100% CSharpier | ██░░░░░░░░ 23% StyleCop<br>not measured Roslynator | In progress |
 | C / C++ | █░░░░░░░░░ 18% clang-format | not measured clang-tidy | In progress |
 

@@ -21,6 +21,7 @@ sql:
       null-comparison: warn
       prefer-coalesce: warn
       right-join: warn
+      detached-semicolon: warn
       self-alias: warn
       type-case: warn
       special-chars-in-identifier: warn
@@ -30,6 +31,7 @@ sql:
       unqualified-reference: warn
       inconsistent-reference: warn
       duplicate-column-alias: warn
+      unused-alias: warn
       group-order-style: warn
       union-distinct: warn
       unused-cte: warn

@@ -16,7 +16,7 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 | 7 | Makefile | none (no reference) | 73.5% (checkmake, `makefile/checkmake`) | `uniquetargets` 88, `phonydeclared` 59 |
 | 8 | YAML | 94.6% of 849 (Prettier 3.9.10; Kubernetes website, awesome-compose, GitHub workflows) | 99.5% (yamllint, `yaml/yamllint`) | flow sequences without a trailing comma (13 files), comment indentation (15); `comments-indentation` 2 after the proof run |
 | 9 | Kotlin | 82.8% of 5,776 (ktlint 1.8.0) | 92.7% (ktlint, `kotlin/ktlint`; 92.3% with the formatter's own findings counted) | layout rules come from the formatter (`format-diff`, `multiline-start`); misses: `string-template-indent`, `annotation`, `no-consecutive-comments`, `function-literal`, `multiline-loop`, `blank-line-between-when-conditions` (264 of 989), `filename` (single-class check) |
-| 10 | SQL | 78.2% of 867 (sqlfluff 4.5.0) | 83.0% (sqlfluff, `sql/sqlfluff`) | `PRS` 380, `CP05` 227, `CP02` 187, `RF05` 131, `CV06` 126; 189 parse gaps and 189 layout gaps |
+| 10 | SQL | 79.1% of 867 (sqlfluff 4.5.0) | 83.2% (sqlfluff, `sql/sqlfluff`) | `PRS` 380, `CP05` 227, `CP02` 187, `RF05` 131, `CV06` 126; 189 parse gaps and 189 layout gaps |
 | 11 | PHP | 88.5% of 10,382 (PHP-CS-Fixer 3.95.31) | 0.0% (PHPStan, `php/phpstan`) | type analysis (`class.notFound` 7,407, `variable.undefined` 591); inline-text files (~790) |
 | 12 | Ruby | none (no reference) | 96.2% (RuboCop Lint, `ruby/rubocop`) | no formatter run |
 | 13 | GraphQL | 97.7% of 132 (Prettier) | 53.7% (graphql-eslint, `graphql/graphql-eslint-recommended`; 20 schema-free rules) | `naming-convention` 80 of 149 missed, `description-style` 11, `require-deprecation-reason` 10; the schema-bound rules cannot run |

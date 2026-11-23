@@ -109,6 +109,21 @@ const PG_BINARY: &[&str] = &[
     "^", "->", "->>", "#>", "#>>", "@>", "<@", "<->", "?|", "?&", "@@", "@?",
 ];
 
+const FRAME_WORDS: &[&str] = &[
+    "between",
+    "and",
+    "unbounded",
+    "preceding",
+    "following",
+    "current",
+    "row",
+    "exclude",
+    "no",
+    "others",
+    "ties",
+    "group",
+];
+
 impl P<'_> {
     /// An expression in its own node. False when none starts here.
     pub fn expression(&mut self) -> bool {
@@ -303,7 +318,8 @@ impl P<'_> {
     }
 
     pub fn at_query_start(&self) -> bool {
-        self.at_any(&["select", "with", "values", "table"]) && !self.is_t(1, T::Dot)
+        self.at_any(&["select", "with", "table"]) && !self.is_t(1, T::Dot)
+            || self.at("values") && (self.is_t(1, T::LParen) || self.is(1, "row"))
             || (self.is_t(0, T::LParen) && self.paren_starts_query())
     }
 
@@ -315,7 +331,7 @@ impl P<'_> {
         }
         if !(self.is(n, "select")
             || self.is(n, "with")
-            || self.is(n, "values")
+            || (self.is(n, "values") && (self.is_t(n + 1, T::LParen) || self.is(n + 1, "row")))
             || (self.is(n, "table") && self.starts_name(n + 1)))
         {
             return false;
@@ -386,8 +402,14 @@ impl P<'_> {
                 c.lone = false;
                 return true;
             }
-            "INTERVAL" if matches!(self.t(1), Some(T::Str | T::Number)) => {
+            "INTERVAL"
+                if matches!(self.t(1), Some(T::Str | T::Number))
+                    || ((self.is_op(1, "-") || self.is_op(1, "+")) && self.is_t(2, T::Number)) =>
+            {
                 self.bump_as(k::KEYWORD);
+                if self.is_t(0, T::Op) {
+                    self.bump();
+                }
                 self.bump();
                 if self.is_t(0, T::Word) && self.keyword_like(0) && !self.reserved(0) {
                     self.bump_as(k::KEYWORD);
@@ -606,30 +628,22 @@ impl P<'_> {
         }
         self.bump_as(k::KEYWORD);
         while let Some(T::Word) = self.t(0) {
-            if self.at_any(&[
-                "between",
-                "and",
-                "unbounded",
-                "preceding",
-                "following",
-                "current",
-                "row",
-                "exclude",
-                "no",
-                "others",
-                "ties",
-                "group",
-            ]) {
+            if self.frame_word() {
                 self.bump_as(k::KEYWORD);
             } else if self.chain(true).terms == 0 {
                 break;
             }
         }
         while self.chain(true).terms > 0 {
-            while self.at_any(&["preceding", "following", "and"]) {
+            while self.frame_word() {
                 self.bump_as(k::KEYWORD);
             }
         }
+    }
+
+    /// A word of a window frame clause at the cursor (not one that qualifies a name).
+    fn frame_word(&self) -> bool {
+        core_syntax::access::is_keyword_word(FRAME_WORDS, self.text(0), self.is_t(1, T::Dot))
     }
 
     pub fn partition_by(&mut self) {
@@ -700,6 +714,17 @@ impl P<'_> {
                 }
             } else if self.at("order") && self.is(1, "by") {
                 self.order_by();
+            } else if self.at_any(&["empty", "error"])
+                && self.at_any_at(1, &["on", "array", "object"])
+            {
+                // `JSON_TABLE(... COLUMNS (...) EMPTY ARRAY ON ERROR)`
+                while self.at_any(&["empty", "error", "array", "object", "on"]) {
+                    self.bump_as(k::KEYWORD);
+                }
+            } else if self.at("columns") && self.is_t(1, T::LParen) {
+                // `JSON_TABLE(doc, '$' COLUMNS (c int PATH '$.c'))`
+                self.bump_as(k::KEYWORD);
+                self.generic_columns_bracket();
             } else if self.at_any(&[
                 "from",
                 "for",
@@ -713,7 +738,9 @@ impl P<'_> {
                 "placing",
             ]) {
                 self.bump_as(k::KEYWORD);
-                if self.at_any(&["unique", "keys", "time"]) {
+                let typed = self.at("time")
+                    && (self.is_t(1, T::Str) || self.is(1, "with") || self.is(1, "without"));
+                if self.at_any(&["unique", "keys", "time"]) && !typed {
                     self.bump_as(k::KEYWORD);
                 }
                 if self.at_any(&["with", "without"]) && self.is(1, "time") && self.is(2, "zone") {
@@ -785,19 +812,7 @@ impl P<'_> {
         self.split();
         if self.depth < MAX_DEPTH {
             self.depth += 1;
-            loop {
-                if self.is_t(0, T::Colon) {
-                    self.bump_as(k::SLICE);
-                } else if !self.element() {
-                    break;
-                }
-                if !(self.is_t(0, T::Comma) || self.is_t(0, T::Colon)) {
-                    break;
-                }
-                if self.is_t(0, T::Comma) {
-                    self.bump();
-                }
-            }
+            core_syntax::access::subscript_items(self);
             self.depth -= 1;
         }
         self.dedent();
@@ -885,6 +900,11 @@ impl P<'_> {
                     self.bracketed(|p| {
                         if p.at_query_start() {
                             p.query();
+                            // `IN ((select 1), (select 2))`: the first one was a list element
+                            if p.is_t(0, T::Comma) {
+                                p.bump();
+                                p.list(|p| p.element());
+                            }
                         } else {
                             p.list(|p| p.element());
                         }
@@ -904,7 +924,7 @@ impl P<'_> {
                     self.eat("of");
                 }
             }
-            "SIMILAR" if self.is(1, "to") || self.is_t(1, T::Str) => {
+            "SIMILAR" if self.is(1, "to") || self.is(1, "null") || self.is_t(1, T::Str) => {
                 self.bump_as(k::KEYWORD);
                 self.eat("to");
             }

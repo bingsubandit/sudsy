@@ -11,3 +11,6 @@ select a, b from t group by a, 2;
 --                 ^^^^^^^^^^^^^ group-order-style
 with c as (select a from t) select * from c;
 select x.a from (select * from t) as x;
+select a from t as x;
+--                 ^ unused-alias
+select x.a from t as x join u as y on x.id = y.id;

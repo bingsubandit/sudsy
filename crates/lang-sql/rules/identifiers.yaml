@@ -8,10 +8,10 @@ severity: off
 category: style
 rule:
   any:
-    - { kind: ObjectReference }
+    - kind: ObjectReference
+      not:
+        parent: { kind: SelectClauseElement, child: { kind: AliasExpression } }
     - { kind: AliasExpression }
-  not:
-    parent: { kind: SelectClauseElement, child: { kind: AliasExpression } }
 token: { kind: [QuotedIdentifier], regex: '^.[A-Za-z0-9_]*[^A-Za-z0-9_].' }
 ---
 id: keyword-identifier

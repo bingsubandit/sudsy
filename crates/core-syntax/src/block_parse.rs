@@ -103,6 +103,8 @@ pub trait Cursor {
     fn at_end(&self) -> bool;
     /// The token `n` ahead ends a statement (`;`).
     fn separator_at(&self, n: usize) -> bool;
+    /// The token at the cursor closes the bracket the statements stand in (`)`).
+    fn at_close(&self) -> bool;
     /// A label (`name:`) is at the cursor.
     fn at_label(&self) -> bool;
     /// Takes the label and its colon.
@@ -112,8 +114,8 @@ pub trait Cursor {
     /// Takes the token at the cursor, whatever it is.
     fn bump_any(&mut self);
     fn expression(&mut self);
-    /// One statement, as a node of its own.
-    fn statement(&mut self);
+    /// One statement, as a node of its own; `bracketed` when a bracket holds it.
+    fn statement(&mut self, bracketed: bool);
     /// How far the cursor is, to see whether a statement took anything.
     fn position(&self) -> usize;
 }
@@ -132,22 +134,32 @@ fn condition<C: Cursor + ?Sized>(c: &mut C, body_after: Option<&str>) {
     }
 }
 
-/// Statements up to the next arm word of `f` or its closer `end <open>`.
-fn body<C: Cursor + ?Sized>(c: &mut C, f: &Frame, end: &str) {
-    while !c.at_end()
-        && !f.arms.iter().any(|a| at(c, 0, a.word))
-        && !(at(c, 0, end) && at(c, 1, f.open))
-    {
+/// Statements up to the `stop` condition or the end; a bracketed list stops at the bracket that
+/// closes it.
+fn statements<C: Cursor + ?Sized>(c: &mut C, bracketed: bool, stop: impl Fn(&C) -> bool) {
+    while !c.at_end() && !stop(c) {
         if c.separator_at(0) {
             c.bump_any();
             continue;
         }
         let before = c.position();
-        c.statement();
+        c.statement(bracketed);
         if c.position() == before {
             c.bump_any();
         }
     }
+}
+
+/// Statements up to the next arm word of `f` or its closer `end <open>`.
+fn body<C: Cursor + ?Sized>(c: &mut C, f: &Frame, end: &str) {
+    statements(c, false, |c| {
+        f.arms.iter().any(|a| at(c, 0, a.word)) || (at(c, 0, end) && at(c, 1, f.open))
+    });
+}
+
+/// The statements of a bracket (`DO INSTEAD (a; b)`), up to its closing bracket or the end.
+pub fn statement_list<C: Cursor + ?Sized>(c: &mut C) {
+    statements(c, true, |c| c.at_close());
 }
 
 /// A statement with arms: the opener, its condition or subject, the arms with their bodies and
@@ -199,7 +211,7 @@ fn block_opener<C: Cursor + ?Sized>(c: &mut C, blocks: &Blocks) -> bool {
     c.bump_keyword();
     condition(c, f.body_after);
     if !c.at_end() && !c.separator_at(0) && !at(c, 0, blocks.end) {
-        c.statement();
+        c.statement(false);
     }
     true
 }

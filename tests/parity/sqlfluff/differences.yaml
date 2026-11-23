@@ -11,40 +11,39 @@ files:
   sql/postgres/src/test/regress/sql/collate.windows.win1252.sql: non-utf8-input
 ratchet:
   sqlfluff-ansi: 204
-  sqlfluff-mysql: 213
+  sqlfluff-mysql: 216
   sqlfluff-postgres: 122
-  sqlfluff-tsql: 107
-  postgres-regress: 37
+  sqlfluff-tsql: 108
+  postgres-regress: 38
 target-files:
   postgres-regress: 115
   sqlfluff-ansi: 210
   sqlfluff-mysql: 248
   sqlfluff-postgres: 142
   sqlfluff-tsql: 152
-target: 83.0
+target: 85.7
 
 fixes:  # gap name or lint rule -> one line: where and what to change
   PRS: sqlfluff's own parse error on files it cannot read (162 files); Sudsy parses them, nothing to report
   CP05: bit strings (b'..'), ::regclass and tsql int column types in files Sudsy cannot parse; remaining parse errors (JSON_TABLE PATH .. ON EMPTY options of postgres and mysql, tsql BIT VARYING parameters, RETURNING WITH (OLD AS o), COPY (query INTO), psql variables)
   CP02: misses are in files with a parse error (the constructs listed under CP05)
   CP01: misses are in files with a parse error (the constructs listed under CP05)
-  RF05: quoted names in statements the generic parse leaves as plain tokens (no ObjectReference)
-  CV06: a semicolon after whitespace or a newline, and doubled semicolons; needs a token-neighbour check, planned until a second language needs it
+  RF05: unquoted names with `$`, `#`, `@`, and quoted names of statements the generic parse leaves as plain tokens (no ObjectReference)
   RF06: quoted names in files with a parse error, and tsql and mysql quoting; per-dialect naked identifier templates
   RF03: references of selects over table functions and nested queries
 missed:  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)
   PRS: 380
-  CP05: 199
-  CP02: 180
-  RF05: 131
-  CV06: 126
-  RF03: 107
+  CP02: 122
+  RF03: 105
   LXR: 102
-  RF06: 94
-  CP01: 80
+  CP01: 79
   ST06: 75
   AL03: 72
   RF02: 67
-  AL05: 62
-  AM04: 57
+  RF06: 61
+  RF05: 59
   RF01: 53
+  AM09: 52
+  AM04: 50
+  CV10: 49
+  AM06: 39

@@ -17,7 +17,7 @@
 {"format":[{"catalog":"google-java-format","name":"google-java-format","share":91.66354439865118}],"ids":["java"],"lint":[{"catalog":"checkstyle","name":"Checkstyle","share":88.6}],"name":"Java","presets":["graphql/graphql-eslint-recommended","java/google","js/biome-recommended","js/eslint-recommended","js/oxlint","kotlin/ktlint","powershell/psscriptanalyzer","python/ruff","ruby/rubocop"],"rules":52,"slug":"java","speed":[["Java","Format","google-java-format","19× faster","1.09 s / 20.53 s","646 / 998 MB"],["Java","Lint","Checkstyle","153× faster","0.96 s / 146.16 s","591 / 1173 MB"]],"status":"Ready"},
 {"format":[{"catalog":"ktlint","name":"ktlint","share":84.12396121883657}],"ids":["kotlin"],"lint":[{"catalog":"ktlint","name":"ktlint","share":92.3}],"name":"Kotlin","presets":["java/google","js/biome-recommended","js/eslint-recommended","js/oxlint","kotlin/ktlint","powershell/psscriptanalyzer","python/ruff","ruby/rubocop"],"rules":53,"slug":"kotlin","speed":[["Kotlin","Format","ktlint","30× faster","1.61 s / 48.42 s","501 / 715 MB"],["Kotlin","Lint","ktlint","42× faster","1.14 s / 48.01 s","485 / 683 MB"]],"status":"In progress"},
 {"format":[{"catalog":"shfmt","name":"shfmt","share":86.58536585365853}],"ids":["shell"],"lint":[{"catalog":"shellcheck","name":"ShellCheck","share":86.6}],"name":"Shell","presets":["js/biome-recommended","js/eslint-recommended","js/oxlint","js/typescript-eslint-recommended","python/ruff","shell/shellcheck","shell/shfmt"],"rules":56,"slug":"shell","speed":[["Shell","Format","shfmt","2.6× slower","0.059 s / 0.023 s","79 / 52 MB"],["Shell","Lint","ShellCheck","1913× faster","0.089 s / 170.25 s","86 / 9735 MB"]],"status":"Ready"},
-{"format":[{"catalog":"sqlfluff","name":"sqlfluff","share":78.77739331026528}],"ids":["sql"],"lint":[{"catalog":"sqlfluff","name":"sqlfluff","share":83.0}],"name":"SQL","presets":["js/biome-recommended","js/eslint-recommended","js/oxlint","sql/sqlfluff"],"rules":44,"slug":"sql","speed":[["SQL","Format","sqlfluff","386× faster","0.012 s / 4.63 s","57 / 52 MB"],["SQL","Lint","sqlfluff","122× faster","0.043 s / 5.27 s","52 / 52 MB"]],"status":"In progress"},
+{"format":[{"catalog":"sqlfluff","name":"sqlfluff","share":79.35409457900808}],"ids":["sql"],"lint":[{"catalog":"sqlfluff","name":"sqlfluff","share":85.7}],"name":"SQL","presets":["js/biome-recommended","js/eslint-recommended","js/oxlint","sql/sqlfluff"],"rules":46,"slug":"sql","speed":[["SQL","Format","sqlfluff","386× faster","0.012 s / 4.63 s","57 / 52 MB"],["SQL","Lint","sqlfluff","122× faster","0.043 s / 5.27 s","52 / 52 MB"]],"status":"In progress"},
 {"format":[{"catalog":"csharpier","name":"CSharpier","share":100.0}],"ids":["csharp"],"lint":[{"catalog":"stylecop","name":"StyleCop","share":23.5},{"catalog":null,"name":"Roslynator","share":null}],"name":"C#","presets":["csharp/csharpier-compat","csharp/dotnet-runtime","csharp/google","csharp/stylecop","csharp/unity","java/google","js/biome-recommended","js/eslint-recommended","js/oxlint","js/typescript-eslint-recommended","kotlin/ktlint","powershell/psscriptanalyzer","python/ruff","ruby/rubocop","shell/shellcheck"],"rules":91,"slug":"csharp","speed":[["C#","Format","CSharpier","3.3× faster","4.36 s / 14.38 s","572 / 456 MB"],["C# (.editorconfig)","Format","dotnet format","5.2× faster","1.93 s / 10.05 s","537 / 807 MB"],["C#","Lint","StyleCop","not measured","-","-"]],"status":"In progress"},
 {"format":[{"catalog":"csharpier","name":"CSharpier XML","share":99.69135802469135}],"ids":["xml"],"lint":[],"name":"XML","presets":["xml/csharpier-compat"],"rules":19,"slug":"xml","speed":[["XML","Format","CSharpier","4.0× faster","0.11 s / 0.44 s","104 / 97 MB"]],"status":"Ready"},
 {"format":[{"catalog":"clang-format","name":"clang-format","share":18.36119897574936}],"ids":["c","cpp"],"lint":[{"catalog":null,"name":"clang-tidy","share":null}],"name":"C / C++","presets":["cpp/chromium","cpp/gnu","cpp/google","cpp/microsoft","cpp/mozilla","cpp/webkit","js/biome-recommended","js/eslint-recommended","js/oxlint","powershell/psscriptanalyzer","python/ruff","ruby/rubocop"],"rules":27,"slug":"c","speed":[],"status":"In progress"},
@@ -3792,7 +3792,7 @@
 ["minify","wontfix","wontfix: not a formatter",""],
 ["language-dialect","partial","formatter","No dialect selection."]
 ]},
-{"languages":["sql"],"target":83.0,"tool":"sqlfluff","version":"4.5.0 (released 2026-10-30)","entries":[
+{"languages":["sql"],"target":85.7,"tool":"sqlfluff","version":"4.5.0 (released 2026-10-30)","entries":[
 ["LT01","covered","formatter",""],
 ["LT02","covered","formatter",""],
 ["LT03","covered","formatter",""],
@@ -3826,7 +3826,7 @@
 ["ST01","covered","rule: else-null",""],
 ["ST03","covered","rule: unused-cte",""],
 ["AL03","covered","rule: expression-alias",""],
-["AL05","missing","planned",""],
+["AL05","covered","rule: unused-alias",""],
 ["AL06","missing","planned",""],
 ["AL07","missing","planned",""],
 ["AL08","covered","rule: duplicate-column-alias",""],
@@ -3837,7 +3837,7 @@
 ["AM07","missing","planned",""],
 ["CV01","missing","planned",""],
 ["CV03","missing","planned",""],
-["CV06","missing","planned",""],
+["CV06","covered","rule: detached-semicolon",""],
 ["CV07","missing","planned",""],
 ["CV09","missing","planned",""],
 ["CV10","missing","planned",""],

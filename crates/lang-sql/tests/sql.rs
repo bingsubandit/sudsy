@@ -71,6 +71,19 @@ fn dialect_constructs_parse() {
         "REPACK t USING INDEX;",
         "SELECT * FROM a CROSS JOIN LATERAL f(x) AS t(c1 text, c2 bool);",
         "SELECT 1 WHERE h = ANY ((SELECT 1)::int[]);",
+        "INSERT INTO t (a[1:5], b[1].q, c) VALUES (1, 2, 3);",
+        "INSERT INTO t VALUES (1) ON CONFLICT (k int4_ops (fillfactor = 10), j COLLATE \"C\" DESC) DO NOTHING;",
+        "SELECT * FROM (a JOIN b USING (i) AS x) AS xx;",
+        "SELECT * FROM (a LEFT JOIN b FULL JOIN c ON false ON false);",
+        "SELECT 1 FROM t GROUP BY GROUPING SETS ((id), (val));",
+        "SELECT sum(u) OVER (ROWS 2 PRECEDING EXCLUDE GROUP), SUBSTRING('a' SIMILAR NULL ESCAPE '#');",
+        "SELECT a WHERE b IN ((SELECT 1), (SELECT 2));",
+        "CREATE TABLE t (c int, CONSTRAINT x EXCLUDE (f WITH =) INITIALLY DEFERRED);",
+        "WITH RECURSIVE s (f) AS (SELECT 1) CYCLE f SET c TO 'Y' DEFAULT 'N' USING path SELECT 1;",
+        "COPY (SELECT t INTO TEMP x FROM y) TO STDOUT;",
+        "CREATE RULE r AS ON INSERT TO t DO INSTEAD (DELETE FROM t; NOTIFY c);",
+        "INSERT INTO foo DEFAULT VALUES RETURNING WITH (OLD AS o, NEW AS n) name, o.p;",
+        "WITH foo AS (MERGE INTO t USING s ON (true) WHEN MATCHED THEN DELETE) SELECT * FROM foo;",
     ];
     for text in postgres {
         check(text, "postgres");
@@ -84,6 +97,8 @@ fn dialect_constructs_parse() {
         "SELECT * FROM OPENJSON(@j) WITH (m VARCHAR(3), n tinyint '$.n') AS t;",
         "CREATE FUNCTION f () RETURNS @t TABLE (i int) AS BEGIN RETURN END;",
         "SELECT 'a' 'b', 'c' AS 'd';",
+        "DECLARE @x XML (dbo.SomeSchemaCollection);",
+        "SELECT * FROM Sales.Customer TABLESAMPLE SYSTEM (10 PERCENT);",
     ];
     for text in tsql {
         check(text, "tsql");
@@ -91,6 +106,8 @@ fn dialect_constructs_parse() {
     for text in [
         "ALTER TABLE t MODIFY COLUMN c varchar(255) NOT NULL;",
         "ALTER TABLE t CHANGE COLUMN a b INT(11) NULL;",
+        "SELECT DATE_ADD(CURDATE(), INTERVAL -30 DAY), @@global.time_zone;",
+        "REPLACE tbl VALUE (1, 2), (11, 22);",
     ] {
         check(text, "mysql");
     }

@@ -19,3 +19,8 @@ select a b, c as d from t u join v as w on u.a = w.a;
 --                          ^^^^ inner-join
 select a from t join u on t.a = u.a inner join v on v.a = t.a;
 --              ^^^^ inner-join
+select 1 ;
+--      ^^ detached-semicolon
+select 2
+--      ^ detached-semicolon
+;

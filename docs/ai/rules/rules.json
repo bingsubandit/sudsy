@@ -22740,7 +22740,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -22767,6 +22767,45 @@
       "upstream": [
         {
           "id": "CV04",
+          "partial": false,
+          "tool": "sqlfluff"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A `;` written after a space, a line break or another `;` instead of right after its statement (sqlfluff CV06).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
+        "language": "sql",
+        "spans": [
+          {
+            "column": 9,
+            "length": 2,
+            "line": 11
+          },
+          {
+            "column": 9,
+            "length": 1,
+            "line": 12
+          }
+        ]
+      },
+      "fix": null,
+      "id": "detached-semicolon",
+      "languages": [
+        "sql"
+      ],
+      "options": [],
+      "presets": [
+        "sql/sqlfluff"
+      ],
+      "upstream": [
+        {
+          "id": "CV06",
           "partial": false,
           "tool": "sqlfluff"
         }
@@ -22813,7 +22852,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\n",
+        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\nselect a from t as x;\nselect x.a from t as x join u as y on x.id = y.id;\n",
         "language": "sql",
         "spans": [
           {
@@ -22886,7 +22925,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -23031,7 +23070,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\n",
+        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\nselect a from t as x;\nselect x.a from t as x join u as y on x.id = y.id;\n",
         "language": "sql",
         "spans": [
           {
@@ -23112,7 +23151,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -23156,7 +23195,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\n",
+        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\nselect a from t as x;\nselect x.a from t as x join u as y on x.id = y.id;\n",
         "language": "sql",
         "spans": [
           {
@@ -23190,7 +23229,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -23460,7 +23499,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -23499,7 +23538,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -23572,6 +23611,11 @@
         "spans": [
           {
             "column": 8,
+            "length": 5,
+            "line": 1
+          },
+          {
+            "column": 26,
             "length": 5,
             "line": 1
           },
@@ -23658,7 +23702,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\n",
+        "input": "select 1 union select 2;\nselect 1 union all select 2;\nselect 1 union distinct select 2;\nselect ifnull(a, 0), nvl(b, 0), coalesce(c, 0) from t;\nselect count(1), count(0), count(*), count(a) from t;\nselect a from t right join u on t.a = u.a;\nselect a from t left join u on t.a = u.a;\nselect case when a then 1 else null end, case when a then 1 else 2 end from t;\nselect a b, c as d from t u join v as w on u.a = w.a;\nselect a from t join u on t.a = u.a inner join v on v.a = t.a;\nselect 1 ;\nselect 2\n;\n",
         "language": "sql",
         "spans": [
           {
@@ -23692,7 +23736,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\n",
+        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\nselect a from t as x;\nselect x.a from t as x join u as y on x.id = y.id;\n",
         "language": "sql",
         "spans": [
           {
@@ -23726,7 +23770,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\n",
+        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\nselect a from t as x;\nselect x.a from t as x join u as y on x.id = y.id;\n",
         "language": "sql",
         "spans": [
           {
@@ -23753,6 +23797,40 @@
       "upstream": [
         {
           "id": "RF02",
+          "partial": false,
+          "tool": "sqlfluff"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "A table alias in a `FROM` clause that no qualified reference of the select (nested queries included) uses (sqlfluff AL05).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "select * from t;\nselect a, b from t1 join t2 on t1.id = t2.id;\nselect t.a, b from t;\nselect a, b as a from t;\nselect a, b from t group by a, 2;\nwith c as (select a from t) select * from c;\nselect x.a from (select * from t) as x;\nselect a from t as x;\nselect x.a from t as x join u as y on x.id = y.id;\n",
+        "language": "sql",
+        "spans": [
+          {
+            "column": 20,
+            "length": 1,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-alias",
+      "languages": [
+        "sql"
+      ],
+      "options": [],
+      "presets": [
+        "sql/sqlfluff"
+      ],
+      "upstream": [
+        {
+          "id": "AL05",
           "partial": false,
           "tool": "sqlfluff"
         }

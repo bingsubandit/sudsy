@@ -112,6 +112,9 @@ impl P<'_> {
                     // `XML (DOCUMENT dbo.Schemas)`
                     p.bump_as(k::KEYWORD);
                     p.obj_ref()
+                } else if (p.is_t(0, T::Word) && p.is_t(1, T::Dot)) || p.is_t(0, T::Quoted) {
+                    // `XML (dbo.Schemas)`, `XML ([dbo].[Schemas])`
+                    p.obj_ref()
                 } else if p.is_t(0, T::Word) && p.is_t(1, T::LParen) {
                     p.bump_as(k::TYPE_IDENTIFIER);
                     p.generic_bracket_run();

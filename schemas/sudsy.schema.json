@@ -1061,6 +1061,10 @@
               "$ref": "#/definitions/rule",
               "description": "The summary of a finalizer starts with \"Finalizes an instance of the <see cref=\"T\"/> class.\". The `<see>` is compared with the name of the type. The fix puts the standard sentence before the text."
             },
+            "detached-semicolon": {
+              "$ref": "#/definitions/rule",
+              "description": "A `;` written after a space, a line break or another `;` instead of right after its statement (sqlfluff CV06)."
+            },
             "directive-keyword-space": {
               "$ref": "#/definitions/rule",
               "description": "No space between `#` and the directive keyword (`#if`, not `# if`)."
@@ -6653,6 +6657,10 @@
             "untagged-base-image": {
               "$ref": "#/definitions/rule",
               "description": "A FROM image with neither a tag nor a digest, which builds on whatever `latest` is. `scratch`, a variable and an earlier stage's name are fine."
+            },
+            "unused-alias": {
+              "$ref": "#/definitions/rule",
+              "description": "A table alias in a `FROM` clause that no qualified reference of the select (nested queries included) uses (sqlfluff AL05)."
             },
             "unused-annotation": {
               "$ref": "#/definitions/rule",
