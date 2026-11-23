@@ -1,5 +1,7 @@
-# eslint-plugin-vue's flat/recommended rules that Sudsy has, at warn.
+# eslint-plugin-vue's flat/recommended rules that Sudsy has, at warn, and the layout of its `max-attributes-per-line`.
 vue:
+  format:
+    single_attribute_per_line: true
   lint:
     rules:
       attr-delimiter: warn

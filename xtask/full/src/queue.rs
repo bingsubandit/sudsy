@@ -17,6 +17,7 @@ struct Tool {
     fixes: BTreeMap<String, String>,
     #[serde(default)]
     missed: BTreeMap<String, u64>,
+    measured: Option<Measured>,
     #[serde(default)]
     ratchet: BTreeMap<String, u64>,
     #[serde(default, rename = "target-files")]
@@ -24,6 +25,17 @@ struct Tool {
     unclassified: Option<u64>,
     target: Option<f64>,
 }
+
+/// What the last `COVERAGE_WRITE=1` run of the coverage counted; `main` is the commit its tree is based on.
+#[derive(Deserialize)]
+struct Measured {
+    covered: u64,
+    total: u64,
+    main: String,
+}
+
+/// The rules the queue lists per tool; the rest is one line with its sum.
+const TOP: usize = 15;
 
 /// The gaps with the files that name them as first cause (`None`: listed in a group without a count), most files first.
 fn gaps(t: &Tool) -> Vec<(&str, Option<u64>)> {
@@ -89,12 +101,25 @@ fn section(name: &str, t: &Tool) -> String {
     if !t.missed.is_empty() {
         let mut rules: Vec<_> = t.missed.iter().collect();
         rules.sort_by(|a, b| b.1.cmp(a.1).then(a.0.cmp(b.0)));
-        out += &format!(
-            "Lint: target {}%; rules by missed findings:\n",
-            t.target.map_or("-".into(), |c| c.to_string())
-        );
-        for (rank, (rule, n)) in rules.iter().enumerate() {
+        let share = t.target.map_or("-".into(), |c| c.to_string());
+        out += &match &t.measured {
+            Some(m) => format!(
+                "Lint: target {share}% ({} of {}, {} missed, measured on {}); rules by missed findings:\n",
+                m.covered,
+                m.total,
+                m.total - m.covered,
+                m.main
+            ),
+            None => format!(
+                "Lint: target {share}%; rules by missed findings (an incomplete list: not re-measured with the layout findings):\n"
+            ),
+        };
+        for (rank, (rule, n)) in rules.iter().take(TOP).enumerate() {
             out += &format!("{}. `{rule}` ({n} missed){}\n", rank + 1, note(rule));
+        }
+        if let Some(rest) = rules.get(TOP..).filter(|r| !r.is_empty()) {
+            let sum: u64 = rest.iter().map(|(_, n)| **n).sum();
+            out += &format!("\n{} more rules: {sum} missed.\n", rest.len());
         }
     }
     if out.is_empty() {
@@ -115,6 +140,15 @@ pub fn generate() -> Result<(PathBuf, String)> {
         let name = path.file_name().unwrap().to_string_lossy().into_owned();
         let tool: Tool = serde_saphyr::from_str(&text)
             .map_err(|e| anyhow::anyhow!("tests/parity/{name}/differences.yaml: {e}"))?;
+        if let Some(m) = &tool.measured {
+            let missed: u64 = tool.missed.values().sum();
+            anyhow::ensure!(
+                m.covered + missed == m.total,
+                "tests/parity/{name}/differences.yaml: {} covered + {missed} missed is not the {} of `measured`",
+                m.covered,
+                m.total
+            );
+        }
         tools.insert(name, tool);
     }
     let mut text = String::from(

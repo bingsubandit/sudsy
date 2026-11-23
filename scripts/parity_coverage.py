@@ -120,7 +120,7 @@ def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out,
     print(f"proof: `sudsy format` rejects {len(rejected)} files: {len(invalid)} that the corpus marks or the reference parser rejects (invalid-input, left out), "
           f"{len(rejected) - len(invalid)} that it does not (named gaps or Sudsy bugs, counted)"
           + "".join(f"\n  {'gap ' + ','.join(named[n]) if n in (named or {}) else 'bug'}: {n}" for n in sorted(rejected - invalid)))
-    return len(left)
+    return left
 
 
 def norm(path, work):

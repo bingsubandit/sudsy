@@ -12,11 +12,9 @@ use core_config::{OptionDef, OptionSchema};
 use core_format::NodeFormatter;
 use provider_api::{ParserProvider, ParserSpec};
 
-/// The options of HTML and, after them, `extra`.
+/// The options of HTML and, after them, `extra`, with HTML's presets.
 fn schema(extra: Vec<OptionDef>) -> OptionSchema {
-    let mut defs = option_schema().defs().to_vec();
-    defs.extend(extra);
-    OptionSchema::new(defs)
+    option_schema().extended(extra, vec![])
 }
 
 fn spec(

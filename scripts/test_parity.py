@@ -4,6 +4,7 @@ import io
 import stat
 import tempfile
 import unittest
+import unittest.mock
 from collections import Counter
 from pathlib import Path
 
@@ -123,6 +124,30 @@ class Runner(unittest.TestCase):
             reviewed = pf.Differences(folder, lint=True)
             self.assertEqual(reviewed.status("a.mk checkmake:r1 4"), "tool-wrong")
             self.assertIsNone(reviewed.status("a.mk checkmake:r1 5"))
+
+
+class Missed(unittest.TestCase):
+    def check(self, hit, total, text=""):
+        with tempfile.TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
+            folder = Path(d)
+            (folder / "differences.yaml").write_text(text)
+            per = {"a": [10, 6], "gone": [3, 0]}
+            entries = [{"id": "gone", "coverage": "wontfix"}]
+            with unittest.mock.patch.object(pl, "catalog_entries", lambda *a, **k: entries):
+                return pl.missed_check("t", folder, per, hit, total, Counter(layout=5), Counter(a=1))
+
+    def test_layout_counts_and_wontfix_and_wrong_do_not(self):
+        with unittest.mock.patch.object(pl, "catalog_entries", lambda *a, **k: [{"id": "gone", "coverage": "wontfix"}]):
+            self.assertEqual(pl.missed_rules("t", {"a": [10, 6], "gone": [3, 0]}, Counter(layout=5), Counter(a=1)), {"a": 3, "layout": 5})
+
+    def test_must_add_up(self):
+        full = "measured: {covered: 6, total: 14, main: x}\nmissed:\n  a: 3\n  layout: 5\n"
+        self.assertEqual(self.check(6, 14, full), 0)
+        self.assertEqual(self.check(6, 15, full), 1)
+
+    def test_a_rule_that_is_not_listed_fails_a_complete_list_only(self):
+        self.assertEqual(self.check(6, 14, "measured: {covered: 6, total: 9, main: x}\nmissed:\n  a: 3\n"), 1)
+        self.assertEqual(self.check(6, 14, "missed:\n  a: 3\n"), 0)
 
 
 class SpeedRuns(unittest.TestCase):

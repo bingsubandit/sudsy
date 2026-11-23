@@ -43,8 +43,6 @@
       ],
       "presets": [
         "css/stylelint-standard",
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "kotlin/ktlint",
         "yaml/yamllint",
         "csharp/stylecop"
@@ -482,11 +480,7 @@
         "js/eslint-recommended",
         "js/biome-recommended",
         "js/oxlint",
-        "python/ruff",
-        "html/html-validate-standard",
-        "html/htmlhint",
-        "html/html-eslint-recommended",
-        "html/eslint-plugin-vue-recommended"
+        "python/ruff"
       ],
       "upstream": [
         {
@@ -611,8 +605,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended",
         "csharp/stylecop"
       ],
@@ -776,8 +768,7 @@
       "options": [],
       "presets": [
         "html/html-validate-recommended",
-        "yaml/yamllint",
-        "html/html-validate-recommended"
+        "yaml/yamllint"
       ],
       "upstream": [
         {
@@ -1156,8 +1147,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1301,8 +1290,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1346,8 +1333,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -1403,8 +1388,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -1453,8 +1436,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1501,8 +1482,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -1554,8 +1533,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1607,8 +1584,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1656,8 +1631,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1743,8 +1716,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -1788,8 +1759,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1833,8 +1802,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1871,8 +1838,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -1916,8 +1881,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -1954,8 +1917,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -1999,8 +1960,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2037,8 +1996,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2087,8 +2044,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2140,8 +2095,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2227,8 +2180,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2265,8 +2216,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2308,8 +2257,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2387,8 +2334,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2466,8 +2411,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2509,8 +2452,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2598,8 +2539,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2651,8 +2590,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2689,8 +2626,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2727,8 +2662,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2765,8 +2698,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -2808,8 +2739,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2853,8 +2782,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2898,8 +2825,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -2946,8 +2871,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -3134,8 +3057,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3179,8 +3100,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -3229,8 +3148,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3272,8 +3189,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3330,8 +3245,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3368,8 +3281,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3411,8 +3322,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3436,8 +3345,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3474,8 +3381,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3512,8 +3417,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3555,8 +3458,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3605,8 +3506,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -3752,8 +3651,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3797,8 +3694,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -3847,8 +3742,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -3900,8 +3793,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -3943,8 +3834,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -4109,8 +3998,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -4159,8 +4046,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -4327,8 +4212,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -4710,8 +4593,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -4794,8 +4675,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -4931,8 +4810,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -5010,8 +4887,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -5096,8 +4971,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -5139,8 +5012,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -5189,8 +5060,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-recommended",
-        "css/stylelint-recommended",
         "css/stylelint-recommended"
       ],
       "upstream": [
@@ -5237,8 +5106,6 @@
       ],
       "options": [],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -5430,8 +5297,6 @@
         }
       ],
       "presets": [
-        "css/stylelint-standard",
-        "css/stylelint-standard",
         "css/stylelint-standard"
       ],
       "upstream": [
@@ -25535,7 +25400,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -25573,7 +25437,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -25621,7 +25484,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -25659,8 +25521,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
-        "html/htmlhint",
         "html/html-validate-recommended",
         "html/htmlhint"
       ],
@@ -25704,8 +25564,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
-        "html/eslint-plugin-vue-recommended",
         "html/html-validate-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
@@ -25804,10 +25662,6 @@
         "html/html-validate-recommended",
         "html/htmlhint",
         "html/html-eslint-recommended",
-        "html/eslint-plugin-vue-recommended",
-        "html/html-validate-recommended",
-        "html/htmlhint",
-        "html/html-eslint-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -25865,7 +25719,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -25908,7 +25761,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -25951,7 +25803,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -25989,7 +25840,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -26037,7 +25887,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -26080,7 +25929,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -26202,9 +26050,6 @@
       "presets": [
         "html/html-validate-standard",
         "html/htmlhint",
-        "html/html-eslint-recommended",
-        "html/html-validate-standard",
-        "html/htmlhint",
         "html/html-eslint-recommended"
       ],
       "upstream": [
@@ -26253,8 +26098,6 @@
       "options": [],
       "presets": [
         "html/html-validate-standard",
-        "html/htmlhint",
-        "html/html-validate-standard",
         "html/htmlhint"
       ],
       "upstream": [
@@ -26297,7 +26140,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -26340,8 +26182,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
-        "html/htmlhint",
         "html/html-validate-recommended",
         "html/htmlhint"
       ],
@@ -26390,7 +26230,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -26438,9 +26277,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
-        "html/htmlhint",
-        "html/html-eslint-recommended",
         "html/html-validate-standard",
         "html/htmlhint",
         "html/html-eslint-recommended"
@@ -26500,7 +26336,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -26543,7 +26378,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -26636,7 +26470,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-eslint-recommended",
         "html/html-eslint-recommended"
       ],
       "upstream": [
@@ -26699,7 +26532,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -26789,7 +26621,6 @@
       ],
       "options": [],
       "presets": [
-        "html/htmlhint",
         "html/htmlhint"
       ],
       "upstream": [
@@ -26837,7 +26668,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -26875,7 +26705,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -26913,7 +26742,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -26951,8 +26779,6 @@
       ],
       "options": [],
       "presets": [
-        "html/htmlhint",
-        "html/html-eslint-recommended",
         "html/htmlhint",
         "html/html-eslint-recommended"
       ],
@@ -27001,7 +26827,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -27081,7 +26906,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -27124,7 +26948,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -27162,7 +26985,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -27200,7 +27022,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -27273,7 +27094,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27311,7 +27131,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -27349,8 +27168,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
-        "html/html-eslint-recommended",
         "html/html-validate-standard",
         "html/html-eslint-recommended"
       ],
@@ -27394,7 +27211,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27432,7 +27248,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27470,7 +27285,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27508,7 +27322,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27546,7 +27359,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27584,7 +27396,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27622,7 +27433,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27660,7 +27470,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27698,7 +27507,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27736,7 +27544,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27779,7 +27586,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27822,7 +27628,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -27860,7 +27665,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -27903,7 +27707,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -27941,7 +27744,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -27979,7 +27781,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -28022,9 +27823,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
-        "html/htmlhint",
-        "html/html-eslint-recommended",
         "html/html-validate-standard",
         "html/htmlhint",
         "html/html-eslint-recommended"
@@ -28074,8 +27872,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
-        "html/htmlhint",
         "html/html-validate-recommended",
         "html/htmlhint"
       ],
@@ -28141,9 +27937,6 @@
       "presets": [
         "html/html-validate-recommended",
         "html/htmlhint",
-        "html/html-eslint-recommended",
-        "html/html-validate-recommended",
-        "html/htmlhint",
         "html/html-eslint-recommended"
       ],
       "upstream": [
@@ -28191,7 +27984,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -28229,8 +28021,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
-        "html/htmlhint",
         "html/html-validate-recommended",
         "html/htmlhint"
       ],
@@ -28289,7 +28079,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -28332,7 +28121,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -28370,7 +28158,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -28493,7 +28280,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -28531,7 +28317,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -28569,7 +28354,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -28622,7 +28406,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -28665,7 +28448,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -28703,7 +28485,6 @@
       ],
       "options": [],
       "presets": [
-        "html/htmlhint",
         "html/htmlhint"
       ],
       "upstream": [
@@ -28791,7 +28572,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -28869,7 +28649,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -28942,7 +28721,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -28980,7 +28758,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -29033,7 +28810,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -29071,7 +28847,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -29109,7 +28884,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -29182,7 +28956,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -29220,7 +28993,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -29258,7 +29030,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -29311,7 +29082,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -29349,7 +29119,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -29387,7 +29156,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -29425,7 +29193,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -29478,7 +29245,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -29516,7 +29282,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-svelte-recommended",
         "html/eslint-plugin-svelte-recommended"
       ],
       "upstream": [
@@ -29598,7 +29363,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -29836,7 +29600,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -29894,7 +29657,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -29932,7 +29694,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-standard",
         "html/html-validate-standard"
       ],
       "upstream": [
@@ -29975,7 +29736,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30013,7 +29773,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30051,7 +29810,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30089,7 +29847,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30127,7 +29884,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30175,7 +29931,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
         "html/html-validate-recommended"
       ],
       "upstream": [
@@ -30223,7 +29978,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30261,7 +30015,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30304,7 +30057,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30352,7 +30104,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30390,7 +30141,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30428,7 +30178,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30466,7 +30215,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30504,7 +30252,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30542,7 +30289,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30585,7 +30331,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30623,7 +30368,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30661,7 +30405,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30699,7 +30442,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30737,7 +30479,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30780,7 +30521,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30818,7 +30558,6 @@
       ],
       "options": [],
       "presets": [
-        "html/eslint-plugin-vue-recommended",
         "html/eslint-plugin-vue-recommended"
       ],
       "upstream": [
@@ -30856,8 +30595,6 @@
       ],
       "options": [],
       "presets": [
-        "html/html-validate-recommended",
-        "html/htmlhint",
         "html/html-validate-recommended",
         "html/htmlhint"
       ],

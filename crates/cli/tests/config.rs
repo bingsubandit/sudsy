@@ -236,6 +236,34 @@ fn extends_a_file_in_another_directory() {
 }
 
 #[test]
+fn a_preset_of_the_base_language_applies_to_its_dialects() {
+    for (preset, file, text, rule) in [
+        (
+            "html/eslint-plugin-vue-recommended",
+            "a.vue",
+            "<template>\n  <p v-html=\"x\" />\n</template>\n",
+            "no-v-html",
+        ),
+        (
+            "html/eslint-plugin-svelte-recommended",
+            "a.svelte",
+            "<p>{@html x}</p>\n",
+            "no-at-html-tags",
+        ),
+    ] {
+        let t = tempfile::tempdir().unwrap();
+        write(
+            t.path(),
+            "sudsy.yaml",
+            &format!("extends: [preset:{preset}]\n"),
+        );
+        write(t.path(), file, text);
+        let out = sudsy(t.path(), &["lint", file]);
+        assert!(stdout(&out).contains(rule), "{file}: {}", stdout(&out));
+    }
+}
+
+#[test]
 fn config_print_shows_the_value_and_where_it_came_from() {
     let t = tempfile::tempdir().unwrap();
     write(

@@ -394,10 +394,6 @@ impl ConfigChain {
         let applies = |name: &str| language_of(name) == language || Some(language_of(name)) == base;
         for r in self.presets.iter().filter(|r| applies(&r.name)) {
             if schema.find_preset(&r.name).is_none() {
-                // A dialect's schema may not carry the presets of its base language.
-                if language_of(&r.name) != language {
-                    continue;
-                }
                 return Err(ConfigError::at(
                     r.line,
                     r.column,

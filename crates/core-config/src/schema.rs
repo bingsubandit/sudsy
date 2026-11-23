@@ -232,6 +232,14 @@ impl OptionSchema {
         self
     }
 
+    /// This schema with `defs` and `presets` after its own: a dialect takes the options and the
+    /// presets of its base language, so that the base's presets apply to its files.
+    pub fn extended(&self, defs: Vec<OptionDef>, presets: Vec<Preset>) -> Self {
+        let mut out = OptionSchema::new([self.defs(), &defs].concat());
+        out.presets = [self.presets(), &presets].concat();
+        out
+    }
+
     pub fn presets(&self) -> &[Preset] {
         match &self.later {
             Some(l) => l.get().presets(),

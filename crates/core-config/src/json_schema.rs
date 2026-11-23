@@ -175,6 +175,7 @@ pub fn json_schema(languages: &[(&str, &OptionSchema)], rules: &[RuleSchema]) ->
         .flat_map(|(_, s)| s.presets().iter().map(|p| format!("preset:{}", p.name)))
         .collect();
     presets.sort();
+    presets.dedup(); // a dialect carries its base's presets
 
     let language_section = |name: &str| -> Value {
         let format = match languages.iter().find(|(l, _)| *l == name) {

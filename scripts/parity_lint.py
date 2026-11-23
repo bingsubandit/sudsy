@@ -611,7 +611,7 @@ def proof_plain(tool, prefix, work, sudsy, preset, layout, fatal, before, pinned
     print(f"proof: `sudsy format` exit {run.returncode}; formatter findings {len(before)} before, {len(left)} after in {len({f[0] for f in left})} files: "
           + (", ".join(f"{r} {n}" for r, n in per.most_common(12)) or "none"))
     print(f"proof: `sudsy format` rejects {len(rejected)} files (Sudsy bugs, counted)" + "".join(f"\n  bug: {n}" for n in rejected))
-    return len(left)
+    return left
 
 
 def coverage(tool, sudsy, version, prefix, exe):
@@ -668,11 +668,14 @@ def coverage(tool, sudsy, version, prefix, exe):
     found = [f for f in found if f[0] not in fatal]
     reviewed = parity_format.Differences(folder, lint=True)  # `<file> <tool>:<rule> <line>`: a finding where the tool is wrong, pinned per finding
     pinned = lambda f: reviewed.status(f"{f[0]} {tool}:{f[1]} {f[3]}") == "tool-wrong"  # a pinned finding leaves the proof run's count too
-    owned = sum(f[1] in layout for f in found)  # `formatter` ids: `sudsy format` does their work, so they are no findings to cover until the proof run counts the remaining ones
+    left = [f for f in found if f[1] in layout]  # the layout findings; the proof run below replaces them by those `sudsy format` leaves
     if layout:  # the proof run: the formatter findings that remain after `sudsy format` are the ones that count as missing
         before = [f for f in found if f[1] in layout]
-        owned = (parity_coverage.proof(tool, spec, prefix, work, exe, {"actionlint": actionlint_check}, sudsy, preset, layout, fatal, before, pinned, reviewed.files) if spec
-                 else proof_plain(tool, prefix, work, sudsy, preset, layout, fatal, before, pinned))
+        left = (parity_coverage.proof(tool, spec, prefix, work, exe, {"actionlint": actionlint_check}, sudsy, preset, layout, fatal, before, pinned, reviewed.files) if spec
+                else proof_plain(tool, prefix, work, sudsy, preset, layout, fatal, before, pinned))
+    owned = len(left)
+    leftover = collections.Counter(f[1] for f in left)  # layout rule -> findings left
+    places = {}  # rule -> the first places of its missing findings
     found = [f for f in found if f[1] not in layout]
     print(f"input filters: files the tool cannot read {len(fatal)}, formatter-owned findings (counted as missing: {owned}{', after the proof run' if layout else ''})")
     def run_sudsy(config):  # Sudsy's findings with `config` as the sudsy.yaml of the corpus (None: no file, the default a user gets)
@@ -692,13 +695,18 @@ def coverage(tool, sudsy, version, prefix, exe):
     offsets = {}  # upstream rule -> Counter(Sudsy line minus tool line) of the findings reported on another line
 
     def score(ours):
-        """`(per, hits, total, tool-wrong findings)`: a finding is covered when the mapped rule reports it on the same line.
+        """`(per, hits, total, tool-wrong findings by rule)`: a finding is covered when the mapped rule reports it on the same line.
         `per`: upstream rule -> [findings, covered]."""
         named = {r for (_, r), ms in ours.items() if any(message_name(m) for m, _ in ms)}  # rules whose messages quote a name
-        per, wrong = {}, 0
+        per, wrong = {}, collections.Counter()
         instruction = (spec or {}).get("instruction")  # `{"rule_prefix", "continuation"}`: those codes are covered on any line of the instruction the tool's line starts
         offsets.clear()
         filehits[0] = 0
+        places.clear()
+        for file, rule, _, line in left:
+            places.setdefault(rule, []).append(f"{file}:{line}")
+            if os.environ.get("COVERAGE_MISSES"):
+                print(f"MISS {file} {tool}:{rule} {line} (after `sudsy format`)")
         for file, rule, message, line in found:
             row = per.setdefault(rule, [0, 0])
             row[0] += 1
@@ -715,7 +723,10 @@ def coverage(tool, sudsy, version, prefix, exe):
                 off = min((l - line for _, l in reports), key=abs)
                 offsets.setdefault(rule, collections.Counter())[off] += 1
                 examples.setdefault((rule, off), f"{file}:{line}")
-            wrong += not on_line and reviewed.status(f"{file} {tool}:{rule} {line}") == "tool-wrong"
+            is_wrong = not on_line and reviewed.status(f"{file} {tool}:{rule} {line}") == "tool-wrong"
+            wrong[rule] += is_wrong
+            if not on_line and not is_wrong:
+                places.setdefault(rule, []).append(f"{file}:{line}")
         total, hit = sum(r[0] for r in per.values()), sum(r[1] for r in per.values())
         return per, hit, total, wrong
 
@@ -732,45 +743,66 @@ def coverage(tool, sudsy, version, prefix, exe):
         if r in on and (f, r) not in wanted and f not in fatal:
             extra[r] = extra.get(r, 0) + len(ms)
     print("only Sudsy (files the tool reports the rule in nowhere): " + (", ".join(f"{r} {n}" for r, n in sorted(extra.items(), key=lambda kv: -kv[1])[:12]) or "none"))
-    for rule, (n, c) in sorted(per.items(), key=lambda kv: kv[1][1] - kv[1][0])[:int(os.environ.get("COVERAGE_TOP", 15))]:
-        print(f"  {rule}: {c} of {n} covered on the line" + ("" if rule in mapping else " (no Sudsy rule)"))
     if os.environ.get("COVERAGE_OFFSETS"):
         print(f"  audit: {filehits[0]} of {total} findings have a report of the mapped rule in the file ({round(1000 * filehits[0] / total) / 10 if total else 100.0}%), {hit} of them on the line")  # the line audit: where Sudsy reports a finding the tool puts on another line
         for rule, c in sorted(offsets.items()):
             print(f"  offsets {rule}: " + ", ".join(f"{o:+d} x{n} e.g. {examples[(rule, o)]}" for o, n in c.most_common(4)) + f" (of {per[rule][0] - per[rule][1]} missed)")
-    print(target_line(tool, per, hit, total, owned, "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else "", wrong))
+    prefixed = "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else ""
+    missed = missed_rules(tool, per, leftover, wrong, prefixed)
+    print(f"missing findings, all {sum(missed.values())} by rule:")  # every one is a bug or gap to fix, or a reviewed choice to record
+    for rule, n in sorted(missed.items(), key=lambda kv: (-kv[1], kv[0])):
+        why = "left after `sudsy format` (formatter or a preset option)" if rule in leftover else f"rule {mapping[rule]} covers {per[rule][1]} of {per[rule][0]}" if rule in mapping else "no Sudsy rule"
+        print(f"  {n} {rule}: {why}; e.g. {', '.join(places[rule][:3])}")
+    print(target_line(tool, per, hit, total, owned, prefixed, sum(wrong.values())))
     print(f"{tool} {version}: {len(per)} rules in {len(names) - len(fatal)} files, preset:{preset}")
-    target = target_numbers(tool, per, hit, total, owned, "@typescript-eslint/" if tool == "typescript-eslint" else f"{PLUGINS[tool]}/" if tool in PLUGINS else "", wrong)[0]
-    return ratchet(tool, folder, target) | missed_check(tool, folder, per)
+    target = target_numbers(tool, per, hit, total, owned, prefixed, sum(wrong.values()))
+    return ratchet(tool, folder, target[0]) | missed_check(tool, folder, per, hit, target[1], leftover, wrong, prefixed)
 
 
-MISSED_TOP = 15
+def missed_rules(tool, per, leftover=None, wrong=None, prefix=""):
+    """Rule -> findings that count as missing in the target: the uncovered ones of each rule (without the `wontfix` rules and the reviewed
+    `tool-wrong` findings, which leave the denominator) and the layout findings the proof run leaves (`leftover`)."""
+    wontfix = {f"{prefix}{e['id']}" for e in catalog_entries(tool, sub=True) if e["coverage"] == "wontfix"}
+    out = collections.Counter(leftover or {})
+    for rule, (n, covered) in per.items():
+        if rule not in wontfix:
+            out[rule] += n - covered - (wrong or {}).get(rule, 0)
+    return {r: n for r, n in out.items() if n}
 
 
-def missed_check(tool, folder, per):
-    """The `missed:` ratchet of the tool's differences.yaml (rule -> findings it misses): the MISSED_TOP rules with most missed findings.
-    Fails when a recorded rule misses more or the key is absent; says when to lower it. `COVERAGE_WRITE=1` writes the block (the queue,
-    docs/ai/parity/queue.md, is generated from it)."""
-    top = sorted(((r, n - c) for r, (n, c) in per.items() if n > c), key=lambda kv: (-kv[1], kv[0]))[:MISSED_TOP]
+def missed_check(tool, folder, per, hit, total, leftover=None, wrong=None, prefix=""):
+    """The `measured:` and `missed:` blocks of the tool's differences.yaml: `missed` is every rule with findings that count as missing (layout
+    included), so covered + missed is the denominator of the target; a run where it is not fails. Fails when a recorded rule misses more,
+    a rule is missing from the list or the key is absent; says when to lower it. `COVERAGE_WRITE=1` writes both (the queue,
+    docs/ai/parity/queue.md, is generated from them)."""
+    missed = missed_rules(tool, per, leftover, wrong, prefix)
+    if hit + sum(missed.values()) != total:
+        print(f"MISSED does not add up: {hit} covered + {sum(missed.values())} missed is not the {total} of the target")
+        return 1
     path = folder / "differences.yaml"
     text = path.read_text(encoding="utf-8") if path.exists() else ""
-    block = ("missed:" if top else "missed: {}") + "  # lint rule -> findings of the corpus it misses, the top rules (scripts/parity.sh coverage <tool> checks it; COVERAGE_WRITE=1 writes it)\n" + "".join(f"  {r}: {n}\n" for r, n in top)
+    rows = "".join(f"  {r}: {n}\n" for r, n in sorted(missed.items(), key=lambda kv: (-kv[1], kv[0])))
     if os.environ.get("COVERAGE_WRITE"):
-        text = re.sub(r"^missed:.*\n(?:[ \t]+.*\n)*", "", text, flags=re.M)
-        path.write_text(text + ("" if text.endswith("\n") or not text else "\n") + block, encoding="utf-8", newline="\n")
-        print(f"missed: written ({len(top)} rules)")
+        base = subprocess.run(["git", "merge-base", "HEAD", "origin/main"], cwd=ROOT, capture_output=True, text=True, check=False).stdout.strip()[:8]
+        text = re.sub(r"^(?:missed|measured):.*\n(?:[ \t]+.*\n)*", "", text, flags=re.M)
+        text += "" if text.endswith("\n") or not text else "\n"
+        text += f"measured: {{covered: {hit}, total: {total}, main: '{base}'}}  # of the target; `main`: the origin/main commit the measured tree is based on\n"
+        text += ("missed:" if rows else "missed: {}") + "  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)\n" + rows
+        path.write_text(text, encoding="utf-8", newline="\n")
+        print(f"missed: written ({len(missed)} rules, {sum(missed.values())} findings)")
         return 0
-    recorded = (yaml.safe_load(text) or {}).get("missed")
+    data = yaml.safe_load(text) or {}
+    recorded = data.get("missed")
     if recorded is None:
         print(f"no `missed:` in tests/parity/{tool}/differences.yaml: COVERAGE_WRITE=1 scripts/parity.sh coverage {tool} writes it")
         return 1
     bad = 0
-    for rule, top_n in recorded.items():
-        now = per[rule][0] - per[rule][1] if rule in per else 0
-        if now > top_n:
-            print(f"MISSED above the ratchet: {rule} misses {now} findings > {top_n}")
+    for rule in {**recorded, **(missed if "measured" in data else {})}:  # without `measured` the list is an older one, not complete
+        now, most = missed.get(rule, 0), recorded.get(rule, 0)
+        if now > most:
+            print(f"MISSED above the ratchet: {rule} misses {now} findings > {most}")
             bad = 1
-        elif now < top_n:
+        elif now < most:
             print(f"missed improved: {rule} misses {now}; COVERAGE_WRITE=1 rewrites `missed:`")
     return bad
 
@@ -835,7 +867,8 @@ def rubocop_coverage(sudsy, version, prefix):
     print("input filters: none (the corpus is copied whole)")
     print(target_line("rubocop", per, hit, total, 0))
     print(f"rubocop {version}: {len(per)} cops in {len(report['files'])} files, preset:{preset}")
-    return ratchet("rubocop", folder, target_numbers("rubocop", per, hit, total, 0)[0]) | missed_check("rubocop", folder, per)
+    target = target_numbers("rubocop", per, hit, total, 0)
+    return ratchet("rubocop", folder, target[0]) | missed_check("rubocop", folder, per, hit, target[1])
 
 
 def install_of(config):
