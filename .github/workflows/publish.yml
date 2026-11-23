@@ -66,7 +66,12 @@ jobs:
             # A re-run skips the packages an earlier run already published.
             spec=$(node -p "const p=require('./$dir/package.json'); p.name+'@'+p.version")
             if npm view "$spec" version >/dev/null 2>&1; then echo "skip $spec (published)"; continue; fi
-            npm publish "$dir" --access public $next
+            # npm shows an upload only after processing it (minutes); until then `npm view` misses it
+            # and publishing again fails with E409, so that conflict counts as published too.
+            if npm publish "$dir" --access public $next 2>publish-err.log; then cat publish-err.log >&2; continue; fi
+            cat publish-err.log >&2
+            grep -q "Cannot publish over previously staged version" publish-err.log || exit 1
+            echo "::warning::skip $spec (uploaded by an earlier run, still processing)"
           done
 
   pypi:
