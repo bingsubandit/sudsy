@@ -12,7 +12,7 @@ entries:
   MD005: formatter
   MD007: formatter
   MD009: formatter
-  MD010: deferred | Needs a shared line rule for tabs; a pattern cannot report a line.
+  MD010: rule no-hard-tabs | Reported on the tab run, as markdownlint does; no `spaces_per_tab` fix, `code_blocks: false` is `ignore_kinds: [CodeText, IndentedCode]`, no `ignore_code_languages`.
   MD011: rule no-reversed-links | Reported on the paragraph, not the link; a link followed by a reference `[a](b)[c]` is not told apart.
   MD012: formatter
   MD013: rule max-line-length | No exemptions for code blocks, tables and headings (`code_blocks`, `tables`, `headings`), no `strict`, `stern` or `line_length` per-language defaults.

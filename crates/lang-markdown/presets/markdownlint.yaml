@@ -16,6 +16,10 @@ markdown:
       no-duplicate-heading: warn
       no-emphasis-as-heading: warn
       no-empty-links: warn
+      no-hard-tabs:
+        level: warn
+        options:
+          ignore_kinds: [FrontMatter]
       no-inline-html: warn
       no-missing-space-atx: warn
       no-reversed-links: warn

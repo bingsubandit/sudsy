@@ -31,6 +31,7 @@ pub static RULES: &[&dyn Rule] = &[
     &crate::curly::Curly,
     &crate::redundant_return_type::RedundantReturnType,
     &crate::heading_style::HeadingStyle,
+    &crate::hard_tabs::NoHardTabs,
 ];
 
 rule! {

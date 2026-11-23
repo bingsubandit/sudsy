@@ -1,0 +1,4 @@
+no-hard-tabs:
+  level: warn
+  options:
+    ignore_kinds: [FrontMatter]
