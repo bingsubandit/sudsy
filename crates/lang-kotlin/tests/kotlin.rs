@@ -278,18 +278,48 @@ fn a_plain_raw_string_keeps_its_bytes() {
     assert!(verify(&trim, &trim_moved).is_ok());
 }
 
-/// A `when` entry with several conditions keeps them at its own level; a comment after `{` or
-/// between `)` and a braced body moves inside; `+=` moves a multi-line value below the operator.
+/// A `when` entry with several conditions keeps them at its own level; a comment after `{` of a `try`, `catch` or `finally` or
+/// between `)` and a braced body moves inside, one after another `{` stays; `+=` moves a multi-line value below the operator.
 #[test]
 fn when_entries_comments_in_braces_and_compound_assignment() {
     let when = "fun f() {\n    when (x) {\n        B,\n        C,\n        -> {\n            g()\n        }\n    }\n}\n";
     assert_eq!(fmt(when), when);
     assert_eq!(
-        fmt("fun f() {\n    if (a) { // c\n        b()\n    }\n}\n"),
-        "fun f() {\n    if (a) {\n        // c\n        b()\n    }\n}\n"
+        fmt(
+            "fun f() {\n    if (a) { // c\n        b()\n    }\n    try { // d\n        b()\n    } catch (e: E) { // e\n    }\n}\n"
+        ),
+        "fun f() {\n    if (a) { // c\n        b()\n    }\n    try {\n        // d\n        b()\n    } catch (e: E) {\n        // e\n    }\n}\n"
     );
     assert_eq!(
         fmt("fun f() {\n    t += g(1) {\n        h()\n    }\n}\n"),
         "fun f() {\n    t +=\n        g(1) {\n            h()\n        }\n}\n"
+    );
+}
+
+/// A one-line block comment that ends its line is a line comment (also after the separator of a
+/// parameter list that breaks); one with code after it stays; a trailing comment after a bare `if`
+/// body stays on the body's line when the braces go in.
+#[test]
+fn single_line_block_comments_and_braced_bodies() {
+    assert_eq!(
+        fmt("val a = 1 /* c */\nval b = 2 /* d */ + 3\n"),
+        "val a = 1 // c\nval b = 2 /* d */ + 3\n"
+    );
+    assert_eq!(fmt("/** doc */\nval a = 1\n"), "/** doc */\nval a = 1\n");
+    let long = "fun f(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: Int, /* c */ bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb: Int, cccccccccccccccccccccccccccccc: Int, ddddddddddddd: Int /* e */) {}\n";
+    let once = fmt(long);
+    assert!(
+        once.contains("Int, // c\n") && once.contains("Int, // e\n"),
+        "{once}"
+    );
+    assert_eq!(fmt(&once), once);
+    // (comments the layout moves to the end of a line: after `->`, after `(`)
+    fmt("fun f(x: Int) = when (x) {\n    1 -> 2\n    else -> /* c */ g(x)\n}\n");
+    fmt("class A(/* a */ val x: Int,\n        /* b */ val y: Int) : B() {}\n");
+    assert_eq!(
+        fmt(
+            "fun f() {\n    if (a) {\n        w()\n    } else if (b) y = 2 /* c */\n    else z = 3 // d\n}\n"
+        ),
+        "fun f() {\n    if (a) {\n        w()\n    } else if (b) {\n        y = 2 // c\n    } else {\n        z = 3 // d\n    }\n}\n"
     );
 }

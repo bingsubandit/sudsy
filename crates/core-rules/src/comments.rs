@@ -53,7 +53,7 @@ rule! {
         grammar: &Grammar,
         text: &str,
         own: &crate::options::RuleOptions,
-        _format: &core_config::ResolvedOptions,
+        format: &core_config::ResolvedOptions,
     ) -> bool {
         let block = own.bool("block")
             && grammar
@@ -61,12 +61,13 @@ rule! {
                 .block
                 .as_ref()
                 .is_some_and(|(open, close)| block_tight(text, open, close));
+        let strict = format.strings(core_config::opt::COMMENT_SPACE_EXEMPT).next().is_some();
         let line = own.bool("line")
             && grammar
                 .comments
                 .line
                 .as_deref()
-                .is_some_and(|marker| line_tight(text, marker));
+                .is_some_and(|marker| line_tight(text, marker, strict));
         block || line
     }
 
@@ -83,8 +84,15 @@ rule! {
             return;
         }
         let repeated = marker.chars().last().unwrap_or(' ');
+        // (the formatter: the language's exempt prefixes, and no other comment is exempt)
+        let exempt_prefixes: Vec<&str> = ctx
+            .format
+            .as_ref()
+            .map(|f| f.options.strings(core_config::opt::COMMENT_SPACE_EXEMPT).collect())
+            .unwrap_or_default();
+        let strict = !exempt_prefixes.is_empty();
         // (only the comments that start at a marker with text right after it)
-        for at in tight_markers(file.text, marker) {
+        for at in tight_markers(file.text, marker, strict) {
             let Some(token) = file
                 .root
                 .token_at_offset(core_syntax::TextSize::from(u32::try_from(at).unwrap_or(u32::MAX)))
@@ -101,9 +109,12 @@ rule! {
             };
             let start = token.text_range().start();
             let exempt = rest.trim().is_empty()
-                || rest.starts_with([' ', repeated])
-                || rest.starts_with("--")
-                || (usize::from(start) == 0 && rest.starts_with('!'));
+                || (usize::from(start) == 0 && rest.starts_with('!'))
+                || if strict {
+                    exempt_prefixes.iter().any(|p| token.text().starts_with(p))
+                } else {
+                    rest.starts_with([' ', repeated]) || rest.starts_with("--")
+                };
             if exempt {
                 continue;
             }
@@ -118,8 +129,16 @@ rule! {
 }
 
 /// The offsets of a line comment marker followed right away by text.
-fn tight_markers<'a>(text: &'a str, marker: &'a str) -> impl Iterator<Item = usize> + 'a {
-    let repeated = marker.chars().last().unwrap_or(' ');
+fn tight_markers<'a>(
+    text: &'a str,
+    marker: &'a str,
+    strict: bool,
+) -> impl Iterator<Item = usize> + 'a {
+    let repeated = if strict {
+        ' '
+    } else {
+        marker.chars().last().unwrap_or(' ')
+    };
     text.match_indices(marker).filter_map(move |(at, _)| {
         text[at + marker.len()..]
             .chars()
@@ -130,8 +149,8 @@ fn tight_markers<'a>(text: &'a str, marker: &'a str) -> impl Iterator<Item = usi
 }
 
 /// Is a line comment marker followed right away by text?
-fn line_tight(text: &str, marker: &str) -> bool {
-    tight_markers(text, marker).next().is_some()
+fn line_tight(text: &str, marker: &str, strict: bool) -> bool {
+    tight_markers(text, marker, strict).next().is_some()
 }
 
 /// Is a block delimiter right against text (no walk of the comments without it)?
@@ -248,15 +267,17 @@ rule! {
         id: "no-single-line-block-comment",
         category: Style,
         default: Off,
-        description: "A block comment that fits on one line is written as a line comment (ktlint \
-                  `no-single-line-block-comment`). Documentation comments (`/**`) and languages \
-                  with no line comment marker are left alone.",
+        fix: Safe,
+        description: "A block comment that fits on one line and ends its line is written as a line \
+                  comment (ktlint `no-single-line-block-comment`). Documentation comments (`/**`), \
+                  empty comments, comments with code after them on the line and languages with no \
+                  line comment marker are left alone.",
         example: "/* a note */   // write: // a note",
     }
 
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
         let comment = &file.grammar.comments;
-        let (Some(_), Some((open, close))) = (comment.line.as_deref(), &comment.block) else {
+        let (Some(line), Some((open, close))) = (comment.line.as_deref(), &comment.block) else {
             return;
         };
         let doc = open.chars().last().unwrap_or(' ');
@@ -267,8 +288,21 @@ rule! {
                 && text.ends_with(close.as_str())
                 && !text.contains(['\n', '\r'])
                 && !text[open.len()..].starts_with(doc);
-            if single {
-                ctx.report(token.text_range(), "a block comment on one line is a line comment");
+            let inner = text.get(open.len()..text.len().saturating_sub(close.len())).unwrap_or("");
+            let rest = &file.text[usize::from(token.text_range().end())..];
+            let ends_line = rest
+                .split(['\n', '\r'])
+                .next()
+                .is_some_and(|r| r.trim_matches([' ', '\t']).is_empty());
+            if single && ends_line && !inner.trim().is_empty() {
+                ctx.report_fix(
+                    token.text_range(),
+                    "a block comment on one line is a line comment",
+                    (
+                        "Write a line comment",
+                        vec![Edit::replace(token.text_range(), format!("{line} {}", inner.trim()))],
+                    ),
+                );
             }
         }
     }

@@ -672,10 +672,10 @@
     {
       "category": "style",
       "default_level": "off",
-      "description": "A block comment that fits on one line is written as a line comment (ktlint `no-single-line-block-comment`). Documentation comments (`/**`) and languages with no line comment marker are left alone.",
+      "description": "A block comment that fits on one line and ends its line is written as a line comment (ktlint `no-single-line-block-comment`). Documentation comments (`/**`), empty comments, comments with code after them on the line and languages with no line comment marker are left alone.",
       "example": {
         "config": null,
-        "fixed": null,
+        "fixed": "import b.B\nimport a.A\n\nfun f(x: Int) = when (x) {\n    1 -> {\n        foo()\n    }\n\n    2 -> bar()\n    else -> baz()\n}\n\n// one line\nval a = 1\n",
         "input": "import b.B\nimport a.A\n\nfun f(x: Int) = when (x) {\n    1 -> {\n        foo()\n    }\n\n    2 -> bar()\n    else -> baz()\n}\n\n/* one line */\nval a = 1\n",
         "language": "kotlin",
         "spans": [
@@ -686,7 +686,7 @@
           }
         ]
       },
-      "fix": null,
+      "fix": "safe",
       "id": "no-single-line-block-comment",
       "languages": [
         "all"
@@ -13486,7 +13486,7 @@
       "description": "An import list the formatter would reorder or rewrite (ktlint import-ordering).",
       "example": {
         "config": null,
-        "fixed": null,
+        "fixed": "import b.B\nimport a.A\n\nfun f(x: Int) = when (x) {\n    1 -> {\n        foo()\n    }\n\n    2 -> bar()\n    else -> baz()\n}\n\n// one line\nval a = 1\n",
         "input": "import b.B\nimport a.A\n\nfun f(x: Int) = when (x) {\n    1 -> {\n        foo()\n    }\n\n    2 -> bar()\n    else -> baz()\n}\n\n/* one line */\nval a = 1\n",
         "language": "kotlin",
         "spans": [

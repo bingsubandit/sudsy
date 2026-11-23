@@ -58,23 +58,22 @@ impl Subject for Formatting {
         .map_err(|e| e.to_string())
     }
 
+    fn block_as_line(&self) -> bool {
+        self.resolved()
+            .get(core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE)
+            == Some(&OptionValue::Bool(true))
+    }
+
     fn rewritten(&self, input: &str) -> String {
-        let mut text = input.to_string();
-        for _ in 0..self.provider.formatter().rewrite_rounds() {
-            let Ok(tree) = self.parse(&text) else {
-                break;
-            };
-            match self
-                .provider
-                .formatter()
-                .rewrite_source(&tree, &text, self.grammar(), &self.resolved())
-                .filter(|t| *t != text)
-            {
-                Some(next) => text = next,
-                None => break,
-            }
+        let options = self.resolved();
+        let file = self.source(input);
+        let Ok(parsed) = self.provider.parse(&file) else {
+            return input.to_string();
+        };
+        match crate::format::rewrite_loop(&*self.provider, &file, &parsed, &options) {
+            Ok(Some((rewritten, _))) => rewritten.text,
+            _ => input.to_string(),
         }
-        text
     }
 }
 

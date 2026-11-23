@@ -4062,7 +4062,7 @@
             },
             "no-single-line-block-comment": {
               "$ref": "#/definitions/rule",
-              "description": "A block comment that fits on one line is written as a line comment (ktlint `no-single-line-block-comment`). Documentation comments (`/**`) and languages with no line comment marker are left alone."
+              "description": "A block comment that fits on one line and ends its line is written as a line comment (ktlint `no-single-line-block-comment`). Documentation comments (`/**`), empty comments, comments with code after them on the line and languages with no line comment marker are left alone."
             },
             "no-space-in-code": {
               "$ref": "#/definitions/rule",
@@ -9986,7 +9986,8 @@
             "assignment_keep_break_kinds": {
               "default": [
                 "Property",
-                "BinaryExpression"
+                "BinaryExpression",
+                "PropertyAccessor"
               ],
               "description": "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
               "items": {
@@ -10040,6 +10041,19 @@
               "default": true,
               "description": "The lines of a block comment keep their indentation relative to the comment's own line when the comment moves.",
               "type": "boolean"
+            },
+            "comment_space_exempt": {
+              "default": [
+                "//region",
+                "//endregion",
+                "//noinspection",
+                "//language="
+              ],
+              "description": "Prefixes of line comments (`//region`) that the rule `comment-space` leaves as they are when the formatter runs it. With the option set, a comment with a repeated marker (`///`) or `--` after it gets its space too.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             },
             "comment_trim_lines": {
               "default": true,
@@ -10154,6 +10168,18 @@
               ],
               "type": "string"
             },
+            "open_comment_inside_parents": {
+              "default": [
+                "Try",
+                "Catch",
+                "Finally"
+              ],
+              "description": "Node kinds whose braced body moves a comment after its `{` to the first body line; a body of any other kind keeps the comment on the `{` line. Empty: every body moves it.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "raw_string_calls": {
               "default": [
                 "trimIndent",
@@ -10206,7 +10232,7 @@
             },
             "single_block_comment_as_line": {
               "default": true,
-              "description": "A block comment that sits on one line and ends its line is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) stay.",
+              "description": "A block comment that sits on one line and ends its line in the output is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) and empty comments stay.",
               "type": "boolean"
             },
             "single_line_body_kinds": {
@@ -13374,7 +13400,8 @@
                   "assignment_keep_break_kinds": {
                     "default": [
                       "Property",
-                      "BinaryExpression"
+                      "BinaryExpression",
+                      "PropertyAccessor"
                     ],
                     "description": "Node kinds of assignments and declarations whose value stays below the operator when the source has it there, whether or not it would fit on the line.",
                     "items": {
@@ -13428,6 +13455,19 @@
                     "default": true,
                     "description": "The lines of a block comment keep their indentation relative to the comment's own line when the comment moves.",
                     "type": "boolean"
+                  },
+                  "comment_space_exempt": {
+                    "default": [
+                      "//region",
+                      "//endregion",
+                      "//noinspection",
+                      "//language="
+                    ],
+                    "description": "Prefixes of line comments (`//region`) that the rule `comment-space` leaves as they are when the formatter runs it. With the option set, a comment with a repeated marker (`///`) or `--` after it gets its space too.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "comment_trim_lines": {
                     "default": true,
@@ -13542,6 +13582,18 @@
                     ],
                     "type": "string"
                   },
+                  "open_comment_inside_parents": {
+                    "default": [
+                      "Try",
+                      "Catch",
+                      "Finally"
+                    ],
+                    "description": "Node kinds whose braced body moves a comment after its `{` to the first body line; a body of any other kind keeps the comment on the `{` line. Empty: every body moves it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
                   "raw_string_calls": {
                     "default": [
                       "trimIndent",
@@ -13594,7 +13646,7 @@
                   },
                   "single_block_comment_as_line": {
                     "default": true,
-                    "description": "A block comment that sits on one line and ends its line is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) stay.",
+                    "description": "A block comment that sits on one line and ends its line in the output is written as a line comment (`/* note */` becomes `// note`). Documentation comments (`/**`) and empty comments stay.",
                     "type": "boolean"
                   },
                   "single_line_body_kinds": {

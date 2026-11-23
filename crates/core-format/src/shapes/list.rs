@@ -452,7 +452,11 @@ fn list_of(
     let blank_before_close = style.keep_blank_before_end_comments
         && !dangling.is_empty()
         && comments::blank_lines_before(g, &c.close) > 0;
-    inner.push(super::dangling_comments_in(&cx.comment_style, &dangling, blank_before_close));
+    inner.push(super::dangling_comments_in(
+        &cx.comment_style,
+        &dangling,
+        blank_before_close,
+    ));
     let inner = if fill {
         fill_parts.push(doc::concat(inner));
         doc::fill(fill_parts)
@@ -548,7 +552,9 @@ fn open_comments_doc(
             if padded {
                 parts.push(doc::lit(" "));
             }
-            parts.push(crate::context::verbatim_text(&c.text()));
+            parts.push(crate::context::verbatim_text(
+                &cx.comment_style.line_text(c),
+            ));
             if items_follow && !padded {
                 parts.push(doc::if_break(Doc::Nil, doc::lit(" ")));
             }

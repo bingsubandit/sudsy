@@ -106,7 +106,7 @@ pub struct CommentStyle {
     /// The lines of a block comment keep their indentation relative to the comment's own line
     /// (`comment_reindent_lines`).
     pub reindent: bool,
-    /// A block comment on one line that ends its line is written as a line comment
+    /// A one-line block comment that ends a line of the output is written as a line comment
     /// (`single_block_comment_as_line`).
     pub block_as_line: bool,
     /// Block comments that end with one of these (`=*/`) have no blank before the token after them.
@@ -166,8 +166,8 @@ impl CommentStyle {
     /// The text of the line comment `c` as the style writes it.
     pub fn line_text<'a>(&self, c: &'a Comment) -> Cow<'a, str> {
         let text = c.text();
-        if let Some(line) = self.as_line(c, &text) {
-            return Cow::Owned(line);
+        if self.block_as_line && c.kind == CommentKind::Block && !text.contains(['\n', '\r']) {
+            return Cow::Owned(format!("{BLOCK_START}{text}{BLOCK_END}"));
         }
         match text.strip_prefix("//") {
             Some(rest)
@@ -180,27 +180,6 @@ impl CommentStyle {
             }
             _ => text,
         }
-    }
-
-    /// The kind `c` has once written: a block comment written as a line comment is a line comment.
-    pub fn kind_of(&self, c: &Comment) -> CommentKind {
-        if self.block_as_line && c.kind == CommentKind::Block && self.as_line(c, &c.text()).is_some() {
-            CommentKind::Line
-        } else {
-            c.kind
-        }
-    }
-
-    /// The line comment `c` is written as under `block_as_line`: `/* a */` is `// a`.
-    fn as_line(&self, c: &Comment, text: &str) -> Option<String> {
-        let inner = text.strip_prefix("/*")?.strip_suffix("*/")?;
-        let single = self.block_as_line
-            && c.kind == CommentKind::Block
-            && !text.contains(['\n', '\r'])
-            && !inner.starts_with('*')
-            && !inner.trim().is_empty()
-            && ends_its_line(c);
-        single.then(|| format!("// {}", inner.trim()))
     }
 
     /// Is `c` preceded by a blank (or a line start) in the source?
@@ -263,6 +242,55 @@ fn ends_its_line(c: &Comment) -> bool {
         next = n.next_token();
     }
     true
+}
+
+/// Around a one-line block comment in the printed text under `block_as_line`: [`settle_block_comments`]
+/// writes the ones that end their line as line comments and drops the marks.
+const BLOCK_START: char = '\u{2}';
+const BLOCK_END: char = '\u{3}';
+
+/// Settles the one-line block comments (`block_as_line`) of the printed `out`: one that ends its
+/// line becomes the line comment `line_form` makes of it, the others lose the marks. `keep` (see
+/// [`align_marked_gaps`]) follows the changes.
+pub fn settle_block_comments(g: &Grammar, out: &mut String, keep: &mut usize) {
+    if !out.contains(BLOCK_START) {
+        return;
+    }
+    let mut settled = String::with_capacity(out.len());
+    let mut kept = *keep;
+    let mut rest = out.as_str();
+    let mut at = 0;
+    while let Some(start) = rest.find(BLOCK_START) {
+        let Some(len) = rest[start..].find(BLOCK_END) else {
+            break;
+        };
+        let text = &rest[start + BLOCK_START.len_utf8()..start + len];
+        let after = rest[start + len + BLOCK_END.len_utf8()..].trim_start_matches([' ', '\t']);
+        let ends = after.is_empty() || after.starts_with(['\n', '\r']);
+        let line = if ends {
+            crate::safety::line_form(g, text)
+        } else {
+            None
+        };
+        settled.push_str(&rest[..start]);
+        // (a line comment that was glued to the token before it, `(/* a */`, gets its blank)
+        let blank = line.is_some() && !settled.is_empty() && !settled.ends_with([' ', '\t', '\n']);
+        let written = match &line {
+            Some(l) if blank => format!(" {l}"),
+            Some(l) => l.clone(),
+            None => text.to_string(),
+        };
+        settled.push_str(&written);
+        let consumed = start + len + BLOCK_END.len_utf8();
+        if at + start < *keep {
+            kept = (kept + written.len()).saturating_sub(consumed - start);
+        }
+        at += consumed;
+        rest = &rest[consumed..];
+    }
+    settled.push_str(rest);
+    *out = settled;
+    *keep = kept;
 }
 
 /// Written in place of the blank before a trailing comment under `align_lines`: a blank and a

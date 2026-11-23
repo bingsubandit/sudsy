@@ -198,7 +198,7 @@ fn corelib_format_throughput() {
         let second = provider.parse(&again).unwrap();
         reparse += t.elapsed();
         let t = Instant::now();
-        let _ = safety::equal_ignoring_trivia(g, &parsed.tree, &second.tree);
+        let _ = safety::equal_ignoring_trivia(g, &parsed.tree, &second.tree, false);
         compare += t.elapsed();
     }
     let all = total.elapsed();

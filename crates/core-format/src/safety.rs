@@ -201,7 +201,13 @@ impl<'a> Iterator for Events<'a> {
 /// `Ok` when both trees have the same nodes and non-trivia tokens in the same order and the same
 /// comments; else a description of the first difference. The value is the number of `#restyle`
 /// items.
-fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode, words: bool) -> Result<usize, String> {
+fn compare(
+    g: &Grammar,
+    a: &SyntaxNode,
+    b: &SyntaxNode,
+    words: bool,
+    as_line: bool,
+) -> Result<usize, String> {
     let (a, b) = (a.green(), b.green());
     let (mut a, mut b) = (Events::new(g, &a), Events::new(g, &b));
     let mut restyled = 0;
@@ -229,7 +235,7 @@ fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode, words: bool) -> Result<u
                 Some(rest) if words => {
                     keys.extend(rest.split_whitespace().map(|w| format!("//{w}")))
                 }
-                _ => keys.push(comment_key(c)),
+                _ => keys.push(comment_key(g, c, as_line)),
             }
         }
         keys.sort_unstable();
@@ -248,14 +254,11 @@ fn compare(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode, words: bool) -> Result<u
 
 /// A comment without what the printer changes: it writes LF only and re-indents the lines of a
 /// multi-line comment; the end of a one-line comment is trimmed.
-fn comment_key(text: &str) -> String {
+fn comment_key(g: &Grammar, text: &str, as_line: bool) -> String {
     let text = text.replace("\r\n", "\n");
-    // (a block comment on one line may be written as a line comment: `single_block_comment_as_line`)
-    if let Some(inner) = text.strip_prefix("/*").and_then(|t| t.strip_suffix("*/"))
-        && !inner.contains('\n')
-        && !inner.starts_with('*')
-    {
-        return format!("// {}", inner.trim());
+    // (`single_block_comment_as_line`: a one-line block comment may be written as a line comment)
+    if as_line && let Some(line) = line_form(g, &text) {
+        return line;
     }
     if text.contains('\n') {
         text.lines().map(str::trim).collect::<Vec<_>>().join("\n")
@@ -264,9 +267,27 @@ fn comment_key(text: &str) -> String {
     }
 }
 
+/// The line comment a one-line block comment (not a documentation comment, not empty) is written
+/// as under `single_block_comment_as_line`.
+pub(crate) fn line_form(g: &Grammar, text: &str) -> Option<String> {
+    let (open, close) = g.comments.block.as_ref()?;
+    let marker = g.comments.line.as_deref()?;
+    let inner = text
+        .strip_prefix(open.as_str())?
+        .strip_suffix(close.as_str())?;
+    let doc = open.chars().last()?;
+    (!inner.contains(['\n', '\r']) && !inner.starts_with(doc) && !inner.trim().is_empty())
+        .then(|| format!("{marker} {}", inner.trim()))
+}
+
 /// [`compare`] without the values of the `#restyle` items.
-pub fn equal_ignoring_trivia(g: &Grammar, a: &SyntaxNode, b: &SyntaxNode) -> Result<(), String> {
-    compare(g, a, b, false).map(drop)
+pub fn equal_ignoring_trivia(
+    g: &Grammar,
+    a: &SyntaxNode,
+    b: &SyntaxNode,
+    as_line: bool,
+) -> Result<(), String> {
+    compare(g, a, b, false, as_line).map(drop)
 }
 
 /// The `#restyle` items of a tree in document order, as `compare` counts them.
@@ -343,8 +364,16 @@ pub fn verify(
 ) -> Result<(), FormatError> {
     let after_tree = reparse(after)
         .map_err(|e| FormatError::Safety(format!("the output does not parse: {e}")))?;
-    if compare(g, before_tree, &after_tree, formatter.reflows_comments())
-        .map_err(FormatError::Safety)?
+    let as_line = options.get(core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE)
+        == Some(&core_config::OptionValue::Bool(true));
+    if compare(
+        g,
+        before_tree,
+        &after_tree,
+        formatter.reflows_comments(),
+        as_line,
+    )
+    .map_err(FormatError::Safety)?
         > 0
     {
         same_values(g, formatter, options, before_tree, &after_tree)
@@ -353,4 +382,33 @@ pub fn verify(
     formatter
         .extra_check(before_tree, &after_tree)
         .map_err(FormatError::Safety)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core_syntax::grammars;
+
+    fn key(text: &str, as_line: bool) -> String {
+        comment_key(grammars::csharp(), text, as_line)
+    }
+
+    #[test]
+    fn a_one_line_block_comment_equals_its_line_form_only_under_the_option() {
+        assert_eq!(key("/* a b */", true), key("// a b", true));
+        assert_eq!(key("/*a*/", true), key("// a", true));
+        assert_ne!(key("/* a */", false), key("// a", false));
+    }
+
+    #[test]
+    fn other_changes_of_a_comment_stay_changes() {
+        // (other words, a documentation comment, a multi-line or an empty comment)
+        assert_ne!(key("/* a */", true), key("// b", true));
+        assert_ne!(key("/** a */", true), key("// a", true));
+        assert_ne!(key("/* a\n b */", true), key("// a b", true));
+        assert_ne!(key("/**/", true), key("//", true));
+        assert_ne!(key("/* a */", true), key("// a // b", true));
+        // (a line comment never equals a different block comment)
+        assert_ne!(key("// a", true), key("/* b */", true));
+    }
 }

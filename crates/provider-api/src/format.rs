@@ -120,7 +120,7 @@ pub fn format_parsed_with(
 
 /// The rewrite rounds on a parsed file: the file and its tree after the rewrites, `None` when
 /// nothing was rewritten.
-fn rewrite_loop(
+pub(crate) fn rewrite_loop(
     provider: &dyn LanguageProvider,
     file: &SourceFile,
     parsed: &ParseResult,

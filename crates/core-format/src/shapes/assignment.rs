@@ -152,6 +152,18 @@ pub fn assignment(
     let Some(right) = a.right else {
         return Ok(a.left);
     };
+    // `multiline`: a line comment after the value is not part of it, so it neither breaks the
+    // value below the operator nor counts as a break in it.
+    let tail = (policy.style == AssignStyle::Multiline)
+        .then(|| match right {
+            SyntaxElement::Token(t) => Some(t.clone()),
+            SyntaxElement::Node(n) => cx.last_token(n),
+        })
+        .flatten()
+        .filter(|t| comments::has_trailing_comment(cx.grammar, t));
+    if let Some(t) = &tail {
+        cx.hold_trailing(t);
+    }
     let right = hooks.right_doc(cx, right, layout)?;
     let layout = if policy.style == AssignStyle::Multiline
         && layout == AssignLayout::BreakAfterOperator
@@ -165,7 +177,11 @@ pub fn assignment(
     } else {
         layout
     };
-    Ok(render(layout, a.left, a.op, right, policy.indent))
+    let rendered = render(layout, a.left, a.op, right, policy.indent);
+    Ok(match tail {
+        Some(t) => doc::concat(vec![rendered, cx.held_trailing(&t)]),
+        None => rendered,
+    })
 }
 
 fn indented(levels: usize, mut d: Doc) -> Doc {

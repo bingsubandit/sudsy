@@ -144,7 +144,7 @@ pub fn token_deferring_comments(cx: &FormatCtx<'_>, t: &SyntaxToken, closers: &[
     let ends = closers.contains(&t.text());
     for c in &trailing {
         let text = doc::text(cx.comment_style.line_text(c).into_owned());
-        if cx.comment_style.kind_of(c) == CommentKind::Block {
+        if c.kind == CommentKind::Block {
             parts.push(doc::lit(" "));
             parts.push(text);
         } else {

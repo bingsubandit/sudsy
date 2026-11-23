@@ -32,6 +32,8 @@ pub const SINGLE_LINE_BODY_KINDS: core_config::OptId = core_config::opt::SINGLE_
 #[allow(dead_code)]
 pub const RAW_STRING_CALLS: core_config::OptId = core_config::opt::RAW_STRING_CALLS;
 #[allow(dead_code)]
+pub const OPEN_COMMENT_INSIDE_PARENTS: core_config::OptId = core_config::opt::OPEN_COMMENT_INSIDE_PARENTS;
+#[allow(dead_code)]
 pub const CTOR_OWN_LINE_KINDS: core_config::OptId = core_config::opt::CTOR_OWN_LINE_KINDS;
 #[allow(dead_code)]
 pub const WRAPPED_BODY_INDENT_WORDS: core_config::OptId = core_config::opt::WRAPPED_BODY_INDENT_WORDS;
@@ -41,6 +43,8 @@ pub const COMMENT_TRIM_LINES: core_config::OptId = core_config::opt::COMMENT_TRI
 pub const SINGLE_BLOCK_COMMENT_AS_LINE: core_config::OptId = core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE;
 #[allow(dead_code)]
 pub const COMMENT_REINDENT_LINES: core_config::OptId = core_config::opt::COMMENT_REINDENT_LINES;
+#[allow(dead_code)]
+pub const COMMENT_SPACE_EXEMPT: core_config::OptId = core_config::opt::COMMENT_SPACE_EXEMPT;
 #[allow(dead_code)]
 pub const FORMAT_RULES: core_config::OptId = core_config::opt::FORMAT_RULES;
 #[allow(dead_code)]
@@ -102,18 +106,20 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::shared::assignment_indent(1),
         core_config::shared::assignment_left_min_parameters(2),
         core_config::shared::assignment_left_unless_kinds(&["Colon"]),
-        core_config::shared::assignment_keep_break_kinds(&["Property", "BinaryExpression"]),
+        core_config::shared::assignment_keep_break_kinds(&["Property", "BinaryExpression", "PropertyAccessor"]),
         core_config::shared::annotation_inline("single"),
         core_config::shared::semicolon_keep_parents(&["ClassBody", "EnumEntry"]),
         core_config::shared::trailing_comma_before(&["WhenEntry", "->"]),
         core_config::shared::trailing_comma_last_entry(&["ClassBody", "EnumEntry"]),
         core_config::shared::single_line_body_kinds(&["EnumEntry"]),
         core_config::shared::raw_string_calls(&["trimIndent", "trimMargin"]),
+        core_config::shared::open_comment_inside_parents(&["Try", "Catch", "Finally"]),
         core_config::shared::ctor_own_line_kinds(&["AnnotationEntry"]),
         core_config::shared::wrapped_body_indent_words(&["constructor"]),
         core_config::shared::comment_trim_lines(true),
         core_config::shared::single_block_comment_as_line(true),
         core_config::shared::comment_reindent_lines(true),
+        core_config::shared::comment_space_exempt(&["//region", "//endregion", "//noinspection", "//language="]),
         core_config::shared::format_rules(&["curly", "redundant-return-type", "comment-space"]),
         core_config::shared::redundant_return_types(&["Unit"]),
         core_config::shared::curly_style("chain"),

@@ -173,18 +173,39 @@ fn wrap(g: &Grammar, n: &SyntaxNode, text: &str, edits: &mut Vec<Edit>) {
         Some((at, _, false)) => edits.push(Edit::replace(range(at, start), " { ")),
         None => edits.push(Edit::insert(TextSize::from(start as u32), "{ ")),
     }
-    // A line comment after the body stays on its line: the brace follows below it.
-    let line_end = text[end..].find('\n').map_or(text.len(), |i| end + i);
-    let commented = g
-        .comments
-        .line
-        .as_deref()
-        .is_some_and(|m| text[end..line_end].trim_start().starts_with(m));
-    if commented {
-        edits.push(Edit::insert(TextSize::from(line_end as u32), "\n}"));
-    } else {
-        edits.push(Edit::insert(TextSize::from(end as u32), " }"));
+    // The comments after the body on its line stay on it: a line comment, or a block comment that
+    // ends the line, puts the brace below it; the brace follows other block comments.
+    let mut at = end;
+    loop {
+        let rest = text[at..].trim_start_matches([' ', '\t']);
+        let from = text.len() - rest.len();
+        let line = g
+            .comments
+            .line
+            .as_deref()
+            .is_some_and(|m| rest.starts_with(m));
+        let block = g.comments.block.as_ref().and_then(|(open, close)| {
+            let inner = rest.strip_prefix(open.as_str())?;
+            let len = inner.find(close.as_str())?;
+            (!inner[..len].contains('\n')).then(|| open.len() + len + close.len())
+        });
+        match block {
+            Some(len) if !line => at = from + len,
+            _ if line => {
+                let line_end = text[from..].find('\n').map_or(text.len(), |i| from + i);
+                edits.push(Edit::insert(TextSize::from(line_end as u32), "\n}"));
+                return;
+            }
+            _ => break,
+        }
     }
+    let ends_line = at > end
+        && text[at..]
+            .split('\n')
+            .next()
+            .is_some_and(|r| r.trim().is_empty());
+    let brace = if ends_line { "\n}" } else { " }" };
+    edits.push(Edit::insert(TextSize::from(at as u32), brace));
 }
 
 /// Does the text from `start` to `end`, on one line, go past the line width?

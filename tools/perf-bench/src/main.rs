@@ -117,7 +117,7 @@ fn phases(p: &dyn LanguageProvider, name: &str, text: &str) -> Result<Vec<(&'sta
     let (re, reparse) = timed(|| p.parse(&again));
     let re = re?;
     let (cmp, compare) =
-        timed(|| safety::equal_ignoring_trivia(p.grammar(), &parsed.tree, &re.tree));
+        timed(|| safety::equal_ignoring_trivia(p.grammar(), &parsed.tree, &re.tree, false));
     cmp.map_err(|e| anyhow!(e))?;
     let (extra, extra_t) = timed(|| {
         sites("extra check", || {

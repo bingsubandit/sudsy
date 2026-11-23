@@ -89,7 +89,10 @@ pub(super) fn empty_braces(cx: &FormatCtx<'_>, els: &[SyntaxElement]) -> Option<
 
 fn body(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let els = kids(cx, node);
-    if let Some(r) = empty_braces(cx, &els) {
+    let commented_open = matches!(els.first(), Some(SyntaxElement::Token(o)) if comments::has_trailing_comment(cx.grammar, o));
+    if !(commented_open && shapes::opens_inside(cx, node))
+        && let Some(r) = empty_braces(cx, &els)
+    {
         return r;
     }
     if let Some(r) = shapes::single_line_body(cx, node, &els) {

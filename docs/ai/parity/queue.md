@@ -187,19 +187,19 @@ Format: unclassified 0 of 15 differing files (0%).
 
 ## ktlint
 
-1. `kt-comment-indent` (74 files): continuation lines of a block comment are aligned differently; fix: align `*` lines of a block comment to the comment's column plus one, as ktlint does, in the cases it does
-2. `kt-comment-placement` (72 files): a comment moves to another line or position (trailing comment, comment before `{` or `else`); fix: keep a trailing comment on the line it follows (shared comment placement option)
-3. `kt-other` (72 files): cause not classified yet; fix: classify further (oth.py)
-4. `kt-break-after-ktlint` (71 files): ktlint breaks after `=` or `->`, Sudsy keeps the value on the line; fix: a shared assignment option: break after `=` when the value is a multi-line chain or lambda call
-5. `kt-block-comment-to-line` (63 files): ktlint turns a block comment into line comments; fix: a shared comment-conversion option for single-line block comments
-6. `kt-semi-or-comma` (60 files): `;` and `,` placement: single-line `enum class` kept on one line, trailing comma or `;` after enum entries; fix: keep a single-line enum body on its line when it fits (shared option), then check `;` after entries
-7. `kt-blank-ktlint-extra` (57 files): ktlint keeps a blank line from the source (after a lambda arrow, between `when` entries, before a comment, after a typealias) that Sudsy removes; fix: keep source blank lines in lambda bodies and `when` bodies (shared blank option)
-8. `kt-blank-sudsy-extra` (44 files): Sudsy inserts a blank line ktlint does not (between consecutive declarations of a kind, before a comment); fix: drop the forced blank between consecutive one-line declarations (blank rows)
-9. `kt-break-after-sudsy` (44 files): Sudsy breaks after `=` or `->`, ktlint keeps the value on the line; fix: stop breaking after `=` when the value starts with a call that fits
-10. `kt-ws-other` (43 files): blanks inside a line differ; fix: classify further
-11. `kt-class-header` (34 files): the header of a class (constructor, supertypes, `where`) is wrapped differently; fix: sample the headers, then extend the shared heritage layout
-12. `kt-dot-chain-ktlint-breaks` (33 files): ktlint breaks a chain below `=` in place (named gap: depends on source-line width after signature wrapping); ktlint breaks a chain at its dots, Sudsy keeps it on a line (or keeps the head with its first accesses); fix: the wrapped chain policy: break property accesses too when the chain breaks
-13. `kt-dot-chain-sudsy` (33 files): Sudsy breaks a chain at its dots, ktlint keeps it on a line; fix: keep a chain flat when it fits and has few calls
+1. `kt-other` (72 files): cause not classified yet; fix: classify further (oth.py)
+2. `kt-comment-indent` (68 files): continuation lines of a block comment are aligned differently; fix: align `*` lines of a block comment to the comment's column plus one, as ktlint does, in the cases it does
+3. `kt-break-after-ktlint` (65 files): ktlint breaks after `=` or `->`, Sudsy keeps the value on the line; fix: a shared assignment option: break after `=` when the value is a multi-line chain or lambda call
+4. `kt-semi-or-comma` (60 files): `;` and `,` placement: single-line `enum class` kept on one line, trailing comma or `;` after enum entries; fix: keep a single-line enum body on its line when it fits (shared option), then check `;` after entries
+5. `kt-blank-ktlint-extra` (57 files): ktlint keeps a blank line from the source (after a lambda arrow, between `when` entries, before a comment, after a typealias) that Sudsy removes; fix: keep source blank lines in lambda bodies and `when` bodies (shared blank option)
+6. `kt-blank-sudsy-extra` (44 files): Sudsy inserts a blank line ktlint does not (between consecutive declarations of a kind, before a comment); fix: drop the forced blank between consecutive one-line declarations (blank rows)
+7. `kt-block-comment-to-line` (42 files): ktlint turns a block comment into line comments; fix: a shared comment-conversion option for single-line block comments
+8. `kt-ws-other` (42 files): blanks inside a line differ; fix: classify further
+9. `kt-break-after-sudsy` (38 files): Sudsy breaks after `=` or `->`, ktlint keeps the value on the line; fix: stop breaking after `=` when the value starts with a call that fits
+10. `kt-class-header` (34 files): the header of a class (constructor, supertypes, `where`) is wrapped differently; fix: sample the headers, then extend the shared heritage layout
+11. `kt-dot-chain-ktlint-breaks` (33 files): ktlint breaks a chain below `=` in place (named gap: depends on source-line width after signature wrapping); ktlint breaks a chain at its dots, Sudsy keeps it on a line (or keeps the head with its first accesses); fix: the wrapped chain policy: break property accesses too when the chain breaks
+12. `kt-dot-chain-sudsy` (33 files): Sudsy breaks a chain at its dots, ktlint keeps it on a line; fix: keep a chain flat when it fits and has few calls
+13. `kt-comment-placement` (30 files): a comment moves to another line or position (trailing comment, comment before `{` or `else`); fix: keep a trailing comment on the line it follows (shared comment placement option)
 14. `kt-unit` (30 files): `: Unit` of a block-body function is removed by ktlint (no-unit-return); added to an expression body that throws; fix: a shared rule `redundant-return-type` with the option value `Unit`, run by the formatter (`format_rules`)
 15. `kt-if-else-other` (27 files): an `if`/`else` is braced or laid out differently (an `if` expression that fits on a line stays unbraced in ktlint); fix: the shared curly rule: an `if`/`else` expression that fits stays unbraced
 16. `kt-expr-vs-block-body` (25 files): a function body is an expression in one output and a block with `return` in the other; fix: the shared expression-body rule: convert a block that is one `return` of a multi-line expression
@@ -209,17 +209,17 @@ Format: unclassified 0 of 15 differing files (0%).
 20. `kt-comment-other` (18 files): a comment differs in a way not classified yet; fix: classify further
 21. `kt-annotation-line` (15 files): an annotation is on its own line in one output and with the declaration in the other; fix: classify further
 22. `kt-binary-chain` (15 files): a binary operator chain breaks differently; fix: a shared binary chain option
-23. `kt-indent-other` (13 files): indentation differs, cause not classified yet; fix: classify further (ind.py) before fixing
-24. `kt-raw-string-lines` (13 files): lines of a raw string or `trimMargin` text are re-indented differently; fix: reindent the text of a `trimMargin` raw string like `trimIndent` (a call-name option row)
-25. `kt-closer-indent` (12 files): a closing parenthesis or bracket, or the lines up to it, are indented differently; fix: sample the cases, then fix the closing line's indent in the shared list layout
+23. `kt-raw-string-lines` (13 files): lines of a raw string or `trimMargin` text are re-indented differently; fix: reindent the text of a `trimMargin` raw string like `trimIndent` (a call-name option row)
+24. `kt-closer-indent` (12 files): a closing parenthesis or bracket, or the lines up to it, are indented differently; fix: sample the cases, then fix the closing line's indent in the shared list layout
+25. `kt-indent-other` (12 files): indentation differs, cause not classified yet; fix: classify further (ind.py) before fixing
 26. `kt-array-hug` (11 files): an annotation argument array stays on the `=` line in ktlint (`foo = [`); fix: a shared option: keep `name = [` on the `=` line in annotation arguments
-27. `kt-line-added-removed` (10 files): a line exists in one output only (cause not classified yet); fix: classify further
-28. `kt-chain-lambda-continuation` (9 files): the body of a lambda after `}.name {` in a chain is indented one level too deep; fix: indent the lambda body of `}.name {` at the chain's own level, not one more
-29. `kt-template-braces` (8 files): `${name}` is written as `$name` by ktlint; fix: a shared rule: `${name}` to `$name` when no identifier char follows
-30. `kt-declaration-body-nesting` (7 files): the body of a declaration whose header was wrapped (`actual constructor`, supertypes below the name) sits one level deeper in ktlint; fix: indent the body one level when the header wraps below the name (shared heritage layout, `actual constructor` kind option)
-31. `kt-brace-placement` (5 files): a `{` is on another line; fix: classify further
-32. `kt-break-after-k` (5 files): ktlint breaks after `=` of a value with a multi-line call or lambda; fix: see break-after-=/->(ktlint)
-33. `kt-if-add-braces` (5 files): ktlint braces a branch that Sudsy leaves bare; fix: the shared curly rule
+27. `kt-chain-lambda-continuation` (9 files): the body of a lambda after `}.name {` in a chain is indented one level too deep; fix: indent the lambda body of `}.name {` at the chain's own level, not one more
+28. `kt-template-braces` (8 files): `${name}` is written as `$name` by ktlint; fix: a shared rule: `${name}` to `$name` when no identifier char follows
+29. `kt-brace-placement` (5 files): a `{` is on another line; fix: classify further
+30. `kt-break-after-k` (5 files): ktlint breaks after `=` of a value with a multi-line call or lambda; fix: see break-after-=/->(ktlint)
+31. `kt-if-add-braces` (5 files): ktlint braces a branch that Sudsy leaves bare; fix: the shared curly rule
+32. `kt-line-added-removed` (5 files): a line exists in one output only (cause not classified yet); fix: classify further
+33. `kt-declaration-body-nesting` (4 files): the body of a declaration whose header was wrapped (`actual constructor`, supertypes below the name) sits one level deeper in ktlint; fix: indent the body one level when the header wraps below the name (shared heritage layout, `actual constructor` kind option)
 34. `kt-empty-braces` (4 files): `{}` handling differs; fix: classify further
 35. `kt-if-else-braced` (4 files): ktlint braces an `if`/`else` that Sudsy leaves bare, or the reverse; fix: the shared curly rule
 36. `kt-lambda-other` (3 files): a lambda is laid out differently, cause not classified yet; fix: classify further

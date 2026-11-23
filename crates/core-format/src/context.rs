@@ -947,7 +947,7 @@ pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
             }
             parts.push(comment_doc_in(c, st));
         }
-        if st.kind_of(c) == CommentKind::Line || c.breaks_after > 0 {
+        if c.kind == CommentKind::Line || c.breaks_after > 0 {
             parts.push(doc::hardline());
             for _ in 0..c.breaks_after.saturating_sub(1).min(max_blank) {
                 parts.push(doc::hardline());
@@ -1027,7 +1027,7 @@ pub fn trailing_comments_doc(st: &CommentStyle, cs: &[Comment]) -> Doc {
     for c in cs {
         let text = st.line_text(c);
         let body = doc::concat(vec![st.gap_before(c), verbatim_text(&text)]);
-        match st.kind_of(c) {
+        match c.kind {
             CommentKind::Line | CommentKind::Lines | CommentKind::Directive => {
                 parts.push(doc::line_suffix(body));
                 if !st.trailing_counts_after.is_empty() {

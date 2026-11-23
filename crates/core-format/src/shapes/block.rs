@@ -3,9 +3,7 @@
 //! tools: Prettier statements, google-java-format blocks, ktlint curly-spacing
 //! reads: tag:block
 
-use super::{
-    BlankRule, Rendered, Slot, container, container_between, dangling_comments, gap, render_slots,
-};
+use super::{BlankRule, Rendered, Slot, container, container_between, gap, render_slots};
 use crate::FormatCtx;
 use crate::comments::{self, Comment};
 use crate::doc::{self, Doc};
@@ -162,13 +160,24 @@ pub fn block(
     block_of(cx, container(cx, node)?, style, false)
 }
 
-/// [`block`] where comments after the opening delimiter move inside, to lines of their own.
+/// [`block`] where comments after the opening delimiter move inside, to lines of their own; with
+/// `open_comment_inside_parents` only in a body whose parent has one of the kinds.
 pub fn block_open_inside(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
     style: &BlockStyle,
 ) -> Result<Doc, FormatError> {
-    block_of(cx, container(cx, node)?, style, true)
+    block_of(cx, container(cx, node)?, style, opens_inside(cx, node))
+}
+
+/// Does the body `node` move the comments after its opening delimiter inside
+/// ([`block_open_inside`])?
+pub fn opens_inside(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    let parents = core_config::opt::OPEN_COMMENT_INSIDE_PARENTS;
+    cx.options.strings(parents).next().is_none()
+        || node
+            .parent()
+            .is_some_and(|p| cx.options.list_has(parents, cx.grammar.name(p.kind())))
 }
 
 /// [`block`] for the delimiters `open` and `close` among the children of `node`.
