@@ -190,6 +190,7 @@ pub fn collection_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         trailing_comma: trailing_comma(cx.options),
         layout: initializer_layout(cx.options),
         max_blank_lines: collection_max_blank_lines(cx.options),
+        leading_line: nested_brace_on_new_line(cx.options) && value_of_assignment(node),
         ..ListStyle::default()
     };
     delimited_list(cx, node, &style)

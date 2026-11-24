@@ -40,7 +40,8 @@ impl shapes::AssignHooks for AssignHooks {
         use shapes::AssignLayout::*;
         let rhs = right.as_node()?;
         if super::options::nested_brace_on_new_line(cx.options)
-            && cx.grammar.has_tag(rhs.kind(), "initializer-expression")
+            && (cx.grammar.has_tag(rhs.kind(), "initializer-expression")
+                || rhs.kind() == k::COLLECTION_EXPRESSION)
             && super::lists::value_of_assignment(rhs)
         {
             return Some(Attached);
