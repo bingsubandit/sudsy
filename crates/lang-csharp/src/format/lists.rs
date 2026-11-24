@@ -6,9 +6,9 @@
 use super::ROWS;
 use super::options::{
     LambdaArgumentHug, anonymous_type_brace_on_new_line, collection_max_blank_lines,
-    creation_brace_on_new_line, empty_body_text, expand_crowded_initializers, hug_closing_paren,
-    hug_only_sole_lambda, creation_initializer_group, initializer_layout, lambda_argument_hug, nested_brace_on_new_line,
-    trailing_comma,
+    creation_brace_on_new_line, creation_initializer_group, empty_body_text,
+    expand_crowded_initializers, hug_closing_paren, hug_only_sole_lambda, initializer_layout,
+    lambda_argument_hug, nested_brace_on_new_line, trailing_comma,
 };
 use super::seq::{R, Sep, direct_tokens, sep_doc, separator, seq_of};
 use crate::generated::kind as k;
@@ -170,7 +170,9 @@ pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         || (nested_brace_on_new_line(cx.options) && value_of_assignment(node));
     style.shared = creation
         && creation_initializer_group(cx.options)
-        && node.parent().is_some_and(|p| p.kind() != k::WITH_EXPRESSION);
+        && node
+            .parent()
+            .is_some_and(|p| p.kind() != k::WITH_EXPRESSION);
     delimited_list(cx, node, &style)
 }
 

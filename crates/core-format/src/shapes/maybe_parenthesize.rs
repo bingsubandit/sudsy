@@ -8,8 +8,8 @@
 
 use crate::FormatCtx;
 use crate::doc::{self, Doc};
-use core_syntax::{SyntaxKind, SyntaxNode};
 use core_syntax::roles::un;
+use core_syntax::{SyntaxKind, SyntaxNode};
 
 /// `open`, the content indented on its own lines, `close`: no group, the group around decides.
 pub fn between(open: Doc, inner: Doc, close: Doc) -> Doc {

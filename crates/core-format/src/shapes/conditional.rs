@@ -246,7 +246,10 @@ fn ladder(
             ])),
         ])),
         line(),
-        group(concat(vec![marked(&p.colon), operand(cx, hooks, &p.other)?])),
+        group(concat(vec![
+            marked(&p.colon),
+            operand(cx, hooks, &p.other)?,
+        ])),
     ]));
     Ok(if hooks.ladder_indent(cx, node) {
         indent(contents)

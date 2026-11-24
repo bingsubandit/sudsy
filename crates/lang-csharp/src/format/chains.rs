@@ -27,7 +27,8 @@ impl shapes::AssignHooks for AssignHooks {
     /// The test `x is null` of a conditional does not move a conditional below the operator.
     fn inline_binary(&self, _cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
         n.kind() == k::IS_PATTERN_EXPRESSION
-            && n.parent().is_some_and(|p| p.kind() == k::CONDITIONAL_EXPRESSION)
+            && n.parent()
+                .is_some_and(|p| p.kind() == k::CONDITIONAL_EXPRESSION)
     }
 
     fn layout(
@@ -212,7 +213,9 @@ pub fn when_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     };
     let discard = node.parent().is_some_and(|p| {
         p.kind() == k::SWITCH_EXPRESSION_ARM
-            && p.children().next().is_some_and(|t| t.kind() == k::DISCARD_PATTERN)
+            && p.children()
+                .next()
+                .is_some_and(|t| t.kind() == k::DISCARD_PATTERN)
     });
     let line = if discard { doc::lit(" ") } else { doc::line() };
     Ok(doc::group(doc::indent(doc::concat(vec![line, body]))))
@@ -227,15 +230,20 @@ pub fn cast(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         except_head: &[k::GENERIC_NAME],
     };
     let els = children(cx, node);
-    let (Some(head_type), Some(SyntaxElement::Node(operand))) = (
-        node.children().next(),
-        els.last(),
-    ) else {
+    let (Some(head_type), Some(SyntaxElement::Node(operand))) =
+        (node.children().next(), els.last())
+    else {
         return seq_of(cx, node, &els);
     };
     let head = seq_of(cx, node, &els[..els.len() - 1])?;
     let printed = core_format::seq::el(cx, els.last().expect("operand"))?;
-    Ok(shapes::hang_operand(head, head_type.kind(), operand, printed, &POLICY))
+    Ok(shapes::hang_operand(
+        head,
+        head_type.kind(),
+        operand,
+        printed,
+        &POLICY,
+    ))
 }
 
 pub fn parenthesized(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {

@@ -290,12 +290,9 @@ pub fn binary_chain(
     let group_step = policy.group_single
         && steps == 1
         && !(place == Place::Bare && logical)
-        && [
-            node_kind(&spine[0].left),
-            node_kind(&spine[0].right),
-        ]
-        .iter()
-        .all(|k| k.is_none_or(|k| !g.has_tag(k, "binary-chain")));
+        && [node_kind(&spine[0].left), node_kind(&spine[0].right)]
+            .iter()
+            .all(|k| k.is_none_or(|k| !g.has_tag(k, "binary-chain")));
 
     let first_doc = {
         let d = operand(cx, hooks, first)?;

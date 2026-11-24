@@ -22,8 +22,7 @@ pub use options::{MEMBER_CHAIN_MIN_CALLS, PREPROCESSOR_SYMBOLS, TRAILING_COMMAS,
 use self::options::{
     attach_comments, constructor_initializer_on_new_line, fluid_assignments,
     hanging_parameter_attributes, hanging_when_clause, inline_accessor_bodies, label_outdent,
-    sort_usings,
-    switch_arm_as_assignment, unbreakable_single_item_lists, using_order,
+    sort_usings, switch_arm_as_assignment, unbreakable_single_item_lists, using_order,
 };
 use crate::generated::kind as k;
 use core_config::ResolvedOptions;

@@ -7,9 +7,8 @@ use super::flat;
 use super::options::{
     DeclaratorLine, StackedResources, clauses_on_closing_line, constructor_initializer_on_new_line,
     creation_brace_on_new_line, declarator_line, do_while_on_closing_line, expand_empty_bodies,
-    hanging_when_clause,
-    label_outdent, nested_brace_on_new_line, space_after_delegate, stacked_resources,
-    space_after_empty_last_for_clause, space_between_empty_for_clauses,
+    hanging_when_clause, label_outdent, nested_brace_on_new_line, space_after_delegate,
+    space_after_empty_last_for_clause, space_between_empty_for_clauses, stacked_resources,
 };
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
