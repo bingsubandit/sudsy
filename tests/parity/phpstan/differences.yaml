@@ -1,6 +1,6 @@
-target: 31.0
+target: 34.8
 
-measured: {covered: 340, total: 1098, main: '9de1e355'}  # of the target; `main`: the origin/main commit the measured tree is based on
+measured: {covered: 382, total: 1098, main: '95fb07ee'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
   class.notFound: 254
   method.notFound: 94
@@ -8,10 +8,10 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   ignore.unmatchedLine: 62
   ignore.unmatchedIdentifier: 49
   new.static: 43
-  method.void: 42
   return.missing: 22
-  property.uninitializedReadonly: 20
   variable.undefined: 20
+  method.void: 12
+  property.uninitializedReadonly: 12
   property.notFound: 11
   staticProperty.notFound: 9
   arguments.count: 8
@@ -19,7 +19,6 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   method.templateTypeNotInParameter: 7
   classConstant.notFound: 6
   interface.notFound: 5
-  staticMethod.void: 4
   class.noParent: 2
   function.void: 2
   method.finalPrivate: 2
@@ -30,3 +29,11 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   unset.possiblyHookedProperty: 1
   unset.readOnlyProperty: 1
   unset.variable: 1
+
+fixes:  # lint rule -> where and what to change
+  method.notFound: "file-local: 65 of 94 are `$this->m()` in a class whose ancestors the file declares (62 in WordPress class-ftp.php); a rule over the class's own members, silent when the class has a parent, trait or __call in another file"
+  variable.undefined: "19 file-local: `$this` inside a closure or `static fn`, a by-reference or compact/extract flow, template files; extras unmeasured"
+  property.uninitializedReadonly: "12 left: assignment on some paths only (core-flow definite assignment on `$this->p`) and reads of an uninitialized property"
+  method.templateTypeNotInParameter: "7 file-local: `@template T` that no `@param` of the method uses; a doc check"
+  return.missing: "rejected once (19 covered, 27 extra); needs `never` calls of other files"
+  new.static: "the rest are trait lines reported once per using class (parents in other files)"

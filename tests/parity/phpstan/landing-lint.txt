@@ -49,14 +49,16 @@ e3b0c44298fc1c14 php/framework/src/Illuminate/JsonSchema/Rules/MatchesEnum.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/JsonSchema/Types/BooleanType.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Queue/Jobs/BeanstalkdJob.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Queue/Jobs/DatabaseJobRecord.php
+9dd83eb19d4d7422 php/framework/src/Illuminate/Queue/Worker.php
 1fb71aae6be6d9c1 php/framework/src/Illuminate/Routing/Route.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Session/ExistenceAwareInterface.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Support/Facades/Broadcast.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Support/Str.php
+21af53b918a6e4ef php/framework/src/Illuminate/Support/Testing/Fakes/MailFake.php
+9f2c0a1eb36f7040 php/framework/src/Illuminate/Support/Testing/Fakes/NotificationFake.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Support/Testing/Fakes/PendingMailFake.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Support/Traits/ReadsClassAttributes.php
 e3b0c44298fc1c14 php/framework/src/Illuminate/Testing/Assert.php
-e3b0c44298fc1c14 php/framework/src/Illuminate/View/Compilers/Concerns/CompilesTranslations.php
 e3b0c44298fc1c14 php/symfony/.github/sa-tools/phpstan-diff.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Bundle/FrameworkBundle/DependencyInjection/Compiler/RemoveUnusedSessionMarshallingHandlerPass.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Bundle/FrameworkBundle/Routing/Attribute/AsRoutingConditionService.php
@@ -71,12 +73,11 @@ e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Config/ConfigCacheFactory.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Config/Resource/SkippingResourceChecker.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Console/ArgumentResolver/ValueResolver/BackedEnumValueResolver.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Console/ArgumentResolver/ValueResolver/MapInputValueResolver.php
-e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Console/Debug/CliRequest.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Console/Question/ConfirmationQuestion.php
-e3b0c44298fc1c14 php/symfony/src/Symfony/Component/CssSelector/Parser/Handler/HandlerInterface.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/DependencyInjection/Attribute/AsAlias.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/DependencyInjection/Attribute/Autoconfigure.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/DependencyInjection/TypedReference.php
+f8d0072657c3708f php/symfony/src/Symfony/Component/Emoji/EmojiTransliterator.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Emoji/Resources/data/emoji-da.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Finder/Iterator/ExcludeDirectoryFilterIterator.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Form/Extension/Core/DataTransformer/ChoicesToValuesTransformer.php
@@ -90,6 +91,7 @@ e3b0c44298fc1c14 php/symfony/src/Symfony/Component/HttpFoundation/RequestMatcher
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/HttpFoundation/RequestMatcher/QueryParameterRequestMatcher.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/HttpFoundation/RequestStack.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/HttpFoundation/Session/FlashBagAwareSessionInterface.php
+e142619d37f7d7bf php/symfony/src/Symfony/Component/HttpKernel/Attribute/Cache.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Intl/Resources/data/currencies/cv.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Intl/Resources/data/currencies/en_ID.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Intl/Resources/data/currencies/en_MU.php
@@ -121,7 +123,6 @@ e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Intl/Resources/data/timezones
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Intl/Resources/data/timezones/ne.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Intl/Resources/data/timezones/pl.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/KeyManagement/Command/EncryptCommand.php
-e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Ldap/Exception/DriverNotFoundException.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Mailer/EventListener/SmimeSignedMessageListener.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Mailer/Transport/Smtp/SmtpTransport.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Messenger/Exception/WrappedExceptionsTrait.php
@@ -144,7 +145,6 @@ e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Uid/Factory/UlidFactory.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Uid/UuidV4.php
 f5c075bd470b71b9 php/symfony/src/Symfony/Component/Validator/ConstraintValidator.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Validator/Constraints/IsNull.php
-e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Validator/Constraints/LessThan.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Validator/Constraints/LocaleValidator.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/Validator/ContainerConstraintValidatorFactory.php
 e3b0c44298fc1c14 php/symfony/src/Symfony/Component/VarDumper/Dumper/ContextProvider/SourceContextProvider.php

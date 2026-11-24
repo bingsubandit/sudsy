@@ -88,7 +88,7 @@ Each number is measured on real-world code against the reference tool with its d
 | GitHub Actions | █████████░ 99% stable · no reference tool | ████████░░ 85% actionlint | Ready |
 | INI / EditorConfig / .gitignore | ██████████ 100% stable · no reference tool | 27 rules · no reference tool | Ready |
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
-| PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 31% PHPStan | In progress |
+| PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 34% PHPStan | In progress |
 | SQL | ██████░░░░ 63% sqlfluff | ███░░░░░░░ 38% sqlfluff | In progress |
 | C / C++ | ████░░░░░░ 44% clang-format | not measured clang-tidy | In progress |
 

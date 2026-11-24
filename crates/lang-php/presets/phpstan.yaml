@@ -7,3 +7,5 @@ php:
       no-unset-hookable-property: warn
       no-inner-function: warn
       implicit-nullable-parameter: warn
+      void-result-used: warn
+      readonly-property-never-assigned: warn

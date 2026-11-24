@@ -10,7 +10,7 @@ Weight: the primary tool of a leg 3, a popular secondary 2, any other 1. Points:
 |---|---|---|---|---|---|---|---|---|---|
 | SQL | lint sqlfluff | 3 | 38.2% | 46.8 | 19639 findings | `LT02` 8585, `LT01` 6332, `CP02` 3270, `CP01` 2630 | 8 | 17.55 | 66718389 |
 | HTML | lint html-eslint | 2 | 69.9% | 15.1 | 49 findings | `use-baseline` 58 | 3 | 10.07 | 9de1e355 |
-| PHP | lint PHPStan | 3 | 31.0% | 54.0 | 594 findings | `class.notFound` 254, `method.notFound` 94, `function.notFound` 80, `ignore.unmatchedLine` 62 +3 more | 19 | 8.53 | 9de1e355 |
+| PHP | lint PHPStan | 3 | 34.8% | 50.2 | 552 findings | `class.notFound` 254, `method.notFound` 94, `function.notFound` 80, `ignore.unmatchedLine` 62 +2 more | 16 | 9.41 | 95fb07ee |
 | C / C++ | format clang-format | 3 | 44.1% | 40.9 | 2714 files | `pointer-align` 983, `reference-align` 910, `binary-op-space` 370, `braced-list-padding` 230 +1 more | 15 | 8.17 | - |
 | SQL | format sqlfluff | 3 | 63.3% | 21.7 | 147 files | `if-condition-wrap` 50, `type-args-split` 31, `index-on-wrap` 28, `identifier-case` 26 +1 more | 15 | 4.34 | - |
 | C# | lint Roslynator | 1 | 0.4% | 84.6 | 9405 findings | `RCS1157` 1714, `RCS1118` 1422, `RCS1123` 827, `RCS1085` 760 +23 more | 75 | 1.13 | 66718389 |
@@ -307,24 +307,24 @@ Lint: target 99% (1965 of 1985, 20 missed, measured on 7514c1f3); rules by misse
 
 ## phpstan
 
-Lint: target 31% (340 of 1098, 758 missed, measured on 9de1e355); rules by missed findings:
+Lint: target 34.8% (382 of 1098, 716 missed, measured on 95fb07ee); rules by missed findings:
 1. `class.notFound` (254 missed)
-2. `method.notFound` (94 missed)
+2. `method.notFound` (94 missed) Fix: file-local: 65 of 94 are `$this->m()` in a class whose ancestors the file declares (62 in WordPress class-ftp.php); a rule over the class's own members, silent when the class has a parent, trait or __call in another file
 3. `function.notFound` (80 missed)
 4. `ignore.unmatchedLine` (62 missed)
 5. `ignore.unmatchedIdentifier` (49 missed)
-6. `new.static` (43 missed)
-7. `method.void` (42 missed)
-8. `return.missing` (22 missed)
-9. `property.uninitializedReadonly` (20 missed)
-10. `variable.undefined` (20 missed)
+6. `new.static` (43 missed) Fix: the rest are trait lines reported once per using class (parents in other files)
+7. `return.missing` (22 missed) Fix: rejected once (19 covered, 27 extra); needs `never` calls of other files
+8. `variable.undefined` (20 missed) Fix: 19 file-local: `$this` inside a closure or `static fn`, a by-reference or compact/extract flow, template files; extras unmeasured
+9. `method.void` (12 missed)
+10. `property.uninitializedReadonly` (12 missed) Fix: 12 left: assignment on some paths only (core-flow definite assignment on `$this->p`) and reads of an uninitialized property
 11. `property.notFound` (11 missed)
 12. `staticProperty.notFound` (9 missed)
 13. `arguments.count` (8 missed)
 14. `method.childReturnType` (7 missed)
-15. `method.templateTypeNotInParameter` (7 missed)
+15. `method.templateTypeNotInParameter` (7 missed) Fix: 7 file-local: `@template T` that no `@param` of the method uses; a doc check
 
-13 more rules: 30 missed.
+12 more rules: 26 missed.
 
 ## prettier
 

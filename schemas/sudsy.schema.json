@@ -5263,6 +5263,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `read` without the `-r` flag."
             },
+            "readonly-property-never-assigned": {
+              "$ref": "#/definitions/rule",
+              "description": "A `readonly` property of a class that uses no trait and has no constructor assigning `$this->name` anywhere in its body (PHPStan property.uninitializedReadonly). An assignment on only some paths of a constructor is not seen."
+            },
             "redeclared-variable": {
               "$ref": "#/definitions/rule",
               "description": "A name declared again in the same scope (`var` twice, a `var` and a parameter, two functions). In TypeScript files declaration merging (interfaces, namespaces, a class with an interface) is allowed. Built-in globals are not checked."
@@ -7494,6 +7498,10 @@
             "verbose-raise": {
               "$ref": "#/definitions/rule",
               "description": "`raise e` in the `except ... as e` clause, where a bare `raise` keeps the traceback."
+            },
+            "void-result-used": {
+              "$ref": "#/definitions/rule",
+              "description": "`return` or an assignment of a call of `$this->name()`, `self::name()` or `static::name()` where the class, trait or enum of the file declares `name` as `: void` or `@return void` (PHPStan method.void, staticMethod.void). A method of a parent or trait in another file is not seen."
             },
             "void-style": {
               "$ref": "#/definitions/rule",
