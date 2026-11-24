@@ -167,7 +167,7 @@ pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let mut style = brace_style(cx, node);
     let creation = creation_parent(node.parent().map(|p| p.kind()));
     style.leading_line = (creation && creation_brace_on_new_line(cx.options))
-        || (nested_brace_on_new_line(cx.options) && value_of_assignment(node));
+        || (nested_brace_on_new_line(cx.options) && value_of_assignment(cx, node));
     style.shared = creation
         && creation_initializer_group(cx.options)
         && node
@@ -176,14 +176,19 @@ pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     delimited_list(cx, node, &style)
 }
 
-/// The value of `a = { ... }` or of a declarator's `= { ... }` (not a property's).
-pub fn value_of_assignment(node: &SyntaxNode) -> bool {
-    node.parent().is_some_and(|p| {
-        p.kind() == k::SIMPLE_ASSIGNMENT_EXPRESSION
-            || (p.kind() == k::EQUALS_VALUE_CLAUSE
-                && p.parent()
-                    .is_some_and(|d| d.kind() != k::PROPERTY_DECLARATION))
-    })
+/// The value of `a = { ... }` or of a declarator's `= { ... }` (not a property's), with no comment
+/// in front of it.
+pub fn value_of_assignment(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    let commented = cx
+        .first_token(node)
+        .is_some_and(|t| !core_format::comments::leading_comments(cx.grammar, &t).is_empty());
+    !commented
+        && node.parent().is_some_and(|p| {
+            p.kind() == k::SIMPLE_ASSIGNMENT_EXPRESSION
+                || (p.kind() == k::EQUALS_VALUE_CLAUSE
+                    && p.parent()
+                        .is_some_and(|d| d.kind() != k::PROPERTY_DECLARATION))
+        })
 }
 
 pub fn collection_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
@@ -192,7 +197,7 @@ pub fn collection_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         trailing_comma: trailing_comma(cx.options),
         layout: initializer_layout(cx.options),
         max_blank_lines: collection_max_blank_lines(cx.options),
-        leading_line: nested_brace_on_new_line(cx.options) && value_of_assignment(node),
+        leading_line: nested_brace_on_new_line(cx.options) && value_of_assignment(cx, node),
         ..ListStyle::default()
     };
     delimited_list(cx, node, &style)

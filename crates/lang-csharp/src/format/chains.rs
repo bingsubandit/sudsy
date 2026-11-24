@@ -43,7 +43,7 @@ impl shapes::AssignHooks for AssignHooks {
         if super::options::nested_brace_on_new_line(cx.options)
             && (cx.grammar.has_tag(rhs.kind(), "initializer-expression")
                 || rhs.kind() == k::COLLECTION_EXPRESSION)
-            && super::lists::value_of_assignment(rhs)
+            && super::lists::value_of_assignment(cx, rhs)
         {
             return Some(Attached);
         }

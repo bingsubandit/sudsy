@@ -13,7 +13,6 @@ Weight: the primary tool of a leg 3, a popular secondary 2, any other 1. Points:
 | HTML | lint htmlhint | 1 | 5.0% | 80.0 | 1041 findings | `spec-char-escape` 1087 | 3 | 26.67 | 4aebdcad |
 | PHP | lint PHPStan | 3 | 0.0% | 85.0 | 2154 findings | `class.notFound` 1322, `new.static` 317, `method.notFound` 171, `function.notFound` 140 +3 more | 21 | 12.14 | 1f4c633b |
 | C# | lint StyleCop | 3 | 24.6% | 60.4 | 247038 findings | `SA1101` 108918, `SA1600` 59930, `SA1611` 45566, `SA1200` 25732 +1 more | 15 | 12.07 | a6a124c7 |
-| C# | format CSharpier | 3 | 79.0% | 6.0 | 459 files | `unclassified` 459 | 3 | 6.02 | - |
 | CSS / SCSS / Less | lint stylelint-less | 1 | 84.2% | 0.8 | 77 findings | `declaration-property-value-no-unknown` 806 | 3 | 0.26 | 2ad6316d |
 
 Blocked on a decision:
@@ -24,7 +23,7 @@ Blocked on a decision:
 
 Not measured: Protobuf format buf format (no real-world group); Protobuf lint buf (no `measured` coverage run); Terraform (HCL) format terraform fmt (no real-world group); GraphQL format Prettier (no real-world group); TOML format taplo (no real-world group); Markdown format Prettier (no real-world group); YAML format Prettier (no real-world group); JSON / JSONC format Prettier (no real-world group); JSON / JSONC format Biome (no real-world group); PowerShell format Invoke-Formatter (no real-world group); Shell format shfmt (no real-world group); Shell lint ShellCheck (no `measured` coverage run); SQL format sqlfluff (no real-world group); C# lint Roslynator (no `measured` coverage run); XML format CSharpier XML (no real-world group); C / C++ lint clang-tidy (no `measured` coverage run).
 
-New language: locked until every primary leg is at the bar or blocked. Held by 18: Protobuf format buf format; Protobuf lint buf; Terraform (HCL) format terraform fmt; GraphQL format Prettier; TOML format taplo; Markdown format Prettier; YAML format Prettier; JSON / JSONC format Prettier; JSON / JSONC lint eslint-plugin-jsonc; PowerShell format Invoke-Formatter; PHP lint PHPStan; Shell format shfmt; Shell lint ShellCheck; SQL format sqlfluff; C# format CSharpier; C# lint StyleCop; XML format CSharpier XML; C / C++ lint clang-tidy.
+New language: locked until every primary leg is at the bar or blocked. Held by 17: Protobuf format buf format; Protobuf lint buf; Terraform (HCL) format terraform fmt; GraphQL format Prettier; TOML format taplo; Markdown format Prettier; YAML format Prettier; JSON / JSONC format Prettier; JSON / JSONC lint eslint-plugin-jsonc; PowerShell format Invoke-Formatter; PHP lint PHPStan; Shell format shfmt; Shell lint ShellCheck; SQL format sqlfluff; C# lint StyleCop; XML format CSharpier XML; C / C++ lint clang-tidy.
 
 ## actionlint
 
@@ -95,7 +94,7 @@ Lint: target 88.6% (53149 of 59973, 6824 missed, measured on 4aebdcad); rules by
 
 ## csharpier
 
-Format: unclassified 1602 of 1602 differing files (100%).
+Format: unclassified 1103 of 1103 differing files (100%).
 
 ## csharpier-xml
 
