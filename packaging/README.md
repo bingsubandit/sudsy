@@ -2,7 +2,7 @@
 
 **A true polyglot formatter and linter for every repo.** One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest. Extensible: add your own rules as YAML patterns or Wasm plugins.
 
-<!-- generated:support-headline -->Ready for 23 languages, early support for 4 more.<!-- /generated --> <!-- generated:support-ready -->Ready: JavaScript / TypeScript, Python, Protobuf, Terraform (HCL), GraphQL, TOML, HTML, Vue / Svelte, Angular templates, CSS / SCSS / Less, Markdown, YAML, PowerShell, Java, Kotlin, Shell, SQL, XML, Dockerfile, Makefile, GitHub Actions, INI / EditorConfig / .gitignore and Ruby. The rest are in progress.<!-- /generated --> Early release (v0.0.x): config may change before 1.0.
+<!-- generated:support-headline -->Ready for 24 languages, early support for 3 more.<!-- /generated --> <!-- generated:support-ready -->Ready: JavaScript / TypeScript, Python, Protobuf, Terraform (HCL), GraphQL, TOML, HTML, Vue / Svelte, Angular templates, CSS / SCSS / Less, Markdown, YAML, JSON / JSONC, PowerShell, Java, Kotlin, Shell, SQL, XML, Dockerfile, Makefile, GitHub Actions, INI / EditorConfig / .gitignore and Ruby. The rest are in progress.<!-- /generated --> Early release (v0.0.x): config may change before 1.0.
 
 ## Try it
 

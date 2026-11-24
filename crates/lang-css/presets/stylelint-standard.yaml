@@ -30,6 +30,7 @@ css:
       no-global-function-names: error
       custom-property-empty-line-before: error
       dollar-variable-empty-line-before: error
+      comment-empty-line-before: error
       double-slash-comment-empty-line-before: error
       no-empty-comment:
         level: error

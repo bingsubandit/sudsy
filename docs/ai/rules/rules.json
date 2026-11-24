@@ -2015,6 +2015,47 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A `/* */` comment on a line of its own needs a blank line before it, unless it comes first in a block, shares a line with code or is a `stylelint-` directive; a `//` comment is another rule's.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "/* first */\na { color: red; }\n/* needs a line */\n\n/* has one */\nb {\n  /* first in the block */\n  color: red;\n  /* needs a line */\n\n  /* has one */\n  top: 0; /* same line */\n}\n/* stylelint-disable */\nc { top: 0; }\n",
+        "language": "css",
+        "spans": [
+          {
+            "column": 1,
+            "length": 18,
+            "line": 3
+          },
+          {
+            "column": 3,
+            "length": 18,
+            "line": 9
+          }
+        ]
+      },
+      "fix": null,
+      "id": "comment-empty-line-before",
+      "languages": [
+        "css",
+        "less",
+        "scss"
+      ],
+      "options": [],
+      "presets": [
+        "css/stylelint-standard"
+      ],
+      "upstream": [
+        {
+          "id": "comment-empty-line-before",
+          "partial": true,
+          "tool": "stylelint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "A `@container` name that does not match the `pattern` option (a regex). An empty pattern allows everything.",
       "example": {
         "config": null,
@@ -9014,6 +9055,60 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "A name that starts or ends with an underscore: a type, field, argument, enum value, directive, operation, fragment or alias, and every reference to one. A field selected in a query is not checked (`__typename`). Equivalent - graphql-eslint naming-convention without `allowLeadingUnderscore` and `allowTrailingUnderscore`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "scalar Good\nscalar _Any\ntype Query {\n  items(first_: Int): [_Any!]!\n  _entities: Good\n}\nquery Q { items(first_: 1) { __typename } }\n",
+        "language": "graphql",
+        "spans": [
+          {
+            "column": 8,
+            "length": 4,
+            "line": 2
+          },
+          {
+            "column": 9,
+            "length": 6,
+            "line": 4
+          },
+          {
+            "column": 24,
+            "length": 4,
+            "line": 4
+          },
+          {
+            "column": 3,
+            "length": 9,
+            "line": 5
+          },
+          {
+            "column": 17,
+            "length": 6,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-name-underscore",
+      "languages": [
+        "graphql"
+      ],
+      "options": [],
+      "presets": [
+        "graphql/graphql-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "naming-convention",
+          "partial": true,
+          "tool": "graphql-eslint"
+        }
+      ]
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "A field of an object or interface type starts with the name of the type (`type User { userId: ID }`); the type already says it (case ignored). No fix: renaming a field changes the schema.",
       "example": {
         "config": null,
@@ -12641,23 +12736,35 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "var a = /a  b/, b = /a {2}b/, c = /[  ]/, d = /a  +/, e = /a   +/, f = new RegExp(\"a  b\"), g = RegExp(\"a b\"), h = /a\\  b/;\nvar i = 017, j = 08, k = 0, l = 0.5, m = 0o17;\nvar p = 9007199254740993, q = 0.1, r = 5123000000000000000000000000001, s = 0x20000000000001, t = 0x1fffffffffffff;\nvar u = 12345678901234567890, v = 0.30000000000000004, w = 1_000, x = 0.1000000000000000055511151231257827, y = 1e3;\n",
-        "language": "js",
+        "input": "{\n  \"a\": \"x\\ny\\\"z\\\\wA\",\n  \"b\": \"p\\/q\",\n  \"c\\/d\": [\"\\/\"]\n}\n",
+        "language": "json",
         "spans": [
           {
-            "column": 117,
+            "column": 10,
             "length": 2,
-            "line": 1
+            "line": 3
+          },
+          {
+            "column": 5,
+            "length": 2,
+            "line": 4
+          },
+          {
+            "column": 13,
+            "length": 2,
+            "line": 4
           }
         ]
       },
       "fix": null,
       "id": "no-useless-escape",
       "languages": [
-        "js"
+        "js",
+        "json"
       ],
       "options": [],
       "presets": [
+        "json/eslint-plugin-jsonc-recommended",
         "js/eslint-recommended",
         "js/biome-recommended",
         "js/oxlint"
@@ -12667,6 +12774,11 @@
           "id": "no-useless-escape",
           "partial": true,
           "tool": "eslint"
+        },
+        {
+          "id": "jsonc/no-useless-escape",
+          "partial": true,
+          "tool": "eslint-plugin-jsonc"
         }
       ]
     },

@@ -258,7 +258,6 @@ data tag:module-body # users: js
 data tag:named-expr # users: python
 data tag:named-type # users: js
 data tag:negated # users: ruby
-data tag:quoted # users: js
 data tag:raw-strings # users: js
 data tag:regex # users: js
 data tag:signature # users: js

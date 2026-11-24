@@ -8,13 +8,10 @@ Weight: the primary tool of a leg 3, a popular secondary 2, any other 1. Points:
 
 | Language | Leg | Weight | Now | Points | Needs | Causes | Difficulty | Score | Measured on |
 |---|---|---|---|---|---|---|---|---|---|
-| JSON / JSONC | lint eslint-plugin-jsonc | 3 | 0.0% | 85.0 | 12 findings | `jsonc/no-useless-escape` 14 | 3 | 85.00 | 4aebdcad |
 | HTML | lint html-eslint | 2 | 0.3% | 84.7 | 16875 findings | `indent` 16182, `element-newline` 2175 | 6 | 28.23 | 2ad6316d |
-| HTML | lint htmlhint | 1 | 5.0% | 80.0 | 1041 findings | `spec-char-escape` 1087 | 3 | 26.67 | 4aebdcad |
 | PHP | lint PHPStan | 3 | 0.0% | 85.0 | 2154 findings | `class.notFound` 1322, `new.static` 317, `method.notFound` 171, `function.notFound` 140 +3 more | 21 | 12.14 | 1f4c633b |
 | C# | lint StyleCop | 3 | 24.6% | 60.4 | 247038 findings | `SA1101` 108918, `SA1600` 59930, `SA1611` 45566, `SA1200` 25732 +1 more | 15 | 12.07 | a6a124c7 |
 | C# | format CSharpier | 3 | 79.0% | 6.0 | 459 files | `unclassified` 459 | 3 | 6.02 | - |
-| CSS / SCSS / Less | lint stylelint-less | 1 | 84.2% | 0.8 | 77 findings | `declaration-property-value-no-unknown` 806 | 3 | 0.26 | 2ad6316d |
 
 Blocked on a decision:
 
@@ -24,7 +21,7 @@ Blocked on a decision:
 
 Not measured: Protobuf format buf format (no real-world group); Protobuf lint buf (no `measured` coverage run); Terraform (HCL) format terraform fmt (no real-world group); GraphQL format Prettier (no real-world group); TOML format taplo (no real-world group); Markdown format Prettier (no real-world group); YAML format Prettier (no real-world group); JSON / JSONC format Prettier (no real-world group); JSON / JSONC format Biome (no real-world group); PowerShell format Invoke-Formatter (no real-world group); Shell format shfmt (no real-world group); Shell lint ShellCheck (no `measured` coverage run); SQL format sqlfluff (no real-world group); C# lint Roslynator (no `measured` coverage run); XML format CSharpier XML (no real-world group); C / C++ lint clang-tidy (no `measured` coverage run).
 
-New language: locked until every primary leg is at the bar or blocked. Held by 18: Protobuf format buf format; Protobuf lint buf; Terraform (HCL) format terraform fmt; GraphQL format Prettier; TOML format taplo; Markdown format Prettier; YAML format Prettier; JSON / JSONC format Prettier; JSON / JSONC lint eslint-plugin-jsonc; PowerShell format Invoke-Formatter; PHP lint PHPStan; Shell format shfmt; Shell lint ShellCheck; SQL format sqlfluff; C# format CSharpier; C# lint StyleCop; XML format CSharpier XML; C / C++ lint clang-tidy.
+New language: locked until every primary leg is at the bar or blocked. Held by 17: Protobuf format buf format; Protobuf lint buf; Terraform (HCL) format terraform fmt; GraphQL format Prettier; TOML format taplo; Markdown format Prettier; YAML format Prettier; JSON / JSONC format Prettier; PowerShell format Invoke-Formatter; PHP lint PHPStan; Shell format shfmt; Shell lint ShellCheck; SQL format sqlfluff; C# format CSharpier; C# lint StyleCop; XML format CSharpier XML; C / C++ lint clang-tidy.
 
 ## actionlint
 
@@ -105,11 +102,6 @@ Format: unclassified 1602 of 1602 differing files (100%).
 
 1. `initializer-layout` (1 files): a wrapped initializer is laid out by `object_collection_array_initializers` and `anonymous_types`; dotnet format leaves the brace where the source has it
 
-## eslint-jsonc
-
-Lint: target 0% (0 of 14, 14 missed, measured on 4aebdcad); rules by missed findings:
-1. `jsonc/no-useless-escape` (14 missed)
-
 ## eslint-plugin-vue
 
 Lint: target 88.8% (1392 of 1567, 175 missed, measured on f4e9edb2); rules by missed findings:
@@ -126,10 +118,10 @@ Lint: target 88.8% (1392 of 1567, 175 missed, measured on f4e9edb2); rules by mi
 
 ## graphql-eslint
 
-Lint: target 53.7% (117 of 218, 101 missed, measured on 4aebdcad); rules by missed findings:
-1. `naming-convention` (80 missed)
-2. `description-style` (11 missed)
-3. `require-deprecation-reason` (10 missed)
+Lint: target 88.1% (192 of 218, 26 missed, measured on e98263ba); rules by missed findings:
+1. `description-style` (11 missed)
+2. `require-deprecation-reason` (10 missed)
+3. `naming-convention` (5 missed)
 
 ## hadolint
 
@@ -186,10 +178,10 @@ Lint: target 86.9% (852 of 980, 128 missed, measured on 1f4c633b); rules by miss
 
 ## htmlhint
 
-Lint: target 5% (65 of 1301, 1236 missed, measured on 4aebdcad); rules by missed findings:
-1. `spec-char-escape` (1087 missed)
-2. `tag-pair` (105 missed)
-3. `doctype-first` (36 missed)
+Lint: target 93% (1210 of 1301, 91 missed, measured on e98263ba); rules by missed findings:
+1. `doctype-first` (36 missed)
+2. `spec-char-escape` (31 missed)
+3. `tag-pair` (16 missed)
 4. `src-not-empty` (6 missed)
 5. `attr-value-double-quotes` (1 missed)
 6. `title-require` (1 missed)
@@ -506,41 +498,40 @@ Lint: target 24.6% (100884 of 409320, 308436 missed, measured on a6a124c7); rule
 
 ## stylelint
 
-Lint: target 94.7% (12015 of 12686, 671 missed, measured on 3f07cafc); rules by missed findings:
+Lint: target 94.8% (12023 of 12686, 663 missed, measured on e98263ba); rules by missed findings:
 1. `media-feature-range-notation` (415 missed)
 2. `value-keyword-case` (127 missed)
 3. `declaration-block-no-redundant-longhand-properties` (57 missed)
 4. `selector-not-notation` (48 missed)
 5. `declaration-property-value-no-unknown` (11 missed)
-6. `comment-empty-line-before` (8 missed)
-7. `declaration-property-value-keyword-no-deprecated` (2 missed)
-8. `no-duplicate-selectors` (2 missed)
-9. `no-descending-specificity` (1 missed)
+6. `declaration-property-value-keyword-no-deprecated` (2 missed)
+7. `no-duplicate-selectors` (2 missed)
+8. `no-descending-specificity` (1 missed)
 
 ## stylelint-less
 
-Lint: target 84.2% (8378 of 9947, 1569 missed, measured on 2ad6316d); rules by missed findings:
+Lint: target 85.4% (8494 of 9947, 1453 missed, measured on e98263ba); rules by missed findings:
 1. `declaration-property-value-no-unknown` (806 missed)
 2. `selector-pseudo-element-colon-notation` (156 missed)
 3. `media-query-no-invalid` (121 missed)
-4. `comment-empty-line-before` (116 missed)
-5. `declaration-block-no-redundant-longhand-properties` (92 missed)
-6. `selector-not-notation` (76 missed)
-7. `at-rule-prelude-no-invalid` (65 missed)
-8. `no-duplicate-selectors` (44 missed)
-9. `no-descending-specificity` (40 missed)
-10. `less/no-duplicate-variables` (22 missed)
-11. `shorthand-property-no-redundant-values` (11 missed)
-12. `selector-class-pattern` (5 missed)
-13. `declaration-property-value-keyword-no-deprecated` (4 missed)
-14. `at-rule-descriptor-no-unknown` (3 missed)
-15. `at-rule-descriptor-value-no-unknown` (3 missed)
+4. `declaration-block-no-redundant-longhand-properties` (92 missed)
+5. `selector-not-notation` (76 missed)
+6. `at-rule-prelude-no-invalid` (65 missed)
+7. `no-duplicate-selectors` (44 missed)
+8. `no-descending-specificity` (40 missed)
+9. `less/no-duplicate-variables` (22 missed)
+10. `shorthand-property-no-redundant-values` (11 missed)
+11. `selector-class-pattern` (5 missed)
+12. `declaration-property-value-keyword-no-deprecated` (4 missed)
+13. `at-rule-descriptor-no-unknown` (3 missed)
+14. `at-rule-descriptor-value-no-unknown` (3 missed)
+15. `CssSyntaxError` (2 missed)
 
-3 more rules: 5 missed.
+2 more rules: 3 missed.
 
 ## stylelint-scss
 
-Lint: target 89.9% (1817 of 2022, 205 missed, measured on 3f07cafc); rules by missed findings:
+Lint: target 89.9% (1818 of 2022, 204 missed, measured on e98263ba); rules by missed findings:
 1. `function-name-case` (54 missed)
 2. `declaration-block-no-redundant-longhand-properties` (44 missed)
 3. `at-rule-empty-line-before` (30 missed)
@@ -557,7 +548,7 @@ Lint: target 89.9% (1817 of 2022, 205 missed, measured on 3f07cafc); rules by mi
 14. `media-feature-range-notation` (2 missed)
 15. `block-no-redundant-nested-style-rules` (1 missed)
 
-7 more rules: 7 missed.
+6 more rules: 6 missed.
 
 ## taplo
 

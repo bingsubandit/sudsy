@@ -4,15 +4,14 @@ differences:
 files:
   unknown/tailwind stylelint:at-rule-no-unknown 1: tailwind-at-rules
   unknown/tailwind stylelint:color-no-invalid-hex 4: element-id
-target: 94.7
-measured: {covered: 12015, total: 12686, main: '3f07cafc'}  # of the target; `main`: the origin/main commit the measured tree is based on
+target: 94.8
+measured: {covered: 12023, total: 12686, main: 'e98263ba'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
   media-feature-range-notation: 415
   value-keyword-case: 127
   declaration-block-no-redundant-longhand-properties: 57
   selector-not-notation: 48
   declaration-property-value-no-unknown: 11
-  comment-empty-line-before: 8
   declaration-property-value-keyword-no-deprecated: 2
   no-duplicate-selectors: 2
   no-descending-specificity: 1

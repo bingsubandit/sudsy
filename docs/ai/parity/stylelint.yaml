@@ -25,7 +25,7 @@ entries:
   color-named: planned
   color-no-hex: rule color-no-hex
   color-no-invalid-hex: rule color-no-invalid-hex
-  comment-empty-line-before: planned | Needs the `except` and `ignore` secondary options (`first-nested`, `after-comment`, ...), which the rule options do not express yet.
+  comment-empty-line-before: rule comment-empty-line-before | `//` comments are left to double-slash-comment-empty-line-before, as stylelint ignores them
   comment-no-empty: rule no-empty-comment
   comment-pattern: planned
   comment-whitespace-inside: rule comment-space

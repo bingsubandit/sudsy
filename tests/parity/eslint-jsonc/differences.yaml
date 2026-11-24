@@ -1,6 +1,5 @@
 differences: {}
 files: {}
-target: 0.0
-measured: {covered: 0, total: 14, main: '4aebdcad'}  # of the target; `main`: the origin/main commit the measured tree is based on
-missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
-  jsonc/no-useless-escape: 14
+target: 100.0
+measured: {covered: 14, total: 14, main: 'e98263ba'}  # of the target; `main`: the origin/main commit the measured tree is based on
+missed: {}  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)

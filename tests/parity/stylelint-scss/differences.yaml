@@ -1,7 +1,7 @@
 differences: {}
 files: {}
 target: 89.9
-measured: {covered: 1817, total: 2022, main: '3f07cafc'}  # of the target; `main`: the origin/main commit the measured tree is based on
+measured: {covered: 1818, total: 2022, main: 'e98263ba'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
   function-name-case: 54
   declaration-block-no-redundant-longhand-properties: 44
@@ -22,6 +22,5 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   nesting-selector-no-missing-scoping-root: 1
   no-invalid-position-at-import-rule: 1
   number-max-precision: 1
-  scss/double-slash-comment-empty-line-before: 1
   scss/function-quote-no-quoted-strings-inside: 1
   scss/operator-no-unspaced: 1

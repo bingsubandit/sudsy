@@ -45,3 +45,11 @@ description: "A `//` comment on a line of its own needs a blank line before it, 
 example: "$a: 1;\n// note   # reported"
 severity: off
 category: style
+---
+id: comment-empty-line-before
+family: blank-line-before
+params: { token: Comment, block: declaration-block, always: "true", except: first-nested, ignore: "inline directive", directive: "stylelint-", message: "expected {blank} before the comment" }
+description: "A `/* */` comment on a line of its own needs a blank line before it, unless it comes first in a block, shares a line with code or is a `stylelint-` directive; a `//` comment is another rule's."
+example: "a {}\n/* note */   # reported"
+severity: off
+category: style

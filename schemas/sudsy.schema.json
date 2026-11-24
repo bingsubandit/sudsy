@@ -783,6 +783,10 @@
               "$ref": "#/definitions/rule",
               "description": "A fenced code block in which every line starts with `$ ` shows commands without their output, which makes copying them awkward (markdownlint MD014)."
             },
+            "comment-empty-line-before": {
+              "$ref": "#/definitions/rule",
+              "description": "A `/* */` comment on a line of its own needs a blank line before it, unless it comes first in a block, shares a line with code or is a `stylelint-` directive; a `//` comment is another rule's."
+            },
             "comment-space": {
               "description": "A line comment has text right after its marker. Exempt: nothing but whitespace after the marker, a marker repeated (`////`, `##`), `--` separator lines, and a `#!` shebang on the first line. The fix inserts the space.",
               "oneOf": [
@@ -4218,6 +4222,10 @@
             "no-multiple-main": {
               "$ref": "#/definitions/rule",
               "description": "A second `<main>` element that is not `hidden`: a page has one main landmark."
+            },
+            "no-name-underscore": {
+              "$ref": "#/definitions/rule",
+              "description": "A name that starts or ends with an underscore: a type, field, argument, enum value, directive, operation, fragment or alias, and every reference to one. A field selected in a query is not checked (`__typename`). Equivalent - graphql-eslint naming-convention without `allowLeadingUnderscore` and `allowTrailingUnderscore`."
             },
             "no-namespace": {
               "$ref": "#/definitions/rule",

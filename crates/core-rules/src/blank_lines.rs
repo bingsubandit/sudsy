@@ -215,7 +215,10 @@ impl Rule for BlankLineBefore {
             }) {
                 continue;
             }
-            let parent_block = t.parent().filter(|p| g.has_tag(p.kind(), &self.block));
+            // A comment before the first statement of a block hangs below that statement.
+            let parent_block = t
+                .parent_ancestors()
+                .find(|p| g.has_tag(p.kind(), &self.block));
             self.check_at(&t, None, false, parent_block, ctx);
         }
     }

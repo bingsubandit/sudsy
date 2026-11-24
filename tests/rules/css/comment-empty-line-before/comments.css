@@ -1,0 +1,17 @@
+/* first */
+a { color: red; }
+/* needs a line */
+^^^^^^^^^^^^^^^^^^ comment-empty-line-before
+
+/* has one */
+b {
+  /* first in the block */
+  color: red;
+  /* needs a line */
+//^^^^^^^^^^^^^^^^^^ comment-empty-line-before
+
+  /* has one */
+  top: 0; /* same line */
+}
+/* stylelint-disable */
+c { top: 0; }

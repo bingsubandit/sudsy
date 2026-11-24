@@ -1,8 +1,8 @@
 differences: {}
 files: {}
-target: 53.7
-measured: {covered: 117, total: 218, main: '4aebdcad'}  # of the target; `main`: the origin/main commit the measured tree is based on
+target: 88.1
+measured: {covered: 192, total: 218, main: 'e98263ba'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
-  naming-convention: 80
   description-style: 11
   require-deprecation-reason: 10
+  naming-convention: 5

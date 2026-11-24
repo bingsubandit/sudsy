@@ -95,13 +95,12 @@ files:
   css/Semantic-UI/src/definitions/views/statistic.less stylelint-less:at-rule-no-unknown 16: less-spaced-variable
 intentional:
   less-spaced-variable: tool-wrong
-target: 84.2
-measured: {covered: 8378, total: 9947, main: '2ad6316d'}  # of the target; `main`: the origin/main commit the measured tree is based on
+target: 85.4
+measured: {covered: 8494, total: 9947, main: 'e98263ba'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
   declaration-property-value-no-unknown: 806
   selector-pseudo-element-colon-notation: 156
   media-query-no-invalid: 121
-  comment-empty-line-before: 116
   declaration-block-no-redundant-longhand-properties: 92
   selector-not-notation: 76
   at-rule-prelude-no-invalid: 65

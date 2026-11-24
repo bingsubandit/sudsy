@@ -6,7 +6,7 @@ sources:
   - "https://the-guild.dev/graphql/eslint/rules"
 scope: "The 34 rules of the plugin's own set, as listed by the rule folders. The rules it takes from graphql-js's validation (`graphql-js-validation.ts`: known-*, unique-*, no-unused-*, scalar-leafs, ...) are one entry below. Only rules that need neither a schema nor other files are built; no differential run (needs the schema-aware ESLint parser), the fixtures under tests/rules/graphql are written from the rules' documentation."
 entries:
-  naming-convention: rule naming-convention, no-name-underscore | No forbiddenPrefixes, forbiddenSuffixes, requiredPrefixes, requiredSuffixes or ignorePattern; no per-kind styles for the root types, interfaces versus objects, or inputs versus objects; `PascalCase` and `camelCase` accept runs of capitals (`HTTPServer`) that change-case rewrites.
+  naming-convention: rule naming-convention, no-name-underscore | Leading and trailing underscores are `no-name-underscore`. No forbiddenPrefixes, forbiddenSuffixes, requiredPrefixes, requiredSuffixes or ignorePattern; no per-kind styles for the root types, interfaces versus objects, or inputs versus objects; `PascalCase` and `camelCase` accept runs of capitals (`HTTPServer`) that change-case rewrites.
   no-anonymous-operations: rule no-anonymous-operations
   no-duplicate-fields: rule no-duplicate-keys
   unique-enum-value-names: rule no-duplicate-keys
