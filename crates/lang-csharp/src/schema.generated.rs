@@ -98,6 +98,8 @@ pub const BASE_LIST_LAYOUT: core_config::OptId = core_config::opt::BASE_LIST_LAY
 #[allow(dead_code)]
 pub const UNBREAKABLE_SINGLE_ITEM_LISTS: core_config::OptId = core_config::opt::UNBREAKABLE_SINGLE_ITEM_LISTS;
 #[allow(dead_code)]
+pub const DECLARATOR_LINE: core_config::OptId = core_config::opt::DECLARATOR_LINE;
+#[allow(dead_code)]
 pub const DO_WHILE_LINE: core_config::OptId = core_config::opt::DO_WHILE_LINE;
 #[allow(dead_code)]
 pub const CLAUSE_KEYWORD_LINE: core_config::OptId = core_config::opt::CLAUSE_KEYWORD_LINE;
@@ -303,6 +305,16 @@ pub fn unbreakable_single_item_lists(o: &core_config::ResolvedOptions) -> bool {
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DeclaratorLine { SameLine, OwnLine }
+#[allow(dead_code)]
+pub fn declarator_line(o: &core_config::ResolvedOptions) -> DeclaratorLine {
+    match o.text(DECLARATOR_LINE) {
+        "own_line" => DeclaratorLine::OwnLine,
+        _ => DeclaratorLine::SameLine,
+    }
+}
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DoWhileLine { NewLine, SameLine }
 #[allow(dead_code)]
 pub fn do_while_line(o: &core_config::ResolvedOptions) -> DoWhileLine {
@@ -501,6 +513,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice(core_config::opt::PARAMETER_ATTRIBUTE_LAYOUT, &["inline", "hanging"], "inline", "A parameter with attribute lists: `inline` keeps them in front of the parameter;              `hanging` keeps them there when the parameter fits and otherwise puts the rest of              the parameter on an indented line below them."),
         core_config::OptionDef::choice(core_config::opt::BASE_LIST_LAYOUT, &["inline", "hanging"], "inline", "The base list of a type (`: A, B`): `inline` keeps it on the line of the type name; `hanging` keeps it there when it fits and otherwise starts a line, with one base type per line."),
         core_config::OptionDef::boolean(core_config::opt::UNBREAKABLE_SINGLE_ITEM_LISTS, false, "Never break a list that holds one simple item: an attribute list with one attribute, a type argument list with one name, an index that is one name or literal."),
+        core_config::OptionDef::choice(core_config::opt::DECLARATOR_LINE, &["same_line", "own_line"], "same_line", "The declarators after the first of `int a, b;` (also fields): `same_line` keeps them on the line of the first; `own_line` puts each on a line of its own, indented (not in a `for` header)."),
         core_config::OptionDef::choice(core_config::opt::DO_WHILE_LINE, &["new_line", "same_line"], "new_line", "The `while` of a `do` statement: `new_line` starts a line; `same_line` follows the closing brace (`} while (x);`)."),
         core_config::OptionDef::choice(core_config::opt::CLAUSE_KEYWORD_LINE, &["new_line", "same_line"], "new_line", "`else`, `catch` and `finally` after a block: `new_line` starts a line; `same_line` follows the closing brace (`} else {`) unless a comment sits between them."),
         core_config::OptionDef::choice(core_config::opt::ELSE_LINE, &["inherit", "new_line", "same_line"], "inherit", "`else` after a block: `new_line` starts a line; `same_line` follows the closing brace; `inherit` takes `clause_keyword_line`."),

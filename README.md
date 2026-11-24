@@ -114,7 +114,7 @@ All languages: <!-- generated:languages -->C#, C/C++, CSS, Dockerfile, EditorCon
 | Java | 23 | google-java-format | [1](https://github.com/google/google-java-format#using-the-formatter) |
 | Protobuf | 4 | buf format | [0](https://buf.build/docs/format/style) |
 | Terraform (HCL) | 3 | terraform fmt | [0](https://developer.hashicorp.com/terraform/cli/commands/fmt) |
-| C# | 77 | CSharpier | [5](https://csharpier.com/docs/Options) |
+| C# | 78 | CSharpier | [5](https://csharpier.com/docs/Options) |
 <!-- /generated -->
 
 - **Your own rules:** [YAML patterns](docs/rules.md#pattern-rules) with fixes, and sandboxed [Wasm plugins](docs/rules.md#wasm-plugins).

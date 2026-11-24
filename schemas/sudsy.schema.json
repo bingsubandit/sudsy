@@ -8561,6 +8561,15 @@
               ],
               "type": "string"
             },
+            "declarator_line": {
+              "default": "same_line",
+              "description": "The declarators after the first of `int a, b;` (also fields): `same_line` keeps them on the line of the first; `own_line` puts each on a line of its own, indented (not in a `for` header).",
+              "enum": [
+                "same_line",
+                "own_line"
+              ],
+              "type": "string"
+            },
             "derive_symbol_sets": {
               "default": false,
               "description": "Also parse with sets of symbols taken from the `#if` and `#elif` conditions of the file (the empty set, all symbols, then each symbol, then pairs and so on, at most 16 sets, after those of `preprocessor_symbol_sets`) until every branch has been active once, and format the branches that are inactive under `preprocessor_symbols` from those parses. A branch no set activates stays as it is.",
@@ -12198,6 +12207,15 @@
                     "enum": [
                       "same_line",
                       "new_line"
+                    ],
+                    "type": "string"
+                  },
+                  "declarator_line": {
+                    "default": "same_line",
+                    "description": "The declarators after the first of `int a, b;` (also fields): `same_line` keeps them on the line of the first; `own_line` puts each on a line of its own, indented (not in a `for` header).",
+                    "enum": [
+                      "same_line",
+                      "own_line"
                     ],
                     "type": "string"
                   },

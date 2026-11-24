@@ -58,6 +58,8 @@ pub enum AssignLayout {
     /// The right side always starts a new line (a line comment ends the operator's line).
     BreakAlways,
     OnlyLeft,
+    /// The right side starts with a line of its own: `left op` and the right side, no blank.
+    Attached,
 }
 
 /// The values where reference tools differ; a language declares each as an option.
@@ -246,6 +248,7 @@ fn render(layout: AssignLayout, left: Doc, op: Doc, right: Doc, levels: usize) -
             indented(levels, doc::concat(vec![doc::hardline(), right])),
         ]),
         OnlyLeft => left,
+        Attached => doc::group(doc::concat(vec![doc::group(left), op, right])),
     }
 }
 

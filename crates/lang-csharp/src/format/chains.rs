@@ -26,13 +26,19 @@ struct AssignHooks;
 impl shapes::AssignHooks for AssignHooks {
     fn layout(
         &self,
-        _cx: &FormatCtx<'_>,
+        cx: &FormatCtx<'_>,
         _a: &shapes::Assign<'_>,
         right: &SyntaxElement,
         policy: &shapes::AssignPolicy,
     ) -> Option<shapes::AssignLayout> {
         use shapes::AssignLayout::*;
         let rhs = right.as_node()?;
+        if super::options::nested_brace_on_new_line(cx.options)
+            && cx.grammar.has_tag(rhs.kind(), "initializer-expression")
+            && super::lists::value_of_assignment(rhs)
+        {
+            return Some(Attached);
+        }
         match policy.style {
             shapes::AssignStyle::Compact => {
                 (rhs.kind() == k::QUERY_EXPRESSION).then_some(BreakAfterOperator)

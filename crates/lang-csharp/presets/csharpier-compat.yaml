@@ -30,6 +30,7 @@ csharp:
     parameter_attribute_layout: hanging
     base_list_layout: hanging
     unbreakable_single_item_lists: true
+    declarator_line: own_line
     do_while_line: same_line
     space_between_empty_for_clauses: true
     space_after_empty_last_for_clause: true

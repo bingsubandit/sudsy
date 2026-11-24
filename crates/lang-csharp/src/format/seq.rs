@@ -5,9 +5,10 @@
 
 use super::flat;
 use super::options::{
-    clauses_on_closing_line, constructor_initializer_on_new_line, creation_brace_on_new_line,
-    do_while_on_closing_line, expand_empty_bodies, label_outdent, nested_brace_on_new_line,
-    space_after_delegate, space_after_empty_last_for_clause, space_between_empty_for_clauses,
+    DeclaratorLine, clauses_on_closing_line, constructor_initializer_on_new_line,
+    creation_brace_on_new_line, declarator_line, do_while_on_closing_line, expand_empty_bodies,
+    label_outdent, nested_brace_on_new_line, space_after_delegate,
+    space_after_empty_last_for_clause, space_between_empty_for_clauses,
 };
 use crate::generated::kind as k;
 use core_format::doc::{self, Doc};
@@ -261,6 +262,15 @@ fn separator_raw(
             Sep::Hard
         };
     }
+    if pk == k::VARIABLE_DECLARATION
+        && declarator_line(cx.options) == DeclaratorLine::OwnLine
+        && matches!(prev, SyntaxElement::Token(t) if t.kind() == k::COMMA_TOKEN)
+        && parent
+            .parent()
+            .is_some_and(|p| p.kind() != k::FOR_STATEMENT)
+    {
+        return Sep::HardIndented;
+    }
     if pk == k::DO_STATEMENT
         && matches!(next, SyntaxElement::Token(t) if t.kind() == k::WHILE_KEYWORD)
     {
@@ -341,6 +351,8 @@ fn has_paren_condition(kind: SyntaxKind) -> bool {
             | k::DO_STATEMENT
             | k::LOCK_STATEMENT
             | k::SWITCH_STATEMENT
+            | k::USING_STATEMENT
+            | k::FIXED_STATEMENT
     )
 }
 

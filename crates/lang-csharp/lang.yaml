@@ -118,6 +118,10 @@ options:
   - unbreakable_single_item_lists:
       default: false
       doc: "Never break a list that holds one simple item: an attribute list with one attribute, a type argument list with one name, an index that is one name or literal."
+  - declarator_line:
+      values: ["same_line", "own_line"]
+      default: "same_line"
+      doc: "The declarators after the first of `int a, b;` (also fields): `same_line` keeps them on the line of the first; `own_line` puts each on a line of its own, indented (not in a `for` header)."
   - do_while_line:
       values: ["new_line", "same_line"]
       default: "new_line"

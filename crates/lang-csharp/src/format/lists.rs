@@ -149,9 +149,18 @@ pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let mut style = brace_style(cx, node);
     style.leading_line = (creation_parent(node.parent().map(|p| p.kind()))
         && creation_brace_on_new_line(cx.options))
-        || (nested_brace_on_new_line(cx.options)
-            && node.parent().map(|p| p.kind()) == Some(k::SIMPLE_ASSIGNMENT_EXPRESSION));
+        || (nested_brace_on_new_line(cx.options) && value_of_assignment(node));
     delimited_list(cx, node, &style)
+}
+
+/// The value of `a = { ... }` or of a declarator's `= { ... }` (not a property's).
+pub fn value_of_assignment(node: &SyntaxNode) -> bool {
+    node.parent().is_some_and(|p| {
+        p.kind() == k::SIMPLE_ASSIGNMENT_EXPRESSION
+            || (p.kind() == k::EQUALS_VALUE_CLAUSE
+                && p.parent()
+                    .is_some_and(|d| d.kind() != k::PROPERTY_DECLARATION))
+    })
 }
 
 pub fn collection_expression(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
