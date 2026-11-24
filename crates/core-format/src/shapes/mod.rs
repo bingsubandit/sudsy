@@ -77,7 +77,9 @@ pub use list::{
     ListFacts, ListLayout, ListStyle, StyleOf, TrailingComma, delimited_list,
     delimited_list_around, delimited_list_between,
 };
-pub use maybe_parenthesize::{between, enclosed, head_test, keyword_argument, maybe_parenthesize};
+pub use maybe_parenthesize::{
+    HangPolicy, between, enclosed, hang_operand, head_test, keyword_argument, maybe_parenthesize,
+};
 pub use omit_parens::{OmitHooks, can_omit, head_fits};
 pub use paren_list::paren_list;
 pub use parens::{

@@ -8,7 +8,7 @@
 
 use crate::FormatCtx;
 use crate::doc::{self, Doc};
-use core_syntax::SyntaxNode;
+use core_syntax::{SyntaxKind, SyntaxNode};
 use core_syntax::roles::un;
 
 /// `open`, the content indented on its own lines, `close`: no group, the group around decides.
@@ -33,6 +33,41 @@ pub fn maybe_parenthesize(inner: Doc) -> Doc {
         inner,
         doc::if_break(doc::lit(")"), Doc::Nil),
     )
+}
+
+/// Which operands stay on the line of the head they follow (`(T)x`, `(T)f(a)`): the kinds that
+/// always do, the kinds that do unless the head has a kind of `except_head`, and the kinds of
+/// call that do when their callee has one of the plain kinds.
+pub struct HangPolicy {
+    pub always: &'static [SyntaxKind],
+    pub plain: &'static [SyntaxKind],
+    pub calls: &'static [SyntaxKind],
+    pub except_head: &'static [SyntaxKind],
+}
+
+/// `head` and its `operand`: the operand moves indented onto a line of its own when the whole does
+/// not fit, unless it is one of the attached kinds of the policy.
+pub fn hang_operand(
+    head: Doc,
+    head_kind: SyntaxKind,
+    operand: &SyntaxNode,
+    printed: Doc,
+    policy: &HangPolicy,
+) -> Doc {
+    let kind = operand.kind();
+    let plain = !policy.except_head.contains(&head_kind)
+        && (policy.plain.contains(&kind)
+            || (policy.calls.contains(&kind)
+                && operand
+                    .first_child()
+                    .is_some_and(|c| policy.plain.contains(&c.kind()))));
+    if policy.always.contains(&kind) || plain {
+        return doc::concat(vec![head, printed]);
+    }
+    doc::group(doc::concat(vec![
+        head,
+        doc::indent(doc::concat(vec![doc::softline(), printed])),
+    ]))
 }
 
 /// What follows a keyword that takes an expression (`return a`, `throw a`): a blank and the

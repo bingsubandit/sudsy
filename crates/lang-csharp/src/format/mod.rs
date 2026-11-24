@@ -186,6 +186,7 @@ impl NodeFormatter for CSharpFormatter {
                 chains::switch_arm(cx, node)?
             }
             k::PARENTHESIZED_EXPRESSION => chains::parenthesized(cx, node)?,
+            k::CAST_EXPRESSION => chains::cast(cx, node)?,
             k::QUERY_EXPRESSION => query::query_expression(cx, node)?,
             k::QUERY_BODY => query::query_body(cx, node)?,
             k::QUERY_CONTINUATION => query::query_continuation(cx, node)?,

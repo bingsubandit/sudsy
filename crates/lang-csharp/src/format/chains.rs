@@ -178,6 +178,26 @@ pub fn conditional(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     )
 }
 
+/// `(T)x`: the operand hangs below the cast when the whole does not fit.
+pub fn cast(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    const POLICY: shapes::HangPolicy = shapes::HangPolicy {
+        always: &[k::PARENTHESIZED_EXPRESSION],
+        plain: &[k::IDENTIFIER_NAME],
+        calls: &[k::INVOCATION_EXPRESSION],
+        except_head: &[k::GENERIC_NAME],
+    };
+    let els = children(cx, node);
+    let (Some(head_type), Some(SyntaxElement::Node(operand))) = (
+        node.children().next(),
+        els.last(),
+    ) else {
+        return seq_of(cx, node, &els);
+    };
+    let head = seq_of(cx, node, &els[..els.len() - 1])?;
+    let printed = core_format::seq::el(cx, els.last().expect("operand"))?;
+    Ok(shapes::hang_operand(head, head_type.kind(), operand, printed, &POLICY))
+}
+
 pub fn parenthesized(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     const POLICY: shapes::ParenPolicy = shapes::ParenPolicy {
         layout: shapes::ParenLayout::Group,
