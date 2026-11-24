@@ -259,6 +259,20 @@
       "tool_may_reject": true,
       "parallel": true,
       "quiet": true,
+      "wrap_compare": {
+        "grammar": "grammars/cpp.grammar",
+        "dump": ["debug", "tree"],
+        "gap_kinds": ["Whitespace", "Newline", "Continuation"],
+        "comment_kind": "Comment",
+        "eof_kind": "EndOfFile",
+        "string_kind": "String",
+        "brace_kinds": ["Lbrace", "Rbrace"],
+        "boundary": ["statement", "member", "case", "directive"],
+        "container": ["block", "huggable"],
+        "wrap_inside": ["TemplateDeclaration"],
+        "column_limits": {"LLVM": 80, "Google": 80, "Chromium": 80, "Mozilla": 80, "WebKit": 0, "GNU": 79, "Microsoft": 120},
+        "variants": {"brace": {"key": "BreakBeforeBraces", "values": ["Allman", "Attach"], "alt_for": ["GNU", "Microsoft"]}, "pointer": {"key": "PointerAlignment", "values": ["Middle", "Middle"], "alt_for": [], "extra": {"DerivePointerAlignment": "false"}}}
+      },
       "fixtures": [
         {"dir": "tests/conformance/corpus/cpp/llvm-project", "suffixes": [".cpp", ".h"], "style": "llvm", "ratchet": "llvm", "prefix": "llvm/", "recursive": true, "copy_as": ".cpp"},
         {"dir": "tests/conformance/corpus/cpp/fmt", "suffixes": [".cc", ".h", ".cpp"], "style": "fmt", "ratchet": "fmt", "prefix": "fmt/", "recursive": true, "copy_as": ".cpp"},

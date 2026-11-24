@@ -14,6 +14,8 @@ pub enum DebugCommand {
         #[arg(long)]
         language_version: Option<String>,
     },
+    /// Parse a file of any language with its own provider and print the tree (kind, byte range, token text).
+    Tree { file: PathBuf },
 }
 
 pub fn run(command: DebugCommand) -> Result<()> {
@@ -22,7 +24,31 @@ pub fn run(command: DebugCommand) -> Result<()> {
             file,
             language_version,
         } => parse(&file, language_version),
+        DebugCommand::Tree { file } => tree(&file),
     }
+}
+
+fn tree(file: &Path) -> Result<()> {
+    let bytes = std::fs::read(file).with_context(|| format!("reading {}", file.display()))?;
+    let source = SourceFile::from_bytes(file.to_string_lossy(), 1, bytes)?;
+    let providers = languages::providers();
+    let provider = providers
+        .iter()
+        .filter(|p| p.file_matchers().iter().any(|m| m.matches(file)))
+        .max_by_key(|p| p.file_matchers().iter().filter(|m| m.matches(file)).map(|m| m.specificity()).max())
+        .with_context(|| format!("no language for {}", file.display()))?;
+    let result = provider.parse(&source)?;
+    // Whitespace and newline tokens are left out: their text is in the gaps between the byte ranges.
+    for line in dump_tree(&result.tree, provider.grammar()).lines() {
+        let blank = line.split_once(" \"").is_some_and(|(_, q)| {
+            let inner = q.trim_end_matches('"');
+            !inner.is_empty() && inner.replace("\\n", "").replace("\\r", "").replace("\\t", "").replace(' ', "").is_empty()
+        });
+        if !blank {
+            println!("{line}");
+        }
+    }
+    Ok(())
 }
 
 fn parse(file: &Path, language_version: Option<String>) -> Result<()> {

@@ -28,6 +28,8 @@ from pathlib import Path
 
 import yaml
 
+import parity_wrap
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -256,7 +258,7 @@ def placed(folder, name, source):
     return folder / (name if source.get("nested") else name.replace("/", "__"))
 
 
-def upstream(config, prefix, version, copy, work, style=None):
+def upstream(config, prefix, version, copy, work, style=None, folder=None):
     """The tool's output for the copy of a fixture, or None when it rejects the file."""
     exe = executable(prefix, config.get("install", {}).get("exe", ""))
     mode = config["input"]
@@ -266,7 +268,7 @@ def upstream(config, prefix, version, copy, work, style=None):
         copy.parent.mkdir(exist_ok=True)
         shutil.copy(work / copy.name, copy)
     group = re.search(config["group"], copy.name) if "group" in config else None  # `{group}`: the first group of the fixture name (sqlfluff: its dialect)
-    command, env = tool_command(config, prefix, exe=exe, file=(copy.name if mode == "in-place" else copy.relative_to(work).as_posix()), group=group.group(1) if group else "", style=style, folder=ROOT / "tests/parity" / config.get("folder", ""))
+    command, env = tool_command(config, prefix, exe=exe, file=(copy.name if mode == "in-place" else copy.relative_to(work).as_posix()), group=group.group(1) if group else "", style=style, folder=folder or ROOT / "tests/parity" / config.get("folder", ""))
     r = run(command, copy.parent if mode == "in-place" else work, text if mode == "stdin" else None, check=False, env=env)
     if r.returncode != 0:
         if config.get("tool_may_reject"):
@@ -544,6 +546,13 @@ def main():
     batch = upstream_batch(config, prefix, found, work) if config["input"] == "batch" else None
 
     flagged = Counter()  # flag -> files the flag changed the result of
+    wrapped = {}  # `wrap_compare`: fixture -> its token-and-gap result (scripts/parity_wrap.py)
+    controlled = bool(os.environ.get("PARITY_CONTROLS"))
+    checker = None
+    if "wrap_compare" in config:
+        checker = parity_wrap.Checker(config["wrap_compare"], ROOT, [os.environ.get("PARITY_DUMP", sudsy), *config["wrap_compare"]["dump"]], work / "dump-tmp")
+        if controlled:
+            parity_wrap.write_variants(config["wrap_compare"], folder, work / "variants", {f[3].get("style") for f in found if f[3].get("style")})
 
     def compare(item):
         name, fixture, _, source = item
@@ -567,10 +576,15 @@ def main():
             theirs, ours = (re.sub(r"[ 	]+$", "", t, flags=re.M) if t is not None else None for t in (theirs, ours))
             masked = not before and theirs == ours
         flagged["ignore_trailing_blanks"] += masked
+        if checker and theirs is not None:
+            wrapped[name] = parity_wrap.file_result(checker, config["wrap_compare"], folder, style, theirs, ours, copy, controlled, lambda variant: upstream(config, prefix, version, copy, here, f"{style}~{variant}", work / "variants"))
         return theirs, ours, unstable, refused
 
     with ThreadPoolExecutor(os.cpu_count() if config.get("parallel") else 1) as pool:
         results = list(pool.map(compare, found))
+    if checker:  # a file with equal tokens and gaps counts as equal
+        parity_wrap.report(found, results, wrapped, target, os.environ.get("PARITY_LABEL", "run"))
+        results = [(t, t if (w := wrapped.get(f[0])) and w["ok"] else o, u, r) for f, (t, o, u, r) in zip(found, results)]
     bad, groups = 0, {}  # a ratchet group is counted: [identical, different, rejected by the tool]
     unstable = Counter()  # group (or "fixtures") -> files that change on a second format
     refusals = Counter()  # group (or "fixtures") -> files Sudsy's safety check refuses
