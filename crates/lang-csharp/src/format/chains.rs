@@ -24,6 +24,12 @@ fn shape(msg: &str) -> FormatError {
 struct AssignHooks;
 
 impl shapes::AssignHooks for AssignHooks {
+    /// The test `x is null` of a conditional does not move a conditional below the operator.
+    fn inline_binary(&self, _cx: &FormatCtx<'_>, n: &SyntaxNode) -> bool {
+        n.kind() == k::IS_PATTERN_EXPRESSION
+            && n.parent().is_some_and(|p| p.kind() == k::CONDITIONAL_EXPRESSION)
+    }
+
     fn layout(
         &self,
         cx: &FormatCtx<'_>,
