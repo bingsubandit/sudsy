@@ -7,7 +7,7 @@ use super::ROWS;
 use super::options::{
     LambdaArgumentHug, anonymous_type_brace_on_new_line, collection_max_blank_lines,
     creation_brace_on_new_line, empty_body_text, expand_crowded_initializers, hug_closing_paren,
-    hug_only_sole_lambda, initializer_layout, lambda_argument_hug, nested_brace_on_new_line,
+    hug_only_sole_lambda, creation_initializer_group, initializer_layout, lambda_argument_hug, nested_brace_on_new_line,
     trailing_comma,
 };
 use super::seq::{R, Sep, direct_tokens, sep_doc, separator, seq_of};
@@ -100,6 +100,17 @@ fn creates_with_initializer(node: &SyntaxNode) -> bool {
     }
 }
 
+/// `new T(...) { ... }` as a group of its own: with `initializer_group: creation` its initializer
+/// breaks with it.
+pub fn creation(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    let doc = super::seq::seq(cx, node)?;
+    Ok(if creation_initializer_group(cx.options) {
+        doc::group(doc)
+    } else {
+        doc
+    })
+}
+
 /// `initializer_expand: crowded`: three or more member assignments, or two or more items one of
 /// which creates an object with an initializer.
 fn crowded(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
@@ -110,10 +121,17 @@ fn crowded(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
     let assignments = items.iter().all(|c| {
         matches!(
             c.kind(),
-            k::SIMPLE_ASSIGNMENT_EXPRESSION | k::ANONYMOUS_OBJECT_MEMBER_DECLARATOR
+            k::SIMPLE_ASSIGNMENT_EXPRESSION
+                | k::ANONYMOUS_OBJECT_MEMBER_DECLARATOR
+                | k::COMPLEX_ELEMENT_INITIALIZER_EXPRESSION
         )
     });
-    (items.len() >= 3 && assignments)
+    let nested_arrays = node.kind() == k::ARRAY_INITIALIZER_EXPRESSION
+        && items
+            .first()
+            .is_some_and(|c| c.kind() == k::ARRAY_INITIALIZER_EXPRESSION);
+    nested_arrays
+        || (items.len() >= 3 && assignments)
         || (items.len() >= 2 && items.iter().any(creates_with_initializer))
 }
 
@@ -147,9 +165,12 @@ fn brace_style(cx: &FormatCtx<'_>, node: &SyntaxNode) -> ListStyle {
 /// `{ a, b }`, or when it does not fit (or the source broke it) the braces on their own lines.
 pub fn initializer(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let mut style = brace_style(cx, node);
-    style.leading_line = (creation_parent(node.parent().map(|p| p.kind()))
-        && creation_brace_on_new_line(cx.options))
+    let creation = creation_parent(node.parent().map(|p| p.kind()));
+    style.leading_line = (creation && creation_brace_on_new_line(cx.options))
         || (nested_brace_on_new_line(cx.options) && value_of_assignment(node));
+    style.shared = creation
+        && creation_initializer_group(cx.options)
+        && node.parent().is_some_and(|p| p.kind() != k::WITH_EXPRESSION);
     delimited_list(cx, node, &style)
 }
 

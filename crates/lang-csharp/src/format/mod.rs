@@ -184,9 +184,13 @@ impl NodeFormatter for CSharpFormatter {
             k::ANONYMOUS_OBJECT_CREATION_EXPRESSION | k::LIST_PATTERN => {
                 lists::list_with_surroundings(cx, node)?
             }
-            k::ARRAY_RANK_SPECIFIER
-            | k::IMPLICIT_ARRAY_CREATION_EXPRESSION
-            | k::IMPLICIT_STACK_ALLOC_ARRAY_CREATION_EXPRESSION => seq::seq(cx, node)?,
+            k::ARRAY_RANK_SPECIFIER => seq::seq(cx, node)?,
+            k::IMPLICIT_ARRAY_CREATION_EXPRESSION
+            | k::IMPLICIT_STACK_ALLOC_ARRAY_CREATION_EXPRESSION => lists::creation(cx, node)?,
+            k::OBJECT_CREATION_EXPRESSION
+            | k::IMPLICIT_OBJECT_CREATION_EXPRESSION
+            | k::ARRAY_CREATION_EXPRESSION
+            | k::STACK_ALLOC_ARRAY_CREATION_EXPRESSION => lists::creation(cx, node)?,
             k::EQUALS_VALUE_CLAUSE => chains::equals_value_clause(cx, node)?,
             k::ARROW_EXPRESSION_CLAUSE => chains::arrow_clause(cx, node)?,
             k::CONDITIONAL_EXPRESSION => chains::conditional(cx, node)?,

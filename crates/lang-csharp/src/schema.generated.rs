@@ -84,6 +84,8 @@ pub const INITIALIZER_COLLAPSE: core_config::OptId = core_config::opt::INITIALIZ
 #[allow(dead_code)]
 pub const PRESERVE_QUERY_BREAKS: core_config::OptId = core_config::opt::PRESERVE_QUERY_BREAKS;
 #[allow(dead_code)]
+pub const INITIALIZER_GROUP: core_config::OptId = core_config::opt::INITIALIZER_GROUP;
+#[allow(dead_code)]
 pub const INITIALIZER_EXPAND: core_config::OptId = core_config::opt::INITIALIZER_EXPAND;
 #[allow(dead_code)]
 pub const LAMBDA_ARGUMENT_HUG: core_config::OptId = core_config::opt::LAMBDA_ARGUMENT_HUG;
@@ -239,6 +241,16 @@ pub fn initializer_collapse(o: &core_config::ResolvedOptions) -> InitializerColl
 #[allow(dead_code)]
 pub fn preserve_query_breaks(o: &core_config::ResolvedOptions) -> bool {
     o.flag(PRESERVE_QUERY_BREAKS, false)
+}
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum InitializerGroup { Own, Creation }
+#[allow(dead_code)]
+pub fn initializer_group(o: &core_config::ResolvedOptions) -> InitializerGroup {
+    match o.text(INITIALIZER_GROUP) {
+        "creation" => InitializerGroup::Creation,
+        _ => InitializerGroup::Own,
+    }
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -518,6 +530,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice(core_config::opt::WRAPPED_BRACE_LINE, &["creation", "all", "none"], "creation", "Opening brace of an initializer or property pattern that is laid out on several lines: `creation` puts it on its own line for `new T { ... }` only; `all` also for an initializer nested in an assignment (`Prop = { ... }`) and for property patterns; `none` keeps it on the line of the expression."),
         core_config::OptionDef::choice(core_config::opt::INITIALIZER_COLLAPSE, &["preserve", "always"], "preserve", "Initializers and collection expressions: `preserve` keeps one expanded when the source has a line break in it; `always` puts one on a single line whenever it fits."),
         core_config::OptionDef::boolean(core_config::opt::PRESERVE_QUERY_BREAKS, false, "A query expression with a line break in the source keeps one clause per line even when it fits on a line."),
+        core_config::OptionDef::choice(core_config::opt::INITIALIZER_GROUP, &["own", "creation"], "own", "The braces of the initializer of a `new` expression: `own` breaks them only when they do not fit; `creation` breaks them together with the whole `new T(...) { ... }`, so that they are expanded once the type and arguments do not fit on the line either."),
         core_config::OptionDef::choice(core_config::opt::INITIALIZER_EXPAND, &["fit", "crowded"], "fit", "Initializers (and anonymous types) that fit on a line: `fit` keeps them on it; `crowded` puts one item per line when there are three or more member assignments, or two or more items one of which creates an object with an initializer."),
         core_config::OptionDef::choice(core_config::opt::LAMBDA_ARGUMENT_HUG, &["last", "sole", "sole_bare"], "last", "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument; `sole_bare` only when that lambda has no parameters or one without parentheses (`x => ...`, `() => ...`)."),
         core_config::OptionDef::choice(core_config::opt::CONSTRUCTOR_INITIALIZER_LINE, &["same_line", "new_line"], "same_line", "The `: base(...)` or `: this(...)` initializer of a constructor: `same_line` keeps it after the parameter list; `new_line` puts it on its own indented line."),

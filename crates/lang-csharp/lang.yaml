@@ -91,6 +91,10 @@ options:
   - preserve_query_breaks:
       default: false
       doc: "A query expression with a line break in the source keeps one clause per line even when it fits on a line."
+  - initializer_group:
+      values: ["own", "creation"]
+      default: "own"
+      doc: "The braces of the initializer of a `new` expression: `own` breaks them only when they do not fit; `creation` breaks them together with the whole `new T(...) { ... }`, so that they are expanded once the type and arguments do not fit on the line either."
   - initializer_expand:
       values: ["fit", "crowded"]
       default: "fit"

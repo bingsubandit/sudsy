@@ -8709,6 +8709,15 @@
               ],
               "type": "string"
             },
+            "initializer_group": {
+              "default": "own",
+              "description": "The braces of the initializer of a `new` expression: `own` breaks them only when they do not fit; `creation` breaks them together with the whole `new T(...) { ... }`, so that they are expanded once the type and arguments do not fit on the line either.",
+              "enum": [
+                "own",
+                "creation"
+              ],
+              "type": "string"
+            },
             "inline_accessor_bodies": {
               "default": false,
               "description": "Keep the body of an accessor on its line (`get { return x; }`) when it is one simple statement without comments and fits; otherwise the braces go on their own lines.",
@@ -12367,6 +12376,15 @@
                     "enum": [
                       "fit",
                       "crowded"
+                    ],
+                    "type": "string"
+                  },
+                  "initializer_group": {
+                    "default": "own",
+                    "description": "The braces of the initializer of a `new` expression: `own` breaks them only when they do not fit; `creation` breaks them together with the whole `new T(...) { ... }`, so that they are expanded once the type and arguments do not fit on the line either.",
+                    "enum": [
+                      "own",
+                      "creation"
                     ],
                     "type": "string"
                   },

@@ -79,6 +79,10 @@ pub fn initializer_layout(options: &ResolvedOptions) -> ListLayout {
     }
 }
 
+pub fn creation_initializer_group(options: &ResolvedOptions) -> bool {
+    initializer_group(options) == InitializerGroup::Creation
+}
+
 pub fn expand_crowded_initializers(options: &ResolvedOptions) -> bool {
     initializer_expand(options) == InitializerExpand::Crowded
 }

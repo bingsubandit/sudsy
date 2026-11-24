@@ -25,6 +25,7 @@ csharp:
     wrapped_brace_line: all
     initializer_collapse: always
     initializer_expand: crowded
+    initializer_group: creation
     lambda_argument_hug: sole_bare
     constructor_initializer_line: new_line
     parameter_attribute_layout: hanging
