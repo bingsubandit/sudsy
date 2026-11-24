@@ -182,23 +182,24 @@ pub const SPACE_BEFORE_COLON: OptId = OptId(179);
 pub const SPACE_BEFORE_PARENS: OptId = OptId(180);
 pub const SPACE_BETWEEN_EMPTY_FOR_CLAUSES: OptId = OptId(181);
 pub const SPACES_BEFORE_TRAILING_COMMENTS: OptId = OptId(182);
-pub const SWITCH_ARM_LAYOUT: OptId = OptId(183);
-pub const TARGET_VERSION: OptId = OptId(184);
-pub const TRAILING_COMMA_BEFORE: OptId = OptId(185);
-pub const TRAILING_COMMA_LAST_ENTRY: OptId = OptId(186);
-pub const TRAILING_COMMAS: OptId = OptId(187);
-pub const TYPE_ARGUMENT_COMPLEX_KINDS: OptId = OptId(188);
-pub const TYPE_CASE: OptId = OptId(189);
-pub const TYPE_USE_ANNOTATIONS: OptId = OptId(190);
-pub const UNBREAKABLE_SINGLE_ITEM_LISTS: OptId = OptId(191);
-pub const WHEN_CLAUSE_LINE: OptId = OptId(192);
-pub const WHITESPACE_SENSITIVITY: OptId = OptId(193);
-pub const WRAP_LINES: OptId = OptId(194);
-pub const WRAPPED_BODY_INDENT_WORDS: OptId = OptId(195);
-pub const WRAPPED_BRACE_LINE: OptId = OptId(196);
+pub const STACKED_RESOURCES: OptId = OptId(183);
+pub const SWITCH_ARM_LAYOUT: OptId = OptId(184);
+pub const TARGET_VERSION: OptId = OptId(185);
+pub const TRAILING_COMMA_BEFORE: OptId = OptId(186);
+pub const TRAILING_COMMA_LAST_ENTRY: OptId = OptId(187);
+pub const TRAILING_COMMAS: OptId = OptId(188);
+pub const TYPE_ARGUMENT_COMPLEX_KINDS: OptId = OptId(189);
+pub const TYPE_CASE: OptId = OptId(190);
+pub const TYPE_USE_ANNOTATIONS: OptId = OptId(191);
+pub const UNBREAKABLE_SINGLE_ITEM_LISTS: OptId = OptId(192);
+pub const WHEN_CLAUSE_LINE: OptId = OptId(193);
+pub const WHITESPACE_SENSITIVITY: OptId = OptId(194);
+pub const WRAP_LINES: OptId = OptId(195);
+pub const WRAPPED_BODY_INDENT_WORDS: OptId = OptId(196);
+pub const WRAPPED_BRACE_LINE: OptId = OptId(197);
 
 /// Option names sorted; an id is the index.
-pub static NAMES: [&str; 197] = [
+pub static NAMES: [&str; 198] = [
     "access_modifier_outdent",
     "accessor_blank_lines",
     "align_after_open_bracket",
@@ -382,6 +383,7 @@ pub static NAMES: [&str; 197] = [
     "space_before_parens",
     "space_between_empty_for_clauses",
     "spaces_before_trailing_comments",
+    "stacked_resources",
     "switch_arm_layout",
     "target_version",
     "trailing_comma_before",

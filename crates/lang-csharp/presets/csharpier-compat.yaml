@@ -33,6 +33,7 @@ csharp:
     unbreakable_single_item_lists: true
     conditional_layout: ladder
     declarator_line: own_line
+    stacked_resources: flush
     when_clause_line: hanging
     do_while_line: same_line
     space_between_empty_for_clauses: true

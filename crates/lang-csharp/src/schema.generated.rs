@@ -102,6 +102,8 @@ pub const UNBREAKABLE_SINGLE_ITEM_LISTS: core_config::OptId = core_config::opt::
 #[allow(dead_code)]
 pub const DECLARATOR_LINE: core_config::OptId = core_config::opt::DECLARATOR_LINE;
 #[allow(dead_code)]
+pub const STACKED_RESOURCES: core_config::OptId = core_config::opt::STACKED_RESOURCES;
+#[allow(dead_code)]
 pub const WHEN_CLAUSE_LINE: core_config::OptId = core_config::opt::WHEN_CLAUSE_LINE;
 #[allow(dead_code)]
 pub const DO_WHILE_LINE: core_config::OptId = core_config::opt::DO_WHILE_LINE;
@@ -329,6 +331,16 @@ pub fn declarator_line(o: &core_config::ResolvedOptions) -> DeclaratorLine {
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StackedResources { Indent, Flush }
+#[allow(dead_code)]
+pub fn stacked_resources(o: &core_config::ResolvedOptions) -> StackedResources {
+    match o.text(STACKED_RESOURCES) {
+        "flush" => StackedResources::Flush,
+        _ => StackedResources::Indent,
+    }
+}
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum WhenClauseLine { SameLine, Hanging }
 #[allow(dead_code)]
 pub fn when_clause_line(o: &core_config::ResolvedOptions) -> WhenClauseLine {
@@ -539,6 +551,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice(core_config::opt::BASE_LIST_LAYOUT, &["inline", "hanging"], "inline", "The base list of a type (`: A, B`): `inline` keeps it on the line of the type name; `hanging` keeps it there when it fits and otherwise starts a line, with one base type per line."),
         core_config::OptionDef::boolean(core_config::opt::UNBREAKABLE_SINGLE_ITEM_LISTS, false, "Never break a list that holds one simple item: an attribute list with one attribute, a type argument list with one name, an index that is one name or literal."),
         core_config::OptionDef::choice(core_config::opt::DECLARATOR_LINE, &["same_line", "own_line"], "same_line", "The declarators after the first of `int a, b;` (also fields): `same_line` keeps them on the line of the first; `own_line` puts each on a line of its own, indented (not in a `for` header)."),
+        core_config::OptionDef::choice(core_config::opt::STACKED_RESOURCES, &["indent", "flush"], "indent", "A `using` or `fixed` statement whose body is another statement of its kind: `indent` indents it like any embedded statement; `flush` puts it on the next line at the same level, so that a stack of them reads like a list."),
         core_config::OptionDef::choice(core_config::opt::WHEN_CLAUSE_LINE, &["same_line", "hanging"], "same_line", "The `when` of a `catch` filter or a `case` guard: `same_line` keeps it on the line of what precedes it; `hanging` moves it to an indented line of its own when the whole does not fit."),
         core_config::OptionDef::choice(core_config::opt::DO_WHILE_LINE, &["new_line", "same_line"], "new_line", "The `while` of a `do` statement: `new_line` starts a line; `same_line` follows the closing brace (`} while (x);`)."),
         core_config::OptionDef::choice(core_config::opt::CLAUSE_KEYWORD_LINE, &["new_line", "same_line"], "new_line", "`else`, `catch` and `finally` after a block: `new_line` starts a line; `same_line` follows the closing brace (`} else {`) unless a comment sits between them."),

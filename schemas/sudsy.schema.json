@@ -8911,6 +8911,15 @@
               "description": "A space between the two semicolons of a `for` with an empty condition (`for (; ;)`); when false `for (;;)`.",
               "type": "boolean"
             },
+            "stacked_resources": {
+              "default": "indent",
+              "description": "A `using` or `fixed` statement whose body is another statement of its kind: `indent` indents it like any embedded statement; `flush` puts it on the next line at the same level, so that a stack of them reads like a list.",
+              "enum": [
+                "indent",
+                "flush"
+              ],
+              "type": "string"
+            },
             "switch_arm_layout": {
               "default": "inline",
               "description": "Layout of a switch expression arm: `inline` keeps `pattern => value` as one run of tokens; `assignment` lays out the value like the right-hand side of `=` (see `assignment_layout`).",
@@ -12580,6 +12589,15 @@
                     "default": false,
                     "description": "A space between the two semicolons of a `for` with an empty condition (`for (; ;)`); when false `for (;;)`.",
                     "type": "boolean"
+                  },
+                  "stacked_resources": {
+                    "default": "indent",
+                    "description": "A `using` or `fixed` statement whose body is another statement of its kind: `indent` indents it like any embedded statement; `flush` puts it on the next line at the same level, so that a stack of them reads like a list.",
+                    "enum": [
+                      "indent",
+                      "flush"
+                    ],
+                    "type": "string"
                   },
                   "switch_arm_layout": {
                     "default": "inline",

@@ -126,6 +126,10 @@ options:
       values: ["same_line", "own_line"]
       default: "same_line"
       doc: "The declarators after the first of `int a, b;` (also fields): `same_line` keeps them on the line of the first; `own_line` puts each on a line of its own, indented (not in a `for` header)."
+  - stacked_resources:
+      values: ["indent", "flush"]
+      default: "indent"
+      doc: "A `using` or `fixed` statement whose body is another statement of its kind: `indent` indents it like any embedded statement; `flush` puts it on the next line at the same level, so that a stack of them reads like a list."
   - when_clause_line:
       values: ["same_line", "hanging"]
       default: "same_line"

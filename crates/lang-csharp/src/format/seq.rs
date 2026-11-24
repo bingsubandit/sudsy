@@ -5,10 +5,10 @@
 
 use super::flat;
 use super::options::{
-    DeclaratorLine, clauses_on_closing_line, constructor_initializer_on_new_line,
+    DeclaratorLine, StackedResources, clauses_on_closing_line, constructor_initializer_on_new_line,
     creation_brace_on_new_line, declarator_line, do_while_on_closing_line, expand_empty_bodies,
     hanging_when_clause,
-    label_outdent, nested_brace_on_new_line, space_after_delegate,
+    label_outdent, nested_brace_on_new_line, space_after_delegate, stacked_resources,
     space_after_empty_last_for_clause, space_between_empty_for_clauses,
 };
 use crate::generated::kind as k;
@@ -228,6 +228,12 @@ fn separator_raw(
             && cx.grammar.has_tag(nk, "statement")
             && !(pk == k::ELSE_CLAUSE && nk == k::IF_STATEMENT)
         {
+            if pk == nk
+                && matches!(pk, k::USING_STATEMENT | k::FIXED_STATEMENT)
+                && stacked_resources(cx.options) == StackedResources::Flush
+            {
+                return Sep::Hard;
+            }
             return Sep::Embedded;
         }
         if matches!(nk, k::ELSE_CLAUSE | k::CATCH_CLAUSE | k::FINALLY_CLAUSE) {
