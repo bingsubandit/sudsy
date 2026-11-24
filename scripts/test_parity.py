@@ -1,6 +1,7 @@
 """Tests of the parity runner (`scripts/parity.sh --test`): pins, filter counts and the `fix` command, on throwaway fixtures."""
 import contextlib
 import io
+import json
 import stat
 import tempfile
 import unittest
@@ -161,6 +162,18 @@ class CorpusAbsent(unittest.TestCase):
         self.assertEqual(e.exception.code, 1)
         self.assertIn("corpus absent", out.getvalue())
         self.assertIn("fetch-t-corpus.sh", out.getvalue())
+
+
+class Fetch(unittest.TestCase):
+    def test_every_corpus_entry_names_fetch_scripts_that_exist(self):
+        root = Path(__file__).resolve().parent.parent
+        for section, entries in pf.tools().items():
+            for name, entry in entries.items():
+                scripts = entry.get("fetch", [])
+                for script in scripts:
+                    self.assertTrue((root / script).is_file(), f"{section} {name}: {script} does not exist")
+                if "tests/conformance/corpus/" in json.dumps(entry):
+                    self.assertTrue(scripts, f"{section} {name} reads the fetched corpus but names no fetch script")
 
 
 class SpeedRuns(unittest.TestCase):

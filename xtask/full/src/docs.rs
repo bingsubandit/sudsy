@@ -155,22 +155,27 @@ pub(crate) fn catalogs() -> Result<Vec<Catalog>> {
 
 /// One row per catalog: the entries by coverage.
 fn catalog_counts(catalogs: Vec<Catalog>) -> Result<String> {
-    let shares = coverage_shares()?;
+    let ratchets = coverage_ratchets()?;
     let mut out = String::from(
-        "| Tool | Target | Entries | Covered | Partial | Missing | SDK | Wontfix | Deferred | Planned |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+        "| Tool | Target | Measured on | Entries | Covered | Partial | Missing | SDK | Wontfix | Deferred | Planned |
+|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
 ",
     );
     for c in catalogs {
         let n = |coverage: &str| c.entries.iter().filter(|e| e.coverage == coverage).count();
         let planned = c.entries.iter().filter(|e| e.sudsy == "planned").count();
         out += &format!(
-            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {planned} |
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {planned} |
 ",
             c.tool,
-            shares
+            ratchets
                 .get(&c.tool)
+                .and_then(|r| r.0)
                 .map_or("-".to_string(), |t| format!("{t:.1}%")),
+            ratchets
+                .get(&c.tool)
+                .and_then(|r| r.1.as_deref())
+                .map_or("-".to_string(), |m| format!("`{m}`")),
             c.entries.len(),
             n("covered"),
             n("partial"),
@@ -187,9 +192,23 @@ fn catalog_counts(catalogs: Vec<Catalog>) -> Result<String> {
 /// leaving out the reviewed exclusions of docs/ai/design/parity-target.md, `scripts/parity.sh
 /// coverage <tool>`) of each lint tool, by catalog name.
 pub(crate) fn coverage_shares() -> Result<BTreeMap<String, f64>> {
+    Ok(coverage_ratchets()?
+        .into_iter()
+        .filter_map(|(tool, (share, _))| share.map(|s| (tool, s)))
+        .collect())
+}
+
+/// `(target, main)` of each lint tool by catalog name: `main` is the origin/main commit of the
+/// last `COVERAGE_WRITE=1` run (`measured:` of its differences.yaml).
+fn coverage_ratchets() -> Result<BTreeMap<String, (Option<f64>, Option<String>)>> {
+    #[derive(serde::Deserialize)]
+    struct Measured {
+        main: String,
+    }
     #[derive(serde::Deserialize)]
     struct Ratchets {
         target: Option<f64>,
+        measured: Option<Measured>,
     }
     let root = xtask::repo_root();
     let text = std::fs::read_to_string(root.join("scripts/parity_tools.json"))?;
@@ -205,8 +224,8 @@ pub(crate) fn coverage_shares() -> Result<BTreeMap<String, f64>> {
         };
         let r: Ratchets = serde_saphyr::from_str(&text)
             .map_err(|e| anyhow::anyhow!("{}: {e}", path.display()))?;
-        if let (Some(share), Some(catalog)) = (r.target, entry["catalog"].as_str()) {
-            shares.insert(catalog.to_string(), share);
+        if let Some(catalog) = entry["catalog"].as_str() {
+            shares.insert(catalog.to_string(), (r.target, r.measured.map(|m| m.main)));
         }
     }
     Ok(shares)
