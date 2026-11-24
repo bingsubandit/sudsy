@@ -21,7 +21,8 @@ pub use options::{MEMBER_CHAIN_MIN_CALLS, PREPROCESSOR_SYMBOLS, TRAILING_COMMAS,
 
 use self::options::{
     attach_comments, constructor_initializer_on_new_line, fluid_assignments,
-    hanging_parameter_attributes, inline_accessor_bodies, label_outdent, sort_usings,
+    hanging_parameter_attributes, hanging_when_clause, inline_accessor_bodies, label_outdent,
+    sort_usings,
     switch_arm_as_assignment, unbreakable_single_item_lists, using_order,
 };
 use crate::generated::kind as k;
@@ -193,6 +194,9 @@ impl NodeFormatter for CSharpFormatter {
                 chains::switch_arm(cx, node)?
             }
             k::PARENTHESIZED_EXPRESSION => chains::parenthesized(cx, node)?,
+            k::WHEN_CLAUSE | k::CATCH_FILTER_CLAUSE if hanging_when_clause(cx.options) => {
+                chains::when_clause(cx, node)?
+            }
             k::CAST_EXPRESSION => chains::cast(cx, node)?,
             k::QUERY_EXPRESSION => query::query_expression(cx, node)?,
             k::QUERY_BODY => query::query_body(cx, node)?,

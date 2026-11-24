@@ -8925,6 +8925,15 @@
               "description": "Never break a list that holds one simple item: an attribute list with one attribute, a type argument list with one name, an index that is one name or literal.",
               "type": "boolean"
             },
+            "when_clause_line": {
+              "default": "same_line",
+              "description": "The `when` of a `catch` filter or a `case` guard: `same_line` keeps it on the line of what precedes it; `hanging` moves it to an indented line of its own when the whole does not fit.",
+              "enum": [
+                "same_line",
+                "hanging"
+              ],
+              "type": "string"
+            },
             "wrapped_brace_line": {
               "default": "creation",
               "description": "Opening brace of an initializer or property pattern that is laid out on several lines: `creation` puts it on its own line for `new T { ... }` only; `all` also for an initializer nested in an assignment (`Prop = { ... }`) and for property patterns; `none` keeps it on the line of the expression.",
@@ -12573,6 +12582,15 @@
                     "default": false,
                     "description": "Never break a list that holds one simple item: an attribute list with one attribute, a type argument list with one name, an index that is one name or literal.",
                     "type": "boolean"
+                  },
+                  "when_clause_line": {
+                    "default": "same_line",
+                    "description": "The `when` of a `catch` filter or a `case` guard: `same_line` keeps it on the line of what precedes it; `hanging` moves it to an indented line of its own when the whole does not fit.",
+                    "enum": [
+                      "same_line",
+                      "hanging"
+                    ],
+                    "type": "string"
                   },
                   "wrapped_brace_line": {
                     "default": "creation",

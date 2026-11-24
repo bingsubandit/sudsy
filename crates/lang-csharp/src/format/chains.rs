@@ -178,6 +178,29 @@ pub fn conditional(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     )
 }
 
+/// `when cond` after a pattern or `catch`: a group on an indented line of its own; a catch filter
+/// has its condition in parentheses that hug it.
+pub fn when_clause(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
+    let els = children(cx, node);
+    let body = match els.as_slice() {
+        [when, open, cond @ SyntaxElement::Node(_), close] => doc::concat(vec![
+            seq_of(cx, node, &[when.clone(), open.clone()])?,
+            doc::group(doc::concat(vec![
+                doc::indent(core_format::seq::el(cx, cond)?),
+                doc::softline(),
+            ])),
+            core_format::seq::el(cx, close)?,
+        ]),
+        _ => seq_of(cx, node, &els)?,
+    };
+    let discard = node.parent().is_some_and(|p| {
+        p.kind() == k::SWITCH_EXPRESSION_ARM
+            && p.children().next().is_some_and(|t| t.kind() == k::DISCARD_PATTERN)
+    });
+    let line = if discard { doc::lit(" ") } else { doc::line() };
+    Ok(doc::group(doc::indent(doc::concat(vec![line, body]))))
+}
+
 /// `(T)x`: the operand hangs below the cast when the whole does not fit.
 pub fn cast(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     const POLICY: shapes::HangPolicy = shapes::HangPolicy {

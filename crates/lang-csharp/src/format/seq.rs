@@ -7,6 +7,7 @@ use super::flat;
 use super::options::{
     DeclaratorLine, clauses_on_closing_line, constructor_initializer_on_new_line,
     creation_brace_on_new_line, declarator_line, do_while_on_closing_line, expand_empty_bodies,
+    hanging_when_clause,
     label_outdent, nested_brace_on_new_line, space_after_delegate,
     space_after_empty_last_for_clause, space_between_empty_for_clauses,
 };
@@ -235,6 +236,10 @@ fn separator_raw(
             } else {
                 Sep::Hard
             };
+        }
+        if matches!(nk, k::WHEN_CLAUSE | k::CATCH_FILTER_CLAUSE) && hanging_when_clause(cx.options)
+        {
+            return Sep::None; // starts with a `line` of its own
         }
         if nk == k::TYPE_PARAMETER_CONSTRAINT_CLAUSE {
             return Sep::HardIndented;

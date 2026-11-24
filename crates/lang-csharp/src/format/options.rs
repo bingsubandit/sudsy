@@ -135,6 +135,10 @@ pub fn using_order(options: &ResolvedOptions) -> Order {
     }
 }
 
+pub fn hanging_when_clause(options: &ResolvedOptions) -> bool {
+    when_clause_line(options) == WhenClauseLine::Hanging
+}
+
 pub fn do_while_on_closing_line(options: &ResolvedOptions) -> bool {
     do_while_line(options) == DoWhileLine::SameLine
 }
