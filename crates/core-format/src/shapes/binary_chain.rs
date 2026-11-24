@@ -291,7 +291,6 @@ pub fn binary_chain(
         && steps == 1
         && !(place == Place::Bare && logical)
         && [
-            parent.as_ref().map(SyntaxNode::kind),
             node_kind(&spine[0].left),
             node_kind(&spine[0].right),
         ]

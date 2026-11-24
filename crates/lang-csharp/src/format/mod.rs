@@ -162,7 +162,14 @@ impl NodeFormatter for CSharpFormatter {
                     && single_child(
                         cx,
                         node,
-                        &[k::PREDEFINED_TYPE, k::IDENTIFIER_NAME, k::QUALIFIED_NAME],
+                        &[
+                            k::PREDEFINED_TYPE,
+                            k::IDENTIFIER_NAME,
+                            k::QUALIFIED_NAME,
+                            k::TUPLE_TYPE,
+                            k::ARRAY_TYPE,
+                            k::NULLABLE_TYPE,
+                        ],
                     ) =>
             {
                 lists::unbreakable_list(cx, node)?
