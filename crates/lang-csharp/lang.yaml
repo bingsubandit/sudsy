@@ -66,7 +66,7 @@ options:
       doc: "Blank lines between the elements of a collection initializer, array initializer or collection expression: `preserve` keeps the source's (at most one); `remove` drops them. The members of an object initializer keep theirs."
   - inline_accessor_bodies:
       default: false
-      doc: "Keep the body of an accessor on its line (`get { return x; }`) when it is one simple statement without comments and fits; otherwise the braces go on their own lines."
+      doc: "Keep the body of an accessor on its line (`get { return x; }`) when it is one simple statement without comments and fits; otherwise the braces go on their own lines. Accessors without a body (`{ get; set; }`) then also collapse onto one line when the source has them on several."
   - preserve_single_line_blocks:
       default: false
       doc: "A block written on one line (`void M() { return; }`, `get { return x; }`,              `if (a)` followed by `{ b(); }`) stays on one line, as `{ a; b; }`, when it has no comment and no label in it. Type, namespace, enum and `switch` bodies written on one line stay as well."

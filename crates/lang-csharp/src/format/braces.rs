@@ -6,8 +6,8 @@
 use super::flat;
 use super::options::{
     empty_body_text, expand_empty_bodies, hanging_base_list, indent_switch_section_block,
-    preserve_single_line_blocks, preserve_single_line_statements, remove_accessor_blank_lines,
-    separate_all_members, trailing_comma,
+    inline_accessor_bodies, preserve_single_line_blocks, preserve_single_line_statements,
+    remove_accessor_blank_lines, separate_all_members, trailing_comma,
 };
 use super::seq::{
     R, Sep, block_is_empty, braced_element, direct_tokens, is_empty_braces, keeps_empty_inline,
@@ -175,7 +175,9 @@ pub fn accessors_inline(cx: &FormatCtx<'_>, list: &SyntaxNode) -> bool {
     let has_body = list
         .children()
         .any(|a| a.children().any(|c| c.kind() == k::BLOCK));
-    simple && !has_comment && !(has_body && cx.has_line_break(list, range))
+    simple
+        && !has_comment
+        && !((has_body || !inline_accessor_bodies(cx.options)) && cx.has_line_break(list, range))
 }
 
 pub fn accessor_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
