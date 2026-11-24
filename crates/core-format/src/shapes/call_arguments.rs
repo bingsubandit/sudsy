@@ -36,6 +36,9 @@ pub enum HugLast {
     Never,
     /// Only an argument that is alone.
     Sole,
+    /// Only an argument that is alone and a function with no parameters or one without
+    /// parentheses (`x => ...`, `() => ...`).
+    SoleBare,
     /// The last of any number of arguments.
     Last,
 }
@@ -65,6 +68,7 @@ impl CallStyle {
             {
                 Some("last") => HugLast::Last,
                 Some("sole") => HugLast::Sole,
+                Some("sole_bare") => HugLast::SoleBare,
                 _ => HugLast::Never,
             },
         }
@@ -147,7 +151,23 @@ pub fn hugs_last(cx: &FormatCtx<'_>, style: &CallStyle, arg: &SyntaxNode, count:
     match style.last {
         HugLast::Never => false,
         HugLast::Sole => count == 1 && can_hug(cx, &expression_of(cx, arg), false),
+        HugLast::SoleBare => {
+            let e = expression_of(cx, arg);
+            count == 1 && can_hug(cx, &e, false) && has_bare_parameters(cx, &e)
+        }
         HugLast::Last => can_hug(cx, &expression_of(cx, arg), false),
+    }
+}
+
+/// Does the function `f` take no parameters, or one without parentheses? A function with no
+/// `parameters` slot does not.
+fn has_bare_parameters(cx: &FormatCtx<'_>, f: &SyntaxNode) -> bool {
+    let g = cx.grammar;
+    match g.slot(f, "parameters") {
+        Some(core_syntax::SyntaxElement::Node(p)) => {
+            !g.has_tag(p.kind(), "delimited-list") || p.children().next().is_none()
+        }
+        _ => false,
     }
 }
 
@@ -190,6 +210,7 @@ fn should_group_last(
     match style.last {
         HugLast::Never => return false,
         HugLast::Sole if args.len() != 1 => return false,
+        HugLast::SoleBare if args.len() != 1 || !has_bare_parameters(cx, last) => return false,
         _ => {}
     }
     !has_comment(cx, last)
@@ -526,6 +547,9 @@ fn body_hug(
     let g = cx.grammar;
     let [lambda] = exprs else { return Ok(None) };
     if !style.body || !g.has_tag(lambda.kind(), "huggable-function") {
+        return Ok(None);
+    }
+    if style.last == HugLast::SoleBare && !has_bare_parameters(cx, lambda) {
         return Ok(None);
     }
     let [slot] = &c.slots[..] else {

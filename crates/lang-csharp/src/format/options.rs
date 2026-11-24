@@ -84,7 +84,7 @@ pub fn expand_crowded_initializers(options: &ResolvedOptions) -> bool {
 }
 
 pub fn hug_only_sole_lambda(options: &ResolvedOptions) -> bool {
-    lambda_argument_hug(options) == LambdaArgumentHug::Sole
+    lambda_argument_hug(options) != LambdaArgumentHug::Last
 }
 
 pub fn hanging_parameter_attributes(options: &ResolvedOptions) -> bool {

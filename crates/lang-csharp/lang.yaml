@@ -96,9 +96,9 @@ options:
       default: "fit"
       doc: "Initializers (and anonymous types) that fit on a line: `fit` keeps them on it; `crowded` puts one item per line when there are three or more member assignments, or two or more items one of which creates an object with an initializer."
   - lambda_argument_hug:
-      values: ["last", "sole"]
+      values: ["last", "sole", "sole_bare"]
       default: "last"
-      doc: "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument."
+      doc: "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument; `sole_bare` only when that lambda has no parameters or one without parentheses (`x => ...`, `() => ...`)."
   - constructor_initializer_line:
       values: ["same_line", "new_line"]
       default: "same_line"

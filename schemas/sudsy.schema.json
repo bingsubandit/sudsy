@@ -8721,10 +8721,11 @@
             },
             "lambda_argument_hug": {
               "default": "last",
-              "description": "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument.",
+              "description": "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument; `sole_bare` only when that lambda has no parameters or one without parentheses (`x => ...`, `() => ...`).",
               "enum": [
                 "last",
-                "sole"
+                "sole",
+                "sole_bare"
               ],
               "type": "string"
             },
@@ -12360,10 +12361,11 @@
                   },
                   "lambda_argument_hug": {
                     "default": "last",
-                    "description": "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument.",
+                    "description": "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument; `sole_bare` only when that lambda has no parameters or one without parentheses (`x => ...`, `() => ...`).",
                     "enum": [
                       "last",
-                      "sole"
+                      "sole",
+                      "sole_bare"
                     ],
                     "type": "string"
                   },

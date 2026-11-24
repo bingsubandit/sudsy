@@ -626,8 +626,27 @@ fn soft(
 }
 
 /// The chain that ends with `node`: on one line if it fits, else the head and then one group per
-/// line.
+/// line. The comments in front of the chain go before it: their line breaks decide nothing.
 pub fn member_chain(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    policy: &ChainPolicy,
+    hooks: &dyn ChainHooks,
+) -> Result<Doc, FormatError> {
+    let held = cx.first_token(node).filter(|t| {
+        !cx.is_held_leading(t) && !comments::leading_comments(cx.grammar, t).is_empty()
+    });
+    if let Some(t) = &held {
+        cx.hold_leading(t);
+    }
+    let doc = chain_doc(cx, node, policy, hooks)?;
+    Ok(match held {
+        Some(t) => doc::concat(vec![cx.held_leading(&t), doc]),
+        None => doc,
+    })
+}
+
+fn chain_doc(
     cx: &FormatCtx<'_>,
     node: &SyntaxNode,
     policy: &ChainPolicy,

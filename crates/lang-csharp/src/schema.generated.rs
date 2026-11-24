@@ -248,11 +248,12 @@ pub fn initializer_expand(o: &core_config::ResolvedOptions) -> InitializerExpand
 }
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum LambdaArgumentHug { Last, Sole }
+pub enum LambdaArgumentHug { Last, Sole, SoleBare }
 #[allow(dead_code)]
 pub fn lambda_argument_hug(o: &core_config::ResolvedOptions) -> LambdaArgumentHug {
     match o.text(LAMBDA_ARGUMENT_HUG) {
         "sole" => LambdaArgumentHug::Sole,
+        "sole_bare" => LambdaArgumentHug::SoleBare,
         _ => LambdaArgumentHug::Last,
     }
 }
@@ -494,7 +495,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::choice(core_config::opt::INITIALIZER_COLLAPSE, &["preserve", "always"], "preserve", "Initializers and collection expressions: `preserve` keeps one expanded when the source has a line break in it; `always` puts one on a single line whenever it fits."),
         core_config::OptionDef::boolean(core_config::opt::PRESERVE_QUERY_BREAKS, false, "A query expression with a line break in the source keeps one clause per line even when it fits on a line."),
         core_config::OptionDef::choice(core_config::opt::INITIALIZER_EXPAND, &["fit", "crowded"], "fit", "Initializers (and anonymous types) that fit on a line: `fit` keeps them on it; `crowded` puts one item per line when there are three or more member assignments, or two or more items one of which creates an object with an initializer."),
-        core_config::OptionDef::choice(core_config::opt::LAMBDA_ARGUMENT_HUG, &["last", "sole"], "last", "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument."),
+        core_config::OptionDef::choice(core_config::opt::LAMBDA_ARGUMENT_HUG, &["last", "sole", "sole_bare"], "last", "A lambda argument whose body can hang from the call's line: `last` hugs a block lambda that is the last argument; `sole` hugs a lambda (block or expression) only when it is the only argument; `sole_bare` only when that lambda has no parameters or one without parentheses (`x => ...`, `() => ...`)."),
         core_config::OptionDef::choice(core_config::opt::CONSTRUCTOR_INITIALIZER_LINE, &["same_line", "new_line"], "same_line", "The `: base(...)` or `: this(...)` initializer of a constructor: `same_line` keeps it after the parameter list; `new_line` puts it on its own indented line."),
         core_config::OptionDef::choice(core_config::opt::MEMBER_ATTRIBUTE_LINE, &["own_line", "keep"], "own_line", "An attribute list in front of a member, statement or type: `own_line` puts it on a line of its own; `keep` leaves one that the source writes on the same line as what it annotates there (`[SerializeField] private int speed;`)."),
         core_config::OptionDef::choice(core_config::opt::PARAMETER_ATTRIBUTE_LAYOUT, &["inline", "hanging"], "inline", "A parameter with attribute lists: `inline` keeps them in front of the parameter;              `hanging` keeps them there when the parameter fits and otherwise puts the rest of              the parameter on an indented line below them."),

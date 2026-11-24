@@ -5,9 +5,10 @@
 
 use super::ROWS;
 use super::options::{
-    anonymous_type_brace_on_new_line, collection_max_blank_lines, creation_brace_on_new_line,
-    empty_body_text, expand_crowded_initializers, hug_closing_paren, hug_only_sole_lambda,
-    initializer_layout, nested_brace_on_new_line, trailing_comma,
+    LambdaArgumentHug, anonymous_type_brace_on_new_line, collection_max_blank_lines,
+    creation_brace_on_new_line, empty_body_text, expand_crowded_initializers, hug_closing_paren,
+    hug_only_sole_lambda, initializer_layout, lambda_argument_hug, nested_brace_on_new_line,
+    trailing_comma,
 };
 use super::seq::{R, Sep, direct_tokens, sep_doc, separator, seq_of};
 use crate::generated::kind as k;
@@ -219,7 +220,11 @@ pub fn argument_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let sole = hug_only_sole_lambda(cx.options);
     let style = CallStyle {
         first: false,
-        last: if sole { HugLast::Sole } else { HugLast::Last },
+        last: match lambda_argument_hug(cx.options) {
+            LambdaArgumentHug::Last => HugLast::Last,
+            LambdaArgumentHug::Sole => HugLast::Sole,
+            LambdaArgumentHug::SoleBare => HugLast::SoleBare,
+        },
         body: sole,
     };
     shapes::call_arguments(cx, node, ROWS.get(), &style, &call_style(cx, node))
