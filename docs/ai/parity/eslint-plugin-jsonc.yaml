@@ -44,7 +44,7 @@ entries:
   jsonc/no-octal-escape: rule syntax-error
   jsonc/no-octal: rule syntax-error
   jsonc/no-sparse-arrays: rule syntax-error
-  "jsonc/no-useless-escape": "planned | the escapes of a string are not checked: `\/` is valid JSON, and the rule reports it"
+  jsonc/no-useless-escape: rule no-useless-escape | `\/` counts as useless, as the plugin reports it
   "jsonc/object-curly-newline": "option json.format.collapse | no `minProperties`/`multiline` threshold: `collapse` follows source line breaks and fit, not property count"
   jsonc/object-curly-spacing: option json.format.bracket_spacing
   "jsonc/object-property-newline": "option json.format.collapse | no exact equivalent for the 'forbid same-line properties' mode (that is collapse: never)"

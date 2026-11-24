@@ -43,6 +43,6 @@ token Unknown #error
 
 node Document = value:#value? Eof
 node Object #value #block #mapping = LBrace members:Member* RBrace
-node Member #key-value = key:String Colon value:#value
+node Member #key-value #quoted = key:String Colon value:#value
 node Array #value #delimited-list #sequence = LBracket elements:#value* RBracket
-node Literal #value = value:#literal
+node Literal #value #quoted = value:#literal

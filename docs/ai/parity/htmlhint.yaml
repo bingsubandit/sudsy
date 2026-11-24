@@ -43,10 +43,10 @@ entries:
   src-not-empty: planned
   style-disabled: rule no-style-tag
   tag-no-obsolete: rule deprecated
-  tag-pair: rule no-implicit-close | an end tag that closes nothing is the parser's `syntax-error`; an unclosed element is `no-implicit-close`
+  tag-pair: rule syntax-error, no-implicit-close | a stray end tag is the parser's `syntax-error`, an unclosed element is `no-implicit-close`
   tag-self-close: planned
   tagname-lowercase: rule element-case
   tags-check: planned
   title-require: planned
-  spec-char-escape: planned
+  spec-char-escape: rule syntax-error | a raw `<` or `>` in text is the parser's error
   tagname-specialchars: planned

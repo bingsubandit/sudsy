@@ -12,6 +12,9 @@
 //!   are; a node that is the last child of a `#raw-strings` node, such as a JSX attribute, has
 //!   none).
 //!
+//! A param `needless` lists characters whose escape `useless-escape` reports though the string
+//! row defines it (JSON's `\/`).
+//!
 //! The message has `{name}`.
 //!
 //! concept: regex-source-checks
@@ -54,6 +57,8 @@ struct RegexRule {
     message: String,
     tags: &'static [&'static str],
     lang: Option<&'static ScopeLang>,
+    /// `useless-escape`: characters whose escape is reported though the string row defines it.
+    needless: String,
 }
 
 /// The `build` of the family over `lang`, the scope table whose model follows names.
@@ -84,6 +89,7 @@ pub fn build(
         message: p.text("message")?,
         tags,
         lang,
+        needless: p.optional("needless").unwrap_or_default(),
     };
     p.done()?;
     Ok(Box::new(rule))
@@ -262,7 +268,7 @@ impl RegexRule {
                     .unwrap_or('\0');
                 let base =
                     usize::from(token.text_range().start()) + lit.prefix.len() + lit.open.len();
-                row.unknown_escapes(lit.inner, quote, |pos, ch| {
+                row.unknown_escapes(lit.inner, quote, &self.needless, |pos, ch| {
                     let start = TextSize::from((base + pos) as u32);
                     let len = TextSize::from(1 + ch.len_utf8() as u32);
                     self.hit(ctx, TextRange::at(start, len), &ch.to_string());

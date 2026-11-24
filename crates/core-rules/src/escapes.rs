@@ -61,7 +61,7 @@ rule! {
                 format!("{}{{", t.text())
             };
             let start = t.text_range().start();
-            row.unknown_escapes(&text, '"', |i, next| {
+            row.unknown_escapes(&text, '"', "", |i, next| {
                 let at = start + TextSize::try_from(i).unwrap_or_default();
                 let len = TextSize::try_from(1 + next.len_utf8()).unwrap_or_default();
                 ctx.report(

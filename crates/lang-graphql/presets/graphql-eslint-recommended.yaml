@@ -17,4 +17,5 @@ graphql:
           directives: "off"
       no-anonymous-operations: error
       no-duplicate-keys: error
+      no-name-underscore: error
       no-typename-prefix: error

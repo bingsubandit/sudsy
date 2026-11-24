@@ -54,7 +54,7 @@ pub fn provider() -> ParserProvider {
         hooks: &core_rules::DEFAULT_HOOKS,
         rules: rules::RULES,
         pattern_files: provider_api::pattern_files!(),
-        families: &[],
+        families: &[core_rules::regex_source::FAMILY],
     };
     ParserProvider::new(spec, parse_file).with_matchers(MATCHERS.clone())
 }

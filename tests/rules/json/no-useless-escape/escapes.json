@@ -1,0 +1,8 @@
+{
+  "a": "x\ny\"z\\wA",
+  "b": "p\/q",
+         ^^ no-useless-escape
+  "c\/d": ["\/"]
+    ^^ no-useless-escape
+            ^^ no-useless-escape
+}

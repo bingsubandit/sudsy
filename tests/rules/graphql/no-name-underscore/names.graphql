@@ -1,0 +1,12 @@
+scalar Good
+scalar _Any
+       ^^^^ no-name-underscore
+type Query {
+  items(first_: Int): [_Any!]!
+        ^^^^^^ no-name-underscore
+                       ^^^^ no-name-underscore
+  _entities: Good
+  ^^^^^^^^^ no-name-underscore
+}
+query Q { items(first_: 1) { __typename } }
+                ^^^^^^ no-name-underscore

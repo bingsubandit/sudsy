@@ -1,0 +1,32 @@
+id: no-name-underscore
+message: "`$0` must not start or end with an underscore"
+description: >-
+  A name that starts or ends with an underscore: a type, field, argument, enum value, directive, operation, fragment or alias, and
+  every reference to one. A field selected in a query is not checked (`__typename`). Equivalent - graphql-eslint naming-convention
+  without `allowLeadingUnderscore` and `allowTrailingUnderscore`.
+example: "type _Entity {   # reported\n  a: Int\n}"
+severity: off
+category: style
+rule:
+  any:
+    - { kind: Operation }
+    - { kind: FragmentName }
+    - { kind: TypeCondition }
+    - { kind: Alias }
+    - { kind: Argument }
+    - { kind: Value }
+    - { kind: ObjectField }
+    - { kind: Directive }
+    - { kind: TypeRef }
+    - { kind: RootOp }
+    - { kind: ScalarType }
+    - { kind: ObjectType }
+    - { kind: InterfaceType }
+    - { kind: UnionType }
+    - { kind: EnumType }
+    - { kind: InputType }
+    - { kind: DirectiveDef }
+    - { kind: FieldDef }
+    - { kind: InputValueDef }
+    - { kind: EnumValueDef }
+token: { kind: [Name], regex: '^_|_$' }

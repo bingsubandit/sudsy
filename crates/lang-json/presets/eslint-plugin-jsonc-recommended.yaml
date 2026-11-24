@@ -1,6 +1,7 @@
 # The rules of eslint-plugin-jsonc's `flat/recommended-with-jsonc` that Sudsy has, at ESLint's severity (error):
-# `jsonc/no-dupe-keys`. The syntax rules (`valid-json-number`, `no-nan`, ...) are the parser's diagnostics.
+# `jsonc/no-dupe-keys`, `jsonc/no-useless-escape`. The syntax rules (`valid-json-number`, `no-nan`, ...) are the parser's diagnostics.
 json:
   lint:
     rules:
       no-duplicate-keys: error
+      no-useless-escape: error

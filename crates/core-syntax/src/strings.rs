@@ -180,7 +180,14 @@ impl StringSyntax {
 
     /// Calls `found(byte offset of the escape character, escaped char)` for every escape of
     /// `inner` (written between the delimiter `quote`) that the row does not define: a useless one.
-    pub fn unknown_escapes(&self, inner: &str, quote: char, mut found: impl FnMut(usize, char)) {
+    /// An escape of a character in `needless` counts as useless though the row defines it.
+    pub fn unknown_escapes(
+        &self,
+        inner: &str,
+        quote: char,
+        needless: &str,
+        mut found: impl FnMut(usize, char),
+    ) {
         let Some(esc) = self.escape else { return };
         let mut chars = inner.char_indices();
         while let Some((i, c)) = chars.next() {
@@ -194,7 +201,10 @@ impl StringSyntax {
                 (self.opener.starts_with(e) && after.starts_with(&self.opener[e.len_utf8()..]))
                     || (last.starts_with(e) && inner[..i].ends_with(head))
             };
-            if !kept && !self.defines(e, quote) && !(self.continuation && is_break(e)) {
+            if !kept
+                && (needless.contains(e) || !self.defines(e, quote))
+                && !(self.continuation && is_break(e))
+            {
                 found(i, e);
             }
         }
@@ -667,7 +677,7 @@ mod tests {
         let g = Grammar::parse(&format!("language t 1\ntoken S\n{row}")).unwrap();
         let s = g.string_rows(g.kind_by_name("S").unwrap()).next().unwrap();
         let mut found = Vec::new();
-        s.unknown_escapes("\\${$\\{\\q", '`', |_, c| found.push(c));
+        s.unknown_escapes("\\${$\\{\\q", '`', "", |_, c| found.push(c));
         assert_eq!(found, ['q']);
     }
 
