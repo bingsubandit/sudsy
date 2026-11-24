@@ -64,7 +64,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `content_newline_with_attributes` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `content_newline_with_elements` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `continuation_indent` | int 0-16 | cpp `4`, c `4` |
-| `dialect` | json: `auto`, `json`, `jsonc`; html: `auto`, `html`, `template`; sql: `ansi`, `postgres`, `mysql`, `tsql` | json `auto`, html `auto`, sql `ansi` |
+| `dialect` | json: `auto`, `json`, `jsonc`; html: `auto`, `html`, `template`, `template-open`; sql: `ansi`, `postgres`, `mysql`, `tsql` | json `auto`, html `auto`, sql `ansi` |
 | `document_end` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |
 | `document_start` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |
 | `embedded_language_formatting` | `auto`, `off` | html `auto`, markdown `auto`, angular `auto`, vue `auto`, svelte `auto` |
@@ -72,6 +72,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `final_newline` | bool | json `true`, css `true`, scss `true`, less `true`, html `true`, cpp `true`, c `true`, dockerfile `true`, editorconfig `true`, gitignore `true`, graphql `true`, hcl `true`, ini `true`, java `true`, js `true`, kotlin `true`, makefile `true`, markdown `true`, php `true`, powershell `true`, protobuf `true`, python `true`, ruby `true`, shell `true`, sql `true`, toml `true`, xml `true`, yaml `true`, github-actions `true`, angular `true`, vue `true`, svelte `true`, csharp `true` |
 | `hug_first_argument` | bool | java `false`, js `true` |
 | `hug_last_argument` | `never`, `sole`, `last` | java `sole`, js `last` |
+| `implied_end_tags` | `write`, `keep` | html `write`, angular `write`, vue `write`, svelte `write` |
 | `indent_braces` | bool | cpp `false`, c `false` |
 | `indent_case_labels` | bool | cpp `false`, c `false` |
 | `indent_expression_operands` | bool | html `false`, angular `false`, vue `false`, svelte `false` |

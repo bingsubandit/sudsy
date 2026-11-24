@@ -41,6 +41,8 @@ for (const [attr, owners] of Object.entries(have)) {
 }
 
 const entities = elementsModule.entities.filter((e) => e.endsWith(";") && !e.startsWith("&#")).map((e) => e.slice(1, -1)).sort();
+// Obsolete in the HTML standard, not flagged by html-validate (html-eslint `no-obsolete-attrs` reports them).
+const OBSOLETE_ALSO = ["script:charset", "style:type"];
 const sections = {
   elements: names,
   void: names.filter((n) => elements[n].void),
@@ -49,7 +51,7 @@ const sections = {
   boolean: flagged((a) => a.boolean),
   omit: flagged((a) => a.omit),
   list: flagged((a) => a.list),
-  "deprecated-attr": flagged((a) => a.deprecated),
+  "deprecated-attr": [...new Set([...flagged((a) => a.deprecated), ...OBSOLETE_ALSO])].sort(),
   required: flagged((a) => a.required === true),
   reference: flagged((a) => a.reference === "id"),
   enum: enums.sort(),

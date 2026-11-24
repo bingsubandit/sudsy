@@ -12,3 +12,11 @@
 //     ^ no-duplicate-id
 <p id="b" class="x y x"></p>
 //                   ^ no-duplicate-class
+<p id=""></p>
+   ^^ attribute-allowed-values
+<p id=""></p>
+   ^^ attribute-allowed-values
+//     ^ no-duplicate-id
+<ul><li>a</li></ul>
+<div><li>b</li></div>
+     ^ require-li-container

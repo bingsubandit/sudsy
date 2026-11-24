@@ -1,9 +1,9 @@
 //! How a markup start tag is laid out from options: how many attributes fit on its line before
 //! each gets a line of its own, whether the `/` of a self-closing tag has a space before it, and
-//! whether a void element is written without the `/`.
+//! whether a void element is written without the `/`, and whether an omitted end tag is written.
 //!
 //! concept: tag-layout
-//! what: Attribute-per-line limit, slash gap and void style of markup start tags.
+//! what: Attribute-per-line limit, slash gap, void style and omitted end tags of markup tags.
 //! tools: eslint-plugin-vue max-attributes-per-line, html-eslint attrs-newline
 //! reads: option:max_attributes_per_line
 
@@ -14,6 +14,7 @@ pub struct TagLayout {
     limit: usize,
     slash_space: bool,
     void_omit: bool,
+    end_keep: bool,
 }
 
 impl TagLayout {
@@ -27,6 +28,7 @@ impl TagLayout {
             limit,
             slash_space: options.flag(opt::SELF_CLOSING_SPACE, true),
             void_omit: options.text(opt::VOID_ELEMENT_STYLE) == "omit",
+            end_keep: options.text(opt::IMPLIED_END_TAGS) == "keep",
         }
     }
 
@@ -38,6 +40,12 @@ impl TagLayout {
     /// A void element is written without the `/`.
     pub fn slashless(&self, void: bool) -> bool {
         self.void_omit && void
+    }
+
+    /// An element with no end tag in the source, which runs to `end`, is written without one
+    /// when it is still open at the end of `src`.
+    pub fn keeps_omitted_end(&self, src: &str, end: usize) -> bool {
+        self.end_keep && end >= src.trim_end().len()
     }
 
     /// A space stands before the `/>` of a self-closing element (`void`: it is a void one).

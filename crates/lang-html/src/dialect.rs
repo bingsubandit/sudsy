@@ -41,9 +41,9 @@ fn spec(
 pub fn provider() -> ParserProvider {
     let options = vec![OptionDef::choice(
         core_config::opt::DIALECT,
-        &["auto", "html", "template"],
+        &["auto", "html", "template", "template-open"],
         "auto",
-        "`template`: the file is a template whose `{{ }}` actions (Go templates, Hugo) stay as written; a block of actions (`if` ... `end`) must open and close inside one element (a file that does not is not formatted); an action among the attributes is one attribute, kept as written.",
+        "`template`: the file is a template whose `{{ }}` actions (Go templates, Hugo) stay as written; a block of actions (`if` ... `end`) must open and close inside one element (a file that does not is not formatted); an action among the attributes is one attribute, kept as written. `template-open`: as `template`, and a block may span elements (the file is laid out by the tree of its markup).",
     )];
     let spec = spec(
         &["html", "htm"],
@@ -52,8 +52,9 @@ pub fn provider() -> ParserProvider {
         &crate::HtmlFormatter,
     );
     ParserProvider::new(spec, |f| {
-        let templates = f.language_version.as_deref() == Some("template");
-        parser::parse_with(&f.text, Mode::Html, templates)
+        let dialect = f.language_version.as_deref().unwrap_or_default();
+        let templates = dialect.starts_with("template");
+        parser::parse_with(&f.text, Mode::Html, templates, dialect != "template-open")
     })
 }
 

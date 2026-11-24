@@ -169,7 +169,11 @@ impl P<'_> {
         let n = self.n(id);
         !n.self_closing
             && !self.explicit_close(id)
-            && (self.has_ignore(id) || self.preserve(n.parent))
+            && (self.has_ignore(id)
+                || self.preserve(n.parent)
+                || (n.t == T::Element
+                    && !n.void
+                    && self.o.tags.keeps_omitted_end(self.t.src, n.end)))
     }
 
     fn open_start_marker(&self, id: usize) -> String {

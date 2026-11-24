@@ -30,6 +30,10 @@ options:
       values: ["selfclose", "omit"]
       default: "selfclose"
       doc: "How a void element (`br`, `img`, ...) is written: `selfclose` as `<br />`, `omit` as `<br>` (`void-style`)."
+  - implied_end_tags:
+      values: ["write", "keep"]
+      default: "write"
+      doc: "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written."
   - content_newline_with_attributes:
       default: false
       doc: "Put the content of an element that has attributes on lines of its own, also when the element fits on a line; inline elements and `pre` keep theirs (`vue/singleline-html-element-content-newline` with its defaults)."

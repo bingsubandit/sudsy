@@ -52,8 +52,7 @@ rule! {
         category: Correctness,
         default: Warn,
         description: "An `id` that an earlier element of the document already has. Ids must be \
-                  unique: scripts, links and labels find the first element only. Empty ids are \
-                  left alone.",
+                  unique: scripts, links and labels find the first element only.",
         example: "<p id=\"a\"></p><p id=\"a\"></p>   // reported at the second",
     }
 
@@ -64,9 +63,7 @@ rule! {
                 let (Some(id), Some(range)) = (a.value, a.value_range) else {
                     continue;
                 };
-                if !id.is_empty() {
-                    seen.check(ctx, id, range, || format!("duplicate id `{id}`"), "first used here");
-                }
+                seen.check(ctx, id, range, || format!("duplicate id `{id}`"), "first used here");
             }
         }
     }

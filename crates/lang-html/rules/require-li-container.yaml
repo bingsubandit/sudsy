@@ -1,0 +1,11 @@
+id: require-li-container
+message: an <li> belongs in a <ul>, <ol> or <menu>
+description: An `<li>` whose parent is not a list (`ul`, `ol`, `menu`) is not a list item.
+example: '<div><li>a</li></div>   <ul><li>a</li></ul>'
+severity: off
+category: correctness
+rule:
+  kind: Element
+  regex: '(?i)^<li\b'
+  not: { parent: { kind: Element, regex: '(?i)^<(ul|ol|menu)\b' } }
+report-on: first-token

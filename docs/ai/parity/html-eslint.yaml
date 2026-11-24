@@ -63,7 +63,7 @@ entries:
   require-img-alt: rule img-alt
   require-input-label: rule input-missing-label
   require-lang: rule element-required-attributes | also requires the attributes of other elements that html-validate requires (`src` of `<img>`)
-  require-li-container: planned
+  require-li-container: rule require-li-container
   require-meta-charset: planned
   require-meta-description: planned
   require-meta-viewport: planned

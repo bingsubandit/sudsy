@@ -34,13 +34,14 @@ pub enum Mode {
 }
 
 pub fn parse(src: &str, mode: Mode) -> ParseResult {
-    parse_with(src, mode, false)
+    parse_with(src, mode, false, true)
 }
 
-/// `templates`: `{{ }}` actions of a template language stay as written (see `actions.rs`).
-pub fn parse_with(src: &str, mode: Mode, templates: bool) -> ParseResult {
+/// `templates`: `{{ }}` actions of a template language stay as written (see `actions.rs`); `balanced`: their blocks must open and close in one element.
+pub fn parse_with(src: &str, mode: Mode, templates: bool, balanced: bool) -> ParseResult {
     let mut p = P {
         templates,
+        balanced,
         blocks: core_syntax::template_actions::Blocks::default(),
         src,
         b: src.as_bytes(),
@@ -96,6 +97,7 @@ struct P<'a> {
     mode: Mode,
     /// HTML with `{{ }}` actions (see `actions.rs`).
     templates: bool,
+    balanced: bool,
     blocks: core_syntax::template_actions::Blocks,
     pos: usize,
     toks: Vec<Tok>,

@@ -10,6 +10,9 @@ use crate::go_template::ACTIONS;
 impl P<'_> {
     /// Counts the action at `start..end` (the `}}` at `end`) in the element it stands in.
     pub(super) fn template_action(&mut self, start: usize, end: usize) {
+        if !self.balanced {
+            return;
+        }
         let Some(step) = ACTIONS.step(&self.src[start + 2..end]) else {
             return;
         };

@@ -14,6 +14,8 @@ pub const SELF_CLOSING_SPACE: core_config::OptId = core_config::opt::SELF_CLOSIN
 #[allow(dead_code)]
 pub const VOID_ELEMENT_STYLE: core_config::OptId = core_config::opt::VOID_ELEMENT_STYLE;
 #[allow(dead_code)]
+pub const IMPLIED_END_TAGS: core_config::OptId = core_config::opt::IMPLIED_END_TAGS;
+#[allow(dead_code)]
 pub const CONTENT_NEWLINE_WITH_ATTRIBUTES: core_config::OptId = core_config::opt::CONTENT_NEWLINE_WITH_ATTRIBUTES;
 #[allow(dead_code)]
 pub const CONTENT_NEWLINE_WITH_ELEMENTS: core_config::OptId = core_config::opt::CONTENT_NEWLINE_WITH_ELEMENTS;
@@ -67,6 +69,16 @@ pub fn void_element_style(o: &core_config::ResolvedOptions) -> VoidElementStyle 
     }
 }
 #[allow(dead_code)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ImpliedEndTags { Write, Keep }
+#[allow(dead_code)]
+pub fn implied_end_tags(o: &core_config::ResolvedOptions) -> ImpliedEndTags {
+    match o.text(IMPLIED_END_TAGS) {
+        "keep" => ImpliedEndTags::Keep,
+        _ => ImpliedEndTags::Write,
+    }
+}
+#[allow(dead_code)]
 pub fn content_newline_with_attributes(o: &core_config::ResolvedOptions) -> bool {
     o.flag(CONTENT_NEWLINE_WITH_ATTRIBUTES, false)
 }
@@ -95,6 +107,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::int(core_config::opt::MAX_ATTRIBUTES_PER_LINE, 0, (0, 100), "Put every attribute of a start tag that has more than this many on its own line (`vue/max-attributes-per-line`, `@html-eslint/attrs-newline`); 0 sets no limit. `single_attribute_per_line` is the limit 1."),
         core_config::OptionDef::boolean(core_config::opt::SELF_CLOSING_SPACE, true, "Write a space before the `/>` of a self-closing element (`<use />`, `<br />`); off writes `<use/>` (`@html-eslint/no-extra-spacing-tags`)."),
         core_config::OptionDef::choice(core_config::opt::VOID_ELEMENT_STYLE, &["selfclose", "omit"], "selfclose", "How a void element (`br`, `img`, ...) is written: `selfclose` as `<br />`, `omit` as `<br>` (`void-style`)."),
+        core_config::OptionDef::choice(core_config::opt::IMPLIED_END_TAGS, &["write", "keep"], "write", "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written."),
         core_config::OptionDef::boolean(core_config::opt::CONTENT_NEWLINE_WITH_ATTRIBUTES, false, "Put the content of an element that has attributes on lines of its own, also when the element fits on a line; inline elements and `pre` keep theirs (`vue/singleline-html-element-content-newline` with its defaults)."),
         core_config::OptionDef::boolean(core_config::opt::CONTENT_NEWLINE_WITH_ELEMENTS, false, "Put the children of an element that has an element child on lines of their own, also when they fit on a line; only where the whitespace between them is not significant (`whitespace_sensitivity: ignore`, `@html-eslint/element-newline`)."),
         core_config::OptionDef::boolean(core_config::opt::INDENT_EXPRESSION_OPERANDS, false, "Indent the operands of a binary or logical expression that continues on following lines in an attribute or `{{ }}` expression (`vue/html-indent`); the default aligns them with the first operand."),

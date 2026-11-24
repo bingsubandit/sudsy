@@ -29035,17 +29035,22 @@
     {
       "category": "correctness",
       "default_level": "warn",
-      "description": "An `id` that an earlier element of the document already has. Ids must be unique: scripts, links and labels find the first element only. Empty ids are left alone.",
+      "description": "An `id` that an earlier element of the document already has. Ids must be unique: scripts, links and labels find the first element only.",
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "spans": [
           {
             "column": 8,
             "length": 1,
             "line": 9
+          },
+          {
+            "column": 8,
+            "length": 1,
+            "line": 12
           }
         ]
       },
@@ -29369,7 +29374,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "spans": [
           {
@@ -30330,7 +30335,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "spans": [
           {
@@ -30551,6 +30556,43 @@
       "options": [],
       "presets": [],
       "upstream": []
+    },
+    {
+      "category": "correctness",
+      "default_level": "off",
+      "description": "An `<li>` whose parent is not a list (`ul`, `ol`, `menu`) is not a list item.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
+        "language": "html",
+        "spans": [
+          {
+            "column": 6,
+            "length": 1,
+            "line": 14
+          }
+        ]
+      },
+      "fix": null,
+      "id": "require-li-container",
+      "languages": [
+        "angular",
+        "html",
+        "svelte",
+        "vue"
+      ],
+      "options": [],
+      "presets": [
+        "html/html-eslint-recommended"
+      ],
+      "upstream": [
+        {
+          "id": "require-li-container",
+          "partial": false,
+          "tool": "html-eslint"
+        }
+      ]
     },
     {
       "category": "suspicious",

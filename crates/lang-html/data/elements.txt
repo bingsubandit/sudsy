@@ -52,16 +52,16 @@ link:urn marquee:datafld marquee:dataformatas marquee:datasrc math:align math:hs
 math:vspace meta:scheme object:align object:archive object:border object:classid object:code
 object:codebase object:codetype object:datafld object:dataformatas object:datasrc object:declare
 object:hspace object:standby object:vspace ol:compact option:dataformatas option:datasrc
-option:name p:align param:datafld param:type param:valuetype pre:width script:event script:for
-script:language span:datafld span:dataformatas span:datasrc table:align table:background
-table:bgcolor table:bordercolor table:cellpadding table:cellspacing table:dataformatas
-table:datapagesize table:datasrc table:frame table:rules table:summary table:width tbody:align
-tbody:background tbody:char tbody:charoff tbody:valign td:align td:axis td:background td:bgcolor
-td:char td:charoff td:height td:nowrap td:scope td:valign td:width textarea:datafld
-textarea:datasrc tfoot:align tfoot:background tfoot:char tfoot:charoff tfoot:valign th:align
-th:axis th:background th:bgcolor th:char th:charoff th:height th:nowrap th:valign th:width
-thead:align thead:background thead:char thead:charoff thead:valign tr:align tr:background
-tr:bgcolor tr:char tr:charoff tr:valign ul:compact ul:type
+option:name p:align param:datafld param:type param:valuetype pre:width script:charset script:event
+script:for script:language span:datafld span:dataformatas span:datasrc style:type table:align
+table:background table:bgcolor table:bordercolor table:cellpadding table:cellspacing
+table:dataformatas table:datapagesize table:datasrc table:frame table:rules table:summary
+table:width tbody:align tbody:background tbody:char tbody:charoff tbody:valign td:align td:axis
+td:background td:bgcolor td:char td:charoff td:height td:nowrap td:scope td:valign td:width
+textarea:datafld textarea:datasrc tfoot:align tfoot:background tfoot:char tfoot:charoff
+tfoot:valign th:align th:axis th:background th:bgcolor th:char th:charoff th:height th:nowrap
+th:valign th:width thead:align thead:background thead:char thead:charoff thead:valign tr:align
+tr:background tr:bgcolor tr:char tr:charoff tr:valign ul:compact ul:type
 [required]
 embed:src embed:title frame:title html:lang iframe:title img:src map:name object:data track:src
 [reference]

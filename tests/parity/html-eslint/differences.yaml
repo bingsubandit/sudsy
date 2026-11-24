@@ -313,19 +313,17 @@ intentional:
   action-attribute: tool-wrong
   front-matter: tool-wrong
   textarea-value: tool-wrong
-target: 33.5
+target: 71.1
 fixes:  # lint rule -> one line: where and what to change
-  indent: 4 files are refused (a block that spans elements, `</h{{ .Level }}>`) and hold most of what is left; formatting the unbalanced region as written (parser records the span, printer copies the element) is about 60 shared lines and clears under half of them, not built
-measured: {covered: 82, total: 245, main: '3f07cafc'}  # of the target; `main`: the origin/main commit the measured tree is based on
+  indent: 5 are the text of multi-line comments (youtube, carousel; comments stay as written), 5 are `{{ }}` action text the tool reads as markup (`shortcodes/table.html`), 3 are in `render-heading.html`, refused for an action in an end tag name (`</h{{ .Level }}>`)
+  require-closing-tags: 10 elements stay open at the end of a Hugo partial (`<body>` of a `define`, a `<div{{ with }}` whose end is in another string); the option `implied_end_tags` (keep) writes no end tag, as one would change the page
+  no-duplicate-id: 8 ids repeat only inside a `{{ highlight }}` string the tool reads as markup (`components-utilities.html`); 2 are the first of two empty ids, which the tool reports at both places and Sudsy at the second
+measured: {covered: 106, total: 149, main: '77fe0268'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
-  indent: 97
-  no-duplicate-id: 20
-  no-obsolete-attrs: 12
-  require-closing-tags: 11
-  attrs-newline: 7
-  element-newline: 7
+  indent: 13
+  no-duplicate-id: 10
+  require-closing-tags: 10
   use-baseline: 4
+  attrs-newline: 3
   quotes: 2
   require-img-alt: 1
-  require-li-container: 1
-  require-title: 1

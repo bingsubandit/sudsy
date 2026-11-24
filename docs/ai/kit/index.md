@@ -84,7 +84,7 @@ One row per concept (one behavior). `turned on by`: the data the shared module r
 | tab-keep | core-format/tabs.rs | Which tabs make a block verbatim: all but those before a list marker of a plain list. | Prettier markdown |  | markdown | SINGLE-USE |
 | table-alignment | lang-markdown/format/table.rs | Tables with aligned columns. | Prettier markdown tables |  | markdown | SINGLE-USE |
 | tabular-rows | core-format/shapes/tabular.rs | Argument and element lists that the source lays out in rows keep their rows. | google-java-format tabular arguments and array initializers |  | hcl, powershell |  |
-| tag-layout | core-format/tag_layout.rs | Attribute-per-line limit, slash gap and void style of markup start tags. | eslint-plugin-vue max-attributes-per-line, html-eslint attrs-newline | option:max_attributes_per_line | html | SINGLE-USE |
+| tag-layout | core-format/tag_layout.rs | Attribute-per-line limit, slash gap, void style and omitted end tags of markup tags. | eslint-plugin-vue max-attributes-per-line, html-eslint attrs-newline | option:max_attributes_per_line | html | SINGLE-USE |
 | template-literal-layout | lang-js/format/template.rs | Template literals with interpolations printed on one line. | Prettier template-literal |  | js | SINGLE-USE |
 | text-fill | core-format/shapes/fill.rs | Words and separators laid out in a fill: JSX children, inline markup text, prose. | Prettier fill, markdown proseWrap |  | html, js, markdown |  |
 | token-case | core-format/case.rs | Case of words per token kind (upper, lower, capitalise, consistent) as rows. | sqlfluff CP01-CP05, hadolint instruction case, Prettier lowercase hex and units | rules:case | css, dockerfile, html, sql |  |

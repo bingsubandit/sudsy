@@ -3624,7 +3624,7 @@
             },
             "no-duplicate-id": {
               "$ref": "#/definitions/rule",
-              "description": "An `id` that an earlier element of the document already has. Ids must be unique: scripts, links and labels find the first element only. Empty ids are left alone."
+              "description": "An `id` that an earlier element of the document already has. Ids must be unique: scripts, links and labels find the first element only."
             },
             "no-duplicate-include": {
               "$ref": "#/definitions/rule",
@@ -5282,6 +5282,10 @@
             "require-for-track": {
               "$ref": "#/definitions/rule",
               "description": "Angular's compiler error for `@for (x of xs) {` without `track`. Only in `.component.html` files."
+            },
+            "require-li-container": {
+              "$ref": "#/definitions/rule",
+              "description": "An `<li>` whose parent is not a list (`ul`, `ol`, `menu`) is not a list item."
             },
             "require-prop-types": {
               "$ref": "#/definitions/rule",
@@ -7601,6 +7605,15 @@
               "description": "End the file with a newline.",
               "type": "boolean"
             },
+            "implied_end_tags": {
+              "default": "write",
+              "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+              "enum": [
+                "write",
+                "keep"
+              ],
+              "type": "string"
+            },
             "indent_expression_operands": {
               "default": false,
               "description": "Indent the operands of a binary or logical expression that continues on following lines in an attribute or `{{ }}` expression (`vue/html-indent`); the default aligns them with the first operand.",
@@ -9698,11 +9711,12 @@
             },
             "dialect": {
               "default": "auto",
-              "description": "`template`: the file is a template whose `{{ }}` actions (Go templates, Hugo) stay as written; a block of actions (`if` ... `end`) must open and close inside one element (a file that does not is not formatted); an action among the attributes is one attribute, kept as written.",
+              "description": "`template`: the file is a template whose `{{ }}` actions (Go templates, Hugo) stay as written; a block of actions (`if` ... `end`) must open and close inside one element (a file that does not is not formatted); an action among the attributes is one attribute, kept as written. `template-open`: as `template`, and a block may span elements (the file is laid out by the tree of its markup).",
               "enum": [
                 "auto",
                 "html",
-                "template"
+                "template",
+                "template-open"
               ],
               "type": "string"
             },
@@ -9729,6 +9743,15 @@
               "default": true,
               "description": "End the file with a newline.",
               "type": "boolean"
+            },
+            "implied_end_tags": {
+              "default": "write",
+              "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+              "enum": [
+                "write",
+                "keep"
+              ],
+              "type": "string"
             },
             "indent_expression_operands": {
               "default": false,
@@ -11301,6 +11324,15 @@
                     "default": true,
                     "description": "End the file with a newline.",
                     "type": "boolean"
+                  },
+                  "implied_end_tags": {
+                    "default": "write",
+                    "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+                    "enum": [
+                      "write",
+                      "keep"
+                    ],
+                    "type": "string"
                   },
                   "indent_expression_operands": {
                     "default": false,
@@ -13342,11 +13374,12 @@
                   },
                   "dialect": {
                     "default": "auto",
-                    "description": "`template`: the file is a template whose `{{ }}` actions (Go templates, Hugo) stay as written; a block of actions (`if` ... `end`) must open and close inside one element (a file that does not is not formatted); an action among the attributes is one attribute, kept as written.",
+                    "description": "`template`: the file is a template whose `{{ }}` actions (Go templates, Hugo) stay as written; a block of actions (`if` ... `end`) must open and close inside one element (a file that does not is not formatted); an action among the attributes is one attribute, kept as written. `template-open`: as `template`, and a block may span elements (the file is laid out by the tree of its markup).",
                     "enum": [
                       "auto",
                       "html",
-                      "template"
+                      "template",
+                      "template-open"
                     ],
                     "type": "string"
                   },
@@ -13373,6 +13406,15 @@
                     "default": true,
                     "description": "End the file with a newline.",
                     "type": "boolean"
+                  },
+                  "implied_end_tags": {
+                    "default": "write",
+                    "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+                    "enum": [
+                      "write",
+                      "keep"
+                    ],
+                    "type": "string"
                   },
                   "indent_expression_operands": {
                     "default": false,
@@ -15695,6 +15737,15 @@
                     "description": "End the file with a newline.",
                     "type": "boolean"
                   },
+                  "implied_end_tags": {
+                    "default": "write",
+                    "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+                    "enum": [
+                      "write",
+                      "keep"
+                    ],
+                    "type": "string"
+                  },
                   "indent_expression_operands": {
                     "default": false,
                     "description": "Indent the operands of a binary or logical expression that continues on following lines in an attribute or `{{ }}` expression (`vue/html-indent`); the default aligns them with the first operand.",
@@ -15953,6 +16004,15 @@
                     "default": true,
                     "description": "End the file with a newline.",
                     "type": "boolean"
+                  },
+                  "implied_end_tags": {
+                    "default": "write",
+                    "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+                    "enum": [
+                      "write",
+                      "keep"
+                    ],
+                    "type": "string"
                   },
                   "indent_expression_operands": {
                     "default": false,
@@ -17160,6 +17220,15 @@
               "description": "End the file with a newline.",
               "type": "boolean"
             },
+            "implied_end_tags": {
+              "default": "write",
+              "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+              "enum": [
+                "write",
+                "keep"
+              ],
+              "type": "string"
+            },
             "indent_expression_operands": {
               "default": false,
               "description": "Indent the operands of a binary or logical expression that continues on following lines in an attribute or `{{ }}` expression (`vue/html-indent`); the default aligns them with the first operand.",
@@ -17418,6 +17487,15 @@
               "default": true,
               "description": "End the file with a newline.",
               "type": "boolean"
+            },
+            "implied_end_tags": {
+              "default": "write",
+              "description": "An element still open at the end of the file (a template closes it in another file; `<body>` of a layout): `write` adds its end tag, `keep` leaves it out. Other omitted end tags (`<p>`, `<li>`) are always written.",
+              "enum": [
+                "write",
+                "keep"
+              ],
+              "type": "string"
             },
             "indent_expression_operands": {
               "default": false,
