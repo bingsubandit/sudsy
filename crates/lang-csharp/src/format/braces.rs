@@ -172,7 +172,10 @@ pub fn accessors_inline(cx: &FormatCtx<'_>, list: &SyntaxNode) -> bool {
         .descendants_with_tokens()
         .filter_map(SyntaxElement::into_token)
         .any(|t| g.has_tag(t.kind(), "comment"));
-    simple && !has_comment && !cx.has_line_break(list, range)
+    let has_body = list
+        .children()
+        .any(|a| a.children().any(|c| c.kind() == k::BLOCK));
+    simple && !has_comment && !(has_body && cx.has_line_break(list, range))
 }
 
 pub fn accessor_list(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
