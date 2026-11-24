@@ -68,6 +68,8 @@ pub struct AssignPolicy {
     /// A conditional on the right moves below the operator; else only one whose test is an
     /// operator chain does.
     pub conditional_always: bool,
+    /// A ladder of conditionals (`layout: ladder`) moves below the operator.
+    pub conditional_ladder: bool,
     /// Kinds besides operator chains that count as one in the test of a conditional.
     pub conditional_test_kinds: Vec<String>,
     /// Levels of indentation of the right side below the operator.
@@ -85,6 +87,7 @@ impl AssignPolicy {
                 _ => AssignStyle::Compact,
             },
             conditional_always: text(CONDITIONAL) == "always",
+            conditional_ladder: options.is(super::conditional::LAYOUT, "ladder"),
             conditional_test_kinds: options
                 .strings(core_config::opt::ASSIGNMENT_CONDITIONAL_TEST_KINDS)
                 .map(String::from)
@@ -401,6 +404,7 @@ fn choose(
         }
         if g.has_tag(r.kind(), "conditional")
             && (policy.conditional_always
+                || (policy.conditional_ladder && super::conditional::is_ladder(cx, r))
                 || g.slot(r, "condition")
                     .and_then(|e| e.as_node().map(roles::un))
                     .is_some_and(|t| {

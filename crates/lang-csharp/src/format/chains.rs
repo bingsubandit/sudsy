@@ -175,13 +175,23 @@ pub fn switch_arm(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 // --------------------------------------------------------------- conditional
 
 /// `a ? b : c`: the shared conditional layout under `conditional_layout`.
+struct ConditionalHooks;
+
+impl shapes::ConditionalHooks for ConditionalHooks {
+    /// A ladder that is a return value or one of several arguments.
+    fn ladder_indent(&self, _cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+        node.parent().is_some_and(|p| match p.kind() {
+            k::RETURN_STATEMENT => true,
+            k::ARGUMENT => p
+                .parent()
+                .is_some_and(|l| l.children().filter(|c| c.kind() == k::ARGUMENT).count() > 1),
+            _ => false,
+        })
+    }
+}
+
 pub fn conditional(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
-    shapes::conditional(
-        cx,
-        node,
-        cx.conditional_policy(),
-        &shapes::NoConditionalHooks,
-    )
+    shapes::conditional(cx, node, cx.conditional_policy(), &ConditionalHooks)
 }
 
 /// `when cond` after a pattern or `catch`: a group on an indented line of its own; a catch filter

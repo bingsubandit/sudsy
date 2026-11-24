@@ -30,6 +30,7 @@ csharp:
     parameter_attribute_layout: hanging
     base_list_layout: hanging
     unbreakable_single_item_lists: true
+    conditional_layout: ladder
     declarator_line: own_line
     when_clause_line: hanging
     do_while_line: same_line

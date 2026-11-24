@@ -8545,10 +8545,11 @@
             },
             "conditional_layout": {
               "default": "indented",
-              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
               "enum": [
                 "indented",
-                "chained"
+                "chained",
+                "ladder"
               ],
               "type": "string"
             },
@@ -9905,10 +9906,11 @@
             },
             "conditional_layout": {
               "default": "indented",
-              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
               "enum": [
                 "indented",
-                "chained"
+                "chained",
+                "ladder"
               ],
               "type": "string"
             },
@@ -10182,10 +10184,11 @@
             },
             "conditional_layout": {
               "default": "chained",
-              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+              "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
               "enum": [
                 "indented",
-                "chained"
+                "chained",
+                "ladder"
               ],
               "type": "string"
             },
@@ -12203,10 +12206,11 @@
                   },
                   "conditional_layout": {
                     "default": "indented",
-                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
                     "enum": [
                       "indented",
-                      "chained"
+                      "chained",
+                      "ladder"
                     ],
                     "type": "string"
                   },
@@ -13499,10 +13503,11 @@
                   },
                   "conditional_layout": {
                     "default": "indented",
-                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
                     "enum": [
                       "indented",
-                      "chained"
+                      "chained",
+                      "ladder"
                     ],
                     "type": "string"
                   },
@@ -13776,10 +13781,11 @@
                   },
                   "conditional_layout": {
                     "default": "chained",
-                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+                    "description": "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
                     "enum": [
                       "indented",
-                      "chained"
+                      "chained",
+                      "ladder"
                     ],
                     "type": "string"
                   },

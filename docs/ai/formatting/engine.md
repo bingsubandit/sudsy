@@ -59,7 +59,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `comment_indent` | `preserve`, `content` | yaml `preserve`, github-actions `preserve` |
 | `comment_spacing` | int 1-10 | yaml `1`, github-actions `1` |
 | `conditional_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
-| `conditional_layout` | `indented`, `chained` | java `indented`, js `chained`, csharp `indented` |
+| `conditional_layout` | `indented`, `chained`, `ladder` | java `indented`, js `chained`, csharp `indented` |
 | `constructor_initializer_indent` | int 0-16 | cpp `4`, c `4` |
 | `content_newline_with_attributes` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `continuation_indent` | int 0-16 | cpp `4`, c `4` |

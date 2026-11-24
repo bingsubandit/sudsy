@@ -958,9 +958,9 @@ pub mod shared {
     pub fn conditional_layout(default: &'static str) -> OptionDef {
         OptionDef::choice(
             opt::CONDITIONAL_LAYOUT,
-            &["indented", "chained"],
+            &["indented", "chained", "ladder"],
             default,
-            "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one.",
+            "Layout of a conditional (`a ? b : c`) that does not fit: `indented` puts the branches one level below the test, each conditional a group of its own; `chained` aligns the branches after `? ` and `: ` and breaks a chain of conditionals in the `else` branch as one; `ladder` is `indented`, except that a chain of conditionals in the `else` branch puts every `: test ? value` on a line of its own at the level of the first test.",
         )
     }
 
