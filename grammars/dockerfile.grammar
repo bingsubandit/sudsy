@@ -19,7 +19,7 @@ token Comment #trivia #comment
 // An instruction name, or `AS`.
 token Keyword #arg #restyle
 // `\` (or the `# escape=` character) ending a line inside an instruction.
-token LineContinuation #arg
+token LineContinuation #arg #optional
 // An argument the formatter keeps as written: an option, a path, an image, a `KEY=value` pair, a quoted string.
 token Word #arg #literal #restyle
 // The name after `AS` in a FROM.

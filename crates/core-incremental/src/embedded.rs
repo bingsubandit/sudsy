@@ -336,10 +336,10 @@ impl Embedder for Engine<'_> {
         language: &str,
         mode: EmbedMode,
         code: &str,
-        width: usize,
-        single_quotes: bool,
+        (width, single_quotes): (usize, bool),
+        overrides: &[(core_config::OptId, OptionValue)],
     ) -> Option<String> {
-        let prepared = self
+        let mut prepared = self
             .prepared
             .borrow_mut()
             .entry((language.to_string(), mode, width, single_quotes))
@@ -354,6 +354,15 @@ impl Embedder for Engine<'_> {
                 )
             })
             .clone();
+        if !overrides.is_empty() {
+            prepared = prepared.map(|p| {
+                let (mut options, version) = (*p).clone();
+                for (id, value) in overrides {
+                    options.set(*id, value.clone());
+                }
+                Rc::new((options, version))
+            });
+        }
         format_with(self.db, language, &prepared, code)
     }
 }

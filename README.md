@@ -5,7 +5,7 @@
 <p align="center"><b>A true polyglot formatter and linter for every repo.</b><br>
 One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest.<br>
 Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
-<b><!-- generated:support-headline -->Ready for 26 languages, early support for 3 more.<!-- /generated --></b></p>
+<b><!-- generated:support-headline -->Ready for 27 languages, early support for 2 more.<!-- /generated --></b></p>
 
 <p align="center">
 <a href="https://github.com/bingsubandit/sudsy/releases"><img alt="release" src="https://img.shields.io/github/v/release/bingsubandit/sudsy"></a>
@@ -18,7 +18,7 @@ Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, SQL, Java, GitHub Actions, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
+> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, GitHub Actions, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
 
 ## Install
 
@@ -76,6 +76,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Python | █████████░ 97% ruff format | █████████░ 94% ruff | Ready |
 | YAML | █████████░ 94% Prettier | █████████░ 98% yamllint | Ready |
 | Shell | ████████░░ 86% shfmt | ████████░░ 86% ShellCheck | Ready |
+| Dockerfile | █████████░ 90% dockerfmt | █████████░ 91% hadolint | Ready |
 | SQL | ████████░░ 85% sqlfluff | █████████░ 90% sqlfluff | Ready |
 | Java | █████████░ 91% google-java-format | ████████░░ 88% Checkstyle | Ready |
 | GitHub Actions | █████████░ 99% stable · no reference tool | ████████░░ 87% actionlint | Ready |
@@ -94,7 +95,6 @@ Each number is measured on real-world code against the default rule set of the r
 | Ruby | ████████░░ 86% RuboCop | █████████░ 96% RuboCop | Ready |
 | GraphQL | █████████░ 99% Prettier | 29 rules · no reference tool | Ready |
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
-| Dockerfile | ███░░░░░░░ 38% dockerfmt | █████████░ 91% hadolint | In progress |
 | C / C++ | ██████░░░░ 69% clang-format | not measured clang-tidy | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 36% PHPStan | In progress |
 
@@ -103,7 +103,7 @@ Notes: clang-format (C / C++): line wrapping is not compared. PHP-CS-Fixer (PHP)
 The rows are ordered by how widely the language is used. Every number is measured against each reference tool's default rule set; a row measured with another set says so in the notes above. How each language is measured, with the tool versions and corpora: [docs/languages.md](docs/languages.md#how-to-read-the-numbers). Presets: [configuration](docs/configuration.md#presets).
 <!-- /generated -->
 
-All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSON, Markdown, Python, YAML, Shell, SQL, Java, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, HCL, EditorConfig, Gitignore, INI, Ruby, GraphQL, Protobuf, Dockerfile, C/C++ and PHP<!-- /generated -->. Corpora, tool versions and the main differences per language: [docs/languages.md](docs/languages.md).
+All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSON, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, HCL, EditorConfig, Gitignore, INI, Ruby, GraphQL, Protobuf, C/C++ and PHP<!-- /generated -->. Corpora, tool versions and the main differences per language: [docs/languages.md](docs/languages.md).
 
 ## Highly configurable
 
@@ -120,7 +120,8 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Markdown | 5 | Prettier | [5](https://prettier.io/docs/options) |
 | Python | 13 | ruff format | [11](https://docs.astral.sh/ruff/settings/#format) |
 | YAML | 14 | Prettier | [7](https://prettier.io/docs/options) |
-| Shell | 8 | shfmt | [8](https://github.com/mvdan/sh/blob/v3.14.1/cmd/shfmt/shfmt.1.scd) |
+| Shell | 11 | shfmt | [8](https://github.com/mvdan/sh/blob/v3.14.1/cmd/shfmt/shfmt.1.scd) |
+| Dockerfile | 12 | dockerfmt | [3](https://github.com/reteps/dockerfmt/blob/v1.0.0/README.md) |
 | SQL | 14 | sqlfluff | [68](https://docs.sqlfluff.com/en/stable/configuration/default_configuration.html) |
 | Java | 23 | google-java-format | [8](https://github.com/google/google-java-format#from-the-command-line) |
 | C# | 93 | CSharpier | [4](https://csharpier.com/docs/Configuration) |
@@ -135,7 +136,6 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Ruby | 6 | RuboCop | [224](https://docs.rubocop.org/rubocop/cops_layout.html) |
 | GraphQL | 6 | Prettier | [5](https://prettier.io/docs/options) |
 | Protobuf | 4 | buf format | [0](https://buf.build/docs/reference/cli/buf/format/) |
-| Dockerfile | 5 | dockerfmt | [3](https://github.com/reteps/dockerfmt/blob/v1.0.0/README.md) |
 | C / C++ | 48 | clang-format | [257](https://clang.llvm.org/docs/ClangFormatStyleOptions.html) |
 | PHP | 7 | PHP-CS-Fixer | [390](https://cs.symfony.com/doc/rules/index.html) |
 <!-- /generated -->
@@ -176,6 +176,7 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 |  | Lint | yamllint | 18× faster | 0.071 s / 1.25 s | 62 / 55 MB |
 | Shell | Format | shfmt | 2.6× slower | 0.059 s / 0.023 s | 79 / 52 MB |
 |  | Lint | ShellCheck | 1913× faster | 0.089 s / 170.25 s | 86 / 9735 MB |
+| Dockerfile | Lint | hadolint | 36× faster | 0.071 s / 2.57 s | 70 / 74 MB |
 | SQL | Format | sqlfluff | 386× faster | 0.012 s / 4.63 s | 57 / 52 MB |
 |  | Lint | sqlfluff | 122× faster | 0.043 s / 5.27 s | 52 / 52 MB |
 | Java | Format | google-java-format | 19× faster | 1.09 s / 20.53 s | 646 / 998 MB |
@@ -202,7 +203,6 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Ruby | Lint | RuboCop | 88× faster | 3.00 s / 264.55 s | 1180 / 377 MB |
 | Protobuf | Format | buf | 3.3× faster | 0.069 s / 0.23 s | 115 / 75 MB |
 |  | Lint | buf | 1.3× faster | 0.091 s / 0.12 s | 123 / 39 MB |
-| Dockerfile | Lint | hadolint | 36× faster | 0.071 s / 2.57 s | 70 / 74 MB |
 | PHP | Format | PHP-CS-Fixer | 161× faster | 1.77 s / 285.46 s | 1161 / 70 MB |
 |  | Lint | PHPStan | 84× faster | 1.44 s / 120.93 s | 1194 / 499 MB |
 

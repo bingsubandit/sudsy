@@ -161,3 +161,12 @@ fn shfmt_options() {
         "case $x in\na) b ;;\n*)\n\tc\n\t;;\nesac\n"
     );
 }
+
+#[test]
+fn pipeline_after_redirect_without_final_newline() {
+    // The pipeline is one node of the list, not a pipeline whose last element is a list.
+    assert_eq!(
+        fmt("a >b && f | c | s | x && r"),
+        "a >b && f | c | s | x && r\n"
+    );
+}

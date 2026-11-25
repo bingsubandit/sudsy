@@ -351,6 +351,38 @@ pub fn redundant_semicolons(
     }
 }
 
+/// A line comment whose marker run (`#`, `##`) is followed by a letter or digit gets a blank after
+/// it (`#x` as `# x`); `skip` names the comment tokens that stay as written. Edits
+/// `(from, to, text)`.
+pub fn comment_space(
+    grammar: &Grammar,
+    tree: &SyntaxNode,
+    skip: impl Fn(&SyntaxToken) -> bool,
+    edits: &mut Vec<(usize, usize, String)>,
+) {
+    let Some(marker) = grammar.comments.line.as_deref() else {
+        return;
+    };
+    for t in tree
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .filter(|t| grammar.has_tag(t.kind(), "comment"))
+    {
+        let mut rest = t.text();
+        let mut at = usize::from(t.text_range().start());
+        if !rest.starts_with(marker) {
+            continue;
+        }
+        while let Some(r) = rest.strip_prefix(marker) {
+            rest = r;
+            at += marker.len();
+        }
+        if rest.starts_with(char::is_alphanumeric) && !skip(&t) {
+            edits.push((at, at, " ".into()));
+        }
+    }
+}
+
 /// `fun f(): T { return x }` becomes `fun f(): T = x` (also `throw`): a function whose body is one
 /// `#return` or `#throw` without a label and without comments. A `throw` body of a function with
 /// no declared type gets the first of `redundant_return_types` (`fun f(): Unit = throw x`: the

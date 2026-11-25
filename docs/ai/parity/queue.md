@@ -8,7 +8,6 @@ Weight: the primary tool of a leg 4, a popular secondary 1, any other 0.25. Orde
 
 | Language | Leg | Weight | Now | Points | Needs | Causes | Difficulty | Score | Measured on |
 |---|---|---|---|---|---|---|---|---|---|
-| Dockerfile | format dockerfmt | 4 | 38.9% | 46.1 | 259 files | `shell-layout` 167, `env-legacy` 122 | 6 | 30.76 | - |
 | C / C++ | format clang-format | 4 | 69.4% | 15.6 | 1038 files | `brace-own-line-in-source` 361, `pointer-align` 328, `reference-align` 300, `comment-line-indent-or-join` 299 | 12 | 5.21 | - |
 | (not in support.yaml) | lint sqlfluff-fixtures | 0.25 | 59.6% | 25.4 | 11453 findings | `CP01` 4211, `LT01` 2805, `LT02` 2639, `PRS` 967 +1 more | 15 | 0.42 | 3cdf2fac |
 | C# | lint Roslynator | 0.25 | 0.4% | 84.6 | 9405 findings | `RCS1157` 1714, `RCS1118` 1422, `RCS1123` 827, `RCS1085` 760 +23 more | 75 | 0.28 | 66718389 |
@@ -21,7 +20,7 @@ Blocked on a decision:
 
 Not measured: C / C++ lint clang-tidy (no target, blocked).
 
-New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x sum(Gain) / (20 x (Parser + sum Cost)), summed over the legs of the plan (lint, format, both); one primary tool per leg (the one most users run), every plan is assumed to reach the bar and its cost holds everything it takes: 1 + 0.3 type worker + 0.2 index + 0.1 per missing shared part + layout (whitespace only -0.3, width +0.2, penalty +0.5); a leg with no reference tool competes like any other. `retrofit` rows are the existing legs with no reference tool (parser paid): they rank by the same formula but never ahead of a primary leg under the bar. `~` marks an estimate, and a score with one is `~`: a row with an estimate may only be picked to measure it (its values), not to build it. Rule for a free slot: a primary leg under the bar that an agent works on counts as handled; the slot goes to a primary leg under the bar without an agent first, else to the best new-language row, before any secondary-tool work. This table cannot see who works on what. Primary legs under the bar now: C / C++ format clang-format; Dockerfile format dockerfmt.
+New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x sum(Gain) / (20 x (Parser + sum Cost)), summed over the legs of the plan (lint, format, both); one primary tool per leg (the one most users run), every plan is assumed to reach the bar and its cost holds everything it takes: 1 + 0.3 type worker + 0.2 index + 0.1 per missing shared part + layout (whitespace only -0.3, width +0.2, penalty +0.5); a leg with no reference tool competes like any other. `retrofit` rows are the existing legs with no reference tool (parser paid): they rank by the same formula but never ahead of a primary leg under the bar. `~` marks an estimate, and a score with one is `~`: a row with an estimate may only be picked to measure it (its values), not to build it. Rule for a free slot: a primary leg under the bar that an agent works on counts as handled; the slot goes to a primary leg under the bar without an agent first, else to the best new-language row, before any secondary-tool work. This table cannot see who works on what. Primary legs under the bar now: C / C++ format clang-format.
 
 | Language | Demand | Parser | Lint | Format | Both | Suggestion | Notes |
 |---|---|---|---|---|---|---|---|
@@ -204,13 +203,13 @@ Format: unclassified 0 of 1 differing files (0%).
 
 ## dockerfmt
 
-Format: unclassified 0 of 343 differing files (0%).
-1. `shell-layout` (167 files): the shell text of RUN, CMD, ENTRYPOINT and HEALTHCHECK is kept as written (continued lines keep their relative indent); dockerfmt lays it out with mvdan/sh (`&&` at the line start, one level of nesting, joined and split lines)
-2. `env-legacy` (122 files): `ENV key value` is kept; dockerfmt writes `ENV key=value`
-3. `copy-json` (37 files): `COPY ["a", "b"]` and `ADD [...]` stay in JSON form; dockerfmt writes plain arguments when the form has no JSON-only meaning
-4. `comment-space` (7 files): `#word` is kept; dockerfmt writes `# word` (a letter or digit after the `#`)
-5. `copy-layout` (6 files): a continued COPY, ADD or SHELL keeps its arguments as written; dockerfmt puts every argument on a line of its own
-6. `blank-lines` (3 files): a blank line at the start of a file is dropped, and blanks between instructions follow `max_blank_lines`; dockerfmt keeps one leading blank line
+Format: unclassified 0 of 53 differing files (0%).
+1. `shell-layout` (23 files): a few shell layouts differ from mvdan/sh, a long `;` list in one line and `ADD --chmod` continuations, a `RUN` whose double space dockerfmt keeps, comment placement beside a `;`-only line
+2. `env-legacy` (14 files): a multi-line `ENV KEY \` legacy value is kept; dockerfmt writes it as one quoted string
+3. `heredoc-body` (10 files): the body of `RUN <<EOT` stays as written (heredoc bodies are kept) and dockerfmt formats it as shell
+4. `blank-lines` (3 files): a blank line at the start of a file is dropped; dockerfmt keeps it
+5. `copy-layout` (1 files): a continued COPY or ADD keeps its arguments as written; dockerfmt puts every argument on a line of its own
+6. `escape` (1 files): a file with `# escape=` and PowerShell stays as written; dockerfmt changes it
 7. `maintainer` (1 files): `MAINTAINER x` is kept; dockerfmt writes `LABEL org.opencontainers.image.authors="x"`, which changes metadata and is not done
 
 ## dotnet-format

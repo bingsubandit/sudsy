@@ -162,7 +162,10 @@ pub fn redirect(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatErro
             // The words after the target (`>&2 'a b'`) are arguments of the command.
             let blank = p.last(cx).and_then(|t| t.next_token()) != e.first(cx);
             let special = (e.first(cx)).is_some_and(|t| t.text().starts_with(['<', '>', '-', '(']));
-            if blank && (special || !operator(p)) {
+            let spaced = cx.options.bool(core_config::opt::SPACE_REDIRECTS)
+                && operator(p)
+                && p.tok().is_some_and(|t| !t.text().ends_with('&'));
+            if (blank && (special || !operator(p))) || spaced {
                 parts.push(doc::lit(" "));
             }
         }
@@ -242,11 +245,13 @@ fn subst(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
     let body = &es[1..es.len() - 1];
     if !matches!(open.text(), "$(" | "<(" | ">(")
         || close.text() != ")"
-        || es.iter().any(|e| e.cont)
+        || es.iter().skip(1).any(|e| e.cont)
     {
+        // (from the opener: the blanks before it belong to the line it stands on)
+        let from = open.text_range().start() - node.text_range().start();
         let to = close.text_range().end() - node.text_range().start();
         return Ok(verbatim_text(
-            &node.text().slice(TextRange::new(0.into(), to)).to_string(),
+            &node.text().slice(TextRange::new(from, to)).to_string(),
         ));
     }
     let last = body.iter().rev().find_map(|e| e.last(cx));

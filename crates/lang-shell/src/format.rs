@@ -186,6 +186,13 @@ fn kw_lead(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
     ])
 }
 
+/// Is the code the shell text of a Dockerfile instruction (`EmbedMode::Continued`)? Its line breaks
+/// are line continuations: a break between statements is one, and every `;` stays, because without
+/// it the next statement would join the words of the one before.
+fn continued_mode(cx: &FormatCtx<'_>) -> bool {
+    core_format::EmbedMode::of(cx.options) == Some(core_format::EmbedMode::Continued)
+}
+
 fn max_blank(cx: &FormatCtx<'_>) -> usize {
     cx.options.max_blank_lines()
 }
@@ -206,7 +213,8 @@ fn is_block(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
         ),
         _ => false,
     };
-    lines || multi_statement_body(cx, &n)
+    // (in a Dockerfile's shell text a case item written on one line stays on it)
+    lines || (!(continued_mode(cx) && n.kind() == k::CASE_ITEM) && multi_statement_body(cx, &n))
 }
 
 /// Does a compound command at or below `node` have a body of several statements?
@@ -240,7 +248,17 @@ fn program(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
         .into_iter()
         .filter(|e| !e.is(k::EOF))
         .collect();
-    let mut parts = vec![block_list(cx, &es)?];
+    // (a `;` after the last statement of a Dockerfile's shell text ends nothing, unless it
+    // stands on a line of its own)
+    let end = match es.last() {
+        Some(e)
+            if continued_mode(cx) && !e.cont && e.tok().is_some_and(|t| t.kind() == k::SEMI) =>
+        {
+            es.len() - 1
+        }
+        _ => es.len(),
+    };
+    let mut parts = vec![block_list(cx, &es[..end])?];
     let eof = node
         .last_token()
         .ok_or_else(|| FormatError::Shape("Program without tokens".into()))?;
@@ -262,14 +280,26 @@ fn program(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
 fn block_list(cx: &FormatCtx<'_>, es: &[E]) -> Result<Doc, FormatError> {
     let g = cx.grammar;
     let max = max_blank(cx);
+    let continued = continued_mode(cx);
     let mut parts = Vec::new();
     let mut first_stmt = true;
     for e in es {
         match e.tok() {
-            Some(t) if t.kind() == k::SEMI => parts.push(cx.trailing_comments_doc(t)),
+            Some(t) if t.kind() == k::SEMI => {
+                if continued {
+                    // (a `;` that stands on a line of its own stays there)
+                    if e.cont {
+                        parts.extend([doc::lit(" \\"), doc::hardline()]);
+                    }
+                    parts.push(doc::lit(";"));
+                }
+                parts.push(cx.trailing_comments_doc(t));
+            }
             Some(t) if e.op() == Some("&") => parts.extend([doc::lit(" "), cx.token(t)]),
             _ => {
-                if !first_stmt {
+                if !first_stmt && continued && !e.cont {
+                    parts.push(doc::lit(" "));
+                } else if !first_stmt {
                     parts.push(doc::hardline());
                     if let Some(first) = e.first(cx) {
                         let blank = comments::blank_lines_before(g, &first).min(max);
@@ -326,6 +356,21 @@ fn flow(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
     let es = elems(cx, node);
     let mut head = Vec::new();
     let mut tail: Option<Vec<Doc>> = None;
+    let op_first = cx
+        .options
+        .is(core_config::opt::BINARY_OPERATOR_LINE, "start");
+    let is_op = |e: &E| matches!(e.op(), Some("&&" | "||" | "|" | "|&"));
+    // (a pipeline after `&&` or `||`: its first broken `|` stands level with that operator, the
+    // others one level in)
+    let mut flat_first = op_first
+        && node.kind() == k::PIPELINE
+        && cx.first_token(node).is_some_and(|t| {
+            let mut prev = t.prev_token();
+            while let Some(p) = prev.clone().filter(|p| cx.grammar.is_trivia(p.kind())) {
+                prev = p.prev_token();
+            }
+            prev.is_some_and(|p| matches!(p.text(), "&&" | "||"))
+        });
     for (i, e) in es.iter().enumerate() {
         let d = e.doc(cx)?;
         if i == 0 {
@@ -333,6 +378,35 @@ fn flow(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
             continue;
         }
         let prev = &es[i - 1];
+        if op_first && (is_op(e) || is_op(prev)) {
+            // A break next to an operator goes before it (`a \` + line break + `&& b`).
+            let target = |tail: &mut Option<Vec<Doc>>| {
+                if tail.is_none() {
+                    *tail = Some(Vec::new());
+                }
+            };
+            let sep = if is_op(e) {
+                let broken = e.cont
+                    || es.get(i + 1).is_some_and(|n| n.cont)
+                    || e.tok().is_some_and(|t| breaks(cx, t));
+                if broken && std::mem::take(&mut flat_first) && tail.is_none() {
+                    head.extend([doc::lit(" \\"), doc::hardline()]);
+                    head.push(d);
+                    continue;
+                } else if broken {
+                    target(&mut tail);
+                    vec![doc::lit(" \\"), doc::hardline()]
+                } else {
+                    vec![doc::lit(" ")]
+                }
+            } else {
+                vec![doc::lit(" ")]
+            };
+            let t = tail.as_mut().unwrap_or(&mut head);
+            t.extend(sep);
+            t.push(d);
+            continue;
+        }
         let after_op = matches!(prev.op(), Some("&&" | "||" | "|" | "|&"));
         let broken_after_op = after_op && (prev.cont || prev.tok().is_some_and(|t| breaks(cx, t)));
         let before_op = matches!(e.op(), Some("&&" | "||" | "|" | "|&"));
@@ -484,10 +558,9 @@ fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
     let kind = node.kind();
     let arithmetic = kind == k::GROUP && !es.first().is_some_and(|e| e.is_kw(&["{"]));
     // A `for` list may continue over lines; elsewhere a continuation is kept by keeping the node.
-    let continued = es
-        .iter()
-        .enumerate()
-        .any(|(i, e)| e.cont && (kind != k::FOR || i + 1 == es.len()));
+    let continued = es.iter().enumerate().any(|(i, e)| {
+        e.cont && (kind != k::FOR || i + 1 == es.len()) && !(continued_mode(cx) && kind != k::FOR)
+    });
     if arithmetic && !continued {
         return Ok(match (cx.first_token(node), cx.last_token(node)) {
             (Some(a), Some(b)) => arithmetic_range(cx, &a, &b),
@@ -528,6 +601,11 @@ fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
         .position(|e| e.is(k::ELIF) || e.is(k::ELSE))
         .unwrap_or(rest.len());
     let (body, clauses) = rest.split_at(split);
+    // (continued mode: the `;` before the `)` of a subshell is dropped, the `)` ends it)
+    let body = match body.split_last() {
+        Some((e, init)) if kind == k::SUBSHELL && continued_mode(cx) && e.is(k::SEMI) => init,
+        _ => body,
+    };
 
     let mut parts = Vec::new();
     if !head.is_empty() {
@@ -693,7 +771,7 @@ fn head_doc(
 
 fn case(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
     let es = elems(cx, node);
-    if es.iter().any(|e| e.cont) {
+    if !continued_mode(cx) && es.iter().any(|e| e.cont) {
         return Ok(cx.verbatim_node(node));
     }
     let Some(ii) = es.iter().position(|e| e.is_kw(&["in"])) else {
@@ -713,17 +791,23 @@ fn case(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
         parts.push(e.doc(cx)?);
     }
     let block = is_block(cx, node);
+    let mut arms = Vec::new();
     for e in items {
         if block {
-            parts.push(doc::hardline());
+            arms.push(doc::hardline());
             if let Some(first) = e.first(cx) {
                 let blank = comments::blank_lines_before(g, &first).min(max_blank(cx));
-                parts.extend((0..blank).map(|_| doc::hardline()));
+                arms.extend((0..blank).map(|_| doc::hardline()));
             }
         } else {
-            parts.push(doc::lit(" "));
+            arms.push(doc::lit(" "));
         }
-        parts.push(e.doc(cx)?);
+        arms.push(e.doc(cx)?);
+    }
+    if block && cx.options.bool(core_config::opt::INDENT_CASE_ARMS) {
+        parts.push(doc::indent(doc::concat(arms)));
+    } else {
+        parts.extend(arms);
     }
     parts.push(if block {
         doc::hardline()
@@ -748,7 +832,7 @@ fn case_item(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> 
     let Some(pi) = es.iter().position(|e| e.is_kw(&[")"])) else {
         return Ok(cx.verbatim_node(node));
     };
-    if es.iter().any(|e| e.cont) {
+    if !continued_mode(cx) && es.iter().any(|e| e.cont) {
         return Ok(cx.verbatim_node(node));
     }
     if es[0].is_kw(&["("]) {
@@ -759,6 +843,11 @@ fn case_item(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> 
     let (body, term) = match rest.split_last() {
         Some((t, body)) if t.is(k::CASE_END) => (body, Some(t)),
         _ => (rest, None),
+    };
+    // (continued mode: the `;` before `;;` is dropped, the arm ends there)
+    let body = match body.split_last() {
+        Some((e, init)) if term.is_some() && continued_mode(cx) && e.is(k::SEMI) => init,
+        _ => body,
     };
     let mut parts = Vec::new();
     // Alternatives are separated by ` | `; the words of one pattern (`*"/.bashrc"`) touch.
@@ -819,7 +908,7 @@ fn end(cx: &FormatCtx<'_>, term: Option<&E>, own_line: bool) -> Option<Doc> {
 /// `name() body` and `function name body`.
 fn function(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
     let es = elems(cx, node);
-    if es.iter().any(|e| e.cont) {
+    if !continued_mode(cx) && es.iter().any(|e| e.cont) {
         return Ok(cx.verbatim_node(node));
     }
     let mut parts = Vec::new();

@@ -33,16 +33,20 @@ pub enum EmbedMode {
     NgNested,
     /// A list of declarations (`style=""`).
     Declarations,
+    /// A whole file whose line breaks are line continuations (the shell code of a Dockerfile `RUN`):
+    /// every statement separator stays, a break between statements is a continuation.
+    Continued,
 }
 
 impl EmbedMode {
-    const ALL: [EmbedMode; 6] = [
+    const ALL: [EmbedMode; 7] = [
         EmbedMode::Program,
         EmbedMode::Expression,
         EmbedMode::ExpressionIndented,
         EmbedMode::NgExpression,
         EmbedMode::NgNested,
         EmbedMode::Declarations,
+        EmbedMode::Continued,
     ];
 
     /// The name the other language's provider reads in its `embed_mode` option.
@@ -54,6 +58,7 @@ impl EmbedMode {
             EmbedMode::NgExpression => "ng-expression",
             EmbedMode::NgNested => "ng-nested",
             EmbedMode::Declarations => "declarations",
+            EmbedMode::Continued => "continued",
         }
     }
 
@@ -102,7 +107,10 @@ impl EmbedMode {
 
     /// Is the code one expression (not a program or declarations)?
     pub fn is_expression(self) -> bool {
-        !matches!(self, EmbedMode::Program | EmbedMode::Declarations)
+        !matches!(
+            self,
+            EmbedMode::Program | EmbedMode::Declarations | EmbedMode::Continued
+        )
     }
 
     /// Does a binary's continuation indent its operands?
@@ -121,13 +129,15 @@ impl EmbedMode {
 /// text without a final line break, or `None` when the code does not parse or the language is
 /// unknown. `single_quotes`: the host's own quote is `"` (an attribute value), so strings prefer `'`.
 pub trait Embedder {
+    /// `overrides` replace options of the other language's resolved set (the host's indentation,
+    /// for code that is laid out in the host's lines).
     fn format(
         &self,
         language: &str,
         mode: EmbedMode,
         code: &str,
-        width: usize,
-        single_quotes: bool,
+        size: (usize, bool),
+        overrides: &[(core_config::OptId, core_config::OptionValue)],
     ) -> Option<String>;
 }
 
@@ -417,8 +427,20 @@ impl<'a> FormatCtx<'a> {
         width: usize,
         single_quotes: bool,
     ) -> Option<String> {
+        self.embed_with(language, mode, code, (width, single_quotes), &[])
+    }
+
+    /// [`FormatCtx::embed`] with `overrides` of the other language's options.
+    pub fn embed_with(
+        &self,
+        language: &str,
+        mode: EmbedMode,
+        code: &str,
+        (width, single_quotes): (usize, bool),
+        overrides: &[(core_config::OptId, core_config::OptionValue)],
+    ) -> Option<String> {
         self.embedder?
-            .format(language, mode, code, width, single_quotes)
+            .format(language, mode, code, (width, single_quotes), overrides)
     }
 
     /// The member chain policy of the options, built once per file.

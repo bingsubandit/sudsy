@@ -196,7 +196,16 @@ pub fn format_tree(root: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<String, Form
     };
     out.truncate(out.trim_end_matches(['\n', ' ', '\t']).len().max(keep));
     let final_newline = cx.options.flag(core_config::shared::FINAL_NEWLINE, true);
-    if final_newline && !cx.exact_end(root) && !out.is_empty() && !out.ends_with('\n') {
+    // `keep_final_newline`: a file that has no final newline gets none.
+    let kept = cx.options.flag(core_config::opt::KEEP_FINAL_NEWLINE, false) && {
+        let text = root.text();
+        let len = text.len();
+        len > rowan::TextSize::from(0)
+            && text
+                .char_at(len - rowan::TextSize::from(1))
+                .is_some_and(|c| c != '\n')
+    };
+    if final_newline && !kept && !cx.exact_end(root) && !out.is_empty() && !out.ends_with('\n') {
         out.push('\n');
     }
     let ending = match cx.options.text(core_config::shared::END_OF_LINE) {

@@ -44,13 +44,13 @@ fn instructions_and_arguments() {
 }
 
 #[test]
-fn continuations_are_reindented_outside_quotes() {
+fn continuations_are_reindented_but_shell_text_stays_without_a_shell() {
     let out = fmt(
         "RUN  apt-get update   \\\n  && apt-get install -y \\\n\n# why\n  curl \\\n  jq\nRUN echo \"a  \\\n   b\" \\\n  c\nCOPY a \\\n  b \\\n   /d\nENV A=1 \\\n    B=2\nRUN \\\n  x\n",
     );
     assert_eq!(
         out,
-        "RUN apt-get update \\\n    && apt-get install -y \\\n\n    # why\n    curl \\\n    jq\nRUN echo \"a  \\\n   b\" \\\n    c\nCOPY a \\\n    b \\\n    /d\nENV A=1 \\\n    B=2\nRUN \\\n    x\n"
+        "RUN apt-get update   \\\n  && apt-get install -y \\\n# why\n  curl \\\n  jq\nRUN echo \"a  \\\n   b\" \\\n  c\nCOPY a \\\n    b \\\n    /d\nENV A=1 \\\n    B=2\nRUN x\n"
     );
 }
 
@@ -58,7 +58,7 @@ fn continuations_are_reindented_outside_quotes() {
 fn nested_continuation_levels_stay_nested() {
     assert_eq!(
         fmt("RUN a \\\n  && b \\\n      c \\\n\t\td\n"),
-        "RUN a \\\n    && b \\\n        c \\\n          d\n"
+        "RUN a \\\n  && b \\\n      c \\\n\t\td\n"
     );
 }
 
@@ -73,7 +73,7 @@ fn the_escape_directive_changes_the_continuation_character() {
     let out = fmt("# escape=`\nFROM x\nRUN a  `\n  b `\n  c\nCOPY a `\n b\nCMD a  `\n b\n");
     assert_eq!(
         out,
-        "# escape=`\nFROM x\nRUN a `\n    b `\n    c\nCOPY a `\n    b\nCMD a `\n    b\n"
+        "# escape=`\nFROM x\nRUN a  `\n  b `\n  c\nCOPY a `\n    b\nCMD a  `\n b\n"
     );
 }
 
@@ -108,7 +108,7 @@ fn blank_lines_and_trailing_comments() {
     assert_eq!(fmt(""), "");
     assert_eq!(
         fmt("FROM a\r\nRUN b \\\r\n  c\r\n"),
-        "FROM a\r\nRUN b \\\r\n    c\r\n"
+        "FROM a\r\nRUN b \\\r\n  c\r\n"
     );
 }
 
@@ -117,7 +117,7 @@ fn words_the_grammar_used_to_reject() {
     // a backslash before the closing single quote is literal
     assert_eq!(
         fmt("FROM a\nRUN x 'a\\'; \\\n  y\n"),
-        "FROM a\nRUN x 'a\\'; \\\n    y\n"
+        "FROM a\nRUN x 'a\\'; \\\n  y\n"
     );
     // quoted USER
     assert_eq!(

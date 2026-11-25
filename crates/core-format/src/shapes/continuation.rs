@@ -8,6 +8,38 @@
 
 use crate::doc::{self, Doc};
 
+/// Does `text` start with `word` as a whole word (not followed by a word character)?
+fn starts_word(text: &str, word: &str) -> bool {
+    text.strip_prefix(word)
+        .is_some_and(|r| !r.starts_with(|c: char| c.is_alphanumeric() || c == '_'))
+}
+
+/// For each line of `text`: does it start inside a quote that an earlier line opened
+/// (`"a \` + line break + `b"`)? The lines of a quote stay as written.
+pub fn quote_starts(text: &str) -> Vec<bool> {
+    let mut quote = None::<char>;
+    let mut out = Vec::new();
+    for line in text.split('\n') {
+        out.push(quote.is_some());
+        // (a comment line outside a quote opens none)
+        if quote.is_none() && line.trim_start().starts_with('#') {
+            continue;
+        }
+        let mut chars = line.chars();
+        while let Some(c) = chars.next() {
+            match quote {
+                _ if c == '\\' && quote != Some('\'') => {
+                    chars.next();
+                }
+                None if c == '"' || c == '\'' => quote = Some(c),
+                Some(q) if c == q => quote = None,
+                _ => {}
+            }
+        }
+    }
+    out
+}
+
 /// Columns of a tab when the indentation of continued lines is compared.
 const TAB_COLUMNS: usize = 4;
 
@@ -144,6 +176,178 @@ impl Continued {
                 }
             }
         }
+    }
+
+    /// Text of several lines as written: the first line goes on, the others stay where they are.
+    pub fn raw(&mut self, text: &str) {
+        for (i, line) in text.split('\n').enumerate() {
+            let line = line.trim_end_matches('\r');
+            if i == 0 {
+                self.push(doc::text(line.to_string()));
+            } else {
+                self.tail.push(doc::line_start(line.to_string()));
+            }
+        }
+    }
+
+    /// Code of another language, laid out in lines by its own formatter (its nested levels indented
+    /// by `unit`, a tab or that many blanks), as the rest of the logical line: the first line goes
+    /// on, every further line is indented one continuation level and ends in ` \\`. Lines of the
+    /// first statement (up to the first line at column 0 that does not close a block) stand one
+    /// level less in, as the first line sets the level, unless the statement is a block closed at
+    /// column 0; where a line starts with one of the `operators`, only from there on. Each of the
+    /// `comments` (code lines before it, text) is put on a line of its own before that code line.
+    pub fn code(
+        &mut self,
+        code: &str,
+        unit: &str,
+        operators: &[&str],
+        closers: &[&str],
+        comments: &[(usize, String)],
+    ) {
+        let lines: Vec<&str> = code.split('\n').collect();
+        let inside = quote_starts(code);
+        let is_op = |l: &str| operators.iter().any(|o| starts_word(l.trim_start(), o));
+        let mut end = lines.len();
+        let mut block = false;
+        let mut first_op = None;
+        for (i, line) in lines.iter().enumerate().skip(1) {
+            if inside[i] {
+                continue;
+            }
+            let body = line.trim_end();
+            let bare = body.trim_start();
+            if body.len() == bare.len() {
+                if !closers.iter().any(|c| starts_word(bare, c)) {
+                    end = i;
+                    break;
+                }
+                block = true;
+            } else if first_op.is_none() && is_op(body) {
+                first_op = Some(i);
+            }
+        }
+        // (a first line with several statements: the lines after it belong to a later one)
+        let later = !inside.get(1).copied().unwrap_or(false)
+            && lines[0].contains("; ")
+            && !lines[0].contains(['"', '\'']);
+        let strip_from = match (block, first_op) {
+            _ if later => end,
+            (true, _) => end,
+            (false, Some(i)) => i,
+            (false, None) => 1,
+        };
+        for (i, line) in lines.iter().enumerate() {
+            let last = i + 1 == lines.len();
+            if inside[i] {
+                // (inside a quote: as written; the line break goes before it)
+                let line = line.trim_end_matches('\r');
+                // (the line that closes the quote goes on to the next line)
+                let ends = !last && !inside[i + 1] && !line.ends_with('\\');
+                self.tail.push(doc::line_start(if ends {
+                    format!("{line} \\")
+                } else {
+                    line.to_string()
+                }));
+                continue;
+            }
+            let ends_in_quote = !last && inside[i + 1];
+            let body = if ends_in_quote {
+                line.trim_end_matches([' ', '\t'])
+            } else {
+                line.trim_end()
+            };
+            let text = if ends_in_quote || last || body.ends_with('\\') {
+                body.to_string()
+            } else if body.is_empty() {
+                // (a blank continuation line stands level with the line after it)
+                let next = (i + 1..lines.len())
+                    .find(|&j| !inside[j] && !lines[j].trim().is_empty())
+                    .map_or("", |j| lines[j]);
+                let lead = &next[..next.len() - next.trim_start().len()];
+                let lead = match lead.strip_prefix(unit) {
+                    Some(rest) if (strip_from..end).contains(&(i + 1)) => rest,
+                    _ => lead,
+                };
+                format!("{lead}\\")
+            } else {
+                format!("{body} \\")
+            };
+            if i == 0 {
+                self.push(doc::text(text));
+                continue;
+            }
+            let text = match text.strip_prefix(unit) {
+                Some(rest) if !body.is_empty() && (strip_from..end).contains(&i) => {
+                    rest.to_string()
+                }
+                _ => text,
+            };
+            // A comment line stands where it was, at the indentation of the line after it.
+            for (_, comment) in comments.iter().filter(|c| c.0 == i) {
+                let indent = &text[..text.len() - text.trim_start().len()];
+                self.tail.push(doc::hardline());
+                self.tail.push(doc::text(format!("{indent}{comment}")));
+            }
+            self.tail.push(doc::hardline());
+            self.tail.push(doc::text(text));
+        }
+    }
+
+    /// The comment lines of the logical line `source` (code lines, with the comment lines among
+    /// them) as `(index of the laid-out line before which it goes, text)`: a comment goes before
+    /// the first laid-out line, at or after the one of the comment before it, that starts with
+    /// the first two words of the source line after it. `None` when there is no such line.
+    pub fn place_comments(source: &str, laid: &str) -> Option<Vec<(usize, String)>> {
+        let words = |l: &str| {
+            l.split_whitespace()
+                .filter(|w| *w != "\\")
+                .collect::<Vec<_>>()
+                .join(" ")
+        };
+        let head = |l: &str| l.split_whitespace().take(2).collect::<Vec<_>>().join(" ");
+        let full: Vec<String> = laid.split('\n').map(words).collect();
+        let laid: Vec<String> = laid.split('\n').map(head).collect();
+        let lines: Vec<&str> = source.split('\n').collect();
+        let (mut at, mut after) = (0, 0);
+        let mut out = Vec::new();
+        for (i, line) in lines.iter().enumerate().skip(1) {
+            if !line.trim_start().starts_with('#') {
+                continue;
+            }
+            let next = lines[i + 1..]
+                .iter()
+                .position(|l| !l.trim_start().starts_with('#'))
+                .map(|n| i + 1 + n)?;
+            let want = head(lines[next]);
+            let exact = words(lines[next]);
+            // (comments in front of the same line share its place; one in front of another line
+            // goes to a later laid line, also when its words are the same)
+            let from = if next == after { at } else { at + 1 };
+            let start = from.min(laid.len());
+            // (the source lines with the same words between the last place and this line come
+            // first: a run of blank lines)
+            let same = if next == after {
+                0
+            } else {
+                lines[after + 1..next]
+                    .iter()
+                    .filter(|l| !l.trim_start().starts_with('#') && words(l) == exact)
+                    .count()
+            };
+            // (the line itself first; a line the Shell formatter broke again, by its first words)
+            at = start
+                + full[start..]
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, l)| **l == exact)
+                    .map(|(n, _)| n)
+                    .nth(same)
+                    .or_else(|| laid[start..].iter().position(|l| *l == want))?;
+            after = next;
+            out.push((at, line.trim().to_string()));
+        }
+        Some(out)
     }
 
     pub fn finish(self) -> Doc {

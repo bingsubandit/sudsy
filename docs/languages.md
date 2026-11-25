@@ -186,6 +186,21 @@ The status and the numbers of every language are in the generated table "Languag
   - Without the `shell/shfmt` preset a last `case` arm without `;;` stays, tabs in `<<-` heredocs are kept and trailing comments keep their blanks.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format shfmt`, `scripts/parity.sh coverage shellcheck`.
 
+## Dockerfile
+
+<!-- generated:measured-dockerfile -->
+- **Measured:** Ready.
+  - Format, dockerfmt: 90% of the files identical (508 of 561 files).
+  - Lint, hadolint: 91% of its findings also reported (685 of 751 findings).
+<!-- /generated -->
+
+- The formatter fixes keyword case and blank lines and keeps nested continuation lines nested. The reference formatter is dockerfmt, which also lays out the shell code of `RUN` and rewrites legacy `ENV` and `COPY` forms: those are the open differences.
+- **Linter:** hadolint.
+- **Presets:** `dockerfile/hadolint`.
+- **Options:** `max_blank_lines`.
+- **Differences:** a variable as `USER` is accepted whether or not an `ARG` defines it. hadolint reports it.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh coverage hadolint` (lint), `scripts/parity.sh stability dockerfile` (stable).
+
 ## SQL
 
 <!-- generated:measured-sql -->
@@ -446,21 +461,6 @@ The status and the numbers of every language are in the generated table "Languag
 - **Options:** only the shared ones.
 - **Differences:** Sudsy keeps empty statements (`;`). buf drops them.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format buf`, `scripts/parity.sh coverage buf`.
-
-## Dockerfile
-
-<!-- generated:measured-dockerfile -->
-- **Measured:** In progress.
-  - Format, dockerfmt: 38% of the files identical (218 of 561 files).
-  - Lint, hadolint: 91% of its findings also reported (685 of 751 findings).
-<!-- /generated -->
-
-- The formatter fixes keyword case and blank lines and keeps nested continuation lines nested. The reference formatter is dockerfmt, which also lays out the shell code of `RUN` and rewrites legacy `ENV` and `COPY` forms: those are the open differences.
-- **Linter:** hadolint.
-- **Presets:** `dockerfile/hadolint`.
-- **Options:** `max_blank_lines`.
-- **Differences:** a variable as `USER` is accepted whether or not an `ARG` defines it. hadolint reports it.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh coverage hadolint` (lint), `scripts/parity.sh stability dockerfile` (stable).
 
 ## C / C++
 

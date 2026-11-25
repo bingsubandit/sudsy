@@ -12,7 +12,26 @@ options:
   - final_newline: true
   - end_of_line
   - max_blank_lines: [1, "Largest number of blank lines kept between instructions and comments."]
-presets: [hadolint]
+  - binary_operator_line: ["start"]
+  - space_redirects:
+      default: true
+      doc: "A blank after the operator of a redirect that opens a file in the shell code of `RUN` (`> file`)."
+  - indent_case_arms:
+      default: true
+      doc: "The arms of a `case` in the shell code of `RUN` one level inside it."
+  - keep_final_newline:
+      default: false
+      doc: "A file that does not end with a line break stays without one (the final newline is not added)."
+  - comment_space:
+      default: false
+      doc: "A line comment whose `#` run is followed by a letter or digit gets a blank after it (`#x` as `# x`); a parser directive before the first instruction stays."
+  - key_value_pairs:
+      default: false
+      doc: "`ENV` and `LABEL` in the legacy form `key value` as `key=value` (a value with blanks in double quotes), where both read as the same value: the value has no quote and no backslash, or is one word (a backslash stays as written), or is one quoted string."
+  - json_copy_as_words:
+      default: false
+      doc: "The JSON array of `COPY` and `ADD` as plain arguments (`COPY [\"a\", \"b\"]` as `COPY a b`) where every element is a plain path word (letters, digits and `_./:@%+,=~*?^-`, not starting with `-`) and the array is on one line."
+presets: [hadolint, dockerfmt]
 mapping:
   wrap: {Raw: Instruction}
   same: 'comment line_continuation shell_command json_string'
