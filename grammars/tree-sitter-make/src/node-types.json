@@ -326,6 +326,22 @@
         "required": true,
         "types": [
           {
+            "type": "automatic_variable",
+            "named": true
+          },
+          {
+            "type": "concatenation",
+            "named": true
+          },
+          {
+            "type": "substitution_reference",
+            "named": true
+          },
+          {
+            "type": "variable_reference",
+            "named": true
+          },
+          {
             "type": "word",
             "named": true
           }
@@ -590,11 +606,35 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
-      "required": true,
+      "multiple": true,
+      "required": false,
       "types": [
         {
           "type": "arguments",
+          "named": true
+        },
+        {
+          "type": "automatic_variable",
+          "named": true
+        },
+        {
+          "type": "function_call",
+          "named": true
+        },
+        {
+          "type": "shell_function",
+          "named": true
+        },
+        {
+          "type": "substitution_reference",
+          "named": true
+        },
+        {
+          "type": "variable_reference",
+          "named": true
+        },
+        {
+          "type": "word",
           "named": true
         }
       ]
@@ -1224,7 +1264,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "shell_text",
@@ -1475,7 +1515,7 @@
     "fields": {
       "pattern": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "archive",
@@ -1517,7 +1557,7 @@
       },
       "replacement": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "archive",
@@ -1728,6 +1768,22 @@
         "required": true,
         "types": [
           {
+            "type": "automatic_variable",
+            "named": true
+          },
+          {
+            "type": "concatenation",
+            "named": true
+          },
+          {
+            "type": "substitution_reference",
+            "named": true
+          },
+          {
+            "type": "variable_reference",
+            "named": true
+          },
+          {
             "type": "word",
             "named": true
           }
@@ -1787,7 +1843,7 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "archive",

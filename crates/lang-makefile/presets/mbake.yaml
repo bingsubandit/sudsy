@@ -1,0 +1,9 @@
+# Formats like mbake with its defaults: the lines after the first of a continued line take the indentation of the second, at most one
+# blank line between statements. The conditional body keeps the indentation as written (mbake's `indent_nested_conditionals` is off).
+makefile:
+  format:
+    indent_style: tab
+    continued_line_indent: first
+    spaced_assignments: plain
+    keep_comment_gap: true
+    max_blank_lines: 1

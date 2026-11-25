@@ -48,8 +48,8 @@ pub use binary_chain::{
 pub use block::{
     BlockStyle, Continuations, LabelStyle, annotation_line, blank_before, block, block_between,
     block_open_inside, braces, document, empty_braces, headed_braces, labeled, labeled_statement,
-    open_comments, opens_inside, single_line_body, spread_cases_style, statement_sequence,
-    statement_sequence_with,
+    open_comments, opens_inside, single_line_body, source_blank_lines, spread_cases_style,
+    statement_sequence, statement_sequence_with, statements_after_break,
 };
 pub use call_arguments::{
     Args, CallStyle, Expanded, HugLast, Item, Plan, call_arguments, can_hug, expression_of,

@@ -1,0 +1,34 @@
+ratchet:
+  real-world: 888
+target-files:
+  real-world: 1007
+second-format:
+  real-world: 0
+refused:
+  real-world: 0
+unclassified: 0
+differences:
+  shell-indent: gap  mbake re-indents the lines of a shell block in a recipe (two spaces to a tab, nesting by depth); Sudsy keeps the indentation of a recipe line after the tab
+  conditional-indent: gap  mbake moves an indented conditional keyword (`ifeq`, `else`, `endif`) to column 1; Sudsy keeps the indentation of the source
+  blank-lines: gap  mbake inserts or removes a blank line in places the source keeps it (a leading blank line of a file, a run of blank lines after the empty last line of a continuation, an empty `define` body line); Sudsy keeps the blank lines of the source (at most `max_blank_lines`)
+  inner-blanks: gap  mbake keeps or adds blanks inside a line in ways of its own (a blank after the colon of `.PHONY:x`, blanks inside `$(call ...)`, blanks before a trailing comment); Sudsy keeps the blanks of a recipe or value as written
+  subst-ref-colon: gap  mbake writes a blank after the colon of `$(F:$(SRC)/%=%)`, which changes the pattern of the reference; the line with a substitution reference stays as written otherwise
+  continued-indent: gap  mbake keeps the indentation of a continued line in places Sudsy sets it by the second line (a target-specific assignment after a function call target, a shell block in a variable value, a closing parenthesis)
+  nmake-syntax: choice  a file in NMake syntax (`!IF`, `!INCLUDE`, `$(VAR:a=b)` in macros, `<<` inline files), or an invalid file; GNU make cannot read it, so it is not Makefile input
+files:
+  real-world: shell-indent:59, blank-lines:19, inner-blanks:18, conditional-indent:10, subst-ref-colon:8, continued-indent:5
+  evidence/vim/src/GvimExt/Makefile: nmake-syntax
+  evidence/vim/runtime/doc/Make_mvc.mak: nmake-syntax
+  evidence/vim/runtime/indent/Make_mvc.mak: nmake-syntax
+  evidence/vim/runtime/lang/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/Make_ami.mak: nmake-syntax
+  evidence/vim/src/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/auto/nmake/tools.mak: nmake-syntax
+  evidence/vim/src/po/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/tee/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/testdir/Make_dos.mak: nmake-syntax
+  evidence/vim/src/testdir/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/xxd/Make_mvc.mak: nmake-syntax
+intentional:
+  nmake-syntax: invalid-input
+pins: {}

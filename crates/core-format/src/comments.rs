@@ -133,6 +133,8 @@ pub struct CommentStyle {
     pub keep_tight: bool,
     /// Block comments that end with one of these (`=*/`) have no blank before the token after them.
     pub glued: &'static [&'static str],
+    /// A comment on a line of its own starts in the column the source has (blanks as written).
+    pub keep_indent: bool,
 }
 
 impl CommentStyle {
@@ -161,6 +163,7 @@ impl Default for CommentStyle {
             block_as_line: false,
             keep_tight: false,
             glued: &[],
+            keep_indent: false,
         }
     }
 }
@@ -1095,6 +1098,44 @@ pub fn column(tok: &SyntaxToken) -> usize {
         prev = t.prev_token();
     }
     col
+}
+
+/// The blanks in front of `tok` on its source line; empty when another token stands before it
+/// on the line.
+pub fn line_prefix(tok: &SyntaxToken) -> String {
+    // (a token may hold the blanks in front of its text)
+    let mut line: String = tok
+        .text()
+        .chars()
+        .take_while(|c| matches!(c, ' ' | '\t'))
+        .collect();
+    let mut prev = tok.prev_token();
+    while let Some(t) = prev {
+        let text = t.text();
+        if let Some(i) = text.rfind(['\n', '\r']) {
+            line.insert_str(0, &text[i + 1..]);
+            break;
+        }
+        line.insert_str(0, text);
+        prev = t.prev_token();
+    }
+    if line.chars().all(|c| matches!(c, ' ' | '\t')) {
+        line
+    } else {
+        String::new()
+    }
+}
+
+/// The first token after `tok` that holds more than blanks and line breaks.
+pub fn next_with_text(tok: &SyntaxToken) -> Option<SyntaxToken> {
+    let mut next = tok.next_token();
+    while let Some(t) = next {
+        if t.text().chars().any(|c| !c.is_whitespace()) {
+            return Some(t);
+        }
+        next = t.next_token();
+    }
+    None
 }
 
 /// The first token after `tok` that is not trivia.

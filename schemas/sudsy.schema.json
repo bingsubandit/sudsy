@@ -10348,6 +10348,7 @@
           "preset:json/prettier-compat",
           "preset:kotlin/ktlint",
           "preset:makefile/checkmake",
+          "preset:makefile/mbake",
           "preset:markdown/markdownlint",
           "preset:markdown/prettier-compat",
           "preset:php/phpstan",
@@ -12273,6 +12274,25 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "conditional_body_indent": {
+              "default": "keep",
+              "description": "The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting.",
+              "enum": [
+                "keep",
+                "indent"
+              ],
+              "type": "string"
+            },
+            "continued_line_indent": {
+              "default": "keep",
+              "description": "The lines after the first of a rule, directive, variable value or recipe command written over several lines: `keep` leaves their indentation as written; `indent` indents the lines of a rule or directive one level; `first` gives every line the indentation of the second (a recipe command that has a shell block keyword, and a line that starts inside quotes, keep theirs).",
+              "enum": [
+                "keep",
+                "indent",
+                "first"
+              ],
+              "type": "string"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -12304,6 +12324,11 @@
               ],
               "type": "string"
             },
+            "keep_comment_gap": {
+              "default": false,
+              "description": "A comment after code keeps the blanks the source has before it when they are more than one.",
+              "type": "boolean"
+            },
             "max_blank_lines": {
               "default": 2,
               "description": "Largest number of blank lines kept between statements and comments.",
@@ -12320,6 +12345,15 @@
               "default": false,
               "description": "Write `target : prerequisite` rather than `target: prerequisite`.",
               "type": "boolean"
+            },
+            "spaced_assignments": {
+              "default": "all",
+              "description": "The assignments `space_around_assignment` applies to: `all`; `plain`: those at the start of a line whose name is letters, digits and underscores, with no substitution reference `$(v:a=b)` on the line and no colon in the first word of a value that follows `=` at once (`A=b:c`, unless a URL, a time or a path). Any other (an indented one, one after `export` or `override`, a target-specific one, a name with `-`, `.`, `/` or a reference) keeps its blanks as written.",
+              "enum": [
+                "all",
+                "plain"
+              ],
+              "type": "string"
             }
           },
           "type": "object"
@@ -16366,6 +16400,25 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "conditional_body_indent": {
+                    "default": "keep",
+                    "description": "The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting.",
+                    "enum": [
+                      "keep",
+                      "indent"
+                    ],
+                    "type": "string"
+                  },
+                  "continued_line_indent": {
+                    "default": "keep",
+                    "description": "The lines after the first of a rule, directive, variable value or recipe command written over several lines: `keep` leaves their indentation as written; `indent` indents the lines of a rule or directive one level; `first` gives every line the indentation of the second (a recipe command that has a shell block keyword, and a line that starts inside quotes, keep theirs).",
+                    "enum": [
+                      "keep",
+                      "indent",
+                      "first"
+                    ],
+                    "type": "string"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -16397,6 +16450,11 @@
                     ],
                     "type": "string"
                   },
+                  "keep_comment_gap": {
+                    "default": false,
+                    "description": "A comment after code keeps the blanks the source has before it when they are more than one.",
+                    "type": "boolean"
+                  },
                   "max_blank_lines": {
                     "default": 2,
                     "description": "Largest number of blank lines kept between statements and comments.",
@@ -16413,6 +16471,15 @@
                     "default": false,
                     "description": "Write `target : prerequisite` rather than `target: prerequisite`.",
                     "type": "boolean"
+                  },
+                  "spaced_assignments": {
+                    "default": "all",
+                    "description": "The assignments `space_around_assignment` applies to: `all`; `plain`: those at the start of a line whose name is letters, digits and underscores, with no substitution reference `$(v:a=b)` on the line and no colon in the first word of a value that follows `=` at once (`A=b:c`, unless a URL, a time or a path). Any other (an indented one, one after `export` or `override`, a target-specific one, a name with `-`, `.`, `/` or a reference) keeps its blanks as written.",
+                    "enum": [
+                      "all",
+                      "plain"
+                    ],
+                    "type": "string"
                   }
                 },
                 "type": "object"

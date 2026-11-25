@@ -45,7 +45,7 @@ pub(crate) struct Row {
     #[serde(default)]
     pub stability: Vec<String>,
     /// The leg with no reference tool predates docs/ai/development/no-reference-tool.md: it needs no agreement,
-    /// checklist or precision number (the six legs INI, EditorConfig, .gitignore, Dockerfile, Makefile and GitHub
+    /// checklist or precision number (the five legs INI, EditorConfig, .gitignore, Dockerfile and GitHub
     /// Actions format; set by name here, never for a new language).
     #[serde(default)]
     pub exempt: bool,
