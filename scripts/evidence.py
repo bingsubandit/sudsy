@@ -1,10 +1,14 @@
 """Evidence run of a format leg with no reference tool (docs/ai/development/no-reference-tool.md): split, decision table, agreement, comparison with a partial tool.
 
 Usage: evidence.py <language> <sudsy-binary> <work-dir> [<tool-binary> [<cause> [<n>]]]
+       evidence.py <language> list   (project, half and path of every corpus file, tab-separated)
+       evidence.py <language> table  (the decision table alone, for a language with no formatter yet)
 
 `<language>` names a module `scripts/evidence_<language>.py`, which holds the facts of the language and no mechanism:
   DIRS      [(corpus folder below tests/conformance/corpus, regex of file names)]
   PROJECT   {repository folder: project} for repositories that are one project; the folder name otherwise
+  SKIP      optional: regex of corpus paths that are not the language (left out)
+  CAP       optional: at most this many files per project (the first by path), so that no project outweighs the others
   SEED      seed of the split (random.Random over the sorted project names; the first half decides, the other is held out)
   KLASSES   {class: text} of causes of difference that a comparison may leave out, in the order they are left out (cumulative)
   TOOL      argv after the binary that reads a file on stdin and writes the result on stdout
@@ -31,18 +35,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 def files(mod):
     """[(project, name, path)] of the corpus folders of the language."""
-    out = []
+    out, taken = [], Counter()
     for d, names in mod.DIRS:
         for f in sorted((CORPUS / d).rglob("*")):
-            if f.is_file() and names.match(f.name):
+            if f.is_file() and names.match(f.name) and not (hasattr(mod, "SKIP") and mod.SKIP.search(str(f))):
                 rel = f.relative_to(CORPUS / d)
-                out.append((mod.PROJECT.get(rel.parts[0], rel.parts[0]), f"{d}/{rel}", f))
+                project = mod.PROJECT.get(rel.parts[0], rel.parts[0])
+                taken[project] += 1
+                if taken[project] <= getattr(mod, "CAP", 1 << 30):
+                    out.append((project, f"{d}/{rel}", f))
     return out
 
 
-def read(f):
+def read(f, keep_eol=False):
+    """The text of a file; `keep_eol`: carriage returns stay (a module whose rows count line endings sets KEEP_EOL)."""
     try:
-        return f.read_text(encoding="utf-8")
+        return f.read_bytes().decode("utf-8") if keep_eol else f.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         return None
 
@@ -63,7 +71,7 @@ def count(corpus, deciding, mod):
     """per[half][row][project] = Counter of variants."""
     per = {"deciding": defaultdict(lambda: defaultdict(Counter)), "held": defaultdict(lambda: defaultdict(Counter))}
     for proj, _, f in corpus:
-        text = read(f)
+        text = read(f, getattr(mod, "KEEP_EOL", False))
         if text is None:
             continue
         for row, vs in mod.variants(text).items():
@@ -160,10 +168,21 @@ def compare(mod, rows):
 
 
 def main():
-    lang, sudsy, work = sys.argv[1], sys.argv[2], Path(sys.argv[3])
-    tool = sys.argv[4] if len(sys.argv) > 4 else None
+    lang = sys.argv[1]
     mod = importlib.import_module(f"evidence_{lang}")
     corpus = files(mod)
+    if sys.argv[2] == "list":
+        deciding, _ = split(corpus, mod.SEED)
+        for p, _, f in corpus:
+            print(f"{p}\t{'deciding' if p in deciding else 'held'}\t{f}")
+        return
+    if sys.argv[2] == "table":  # no formatter yet: the decision table of the corpus alone
+        deciding, held = split(corpus, mod.SEED)
+        print(f"{len(corpus)} files, {len({p for p, _, _ in corpus})} projects\n")
+        report_table(mod, deciding, held, count(corpus, deciding, mod))
+        return
+    sudsy, work = sys.argv[2], Path(sys.argv[3])
+    tool = sys.argv[4] if len(sys.argv) > 4 else None
     projects = {p for p, _, _ in corpus}
     print(f"{len(corpus)} files, {len(projects)} projects\n")
     deciding, held = split(corpus, mod.SEED)

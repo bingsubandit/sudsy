@@ -155,8 +155,8 @@
   lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no maintained tool found"}
 - language: Batchfile
   gh: 815225
-  parser: ~1.5 # hand-written; wharflab/tree-sitter-batch (14 stars, pushed 2026-11) is not used
-  format: {tool: "none found", gain: ~1.0, cost: {layout: whitespace, parts: 1, est: true}, why: "no maintained tool found; only blanks and case change"}
+  parser: ~1.2 # tree-sitter: wharflab/tree-sitter-batch (15 stars, pushed 2026-11; 79.3% of 547 corpus files without an error node, 11.8 MB/s, MIT); docs/ai/design/batchfile.md
+  format: {tool: "none found", gain: ~1.0, cost: {layout: whitespace, parts: 1, est: true}, why: "no maintained formatter found (wwnao.bat-formatter is a regex toy, 2 stars); decision table of the corpus in docs/ai/design/batchfile.md; only blanks and case change"}
   lint: {tool: "Blinter", gain: ~0.7, cost: {est: true}, why: "only tool found: PyPI Blinter 20,445 downloads a month, BatchLang/Blinter 54 stars, pushed 2026-11-16; Python"}
 - language: Beancount / hledger
   parser: ~1.2 # tree-sitter: polarmutex/tree-sitter-beancount (56 stars, pushed 2026-11)

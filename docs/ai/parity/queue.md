@@ -25,7 +25,7 @@ New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x
 
 | Language | Demand | Parser | Lint | Format | Both | Suggestion | Notes |
 |---|---|---|---|---|---|---|---|
-| Batchfile | 0.51~ | ~1.5 | 2.43~ | 3.78~ | 4.48~ | both: lint Blinter + format none found | estimate: pick only to measure it |
+| Batchfile | 0.51~ | ~1.2 | 2.77~ | 4.35~ | 4.93~ | both: lint Blinter + format none found | estimate: pick only to measure it |
 | Makefile | 0.44 | 0 (paid) | - | 4.33~ | - | format: format mbake | retrofit to no-reference-tool.md; estimate: pick only to measure it |
 | Dockerfile | 0.68 | 0 (paid) | - | 3.57~ | - | format: format dockerfmt | retrofit to no-reference-tool.md; estimate: pick only to measure it |
 | Jupyter Notebook | 0.57~ | ~1 | 1.94~ | 1.94~ | 2.59~ | both: lint ruff check on cells + format ruff format on cells | JSON file with Python cells: the Python leg does the work; estimate: pick only to measure it |
