@@ -8383,7 +8383,7 @@
             },
             "align_after_open_bracket": {
               "default": "align",
-              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
               "enum": [
                 "align",
                 "dont_align",
@@ -8861,7 +8861,7 @@
             },
             "align_after_open_bracket": {
               "default": "align",
-              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
               "enum": [
                 "align",
                 "dont_align",
@@ -12567,7 +12567,7 @@
                   },
                   "align_after_open_bracket": {
                     "default": "align",
-                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
                     "enum": [
                       "align",
                       "dont_align",
@@ -13045,7 +13045,7 @@
                   },
                   "align_after_open_bracket": {
                     "default": "align",
-                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
                     "enum": [
                       "align",
                       "dont_align",

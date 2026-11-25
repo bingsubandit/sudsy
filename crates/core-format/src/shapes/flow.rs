@@ -13,6 +13,8 @@ use crate::doc::{self, Doc};
 use crate::error::FormatError;
 use crate::seq::{el, first, kids, last};
 use crate::spacing::SpaceRules;
+mod hug;
+
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 /// The language's part of [`Flow::seq`].
@@ -238,6 +240,18 @@ impl Flow<'_> {
         if broken && !(self.joined(a, b) && !comment_between(cx, a, b) && !in_directive(cx, a)) {
             return Some(self.line_break(cx, b));
         }
+        self.spaced(cx, a, b, broken)
+    }
+
+    /// The blank between two tokens on one line (`broken`: the source breaks between them but no
+    /// line break stays, so a blank stands in for it where no row decides).
+    pub(super) fn spaced(
+        &self,
+        cx: &FormatCtx<'_>,
+        a: &SyntaxToken,
+        b: &SyntaxToken,
+        broken: bool,
+    ) -> Option<Doc> {
         let gap = a.text_range().end() != b.text_range().start();
         // `f(a, /*name=*/b)`: the blank between a block comment and `b` is as the source has it.
         if (self.exact || self.keep_comment_gap)
@@ -318,6 +332,38 @@ impl Flow<'_> {
         els: &[SyntaxElement],
         doc: impl Fn(&SyntaxElement) -> Result<Doc, FormatError>,
     ) -> Result<Doc, FormatError> {
+        let Some(hug) = self.hugs(cx, els) else {
+            return self.hung(cx, els, None, &|_, e| doc(e));
+        };
+        if !hug {
+            let cont = cx.options.int(core_config::opt::CONTINUATION_INDENT) as usize;
+            return self.hung(cx, els, Some(cont), &|_, e| doc(e));
+        }
+        let docs = els
+            .iter()
+            .map(|e| doc(e).map(doc::shared))
+            .collect::<Result<Vec<_>, _>>()?;
+        let cont = cx.options.int(core_config::opt::CONTINUATION_INDENT) as usize;
+        let hang = self.hung(cx, els, Some(cont), &|i, _| Ok(docs[i].clone()))?;
+        let width = els
+            .first()
+            .and_then(|e| e.as_token())
+            .and_then(|open| self.hug_width(open));
+        Ok(match (self.hugged(cx, els, &docs), width) {
+            (Some(hug), Some(w)) => doc::fits_below(0, w, hug, hang),
+            _ => hang,
+        })
+    }
+
+    /// The elements with a part that hangs below what stands before it at every line break of the
+    /// source; `doc` lays out the element at an index.
+    fn hung(
+        &self,
+        cx: &FormatCtx<'_>,
+        els: &[SyntaxElement],
+        fixed: Option<usize>,
+        doc: &dyn Fn(usize, &SyntaxElement) -> Result<Doc, FormatError>,
+    ) -> Result<Doc, FormatError> {
         let tab = if self.source_hang {
             cx.options.int(core_config::opt::INDENT_SIZE) as usize
         } else {
@@ -325,10 +371,11 @@ impl Flow<'_> {
         };
         let mut parts: Vec<Doc> = Vec::with_capacity(els.len() * 2);
         let mut hung: Vec<Hung> = Vec::new();
+        let mut shift: Option<isize> = None;
         let mut prev: Option<(&SyntaxElement, SyntaxToken)> = None;
         let base = |first_el: &SyntaxElement| first(cx, first_el).map(|t| line_indent(&t, tab));
-        for e in els {
-            let mut d = doc(e)?;
+        for (i, e) in els.iter().enumerate() {
+            let mut d = doc(i, e)?;
             if let (Some((p, a)), Some(b)) = (prev.take(), first(cx, e)) {
                 // A declaration's annotation stands on a line of its own.
                 let mut sep = if super::annotation_line(cx, p) {
@@ -398,6 +445,14 @@ impl Flow<'_> {
                                 Some(at.saturating_sub(base(&els[0])?))
                             })
                             .flatten();
+                        // The first line of the list goes to `fixed`, the others move with it.
+                        let delta = match (fixed, delta) {
+                            (Some(f), Some(d)) if !matches!(b.text(), ")" | "]" | "}") => {
+                                let shift = *shift.get_or_insert(f as isize - d as isize);
+                                Some((d as isize + shift).max(0) as usize)
+                            }
+                            _ => delta,
+                        };
                         hung.push(Hung {
                             delta,
                             docs: Vec::new(),

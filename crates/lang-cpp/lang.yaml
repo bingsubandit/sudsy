@@ -187,7 +187,10 @@ options:
   - align_after_open_bracket:
       values: ["align", "dont_align", "always_break"]
       default: "align"
-      doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."
+      doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source."
+      kinds:
+        hug_list: [ParameterList, Arguments, ParenGroup, Condition, InitList]
+        hug_brace_after: [Ident, Greater]
   - break_before_binary_operators:
       values: ["none", "non_assignment", "all"]
       default: "none"

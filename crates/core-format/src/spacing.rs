@@ -566,6 +566,9 @@ pub struct SpaceRules {
     /// a cast type (`(T)*p`, `(T)&x`: a mark between it and a name stays as written) and the marks that are an
     /// operator, not a cast's, when the source has a blank behind them (`(a) & b`).
     binary: [Vec<SyntaxKind>; 5],
+    /// The `hug_list` kind set (the bracketed nodes that may line up with their opening bracket) and
+    /// `hug_brace_after` (what a `{` follows when its list hugs: a type name, not `=`).
+    hug: [Vec<SyntaxKind>; 2],
 }
 
 /// The kind sets of padded braces: `pad_list` (the nodes whose braces are padded), `pad_open` and
@@ -749,6 +752,7 @@ impl SpaceRules {
                 open: set("pad_open"),
                 close: set("pad_close"),
             },
+            hug: ["hug_list", "hug_brace_after"].map(set),
             index: Index::build(&space),
             space,
             joined: rows("joined"),
@@ -981,6 +985,28 @@ impl SpaceRules {
         node.text_range()
             .contains_range(b.text_range())
             .then_some(blank)
+    }
+
+    /// Is the list `open` starts of a `hug_list` kind?
+    pub fn in_hug_list(&self, open: &SyntaxToken) -> bool {
+        open.parent()
+            .is_some_and(|p| self.hug[0].contains(&p.kind()))
+    }
+
+    /// May the first item of the list `open` starts go on the line of the bracket: a `(` or `[`, or a
+    /// `{` behind a `hug_brace_after` token (a type name, not `=`)?
+    pub fn hug_after(&self, open: &SyntaxToken) -> bool {
+        open.text() != "{" || {
+            let mut p = open.prev_token();
+            while let Some(t) = p.as_ref().filter(|t| {
+                t.text().trim().is_empty()
+                    || t.text().starts_with("//")
+                    || t.text().starts_with("/*")
+            }) {
+                p = t.prev_token();
+            }
+            p.is_some_and(|t| self.hug[1].contains(&t.kind()))
+        }
     }
 
     /// Does the language pad braces (`pad_list` kind set)?
