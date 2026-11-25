@@ -1,7 +1,7 @@
 """Findings of an upstream tool on its corpus for the generic coverage mode (scripts/parity_lint.py `coverage`).
 
 A tool entry of parity_tools.json has a `coverage` object (docs/ai/development/parity.md#coverage-mode):
-`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `reference_parser` (a command with `{file}` that exits non-zero on a syntax error: a file Sudsy rejects and it rejects too is invalid, as a marked one), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
+`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `reference_parser` (a command with `{file}` that exits non-zero on a syntax error: a file Sudsy rejects and it rejects too is invalid, as a marked one), `parse_error` (the rule id the tool reports for a file it cannot parse, with the same effect), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
 (`{exe}`, `{prefix}`, `{group}` and `{files}`), `group` (a regex over the file's path: files of one group run in one
 command; `cwd: group` runs it in the folder `group` names), `chunk` (files per command), `ok_codes` (exit codes with an empty report meaning no findings), `timeout` (seconds) and `memory_gb` (address space) per command, `env`, `stream` (`stdout` or `stderr`: where the report is), `files` (config files
 written next to the corpus), `group_files` (config files written into the folder of each group, `{group}` and `{prefix}` replaced: a project's own config), `parse` (how the report turns into findings) and `sudsy` (the Sudsy side's config).
@@ -117,6 +117,8 @@ def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out,
     invalid = {n for n in rejected if marker and (sources[n].parent / marker).exists()}
     reference = spec.get("reference_parser")  # a command (`{file}`) that exits non-zero on a syntax error: the language's own parser
     invalid |= {n for n in rejected - invalid if reference and subprocess.run([a.format(python=sys.executable, file=sources[n]) for a in reference], capture_output=True, check=False).returncode}
+    parse_error = spec.get("parse_error")  # the rule the tool reports for a file it cannot parse: a file Sudsy rejects and the tool reports it for is invalid too
+    invalid |= {f[0] for f in found if parse_error and f[1] == parse_error and f[0] in rejected}
     left = [f for f in found if f[1] in layout and f[0] not in left_out and f[0] not in invalid and not pinned(f)]
     per = Counter(f[1] for f in left)
     print(f"proof: `sudsy format` exit {run.returncode}; formatter findings {len(before)} before, {len(left)} after in {len({f[0] for f in left})} files: "
