@@ -7,6 +7,7 @@
 //! tools: shfmt, hadolint, checkmake
 
 use crate::doc::{self, Doc};
+use std::borrow::Cow;
 
 /// One logical line: the parts up to the first continuation, then the indented rest.
 #[derive(Default)]
@@ -14,6 +15,8 @@ pub struct Continued {
     head: Vec<Doc>,
     tail: Vec<Doc>,
     broken: bool,
+    /// The blanks the next physical line starts with, at column 0 (as written).
+    next_blanks: Option<String>,
 }
 
 impl Continued {
@@ -21,6 +24,9 @@ impl Continued {
     pub fn push(&mut self, d: Doc) {
         if self.broken {
             self.tail.push(doc::hardline());
+            if let Some(blanks) = self.next_blanks.take() {
+                self.tail.push(doc::line_start(blanks));
+            }
             self.broken = false;
         }
         if self.tail.is_empty() {
@@ -41,6 +47,12 @@ impl Continued {
     pub fn end_line(&mut self, marker: &str) {
         self.push(doc::text(format!(" {marker}")));
         self.broken = true;
+    }
+
+    /// [`Continued::end_line`]; the next physical line starts with `blanks` at column 0.
+    pub fn end_line_at(&mut self, marker: &str, blanks: String) {
+        self.end_line(marker);
+        self.next_blanks = Some(blanks);
     }
 
     /// A line of its own in the indented part (a comment between continued lines).
@@ -223,24 +235,77 @@ fn heredoc_reindented(raw: &str) -> Doc {
 /// turn into a continuation) and no carriage returns; after the first line each starts at column 0
 /// (`tab`: the first after a tab).
 pub fn as_written(text: &str, tab: bool) -> Doc {
+    as_written_with(text, tab, false)
+}
+
+/// [`as_written`] for a value that the blanks at its end belong to (a Makefile variable's), and
+/// where the blanks before the backslash that continues a line collapse to one (an odd number of
+/// backslashes ends the line).
+pub fn as_written_value(text: &str) -> Doc {
+    as_written_with(text, false, true)
+}
+
+/// The line with the blanks before its continuation backslash collapsed to one (an odd number of
+/// backslashes continues the line); the line itself when there are none to collapse.
+fn condense_line(line: &str) -> Cow<'_, str> {
+    let trimmed = line.trim_end_matches([' ', '\t']);
+    let slashes = trimmed.len() - trimmed.trim_end_matches('\\').len();
+    let before = trimmed[..trimmed.len() - slashes].trim_end_matches([' ', '\t']);
+    if slashes % 2 == 1 && !before.is_empty() && before.len() + slashes < trimmed.len() {
+        Cow::Owned(format!("{before} {}", &trimmed[trimmed.len() - slashes..]))
+    } else {
+        Cow::Borrowed(line)
+    }
+}
+
+/// `text` with the blanks before the backslash of each continued line collapsed to one.
+pub fn condensed(text: &str) -> String {
+    text.split('\n')
+        .map(|l| condense_line(l))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// A line continues when it ends in an odd number of backslashes (a pair is an escaped backslash).
+fn continues(line: &str) -> bool {
+    (line.len() - line.trim_end_matches('\\').len()) % 2 == 1
+}
+
+fn as_written_with(text: &str, tab: bool, condense: bool) -> Doc {
     let mut parts = Vec::new();
     for (i, raw) in text.split('\n').enumerate() {
         let raw = raw.trim_end_matches('\r');
         let trimmed = raw.trim_end_matches([' ', '\t']);
-        let line = if trimmed.ends_with('\\') {
-            raw
+        let line = if continues(trimmed) {
+            if condense {
+                condense_line(raw)
+            } else {
+                Cow::Borrowed(raw)
+            }
+        } else if condense {
+            Cow::Borrowed(raw)
         } else {
-            trimmed
+            Cow::Borrowed(trimmed)
+        };
+        let line = line.as_ref();
+        // (blanks that are kept at the end of the text are written verbatim: the printer drops the others)
+        let text_end = if condense {
+            line.trim_end_matches([' ', '\t'])
+        } else {
+            line
         };
         parts.push(match (i, tab) {
-            (0, false) => doc::text(line),
-            (0, true) => doc::line_start(format!("\t{line}")),
-            _ => doc::line_start(line),
+            (0, false) => doc::text(text_end),
+            (0, true) => doc::line_start(format!("\t{text_end}")),
+            _ => doc::line_start(text_end),
         });
+        if text_end.len() < line.len() {
+            parts.push(doc::verbatim(&line[text_end.len()..]));
+        }
     }
     // A last line that ends in `\` continues onto the next line, which stays empty: without it the
     // next statement would be swallowed.
-    if text.ends_with('\\') {
+    if continues(text) {
         parts.push(doc::line_start(""));
     }
     doc::concat(parts)

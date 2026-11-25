@@ -95,7 +95,7 @@ Each number is measured on real-world code against the default rule set of the r
 | GraphQL | █████████░ 99% Prettier | 29 rules · no reference tool | Ready |
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
 | C / C++ | ██████░░░░ 69% clang-format | not measured clang-tidy | In progress |
-| Makefile | ███████░░░ 77% stable · no reference tool | ██████████ 100% checkmake | In progress |
+| Makefile | ███████░░░ 73% mbake | ██████████ 100% checkmake | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 36% PHPStan | In progress |
 
 Notes: clang-format (C / C++): line wrapping is not compared. PHP-CS-Fixer (PHP): measured with the `@PER-CS` rule set (the default of PHP-CS-Fixer 3 is `@PSR12`, which `@PER-CS` contains).
@@ -136,6 +136,7 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | GraphQL | 6 | Prettier | [5](https://prettier.io/docs/options) |
 | Protobuf | 4 | buf format | [0](https://buf.build/docs/reference/cli/buf/format/) |
 | C / C++ | 48 | clang-format | [257](https://clang.llvm.org/docs/ClangFormatStyleOptions.html) |
+| Makefile | 9 | mbake | [17](https://github.com/EbodShojaei/bake#configuration) |
 | PHP | 7 | PHP-CS-Fixer | [390](https://cs.symfony.com/doc/rules/index.html) |
 <!-- /generated -->
 

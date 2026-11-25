@@ -113,6 +113,19 @@
         {"dir": "tests/conformance/corpus/cmake", "suffixes": ["CMakeLists.txt", ".cmake"], "prefix": "corpus/", "ratchet": "real-world", "recursive": true, "nested": true}
       ]
     },
+    "mbake": {"catalog": "mbake",
+      "install": {"pip": "mbake"},
+      "fetch": ["tests/conformance/fetch-makefile-corpus.sh", "tests/conformance/fetch-makefile-evidence-corpus.sh"],
+      "command": ["{python}", "-m", "mbake", "format", "--stdin"],
+      "env": {"PYTHONPATH": "{prefix}"},
+      "input": "stdin",
+      "tool_may_reject": true,
+      "parallel": true,
+      "fixtures": [
+        {"dir": "tests/conformance/corpus/makefile", "suffixes": ["Makefile", "makefile", "GNUmakefile", ".mk", ".mak"], "prefix": "corpus/", "ratchet": "real-world", "recursive": true, "nested": true},
+        {"dir": "tests/conformance/corpus/makefile-evidence", "suffixes": ["Makefile", "makefile", "GNUmakefile", ".mk", ".mak"], "prefix": "evidence/", "ratchet": "real-world", "recursive": true, "nested": true}
+      ]
+    },
     "taplo": {"speed": {"language": "TOML", "label": "taplo", "corpus": {"group": "fixtures", "text": "the toml-test valid files and the TOML fixtures of the repository"}, "format": ["{exe}", "fmt", "--check", "--no-auto-config", "{files}"]}, 
       "catalog": "taplo",
       "install": {

@@ -762,6 +762,32 @@ impl<'a> FormatCtx<'a> {
         doc::concat(parts)
     }
 
+    /// `build()` (a line that starts with `first`) on a line that starts with the blanks the
+    /// source has in front of `first`, whatever the indentation around; the comments in front of
+    /// `first` come before the line, each in its own source column.
+    pub fn at_source_indent<E>(
+        &self,
+        first: &SyntaxToken,
+        build: impl FnOnce() -> Result<Doc, E>,
+    ) -> Result<Doc, E> {
+        let blanks = comments::line_prefix(first);
+        let leading = self.leading_of(first);
+        if blanks.is_empty() && leading.is_empty() {
+            return build();
+        }
+        self.hold_leading(first);
+        let body = build()?;
+        let st = CommentStyle {
+            keep_indent: true,
+            ..self.comment_style
+        };
+        Ok(doc::concat(vec![
+            leading_comments_doc_with(&leading, &st),
+            doc::line_start(blanks),
+            body,
+        ]))
+    }
+
     /// The comments in front of `tok`, as the comment style wants them attached to it.
     fn leading(&self, tok: &SyntaxToken) -> Vec<Comment> {
         let cs = self.leading_of(tok);
@@ -1232,7 +1258,17 @@ pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
             if i == 0 && (c.kind != CommentKind::Block || c.breaks_after > 0) {
                 parts.push(doc::newline_if_needed());
             }
-            parts.push(comment_doc_in(c, st));
+            let own_line = if st.keep_indent {
+                comments::line_prefix(c.token())
+            } else {
+                String::new()
+            };
+            if own_line.is_empty() {
+                parts.push(comment_doc_in(c, st));
+            } else {
+                parts.push(doc::line_start(own_line));
+                parts.push(comment_doc_in(c, st));
+            }
         }
         if c.kind == CommentKind::Line || c.breaks_after > 0 {
             parts.push(doc::hardline());

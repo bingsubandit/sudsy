@@ -21,7 +21,15 @@ options:
       default: false
       doc: "Write `target : prerequisite` rather than `target: prerequisite`."
   - max_blank_lines: [2, "Largest number of blank lines kept between statements and comments."]
-presets: [checkmake]
+  - conditional_indent:
+      values: ["keep", "indent"]
+      default: "keep"
+      doc: "The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting."
+  - continuation_indent:
+      values: ["keep", "indent"]
+      default: "keep"
+      doc: "The lines after the first of a rule or directive written over several lines: `keep` leaves their indentation as written; `indent` indents them one level."
+presets: [checkmake, mbake]
 mapping:
   same: 'comment rule targets recipe recipe_line shell_text conditional word'
   Document: makefile

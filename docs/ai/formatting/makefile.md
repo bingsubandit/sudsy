@@ -5,17 +5,17 @@ tree-sitter-make 1.1.1 (GNU make, forked in `grammars/tree-sitter-make`) linked 
 
 Files: `Makefile`, `GNUmakefile`, `makefile`, `*.mk` and `*.mak`.
 
-The grammar is a fork ([../../../grammars/tree-sitter-make/FORK.md](../../../grammars/tree-sitter-make/FORK.md)); all 59 files of the corpus below parse, but 225 of the 1,021 files of the evidence corpus ([../design/makefile.md](../design/makefile.md)) do not (`stable` 78%): 188 have a variable name with a reference (`OBJS-$(CONFIG_X) += a.o`), 10 are NMake. Known gap: `A+=b`, `A?=b` and `A!=b` written with no blank before the operator read as the name `A+` and `=`, so the formatter leaves such an assignment as written. `.RECIPEPREFIX` is parsed but recipes must still start with a tab.
+The grammar is a fork ([../../../grammars/tree-sitter-make/FORK.md](../../../grammars/tree-sitter-make/FORK.md)); 1,008 of the 1,021 files of the evidence corpus ([../design/makefile.md](../design/makefile.md)) parse, stable on a second format; the other 13 are NMake (`!IF`, `!INCLUDE`, 12 of vim) and one file that is not make syntax.
 
 ## Formatting
-- One statement per line group, blank lines kept up to `max_blank_lines` (2), trailing blanks removed.
-- Assignments: one space around the operator (`A:=b` is `A := b`, `space_around_assignment`); the value is kept as written, and so are the lines after a continuation.
-- Rules: `targets: prerequisites | order-only`, one space after the colon and none before it (`space_before_colon`), `&:` keeps its blank, an inline command stays after its semicolon. A continuation line of a rule or directive is indented one level (`indent_size`, default 2).
+- One statement per line group, blank lines kept up to `max_blank_lines` (2), also after `ifeq`, before `else` and `endif`, and at the start of a `define` body; trailing blanks of a line removed, except the trailing blank of an assignment value, which is part of the value and stays.
+- Assignments: one space around the operator (`A:=b`, `A+=b`, `A?=b` are spaced, `space_around_assignment`, also after `export` and in a target-specific assignment); the value is kept as written, and so are the lines after a continuation, with the blanks before a backslash collapsed to one (make reads them as one).
+- Rules: `targets: prerequisites | order-only`, one space after the colon and none before it (`space_before_colon`), `&:` keeps its blank, an inline command stays after its semicolon. The lines after the first of a rule or directive are kept as written (`continuation_indent: indent` writes one level, `indent_size`).
 - Recipe commands start with exactly one tab and are kept as written, after their prefix (`@`, `-`, `+`); continued lines are kept as written. A command is Shell code (below); the Shell formatter does not run on it.
-- Conditionals: the body is indented one level (not inside a recipe, where a body line is a command and starts with the tab); `else`, `else ifeq ...` and `endif` stand at the level of the `ifeq`. The condition is kept as written with its blanks collapsed.
-- `define`: the body and its blanks are kept exactly, `endef` goes at the level of `define`.
-- A value, directive or command that ends in `\` keeps the line it continues onto, so the next statement is not swallowed.
-- Comments stay where they are. The safety check allows only blanks around values, keywords and recipe prefixes to change.
+- Conditionals: the lines inside keep their indentation, comments included; `else`, `else ifeq ...` and `endif` too (`conditional_indent: indent` indents the body one level per nesting, not inside a recipe, where a body line is a command and starts with the tab). The condition is kept as written with its blanks collapsed.
+- `define`: the body and its blanks are kept exactly, `endef` keeps its own indentation.
+- A value, directive or command that ends in an odd number of `\` keeps the line it continues onto, so the next statement is not swallowed (a pair is an escaped backslash).
+- Comments stay where they are. The safety check allows only blanks around values, keywords, operators and recipe prefixes to change.
 
 The options follow mbake's (`space_around_assignment`, `space_after_colon` always on, `max_consecutive_empty_lines`, tab recipes); checkmake only lints.
 
@@ -29,10 +29,14 @@ The options follow mbake's (`space_around_assignment`, `space_after_colon` alway
 | `space_around_assignment` | bool | `true` | Write `A := b` rather than `A:=b`. |
 | `space_before_colon` | bool | `false` | Write `target : prerequisite` rather than `target: prerequisite`. |
 | `max_blank_lines` | int 0-10 | `2` | Largest number of blank lines kept between statements and comments. |
+| `conditional_indent` | `keep`, `indent` | `keep` | The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting. |
+| `continuation_indent` | `keep`, `indent` | `keep` | The lines after the first of a rule or directive written over several lines: `keep` leaves their indentation as written; `indent` indents them one level. |
 <!-- /generated -->
 
 ## Presets
 `makefile/checkmake`: turns on every rule that has a checkmake equivalent ([../parity/checkmake.yaml](../parity/checkmake.yaml)) at checkmake's defaults.
+
+`makefile/mbake`: mbake's defaults (`indent_style: tab`, `continuation_indent: indent`, `max_blank_lines: 1`): the Sudsy side of the mbake comparison.
 
 ## Shell in recipes
 Each command of a recipe is one shell invocation in make and one Shell parse here ([../architecture/adding-a-language.md](../architecture/adding-a-language.md#embedded-languages), the `embed` rows of `grammars/makefile.grammar`): from the command after its prefix characters to its last line. What the shell never sees is carved out and blanked: `$(...)`, `${...}` and `$x` references and calls, the first `$` of `$$`, and the tab that starts each continued line. The shell rules (`cd-without-exit`, the shellcheck ones, the `shell:` section of the config) run on it at their positions in the Makefile, and a `# sudsy-disable-next-line` comment of the Makefile silences them. Shell code in `$(shell ...)` and in `define` bodies is not parsed.
@@ -41,6 +45,14 @@ Each command of a recipe is one shell invocation in make and one Shell parse her
 Shared: suppression comments (`# sudsy-disable-next-line <rule>`), `no-empty-comment`, `comment-space`, `max-line-length`. The grammar has no `#mapping` or `#sequence` nodes, so the key rules do not apply. The language rules are listed in [../rules/builtin.md](../rules/builtin.md) and are checkmake's: `timestamp-expanded` is on by default; `phony-declared` (it names object files), `unique-targets` (a target may have several rules), `min-phony` (options `required`) and `max-body-length` (`max`) are off; the preset turns all five on. checkmake reads a rule with several targets (`a b:`) as one target named `a b`; Sudsy checks each name. A recipe ends where make's does (blank lines and comments inside it belong to it), so `max-body-length` counts more lines than checkmake in a recipe with a blank line or a column-0 comment.
 
 ## Parity
+`scripts/parity.sh format mbake` ([../development/parity.md](../development/parity.md)) runs mbake 1.5.0 and `sudsy format` with the `makefile/mbake` preset on the 1,021-file corpus ([../design/makefile.md](../design/makefile.md)): the share of identical files is in the README table, `second-format` is 0. The differences are mbake's own rules and are named in `tests/parity/mbake/differences.yaml`:
+
+<!-- generated:differences:mbake -->
+
+- `nmake-syntax`: a file in NMake syntax (`!IF`, `!INCLUDE`, `$(VAR:a=b)` in macros, `<<` inline files), or an invalid file; GNU make cannot read it, so it is not Makefile input
+- `trailing-blanks`: the trailing blanks of a variable value are part of the value (`A = b ` then `$(A)x` is `b x`); Sudsy keeps them, mbake drops them from some lines
+<!-- /generated -->
+
 `scripts/parity.sh checkmake` ([../development/parity.md](../development/parity.md#checkmake)) runs checkmake 0.3.2 and `sudsy lint` on the rule fixtures (`tests/rules/makefile/*/*.mk`): 10 findings, none differs but the 4 named in `tests/parity/checkmake/differences.yaml`.
 
 Where Sudsy differs from checkmake by design:

@@ -61,12 +61,12 @@ Options declared by more than one language, generated from the option schemas; p
 | `comment_indent` | `preserve`, `content` | yaml `preserve`, github-actions `preserve` |
 | `comment_keep_unicode_blanks` | bool | cpp `true`, c `true` |
 | `comment_spacing` | int 1-10 | yaml `1`, github-actions `1` |
-| `conditional_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
+| `conditional_indent` | java: int 1-4; js: int 1-4; makefile: `keep`, `indent`; csharp: int 1-4 | java `2`, js `1`, makefile `keep`, csharp `1` |
 | `conditional_layout` | `indented`, `chained`, `ladder` | java `indented`, js `chained`, csharp `indented` |
 | `constructor_initializer_indent` | int 0-16 | cpp `4`, c `4` |
 | `content_newline_with_attributes` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `content_newline_with_elements` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
-| `continuation_indent` | int 0-16 | cpp `4`, c `4` |
+| `continuation_indent` | cpp: int 0-16; c: int 0-16; makefile: `keep`, `indent` | cpp `4`, c `4`, makefile `keep` |
 | `derive_pointer_alignment` | bool | cpp `false`, c `false` |
 | `dialect` | json: `auto`, `json`, `jsonc`; html: `auto`, `html`, `template`, `template-open`; sql: `ansi`, `postgres`, `mysql`, `tsql` | json `auto`, html `auto`, sql `ansi` |
 | `document_end` | `preserve`, `always`, `never` | yaml `preserve`, github-actions `preserve` |

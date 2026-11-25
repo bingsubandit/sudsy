@@ -21,6 +21,23 @@ impl NodeFormatter for MakefileFormatter {
     /// The formatter trims the blanks around values, prefixes and keywords.
     fn value<'a>(&self, item: &'a SyntaxElement) -> Cow<'a, str> {
         match item {
+            // `A+=b` is the name `A+` and `=` in the tree, `A += b` the name `A` and `+=`: both read the same
+            SyntaxElement::Token(t) if t.kind() == k::WORD && glued_operator(t) => {
+                t.text()[..t.text().len() - 1].to_string().into()
+            }
+            SyntaxElement::Token(t) if t.kind() == k::OP => {
+                let carried = t
+                    .prev_token()
+                    .filter(|p| p.kind() == k::WORD && glued_operator(p))
+                    .and_then(|p| p.text().chars().last());
+                match carried {
+                    Some(c) => format!("{c}{}", t.text()).into(),
+                    None => t.text().trim().into(),
+                }
+            }
+            SyntaxElement::Token(t) if t.kind() == k::VALUE => {
+                continuation::condensed(t.text().trim()).into()
+            }
             SyntaxElement::Token(t) => t.text().trim().into(),
             SyntaxElement::Node(n) => n.text().to_string().into(),
         }
@@ -31,19 +48,73 @@ impl NodeFormatter for MakefileFormatter {
         node: &SyntaxNode,
         cx: &FormatCtx<'_>,
     ) -> Result<Option<Doc>, FormatError> {
-        Ok(Some(match node.kind() {
-            k::DOCUMENT => document(cx, node)?,
-            k::RULE => rule(cx, node)?,
-            k::RECIPE_LINE => recipe_line(cx, node, false),
-            k::CONDITIONAL => conditional(cx, node)?,
-            k::DEFINE => define(cx, node),
-            k::ASSIGN | k::DIRECTIVE | k::CALL => {
-                let mut line = Line::default();
-                relay(cx, node.children_with_tokens(), &mut line);
-                line.finish()
-            }
-            _ => return Ok(None),
-        }))
+        let kept = keeps_indent(cx, node)
+            .then(|| cx.first_token(node))
+            .flatten();
+        let statement = || -> Result<Option<Doc>, FormatError> {
+            Ok(Some(match node.kind() {
+                k::DOCUMENT => document(cx, node)?,
+                k::RULE => rule(cx, node)?,
+                k::RECIPE_LINE => recipe_line(cx, node, false),
+                k::CONDITIONAL => conditional(cx, node)?,
+                k::DEFINE => define(cx, node),
+                k::ASSIGN | k::DIRECTIVE | k::CALL => {
+                    let mut line = Line::default();
+                    relay(cx, node.children_with_tokens(), &mut line);
+                    line.finish()
+                }
+                _ => return Ok(None),
+            }))
+        };
+        match kept {
+            Some(first) => cx
+                .at_source_indent(&first, || Ok(statement()?.unwrap_or(Doc::Nil)))
+                .map(Some),
+            None => statement(),
+        }
+    }
+}
+
+/// Does a line of this node start with the blanks of the source (`conditional_indent: keep`)? So
+/// do the lines of a conditional and of what stands in its body, outside a recipe.
+fn keeps_indent(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    if conditional_indent(cx.options) != ConditionalIndent::Keep
+        || !matches!(
+            node.kind(),
+            k::RULE | k::CONDITIONAL | k::DEFINE | k::ASSIGN | k::DIRECTIVE | k::CALL
+        )
+    {
+        return false;
+    }
+    if node.kind() == k::CONDITIONAL && !in_recipe(node) {
+        return true;
+    }
+    for a in node.ancestors().skip(1) {
+        match a.kind() {
+            k::RECIPE | k::DOCUMENT => return false,
+            k::CONDITIONAL | k::ELSE => return true,
+            _ => {}
+        }
+    }
+    false
+}
+
+fn in_recipe(node: &SyntaxNode) -> bool {
+    node.ancestors().skip(1).any(|a| a.kind() == k::RECIPE)
+}
+
+/// The directive line `first` starts, at the blanks of the source when the conditional keeps them.
+fn kept_line(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    first: &SyntaxToken,
+    line: impl FnOnce() -> Doc,
+) -> Doc {
+    if conditional_indent(cx.options) == ConditionalIndent::Keep && !in_recipe(node) {
+        cx.at_source_indent(first, || Ok::<_, FormatError>(line()))
+            .unwrap_or(Doc::Nil)
+    } else {
+        line()
     }
 }
 
@@ -76,11 +147,9 @@ fn document(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
 struct Line {
     out: Continued,
     prev: Option<SyntaxKind>,
-    /// The last character of the previous token's text.
-    prev_end: char,
     blank: bool,
-    /// The grammar reads `A+=b` as the name `A+` and `=`: such an operator is left as written.
-    glued: bool,
+    /// The grammar reads `A+=b` as the name `A+` and `=`: the `+` goes to the operator.
+    carry: Option<char>,
 }
 
 impl Line {
@@ -113,21 +182,25 @@ fn relay(cx: &FormatCtx<'_>, elements: impl Iterator<Item = SyntaxElement>, line
         };
         match t.kind() {
             k::WHITESPACE if t.text().starts_with('\\') => {
-                line.out.end_line("\\");
+                match (
+                    continuation_indent(cx.options),
+                    comments::next_with_text(&t),
+                ) {
+                    (ContinuationIndent::Keep, Some(next)) => {
+                        line.out.end_line_at("\\", comments::line_prefix(&next))
+                    }
+                    _ => line.out.end_line("\\"),
+                }
                 line.blank = false;
             }
             k::WHITESPACE | k::NEWLINE => line.blank = true,
             k::TAB | k::COMMENT => {}
             kind => {
-                let glued =
-                    kind == k::OP && !line.blank && matches!(line.prev_end, '+' | '?' | '!');
                 let space = match (line.prev, kind) {
                     (None, _) => false,
                     (_, k::COLON) => {
                         t.text().starts_with('&') || cx.options.bool(SPACE_BEFORE_COLON)
                     }
-                    (_, k::OP) if glued => false,
-                    (Some(k::OP), _) if line.glued => false,
                     (Some(k::COLON | k::PIPE | k::SEMI), _) | (_, k::PIPE | k::SEMI) => true,
                     (_, k::OP) | (Some(k::OP), _) => cx.options.bool(SPACE_AROUND_ASSIGNMENT),
                     _ => line.blank,
@@ -135,19 +208,37 @@ fn relay(cx: &FormatCtx<'_>, elements: impl Iterator<Item = SyntaxElement>, line
                 if space {
                     line.out.space();
                 }
+                let carried = line.carry.take();
                 let d = match kind {
                     k::VALUE => value(cx, &t, line.prev == Some(k::OP)),
                     k::KEYWORD => keyword(cx, &t),
+                    k::OP if carried.is_some() => {
+                        doc::text(format!("{}{}", carried.unwrap_or(' '), t.text()))
+                    }
+                    k::WORD if glued_operator(&t) => {
+                        let name = t.text();
+                        line.carry = name.chars().last();
+                        doc::concat(vec![
+                            cx.leading_comments_doc(&t),
+                            doc::text(&name[..name.len() - 1]),
+                        ])
+                    }
                     _ => cx.token(&t),
                 };
                 line.push(d);
                 line.prev = Some(kind);
-                line.prev_end = t.text().chars().last().unwrap_or(' ');
-                line.glued = glued;
                 line.blank = false;
             }
         }
     }
+}
+
+/// Is `t` the name of `A+=b`, `A?=b` or `A!=b` that the grammar reads as `A+` and `=`?
+fn glued_operator(t: &SyntaxToken) -> bool {
+    t.text().ends_with(['+', '?', '!'])
+        && t.text().len() > 1
+        && t.next_token()
+            .is_some_and(|n| n.kind() == k::OP && n.text() == "=")
 }
 
 /// A keyword without the blanks before it, which its token holds.
@@ -163,13 +254,13 @@ fn keyword(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
 /// keep their blanks.
 fn value(cx: &FormatCtx<'_>, t: &core_syntax::SyntaxToken, assignment: bool) -> Doc {
     let text = if assignment {
-        t.text().trim()
+        t.text().trim_start()
     } else {
         t.text()
     };
     doc::concat(vec![
         cx.leading_comments_doc(t),
-        continuation::as_written(text, false),
+        continuation::as_written_value(text),
         cx.trailing_comments_doc(t),
     ])
 }
@@ -195,6 +286,11 @@ fn rule(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
         }
         if !items.is_empty() {
             parts.push(doc::hardline());
+            // the blank lines between the rule line and what follows it stay
+            parts.push(blank_lines(
+                cx,
+                items.first().and_then(|n| cx.first_token(n)),
+            ));
             parts.push(statement_sequence(
                 cx,
                 &items,
@@ -234,16 +330,22 @@ pub(crate) fn code(node: &SyntaxNode) -> Option<(TextRange, String)> {
 
 /// `ifeq (...)`, the body indented (not inside a recipe, where it is a command), `else`, `endif`.
 fn conditional(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError> {
-    let in_recipe = node.ancestors().skip(1).any(|a| a.kind() == k::RECIPE);
+    let in_recipe = in_recipe(node);
+    let keep = conditional_indent(cx.options) == ConditionalIndent::Keep;
     let body = |items: &[SyntaxNode]| -> Result<Doc, FormatError> {
         if items.is_empty() {
             return Ok(doc::nil());
         }
         let seq = doc::concat(vec![
             doc::hardline(),
+            blank_lines(cx, items.first().and_then(|n| cx.first_token(n))),
             statement_sequence(cx, items, cx.options.max_blank_lines())?,
         ]);
-        Ok(if in_recipe { seq } else { doc::indent(seq) })
+        Ok(if in_recipe || keep {
+            seq
+        } else {
+            doc::indent(seq)
+        })
     };
     let mut parts = Vec::new();
     let mut items = Vec::new();
@@ -256,23 +358,41 @@ fn conditional(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Result<Doc, FormatError
             }
             SyntaxElement::Node(n) if n.kind() == k::ELSE => {
                 parts.push(body(&std::mem::take(&mut items))?);
-                let mut line = Line::default();
                 let mut inner = Vec::new();
-                relay_header(cx, &n, &mut line, &mut inner);
+                let head = |inner: &mut Vec<SyntaxNode>| {
+                    let mut line = Line::default();
+                    relay_header(cx, &n, &mut line, inner);
+                    line.finish()
+                };
                 parts.push(doc::hardline());
-                parts.push(line.finish());
+                parts.push(blank_lines(cx, cx.first_token(&n)));
+                parts.push(match cx.first_token(&n) {
+                    Some(first) => kept_line(cx, &n, &first, || head(&mut inner)),
+                    None => head(&mut inner),
+                });
                 parts.push(body(&inner)?);
             }
             SyntaxElement::Node(n) => items.push(n),
             SyntaxElement::Token(t) if t.kind() == k::KEYWORD => {
                 parts.push(body(&std::mem::take(&mut items))?);
                 parts.push(doc::hardline());
-                parts.push(keyword(cx, &t));
+                parts.push(blank_lines(cx, Some(t.clone())));
+                parts.push(kept_line(cx, node, &t, || keyword(cx, &t)));
             }
             SyntaxElement::Token(_) => {}
         }
     }
     Ok(doc::concat(parts))
+}
+
+/// The blank lines in front of `first` that the source has, after the line break before it.
+fn blank_lines(cx: &FormatCtx<'_>, first: Option<SyntaxToken>) -> Doc {
+    let count = first.map_or(0, |t| comments::blank_lines_before(cx.grammar, &t));
+    doc::concat(
+        (0..count.min(cx.options.max_blank_lines()))
+            .map(|_| doc::hardline())
+            .collect(),
+    )
 }
 
 /// The `else` line of an `Else` node (its keyword and the condition after it); the other children
@@ -313,6 +433,9 @@ fn define(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
         match e {
             SyntaxElement::Token(t) if t.kind() == k::RAW => {
                 let body = t.text().strip_suffix('\n').unwrap_or(t.text());
+                // blank lines that the line break after `define NAME` took belong to the value
+                let blank = comments::blank_lines_before(cx.grammar, &t);
+                parts.extend((0..blank + usize::from(blank > 0)).map(|_| doc::hardline()));
                 // The printer starts a line only after text; after verbatim text it takes a hardline.
                 for (i, l) in body.split('\n').enumerate() {
                     let line = doc::verbatim(l.trim_end_matches('\r'));
@@ -326,7 +449,7 @@ fn define(cx: &FormatCtx<'_>, node: &SyntaxNode) -> Doc {
             }
             SyntaxElement::Token(t) if t.kind() == k::KEYWORD => {
                 parts.push(doc::hardline());
-                parts.push(keyword(cx, &t));
+                parts.push(kept_line(cx, node, &t, || keyword(cx, &t)));
             }
             _ => {}
         }

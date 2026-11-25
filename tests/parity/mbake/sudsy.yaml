@@ -1,0 +1,2 @@
+# The Sudsy side of the comparison with mbake: the preset that reproduces its defaults.
+extends: [preset:makefile/mbake]

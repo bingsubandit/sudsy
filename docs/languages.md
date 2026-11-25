@@ -464,7 +464,7 @@ The status and the numbers of every language are in the generated table "Languag
 
 <!-- generated:measured-makefile -->
 - **Measured:** In progress.
-  - Format, stable: 77% of the files format stably, by the rules of the formatter (796 of 1,021 files).
+  - Format, mbake: 73% of the files identical (740 of 1,007 files).
   - Lint, checkmake: 100% of its findings also reported (349 of 349 findings).
 <!-- /generated -->
 

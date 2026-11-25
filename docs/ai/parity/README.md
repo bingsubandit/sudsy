@@ -50,6 +50,7 @@ The clang-format run does not compare line wrapping (the `wrap_compare` `note` o
 | htmlhint | 91.6% | `0c8a3dcc` | 44 | 10 | 7 | 27 | 0 | 0 | 0 | 27 |
 | ktlint | 92.3% | `7514c1f3` | 100 | 53 | 11 | 36 | 0 | 0 | 0 | 36 |
 | markdownlint | 99.0% | `7514c1f3` | 53 | 23 | 19 | 0 | 0 | 0 | 11 | 0 |
+| mbake | - | - | 17 | 9 | 1 | 0 | 0 | 0 | 7 | 0 |
 | php-cs-fixer | - | - | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | phpstan | 36.3% | `062a8f18` | 19 | 0 | 7 | 10 | 0 | 2 | 0 | 10 |
 | prettier | - | - | 59 | 38 | 9 | 2 | 0 | 3 | 7 | 2 |

@@ -8,7 +8,7 @@
 /// <reference types="tree-sitter-cli/dsl" />
 // @ts-check
 
-const CHARSET = 'a-zA-Z0-9%\\+\\-\\.@_\\*\\?\\/';
+const CHARSET = 'a-zA-Z0-9%\\+\\-\\.@_\\*\\?\\/!\\[\\]';
 const ESCAPE_SET = 'abtnvfrE!"#\\$&\'\\(\\)\\*,;<>\\?\\[\\\\\\]^`{\\|}~';
 
 const NL = token.immediate(/[\r\n]+/);
@@ -75,6 +75,8 @@ module.exports = grammar({
     $._string,
   ],
 
+  conflicts: $ => [[$.concatenation, $._cond_arg]],
+
   extras: $ => [
     /\s/,
     alias(token(seq('\\', /\r?\n|\r/)), '\\'),
@@ -90,6 +92,8 @@ module.exports = grammar({
       $._variable_definition,
       $._directive,
       seq($._function, NL),
+      alias($._stray_paren_line, $.function_call),
+      alias($._reference_line, $.function_call),
     ),
 
     // Rules {{{
@@ -118,12 +122,21 @@ module.exports = grammar({
       $._target_pattern,
       ':',
       optional(WS),
-      optional($._prerequisites_pattern),
+      optional(choice(
+        $._prerequisites_pattern,
+        seq(optional($._prerequisites_pattern), '|', $._order_only_prerequisites),
+      )),
       choice(
         $.recipe,
         NL,
       ),
     )),
+
+    // `$(error x))`: make takes the stray parenthesis as text
+    _stray_paren_line: $ => seq($._function, repeat1(alias(')', $.word)), NL),
+
+    // a statement that is a reference (`$(recurse)`): make expands it to makefile text
+    _reference_line: $ => seq($._variable, NL),
 
     _targets: $ => alias($.list, $.targets),
 
@@ -190,21 +203,25 @@ module.exports = grammar({
       NL,
     ),
 
-    recipe_line: $ => seq(
-      optional(choice(
-        ...['@', '-', '+'].map(c => token(prec(1, c))),
-      )),
-      optional(seq(
-        alias($.shell_text_with_split, $.shell_text),
-        repeat(seq(
-          // splited recipe lines may start with .RECIPEPREFIX
-          // that shall not be part of the shell_code
-          optional($._recipeprefix),
-          alias($.shell_text_with_split, $.shell_text),
+    recipe_line: $ => choice(
+      // a command that is only its prefix (`\t@`)
+      choice(...['@', '-', '+'].map(c => token(prec(1, c)))),
+      seq(
+        optional(choice(
+          ...['@', '-', '+'].map(c => token(prec(1, c))),
         )),
-        optional($._recipeprefix),
-      )),
-      alias($._shell_text_without_split, $.shell_text),
+        optional(seq(
+          alias($.shell_text_with_split, $.shell_text),
+          repeat(seq(
+            // splited recipe lines may start with .RECIPEPREFIX
+            // that shall not be part of the shell_code
+            optional($._recipeprefix),
+            alias($.shell_text_with_split, $.shell_text),
+          )),
+          optional($._recipeprefix),
+        )),
+        alias($._shell_text_without_split, $.shell_text),
+      ),
     ),
     // }}}
     // Variables {{{
@@ -235,12 +252,12 @@ module.exports = grammar({
 
     // 6.5
     variable_assignment: $ => seq(
-      optional($._target_or_pattern_assignment),
+      optional(seq($._target_or_pattern_assignment, optional(choice('export', 'override', 'private')))),
       $._name,
       optional(WS),
       field('operator', choice(...DEFINE_OPS)),
       optional(WS),
-      optional(field('value', $.text)),
+      optional(field('value', alias($._value_text, $.text))),
       NL,
     ),
 
@@ -261,13 +278,13 @@ module.exports = grammar({
 
     define_directive: $ => seq(
       'define',
-      field('name', $.word),
+      $._name,
       optional(WS),
       optional(field('operator', choice(...DEFINE_OPS))),
       optional(WS),
       NL,
       optional(field('value',
-        alias(repeat1($._rawline), $.raw_text),
+        alias(repeat1(choice($._rawline, $._nested_define)), $.raw_text),
       )),
       token(prec(1, 'endef')),
       NL,
@@ -342,12 +359,14 @@ module.exports = grammar({
 
     elsif_directive: $ => seq(
       'else',
+      optional(WS),
       field('condition', $._conditional_directives),
       optional(field('consequence', $._conditional_consequence)),
     ),
 
     else_directive: $ => seq(
       'else',
+      optional(WS),
       NL,
       optional(field('consequence', $._conditional_consequence)),
     ),
@@ -383,14 +402,14 @@ module.exports = grammar({
     _conditional_args_cmp: $ => choice(
       seq(
         '(',
-        optional(field('arg0', $._primary)),
+        optional(field('arg0', $._cond_arg)),
         ',',
-        optional(field('arg1', $._primary)),
+        optional(field('arg1', $._cond_arg)),
         ')',
       ),
       seq(
-        field('arg0', $._primary),
-        field('arg1', $._primary),
+        field('arg0', $._cond_arg),
+        field('arg1', $._cond_arg),
       ),
     ),
 
@@ -406,9 +425,12 @@ module.exports = grammar({
       '$',
       choice(
         delimitedVariable($._primary),
+        // `$()`: the empty variable, a common way to write a blank (`$(subst $() $(),:,x)`)
+        seq(token.immediate('('), ')'),
         // TODO are those legal? $) $$$
         alias(token.immediate(/./), $.word), // match any single digit
-        // alias(token.immediate('\\\n'), $.word)
+        // `$\` and a newline: the empty variable that joins two lines without a blank
+        alias(token.immediate(prec(1, /\\\r?\n|\\\r/)), $.word),
       ),
     ),
 
@@ -422,9 +444,9 @@ module.exports = grammar({
           alias(choice(...AUTOMATIC_VARS.map(c => token(prec(1, c)))), $.word),
         )),
         ':',
-        field('pattern', $._primary),
+        optional(field('pattern', choice($._primary, alias($._braced_word, $.word)))),
         '=',
-        field('replacement', $._primary),
+        optional(field('replacement', choice($._primary, alias($._braced_word, $.word)))),
       )),
     ),
 
@@ -463,7 +485,7 @@ module.exports = grammar({
         ...FUNCTIONS.map(f => token.immediate(seq(f, /[	 ]/))),
       )),
       optional(WS),
-      $.arguments,
+      optional($.arguments),
       ')',
     ),
 
@@ -519,7 +541,7 @@ module.exports = grammar({
     )),
     // }}}
     // Names {{{
-    _name: $ => field('name', $.word),
+    _name: $ => field('name', choice($.word, $.concatenation, $._variable)),
 
     string: $ => field('string', choice(
       seq('"', optional($._string), '"'),
@@ -538,6 +560,21 @@ module.exports = grammar({
       new RegExp('\\\\[0-9]{3}'),
     ))),
 
+    // an argument of ifeq and friends: a primary, or a word that also has `;`, `:`, `=` and `'` (`ifeq ($(a), b='c';)`)
+    _cond_arg: $ => choice($._primary, alias($._cond_word, $.word)),
+
+    _cond_word: _ => token(repeat1(choice(
+      new RegExp('[' + CHARSET + ';:=\'\\\\]'),
+      new RegExp('\\\\[' + ESCAPE_SET + ']'),
+    ))),
+
+    // a word with braces or commas, as the pattern and replacement of a substitution reference have (`$(c:%=a{b})`, `$(c:%=-Wl,%)`)
+    _braced_word: _ => token(seq(
+      repeat(choice(new RegExp('[' + CHARSET + ']'), new RegExp('\\\\[' + ESCAPE_SET + ']'))),
+      new RegExp('[{},]'),
+      repeat(choice(new RegExp('[' + CHARSET + '{},]'), new RegExp('\\\\[' + ESCAPE_SET + ']'))),
+    )),
+
     // 11.1
     archive: $ => seq(
       field('archive', $.word),
@@ -550,6 +587,13 @@ module.exports = grammar({
     // TODO external parser for .RECIPEPREFIX
     _recipeprefix: _ => '\t',
 
+    // a `define ... endef` inside the body of a define: make counts the nesting
+    _nested_define: $ => seq(
+      token(prec(2, /[ \t]*define[ \t][^\r\n]*[\r\n]+/)),
+      repeat(choice($._rawline, $._nested_define)),
+      token(prec(2, /[ \t]*endef[^\r\n]*[\r\n]+/)),
+    ),
+
     // TODO prefixed line in define is recipe
     _rawline: _ => token(/.*[\r\n]+/), // any line
 
@@ -561,6 +605,8 @@ module.exports = grammar({
         alias('$$', $.escape),
         alias('//', $.escape),
       ),
+      // a `#` in a command is shell text, even right after a reference
+      token.immediate(prec(2, /#[^$\r\n\\]*/)),
     ),
 
     // The SPLIT chars shall be included the injected code
@@ -576,6 +622,20 @@ module.exports = grammar({
 
     // balanced parentheses in a value or an argument: SOURCES = ( \ ... ), goal(s)
     _paren_group: $ => seq('(', optional($.text), ')'),
+
+    // the value of an assignment: parentheses need not balance (`A = case x in 0) ...`)
+    _value_text: $ => text(
+      choice(
+        noneOf(...['\\$', '\\n', '\\r', '\\']),
+        SPLIT,
+      ),
+      choice(
+        $._variable,
+        $._function,
+        alias('$$', $.escape),
+        alias('//', $.escape),
+      ),
+    ),
 
     text: $ => text(
       choice(
@@ -621,28 +681,29 @@ function delimitedVariable(rule) {
  * @param {RuleOrLiteral} text
  * @param {RuleOrLiteral} fenced_vars
  */
-function text(text, fenced_vars) {
+function text(text, fenced_vars, after_reference = null) {
   const raw_text = token(repeat1(choice(
     text,
     new RegExp('\\\\[' + ESCAPE_SET + ']'),
     new RegExp('\\\\[0-9]{3}'),
     new RegExp('\\\\[^\n\r]'), // used in cmd like sed \1
   )));
+  const after = after_reference ? choice(raw_text, after_reference) : raw_text;
   return choice(
     seq(
       raw_text,
       repeat(seq(
         fenced_vars,
-        optional(raw_text),
+        optional(after),
       )),
     ),
     seq(
       fenced_vars,
       repeat(seq(
-        optional(raw_text),
+        optional(after),
         fenced_vars,
       )),
-      optional(raw_text),
+      optional(after),
     ),
   );
 }

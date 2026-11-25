@@ -1,0 +1,7 @@
+# Formats like mbake with its defaults: the lines after the first of a continued rule or directive start with a tab, at most one
+# blank line between statements. The conditional body keeps the indentation as written (mbake's `indent_nested_conditionals` is off).
+makefile:
+  format:
+    indent_style: tab
+    continuation_indent: indent
+    max_blank_lines: 1

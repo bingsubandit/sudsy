@@ -10322,6 +10322,7 @@
           "preset:json/prettier-compat",
           "preset:kotlin/ktlint",
           "preset:makefile/checkmake",
+          "preset:makefile/mbake",
           "preset:markdown/markdownlint",
           "preset:markdown/prettier-compat",
           "preset:php/phpstan",
@@ -12247,6 +12248,24 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "conditional_indent": {
+              "default": "keep",
+              "description": "The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting.",
+              "enum": [
+                "keep",
+                "indent"
+              ],
+              "type": "string"
+            },
+            "continuation_indent": {
+              "default": "keep",
+              "description": "The lines after the first of a rule or directive written over several lines: `keep` leaves their indentation as written; `indent` indents them one level.",
+              "enum": [
+                "keep",
+                "indent"
+              ],
+              "type": "string"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -16314,6 +16333,24 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "conditional_indent": {
+                    "default": "keep",
+                    "description": "The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting.",
+                    "enum": [
+                      "keep",
+                      "indent"
+                    ],
+                    "type": "string"
+                  },
+                  "continuation_indent": {
+                    "default": "keep",
+                    "description": "The lines after the first of a rule or directive written over several lines: `keep` leaves their indentation as written; `indent` indents them one level.",
+                    "enum": [
+                      "keep",
+                      "indent"
+                    ],
+                    "type": "string"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",

@@ -1,0 +1,39 @@
+ratchet:
+  real-world: 740
+target-files:
+  real-world: 1007
+second-format:
+  real-world: 0
+refused:
+  real-world: 0
+unclassified: 0
+differences:
+  assignment-blanks: gap  mbake spaces the operator of a variable at the start of a line only; it leaves an indented one, a target-specific one, one after `export` or `override`, and one whose name holds a `$(...)` or `!` as written; Sudsy applies `space_around_assignment` to every assignment
+  continued-line-indent: gap  mbake sets the lines after the first of a rule or variable to one tab and re-indents recipe continuation lines by their depth in the source (also inside quoted strings, which changes the string); Sudsy keeps them as written, or one tab with `continuation_indent` set to `indent`
+  blank-lines: gap  mbake inserts a blank line before some rules and after some directives that the source does not have; Sudsy keeps the blank lines of the source (at most `max_blank_lines`)
+  backslash-blank: gap  mbake writes one blank before the backslash of a continued recipe line (inside a quoted string too, which changes the string); Sudsy keeps a recipe line as written
+  inline-blanks: gap  mbake keeps or adds blanks inside a line in ways of its own (two blanks before a trailing `##` comment, blanks inside `$(call ...)`); Sudsy keeps the blanks of a recipe or value as written
+  recipe-indent: gap  mbake sets the indent of recipe lines and comments between them to one tab; Sudsy keeps a comment line as written
+  indent-other: gap  indentation of lines mbake changes by rules of its own (deeper recipe lines after a conditional, a comment in a rule body)
+  mbake-indents: gap  mbake indents a line the source has at column 0 (a recipe line after a rule line broken over lines)
+  conditional-comment-indent: gap  mbake indents a comment or body line inside a conditional when the source indents it differently; Sudsy keeps the source indent (`conditional_indent` set to `keep`)
+  trailing-blanks: choice  the trailing blanks of a variable value are part of the value (`A = b ` then `$(A)x` is `b x`); Sudsy keeps them, mbake drops them from some lines
+  other: gap  one file with a difference in line count that no cause above explains
+  nmake-syntax: choice  a file in NMake syntax (`!IF`, `!INCLUDE`, `$(VAR:a=b)` in macros, `<<` inline files), or an invalid file; GNU make cannot read it, so it is not Makefile input
+files:
+  real-world: assignment-blanks:104, continued-line-indent:70, blank-lines:20, inline-blanks:18, backslash-blank:16, recipe-indent:12, indent-other:10, mbake-indents:9, conditional-comment-indent:5, trailing-blanks:2, other:1
+  evidence/vim/src/GvimExt/Makefile: nmake-syntax
+  evidence/vim/runtime/doc/Make_mvc.mak: nmake-syntax
+  evidence/vim/runtime/indent/Make_mvc.mak: nmake-syntax
+  evidence/vim/runtime/lang/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/Make_ami.mak: nmake-syntax
+  evidence/vim/src/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/auto/nmake/tools.mak: nmake-syntax
+  evidence/vim/src/po/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/tee/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/testdir/Make_dos.mak: nmake-syntax
+  evidence/vim/src/testdir/Make_mvc.mak: nmake-syntax
+  evidence/vim/src/xxd/Make_mvc.mak: nmake-syntax
+intentional:
+  nmake-syntax: invalid-input
+pins: {}
