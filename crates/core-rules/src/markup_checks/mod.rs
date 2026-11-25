@@ -1,16 +1,23 @@
 //! Accessibility checks over the element tree ([`crate::markup`]) and the content categories of a
 //! [`Model`]: a link with no text, a form with no submit button, a table whose header cells lack a
-//! scope, a focusable element that is hidden from assistive technology. The names of the elements
-//! and attributes are the language's [`Words`].
+//! scope, a focusable element that is hidden from assistive technology, a click handler no key
+//! reaches, a label with no control, an empty link, button or heading. The names of the elements
+//! and attributes are the language's [`Words`]; the sets of elements and roles are rows of its
+//! [`Model`].
 //!
 //! concept: markup-checks
-//! what: Elements whose accessible name, scope or visibility is missing or contradictory: links without text, forms without a submit button, table headers without scope, hidden focusable elements.
-//! tools: html-validate wcag/h30, wcag/h32, wcag/h63, hidden-focusable
+//! what: Elements whose accessible name, scope, visibility or keyboard access is missing or contradictory: links without text, forms without a submit button, table headers without scope, hidden focusable elements, click handlers no key reaches, labels without a control, empty links and buttons, images without alternative text.
+//! tools: html-validate wcag/h30, wcag/h32, wcag/h63, hidden-focusable, angular-eslint
 
+use crate::checks::FileCache;
 use crate::content_model::Model;
 use crate::markup::Markup;
+use crate::options::RuleOptions;
 use crate::rule::{FileContext, Rule, RuleContext, RuleMeta};
 use core_syntax::TextRange;
+
+mod events;
+mod names;
 
 /// The words of a language for the checks.
 pub struct Words {
@@ -45,10 +52,45 @@ pub struct Words {
     pub submit_category: &'static str,
     /// Template syntax that makes a value unknown (`{{`).
     pub dynamic: &'static str,
+    /// The attributes of a label's target (`for`, and `htmlFor` of a framework), lowercase.
+    pub label_for: &'static [&'static str],
+    pub label_element: &'static str,
+    pub labelledby: &'static str,
+    pub autofocus: &'static str,
+    pub dialog: &'static str,
+    pub type_attr: &'static str,
+    pub contenteditable: &'static str,
+    pub aria_disabled: &'static str,
+    /// The element and the `type` of an image button, and the elements that need an alternative
+    /// text besides the image.
+    pub input: &'static str,
+    pub input_hidden: &'static str,
+    pub input_image: &'static str,
+    pub area: &'static str,
+    pub object: &'static str,
+    /// Events that count as a key (the name may continue after a `.`).
+    pub key_events: &'static [&'static str],
+    pub click: &'static str,
+    /// Events that listen to the pointer and the one that reaches the same user by keyboard.
+    pub pointer_events: &'static [(&'static str, &'static str)],
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Check {
+    /// An element with a click handler that no key event comes with.
+    ClickKeyEvents,
+    /// An element with a click or key handler that cannot take focus.
+    InteractiveFocus,
+    /// A pointer event with no matching focus event.
+    PointerKeyEvents,
+    /// A label with no control.
+    LabelControl,
+    /// A link, button or heading with nothing in it.
+    EmptyContent,
+    /// An `autofocus` attribute.
+    Autofocus,
+    /// An image (or area, object, image button) with no text alternative.
+    ImageAlt,
     /// A link with no text, no image with alt text and no label.
     LinkText,
     /// A form with no submit button of its own or associated with it.
@@ -60,7 +102,7 @@ pub enum Check {
 }
 
 pub struct MarkupCheck {
-    meta: &'static RuleMeta,
+    pub(crate) meta: &'static RuleMeta,
     check: Check,
     model: fn() -> &'static Model,
     words: &'static Words,
@@ -83,20 +125,20 @@ impl MarkupCheck {
 }
 
 fn value<'a>(m: &'a Markup, i: usize, name: &str) -> Option<&'a str> {
-    m.attr(i, name).and_then(|a| a.value.as_deref())
+    m.plain(i, name)
 }
 
 impl Words {
-    fn aria_hidden_self(&self, m: &Markup, i: usize) -> bool {
+    pub(crate) fn aria_hidden_self(&self, m: &Markup, i: usize) -> bool {
         value(m, i, self.aria_hidden) == Some("true")
     }
 
-    fn aria_hidden(&self, m: &Markup, i: usize) -> bool {
+    pub(crate) fn aria_hidden(&self, m: &Markup, i: usize) -> bool {
         m.ancestors_and_self(i).any(|a| self.aria_hidden_self(m, a))
     }
 
     /// Hidden from everyone: the `hidden` attribute, `inert` or a hiding style, on the element or an ancestor.
-    fn hidden(&self, m: &Markup, i: usize) -> bool {
+    pub(crate) fn hidden(&self, m: &Markup, i: usize) -> bool {
         m.ancestors_and_self(i).any(|a| {
             m.attr(a, self.hidden).is_some()
                 || m.attr(a, self.inert).is_some()
@@ -118,7 +160,7 @@ impl Words {
                 && value(m, i, self.role).is_some_and(|r| self.presentation.contains(&r)))
     }
 
-    fn labelled(&self, m: &Markup, i: usize) -> bool {
+    pub(crate) fn labelled(&self, m: &Markup, i: usize) -> bool {
         m.attr(i, self.label)
             .is_some_and(|a| a.value.as_deref().is_some_and(|v| !v.is_empty()))
     }
@@ -142,7 +184,7 @@ impl Words {
 }
 
 impl MarkupCheck {
-    fn run(&self, m: &Markup, out: &mut Vec<(TextRange, String)>) {
+    fn run(&self, m: &Markup, options: &RuleOptions, out: &mut Vec<(TextRange, String)>) {
         let model = (self.model)();
         let w = self.words;
         for i in 0..m.elements.len() {
@@ -151,6 +193,13 @@ impl MarkupCheck {
                 continue;
             }
             match self.check {
+                Check::ClickKeyEvents => self.click_key_events(model, m, i, out),
+                Check::InteractiveFocus => self.interactive_focus(model, m, i, out),
+                Check::PointerKeyEvents => self.pointer_key_events(m, i, out),
+                Check::LabelControl => self.label_control(model, m, i, out),
+                Check::EmptyContent => self.empty_content(model, m, i, out),
+                Check::Autofocus => self.autofocus(model, m, i, out),
+                Check::ImageAlt => self.image_alt(m, i, options, out),
                 Check::LinkText => self.link_text(m, i, out),
                 Check::FormSubmit => {
                     if model.in_category(m, i, w.form_category) && !self.has_submit(model, m, i) {
@@ -321,16 +370,33 @@ fn natural_join(items: &[&str]) -> String {
     }
 }
 
+thread_local! {
+    /// The tree of the last file: the checks of a file share one build.
+    static MARKUP: FileCache<Markup> = const { FileCache::new() };
+}
+
 impl Rule for MarkupCheck {
     fn meta(&self) -> &'static RuleMeta {
         self.meta
     }
 
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
-        let mut markup = Markup::build(file.root, file.grammar, file.text, true);
-        (self.model)().synthesize(&mut markup);
+        let model = (self.model)();
+        let markup = MARKUP.with(|cache| {
+            cache.get(file, || {
+                let mut markup = Markup::build(
+                    file.root,
+                    file.grammar,
+                    file.text,
+                    true,
+                    &model.dialect(file.path),
+                );
+                model.synthesize(&mut markup);
+                markup
+            })
+        });
         let mut out = Vec::new();
-        self.run(&markup, &mut out);
+        self.run(&markup, ctx.options, &mut out);
         for (range, message) in out {
             ctx.report(range, message);
         }
@@ -347,6 +413,7 @@ macro_rules! markup_rule {
             description: $description:expr,
             why: $why:expr,
             example: $example:expr,
+            options: $options:expr,
             check: $check:ident,
             model: $model:expr,
             words: $words:expr,
@@ -365,7 +432,7 @@ macro_rules! markup_rule {
                     fix: None,
                     requires: &[],
                     uses: &[],
-                    options: &[],
+                    options: $options,
                 };
                 &META
             },

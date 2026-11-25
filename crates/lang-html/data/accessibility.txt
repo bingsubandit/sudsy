@@ -1,0 +1,14 @@
+# Facts for the accessibility checks (hand-written; each list names its source).
+# Labelable elements: HTML Living Standard 4.10.2 (categories: labelable elements).
+category labelable button,input,meter,output,progress,select,textarea
+# Operable beyond HTML's interactive content: option and datalist (roles option and listbox, HTML-AAM), summary (focusable with an activation behavior, HTML 4.11.2). Cells and rows are widgets only in a grid (gridcell and row, HTML-AAM), which a template cannot tell: they are left alone everywhere.
+category widget option,datalist,summary,td,th,tr
+# Angular's `routerLink` makes an anchor a link, as `href` does (https://angular.dev/guide/routing/navigate-to-routes).
+if widget a routerlink
+# Interactive content that acts without a script of its own (HTML 3.2.5.2.7): a click handler on it is not a keyboard gap.
+category passive label,iframe,details
+# Roles a user does not operate: the document structure, landmark, live region and window roles of WAI-ARIA 1.2 (5.3.3 to 5.3.6), DPUB-ARIA 1.1 and Graphics-ARIA, and the two widget roles that only show state or content (progressbar, tabpanel).
+category static-role alert,alertdialog,application,article,banner,blockquote,caption,cell,code,complementary,contentinfo,definition,deletion,dialog,directory,document,emphasis,feed,figure,form,generic,group,heading,img,insertion,list,listitem,log,main,mark,marquee,math,meter,navigation,none,note,paragraph,presentation,region,rowgroup,search,separator,status,strong,subscript,superscript,table,tabpanel,term,time,timer,tooltip,progressbar,doc-abstract,doc-acknowledgments,doc-afterword,doc-appendix,doc-biblioentry,doc-bibliography,doc-chapter,doc-colophon,doc-conclusion,doc-cover,doc-credit,doc-credits,doc-dedication,doc-endnote,doc-endnotes,doc-epigraph,doc-epilogue,doc-errata,doc-example,doc-footnote,doc-foreword,doc-glossary,doc-index,doc-introduction,doc-notice,doc-pagebreak,doc-pagefooter,doc-pageheader,doc-pagelist,doc-part,doc-preface,doc-prologue,doc-pullquote,doc-qna,doc-subtitle,doc-tip,doc-toc,graphics-document,graphics-object,graphics-symbol
+# Links, buttons and headings need content to be perceivable (WCAG 2.4.4, 4.1.2, 2.4.6); the attributes that give it.
+category needs-content a,button,h1,h2,h3,h4,h5,h6
+category gives-content aria-label,innerhtml,innertext,outerhtml,textcontent,title

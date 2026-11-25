@@ -5,12 +5,26 @@
 
 use core_rules::content_model::Model;
 use core_rules::content_rule;
+use core_rules::markup::Spellings;
 use std::sync::LazyLock;
 
 pub(crate) fn model() -> &'static Model {
-    static MODEL: LazyLock<Model> =
-        LazyLock::new(|| Model::parse(include_str!("../data/model.txt")));
+    static MODEL: LazyLock<Model> = LazyLock::new(|| {
+        Model::parse(concat!(
+            include_str!("../data/model.txt"),
+            include_str!("../data/spelling.txt"),
+            include_str!("../data/accessibility.txt")
+        ))
+    });
     &MODEL
+}
+
+/// How the dialects write bound attributes (`data/spelling.txt`), parsed apart from the model so
+/// that a rule that only reads attributes does not load the model.
+pub(crate) fn spellings() -> &'static Spellings {
+    static SPELLINGS: LazyLock<Spellings> =
+        LazyLock::new(|| Spellings::parse(include_str!("../data/spelling.txt")));
+    &SPELLINGS
 }
 
 content_rule! {

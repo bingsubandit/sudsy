@@ -22,7 +22,7 @@
 //! tools: html-validate element-permitted-content, element-permitted-order, element-permitted-occurrences, element-required-content
 
 use crate::family::comma_list as list;
-use crate::markup::{Element, Markup};
+use crate::markup::{Dialect, Element, Markup, Spellings};
 use crate::rule::{FileContext, Rule, RuleContext, RuleMeta};
 use core_syntax::TextRange;
 use std::collections::{HashMap, HashSet};
@@ -50,11 +50,15 @@ pub struct Model {
     open: HashMap<String, Vec<(String, String)>>,
     closed: HashMap<String, Vec<String>>,
     transparent: HashSet<String>,
+    spellings: Spellings,
 }
 
 impl Model {
     pub fn parse(text: &str) -> Model {
-        let mut m = Model::default();
+        let mut m = Model {
+            spellings: Spellings::parse(text),
+            ..Model::default()
+        };
         for line in text.lines() {
             let mut words = line.split_whitespace();
             let (Some(kind), Some(subject)) = (words.next(), words.next()) else {
@@ -118,6 +122,23 @@ impl Model {
         m
     }
 
+    /// How the file's dialect writes bound attributes.
+    pub fn dialect(&self, path: &std::path::Path) -> Dialect<'_> {
+        self.spellings.of(path)
+    }
+
+    /// Is `name` an element of the language (not a component of a framework)?
+    pub fn is_known(&self, name: &str) -> bool {
+        self.known.contains(name)
+    }
+
+    /// Is `name` in the plain list of the category (a row without conditions)?
+    pub fn listed(&self, category: &str, name: &str) -> bool {
+        self.categories
+            .get(category)
+            .is_some_and(|c| c.contains(name))
+    }
+
     pub fn in_category(&self, markup: &Markup, index: usize, category: &str) -> bool {
         if let Some((a, b)) = category.split_once("-not-") {
             return self.in_category(markup, index, a) && !self.in_category(markup, index, b);
@@ -136,12 +157,10 @@ impl Model {
                 .any(|(_, cond)| match cond {
                     Cond::Attr(a) => markup.attr(index, a).is_some(),
                     Cond::AttrNot(a, v) => !markup
-                        .attr(index, a)
-                        .and_then(|x| x.value.as_deref())
+                        .plain(index, a)
                         .is_some_and(|x| x.eq_ignore_ascii_case(v)),
                     Cond::AttrIn(a, values) => markup
-                        .attr(index, a)
-                        .and_then(|x| x.value.as_deref())
+                        .plain(index, a)
                         .is_some_and(|x| values.iter().any(|v| x.eq_ignore_ascii_case(v))),
                     Cond::Absent(a) => markup.attr(index, a).is_none(),
                     Cond::In(tag) => markup
@@ -418,8 +437,14 @@ impl Rule for ContentModel {
     }
 
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
-        let mut markup = Markup::build(file.root, file.grammar, file.text, true);
         let model = (self.model)();
+        let mut markup = Markup::build(
+            file.root,
+            file.grammar,
+            file.text,
+            true,
+            &model.dialect(file.path),
+        );
         model.synthesize(&mut markup);
         for (range, message) in model.run(&markup, self.check) {
             ctx.report(range, message);

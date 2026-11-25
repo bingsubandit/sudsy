@@ -1,0 +1,17 @@
+id: table-scope
+message: "`scope` belongs on `<th>`"
+description: >-
+  Reports a `scope` attribute on an element other than `<th>`.
+why: >-
+  `scope` tells assistive technology which cells a header cell labels. On any other element it
+  has no meaning and is ignored, so the table is no easier to read than without it, while the
+  attribute suggests that it is.
+example: '<td scope="row">   <th scope="row">'
+severity: off
+category: correctness
+rule:
+  kind: StartTag
+  regex: '(?i)^<[a-z]'
+  not:
+    regex: '(?i)^<th\b'
+  has: { kind: Attribute, regex: '(?i)^scope(\s|=|$)' }

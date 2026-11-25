@@ -42,4 +42,4 @@ options:
   - indent_expression_operands:
       default: false
       doc: "Indent the operands of a binary or logical expression that continues on following lines in an attribute or `{{ }}` expression (`vue/html-indent`); the default aligns them with the first operand."
-presets: [html-validate-standard, html-validate-recommended, htmlhint, html-eslint-recommended, eslint-plugin-vue-recommended, eslint-plugin-svelte-recommended]
+presets: [html-validate-standard, html-validate-recommended, htmlhint, html-eslint-recommended, angular-eslint-recommended, eslint-plugin-vue-recommended, eslint-plugin-svelte-recommended]

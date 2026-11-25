@@ -111,6 +111,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::Preset::new("html/html-validate-recommended", include_str!("../presets/html-validate-recommended.yaml")),
         core_config::Preset::new("html/htmlhint", include_str!("../presets/htmlhint.yaml")),
         core_config::Preset::new("html/html-eslint-recommended", include_str!("../presets/html-eslint-recommended.yaml")),
+        core_config::Preset::new("html/angular-eslint-recommended", include_str!("../presets/angular-eslint-recommended.yaml")),
         core_config::Preset::new("html/eslint-plugin-vue-recommended", include_str!("../presets/eslint-plugin-vue-recommended.yaml")),
         core_config::Preset::new("html/eslint-plugin-svelte-recommended", include_str!("../presets/eslint-plugin-svelte-recommended.yaml")),
         ])

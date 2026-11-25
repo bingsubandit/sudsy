@@ -44,6 +44,13 @@ pub static RULES: &[&dyn Rule] = &[
     &crate::access::FORM_SUBMIT,
     &crate::access::HEADER_SCOPE,
     &crate::access::HIDDEN_FOCUSABLE,
+    &crate::access::IMG_ALT,
+    &crate::access::CLICK_KEY_EVENTS,
+    &crate::access::INTERACTIVE_FOCUS,
+    &crate::access::POINTER_KEY_EVENTS,
+    &crate::access::LABEL_CONTROL,
+    &crate::access::EMPTY_CONTENT,
+    &crate::access::NO_AUTOFOCUS,
 ];
 
 rule! {

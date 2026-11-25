@@ -1,0 +1,21 @@
+# angular-eslint's template `recommended` and `accessibility` sets (@angular-eslint/template) that Sudsy has, at warn.
+angular:
+  lint:
+    rules:
+      banana-in-box: warn
+      eqeqeq: warn
+      no-negated-async: warn
+      img-alt:
+        level: warn
+        options:
+          other_elements: true
+          skip_hidden: false
+          name_counts: true
+      click-events-have-key-events: warn
+      interactive-supports-focus: warn
+      mouse-events-have-key-events: warn
+      label-has-control: warn
+      empty-content: warn
+      no-autofocus: warn
+      prefer-control-flow: warn
+      table-scope: warn

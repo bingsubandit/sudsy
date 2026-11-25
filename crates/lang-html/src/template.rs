@@ -562,7 +562,7 @@ impl Rule for Template {
             }
             Check::ForKey | Check::SelfClosing | Check::AttributesOrder => {
                 let ranges = match self.check {
-                    Check::ForKey => vue::for_key(node, text),
+                    Check::ForKey => vue::for_key(node, text, ctx.file.path),
                     Check::SelfClosing => vue::self_closing(node, text),
                     _ => vue::attributes_order(node, text),
                 };

@@ -1,26 +1,26 @@
 tool: "angular-eslint"
-version: "20.7.0"
+version: "22.8.0"
 languages: ["angular"]
-rule-url: "https://github.com/angular-eslint/angular-eslint/blob/v20.7.0/packages/eslint-plugin-template/docs/rules/{id}.md"
+rule-url: "https://github.com/angular-eslint/angular-eslint/blob/v22.8.0/packages/eslint-plugin-template/docs/rules/{id}.md"
 sources:
-  - "https://github.com/angular-eslint/angular-eslint/tree/v20.7.0/packages/eslint-plugin-template/docs/rules"
+  - "https://github.com/angular-eslint/angular-eslint/tree/v22.8.0/packages/eslint-plugin-template/docs/rules"
 scope: "@angular-eslint/eslint-plugin-template's rules for `*.component.html`; the recommended ones first. Rules about TypeScript components are not in it."
 entries:
-  alt-text: planned
+  alt-text: rule img-alt | `other_elements` covers `<area>`, `<object>` and `<input type="image">`
   attributes-order: planned
   banana-in-box: rule banana-in-box
   button-has-type: rule no-implicit-button-type
-  click-events-have-key-events: planned
+  click-events-have-key-events: rule click-events-have-key-events
   conditional-complexity: deferred
   cyclomatic-complexity: deferred
-  elements-content: planned
+  elements-content: rule empty-content
   eqeqeq: rule eqeqeq | `allowNullOrUndefined` is not an option
   i18n: deferred
-  interactive-supports-focus: planned
-  label-has-associated-control: planned
-  mouse-events-have-key-events: planned
+  interactive-supports-focus: rule interactive-supports-focus
+  label-has-associated-control: rule label-has-control | no `controlComponents` or `labelComponents` options
+  mouse-events-have-key-events: rule mouse-events-have-key-events
   no-any: deferred
-  no-autofocus: planned
+  no-autofocus: rule no-autofocus
   no-call-expression: deferred
   no-distracting-elements: planned
   no-duplicate-attributes: planned
@@ -30,16 +30,23 @@ entries:
   no-negated-async: rule no-negated-async | `!(x | async)` and `(x | async) === false`
   no-nested-tags: deferred
   prefer-contextual-for-variables: deferred
-  prefer-control-flow: planned
+  prefer-control-flow: rule prefer-control-flow
   prefer-ngsrc: planned
   prefer-self-closing-tags: planned
   prefer-static-string-properties: deferred
   prefer-template-literal: deferred
   role-has-required-aria: planned
-  table-scope: planned
+  table-scope: rule table-scope
   use-track-by-function: deferred
   valid-aria: planned
   no-positive-tabindex: planned
   prefer-at-else: planned
   prefer-at-empty: planned
   prefer-built-in-pipes: planned
+  no-multi-token-class-key: planned
+  no-non-null-assertion: planned
+  no-outerhtml: planned
+  prefer-class-binding: planned
+  prefer-let-for-async-pipe: planned
+  prefer-style-binding: planned
+  require-switch-default: planned

@@ -74,8 +74,6 @@
   lint: {tool: "graphql-eslint", gain: ~0.7, cost: {est: true}, why: "npm @graphql-eslint/eslint-plugin 7.7M downloads a month against graphql-schema-linter 0.44M; Node; schema and operation rules; syntactic rules"}
 - language: TOML
   lint: {tool: "taplo lint", gain: ~0.4, cost: {est: true}, why: "Homebrew installs 30 days: taplo 1.7k, tombi 1.0k; taplo also formats TOML in Sudsy's reference table (close call); Rust, fast; schema validation only; schema checks"}
-- language: Angular templates
-  lint: {tool: "angular-eslint template rules", gain: ~0.7, cost: {est: true}, why: "only tool found; Node; syntactic rules"}
 - language: XML
   lint: {tool: "xmllint", gain: ~0.1, cost: {est: true}, why: "only tool found; official libxml2, native; DTD and schema checks; some rules need semantics"}
 - language: Ruby

@@ -77,6 +77,7 @@
   ids: [angular]
   speed: [Angular]
   format: [{tool: prettier-angular, name: Prettier, groups: [components, angular, realworld-app]}]
+  lint: [{tool: angular-eslint, name: angular-eslint, primary: true}]
 - language: CSS / SCSS / Less
   popularity: [{name: CSS, gh: 6577861, so: 59.0}, {name: SCSS, gh: 570377}, {name: Less, gh: 65081}]
   ids: [css, scss, less]

@@ -1,0 +1,44 @@
+<div (click)="a()"></div>
+^^^^^^^^^^^^^^^^^^^ click-events-have-key-events
+^^^^^^^^^^^^^^^^^^^ interactive-supports-focus
+<div (click)="a()" (keydown.enter)="a()" tabindex="0"></div>
+<div on-click="a()" role="presentation"></div>
+<button (click)="a()"></button>
+^^^^^^^^^^^^^^^^^^^^^^ empty-content
+<a (click)="a()" routerLink="/x">x</a>
+<a (click)="a()">x</a>
+^^^^^^^^^^^^^^^^^ click-events-have-key-events
+^^^^^^^^^^^^^^^^^ interactive-supports-focus
+<app-card (click)="a()"></app-card>
+<div role="heading" (keydown)="a()"></div>
+@if (ok) { <div (click)="a()" aria-hidden="true"></div> }
+<div (mouseover)="a()"></div>
+^^^^^^^^^^^^^^^^^^^^^^^ mouse-events-have-key-events
+<div (mouseout)="a()" (blur)="b()"></div>
+<label>Name</label>
+^^^^^^^ label-has-control
+<input id="a" /> <label for="a">Name</label> <label [for]="id">Name</label> <label><input /></label>
+@if (ok) { <a></a> }
+           ^^^ empty-content
+<h2></h2>
+^^^^ empty-content
+<a [innerHTML]="html"></a> <a><img alt="x" /></a> <a aria-label="x"></a> <a>{{ x }}</a>
+<input autofocus />
+       ^^^^^^^^^ no-autofocus
+<dialog><input autofocus /></dialog>
+<mat-sidenav [autoFocus]="x"></mat-sidenav> <input [autofocus]="y" />
+                                                   ^^^^^^^^^^^ no-autofocus
+<p *ngIf="a">x</p>
+   ^^^^^^^^^ prefer-control-flow
+<p *ngFor="let x of xs">x</p>
+   ^^^^^^^^^^^^^^^^^^^^ prefer-control-flow
+<div [ngSwitch]="a"><i *ngSwitchCase="1"></i></div>
+     ^^^^^^^^^^^^^^ prefer-control-flow
+<td scope="row"></td>
+^^^^^^^^^^^^^^^^ table-scope
+<th scope="row"></th>
+<img src="a.png" aria-hidden="true" />
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ img-alt
+<img [alt]="t" src="a.png" /> <area href="/x" /> <input type="image" />
+                              ^^^^^^^^^^^^^^^^^^ img-alt
+                                                 ^^^^^^^^^^^^^^^^^^^^^^ img-alt

@@ -32,6 +32,8 @@ def corpus_files(spec, filters):
                     filters["skip"] += 1
                 elif p.is_file():
                     name = f"{source['as']}/{inside}" if "as" in source else p.relative_to(base.parent).as_posix()
+                    if "suffix" in source and not name.endswith(source["suffix"]):  # the tool and Sudsy read the file by its name (`*.component.html` is Angular)
+                        name = name.removesuffix(Path(name).suffix) + source["suffix"]
                     if "esm" in source:  # `[module suffix, script suffix]`: a `.js` with `import`/`export` is read as a module by both tools, the others as scripts
                         module = re.search(r"^(?:import|export)\b", p.read_text(encoding="utf-8", errors="replace"), re.M)
                         name = str(Path(name).with_suffix(source["esm"][0 if module else 1]))

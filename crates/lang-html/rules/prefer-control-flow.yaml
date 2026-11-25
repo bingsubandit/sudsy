@@ -1,0 +1,20 @@
+id: prefer-control-flow
+message: "use the built-in control flow (`@if`, `@for`, `@switch`) instead of this structural directive"
+description: >-
+  Reports a `*ngIf` or `*ngFor` attribute and a `[ngSwitch]` binding: the directives that the
+  `@if`, `@for` and `@switch` blocks of Angular 17 replace. The `*ngSwitchCase` and
+  `*ngSwitchDefault` inside a switch are not reported again.
+why: >-
+  The built-in blocks are part of the template syntax, so they need no import of `CommonModule`
+  or of the directive, type-check their conditions more strictly and run without the
+  directive's runtime code. `@for` also requires a `track` expression, which `*ngFor` leaves to
+  an optional `trackBy`.
+
+
+  To migrate, run `ng generate @angular/core:control-flow`.
+example: '<p *ngIf="a">   @if (a) { <p></p> }'
+severity: off
+category: style
+rule:
+  kind: Attribute
+  regex: '^(\*ng(If|For)|\[ngSwitch\])(\s|=|$)'

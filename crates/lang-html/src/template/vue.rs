@@ -8,6 +8,7 @@ use super::{
     Attr, SyntaxNode, TextRange, TextSize, attrs, code, is_component, previous_tag, tag_name,
 };
 use crate::generated::kind as k;
+use core_rules::markup::{Bind, Dialect};
 use core_syntax::SyntaxNodeExt;
 
 const VOID: &[&str] = &[
@@ -31,23 +32,24 @@ fn tag_range(tag: &SyntaxNode, text: &str) -> TextRange {
     TextRange::at(start, TextSize::of(s.trim_end()))
 }
 
-fn is_key(a: &Attr<'_>) -> bool {
-    a.name == "v-bind" && a.parts().0 == Some("key")
+/// The attribute binds `key`, as the dialect spells a binding.
+fn is_key(a: &Attr<'_>, dialect: &Dialect<'_>) -> bool {
+    dialect.read(a.full) == Some((Bind::Prop, "key"))
 }
 
 /// A `v-for` element without a `:key`: a `<template>` or `<slot>` passes the duty to its child
 /// elements, a component is checked by `valid-v-for`.
-pub(super) fn for_key(tag: &SyntaxNode, text: &str) -> Vec<TextRange> {
+pub(super) fn for_key(tag: &SyntaxNode, text: &str, path: &std::path::Path) -> Vec<TextRange> {
     let mut out = Vec::new();
     if attrs(tag, text).iter().any(|a| a.name == "v-for") {
-        key_of(tag, text, &mut out);
+        key_of(tag, text, &crate::content::spellings().of(path), &mut out);
     }
     out
 }
 
-fn key_of(tag: &SyntaxNode, text: &str, out: &mut Vec<TextRange>) {
+fn key_of(tag: &SyntaxNode, text: &str, dialect: &Dialect<'_>, out: &mut Vec<TextRange>) {
     let a = attrs(tag, text);
-    if a.iter().any(is_key) {
+    if a.iter().any(|a| is_key(a, dialect)) {
         return;
     }
     let Some((name, _)) = tag_name(tag, text) else {
@@ -59,7 +61,7 @@ fn key_of(tag: &SyntaxNode, text: &str, out: &mut Vec<TextRange>) {
                 .child(k::START_TAG)
                 .filter(|_| child.kind() == k::ELEMENT)
             {
-                key_of(&t, text, out);
+                key_of(&t, text, dialect, out);
             }
         }
     } else if !is_component(name)

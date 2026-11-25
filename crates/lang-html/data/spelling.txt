@@ -1,0 +1,9 @@
+# How each dialect writes a bound attribute: `<file suffixes, comma-separated> <prop|event> [strip=<chars>] <prefix>%<suffix>...`, `%` is the name.
+# Angular: https://angular.dev/guide/templates/binding (property, attribute and event bindings, `bind-` and `on-` forms).
+# Vue (and the Vue directives of a plain HTML file): https://vuejs.org/guide/essentials/template-syntax.html#directives (`v-bind` and `v-on`, `:` and `@` shorthands; modifiers follow `.`).
+# Svelte: https://svelte.dev/docs/svelte/legacy-on (the `on:` directive of Svelte 4; modifiers follow `|`).
+component.html prop [%] [attr.%] bind-% bind-attr.%
+component.html event (%) on-%
+vue,html prop strip=. :% v-bind:%
+vue,html event strip=. @% v-on:%
+svelte event strip=| on:%
