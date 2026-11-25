@@ -1,8 +1,12 @@
 id: quote-command-substitution
 message: quote the command substitution to prevent word splitting
 description: >-
-  An unquoted `$(...)` or backtick substitution in a command's arguments is split into words
-  and globbed.
+  Reports an unquoted `$(...)` or backtick substitution in the arguments of a command.
+why: >-
+  The output is split on blanks and globbed, so a result with spaces becomes several arguments, an
+  empty one disappears, and a `*` becomes file names.
+
+  To fix, quote it: `"$(cmd)"`.
 example: 'rm $(cat list)'
 severity: warn
 category: suspicious
@@ -18,8 +22,14 @@ rule:
 id: quote-variable
 message: quote the expansion to prevent word splitting and globbing
 description: >-
-  An unquoted `$var` or `${var}` in a command's arguments is split into words and globbed.
-  Does not know which variables hold only a number or a single word.
+  Reports an unquoted `$var` or `${var}` in the arguments of a command. The rule does not know which
+  variables hold only a number or a single word.
+why: >-
+  The value is split on blanks and globbed, so a value with a space becomes several arguments, an
+  empty one disappears (and a test such as `[ $x = a ]` becomes a syntax error), and a `*` becomes
+  file names.
+
+  To fix, quote it: `"$var"`.
 example: 'rm $file'
 category: suspicious
 rule: { any: [{ kind: Command }, { kind: Test, not: { regex: '^\[\[' } }] }
@@ -27,7 +37,13 @@ token: { needs: '$', kind: [Word, Concat], regex: '^(?:[^"''`\\(]|\\.|"(?:[^"\\$
 ---
 id: quote-at-expansion
 message: quote `$@` and `${array[@]}` so the elements are not split again
-description: An unquoted `$@` or `${array[@]}` in a command's arguments.
+description: >-
+  Reports an unquoted `$@` or `${array[@]}` in the arguments of a command.
+why: >-
+  Unquoted, each element is split again on blanks and globbed, so the arguments that were separate
+  words are cut apart. Only `"$@"` keeps each argument as one word.
+
+  To fix, write `"$@"` or `"${array[@]}"`.
 example: 'cp $@ dir'
 severity: error
 category: correctness
@@ -36,7 +52,13 @@ token: { needs: '$', kind: [Word, Concat], regex: '^[^"''`\\(]*\$(@|\{@\}|\{!?[A
 ---
 id: quote-star-expansion
 message: use "$@" (with quotes) to keep the arguments apart
-description: An unquoted `$*` or `${array[*]}` in a command's arguments.
+description: >-
+  Reports an unquoted `$*` or `${array[*]}` in the arguments of a command.
+why: >-
+  Unquoted, it is split on blanks and globbed, and an argument that held a space becomes two. `$*`
+  is rarely what is wanted.
+
+  To fix, write `"$@"`, or `"$*"` if one string is meant.
 example: 'cp $* dir'
 severity: warn
 category: suspicious
@@ -45,7 +67,13 @@ token: { needs: '$', kind: [Word, Concat], regex: '^[^"''`\\(]*\$(\*|\{\*\}|\{[A
 ---
 id: no-backticks
 message: use $(...) instead of backticks
-description: A command substitution written with backticks.
+description: >-
+  Reports a command substitution written with backticks.
+why: >-
+  Backticks cannot be nested without escaping, treat backslashes inside in their own way, and are
+  easy to mistake for a quote. `$(...)` nests, and the quoting inside it is the same as outside.
+
+  To fix, write `$(...)`.
 example: 'now=`date`   # now=$(date)'
 severity: off
 category: style
@@ -56,8 +84,13 @@ fix-kind: safe
 id: declare-and-assign-separately
 message: declare and assign separately, or the exit status of the substitution is lost
 description: >-
-  `export`, `local`, `declare`, `readonly` or `typeset` with a command substitution as the
-  value reports the status of the declaration, not of the command.
+  Reports `export`, `local`, `declare`, `readonly` or `typeset` with a command substitution as the
+  value, as in `local x=$(cmd)`.
+why: >-
+  The exit status of the line is that of `local`, which succeeds, and not of `cmd`. A failing
+  command is lost, even under `set -e`.
+
+  To fix, declare first and assign on the next line: `local x; x=$(cmd)`.
 example: 'local out=$(make)'
 severity: off
 category: suspicious

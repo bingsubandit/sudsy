@@ -7,8 +7,9 @@ params:
   doc: '@return\s+(.+)'
 description: >-
   Reports a function or method whose native return type or `@return` tag is not `void` or `never`
-  and whose end can be reached without a `return` or `throw`, on the function. Generators are not
-  reported, and a call that never returns (`exit`, `die`, a `@return never` function) is not seen.
+  and whose end can be reached without a `return` or `throw`, on the last statement that reaches the
+  end. Generators are not reported, and a call that never returns (`exit`, `die`, a `@return never`
+  function) is not seen.
 why: >-
   The function runs off its end and returns `null`, which breaks the declared type: a native type
   gives a `TypeError` at run time, and a documented type gives the caller a `null` where it expects

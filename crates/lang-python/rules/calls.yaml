@@ -1,6 +1,13 @@
 id: regex-flag-alias
 message: "use of regular expression alias `re.$FLAG`: write the flag's full name"
-description: "`re.A`, `re.I`, `re.L`, `re.M`, `re.S`, `re.U` or `re.X`, the short names of `re.ASCII`, `re.IGNORECASE`, `re.LOCALE`, `re.MULTILINE`, `re.DOTALL`, `re.UNICODE` and `re.VERBOSE`."
+description: >-
+  Reports `re.A`, `re.I`, `re.L`, `re.M`, `re.S`, `re.U` and `re.X`, the short names of `re.ASCII`,
+  `re.IGNORECASE`, `re.LOCALE`, `re.MULTILINE`, `re.DOTALL`, `re.UNICODE` and `re.VERBOSE`.
+why: >-
+  The one-letter names are hard to tell apart and to look up (`re.S` is `DOTALL`, `re.M` is
+  `MULTILINE`). The long names say what the flag does.
+
+  To fix, write the long name.
 example: "import re\nx = re.compile(\"a\", re.I)"
 severity: off
 category: style
@@ -10,7 +17,14 @@ rule:
 ---
 id: hasattr-call
 message: 'using `hasattr(x, "__call__")` to test if x is callable is unreliable: use `callable(x)`'
-description: 'A call of `hasattr` or `getattr` that asks for `"__call__"`.'
+description: >-
+  Reports a call of `hasattr` or `getattr` that asks for `"__call__"`.
+why: >-
+  `hasattr(x, "__call__")` asks for the attribute on the object, which is not what Python does when
+  it calls a value: it looks the method up on the type. The result can differ, and `callable(x)` is
+  the test that matches the call.
+
+  To fix, write `callable(x)`.
 example: 'hasattr(x, "__call__")'
 severity: warn
 category: suspicious

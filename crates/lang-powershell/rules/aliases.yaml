@@ -1,9 +1,14 @@
 id: no-cmdlet-aliases
 message: use the full cmdlet name instead of the alias
 description: >-
-  A command written with one of the default aliases of Windows PowerShell and PowerShell 7
-  (`gci`, `ls`, `%`, `?`, `iex`, ...). The table is the one of a Windows host; PSScriptAnalyzer
-  reads the aliases of the host it runs on.
+  Reports a command written with one of the default aliases of Windows PowerShell and PowerShell 7
+  (`gci`, `ls`, `%`, `?`, `iex` and so on). The table is the one of a Windows host.
+why: >-
+  Aliases are for typing at a prompt. In a script they are less readable (`%` and `?` are not
+  words), may be absent or mean another command on a platform (`ls` is the native command on Linux),
+  and users can redefine them.
+
+  To fix, write the full name of the cmdlet.
 example: 'gci | % { $_ }'
 severity: off
 category: style

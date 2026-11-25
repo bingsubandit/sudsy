@@ -1,6 +1,12 @@
 id: multiple-imports-on-one-line
 message: put each import on a line of its own
-description: An `import` that names several modules.
+description: >-
+  Reports an `import` that names several modules, as in `import os, sys`.
+why: >-
+  One import per line gives one line per change in a diff, and a merge conflict or a removed import
+  touches one line.
+
+  To fix, write one `import` per module.
 example: 'import os, sys'
 severity: off
 category: style
@@ -10,7 +16,15 @@ rule:
 ---
 id: assert-tuple
 message: 'this assert is always true: its test is a non-empty tuple'
-description: An `assert` whose test is a tuple (a message written inside the parentheses).
+description: >-
+  Reports an `assert` whose test is a tuple, usually the condition and the message written inside
+  the parentheses.
+why: >-
+  A tuple with elements is always true, so `assert (x > 0, "x must be positive")` never fails, and
+  the check looks like it is there. Python warns about it when the file is compiled.
+
+  To fix, write the message after a comma outside the parentheses: `assert x > 0, "x must be
+  positive"`.
 example: 'assert (x, "message")'
 severity: warn
 category: correctness
@@ -19,7 +33,14 @@ rule:
 ---
 id: if-tuple
 message: 'this condition is always true: it is a non-empty tuple'
-description: An `if` or `elif` whose test is a tuple.
+description: >-
+  Reports an `if` or `elif` whose test is a tuple.
+why: >-
+  A tuple with elements is always true (and an empty one always false), so the branch is always
+  taken. It is usually a stray comma, or a condition written inside parentheses with commas instead
+  of `and`.
+
+  To fix, write one boolean expression.
 example: 'if (x, y):'
 severity: warn
 category: correctness
@@ -31,7 +52,13 @@ report-on: first-token
 ---
 id: raise-not-implemented
 message: raise `NotImplementedError`; `NotImplemented` is not an exception
-description: A `raise` of `NotImplemented`.
+description: >-
+  Reports a `raise` of `NotImplemented`, with or without a call.
+why: >-
+  `NotImplemented` is the value that binary operators return to say "I cannot do this for that
+  type". It is not an exception, so raising it fails with a `TypeError` that hides the real reason.
+
+  To fix, raise `NotImplementedError`.
 example: 'raise NotImplemented'
 severity: warn
 category: correctness

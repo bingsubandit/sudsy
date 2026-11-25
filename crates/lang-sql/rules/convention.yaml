@@ -1,6 +1,12 @@
 id: union-distinct
 message: write UNION DISTINCT or UNION ALL, not a bare UNION
-description: A `UNION` that names neither `DISTINCT` nor `ALL` (sqlfluff AM02).
+description: >-
+  Reports a `UNION` that names neither `DISTINCT` nor `ALL`.
+why: >-
+  `UNION` removes duplicates, which costs a sort or a hash, and `UNION ALL` does not. Without a
+  keyword a reader cannot tell whether the removal is wanted, or whether `ALL` was forgotten.
+
+  To fix, write `UNION DISTINCT` or `UNION ALL`.
 example: 'select 1 union select 2'
 severity: warn
 category: suspicious
@@ -10,7 +16,13 @@ rule:
 ---
 id: prefer-coalesce
 message: use COALESCE, which every dialect has, instead of IFNULL or NVL
-description: A call of `IFNULL` or `NVL` (sqlfluff CV02).
+description: >-
+  Reports a call of `IFNULL` or `NVL`.
+why: >-
+  `COALESCE` is in the SQL standard and works on every database. `IFNULL` and `NVL` are vendor
+  functions, take two arguments only and may handle types differently.
+
+  To fix, write `COALESCE`.
 example: 'select ifnull(a, 0) from t'
 severity: off
 category: style
@@ -20,7 +32,14 @@ rule:
 ---
 id: count-star
 message: use COUNT(*), not COUNT(1) or COUNT(0)
-description: A `COUNT` of the constant 1 or 0 (sqlfluff CV04).
+description: >-
+  Reports a `COUNT` of the constant 1 or 0, as in `COUNT(1)`.
+why: >-
+  `COUNT(*)` is the standard form and counts rows. `COUNT(1)` and `COUNT(0)` give the same number,
+  but a reader may wonder whether the constant matters, and some think it is faster, which it is
+  not.
+
+  To fix, write `COUNT(*)`.
 example: 'select count(1) from t'
 severity: off
 category: style
@@ -30,7 +49,14 @@ rule:
 ---
 id: right-join
 message: use a LEFT JOIN and swap the tables instead of a RIGHT JOIN
-description: A `RIGHT` join (sqlfluff CV08).
+description: >-
+  Reports a `RIGHT` join.
+why: >-
+  Most queries read from left to right and join the next table onto what came before. A right join
+  makes the reader turn that around, and the same result is a `LEFT JOIN` with the tables in the
+  other order.
+
+  To fix, swap the tables and use `LEFT JOIN`.
 example: 'select a from t right join u on t.a = u.a'
 severity: off
 category: style
@@ -41,7 +67,13 @@ report-on: first-token
 ---
 id: else-null
 message: the ELSE NULL is the default of CASE; leave it out
-description: A `CASE` branch `ELSE NULL` (sqlfluff ST01).
+description: >-
+  Reports a `CASE` branch `ELSE NULL`.
+why: >-
+  A `CASE` that does not match returns `NULL` without an `ELSE`, so the branch says what is already
+  the case.
+
+  To fix, remove the `ELSE NULL`.
 example: 'select case when a then 1 else null end from t'
 severity: warn
 category: cleanup
@@ -51,7 +83,13 @@ rule:
 ---
 id: implicit-alias
 message: write AS before the alias
-description: A table or column alias without the `AS` keyword (sqlfluff AL01, AL02).
+description: >-
+  Reports a table or column alias written without the `AS` keyword.
+why: >-
+  The alias of a column is easy to confuse with a missing comma: `select a b from t` is one column
+  named `b`, and `select a, b from t` is two. `AS` makes it explicit.
+
+  To fix, write `AS` before the alias.
 example: 'select a b from t u'
 severity: off
 category: style
@@ -61,7 +99,13 @@ rule:
 ---
 id: inner-join
 message: write INNER JOIN, not a bare JOIN
-description: A `JOIN` with no join type, which is an inner join (sqlfluff AM05).
+description: >-
+  Reports a `JOIN` with no join type, which is an inner join.
+why: >-
+  `JOIN` alone leaves it to the reader to know that it means `INNER JOIN` (and not left). The
+  keyword makes the intent explicit next to `LEFT JOIN`.
+
+  To fix, write `INNER JOIN`.
 example: 'select a from t join u on t.a = u.a'
 severity: off
 category: style
@@ -74,8 +118,13 @@ id: detached-semicolon
 family: detached-token
 params: { kind: Semicolon, message: "the semicolon belongs right after its statement" }
 description: >-
-  A `;` written after a space, a line break or another `;` instead of right after its
-  statement (sqlfluff CV06).
+  Reports a `;` written after a space, a line break or another `;`, instead of right after its
+  statement.
+why: >-
+  The end of a statement is easy to see when the `;` sits against the last token. On its own line it
+  reads as a separate, empty statement, and a stray `;;` is an empty one.
+
+  To fix, write the `;` right after the statement.
 example: "select 1\n;"
 severity: off
 category: style

@@ -60,12 +60,12 @@ pub struct FormatRule {
 
 macro_rules! rules {
     ($($kind:ident $id:literal $category:ident $level:ident $message:literal
-        $description:literal $example:literal;)*) => {
+        $description:literal $why:literal $example:literal;)*) => {
         pub static RULES: &[FormatRule] = &[$(FormatRule {
             meta: &RuleMeta {
                 id: $id,
                 category: Category::$category,
-                why: "",
+                why: $why,
                 source: "",
                 description: $description,
                 example: $example,
@@ -84,57 +84,134 @@ macro_rules! rules {
 rules! {
     PercentInvalid "percent-format-invalid-format" Correctness Warn
         "`%`-format string is invalid: {name}"
-        "A `\"...\" % x` whose format string does not parse." "\"%\" % x";
+        "Reports a `\"...\" % x` whose format string does not parse, such as a `%` at the \
+         end of the string."
+        "Python raises `ValueError: incomplete format` when the line runs, so the failure \
+         is at run time and only on the path that reaches the line.\n\
+         To fix, escape a literal percent sign as `%%`, or complete the conversion."
+        "\"%\" % x";
     PercentCharacter "percent-format-unsupported-format-character" Correctness Warn
         "`%`-format string has an unsupported format character `{name}`"
-        "A `%` format with a conversion character the language does not know." "\"%z\" % x";
+        "Reports a `%` format with a conversion character that Python does not know, as in \
+         `\"%z\" % x`."
+        "Python raises `ValueError: unsupported format character` when the line runs. It \
+         is usually a literal `%` that should have been written `%%`.\n\
+         To fix, write `%%` for a percent sign, or a conversion Python has (`s`, `r`, `a`, \
+         `d`, `i`, `f`, `x` and so on)."
+        "\"%z\" % x";
     PercentMixed "percent-format-mixed-positional-and-named" Correctness Warn
         "`%`-format string mixes positional and named placeholders"
-        "A `%` format with both `%s` and `%(name)s`." "\"%s %(a)s\" % x";
+        "Reports a `%` format that has both positional placeholders (`%s`) and named ones \
+         (`%(a)s`)."
+        "A format takes its values from a tuple or from a mapping, not both. Python raises \
+         a `TypeError` at run time.\n\
+         To fix, use only named placeholders with a dict, or only positional ones with a \
+         tuple."
+        "\"%s %(a)s\" % x";
     PercentMapping "percent-format-expected-mapping" Correctness Warn
         "`%`-format string has named placeholders but the right side is a sequence"
-        "A `%` format with `%(name)s` placeholders applied to a tuple, list or set."
+        "Reports a `%` format that has named placeholders (`%(a)s`) applied to a tuple, \
+         list or set."
+        "Named placeholders look their value up in a mapping. With a tuple, Python raises \
+         `TypeError: format requires a mapping` when the line runs.\n\
+         To fix, pass a dict, or use positional placeholders."
         "\"%(a)s\" % (1,)";
     PercentSequence "percent-format-expected-sequence" Correctness Warn
         "`%`-format string has several placeholders but the right side is a mapping"
-        "A `%` format with several positional placeholders applied to a dict."
+        "Reports a `%` format that has several positional placeholders applied to a dict."
+        "Positional placeholders take one value each from a tuple. A dict is taken as one \
+         value, so with two or more placeholders Python raises `TypeError: not enough \
+         arguments for format string`.\n\
+         To fix, pass a tuple, or name the placeholders (`%(a)s`)."
         "\"%s %s\" % {\"a\": 1}";
     PercentExtraNames "percent-format-extra-named-arguments" Correctness Warn
         "`%`-format string has unused named argument(s): {name}"
-        "A `%` format applied to a dict with keys no placeholder names."
+        "Reports a `%` format applied to a dict that has keys that no placeholder names."
+        "Python ignores the extra keys without an error. The key is a leftover after the \
+         format string was edited, or a placeholder was misspelled and the value is never \
+         shown.\n\
+         To fix, remove the key, or add the placeholder."
         "\"%(a)s\" % {\"a\": 1, \"b\": 2}";
     PercentMissingName "percent-format-missing-argument" Correctness Warn
         "`%`-format string is missing argument(s) for placeholder(s): {name}"
-        "A `%` format with named placeholders the dict does not have."
+        "Reports a `%` format with named placeholders that the dict does not have."
+        "Python raises a `KeyError` for the first missing key when the line runs. A key \
+         that is misspelled in the string or in the dict is the usual cause.\n\
+         To fix, add the key, or correct the name."
         "\"%(a)s\" % {\"b\": 1}";
     PercentCount "percent-format-positional-count-mismatch" Correctness Warn
         "`%`-format string has {name}"
-        "A `%` format whose placeholders and values differ in number." "\"%s %s\" % (1,)";
+        "Reports a `%` format whose number of placeholders differs from the number of \
+         values in the tuple."
+        "Python raises a `TypeError` when the line runs: `not enough arguments for format \
+         string` with too few values, `not all arguments converted during string \
+         formatting` with too many.\n\
+         To fix, make the two counts the same."
+        "\"%s %s\" % (1,)";
     PercentStar "percent-format-star-requires-sequence" Correctness Warn
         "`%`-format string `*` specifier requires a sequence"
-        "A `%` format with a `*` width or precision applied to a dict." "\"%*s\" % {\"a\": 1}";
+        "Reports a `%` format with a `*` width or precision applied to a dict."
+        "A `*` takes its number from the values, and a dict has no order to take it from. \
+         Python raises `TypeError: * wants int`.\n\
+         To fix, pass a tuple with the width before the value, or write the number in the \
+         format."
+        "\"%*s\" % {\"a\": 1}";
     BraceInvalid "string-dot-format-invalid-format" Correctness Warn
         "`.format` call has an invalid format string: {name}"
-        "A `\"...\".format(...)` whose string does not parse." "\"{\".format(1)";
+        "Reports a `\"...\".format(...)` call whose string does not parse, such as an \
+         unmatched `{` or `}`."
+        "Python raises a `ValueError` (`Single '{' encountered in format string`) when the \
+         line runs. It is usually a literal brace that should have been doubled.\n\
+         To fix, write `{{` and `}}` for literal braces."
+        "\"{\".format(1)";
     BraceExtraNames "string-dot-format-extra-named-arguments" Correctness Warn
         "`.format` call has unused named argument(s): {name}"
-        "A `.format` call with keywords no field names." "\"{}\".format(1, a=2)";
+        "Reports a `.format` call with keyword arguments that no field names."
+        "Python ignores the extra keywords without an error, so a leftover after an edit, \
+         or a field that was misspelled, goes unnoticed.\n\
+         To fix, remove the keyword, or add the field."
+        "\"{}\".format(1, a=2)";
     BraceExtraPositional "string-dot-format-extra-positional-arguments" Correctness Warn
         "`.format` call has unused arguments at position(s): {name}"
-        "A `.format` call with positional arguments no field uses." "\"{}\".format(1, 2)";
+        "Reports a `.format` call with positional arguments that no field uses."
+        "Python ignores the extra arguments without an error. It is usually a field that \
+         was removed from the string, or one that was never added.\n\
+         To fix, remove the argument, or add the field."
+        "\"{}\".format(1, 2)";
     BraceMissing "string-dot-format-missing-arguments" Correctness Warn
         "`.format` call is missing argument(s) for placeholder(s): {name}"
-        "A `.format` call without an argument for a field." "\"{} {}\".format(1)";
+        "Reports a `.format` call without an argument for a field of its string."
+        "Python raises an `IndexError` for a positional field or a `KeyError` for a named \
+         one when the line runs.\n\
+         To fix, pass the argument, or correct the field."
+        "\"{} {}\".format(1)";
     BraceMixing "string-dot-format-mixing-automatic" Correctness Warn
         "`.format` string mixes automatic and manual numbering"
-        "A `.format` string with both `{}` and `{0}`." "\"{} {0}\".format(1)";
+        "Reports a `.format` string that has both automatic fields (`{}`) and numbered \
+         ones (`{0}`)."
+        "Python raises `ValueError: cannot switch from automatic field numbering to manual \
+         field specification` when the line runs.\n\
+         To fix, use one kind of field in a string."
+        "\"{} {0}\".format(1)";
     PrintfToInterpolation "printf-string-formatting" Style Off
         "use format specifiers or an f-string instead of `%` formatting"
-        "A `\"...\" % x` whose format string and values pair up (a tuple of as many values, a dict for named fields, or one value for one field)."
+        "Reports a `\"...\" % x` whose format string and values pair up: a tuple with as \
+         many values as placeholders, a dict for named fields, or one value for one \
+         placeholder."
+        "The `%` operator is the oldest of Python's three ways to format a string. An \
+         f-string or `.format` puts the value where it is used, and a single value or a \
+         tuple that is mistaken for the arguments (`\"%s\" % some_tuple`) is a classic bug \
+         of `%`.\n\
+         To fix, write an f-string, or use `.format`."
         "x = \"%s\" % y";
     BraceToInterpolation "f-string" Style Off
         "use an f-string instead of a `.format` call"
-        "A `\"...\".format(...)` on a string literal whose fields all name an argument."
+        "Reports a `\"...\".format(...)` call on a string literal whose fields all name an \
+         argument."
+        "An f-string puts the expression where it is shown, so the reader does not look \
+         from the field to the argument list and count positions. It is also the faster \
+         form.\n\
+         To fix, write an f-string."
         "x = \"{}\".format(y)";
 }
 

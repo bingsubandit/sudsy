@@ -1,8 +1,13 @@
 id: special-chars-in-identifier
 message: this quoted identifier has characters other than letters, digits and underscores
 description: >-
-  A quoted identifier with a space or another character that is not a letter, a digit or an
-  underscore (sqlfluff RF05). A column of a select element that has an alias is left alone.
+  Reports a quoted identifier with a space or another character that is not a letter, a digit or an
+  underscore. A column of a select element that has an alias is left alone.
+why: >-
+  A name with special characters has to be quoted in every query that uses it, and the quotes differ
+  between databases. Tools that generate code from the schema fail on such names.
+
+  To fix, rename it with letters, digits and underscores.
 example: 'select a as "my col" from "my table"'
 severity: off
 category: style
@@ -18,7 +23,14 @@ id: keyword-identifier
 family: keyword-name
 params: { kind: Identifier, parents: "ObjectReference,AliasExpression", message: "`{name}` is a keyword: use another name or quote it" }
 description: >-
-  An unquoted name written like a keyword of the dialect (sqlfluff RF04).
+  Reports an unquoted name written like a keyword of the dialect, such as a column called `year` or
+  `name`.
+why: >-
+  A name that is a keyword can be read as the keyword. In some positions the parser takes the
+  keyword, in others the name, and a new version of the database may reserve the word and break the
+  query.
+
+  To fix, rename it, or quote it.
 example: "select a as date from t"
 severity: off
 category: style
@@ -27,8 +39,15 @@ id: needless-quotes
 family: needless-quotes
 params: { kind: QuotedIdentifier, message: "`{name}` does not need quotes" }
 description: >-
-  A quoted name that is a plain word, not reserved, and already in the case the dialect folds
-  unquoted names to (upper for ansi, lower for postgres), so the quotes change nothing (sqlfluff RF06).
+  Reports a quoted name that is a plain word, not reserved, and already in the case the dialect
+  folds unquoted names to (upper case for ansi, lower case for postgres), so the quotes change
+  nothing.
+why: >-
+  The quotes suggest that the name is special, but it is the same name without them. Quotes also
+  make the name case sensitive in the code that follows, which hides a mistake when one use is
+  quoted and another is not.
+
+  To fix, remove the quotes.
 example: 'select "A" from t'
 severity: off
 category: style

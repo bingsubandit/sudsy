@@ -2,9 +2,13 @@ id: unknown-columns
 family: unknown-columns
 params: { message: "this query produces an unknown number of columns", select: SelectStatement, queries: "SelectStatement,SetExpression,WithCompoundStatement", element: SelectClauseElement, source: FromExpressionElement, alias: AliasExpression, reference: ObjectReference, table: TableExpression, cte: CommonTableExpression, from: FromClause, wildcard: "*" }
 description: >-
-  A wildcard of the outermost query that resolves to a table, so the columns of the result change
-  when the table does: a `*` over a table, or over a subquery or common table that has one itself
-  (sqlfluff AM04).
+  Reports a wildcard of the outermost query that resolves to a table: a `*` over a table, or over a
+  subquery or common table that has one itself.
+why: >-
+  The columns of the result are whatever the table has now. A column added or reordered in the table
+  changes the result of the query, and clients that read the result by position or by name break.
+
+  To fix, list the columns.
 example: "select * from t"
 severity: off
 category: style
@@ -13,8 +17,13 @@ id: unqualified-reference
 family: reference-qualification
 params: { message: "unqualified reference `{name}` in a select with more than one table", select: SelectStatement, queries: "SelectStatement,SetExpression,WithCompoundStatement", element: SelectClauseElement, source: FromExpressionElement, alias: AliasExpression, reference: ObjectReference, table: TableExpression, cte: CommonTableExpression, from: FromClause, wildcard: "*" }
 description: >-
-  A column reference without a table in a select over more than one table or view; a name that
-  an alias of another select element or a `USING` list gives is left alone (sqlfluff RF02).
+  Reports a column reference without a table in a select over more than one table or view. A name
+  that an alias of another select element or a `USING` list gives is left alone.
+why: >-
+  With several tables, a name may exist in more than one of them, now or after a column is added.
+  The query then fails as ambiguous, or the reader cannot tell which table a column comes from.
+
+  To fix, qualify the column with the table or its alias.
 example: "select a from t1 join t2 on t1.id = t2.id"
 severity: off
 category: style
@@ -23,8 +32,14 @@ id: inconsistent-reference
 family: reference-consistency
 params: { message: "`{name}` is qualified differently from the other references of this single-table select", select: SelectStatement, queries: "SelectStatement,SetExpression,WithCompoundStatement", element: SelectClauseElement, source: FromExpressionElement, alias: AliasExpression, reference: ObjectReference, table: TableExpression, cte: CommonTableExpression, from: FromClause, wildcard: "*" }
 description: >-
-  In a select over one table, some column references are qualified (`t.a`) and others are not
-  (sqlfluff RF03).
+  Reports a select over one table in which some column references are qualified (`t.a`) and others
+  are not.
+why: >-
+  Mixed forms make the reader wonder whether the two refer to the same thing. With one table, one
+  style is enough for every reference, and the unqualified one becomes ambiguous once a join is
+  added.
+
+  To fix, qualify all of them, or none.
 example: "select t.a, b from t"
 severity: off
 category: style
@@ -33,8 +48,14 @@ id: duplicate-column-alias
 family: unique-aliases
 params: { message: "`{name}` is already the name of an earlier column of this select", select: SelectStatement, queries: "SelectStatement,SetExpression,WithCompoundStatement", element: SelectClauseElement, source: FromExpressionElement, alias: AliasExpression, reference: ObjectReference, table: TableExpression, cte: CommonTableExpression, from: FromClause, wildcard: "*" }
 description: >-
-  Two select elements with the same column name: an alias, or the last part of a plain column
-  reference, compared without case and quotes (sqlfluff AL08).
+  Reports two select elements with the same column name, compared without case and quotes: an alias,
+  or the last part of a plain column reference.
+why: >-
+  The result has two columns with one name. Clients that read the result by name get only one of
+  them, a subquery or a view built on it is rejected by some databases, and which one wins is not
+  defined.
+
+  To fix, give one of them another alias.
 example: "select a, b as a from t"
 severity: off
 category: style
@@ -43,8 +64,13 @@ id: unused-alias
 family: unused-alias
 params: { message: "the alias `{name}` is never used in this select", select: SelectStatement, queries: "SelectStatement,SetExpression,WithCompoundStatement", element: SelectClauseElement, source: FromExpressionElement, alias: AliasExpression, reference: ObjectReference, table: TableExpression, cte: CommonTableExpression, from: FromClause, wildcard: "*" }
 description: >-
-  A table alias in a `FROM` clause that no qualified reference of the select (nested queries
-  included) uses (sqlfluff AL05).
+  Reports a table alias in a `FROM` clause that no qualified reference of the select, nested queries
+  included, uses.
+why: >-
+  An alias that nothing uses is left over from an earlier version of the query, or a reference was
+  written without it.
+
+  To fix, remove the alias, or use it.
 example: "select a from t as x"
 severity: off
 category: style

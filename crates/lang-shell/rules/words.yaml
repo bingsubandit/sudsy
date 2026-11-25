@@ -1,6 +1,14 @@
 id: quote-in-quotes
 message: the word is "A"B"C"; the middle part is outside the quotes (write "ABC" or "A\"B\"C")
-description: A word of two double-quoted strings with unquoted text between them, as `"a"b"c"`.
+description: >-
+  Reports a word made of two double-quoted strings with unquoted text between them, where a quoted
+  part has a blank, as in `"say "hi" now"`.
+why: >-
+  It is usually a quote that was meant to be inside the string, written without a backslash. The
+  text between the quotes is outside any quotes, so it is split and globbed, and the words are not
+  what the string looks like.
+
+  To fix, escape the inner quotes (`"say \"hi\" now"`) or use single quotes outside.
 example: 'x="a "\""$v"\"" b"'
 severity: off
 category: suspicious
@@ -11,7 +19,16 @@ rule:
 ---
 id: array-in-string
 message: the string mixes text and an array; use "${array[*]}" or separate arguments
-description: A double-quoted argument that holds `$@` or `${array[@]}` among other text.
+description: >-
+  Reports a double-quoted argument that holds `$@` or `${array[@]}` among other text, as in `"files:
+  $@"`.
+why: >-
+  Inside a string with other text, `"$@"` cannot give one word to each element. The first element is
+  joined to the text before it and the last to the text after it, and the elements in between become
+  separate words, so the string is split in a way that is easy to misread.
+
+  To fix, use `$*` (or `${array[*]}`) to join them into one string, or put the array in a separate
+  argument of its own.
 example: 'echo "args: $@"'
 severity: off
 category: correctness
@@ -23,7 +40,14 @@ token: { needs: '@', kind: [Word], regex: '^\s*(?:\$@|\$\{[A-Za-z_][A-Za-z0-9_]*
 ---
 id: quote-array-element
 message: quote the expansion in the array, or split it with read -a or mapfile
-description: An unquoted `$var` or `${var}` among the elements of an array assignment is split into words and globbed.
+description: >-
+  Reports an unquoted `$var` or `${var}` among the elements of an array assignment, as in `arr=($x
+  y)`.
+why: >-
+  The expansion is split into words and globbed, so one element becomes several, or none, and a `*`
+  becomes file names. The shell does not know which variables hold a single word.
+
+  To fix, quote it: `arr=("$x" y)`.
 example: 'files=($list)'
 severity: off
 category: suspicious
@@ -32,7 +56,13 @@ token: { needs: '$', kind: [Word, Concat], regex: '^[^"''`\\(]*\$(?:[A-Za-z_][A-
 ---
 id: split-command-output
 message: use mapfile or read -a to split command output into an array, or quote the substitution
-description: An unquoted `$(...)` among the elements of an array assignment is split into words and globbed.
+description: >-
+  Reports an unquoted `$(...)` among the elements of an array assignment, as in `arr=($(cmd))`.
+why: >-
+  The output is split on blanks and globbed, so a line with a space becomes several elements and a
+  `*` becomes file names.
+
+  To fix, read the lines with `mapfile -t arr < <(cmd)` (bash) or a `while read` loop.
 example: 'lines=($(cat file))'
 severity: off
 category: suspicious
@@ -40,7 +70,13 @@ rule: { kind: Subst, regex: '^[$`]', parent: { kind: Array } }
 ---
 id: assignment-space
 message: remove the space after = to assign a value (an empty value is written `var=""`)
-description: A command prefix `var= cmd` (reported at the start of the command), which sets `var` empty for the command; `var=value cmd` was probably meant.
+description: >-
+  Reports a command prefix `var= cmd`, at the start of the command.
+why: >-
+  The space ends the assignment, so `var` is set to the empty string for `cmd`, and `cmd` runs.
+  `var=value cmd` was almost always meant.
+
+  To fix, remove the space, or quote the empty value if it is meant (`var="" cmd`).
 example: 'PGHOST= psql'
 severity: off
 category: correctness
@@ -51,7 +87,13 @@ rule:
 ---
 id: unset-glob
 message: quote the argument of unset so that `name[...]` is not expanded as a glob
-description: '`unset name[i]` with an unquoted subscript.'
+description: >-
+  Reports `unset name[i]` with an unquoted subscript.
+why: >-
+  The word `name[i]` is a glob pattern too. If a file called `namei` exists in the directory, the
+  shell replaces the word with it and unsets that name.
+
+  To fix, quote it: `unset 'name[i]'`.
 example: 'unset words[0]'
 severity: off
 category: suspicious
@@ -61,7 +103,13 @@ rule:
 ---
 id: unquoted-pattern
 message: quote the right-hand side of the comparison in [[ ]], or it is matched as a pattern
-description: A `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion.
+description: >-
+  Reports a `==`, `!=` or `=` in `[[ ]]` whose right side is an unquoted expansion.
+why: >-
+  In `[[ ]]` the right side is a pattern, so a `*` or `?` in the value of `$b` in `[[ $a == $b ]]`
+  matches anything, and the test is not a comparison of two strings.
+
+  To fix, quote the right side: `[[ $a == "$b" ]]`.
 example: '[[ $a == $b ]]'
 severity: off
 category: suspicious
@@ -71,7 +119,13 @@ rule:
 ---
 id: echo-in-substitution
 message: use the argument of echo directly instead of $(echo ...)
-description: A command substitution that only runs `echo` on words.
+description: >-
+  Reports a command substitution that only runs `echo` on words, as in `$(echo $a $b)`.
+why: >-
+  It runs a subshell to print what the shell already has. Unquoted, it also splits and globs the
+  words and, with some shells, interprets backslashes.
+
+  To fix, use the words directly, and quote them.
 example: 'x=$(echo $y)'
 severity: off
 category: suspicious
@@ -79,7 +133,14 @@ rule: { kind: Subst, regex: '^\$\(\s*echo\s+[^|;&<>()`"'']*\)$' }
 ---
 id: test-grep-output
 message: use grep -q and its exit status instead of testing the output of grep
-description: A `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in `grep`.
+description: >-
+  Reports a `[[ ]]` or `[ -n ]` / `[ -z ]` test of the output of a pipeline or command that ends in
+  `grep`.
+why: >-
+  The output is captured only to see whether it is empty. `grep -q` does that, stops at the first
+  match and sets the status.
+
+  To fix, write `if grep -q ...; then`.
 example: '[[ $(ps | grep x) ]]'
 severity: off
 category: suspicious
@@ -89,7 +150,13 @@ rule:
 ---
 id: iterate-file-output
 message: do not loop over the words of a command's output; read the lines with a while read loop
-description: A `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`.
+description: >-
+  Reports a `for` loop over the output of `cat`, `sort`, `sed`, `head` or `tail`.
+why: >-
+  The output is split on blanks and globbed, not on lines, so a line with a space becomes several
+  items, and a `*` in the file expands to file names.
+
+  To fix, read lines: `while IFS= read -r line; do ...; done < file`.
 example: 'for l in $(cat file); do'
 severity: off
 category: suspicious
@@ -99,7 +166,13 @@ rule:
 ---
 id: eval-array
 message: eval negates the benefit of arrays; drop eval or quote the elements
-description: An `eval` whose argument expands an array with `[@]`.
+description: >-
+  Reports an `eval` whose argument expands an array with `[@]`.
+why: >-
+  `eval` joins its arguments with spaces and parses the result again, so the quoting that the array
+  elements had is lost, and an element with a space or a `;` is read as code.
+
+  To fix, avoid `eval`: run the array as a command, `"${cmd[@]}"`.
 example: 'eval "f ${args[@]}"'
 severity: off
 category: suspicious
@@ -110,7 +183,15 @@ token: { deep: true, needs: '[@]', kind: [Word], regex: '^[^'']*?(?:^|[^\\''])\$
 ---
 id: assignment-not-seen
 message: the assignment before the command is only seen by that command; the expansion on the same line does not see it
-description: '`var=value cmd "$var"`: `$var` is expanded before the assignment takes effect.'
+description: >-
+  Reports `var=value cmd "$var"`, where `$var` is used in the arguments of the command that the
+  assignment is a prefix of.
+why: >-
+  The shell expands the arguments before the command runs, and the prefix assignment takes effect
+  only in the command's environment. `$var` in the arguments is the old value (often empty), not
+  `value`.
+
+  To fix, assign on its own line, or read the variable inside the command.
 example: 'A=1 echo "$A"'
 severity: off
 category: correctness
@@ -122,7 +203,14 @@ token: { needs: '$', kind: [Word], regex: '^\$\{?${VAR}\b' }
 ---
 id: array-without-index
 message: expanding an array without an index gives only the first element
-description: '`$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used with no subscript.'
+description: >-
+  Reports `$BASH_SOURCE`, `$FUNCNAME` and the other bash arrays used without a subscript.
+why: >-
+  `$BASH_SOURCE` is the same as `${BASH_SOURCE[0]}`: the first element only. A reader may expect the
+  whole array or the top of the stack, and the code is wrong when the element that was meant is
+  another one.
+
+  To fix, write the subscript: `${BASH_SOURCE[0]}`.
 example: 'echo "$FUNCNAME"'
 severity: off
 category: correctness

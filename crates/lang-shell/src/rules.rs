@@ -64,7 +64,11 @@ rule! {
         id: "cd-without-exit",
         category: Suspicious,
         default: Warn,
-        description: "`cd`, `pushd` or `popd` whose failure is not handled (`cd dir || exit`). Not reported with `set -e`, for `cd ..` or `cd /`, or for `popd -n`.",
+        description: "Reports `cd`, `pushd` or `popd` whose failure is not handled, as in `cd dir || \
+                  exit`. It is not reported under `set -e`, for `cd ..` or `cd /`, or for `popd -n`.",
+        why: "If the directory is missing the script goes on in the old one, and the commands that \
+                  follow (a `rm -rf *`, a build, a copy) run in the wrong place.\n\
+                  To fix, write `cd dir || exit 1`, or use `set -e`.",
         example: "cd build",
         kinds: &[k::COMMAND],
     }
@@ -110,7 +114,11 @@ rule! {
         id: "useless-echo",
         category: Style,
         default: Off,
-        description: "An `echo` whose only argument is a command substitution.",
+        description: "Reports an `echo` whose only argument is a command substitution, as in `echo \
+                  $(cmd)`.",
+        why: "The command already writes its output, so the `echo` adds a process and, unquoted, \
+                  joins the lines with spaces and splits and globs the output.\n\
+                  To fix, run the command itself.",
         example: "echo $(date)",
         kinds: &[k::COMMAND],
     }

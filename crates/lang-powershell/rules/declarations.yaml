@@ -1,6 +1,13 @@
 id: no-plain-text-password
 message: a password parameter should be a SecureString or a PSCredential, not a string
-description: A `[string]` parameter whose name contains `password`, `passphrase` or `cred`.
+description: >-
+  Reports a `[string]` parameter whose name contains `password`, `passphrase` or `cred`.
+why: >-
+  A `[string]` stays in memory as clear text and is easy to log or to show in history and
+  transcripts. `[SecureString]` and `[PSCredential]` keep the secret protected and make the cmdlet
+  fit with the credential handling of other commands.
+
+  To fix, take a `[SecureString]` or a `[PSCredential]`.
 example: 'param([string]$Password)'
 severity: warn
 category: suspicious
@@ -8,7 +15,13 @@ rule: { kind: ParamDecl, regex: '(?is)\[string\]\s*\$\w*(password|passphrase|cre
 ---
 id: no-default-true-switch
 message: a switch parameter should not default to $true; the caller cannot turn it off
-description: A `[switch]` parameter with the default value `$true`.
+description: >-
+  Reports a `[switch]` parameter with the default value `$true`.
+why: >-
+  A switch is present or absent, and the caller turns it on by naming it. A switch that is on by
+  default can never be turned off by leaving it out, only with the odd form `-Name:$false`.
+
+  To fix, invert the meaning, with a name for the opposite (`-NoLog` for `-Log`).
 example: 'param([switch]$Force = $true)'
 severity: warn
 category: suspicious
@@ -16,7 +29,15 @@ rule: { kind: ParamDecl, regex: '(?is)\[switch\]\s*\$\w+\s*=\s*\$true\b' }
 ---
 id: approved-verbs
 message: the verb of the function name is not an approved PowerShell verb (see Get-Verb)
-description: A function named `Verb-Noun` whose verb is not in the list `Get-Verb` returns. Names without a dash are not checked.
+description: >-
+  Reports a function named `Verb-Noun` whose verb is not one that `Get-Verb` returns. A name without
+  a dash is not checked.
+why: >-
+  PowerShell users find commands by verb (`Get-Command -Verb Get`) and expect a verb to mean the
+  same in every module. An unapproved verb such as `Make-` or `Delete-` also makes `Import-Module`
+  print a warning about the module's names.
+
+  To fix, rename the function with an approved verb (`New-`, `Remove-`).
 example: 'function Fetch-Data { }'
 severity: off
 category: style
@@ -28,7 +49,16 @@ token:
 ---
 id: no-global-vars
 message: avoid the global scope; pass the value as a parameter or use the script or module scope
-description: A variable in the `global:` scope, other than the special variables PSScriptAnalyzer exempts (`$global:LASTEXITCODE`, `$global:ErrorActionPreference`, `$global:PSDefaultParameterValues`, ...).
+description: >-
+  Reports a variable in the `global:` scope, other than the special variables that PowerShell and
+  its tools use (`$global:LASTEXITCODE`, `$global:ErrorActionPreference`,
+  `$global:PSDefaultParameterValues` and so on).
+why: >-
+  A global variable is shared by everything in the session, including other modules and the user's
+  own commands. Two scripts that use the same name change each other's state, and the value is hard
+  to trace to where it was set.
+
+  To fix, pass values as parameters, or use a `script:` variable.
 example: '$global:count = 1'
 severity: off
 category: suspicious
@@ -38,7 +68,16 @@ token: { kind: [Word], needs: ':', regex: '(?i)^[$@](\{)?global:', not-regex: '(
 ---
 id: no-automatic-variable-assignment
 message: do not use the name of an automatic variable for a variable or parameter
-description: An assignment to, a parameter named like, or a `foreach` variable named like an automatic variable (`$Error`, `$Event`, `$input`, `$PSItem`, `$_`, `$PWD`, `$Host`, `$this`, `$true`, ...). `$null = ...` is fine.
+description: >-
+  Reports an assignment to an automatic variable, a parameter or a `foreach` variable that has the
+  name of one (`$Error`, `$Event`, `$input`, `$PSItem`, `$_`, `$PWD`, `$Host`, `$this`, `$true` and
+  so on). `$null = ...` is not reported.
+why: >-
+  Automatic variables are set by PowerShell, so an assignment is overwritten or is refused, and a
+  parameter with the same name hides the value that other code expects (`$input`, `$Host`). The code
+  reads as if it set something that it does not.
+
+  To fix, use another name.
 example: '$input = 1'
 severity: warn
 category: correctness
@@ -48,7 +87,14 @@ rule:
 ---
 id: null-comparison-side
 message: put $null on the left of the comparison; with an array on the left `$x -eq $null` filters instead of testing
-description: A `-eq`, `-ne` (or case variant) comparison with `$null` on the right.
+description: >-
+  Reports a `-eq` or `-ne` comparison (or a case variant, as `-ceq`) with `$null` on the right.
+why: >-
+  When the left side is an array, `-eq` and `-ne` filter it and return the elements: `@() -eq $null`
+  is an empty array, which is false, and an array that holds a `$null` is true. The test does not
+  say whether the array itself is `$null`.
+
+  To fix, write `$null` on the left: `$null -eq $x`.
 example: 'if ($x -eq $null) { }'
 severity: warn
 category: correctness

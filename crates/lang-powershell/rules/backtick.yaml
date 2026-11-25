@@ -1,6 +1,14 @@
 id: no-misleading-backtick
 message: a backtick followed by blanks escapes the blank, not the line break; remove the blanks after it
-description: A backtick that is followed by blanks before the end of the line, so it does not continue the line.
+description: >-
+  Reports a backtick that is followed by blanks before the end of the line.
+why: >-
+  The backtick continues a line only when it is the last character. With a space after it, the
+  backtick escapes the space, the line is not continued, and the next line runs as a separate
+  command. The space is invisible in an editor.
+
+  To fix, remove the blanks after the backtick, or avoid the backtick with splatting or a bracketed
+  expression.
 example: "Get-ChildItem `  \n  -Force"
 severity: warn
 category: correctness

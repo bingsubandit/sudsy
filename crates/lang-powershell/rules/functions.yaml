@@ -1,6 +1,16 @@
 id: supports-should-process
 message: "Function '$0' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
-description: A function named with the verb `New`, `Set`, `Remove`, `Start`, `Stop`, `Restart`, `Reset` or `Update` whose text has no `SupportsShouldProcess` (or has `SupportsShouldProcess = $false`).
+description: >-
+  Reports a function whose name has the verb `New`, `Set`, `Remove`, `Start`, `Stop`, `Restart`,
+  `Reset` or `Update` and whose text has no `SupportsShouldProcess`, or has `SupportsShouldProcess =
+  $false`.
+why: >-
+  A command that changes something is expected to accept `-WhatIf` and `-Confirm`, so a user can see
+  what it would do first. Without `SupportsShouldProcess`, they are not available and the user must
+  run it to find out.
+
+  To fix, add `[CmdletBinding(SupportsShouldProcess)]` and call `$PSCmdlet.ShouldProcess(...)`
+  before the change.
 example: 'function Remove-Thing { }'
 severity: off
 category: suspicious
@@ -13,7 +23,14 @@ token: { kind: [Word], regex: '(?i)^(New|Set|Remove|Start|Stop|Restart|Reset|Upd
 ---
 id: singular-nouns
 message: "The cmdlet '$0' uses a plural noun. A singular noun should be used instead."
-description: A function named `Verb-Nouns` whose noun ends in `s` and is no singular word that ends in `ss`, `us`, `is` or `as` (`Status`, `Address`, `Analysis`, `Alias`).
+description: >-
+  Reports a function named `Verb-Nouns` whose noun ends in `s`. A noun that ends in `ss`, `us`, `is`
+  or `as` (`Status`, `Address`, `Analysis`, `Alias`) is not reported.
+why: >-
+  The Microsoft guidelines name the noun in the singular, even when the command returns many
+  objects, so that users can guess names and the names look the same in every module.
+
+  To fix, use the singular noun.
 example: 'function Get-Items { }'
 severity: off
 category: style
@@ -25,7 +42,14 @@ token:
 ---
 id: process-block-for-pipeline
 message: Command accepts pipeline input but has not defined a process block.
-description: A parameter of a `param` block with `ValueFromPipeline` or `ValueFromPipelineByPropertyName`, in a function or script block that has no `process` block (a `filter` is one).
+description: >-
+  Reports a function or script block with a parameter that has `ValueFromPipeline` or
+  `ValueFromPipelineByPropertyName` and no `process` block. A `filter` counts as having one.
+why: >-
+  Without a `process` block the body runs once, after the pipeline has finished, and sees only the
+  last object that came in. The others are lost.
+
+  To fix, put the work in `process { }`.
 example: 'function Get-Name { param([Parameter(ValueFromPipeline)]$Item) $Item.Name }'
 severity: off
 category: correctness

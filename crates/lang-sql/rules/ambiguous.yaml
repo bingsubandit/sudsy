@@ -2,9 +2,13 @@ id: group-order-style
 family: clause-style
 params: { message: "this clause lists columns differently from the other GROUP BY and ORDER BY clauses", clauses: "GroupbyClause,OrderbyClause", explicit: "ObjectReference,Expression", implicit: Number }
 description: >-
-  A `GROUP BY` or `ORDER BY` clause that lists both column names or expressions and column
-  positions (`1`, `2`), or that lists them the other way from the first such clause of the file
-  (sqlfluff AM06).
+  Reports a `GROUP BY` or `ORDER BY` clause that lists both column names or expressions and column
+  positions (`1`, `2`), or that lists them in the other way than the first such clause of the file.
+why: >-
+  Positions are short but depend on the order of the select list: a column added to the front
+  changes what `GROUP BY 1` means, with no error. A clause that mixes the two is read in two ways.
+
+  To fix, use names in every clause, or positions in every one.
 example: 'select a, b from t group by a, 2'
 severity: off
 category: style

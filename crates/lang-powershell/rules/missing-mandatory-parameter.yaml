@@ -1,7 +1,16 @@
 id: missing-mandatory-parameter
 family: missing-arguments
 message: "`{name}` is called without any of its mandatory parameters"
-description: A call of a cmdlet whose mandatory parameters (the ones every parameter set requires) none is given by name or position. A `-name` takes the element after it as its value, so `Write-Verbose -Verbose "text"` leaves `-Message` unbound. A command behind a pipe or with a splatted argument is left alone.
+description: >-
+  Reports a call of a cmdlet that gives none of the parameters that every parameter set requires, by
+  name or by position. A `-name` takes the element after it as its value, so `Write-Verbose -Verbose
+  "text"` leaves `-Message` unbound. A command behind a pipe or with a splatted argument is left
+  alone.
+why: >-
+  PowerShell asks for a missing mandatory parameter at run time and waits for input. In a script or
+  on a server that hangs the run, or fails with an error when there is no host to ask.
+
+  To fix, give the parameter by name.
 example: 'Write-Verbose -Verbose "text"'
 severity: off
 category: correctness

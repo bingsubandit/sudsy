@@ -2,7 +2,9 @@ id: unused-import
 family: scope
 params: { check: unused-import }
 message: "`{name}` imported but unused"
-description: "An import that nothing in its scope reads and that `__all__` does not name (a redundant alias `import a as a` is a re-export)."
+description: >-
+  Reports an import that nothing in its scope reads and that `__all__` does not name. `import a as
+  a` and `from m import a as a` count as re-exports.
 example: "import os"
 severity: off
 category: suspicious
@@ -50,7 +52,13 @@ id: unused-annotation
 family: scope
 params: { check: unused-variable, mode: annotation }
 message: "local variable `{name}` is annotated but never used"
-description: "A local variable annotated without a value and never read."
+description: >-
+  Reports a local variable that is annotated without a value and never read.
+why: >-
+  `x: int` in a function declares a type and binds nothing. If the name is never used afterwards it
+  is dead code left from a change.
+
+  To fix, remove it, or assign a value that is used.
 example: "def f():\n    x: int"
 severity: off
 category: suspicious
@@ -59,7 +67,14 @@ id: undefined-export
 family: scope
 params: { check: undefined-export }
 message: "undefined name `{name}` in `__all__`"
-description: "A name in `__all__` that the module does not bind."
+description: >-
+  Reports a name in `__all__` that the module does not bind.
+why: >-
+  `from module import *` raises `AttributeError` for a name that `__all__` lists and the module does
+  not define, and the mistake (a misspelling or a removed function) stays hidden until someone
+  imports the module with a star.
+
+  To fix, correct the name or remove it from `__all__`.
 example: "__all__ = [\"x\"]"
 severity: warn
 category: correctness
@@ -95,7 +110,13 @@ id: late-future-import
 family: check
 params: { check: late-future-import }
 message: "`from __future__` imports must occur at the beginning of the file"
-description: "A `from __future__` import after other statements."
+description: >-
+  Reports a `from __future__` import that comes after other statements.
+why: >-
+  Python rejects the file with `SyntaxError: from __future__ imports must occur at the beginning of
+  the file`. Only a docstring, comments and other future imports may come before it.
+
+  To fix, move the import to the top.
 example: "import os\nfrom __future__ import annotations"
 severity: warn
 category: correctness
@@ -104,7 +125,14 @@ id: undefined-local-with-import-star-usage
 family: scope
 params: { check: undefined-variable, mode: star-usage }
 message: "`{name}` may be undefined, or defined from star imports"
-description: "A name that no scope binds in a file that has a star import."
+description: >-
+  Reports a name that no scope binds in a file that has a star import.
+why: >-
+  With `from m import *` the names it brings in are not visible to a reader or a tool, so a name
+  that is defined nowhere in the file may come from the import or may be a misspelling. The same
+  file without the star import would be reported as undefined.
+
+  To fix, import the names that are used, or define them.
 example: "from os import *\nprint(x)"
 severity: off
 category: suspicious
@@ -113,7 +141,13 @@ id: undefined-local-with-nested-import-star-usage
 family: check
 params: { check: undefined-local-with-nested-import-star-usage }
 message: "`from {name} import *` only allowed at module level"
-description: "A star import in a function or class."
+description: >-
+  Reports a star import in a function or class.
+why: >-
+  Python rejects the file with `SyntaxError: import * only allowed at module level` since a
+  function's local names are fixed when it is compiled and cannot depend on what a module defines.
+
+  To fix, import the names you need, or move the import to module level.
 example: "def f():\n    from os import *"
 severity: warn
 category: correctness
@@ -122,7 +156,13 @@ id: future-feature-not-defined
 family: check
 params: { check: future-feature-not-defined }
 message: "future feature `{name}` is not defined"
-description: "A name imported from `__future__` that the module does not have."
+description: >-
+  Reports a name imported from `__future__` that the module does not define.
+why: >-
+  Python rejects the file with `SyntaxError: future feature ... is not defined`, since `__future__`
+  has a fixed set of names (a misspelling, or a feature of a newer version).
+
+  To fix, correct the name or remove the import.
 example: "from __future__ import nope"
 severity: warn
 category: correctness
@@ -131,7 +171,13 @@ id: multiple-starred-expressions
 family: check
 params: { check: multiple-starred-expressions }
 message: "two starred expressions in assignment"
-description: "An assignment target with two starred names."
+description: >-
+  Reports an assignment target with two starred names, such as `a, *b, *c = x`.
+why: >-
+  Python rejects the file with `SyntaxError: multiple starred expressions in assignment`, since it
+  cannot tell how to split the values between them.
+
+  To fix, keep one starred name.
 example: "a, *b, *c = x"
 severity: warn
 category: correctness
@@ -140,7 +186,13 @@ id: invalid-print-syntax
 family: check
 params: { check: invalid-print-syntax }
 message: "use of `>>` is invalid with the `print` function"
-description: "`print >> file, ...` of Python 2."
+description: >-
+  Reports `print >> file, ...`, the Python 2 form that writes to a file.
+why: >-
+  In Python 3 `print >> file, x` is an expression that shifts the function `print` right by `file`,
+  which fails with a `TypeError` when it runs, and the text is never written.
+
+  To fix, call `print(..., file=file)`.
 example: "print >> f, x"
 severity: warn
 category: correctness
@@ -149,7 +201,13 @@ id: break-outside-loop
 family: simplify
 params: { check: jump-outside, jump: break }
 message: "`break` outside loop"
-description: "A `break` that no loop of its function or class contains."
+description: >-
+  Reports a `break` that no loop of its function or class contains.
+why: >-
+  Python rejects the file with `SyntaxError: 'break' outside loop`, so no code in it runs.
+
+  To fix, remove the `break`, or put the statement in the loop it is meant for. In a function,
+  `return` leaves it.
 example: "break"
 severity: warn
 category: correctness
@@ -158,7 +216,13 @@ id: continue-outside-loop
 family: simplify
 params: { check: jump-outside, jump: continue }
 message: "`continue` not properly in loop"
-description: "A `continue` that no loop of its function or class contains."
+description: >-
+  Reports a `continue` that no loop of its function or class contains.
+why: >-
+  Python rejects the file with `SyntaxError: 'continue' not properly in loop`, so no code in it
+  runs.
+
+  To fix, remove the `continue`, or put the statement in the loop it is meant for.
 example: "continue"
 severity: warn
 category: correctness
@@ -167,7 +231,13 @@ id: yield-outside-function
 family: simplify
 params: { check: jump-outside, jump: "yield await" }
 message: "`yield` or `await` outside of a function"
-description: "A `yield`, `yield from` or `await` outside a function."
+description: >-
+  Reports a `yield`, `yield from` or `await` outside a function.
+why: >-
+  Python rejects the file with a `SyntaxError` (`'yield' outside function`, `'await' outside
+  function`), so no code in it runs.
+
+  To fix, put the code in a function (an `async def` for `await`).
 example: "yield 1"
 severity: warn
 category: correctness
@@ -176,7 +246,12 @@ id: return-outside-function
 family: simplify
 params: { check: jump-outside, jump: return }
 message: "`return` outside of a function"
-description: "A `return` that is not inside a function."
+description: >-
+  Reports a `return` that is not inside a function.
+why: >-
+  Python rejects the file with `SyntaxError: 'return' outside function`.
+
+  To fix, remove it, or move the code into a function.
 example: "return 1"
 severity: warn
 category: correctness
@@ -185,7 +260,13 @@ id: default-except-not-last
 family: check
 params: { check: default-except-not-last }
 message: "an `except:` block must be the last exception handler"
-description: "A bare `except:` followed by another handler."
+description: >-
+  Reports a bare `except:` that is followed by another handler of the same `try`.
+why: >-
+  A bare `except:` catches everything, so the handlers after it can never run. Python rejects the
+  file with `SyntaxError: default 'except:' must be last`.
+
+  To fix, put the bare `except:` last, or better, name the exceptions it should catch.
 example: "try:\n    pass\nexcept:\n    pass\nexcept ValueError:\n    pass"
 severity: warn
 category: correctness
@@ -194,7 +275,14 @@ id: forward-annotation-syntax-error
 family: check
 params: { check: forward-annotation-syntax-error }
 message: "syntax error in forward annotation: {name}"
-description: "A quoted annotation that is not an expression."
+description: >-
+  Reports a quoted annotation whose text is not an expression.
+why: >-
+  Type checkers and `typing.get_type_hints` parse the string as an expression. A string that is not
+  one fails there, though Python itself never looks at it when the code runs, so the mistake hides
+  until a tool evaluates the annotation.
+
+  To fix, correct the text of the annotation.
 example: "x: \"1 +\" = 1"
 severity: warn
 category: correctness
@@ -203,7 +291,15 @@ id: type-comparison
 family: check
 params: { check: type-comparison }
 message: "compare types with `is` and `is not`, or use `isinstance`"
-description: "A comparison with `==` or `!=` where a side is `type(x)` or a builtin class (the builtin, not a name that shadows it)."
+description: >-
+  Reports a comparison with `==` or `!=` where one side is `type(x)` or a builtin class such as
+  `int`. A name that shadows the builtin is not reported.
+why: >-
+  `type(x) == int` is false for a subclass (a `bool` is not an `int` by this test, and an enum with
+  `int` as a base is not either), while `isinstance(x, int)` says what is usually meant. When the
+  exact type is meant, `is` states it.
+
+  To fix, use `isinstance(x, int)`, or `type(x) is int` for an exact match.
 example: "type(a) == type(b)"
 severity: warn
 category: suspicious
@@ -212,7 +308,14 @@ id: invalid-syntax
 family: check
 params: { check: invalid-syntax }
 message: "{name}"
-description: "Code that Python rejects when it compiles the file, though the grammar allows it (a duplicate parameter, `nonlocal` at module level, `await` in a sync function, ...)."
+description: >-
+  Reports code that Python rejects when it compiles the file although the grammar allows it, such as
+  a duplicate parameter, `nonlocal` at module level or `await` in a function that is not async.
+why: >-
+  Python raises a `SyntaxError` for the file, so none of the code in it runs, and the error shows up
+  only when the module is imported or compiled.
+
+  To fix, follow the message and correct the statement.
 example: "def f(a, a):\n    pass"
 severity: error
 category: correctness
@@ -221,7 +324,14 @@ id: module-import-not-at-top-of-file
 family: check
 params: { check: module-import-not-at-top-of-file }
 message: "module level import not at top of file"
-description: "An import at module level after code (docstrings, `__all__`, blocks, and `sys.path` or `os.environ` setup are not code)."
+description: >-
+  Reports an import at module level after code. Docstrings, `__all__`, blocks (`if`, `try`) and
+  `sys.path` or `os.environ` setup do not count as code.
+why: >-
+  Imports at the top show what the module depends on, in one place, and a name is never used before
+  it is imported. An import in the middle hides a dependency and runs later than a reader expects.
+
+  To fix, move the import to the top of the file.
 example: "x = 1\nimport os"
 severity: off
 category: style
@@ -230,7 +340,14 @@ id: multiple-statements-on-one-line-colon
 family: check
 params: { check: multiple-statements-on-one-line-colon }
 message: "put the body of the statement on its own line"
-description: "A compound statement whose body starts on the line of its colon (not `def`, not a lone `...`)."
+description: >-
+  Reports a compound statement whose body starts on the line of its colon, as in `if x: y()`. `def`
+  and a lone `...` as the body are not reported.
+why: >-
+  The body is easy to miss when it sits at the end of a long line, and a line breakpoint or coverage
+  mark on the line cannot tell the condition from the body.
+
+  To fix, put the body on its own indented line.
 example: "if x: pass"
 severity: off
 category: style
@@ -239,7 +356,14 @@ id: multiple-statements-on-one-line-semicolon
 family: check
 params: { check: multiple-statements-on-one-line-semicolon }
 message: "put each statement on a line of its own"
-description: "Statements joined by `;`."
+description: >-
+  Reports statements joined by `;` on one line.
+why: >-
+  Each statement on its own line is one statement per diff line, per breakpoint and per coverage
+  mark, and a reader of the code does not need to look for a second statement at the end of the
+  line.
+
+  To fix, put each statement on its own line.
 example: "a = 1; b = 2"
 severity: off
 category: style
@@ -248,7 +372,13 @@ id: useless-semicolon
 family: check
 params: { check: useless-semicolon }
 message: "remove the semicolon that ends the statement"
-description: "A `;` at the end of a line."
+description: >-
+  Reports a `;` at the end of a line.
+why: >-
+  Python does not need it, and it comes from other languages. A reader looks for a second statement
+  after it.
+
+  To fix, remove the semicolon.
 example: "a = 1;"
 severity: off
 category: style
@@ -257,7 +387,13 @@ id: ambiguous-variable-name
 family: scope
 params: { check: ambiguous-name, names: l O I, of: binding }
 message: "ambiguous variable name `{name}`"
-description: "A variable, parameter or `global` name that is `l`, `O` or `I`."
+description: >-
+  Reports a variable, parameter or `global` name that is `l`, `O` or `I`.
+why: >-
+  In many fonts `l` (lower case L), `I` (upper case i) and the digit `1` look alike, and so do `O`
+  and `0`. In `l = O + 1` a reader cannot tell the names from the numbers.
+
+  To fix, rename the variable.
 example: "l = 1"
 severity: off
 category: style
@@ -266,7 +402,14 @@ id: ambiguous-class-name
 family: scope
 params: { check: ambiguous-name, names: l O I, of: class }
 message: "ambiguous class name `{name}`"
-description: "A class named `l`, `O` or `I`."
+description: >-
+  Reports a class named `l`, `O` or `I`.
+why: >-
+  In many fonts `l` (lower case L), `I` (upper case i) and the digit `1` look alike, and so do `O`
+  and `0`. A class with one of these names is hard to tell from a number or another name in `x =
+  O()`.
+
+  To fix, give the class a name that says what it is.
 example: "class l:\n    pass"
 severity: off
 category: style
@@ -275,7 +418,13 @@ id: ambiguous-function-name
 family: scope
 params: { check: ambiguous-name, names: l O I, of: function }
 message: "ambiguous function name `{name}`"
-description: "A function named `l`, `O` or `I`."
+description: >-
+  Reports a function or method named `l`, `O` or `I`.
+why: >-
+  In many fonts `l` (lower case L), `I` (upper case i) and the digit `1` look alike, and so do `O`
+  and `0`. A call such as `l(x)` or `O(x)` is easy to misread as an expression with a number.
+
+  To fix, give the function a name that says what it does.
 example: "def l():\n    pass"
 severity: off
 category: style
@@ -284,7 +433,15 @@ id: is-literal
 family: check
 params: { check: is-literal }
 message: "use `==` to compare with a literal, not `is`"
-description: "An identity test (`is`, `is not`) with a string, bytes or number literal, a list, set, dict or comprehension, or a tuple of constants."
+description: >-
+  Reports an identity test (`is` or `is not`) with a string, bytes or number literal, a list, set,
+  dict or comprehension, or a tuple of constants.
+why: >-
+  `is` compares object identity, not the value. Whether two equal literals are one object depends on
+  the implementation, so `x is "a"` can be true in one run and false in another. Python warns about
+  it at compile time.
+
+  To fix, write `==` or `!=`.
 example: 'x is "a"'
 severity: warn
 category: correctness
@@ -293,7 +450,13 @@ id: f-string-missing-placeholders
 family: check
 params: { check: f-string-missing-placeholders }
 message: "this f-string has no placeholders; drop the `f`"
-description: "An f-string with no replacement field in any of its parts."
+description: >-
+  Reports an f-string that has no replacement field in any of its parts.
+why: >-
+  The `f` prefix does nothing without a `{}`, and it suggests that a value was meant to be put in.
+  It is often a placeholder that was lost in an edit.
+
+  To fix, remove the `f`, or add the field.
 example: 'f"text"'
 severity: warn
 category: suspicious
@@ -302,7 +465,13 @@ id: lambda-assignment
 family: check
 params: { check: lambda-assignment }
 message: "define a function with `def` instead of assigning a lambda"
-description: "A lambda assigned to a single name (an annotated one also in a class body is left alone)."
+description: >-
+  Reports a lambda assigned to a single name. An annotated assignment in a class body is left alone.
+why: >-
+  A `def` gives the function a real name in tracebacks and `repr`, takes annotations and a
+  docstring, and reads as what it is. The lambda keeps its generic name, `<lambda>`.
+
+  To fix, write a `def`.
 example: 'f = lambda x: x'
 severity: off
 category: style
@@ -311,7 +480,15 @@ id: mutable-argument-default
 family: check
 params: { check: mutable-argument-default }
 message: "do not use a mutable value as an argument default: it is shared by every call"
-description: "A parameter whose default is a list, dict or set (literal, comprehension or `list()`, `dict()`, `set()`, `collections.deque()`, ...), unless its annotation is an immutable type."
+description: >-
+  Reports a parameter whose default is a list, dict or set: a literal, a comprehension, or a call of
+  `list()`, `dict()`, `set()`, `collections.deque()` and the like. A parameter annotated with an
+  immutable type is left alone.
+why: >-
+  The default is made once, when the function is defined, and every call that does not pass the
+  argument shares it. A call that appends to `items=[]` changes the default for all later calls.
+
+  To fix, default to `None` and create the value in the body.
 example: "def f(a=[]):\n    pass"
 severity: warn
 category: suspicious
@@ -320,7 +497,13 @@ id: get-attr-with-constant
 family: check
 params: { check: get-attr-with-constant }
 message: "`getattr` with a constant attribute is no safer than `x.attr`"
-description: "`getattr(x, \"name\")` with a literal name that is an identifier (two arguments)."
+description: >-
+  Reports `getattr(x, "name")` with a literal name that is a valid identifier and two arguments.
+why: >-
+  `getattr` is for names that are known only at run time. With a fixed name `x.name` does the same,
+  is checked by type checkers and found by searches for the attribute.
+
+  To fix, write `x.name`.
 example: "getattr(x, \"name\")"
 severity: off
 category: style
@@ -329,7 +512,13 @@ id: set-attr-with-constant
 family: check
 params: { check: set-attr-with-constant }
 message: "`setattr` with a constant attribute is no safer than `x.attr = v`"
-description: "A statement `setattr(x, \"name\", v)` with a literal name that is an identifier."
+description: >-
+  Reports a statement `setattr(x, "name", v)` with a literal name that is a valid identifier.
+why: >-
+  `setattr` is for names known only at run time. With a fixed name `x.name = v` does the same and is
+  checked by type checkers and found by searches for the attribute.
+
+  To fix, write `x.name = v`.
 example: "setattr(x, \"name\", 1)"
 severity: off
 category: style
@@ -338,7 +527,13 @@ id: assert-false
 family: simplify
 params: { check: assert-false }
 message: "do not `assert False`: `python -O` removes it, raise `AssertionError()`"
-description: "An `assert` whose test is the literal `False`."
+description: >-
+  Reports an `assert` whose test is the literal `False`, with or without a message.
+why: >-
+  `assert` statements are removed when Python runs with `-O`, so an `assert False` that is meant to
+  stop the program does nothing there and execution goes on past the line.
+
+  To fix, write `raise AssertionError(...)`, which always runs.
 example: "assert False"
 severity: warn
 category: suspicious
@@ -347,7 +542,13 @@ id: redundant-tuple-in-exception-handler
 family: check
 params: { check: redundant-tuple-in-exception-handler }
 message: "a one-element tuple is redundant in an exception handler"
-description: "An `except` clause that names a tuple of one exception."
+description: >-
+  Reports an `except` clause that names a tuple of one exception, `except (E,):`.
+why: >-
+  The parentheses and comma make a tuple for no reason, and a reader looks for the other exceptions
+  that are missing.
+
+  To fix, write `except E:`.
 example: "try:\n    pass\nexcept (ValueError,):\n    pass"
 severity: warn
 category: style
@@ -356,7 +557,16 @@ id: raise-without-from-inside-except
 family: check
 params: { check: raise-without-from-inside-except }
 message: "inside an `{name}` clause, raise with `from err` or `from None`"
-description: "A `raise` of an exception inside an `except` clause (nested `if`, loops, `with` and `match` included; `try`, functions and classes not) without `from`, unless it raises the name the clause bound."
+description: >-
+  Reports a `raise` of an exception inside an `except` clause without `from`. Nested `if`, loops,
+  `with` and `match` are part of the clause; a nested `try`, function or class is not. Raising the
+  name the clause bound is not reported.
+why: >-
+  Without `from`, the traceback says "During handling of the above exception, another exception
+  occurred", which reads as a bug in the handler. `from err` says that this exception is the result
+  of that one, and `from None` hides the first one on purpose.
+
+  To fix, add `from err`, or `from None`.
 example: "try:\n    pass\nexcept OSError:\n    raise ValueError"
 severity: off
 category: suspicious
@@ -365,7 +575,15 @@ id: zip-without-explicit-strict
 family: check
 params: { check: zip-without-explicit-strict }
 message: "`zip()` without an explicit `strict=`"
-description: "A call of `zip` with several arguments (or a starred one) and no `strict` keyword, for Python 3.10 and later."
+description: >-
+  Reports a call of `zip` with several arguments (or a starred one) and no `strict` keyword, for a
+  `target_version` of 3.10 and later.
+why: >-
+  `zip` stops at the shortest argument and drops the rest without a message. When the arguments are
+  meant to have one length, a bug that makes one shorter is lost. `strict=True` raises `ValueError`,
+  and `strict=False` says that cutting is intended.
+
+  To fix, add `strict=True`, or `strict=False` when the lengths may differ.
 example: "zip(a, b)"
 severity: off
 category: suspicious
@@ -374,7 +592,13 @@ id: useless-object-inheritance
 family: check
 params: { check: useless-object-inheritance }
 message: "class `{name}` inherits from `object`, which every class does"
-description: "A class with the builtin `object` as a base."
+description: >-
+  Reports a class that has the builtin `object` as a base.
+why: >-
+  Every class of Python 3 inherits from `object`, so naming it changes nothing. The base was needed
+  for new-style classes in Python 2.
+
+  To fix, remove the base.
 example: "class A(object):\n    pass"
 severity: off
 category: style
@@ -383,7 +607,14 @@ id: os-error-alias
 family: check
 params: { check: os-error-alias }
 message: "`{name}` is an alias of `OSError`"
-description: "`EnvironmentError`, `IOError`, `WindowsError`, `mmap.error`, `os.error`, `select.error` or `socket.error` in an `except` clause or a `raise`."
+description: >-
+  Reports `EnvironmentError`, `IOError`, `WindowsError`, `mmap.error`, `os.error`, `select.error` or
+  `socket.error` in an `except` clause or a `raise`.
+why: >-
+  Since Python 3.3 these names are other names of `OSError`. Using the old ones makes a reader look
+  for a difference that is not there.
+
+  To fix, write `OSError`.
 example: "try:\n    pass\nexcept IOError:\n    pass"
 severity: off
 category: style
@@ -392,7 +623,13 @@ id: unicode-literal
 family: check
 params: { check: unicode-literal }
 message: "remove the `u` prefix: strings are unicode"
-description: "A string with the `u` prefix."
+description: >-
+  Reports a string with the `u` prefix.
+why: >-
+  In Python 3 every `str` is Unicode, so `u"text"` and `"text"` are the same. The prefix was needed
+  to bridge Python 2.
+
+  To fix, remove the `u`.
 example: "x = u\"a\""
 severity: off
 category: style
@@ -401,7 +638,14 @@ id: in-dict-keys
 family: check
 params: { check: in-dict-keys }
 message: "use `key in dict` instead of `key in dict.keys()`"
-description: "A membership test, `for` or comprehension over `.keys()` with no arguments."
+description: >-
+  Reports a membership test, a `for` loop or a comprehension over `.keys()` with no arguments, as in
+  `k in d.keys()`.
+why: >-
+  A dict tests membership and iterates its keys by itself. `.keys()` adds a call, and for a
+  membership test it makes a view first, which is slower than the test on the dict.
+
+  To fix, drop `.keys()`.
 example: "x = k in d.keys()"
 severity: off
 category: style
@@ -411,7 +655,12 @@ family: simplify
 params: { check: negated-comparison, operator: "==", except-in: "__eq__ __ne__", except-guard: "true" }
 fix-kind: unsafe
 message: "use `a != b` instead of `not a == b`"
-description: "`not` applied to a comparison with `==`."
+description: >-
+  Reports `not` applied to a comparison with `==`, as in `not a == b`.
+why: >-
+  `!=` is the operator for that, and it reads without the reader inverting the comparison.
+
+  To fix, write `a != b`.
 example: "x = not a == b"
 severity: off
 category: style
@@ -421,7 +670,12 @@ family: simplify
 params: { check: negated-comparison, operator: "!=", except-in: "__eq__ __ne__", except-guard: "true" }
 fix-kind: unsafe
 message: "use `a == b` instead of `not a != b`"
-description: "`not` applied to a comparison with `!=`."
+description: >-
+  Reports `not` applied to a comparison with `!=`, as in `not a != b`.
+why: >-
+  `==` is the operator for that, and it reads without the reader inverting the comparison.
+
+  To fix, write `a == b`.
 example: "x = not a != b"
 severity: off
 category: style
@@ -431,7 +685,13 @@ family: simplify
 params: { check: double-negation }
 fix-kind: unsafe
 message: "`not not a` is `a`"
-description: "`not` applied to `not`."
+description: >-
+  Reports `not not x`.
+why: >-
+  A double `not` turns a value into a bool, but the reader has to unwind two negations to see that.
+  `bool(x)` says it, and in a condition the `not not` can be dropped.
+
+  To fix, write `bool(x)`, or `x` where only the truth is needed.
 example: "x = not not a"
 severity: off
 category: style
@@ -440,7 +700,12 @@ id: if-expr-with-true-false
 family: simplify
 params: { check: boolean-conditional, then: "true", else: "false" }
 message: "use `bool(...)` instead of `True if ... else False`"
-description: "A conditional expression with `True` and `False` arms."
+description: >-
+  Reports a conditional expression whose arms are `True` and `False`: `True if a else False`.
+why: >-
+  The expression is the truth of `a`. When `a` is already a comparison, it is that comparison.
+
+  To fix, write `bool(a)`, or `a` itself if it is already a bool.
 example: "x = True if a else False"
 severity: off
 category: style
@@ -449,7 +714,12 @@ id: if-expr-with-false-true
 family: simplify
 params: { check: boolean-conditional, then: "false", else: "true" }
 message: "use `not ...` instead of `False if ... else True`"
-description: "A conditional expression with `False` and `True` arms."
+description: >-
+  Reports a conditional expression whose arms are `False` and `True`: `False if a else True`.
+why: >-
+  The expression is `not a`, written the long way round.
+
+  To fix, write `not a`.
 example: "x = False if a else True"
 severity: off
 category: style
@@ -458,7 +728,13 @@ id: if-expr-with-twisted-arms
 family: simplify
 params: { check: twisted-conditional }
 message: "use `a if a else b` instead of `b if not a else a`"
-description: "A conditional expression `b if not a else a`."
+description: >-
+  Reports a conditional expression of the form `b if not a else a`.
+why: >-
+  `b if not a else a` gives `a` when `a` is true and `b` otherwise, which is `a or b`. The negation
+  only puts the arms in the opposite order, and a condition that is not negated is easier to read.
+
+  To fix, write `a or b`, or swap the arms and drop the `not`.
 example: "x = b if not a else a"
 severity: off
 category: style
@@ -467,7 +743,13 @@ id: unnecessary-placeholder
 family: check
 params: { check: unnecessary-placeholder }
 message: "unnecessary `{name}`: the body has other statements"
-description: "A `pass` or `...` statement in a body of two statements or more."
+description: >-
+  Reports a `pass` or `...` statement in a body that has two statements or more.
+why: >-
+  `pass` and `...` stand for "nothing here". Next to other statements they only suggest that
+  something was removed.
+
+  To fix, delete the statement.
 example: "def f():\n    pass\n    x = 1"
 severity: off
 category: style
@@ -476,7 +758,13 @@ id: multiple-starts-ends-with
 family: check
 params: { check: multiple-starts-ends-with }
 message: "call `{name}` once with a tuple"
-description: "`a.startswith(x) or a.startswith(y)` (also `endswith`): the methods take a tuple."
+description: >-
+  Reports `a.startswith(x) or a.startswith(y)` and the same with `endswith`.
+why: >-
+  `startswith` and `endswith` accept a tuple of prefixes or suffixes, so one call with `(x, y)` says
+  the same, and the string is scanned once.
+
+  To fix, write `a.startswith((x, y))`.
 example: "x = a.startswith(\"a\") or a.startswith(\"b\")"
 severity: off
 category: style
@@ -485,7 +773,14 @@ id: unnecessary-collection-call
 family: check
 params: { check: unnecessary-collection-call }
 message: "unnecessary `{name}()` call: write a literal"
-description: "`dict()`, `list()` or `tuple()` with no arguments (`dict` with keyword arguments only)."
+description: >-
+  Reports `dict()`, `list()` or `tuple()` with no arguments, and `dict(a=1)` with only keyword
+  arguments.
+why: >-
+  A literal (`{}`, `[]`, `()`, `{"a": 1}`) says the same, needs no name lookup and call, and is
+  faster.
+
+  To fix, write the literal.
 example: "x = list()"
 severity: off
 category: style
@@ -494,7 +789,14 @@ id: unused-unpacked-variable
 family: scope
 params: { check: unused-variable, mode: unpacked }
 message: "unpacked variable `{name}` is never used"
-description: "A name of a tuple target in a function that the function never reads (not `_` names, not in functions that call `locals()`)."
+description: >-
+  Reports a name of a tuple target in a function that the function never reads. A name that starts
+  with `_` and a function that calls `locals()` are left alone.
+why: >-
+  `a, b = f()` where `b` is not used binds a value for nothing, and the reader looks for where it is
+  used. The unused value is also a hint that the function returns more than the caller needs.
+
+  To fix, name it `_`, or take only the items that are used.
 example: "def f():\n    a, b = g()\n    return a"
 severity: off
 category: suspicious
@@ -503,7 +805,16 @@ id: mutable-class-default
 family: check
 params: { check: mutable-class-default }
 message: "mutable default value for class attribute: annotate it with `ClassVar` or use an immutable value"
-description: "A class attribute assigned a list, dict, set or comprehension (or a call that builds one) without a `ClassVar` or `Final` annotation; data classes, Pydantic models and named tuples are left alone."
+description: >-
+  Reports a class attribute assigned a list, dict, set or comprehension, or a call that builds one,
+  with no `ClassVar` or `Final` annotation. Data classes, Pydantic models and named tuples are left
+  alone.
+why: >-
+  A class attribute belongs to the class and is shared by every instance. `self.items.append(x)` on
+  one instance changes all of them, which is rarely meant.
+
+  To fix, create the value in `__init__`, or annotate the attribute `ClassVar` if sharing is the
+  intent.
 example: "class A:\n    x = []"
 severity: off
 category: suspicious
@@ -512,7 +823,13 @@ id: useless-import-alias
 family: check
 params: { check: useless-import-alias }
 message: "import alias `{name}` does not rename the original"
-description: "`import a as a` or `from m import a as a`."
+description: >-
+  Reports `import a as a` and `from m import a as a`.
+why: >-
+  The alias repeats the name, so it adds nothing in an ordinary import. Type checkers read the form
+  as an explicit re-export, but the rule still reports it.
+
+  To fix, remove the alias.
 example: "import os as os"
 severity: off
 category: style
@@ -521,7 +838,13 @@ id: collapsible-if
 family: simplify
 params: { check: collapsible-if }
 message: "use a single `if` with `and` instead of nested `if` statements"
-description: "An `if` whose only statement is another `if`, neither having `elif` or `else`."
+description: >-
+  Reports an `if` whose only statement is another `if`, when neither has an `elif` or `else`.
+why: >-
+  The two tests are one condition, `if a and b:`. The nesting adds an indent level and makes the
+  reader check that nothing else happens between the tests.
+
+  To fix, join the tests with `and`.
 example: "if a:\n    if b:\n        pass"
 severity: off
 category: style
@@ -530,7 +853,14 @@ id: needless-bool
 family: simplify
 params: { check: needless-bool }
 message: "return the condition directly instead of returning a boolean in each branch"
-description: "An `if` that returns `True` (or `False`) and is followed, or continued by `else`, by the opposite boolean."
+description: >-
+  Reports an `if` that returns `True` or `False` and is followed, directly or in an `else`, by a
+  return of the opposite boolean.
+why: >-
+  The `if` only turns a condition into the bool it already is. The condition itself, or `bool(...)`
+  of it, is the value, and the four lines hide that.
+
+  To fix, `return` the condition.
 example: "def f(x):\n    if x:\n        return True\n    return False"
 severity: off
 category: style
@@ -539,7 +869,13 @@ id: if-with-same-arms
 family: simplify
 params: { check: if-with-same-arms }
 message: "combine the `if` branches with `or`: their bodies are the same"
-description: "Two neighbouring branches of an `if`/`elif` chain with the same body."
+description: >-
+  Reports two neighbouring branches of an `if`/`elif` chain whose bodies are the same.
+why: >-
+  Two branches that do the same thing are one branch with a condition joined by `or`. Written twice,
+  a later change is made to one and not the other.
+
+  To fix, join the conditions with `or`.
 example: "if a:\n    x = 1\nelif b:\n    x = 1"
 severity: off
 category: style
@@ -548,7 +884,16 @@ id: open-file-without-with
 family: check
 params: { check: open-file-without-with }
 message: "use a context manager for opening files"
-description: "A call of `open` (or of `tempfile.NamedTemporaryFile` and the like) that is not the context of a `with`, not returned and not given to `enter_context`."
+description: >-
+  Reports a call of `open` or `tempfile.NamedTemporaryFile` and the like that is not the context of
+  a `with`, is not returned and is not given to `enter_context`.
+why: >-
+  A file that is not closed explicitly is closed when the object is freed, which depends on the
+  interpreter and on references that remain, and on an error between the open and the close it stays
+  open. Handles that stay open run a process out of descriptors, and buffered data may not be
+  written.
+
+  To fix, open the file in a `with` statement.
 example: "f = open(\"a\")"
 severity: off
 category: suspicious
@@ -557,7 +902,13 @@ id: nested-with
 family: simplify
 params: { check: nested-with }
 message: "use a single `with` statement with several contexts"
-description: "A `with` whose only statement is another `with` (both sync or both async)."
+description: >-
+  Reports a `with` whose only statement is another `with`, when both are sync or both are async.
+why: >-
+  One `with` can open several context managers (`with a, b:`), which saves an indent level and the
+  long lines that nesting forces.
+
+  To fix, join the two into one `with`.
 example: "with a:\n    with b:\n        pass"
 severity: off
 category: style
@@ -566,7 +917,14 @@ id: type-check-without-type-error
 family: check
 params: { check: type-check-without-type-error }
 message: "prefer `TypeError` for an invalid type"
-description: "A branch tested with `isinstance`, `issubclass` or `callable` that raises a builtin exception other than `TypeError` (and `NotImplementedError`)."
+description: >-
+  Reports a branch tested with `isinstance`, `issubclass` or `callable` that raises a builtin
+  exception other than `TypeError` (`NotImplementedError` is accepted too).
+why: >-
+  A value of the wrong type is what `TypeError` means, and callers catch it for that case. A
+  `ValueError` or `Exception` there makes them handle a type mistake as a bad value.
+
+  To fix, raise `TypeError`.
 example: "if not isinstance(x, int):\n    raise ValueError(\"x\")"
 severity: off
 category: style
@@ -575,7 +933,16 @@ id: explicit-return-none
 family: check
 params: { check: explicit-return-none }
 message: "do not explicitly `return None` in a function that returns nothing else"
-description: "A `return None` in a function whose other returns (if any) return nothing or `None`, and that is not a generator. Left alone: a function that is only `return None`, a property, a function annotated with anything but `None`."
+description: >-
+  Reports `return None` in a function whose other returns, if any, return nothing or `None`. A
+  function that is a generator, one whose only statement is `return None`, a property and a function
+  annotated with anything but `None` are left alone.
+why: >-
+  A function without a value returns `None` anyway, so the word adds nothing. The explicit form is
+  needed where another `return` has a value, to tell the reader that `None` is meant, and that case
+  is not reported.
+
+  To fix, write `return`, or remove it at the end of the function.
 example: "def f(x):\n    if x:\n        return None\n    print(x)"
 severity: off
 category: style
@@ -584,7 +951,14 @@ id: implicit-concat-in-collection
 family: check
 params: { check: implicit-concat-in-collection }
 message: "parenthesize the implicit string concatenation in a collection, or add the missing comma"
-description: "An element of a list, tuple or set that is several string literals one after the other, without parentheses."
+description: >-
+  Reports an element of a list, tuple or set that is several string literals one after the other,
+  with no parentheses and no comma.
+why: >-
+  Python joins adjacent literals into one string. In a collection that is usually a comma that was
+  left out, and the two items silently become one.
+
+  To fix, add the comma, or put the parts in parentheses if one string is meant.
 example: "x = [\"a\" \"b\", \"c\"]"
 severity: off
 category: suspicious
@@ -593,7 +967,14 @@ id: unsorted-dunder-all
 family: check
 params: { check: unsorted-dunder-all }
 message: "`{name}` is not sorted"
-description: "An `__all__` list or tuple of strings out of order: constants (upper case) first, then classes (capitalized), then the rest, each in natural order."
+description: >-
+  Reports an `__all__` list or tuple of strings that is out of order: constants (upper case) first,
+  then classes (capitalized), then the rest, each group in natural order.
+why: >-
+  A sorted list is easy to scan for a name, a merge does not put the same name in twice, and an
+  added name has one obvious place.
+
+  To fix, sort the list.
 example: "__all__ = [\"b\", \"a\"]"
 severity: off
 category: style
@@ -602,7 +983,13 @@ id: unsorted-dunder-slots
 family: check
 params: { check: unsorted-dunder-slots }
 message: "`{name}` is not sorted"
-description: "A `__slots__` list or tuple of strings out of natural order."
+description: >-
+  Reports a `__slots__` list or tuple of strings that is not in natural order.
+why: >-
+  A sorted list is easy to scan for a name, a merge does not put the same name in twice, and an
+  added name has one obvious place.
+
+  To fix, sort the list.
 example: "class A:\n    __slots__ = (\"b\", \"a\")"
 severity: off
 category: style
@@ -611,7 +998,13 @@ id: union-annotation
 family: check
 params: { check: union-annotation }
 message: "use `X | Y` instead of `Union`"
-description: "A `typing.Union[...]` subscript, for a target version that has `X | Y` (3.10)."
+description: >-
+  Reports a `typing.Union[...]` subscript when the `target_version` has `X | Y` (3.10 and later).
+why: >-
+  `Union[X, Y]` is the same type as `X | Y`, which needs no import and reads like the other uses of
+  `|`.
+
+  To fix, write `X | Y`.
 example: "from typing import Union\nx: Union[int, str]"
 severity: off
 category: style
@@ -620,7 +1013,14 @@ id: optional-annotation
 family: check
 params: { check: optional-annotation }
 message: "use `X | None` instead of `Optional`"
-description: "A `typing.Optional[...]` subscript, for a target version that has `X | Y` (3.10)."
+description: >-
+  Reports a `typing.Optional[...]` subscript when the `target_version` has `X | Y` (3.10 and later).
+why: >-
+  `Optional[X]` is a name for `X | None`, which the newer syntax writes without an import and in the
+  same form as other unions. The name also suggests a parameter that may be left out, which it is
+  not.
+
+  To fix, write `X | None`.
 example: "from typing import Optional\nx: Optional[int]"
 severity: off
 category: style
@@ -629,7 +1029,14 @@ id: deprecated-typing-alias
 family: check
 params: { check: deprecated-typing-alias }
 message: "use the builtin `{name}` instead of its alias in `typing`"
-description: "A subscript of `typing.List`, `Dict`, `Set`, `FrozenSet`, `Tuple` or `Type`, for a target version where the builtin is generic (3.9)."
+description: >-
+  Reports a subscript of `typing.List`, `Dict`, `Set`, `FrozenSet`, `Tuple` or `Type` when the
+  `target_version` makes the builtin generic (3.9 and later).
+why: >-
+  Since Python 3.9 `list[int]`, `dict[str, int]` and the other builtins are generic, and the
+  `typing` aliases are deprecated. They also need an import that the builtin does not.
+
+  To fix, write the builtin, `list[int]` for `List[int]`.
 example: "from typing import List\nx: List[int]"
 severity: off
 category: style
@@ -638,7 +1045,15 @@ id: default-type-arguments
 family: check
 params: { check: default-type-arguments }
 message: "unnecessary default type arguments"
-description: "`Generator[X, None, None]` or `AsyncGenerator[X, None]`, for a target version where the arguments have defaults (3.13)."
+description: >-
+  Reports `Generator[X, None, None]` and `AsyncGenerator[X, None]` when the `target_version` gives
+  the last arguments a default (3.13 and later).
+why: >-
+  From Python 3.13 the send and return types of a generator default to `None`, so `Generator[int]`
+  means the same as `Generator[int, None, None]` and `AsyncGenerator[int]` the same as
+  `AsyncGenerator[int, None]`. The extra arguments are noise.
+
+  To fix, remove the trailing `None` arguments.
 example: "from typing import Generator\nx: Generator[int, None, None]"
 severity: off
 category: style
@@ -647,7 +1062,15 @@ id: quoted-annotation
 family: check
 params: { check: quoted-annotation }
 message: "remove the quotes from the annotation"
-description: "A quoted name in a parameter, return or variable annotation, for a target version that does not evaluate annotations (3.14)."
+description: >-
+  Reports a quoted name in a parameter, return or variable annotation when the `target_version` does
+  not evaluate annotations at definition (3.14 and later).
+why: >-
+  The quotes are there to delay evaluation of a name that is not defined yet. From Python 3.14
+  annotations are evaluated lazily by themselves, so the quotes only hide the name from tools and
+  add noise.
+
+  To fix, remove the quotes.
 example: "def f(x: \"int\"):\n    pass"
 severity: off
 category: style
@@ -656,7 +1079,13 @@ id: type-alias-annotation
 family: check
 params: { check: type-alias-annotation }
 message: "type alias `{name}` uses `TypeAlias` instead of the `type` keyword"
-description: "`X: TypeAlias = ...`, for a target version with the `type` statement (3.12)."
+description: >-
+  Reports `X: TypeAlias = ...` when the `target_version` has the `type` statement (3.12 and later).
+why: >-
+  `type X = ...` declares the alias as one, evaluates the right side lazily (so it can refer to
+  later names) and needs no import of `TypeAlias`.
+
+  To fix, write `type X = ...`.
 example: "from typing import TypeAlias\nX: TypeAlias = int"
 severity: off
 category: style
@@ -665,7 +1094,15 @@ id: generic-class
 family: check
 params: { check: generic-class }
 message: "generic class `{name}` uses a `Generic` base instead of type parameters"
-description: "A class with `Generic[...]` among its bases, for a target version with type parameters (3.12)."
+description: >-
+  Reports a class that has `Generic[...]` among its bases when the `target_version` has type
+  parameters (3.12 and later).
+why: >-
+  Since Python 3.12 a class declares its type variables in the header, `class Box[T]:`, and the
+  `TypeVar` and the `Generic` base are no longer needed. The old form needs a separate declaration
+  that can be mistaken for an unrelated variable.
+
+  To fix, move the type variables to the class header.
 example: "from typing import Generic, TypeVar\nT = TypeVar(\"T\")\nclass A(Generic[T]):\n    pass"
 severity: off
 category: style
@@ -674,7 +1111,14 @@ id: generic-function
 family: check
 params: { check: generic-function }
 message: "generic function `{name}` should use type parameters"
-description: "A function outside a class whose parameters use a module-level `TypeVar`, `ParamSpec` or `TypeVarTuple`, for a target version with type parameters (3.12)."
+description: >-
+  Reports a function outside a class whose parameters use a module-level `TypeVar`, `ParamSpec` or
+  `TypeVarTuple`, when the `target_version` has type parameters (3.12 and later).
+why: >-
+  Since Python 3.12 a function declares its type variables itself, `def first[T](xs: list[T]) ->
+  T:`, so the variable is scoped to the function and a module-level declaration is not needed.
+
+  To fix, declare the type parameters on the function.
 example: "from typing import TypeVar\nT = TypeVar(\"T\")\ndef f(x: T) -> T:\n    return x"
 severity: off
 category: style
@@ -683,7 +1127,14 @@ id: datetime-utc-alias
 family: check
 params: { check: datetime-utc-alias }
 message: "use `datetime.UTC` instead of `datetime.timezone.utc`"
-description: "`datetime.timezone.utc` (also imported as `timezone.utc`), for a target version that has `datetime.UTC` (3.11)."
+description: >-
+  Reports `datetime.timezone.utc`, also written `timezone.utc` after an import, when the
+  `target_version` has `datetime.UTC` (3.11 and later).
+why: >-
+  `datetime.UTC` is the shorter name of the same object, added in Python 3.11. One spelling of UTC
+  in a code base is easier to search for.
+
+  To fix, write `datetime.UTC`.
 example: "import datetime\nx = datetime.timezone.utc"
 severity: off
 category: style
@@ -692,7 +1143,17 @@ id: deprecated-import
 family: check
 params: { check: deprecated-import }
 message: "{name}"
-description: "An import from `typing_extensions` of a name that `typing`, `collections.abc` or `warnings` has in the target version, from `typing` of an alias of a `collections.abc` class, or of `List`, `Dict`, `Set`, `FrozenSet`, `Tuple`, `Type`."
+description: >-
+  Reports an import of a name from the wrong module for the `target_version`: a name of
+  `typing_extensions` that `typing`, `collections.abc` or `warnings` has in that version, an alias
+  in `typing` of a `collections.abc` class, or `List`, `Dict`, `Set`, `FrozenSet`, `Tuple` or
+  `Type`.
+why: >-
+  The backport module exists for old versions. Once the standard library has the name, importing it
+  from there removes a dependency, and the old aliases of `typing` are deprecated in favour of the
+  builtin generics and `collections.abc`.
+
+  To fix, import the name from the module that the message names.
 example: "from typing_extensions import Self"
 severity: off
 category: style
@@ -701,7 +1162,15 @@ id: outdated-version-block
 family: check
 params: { check: outdated-version-block }
 message: "version block is outdated for the target Python version"
-description: "A test of `sys.version_info` against a version older than the target's, or of `sys.version_info[0]` against a number: the result is always the same."
+description: >-
+  Reports a test of `sys.version_info` against a version older than the `target_version`, or of
+  `sys.version_info[0]` against a number.
+why: >-
+  For the target version the answer of the test is always the same, so one of the branches never
+  runs and the other needs no test. It is a block that was kept after support for the old version
+  ended.
+
+  To fix, remove the test and keep the branch that runs.
 example: "import sys\nif sys.version_info >= (3, 8):\n    pass"
 severity: off
 category: suspicious
@@ -709,7 +1178,22 @@ category: suspicious
 id: unsorted-imports
 family: imports
 params: { report: block, message: "the import block is not sorted or not formatted as isort writes it" }
-description: "A block of imports that differs from the isort layout (ruff's defaults): sections of future, standard library, third-party, first-party and relative imports, `import x` before `from x import y`, names in natural order without regard to case, members as constants, classes, then variables, one statement for each module, lines over 88 columns in parentheses, one blank line between sections and after the block (two before a definition at module level). A folder or file next to the file, in the project root or in its `src` folder, is first-party."
+description: >-
+  Reports a block of imports that differs from the isort layout with its default settings. The
+  sections are `__future__`, the standard library, third party, first party and relative imports,
+  with a blank line between them and after the block (two before a definition at module level).
+  Within a section `import x` comes before `from x import y`, names are in natural order without
+  regard to case, and members are ordered as constants, classes, then the rest. One statement is
+  written for each module, and a `from` import over `line_width` columns (88) is wrapped in
+  parentheses, one member to a line. The options `sections` and `force_sort_within_sections` change
+  the order. A folder or file next to the file, in the project root or in its `src` folder, is first
+  party.
+why: >-
+  Imports in one fixed order show at a glance which dependencies a file has, a new import has one
+  place, and merge conflicts in the import block are rare. An order that a tool can check needs no
+  discussion in a review.
+
+  To fix, sort the block by hand or with an import sorter.
 example: "import sys\nimport os"
 severity: off
 category: style
@@ -722,7 +1206,16 @@ id: cached-method
 family: check
 params: { check: cached-method }
 message: "use of `functools.lru_cache` or `functools.cache` on a method can lead to memory leaks"
-description: "A method decorated with `functools.lru_cache` or `functools.cache` (not a static method): the cache keeps `self` alive."
+description: >-
+  Reports a method decorated with `functools.lru_cache` or `functools.cache`. Static methods are not
+  reported.
+why: >-
+  The cache belongs to the function and is shared by all instances. It stores `self` as part of each
+  key, so every instance that called the method stays alive as long as the cache does, and the
+  memory is never freed.
+
+  To fix, keep the cache per instance (create it in `__init__`), use `functools.cached_property`, or
+  move the work to a function that takes only the values it needs.
 example: "import functools\nclass A:\n    @functools.cache\n    def f(self):\n        pass"
 severity: warn
 category: suspicious
@@ -731,7 +1224,15 @@ id: function-call-in-default
 family: check
 params: { check: function-call-in-default }
 message: "do not call `{name}` in an argument default: it runs once, when the function is defined"
-description: "A call in the default of a parameter (not in a lambda, not a call of an immutable builtin such as `tuple`)."
+description: >-
+  Reports a call in the default value of a parameter. Calls in a lambda, and calls of immutable
+  builtins such as `tuple`, are not reported.
+why: >-
+  A default is evaluated once, when the function is defined, and every call shares the value. `def
+  f(when=datetime.now())` keeps the time of the import for ever, and a default that builds an object
+  shares that object between calls.
+
+  To fix, default to `None` and make the value in the body.
 example: "def f(x=list()):\n    pass"
 severity: warn
 category: suspicious
@@ -740,7 +1241,15 @@ id: custom-type-var-return
 family: check
 params: { check: custom-type-var-return }
 message: "use `Self` instead of the custom type variable `{name}`"
-description: "A method whose `self` is annotated with a type variable that the return annotation repeats."
+description: >-
+  Reports a method whose `self` parameter is annotated with a type variable that the return
+  annotation uses too, as in `def f(self: T) -> T`.
+why: >-
+  `typing.Self` (Python 3.11) states "the type of this instance" without declaring a type variable,
+  and it is the form that type checkers and readers know. The type variable has to be declared,
+  bound and imported for the same meaning.
+
+  To fix, drop the annotation of `self` and return `Self`.
 example: "from typing import TypeVar\nT = TypeVar(\"T\")\nclass A:\n    def f(self: T) -> T:\n        return self"
 severity: off
 category: style
@@ -749,7 +1258,14 @@ id: any-eq-parameter
 family: check
 params: { check: any-eq-parameter }
 message: "prefer `object` to `Any` for the second parameter to `{name}`"
-description: "`other: Any` in `__eq__` or `__ne__`."
+description: >-
+  Reports an `__eq__` or `__ne__` method whose second parameter is annotated `Any`.
+why: >-
+  Python calls `__eq__` with any object on the right, so the accurate type is `object`. With `Any` a
+  type checker accepts `other.value` without a check and the method fails at run time on a value of
+  another type.
+
+  To fix, annotate `other: object` and check its type before using it.
 example: "from typing import Any\nclass A:\n    def __eq__(self, other: Any) -> bool:\n        return True"
 severity: off
 category: style
@@ -758,7 +1274,15 @@ id: subprocess-run-without-check
 family: check
 params: { check: subprocess-run-without-check }
 message: "`subprocess.run` without an explicit `check` argument"
-description: "A call of `subprocess.run` with no `check` keyword (and no `**kwargs`)."
+description: >-
+  Reports a call of `subprocess.run` with no `check` keyword. A call with `**kwargs` is not
+  reported.
+why: >-
+  By default `run` returns after the command fails and does not tell: the exit status is only in
+  `returncode`, and a script that never reads it goes on as if the command had worked. `check=True`
+  raises `CalledProcessError`, and `check=False` says that the status is read or ignored on purpose.
+
+  To fix, pass `check=True`, or `check=False` when the status is handled.
 example: "import subprocess\nsubprocess.run([\"ls\"])"
 severity: off
 category: suspicious
@@ -767,7 +1291,14 @@ id: type-var-name-variance
 family: check
 params: { check: type-var-name-variance }
 message: "the `TypeVar` name \"{name}\" does not say whether it is covariant or contravariant: end it with `_co` or `_contra`"
-description: "A `TypeVar` with `covariant=True` whose name does not end with `_co`, or with `contravariant=True` and a name that does not end with `_contra`."
+description: >-
+  Reports a `TypeVar` with `covariant=True` whose name does not end in `_co`, or with
+  `contravariant=True` and a name that does not end in `_contra`.
+why: >-
+  The suffixes are the convention of the typing documentation and of the standard library stubs. A
+  reader sees the variance in every annotation that uses the name, without finding the declaration.
+
+  To fix, rename the variable with the suffix.
 example: "from typing import TypeVar\nT = TypeVar(\"T\", covariant=True)"
 severity: off
 category: style
@@ -776,7 +1307,13 @@ id: static-join
 family: check
 params: { check: static-join }
 message: "consider an f-string instead of joining a fixed list of items"
-description: "`\"sep\".join([a, b])` of a list or tuple written out in the call, which an f-string says directly."
+description: >-
+  Reports `"sep".join([a, b])` where the list or tuple is written out in the call.
+why: >-
+  The items are known where they are written, so the result is a fixed text with the items inserted,
+  which an f-string says directly without building a list.
+
+  To fix, write an f-string: `f"{a}, {b}"`.
 example: "a = b = \"x\"\nx = \", \".join([a, b])"
 severity: off
 category: style
@@ -785,7 +1322,13 @@ id: verbose-raise
 family: check
 params: { check: verbose-raise }
 message: "use `raise` without the exception name"
-description: "`raise e` in the `except ... as e` clause, where a bare `raise` keeps the traceback."
+description: >-
+  Reports `raise e` in an `except ... as e` clause.
+why: >-
+  `raise e` adds the current line to the traceback of the exception, so the output shows two places
+  for one error. A bare `raise` re-raises it with the traceback as it was.
+
+  To fix, write `raise`.
 example: "try:\n    pass\nexcept ValueError as e:\n    raise e"
 severity: off
 category: style
@@ -794,7 +1337,14 @@ id: bare-raise-outside-handler
 family: check
 params: { check: bare-raise-outside-handler }
 message: "bare `raise` is not inside an exception handler"
-description: "A `raise` with no exception in code that no `except` clause of its function contains."
+description: >-
+  Reports a `raise` with no exception in code that no `except` clause of its function contains.
+why: >-
+  A bare `raise` re-raises the exception being handled. With no `except` around it, it fails with
+  `RuntimeError: No active exception to reraise`, unless the function is only ever called from a
+  handler, which nothing in the file shows.
+
+  To fix, raise a named exception, or move the `raise` into the `except` clause.
 example: "def f():\n    raise"
 severity: warn
 category: correctness

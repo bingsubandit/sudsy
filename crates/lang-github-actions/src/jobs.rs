@@ -30,7 +30,11 @@ rule! {
         id: "invalid-job-id",
         category: Correctness,
         default: Error,
-        description: "A job id must start with a letter or `_` and contain only letters, digits, `-` and `_`.",
+        description: "Reports a job id that does not start with a letter or `_`, or that has a character \
+                  other than letters, digits, `-` and `_`.",
+        why: "GitHub rejects the workflow with a message about the id, and in expressions the id \
+                  is used as a name (`needs.<id>`), where other characters do not work.\n\
+                  To fix, rename the job.",
         example: "jobs:\n  build app:   # reported\n    runs-on: ubuntu-latest",
     }
 
@@ -51,8 +55,13 @@ rule! {
         id: "duplicate-ids",
         category: Correctness,
         default: Error,
-        description: "Job ids that differ only in case (ids are case-insensitive; exact repeats are \
-                  `no-duplicate-keys`), and step ids repeated within a job.",
+        description: "Reports job ids that differ only in case (job ids are not case sensitive; exact \
+                  repeats are a different rule, `no-duplicate-keys`), and step ids repeated within a \
+                  job.",
+        why: "Two job ids that differ in case name one job for GitHub, and a reference such as \
+                  `needs.build` can mean either. A repeated step id makes `steps.<id>.outputs` read \
+                  one step or the other.\n\
+                  To fix, give each job and step its own id.",
         example: "jobs:\n  Build: {}\n  build: {}   # reported",
     }
 
@@ -111,7 +120,10 @@ rule! {
         id: "unknown-needs",
         category: Correctness,
         default: Error,
-        description: "`needs` names a job that the workflow does not define.",
+        description: "Reports a `needs` entry that names a job that the workflow does not define.",
+        why: "GitHub rejects the workflow. The usual cause is a job that was renamed or removed \
+                  while another still waits for it.\n\
+                  To fix, correct the name, or remove it from `needs`.",
         example: "jobs:\n  test:\n    needs: build   # reported\n    runs-on: ubuntu-latest",
     }
 
@@ -130,7 +142,11 @@ rule! {
         id: "cyclic-needs",
         category: Correctness,
         default: Error,
-        description: "The `needs` of the jobs form a cycle, so no job of it can start.",
+        description: "Reports jobs whose `needs` form a cycle, such as `a` needing `b` and `b` needing \
+                  `a`.",
+        why: "A job starts when the jobs it needs have finished. In a cycle each job waits for \
+                  another, so none of them can start, and GitHub rejects the workflow.\n\
+                  To fix, remove one of the `needs` that closes the cycle.",
         example: "jobs:\n  a:\n    needs: b   # reported\n  b:\n    needs: a   # reported",
     }
 
@@ -225,9 +241,13 @@ rule! {
         id: "invalid-runs-on",
         category: Suspicious,
         default: Warn,
-        description: "A `runs-on` label that is not one of the known runner labels. A job that also \
-                  has `self-hosted` is not checked; `${{ matrix.name }}` stands for the matrix's values, other \
-                  expressions are skipped.",
+        description: "Reports a `runs-on` label that is not one of the known runner labels. A job that \
+                  also has `self-hosted` is not checked, `${{ matrix.name }}` stands for the values of \
+                  the matrix, and other expressions are skipped.",
+        why: "A label that no runner has leaves the job queued with no runner to take it. A \
+                  misspelling such as `ubuntu-lates` is the usual cause. The option `labels` lists the \
+                  known labels.\n\
+                  To fix, use a label of a hosted runner, or add `self-hosted` for your own.",
         example: "jobs:\n  build:\n    runs-on: ubuntu-lates   # reported",
         options: [OptionDecl {
             name: "labels",
@@ -283,8 +303,12 @@ rule! {
         id: "missing-permissions",
         category: Suspicious,
         default: Off,
-        description: "A job without `permissions`, in a workflow without top-level `permissions`: \
-                  it gets the repository's default token permissions, often write access.",
+        description: "Reports a job with no `permissions`, in a workflow with no top-level `permissions`.",
+        why: "Without `permissions`, the `GITHUB_TOKEN` gets the default of the repository or \
+                  organization, which for older repositories is read and write on most scopes. A \
+                  compromised step or action then has more access than the job needs.\n\
+                  To fix, set `permissions` with only the scopes the job uses, for example `contents: \
+                  read`.",
         example: "jobs:\n  build:   # reported\n    runs-on: ubuntu-latest",
     }
 

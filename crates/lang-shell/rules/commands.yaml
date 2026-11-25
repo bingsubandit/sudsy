@@ -1,6 +1,12 @@
 id: useless-cat
 message: pass the file to the command or redirect it (`cmd < $F`) instead of cat
-description: A pipeline that starts with `cat file`.
+description: >-
+  Reports a pipeline that starts with `cat file`.
+why: >-
+  `cmd < file` does the same without a process and a pipe, and gives the command a file it can seek
+  in.
+
+  To fix, write `cmd < file`, or pass the file as an argument.
 example: 'cat in.txt | grep x'
 severity: off
 category: style
@@ -11,7 +17,13 @@ constraints:
 ---
 id: read-without-raw
 message: use `read -r`, or backslashes in the input are mangled
-description: A `read` without the `-r` flag.
+description: >-
+  Reports a `read` without `-r`.
+why: >-
+  Without `-r`, `read` treats a backslash in the input as an escape: it removes it and joins the
+  next line. Paths and text with a backslash come out wrong.
+
+  To fix, write `read -r`.
 example: 'read line'
 severity: off
 category: suspicious
@@ -21,7 +33,13 @@ rule:
 ---
 id: printf-variable-format
 message: do not put variables in the printf format; use printf '%s' "$x"
-description: A `printf` whose format string contains an expansion and no `%`.
+description: >-
+  Reports a `printf` whose format string contains an expansion and no `%`.
+why: >-
+  The value is the format, so a `%` or a backslash in it is read as an instruction, and the output
+  is wrong or an error (a file name with `%s` in it). The data belongs in an argument.
+
+  To fix, write `printf '%s\n' "$var"`.
 example: 'printf "$fmt"'
 severity: off
 category: suspicious
@@ -32,7 +50,14 @@ constraints:
 ---
 id: trap-expands-now
 message: use single quotes, or the command expands now instead of when the trap fires
-description: A `trap` whose double-quoted command contains an expansion.
+description: >-
+  Reports a `trap` whose command is double-quoted and contains an expansion, as in `trap "rm $tmp"
+  EXIT`.
+why: >-
+  The expansion happens when `trap` is set, not when the signal arrives. If the variable changes
+  later, the trap uses the old value, and a value with a space or a quote changes the command.
+
+  To fix, use single quotes: `trap 'rm "$tmp"' EXIT`.
 example: 'trap "rm $tmp" EXIT'
 severity: warn
 category: suspicious
@@ -43,7 +68,14 @@ constraints:
 ---
 id: no-ls-grep
 message: do not filter ls with grep; use a glob or find
-description: A pipeline from `ls` into `grep`.
+description: >-
+  Reports a pipeline from `ls` into `grep`.
+why: >-
+  `ls` output is for people and `grep` matches lines, so a file name with a newline is split and one
+  that looks like a line of output is matched wrongly. A glob or `find` selects names without
+  parsing text.
+
+  To fix, use a glob (`ls *foo*`, or `for f in *foo*`) or `find`.
 example: 'ls | grep txt'
 severity: warn
 category: suspicious
@@ -53,7 +85,13 @@ rule:
 ---
 id: no-ps-grep
 message: use pgrep instead of grepping ps output
-description: A pipeline from `ps` into `grep`.
+description: >-
+  Reports a pipeline from `ps` into `grep`.
+why: >-
+  `ps | grep name` also matches the `grep` process itself, and any process whose command line
+  contains the text, so the test is true when nothing runs.
+
+  To fix, use `pgrep name`.
 example: 'ps aux | grep nginx'
 severity: off
 category: style
@@ -63,7 +101,12 @@ rule:
 ---
 id: grep-count
 message: use grep -c instead of piping to wc -l
-description: A pipeline from `grep` into `wc -l`.
+description: >-
+  Reports a pipeline from `grep` into `wc -l`.
+why: >-
+  `grep -c` counts the matching lines in one process and has no pipe.
+
+  To fix, write `grep -c`.
 example: 'grep x f | wc -l'
 severity: off
 category: style
@@ -73,7 +116,13 @@ rule:
 ---
 id: no-egrep
 message: egrep and fgrep are deprecated; use grep -E and grep -F
-description: A call of `egrep` or `fgrep`.
+description: >-
+  Reports a call of `egrep` or `fgrep`.
+why: >-
+  They are obsolescent wrappers of `grep -E` and `grep -F`, and recent versions of GNU grep warn
+  about them. They are not in every system.
+
+  To fix, write `grep -E` or `grep -F`.
 example: 'egrep x f'
 severity: off
 category: style
@@ -84,7 +133,13 @@ rule:
 ---
 id: no-which
 message: which is non-standard; use `command -v`
-description: A call of `which`.
+description: >-
+  Reports a call of `which`.
+why: >-
+  `which` is not part of POSIX, and its output and exit status differ between systems (some print an
+  error message and exit 0). `command -v` is built into the shell and is portable.
+
+  To fix, write `command -v name`.
 example: 'which git'
 severity: off
 category: style
@@ -93,7 +148,13 @@ rule:
 ---
 id: test-exit-status
 message: check the exit status directly (`if cmd; then`), not through $?
-description: A test that compares `$?` with a number.
+description: >-
+  Reports a test that compares `$?` with a number, as in `[ $? -eq 0 ]`.
+why: >-
+  `if cmd` already tests the status. A separate test of `$?` is one more line, and `$?` is changed
+  by any command that runs in between.
+
+  To fix, test the command: `if cmd; then`.
 example: 'if [ $? -eq 0 ]; then'
 severity: off
 category: style
@@ -103,7 +164,14 @@ rule:
 ---
 id: test-and-or
 message: use [ a ] && [ b ] instead of -a and -o inside one test
-description: A `[ ]` test that joins conditions with `-a` or `-o`.
+description: >-
+  Reports a `[ ]` test that joins conditions with `-a` or `-o`.
+why: >-
+  POSIX marks `-a` and `-o` obsolescent: with operands that look like operators (`[ "$a" = -o -a x
+  ]`) the result is not defined and shells disagree. `&&` and `||` between two tests have no such
+  ambiguity.
+
+  To fix, write `[ a ] && [ b ]`, or use `[[ ]]`.
 example: '[ -f a -o -f b ]'
 severity: warn
 category: suspicious
@@ -113,7 +181,13 @@ rule:
 ---
 id: test-negated-empty
 message: use -n instead of ! -z, and -z instead of ! -n
-description: A test that negates `-z` or `-n`.
+description: >-
+  Reports a test that negates `-z` or `-n`, as in `[ ! -z "$x" ]`.
+why: >-
+  `-n` is the opposite of `-z`, so the negation can be dropped, and a double negative is hard to
+  read.
+
+  To fix, write `[ -n "$x" ]`.
 example: '[ ! -z "$x" ]'
 severity: off
 category: style
@@ -123,7 +197,14 @@ rule:
 ---
 id: and-or-is-not-if-else
 message: A && B || C is not if-then-else; C also runs when B fails
-description: A list `a && b || c` of three commands, unless `c` is `echo`, `printf`, `true`, `:`, `return` or `exit`.
+description: >-
+  Reports a list `a && b || c` of three commands, unless `c` is `echo`, `printf`, `true`, `:`,
+  `return` or `exit`.
+why: >-
+  It looks like an if/else, but `c` runs whenever `a && b` does not succeed, and that includes the
+  case where `a` succeeds and `b` fails. A failing `b` runs both `b` and `c`.
+
+  To fix, write an `if a; then b; else c; fi`.
 example: 'test -f x && echo yes || cleanup'
 severity: off
 category: suspicious
@@ -134,7 +215,13 @@ rule:
 ---
 id: iterate-ls-output
 message: do not loop over ls output; use a glob
-description: A `for` loop over the output of `ls`.
+description: >-
+  Reports a `for` loop over the output of `ls`.
+why: >-
+  `ls` output is for people. It is split on blanks and globbed, a file name with a space or a
+  newline breaks the loop, and `ls` may change the names it prints.
+
+  To fix, loop over a glob: `for f in ./*`.
 example: 'for f in $(ls); do'
 severity: warn
 category: suspicious
@@ -144,7 +231,14 @@ rule:
 ---
 id: iterate-find-output
 message: do not loop over find output; use find -exec or a while read loop
-description: A `for` loop over the output of `find`.
+description: >-
+  Reports a `for` loop over the output of `find`.
+why: >-
+  The output is split on blanks and globbed, so a file name with a space is cut into several items,
+  and one with a `*` or `?` expands to other names.
+
+  To fix, use `find ... -exec`, or `find ... -print0 | while IFS= read -r -d '' f`, or a glob (`for
+  f in ./*`).
 example: 'for f in $(find .); do'
 severity: warn
 category: suspicious
@@ -154,7 +248,14 @@ rule:
 ---
 id: find-xargs-print0
 message: use find -print0 with xargs -0, or find -exec, for names with blanks
-description: A pipeline from `find` into `xargs` without `-print0`/`-0`.
+description: >-
+  Reports a pipeline from `find` into `xargs` without `-print0` and `-0`.
+why: >-
+  `xargs` splits its input on blanks and treats quotes and backslashes in it specially, and `find`
+  writes one file name per line. A file name with a space, a quote or a newline is cut into pieces,
+  and the command runs on wrong files.
+
+  To fix, use `find ... -print0 | xargs -0 ...` (or `find -exec`).
 example: 'find . | xargs rm'
 severity: warn
 category: suspicious

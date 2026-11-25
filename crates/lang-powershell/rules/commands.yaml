@@ -1,6 +1,13 @@
 id: no-plain-text-secure-string
 message: do not convert a plain text string with ConvertTo-SecureString -AsPlainText; read the secret as a SecureString
-description: A call of `ConvertTo-SecureString` with `-AsPlainText`.
+description: >-
+  Reports a call of `ConvertTo-SecureString` with `-AsPlainText`.
+why: >-
+  It turns a clear-text string into a `SecureString`, and the clear text is in the script, the
+  history and the logs already. The protection is only in name.
+
+  To fix, read the secret as a `SecureString` (`Read-Host -AsSecureString`, a vault or
+  `Get-Credential`).
 example: 'ConvertTo-SecureString $p -AsPlainText -Force'
 severity: error
 category: suspicious
@@ -9,7 +16,15 @@ report-on: first-token
 ---
 id: no-wmi-cmdlets
 message: the WMI cmdlets are removed from PowerShell 7; use the CIM cmdlets (Get-CimInstance, Invoke-CimMethod, ...)
-description: A call of `Get-WmiObject`, `Invoke-WmiMethod`, `Register-WmiEvent`, `Remove-WmiObject` or `Set-WmiInstance`.
+description: >-
+  Reports a call of `Get-WmiObject`, `Invoke-WmiMethod`, `Register-WmiEvent`, `Remove-WmiObject` or
+  `Set-WmiInstance`.
+why: >-
+  The WMI cmdlets are not in PowerShell 7 and later. The CIM cmdlets (`Get-CimInstance`,
+  `Invoke-CimMethod`) do the same work, run on all supported platforms and use the newer remoting
+  protocol.
+
+  To fix, use the CIM cmdlet of the same job.
 example: 'Get-WmiObject Win32_Process'
 severity: warn
 category: suspicious

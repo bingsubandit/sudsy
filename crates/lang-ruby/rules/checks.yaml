@@ -148,12 +148,15 @@ family: check
 params: { check: parentheses-as-grouped-expression }
 message: "`{name}` is read as a grouped expression, not as the arguments: remove the space before it"
 description: >-
-  Reports a space between a method name and the `(` of its only argument (`puts (1 + 2) * 3`).
+  Reports a space between a method name and a `(` that holds its only argument (`puts (x)`). A call
+  whose argument goes on after the parentheses (`puts (1 + 2) * 3`) is not reported.
 why: >-
-  Ruby reads `puts (1 + 2) * 3` as `puts((1 + 2) * 3)`, not as `puts(1 + 2) * 3`, so the parentheses
-  group an expression instead of enclosing the arguments, and the code does what the spaces hide.
+  Ruby reads the parentheses as grouping the argument, not as enclosing the arguments of the call,
+  and warns about it. With one argument the result is the same, but the form changes meaning when
+  the code is edited: `puts (1 + 2).abs` calls `abs` on the group inside the call, while
+  `puts(1 + 2).abs` calls it on the result of `puts`.
 
-  To fix, remove the space before `(`, or put the whole argument in parentheses.
+  To fix, remove the space before `(`.
 example: "puts (x)"
 severity: off
 category: suspicious

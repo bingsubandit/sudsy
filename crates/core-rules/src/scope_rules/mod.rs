@@ -447,11 +447,11 @@ pub fn build(
 }
 
 macro_rules! meta {
-    ($id:expr, $category:ident, $level:ident, $description:expr, $example:expr) => {{
+    ($id:expr, $category:ident, $level:ident, $description:expr, $why:expr, $example:expr) => {{
         static META: RuleMeta = RuleMeta {
             id: $id,
             category: Category::$category,
-            why: "",
+            why: $why,
             source: "",
             description: $description,
             example: $example,
@@ -601,25 +601,34 @@ impl Rule for ScopeRule {
                 "unused-import",
                 Cleanup,
                 Off,
-                "An import whose name the file does not use (Checkstyle UnusedImports, ktlint \
-                 no-unused-imports). Imports with `*` are not checked, and a name in a doc \
-                 comment counts as a use where the language has doc comments. No fix: removing \
-                 an import can change which declaration a name means.",
+                "Reports an import whose name the file does not use. Imports with `*` are not \
+                 checked, and a name in a doc comment counts as a use where the language has doc \
+                 comments. No fix: removing an import can change which declaration a name means.",
+                "",
                 "import java.util.List;   // List is not used"
             ),
             Check::UnusedLocal => meta!(
                 "unused-local-variable",
                 Cleanup,
                 Off,
-                "A local variable that is never read: it is declared, and perhaps assigned, and \
-                 that is all (Checkstyle UnusedLocalVariable, RuboCop Lint/UselessAssignment). No fix.",
+                "Reports a local variable that is declared, and perhaps assigned, but never read. \
+                 No fix.",
+                "A variable that is assigned and never read is dead code. It is a leftover of an \
+                 earlier version, or a sign that the code was meant to use it (a misspelled name, \
+                 a result that is forgotten), and it misleads the reader about what the code \
+                 computes.\n\
+                 To fix, remove the variable, or use it.",
                 "int count = 0;   // never read"
             ),
             Check::ParameterAssignment => meta!(
                 "parameter-assignment",
                 Style,
                 Off,
-                "A parameter is assigned a new value (Checkstyle ParameterAssignment). No fix.",
+                "Reports an assignment to a parameter of a method. No fix.",
+                "A reassigned parameter means two things in one method: the value the caller \
+                 passed, and the later one. A reader who sees the name expects the argument, and a \
+                 later edit that reads the parameter gets the wrong value.\n\
+                 To fix, put the new value in a local variable.",
                 "void f(int n) { n = 1; }   // use another variable"
             ),
             Check::UndefinedVariable => meta!(
@@ -631,31 +640,44 @@ impl Rule for ScopeRule {
                  always undefined variables). A variable passed to a call counts as assigned, \
                  since the call can take it by reference; a function that uses `extract`, \
                  `parse_str`, `include` or `$$name` is not checked.",
+                "",
                 "function f() { return $total; }   // $total is not defined"
             ),
             Check::UnusedMethodArgument => meta!(
                 "unused-method-argument",
                 Cleanup,
                 Off,
-                "A method parameter that the method never reads (RuboCop Lint/UnusedMethodArgument). \
-                 Names that start with `_`, empty methods and methods that only raise \
-                 NotImplementedError are left alone. No fix.",
+                "Reports a method parameter that the method never reads. Names that start with `_`, \
+                 empty methods and methods that only raise `NotImplementedError` are left alone. \
+                 No fix.",
+                "An argument that is never read is either dead (callers pass a value for nothing) \
+                 or a mistake (the method was meant to use it). Naming it with a leading `_` says \
+                 that it is left out on purpose, as in an override that must keep the signature.\n\
+                 To fix, remove the parameter, or prefix its name with `_`.",
                 "def f(a, b)\n  a\nend   # b is not used"
             ),
             Check::UnusedBlockArgument => meta!(
                 "unused-block-argument",
                 Cleanup,
                 Off,
-                "A block parameter that the block never reads (RuboCop Lint/UnusedBlockArgument). \
-                 Names that start with `_` and empty blocks are left alone. No fix.",
+                "Reports a block parameter that the block never reads. Names that start with `_` \
+                 and empty blocks are left alone. No fix.",
+                "A block parameter that is never read is a value that the block was given for \
+                 nothing, or a mistake in the block. A leading `_` says that it is skipped on \
+                 purpose, as with the key of `each_with_index`.\n\
+                 To fix, remove the parameter, or prefix its name with `_`.",
                 "items.each { |a, b| puts a }   # b is not used"
             ),
             Check::UnderscorePrefixed => meta!(
                 "underscore-prefixed-variable-used",
                 Style,
                 Off,
-                "A variable whose name starts with `_`, which says it is unused, is read \
-                 (RuboCop Lint/UnderscorePrefixedVariableName). No fix.",
+                "Reports a variable whose name starts with `_`, which says it is unused, but that \
+                 is read. No fix.",
+                "A leading underscore tells the reader that the value is ignored. Reading it breaks \
+                 that promise, and the next editor may remove the variable or the argument as \
+                 unused.\n\
+                 To fix, drop the underscore, or stop reading the variable.",
                 "def f(_a)\n  _a\nend"
             ),
         }

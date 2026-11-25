@@ -15,7 +15,15 @@ id: unassigned-variable
 family: scope
 params: { check: undefined-variable }
 message: "`{name}` is referenced but not assigned"
-description: A lower case variable that the file reads and never assigns, reads with `read`, `getopts`, `local` or a `for` loop, or guards with a default (`${name:-x}`). Names with an upper case letter are the environment's and are left alone.
+description: >-
+  Reports a lower case variable that the file reads and never assigns, reads with `read`, `getopts`,
+  `local` or a `for` loop, or guards with a default (`${name:-x}`). Names with an upper case letter
+  are left alone: they are the environment's.
+why: >-
+  A variable that is read and never set is usually a misspelling of another one, and it expands to
+  nothing without an error, so `rm -rf "$dir/"*` with `dir` misspelled becomes `rm -rf /*`.
+
+  To fix, correct the name, or assign the variable.
 example: 'echo "$name"'
 severity: off
 category: correctness

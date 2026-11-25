@@ -35,7 +35,10 @@ rule! {
         id: "null-comparison",
         category: Correctness,
         default: Warn,
-        description: "`= NULL`, `<> NULL` or `!= NULL`, which is never true: use `IS NULL` or `IS NOT NULL` (sqlfluff CV05).",
+        description: "Reports `= NULL`, `<> NULL` and `!= NULL`.",
+        why: "A comparison with `NULL` gives `NULL`, not true or false, so the condition is never \
+                  true and the query returns no rows (or, with `<>`, none of the rows that it should).\n\
+                  To fix, write `IS NULL` or `IS NOT NULL`.",
         example: "select a from t where a = null",
         kinds: &[k::COMPARISON_OPERATOR],
     }
@@ -60,7 +63,11 @@ rule! {
         id: "distinct-group-by",
         category: Suspicious,
         default: Warn,
-        description: "`SELECT DISTINCT` in a query that has `GROUP BY`: the grouping already makes the rows distinct (sqlfluff AM01).",
+        description: "Reports `SELECT DISTINCT` in a query that has `GROUP BY`.",
+        why: "The grouping already makes the rows distinct, so `DISTINCT` does nothing, and the \
+                  database may still sort or hash the result a second time. It also suggests a \
+                  duplicate problem that the query does not have.\n\
+                  To fix, remove `DISTINCT`.",
         example: "select distinct a from t group by a",
         kinds: &[k::SELECT_STATEMENT],
     }
@@ -84,7 +91,10 @@ rule! {
         id: "unused-cte",
         category: Suspicious,
         default: Warn,
-        description: "A common table expression that nothing in the `WITH` statement refers to (sqlfluff ST03).",
+        description: "Reports a common table expression that nothing in the `WITH` statement refers to.",
+        why: "The expression is defined and never used, so the reader has to read it to find out. \
+                  The database may still run it.\n\
+                  To fix, remove it, or use it.",
         example: "with a as (select 1) select 2",
         kinds: &[k::WITH_COMPOUND_STATEMENT],
     }
@@ -117,7 +127,9 @@ rule! {
         id: "self-alias",
         category: Cleanup,
         default: Warn,
-        description: "An alias that repeats the name it is given to, `a AS a` (sqlfluff AL09).",
+        description: "Reports an alias that repeats the name it is given to, as in `a AS a`.",
+        why: "The alias does nothing: the name of the column is already `a`.\n\
+                  To fix, remove the alias.",
         example: "select a as a from t",
         kinds: &[k::ALIAS_EXPRESSION],
     }

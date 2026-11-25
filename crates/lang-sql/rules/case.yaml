@@ -2,10 +2,14 @@ id: keyword-case
 family: token-case
 params: { option: keyword_case, message: "write `{name}` as `{fixed}`" }
 description: >-
-  Keywords are not all in one case: with the `policy` option `consistent` the first one written fixes
-  the case (`upper`, `lower` or `capitalise`) and a later one that cannot be in it is reported; the
-  other values name the case. The fix writes the word in that case; with `consistent` that is the
-  case the words settled on (sqlfluff CP01).
+  Reports a keyword not in the case that the `policy` option sets. With `consistent` (the default)
+  the first one written fixes the case (`upper`, `lower` or `capitalise`) and a later one that
+  cannot be in it is reported; the other values name the case. The fix writes the word in that case.
+why: >-
+  Keywords in one case stand out from the names of tables and columns, and a file that mixes cases
+  looks like it was merged from different sources.
+
+  To fix, write the keyword in the case that the policy gives.
 example: "SELECT a from t   # from is reported"
 severity: off
 category: style
@@ -17,10 +21,15 @@ id: identifier-case
 family: token-case
 params: { option: identifier_case, message: "write `{name}` as `{fixed}`" }
 description: >-
-  Unquoted identifiers are not all in one case: with the `policy` option `consistent` the first one written fixes
-  the case (`upper`, `lower` or `capitalise`) and a later one that cannot be in it is reported; the
-  other values name the case. The fix writes the word in that case; with `consistent` that is the
-  case the words settled on (sqlfluff CP02).
+  Reports an unquoted identifier not in the case that the `policy` option sets. With `consistent`
+  (the default) the first one written fixes the case (`upper`, `lower` or `capitalise`) and a later
+  one that cannot be in it is reported; the other values name the case. The fix writes the word in
+  that case.
+why: >-
+  Most databases ignore the case of an unquoted name, so `Orders` and `orders` are one table, but a
+  reader sees two. One case makes names easy to search for and to compare.
+
+  To fix, write the name in the case that the policy gives.
 example: "select A, b from t   # the later word is reported"
 severity: off
 category: style
@@ -32,10 +41,15 @@ id: function-case
 family: token-case
 params: { option: function_case, message: "write `{name}` as `{fixed}`" }
 description: >-
-  Function names are not all in one case: with the `policy` option `consistent` the first one written fixes
-  the case (`upper`, `lower` or `capitalise`) and a later one that cannot be in it is reported; the
-  other values name the case. The fix writes the word in that case; with `consistent` that is the
-  case the words settled on (sqlfluff CP03).
+  Reports a function name not in the case that the `policy` option sets. With `consistent` (the
+  default) the first one written fixes the case (`upper`, `lower` or `capitalise`) and a later one
+  that cannot be in it is reported; the other values name the case. The fix writes the word in that
+  case.
+why: >-
+  Function names written in one case are easy to read and search for. Mixed case makes the same
+  function look like two.
+
+  To fix, write the name in the case that the policy gives.
 example: "select COUNT(a), sum(b) from t   # the later word is reported"
 severity: off
 category: style
@@ -47,10 +61,15 @@ id: literal-case
 family: token-case
 params: { option: literal_case, message: "write `{name}` as `{fixed}`" }
 description: >-
-  `NULL`, `TRUE` and `FALSE` are not all in one case: with the `policy` option `consistent` the first one written fixes
-  the case (`upper`, `lower` or `capitalise`) and a later one that cannot be in it is reported; the
-  other values name the case. The fix writes the word in that case; with `consistent` that is the
-  case the words settled on (sqlfluff CP04).
+  Reports `NULL`, `TRUE` or `FALSE` not in the case that the `policy` option sets. With `consistent`
+  (the default) the first one written fixes the case (`upper`, `lower` or `capitalise`) and a later
+  one that cannot be in it is reported; the other values name the case. The fix writes the word in
+  that case.
+why: >-
+  These literals are written as values in the query. Using one case for them keeps them uniform and
+  easy to find.
+
+  To fix, write the literal in the case that the policy gives.
 example: "select NULL, true   # the later word is reported"
 severity: off
 category: style
@@ -62,10 +81,15 @@ id: type-case
 family: token-case
 params: { option: type_case, message: "write `{name}` as `{fixed}`" }
 description: >-
-  Data type names are not all in one case: with the `policy` option `consistent` the first one written fixes
-  the case (`upper`, `lower` or `capitalise`) and a later one that cannot be in it is reported; the
-  other values name the case. The fix writes the word in that case; with `consistent` that is the
-  case the words settled on (sqlfluff CP05).
+  Reports a data type name not in the case that the `policy` option sets. With `consistent` (the
+  default) the first one written fixes the case (`upper`, `lower` or `capitalise`) and a later one
+  that cannot be in it is reported; the other values name the case. The fix writes the word in that
+  case.
+why: >-
+  Type names in one case read as a group in a table definition or a cast, and a file that mixes
+  cases looks inconsistent.
+
+  To fix, write the type name in the case that the policy gives.
 example: "select cast(a as INT), cast(b as text)   # the later word is reported"
 severity: off
 category: style

@@ -107,13 +107,14 @@ static SPEC: Spec = Spec {
 };
 
 macro_rules! expr_rule {
-    ($name:ident, $id:expr, $default:ident, $description:expr, $example:expr) => {
+    ($name:ident, $id:expr, $default:ident, $description:expr, $why:expr, $example:expr) => {
         rule! {
             pub $name {
                 id: $id,
                 category: Correctness,
                 default: $default,
                 description: $description,
+                why: $why,
                 example: $example,
             }
 
@@ -128,33 +129,50 @@ expr_rule!(
     InvalidExpression,
     "invalid-expression",
     Error,
-    "A `${{ }}` expression that is not closed or empty, does not parse (unbalanced brackets, a \
-     string that is not closed, a character expressions do not have such as a double quote), or \
-     names a context or function that does not exist.",
+    "Reports a `${{ }}` expression that is not closed or is empty, that does not parse \
+     (unbalanced brackets, a string that is not closed, a character expressions do not \
+     have, such as a double quote), or that names a context or function that does not \
+     exist.",
+    "GitHub rejects the workflow or evaluates the expression to an empty string. The \
+     error appears only when the workflow runs.\n\
+     To fix, correct the expression.",
     "name: ${{ github.sha }\nenv:\n  A: ${{ foo.bar }}   # reported"
 );
 expr_rule!(
     ExpressionContext,
     "expression-context",
     Off,
-    "An expression that reads a context, or calls a special function, that the key it is in does \
-     not offer (`env` in the `env` of a job, `runner` in a matrix).",
+    "Reports an expression that reads a context, or calls a special function, that the \
+     key it is in does not offer (`env` in the `env` of a job, `runner` in a matrix).",
+    "Each key of a workflow can use only some contexts, since the others do not exist \
+     yet when it is evaluated. Elsewhere the value is empty, or GitHub rejects the \
+     workflow.\n\
+     To fix, use a context the key offers, or move the value to a key that has it.",
     "jobs:\n  a:\n    runs-on: ubuntu-latest\n    env:\n      A: ${{ env.B }}   # reported"
 );
 expr_rule!(
     IfCondition,
     "if-condition",
     Off,
-    "An `if:` that is a constant (`if: false`), or that has text around its `${{ }}` and so is a \
-     non-empty string, always true (`if: ${{ a }} && ${{ b }}`).",
+    "Reports an `if:` that is a constant (`if: false`), or one with text around its `${{ \
+     }}`, which makes it a non-empty string that is always true (`if: ${{ a }} && ${{ b \
+     }}`).",
+    "A string with text around the expression is never false, even when the expression \
+     is `false`, so the step or job always runs. A constant condition is left in by \
+     mistake after a test.\n\
+     To fix, write the whole condition inside one `${{ }}`, or without it.",
     "on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    if: ${{ github.ref }} && true   # reported"
 );
 expr_rule!(
     ExpressionTypes,
     "expression-types",
     Off,
-    "An expression whose types do not fit: a property an object does not have, a comparison of \
-     values that cannot be compared, a wrong number or type of arguments, an object where text is \
-     expected.",
+    "Reports an expression whose types do not fit: a property that an object does not \
+     have, a comparison of values that cannot be compared, a wrong number or type of \
+     arguments, or an object where text is expected.",
+    "Expressions fail without an error: a property that does not exist is an empty \
+     string, and an object where text is expected becomes a text like `Object`. The \
+     workflow runs with a wrong value.\n\
+     To fix, correct the property, or the types.",
     "on: push\nrun-name: ${{ github.events }}   # reported"
 );

@@ -1,6 +1,13 @@
 id: none-comparison
 message: compare to None with `is` or `is not`, not `==` or `!=`
-description: A comparison of a value to `None` with `==` or `!=`.
+description: >-
+  Reports a comparison of a value to `None` with `==` or `!=`.
+why: >-
+  `None` is a single object, and `is` and `is not` test for it. `==` calls `__eq__` of the other
+  operand, which a class can define to return true for `None` (NumPy arrays compare element by
+  element and return an array).
+
+  To fix, write `x is None` or `x is not None`.
 example: 'x == None'
 severity: warn
 category: suspicious
@@ -13,7 +20,13 @@ rule:
 ---
 id: not-in-test
 message: use `not in`, not `not ... in`
-description: A membership test negated in front of the expression (`not a in b`).
+description: >-
+  Reports a membership test negated in front of the expression: `not a in b`.
+why: >-
+  `a not in b` is the operator for it. The prefix form is the same test, but a reader may take it as
+  `(not a) in b`.
+
+  To fix, write `a not in b`.
 example: 'not a in b'
 severity: off
 category: style
@@ -24,7 +37,13 @@ rule:
 ---
 id: not-is-test
 message: use `is not`, not `not ... is`
-description: An identity test negated in front of the expression (`not a is b`).
+description: >-
+  Reports an identity test negated in front of the expression: `not a is b`.
+why: >-
+  `a is not b` is the operator for it. The prefix form is the same test, but a reader may take it as
+  `(not a) is b`.
+
+  To fix, write `a is not b`.
 example: 'not a is b'
 severity: off
 category: style

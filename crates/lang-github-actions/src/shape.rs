@@ -239,13 +239,14 @@ static SHAPE: Shape = Shape {
 };
 
 macro_rules! shape_rule {
-    ($name:ident, $id:expr, $description:expr, $example:expr) => {
+    ($name:ident, $id:expr, $description:expr, $why:expr, $example:expr) => {
         rule! {
             pub $name {
                 id: $id,
                 category: Correctness,
                 default: Off,
                 description: $description,
+                why: $why,
                 example: $example,
             }
 
@@ -259,31 +260,53 @@ macro_rules! shape_rule {
 shape_rule!(
     WorkflowSyntax,
     "workflow-syntax",
-    "A key a section does not have, a required key or section that is missing, a section of the \
-     wrong kind, or an empty one.",
+    "Reports a key that a section does not have, a required key or section that is \
+     missing, a section of the wrong kind (a list where a map is needed), or an empty \
+     one.",
+    "GitHub rejects a workflow with a structural mistake, or ignores the key. A \
+     misspelling such as `stepz` is never run, and the error shows only when the \
+     workflow is pushed and fails to start.\n\
+     To fix, correct the key, or add what is missing.",
     "on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    stepz: []   # reported"
 );
 shape_rule!(
     InvalidEvent,
     "invalid-event",
-    "An event name, activity type, filter or schedule that the `on` section cannot have.",
+    "Reports an event name, activity type, filter or schedule that the `on` section \
+     cannot have.",
+    "An event or activity type that GitHub does not have never fires. A misspelled \
+     `pushh`, or a type that the event does not have, means the workflow does not run \
+     when its author expects.\n\
+     To fix, use the event, type and filter that the documentation lists.",
     "on:\n  pushh: {}   # reported\njobs: {}"
 );
 shape_rule!(
     InvalidGlob,
     "invalid-glob",
-    "A branch, tag or path filter that is not a valid pattern (a bad range or escape, a character a ref name cannot have, `.` or `..` in a path).",
+    "Reports a branch, tag or path filter that is not a valid pattern: a bad range or \
+     escape, a character that a ref name cannot have, or `.` or `..` in a path.",
+    "A pattern that GitHub cannot read does not select the refs or paths it was written \
+     for, so the workflow runs for the wrong pushes or not at all.\n\
+     To fix, correct the pattern.",
     "on:\n  push:\n    tags: ['v*+']   # reported\njobs: {}"
 );
 shape_rule!(
     OutdatedAction,
     "outdated-action",
-    "A step that uses a popular action at a version whose runner is retired.",
+    "Reports a step that uses a popular action at a version whose runner (the Node \
+     version it runs on) is retired, from a list of actions kept with the rule.",
+    "GitHub retires the Node runtimes that old action versions use. Their jobs print \
+     deprecation warnings and, once the runtime is removed, fail.\n\
+     To fix, update to the version that the message names.",
     "on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2   # reported"
 );
 shape_rule!(
     InvalidPermissions,
     "invalid-permissions",
-    "A permission scope or value that GitHub does not have.",
+    "Reports a permission scope or value that GitHub does not have.",
+    "GitHub rejects the workflow with an error, or the key has no effect. A misspelling \
+     like `content: read` leaves the scope without the access that the job needs.\n\
+     To fix, use a scope of the permissions documentation, with the value `read`, \
+     `write` or `none`.",
     "on: push\npermissions:\n  content: read   # reported\njobs: {}"
 );

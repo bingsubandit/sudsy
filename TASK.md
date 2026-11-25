@@ -5,3 +5,6 @@ Task (rule texts, batches 5 and 6), worktree /persist/projects/sudsy/worktrees/a
 - Tools: .cargo/tmp/ls.py [crate-prefix] (undescribed by crate), show.py ID.. (definition), apply.py TEXTS yamldir.. (yaml rule files), apply_rs.py TEXTS srcdir.. (rule! blocks); texts file format: `== id`, description paras, `--`, why paras. Avoid the word git-ignore-like names in shell commands (worktree guard): use script files.
 - Each batch at most +0.3% startup.lint.instr. Gate with `scripts/gate.sh -p ...`, then `scripts/finish.sh --start` / `--wait` (timeout 600000). After FINISH OK write .cargo/tmp/msg-b5.txt (msg-b6.txt) with Co-Authored-By trailer, list the crates the cost check names, STOP before landing: the lead adds approval lines and lands. Write no approval lines.
 - Bugs found go to docs/ai/bugs.md with input. Final report via SubagentHandback.
+
+## Batch 6 (last)
+Batch 5 landed as b314ffb4. Batch 6: the remaining 209 rules (python 90, shell 38, sql 28, powershell 14, github-actions 8, 30 in shared code: format strings, scope rules, github-actions shape and expressions). Also probed Ruby and PHP texts of batch 5 (fixed parentheses-as-grouped-expression, missing-return). Budget +0.3% startup.lint.instr. After FINISH OK write .cargo/tmp/msg-b6.txt (Co-Authored-By trailer, no approval lines), name the growing crates, stop before landing.
