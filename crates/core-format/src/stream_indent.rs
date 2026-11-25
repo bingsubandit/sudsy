@@ -238,10 +238,15 @@ impl Indents {
     /// (`shifts`: how far the line of each token moves). A body that is not at `width` in from its opener's line is moved there when
     /// its opener is `<<~` (the value stays: every line loses the same indentation); the closing label stands at the opener's
     /// line, or where it is when the line of the call that holds the heredoc has it.
-    pub fn heredocs(&self, tks: &[Tk], shifts: &[isize], width: usize) -> HashMap<usize, String> {
-        let mut out = HashMap::new();
+    pub fn heredocs(
+        &self,
+        tks: &[Tk],
+        shifts: &[isize],
+        width: usize,
+    ) -> std::collections::HashMap<usize, String> {
+        let mut out = std::collections::HashMap::new();
         let mut openers: std::collections::VecDeque<(usize, usize)> = Default::default();
-        let mut line_indents: HashMap<usize, usize> = HashMap::new();
+        let mut line_indents = Lines::new(tks.last().map_or(0, |t| t.last_line + 1));
         let mut line_indent = 0;
         for (i, tk) in tks.iter().enumerate() {
             let is_body = self.heredoc_bodies.contains(&tk.kind);

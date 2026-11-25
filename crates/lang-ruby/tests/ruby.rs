@@ -312,6 +312,33 @@ fn block_indentation() {
     assert_eq!(f(s), "def f\n  x = <<~P\n    a\n  P\nend\n");
 }
 
+/// The body of a `<<~` heredoc stands one step in from its opener's line and its closing label at
+/// that line (or where it is, at the line of the call that holds the heredoc); a `<<-` heredoc keeps
+/// its body and moves its closing label; every line of a body moves by the same amount.
+#[test]
+fn heredoc_indentation() {
+    let f = fmt;
+    assert_eq!(
+        f("def f\n  x = <<~P\n  a\n\n      b\n    P\nend\n"),
+        "def f\n  x = <<~P\n    a\n\n        b\n  P\nend\n"
+    );
+    assert_eq!(
+        f("def f\n  x = <<-P\n a\n    P\nend\n"),
+        "def f\n  x = <<-P\n a\n  P\nend\n"
+    );
+    // The label stays at the line of the call that holds the heredoc when the body is right.
+    let s = "expect(a)\n  .to eq <<~P\n    a\nP\n";
+    assert_eq!(f(s), s);
+    // The body moves with its statement, and the label goes to the opener's line.
+    assert_eq!(
+        f("def f\n    x(<<~P)\n  a\n  P\nend\n"),
+        "def f\n  x(<<~P)\n    a\n  P\nend\n"
+    );
+    // A body with a tab stays as it is.
+    let s = "x = <<~P\n\ta\n  P\n";
+    assert_eq!(f(s), s);
+}
+
 /// Dots that start a line stand under the first dot of the chain, or one step in from its
 /// statement; the second operand of a condition stands under the first.
 #[test]
