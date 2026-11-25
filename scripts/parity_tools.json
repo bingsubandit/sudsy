@@ -286,7 +286,7 @@
       "parallel": true,
       "quiet": true,
       "wrap_compare": {
-        "note": "line wrapping is not compared: where a statement, a list or an enum breaks, where a string literal is split and the indent of the continuation lines; everything else is compared exactly (blank lines, braces, spacing, comments, statements of macro bodies, text under clang-format off). Byte-identical files are the secondary number",
+        "note": "line wrapping is not compared: where a statement, a list or an enum breaks, where a string literal is split and the indent of the continuation lines; a one-line versus multi-line short body (lambda, function, block, enum, loop, if) is a wrap too where the style's AllowShort...OnASingleLine value permits the join (a body of one statement without comments; an option that forces the form stays exact; brace placement stays exact); everything else is compared exactly (blank lines, braces, spacing, comments, statements of macro bodies, text under clang-format off). Byte-identical files are the secondary number",
         "grammar": "grammars/cpp.grammar",
         "dump": ["debug", "tree"],
         "gap_kinds": ["Whitespace", "Newline", "Continuation"],
@@ -301,6 +301,29 @@
         "boundary": ["statement", "member", "case", "directive"],
         "container": ["block", "huggable"],
         "wrap_inside": ["TemplateDeclaration"],
+        "short_bodies": {
+          "owners": {"Lambda": "AllowShortLambdasOnASingleLine", "FunctionDeclaration": "AllowShortFunctionsOnASingleLine", "IfStatement": "AllowShortIfStatementsOnASingleLine", "WhileStatement": "AllowShortLoopsOnASingleLine", "ForStatement": "AllowShortLoopsOnASingleLine", "EnumSpecifier": "AllowShortEnumsOnASingleLine"},
+          "nested": "AllowShortBlocksOnASingleLine",
+          "class_kinds": ["ClassSpecifier"],
+          "argument_kinds": ["Arguments"],
+          "permits": {
+            "AllowShortFunctionsOnASingleLine": {"All": "", "Inline": "inline", "InlineOnly": "inline"},
+            "AllowShortLambdasOnASingleLine": {"All": "", "Inline": "arg"},
+            "AllowShortIfStatementsOnASingleLine": {"AllIfsAndElse": "", "WithoutElse": "!else", "OnlyFirstIf": "!else"},
+            "AllowShortLoopsOnASingleLine": {"true": ""},
+            "AllowShortBlocksOnASingleLine": {"Always": ""},
+            "AllowShortEnumsOnASingleLine": {"true": ""}
+          },
+          "defaults": {
+            "LLVM": {"AllowShortBlocksOnASingleLine": "Never", "AllowShortEnumsOnASingleLine": "true", "AllowShortFunctionsOnASingleLine": "All", "AllowShortIfStatementsOnASingleLine": "Never", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "false"},
+            "Google": {"AllowShortBlocksOnASingleLine": "Never", "AllowShortEnumsOnASingleLine": "true", "AllowShortFunctionsOnASingleLine": "All", "AllowShortIfStatementsOnASingleLine": "WithoutElse", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "true"},
+            "Chromium": {"AllowShortBlocksOnASingleLine": "Never", "AllowShortEnumsOnASingleLine": "true", "AllowShortFunctionsOnASingleLine": "Inline", "AllowShortIfStatementsOnASingleLine": "Never", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "false"},
+            "Mozilla": {"AllowShortBlocksOnASingleLine": "Never", "AllowShortEnumsOnASingleLine": "true", "AllowShortFunctionsOnASingleLine": "Inline", "AllowShortIfStatementsOnASingleLine": "Never", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "false"},
+            "WebKit": {"AllowShortBlocksOnASingleLine": "Empty", "AllowShortEnumsOnASingleLine": "true", "AllowShortFunctionsOnASingleLine": "All", "AllowShortIfStatementsOnASingleLine": "Never", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "false"},
+            "GNU": {"AllowShortBlocksOnASingleLine": "Never", "AllowShortEnumsOnASingleLine": "true", "AllowShortFunctionsOnASingleLine": "All", "AllowShortIfStatementsOnASingleLine": "Never", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "false"},
+            "Microsoft": {"AllowShortBlocksOnASingleLine": "Never", "AllowShortEnumsOnASingleLine": "false", "AllowShortFunctionsOnASingleLine": "None", "AllowShortIfStatementsOnASingleLine": "Never", "AllowShortLambdasOnASingleLine": "All", "AllowShortLoopsOnASingleLine": "false"}
+          }
+        },
         "column_limits": {"LLVM": 80, "Google": 80, "Chromium": 80, "Mozilla": 80, "WebKit": 0, "GNU": 79, "Microsoft": 120},
         "variants": {"brace": {"key": "BreakBeforeBraces", "values": ["Allman", "Attach"], "alt_for": ["GNU", "Microsoft"]}, "pointer": {"key": "PointerAlignment", "values": ["Middle", "Middle"], "alt_for": [], "extra": {"DerivePointerAlignment": "false"}}}
       },

@@ -98,12 +98,14 @@ sets:
   - "spacing Comma|Number in InitList (e.g. `, 53`): +10 files, 482 equal after it"
   - "spacing Star|Ident in Binary (e.g. `* Token`): +9 files, 491 equal after it"
 unclassified: 0
+# Comparison change (not a formatter gain): a one-line against a multi-line short body is a wrap where the style's
+# AllowShort...OnASingleLine value permits the join (scripts/parity_wrap.py, docs/ai/development/parity.md): 4,668 -> 4,827 equal (+159).
 ratchet:
-  llvm: 337
+  llvm: 340
   fmt: 46
-  range-v3: 333
-  folly: 1740
-  linux: 2156
+  range-v3: 361
+  folly: 1840
+  linux: 2183
   sqlite: 52
   google: 2
   chromium: 2

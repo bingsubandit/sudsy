@@ -46,9 +46,11 @@ class Tree:
         self.kind, self.start, self.end = [], [], []
         self.sb, self.eb, self.br, self.dr, self.cm, self.frame = [], [], [], [], [], []
         self.par, self.gpar = [], []  # the kinds of the parent node and of its parent
+        self.sh = []  # the gap before the token is inside a short body: its `ex` facts (see `short_body`), or None
         self.mb, self.off = [], []  # the token ends a statement of a macro body; the token is between `format_off` and `format_on`
         mkinds, pars, off, pdepth = set(cfg["macro_boundary"]), set(cfg["paren_kinds"]), False, 0
-        stack = []  # frames: [name, tags, first, first_code, anchor, boundary]
+        short = cfg.get("short_bodies") or {}
+        stack = []  # frames: [name, tags, first, first_code, anchor, boundary, ex]; ex: the facts of a short-body block
         nfirst = ncode = 0
         depth_dir = 0
         conts = []
@@ -61,6 +63,9 @@ class Tree:
                 f = stack.pop()
                 if f[5] and f[2] is not None:
                     self.eb[len(self.kind) - 1] = True
+                ex = f[6]
+                if ex and "opt" in ex and ex["n"] == 1 and not ex["cm"] and not ex["nb"] and ex["lb"] is not None and ex["rb"] is not None:
+                    self.sh[ex["lb"] + 1] = self.sh[ex["rb"]] = ex
                 if "directive" in f[1]:
                     depth_dir -= 1
                     pdepth = 0
@@ -72,7 +77,20 @@ class Tree:
             if not rest:  # a node
                 tg = tags.get(name, set())
                 parent = stack[-1] if stack else None
-                f = [name, tg, None, None, None, bool(tg & bound) and not (parent and parent[0] in inside)]
+                f = [name, tg, None, None, None, bool(tg & bound) and not (parent and parent[0] in inside), None]
+                if parent and parent[6] and "opt" in parent[6]:
+                    parent[6]["n"] += 1
+                if "block" in tg:
+                    for a in stack:
+                        if a[6] and "opt" in a[6]:
+                            a[6]["nb"] = True
+                if short and "block" in tg and parent:
+                    opt = short["owners"].get(parent[0]) or (short["nested"] if parent[0] == name else None)
+                    if opt:
+                        up = stack[-2][0] if len(stack) > 1 else ""
+                        f[6] = {"opt": opt, "n": 0, "cm": False, "nb": False, "lb": None, "rb": None, "owner": parent,
+                                "inline": parent[0] in short["owners"] and up == name and len(stack) > 2 and stack[-3][0] in short["class_kinds"],
+                                "arg": up in short["argument_kinds"]}
                 if tg & cont_tags:
                     f[4] = -1 if parent is None else "self" if (tg & {"huggable"}) or (parent[1] & cont_tags) else parent
                     conts.append(f)
@@ -85,6 +103,14 @@ class Tree:
             t = len(self.kind)
             is_com = name == com
             self.kind.append(name), self.start.append(s), self.end.append(e)
+            self.sh.append(None)
+            for a in stack:
+                if is_com and a[6] and "opt" in a[6]:
+                    a[6]["cm"] = True
+            if stack and stack[-1][6] and "opt" in stack[-1][6] and name in braces:
+                stack[-1][6]["lb" if name == cfg["brace_kinds"][0] else "rb"] = t
+            if stack and stack[-1][0] == "IfStatement" and src[s:e] == b"else":
+                stack[-1][6] = {"else": True}
             self.sb.append(False), self.eb.append(False)
             while nfirst < len(stack):
                 f = stack[nfirst]
@@ -226,9 +252,22 @@ def tokens_equal(a, b):
     return "tokens-comment" if any(t.cm[k] for t in (a, b) if k < t.n) else "tokens-other"
 
 
-def compare(ref, out, shape=None, where=None):
+def joinable(ex, allow, table):
+    """The body of a short-body block (the `ex` facts of `Tree.sh`) may be joined to one line under the style's
+    AllowShort...OnASingleLine values `allow`: `table` maps option -> value -> the fact the construct needs (`inline`,
+    `arg`, `!else`; empty for none); an option the style sets to None/Never/false, or a value not in the table, forces the form."""
+    need = table.get(ex["opt"], {}).get(str(allow.get(ex["opt"])))
+    if need is None:
+        return False
+    if need == "!else":
+        return not (ex["owner"][6] and ex["owner"][6].get("else"))
+    return not need or bool(ex[need])
+
+
+def compare(ref, out, shape=None, where=None, joins=None):
     """(equal, causes in file order, wrap gaps that differ in newline) of two Trees; the tree facts (wrap points,
-    anchors) are those of `shape`, by default the output's."""
+    anchors) are those of `shape`, by default the output's. `joins`: a function ex -> bool; the newlines inside a short body
+    that it accepts are wrap points: the width alone decides them, and the lines after them are free as after any wrap."""
     shape = shape or out
     why = tokens_equal(ref, out)
     if why:
@@ -254,6 +293,8 @@ def compare(ref, out, shape=None, where=None):
         cm = shape.cm[i] or (i and shape.cm[i - 1])
         brace = shape.br[i] or (i and shape.br[i - 1])
         exact = i == 0 or i == out.n - 1 or shape.sb[i] or (i and (shape.eb[i - 1] or shape.mb[i - 1])) or brace or cm
+        if exact and joins and shape.sh[i] and not cm and i != out.n - 1 and joins(shape.sh[i]):
+            exact = False
         if not exact:
             if nr and no:
                 ok = min(nr, 2) == min(no, 2)
@@ -284,7 +325,7 @@ def gap_text(g):
     return g.decode("latin-1").replace("\t", "\\t") if len(g) <= 3 else f"{len(g)}sp"
 
 
-def gaps(ref, out):
+def gaps(ref, out, joins=None):
     """Every difference of two Trees as records {c: cause, a, b: kinds of the tokens around the gap, p, g: parent and
     grandparent kinds of the second token, o, t: the gap of `out` and of the reference, x: the two token texts}; when the
     tokens differ, the first pair that does (`parity_gaps.py` ranks them)."""
@@ -298,10 +339,23 @@ def gaps(ref, out):
             return [{"c": "tokens-reorder" if sorted(ta) == sorted(tb) else "tokens", "a": ref.kind[k], "b": out.kind[k], "p": out.par[k], "g": out.gpar[k], "o": text(out, k), "t": text(ref, k), "x": text(out, k - 1) if k else ""}]
         return [{"c": "tokens", "a": "", "b": "", "p": "", "g": "", "o": f"{out.n} tokens", "t": f"{ref.n} tokens", "x": ""}]
     where = []
-    _, causes, _ = compare(ref, out, None, where)
+    _, causes, _ = compare(ref, out, None, where, joins)
+
+    def wrapped_before(i):
+        """A wrap point between the anchor of token i (else the start of its statement) and i has a newline in one output only."""
+        s = out.anchor(i)
+        if s < 0:
+            s = next((j for j in range(i, -1, -1) if out.sb[j]), 0)
+        for k in range(s + 1, i):
+            exact = out.sb[k] or out.eb[k - 1] or out.mb[k - 1] or out.br[k] or out.br[k - 1] or out.cm[k] or out.cm[k - 1]
+            if not exact and (b"\n" in ref.gap(k)) != (b"\n" in out.gap(k)):
+                return 1
+        return 0
+
     return [
-        {"c": c, "a": out.kind[i - 1] if i else "", "b": out.kind[i], "p": out.par[i], "g": out.gpar[i], "o": gap_text(out.gap(i)), "t": gap_text(ref.gap(i)), "x": (text(out, i - 1) if i else "") + " " + text(out, i)}
-        for c, i in list(zip(causes, where))[:400]
+        {"c": c, "a": out.kind[i - 1] if i else "", "b": out.kind[i], "p": out.par[i], "g": out.gpar[i], "o": gap_text(out.gap(i)), "t": gap_text(ref.gap(i)), "x": (text(out, i - 1) if i else "") + " " + text(out, i),
+         "w": wrapped_before(i) if c in ("indent", "comment-gap", "brace-placement") else 0}
+        for c, i in list(zip(causes, where))[:20000]
     ]
 
 
@@ -325,7 +379,7 @@ class Checker:
             return None
         return Tree(self.cfg, self.tags, r.stdout.decode("utf-8", "replace"), data)
 
-    def score(self, theirs, ours, suffix, ref_tree=None, source=None, listing=False):
+    def score(self, theirs, ours, suffix, ref_tree=None, source=None, listing=False, join_ok=None):
         """The result of one file: ok, causes, wraps; the column-limit guard is added by the caller. `ours` is a text,
         or a Tree built from the reference's own tokens (a control), whose wrap points are the reference's. `source` is the
         text both tools read: a string literal the reference tool split is compared as the whole literal."""
@@ -333,16 +387,16 @@ class Checker:
         out = ours if isinstance(ours, Tree) else self.tree(ours, suffix)
         if ref is None or out is None:
             return {"ok": False, "causes": ["tree"], "wraps": 0}
-        ok, causes, wraps = compare(ref, out, ref if out is ours else None)
+        ok, causes, wraps = compare(ref, out, ref if out is ours else None, None, join_ok)
         joins = string_joins(ref, out, self.tree(source, suffix)) if causes == ["tokens-string-split"] and source is not None else None
         if joins:
             ref, out = (self.tree(joined_text(t, j), suffix) if j else t for t, j in zip((ref, out), joins))
             if ref is None or out is None:
                 return {"ok": False, "causes": ["tree"], "wraps": 0}
-            ok, causes, wraps = compare(ref, out)
+            ok, causes, wraps = compare(ref, out, None, None, join_ok)
         r = {"ok": ok, "causes": causes, "wraps": wraps}
         if listing and not ok:
-            r["gaps"] = gaps(ref, out)
+            r["gaps"] = gaps(ref, out, join_ok)
         return r
 
 
@@ -462,6 +516,15 @@ def controls(chk, ref, theirs, suffix, name):
     }
 
 
+def style_values(cfg, folder, style):
+    """The AllowShort...OnASingleLine values of the style's file: its own, else those of its BasedOnStyle."""
+    text = (Path(folder) / f"{style}.clang-format").read_text(encoding="utf-8")
+    base = re.search(r"^BasedOnStyle:\s*(\w+)", text, re.M)
+    values = dict(cfg["short_bodies"]["defaults"].get(base.group(1) if base else "LLVM", {}))
+    values.update(re.findall(r"^(AllowShort\w+OnASingleLine):\s*(\w+)", text, re.M))
+    return values
+
+
 def column_limit(cfg, folder, style):
     """The ColumnLimit of the style's file: its own value or its BasedOnStyle's."""
     text = (Path(folder) / f"{style}.clang-format").read_text(encoding="utf-8")
@@ -492,12 +555,15 @@ def file_result(checker, cfg, folder, style, theirs, ours, copy, controlled, var
     limit = column_limit(cfg, folder, style)
     ref = checker.tree(theirs, suffix)
     base = over_limit(theirs, limit)
+    short = cfg.get("short_bodies")
+    allow = style_values(cfg, folder, style) if short else {}
+    joins = (lambda ex: joinable(ex, allow, short["permits"])) if short else None
     source = copy.read_text(encoding="utf-8")
 
     def one(text, listing=False):
         if text is None:
             return {"ok": False, "causes": ["rejected"], "wraps": 0, "byte": False, "guard": False}
-        r = checker.score(theirs, text, suffix, ref, source, listing)
+        r = checker.score(theirs, text, suffix, ref, source, listing, joins)
         raw = text.src.decode("utf-8") if isinstance(text, Tree) else text
         r.update(byte=raw == theirs, guard=over_limit(raw, limit) > base)
         return r

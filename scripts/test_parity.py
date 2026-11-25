@@ -326,6 +326,58 @@ def block_tree(src):
     return pw.Tree(WRAP_CFG, {**WRAP_TAGS, "Block": {"block", "huggable"}}, "\n".join(lines), src.encode())
 
 
+SHORT_CFG = {**WRAP_CFG, "short_bodies": {"owners": {"Func": "AllowShortFunctionsOnASingleLine"}, "nested": "AllowShortBlocksOnASingleLine", "class_kinds": [], "argument_kinds": [], "permits": {"AllowShortFunctionsOnASingleLine": {"All": ""}}}}
+
+
+def short_tree(src):
+    """A Tree of `src`: a Func node (tokens up to the first `{`), its Block, and one Stmt per `;` inside the block."""
+    import re
+
+    toks = [(m.lastgroup, m.start(), m.end()) for m in re.finditer("|".join(f"(?P<{k}>{r})" for k, r in WRAP_TOKENS), src)]
+    a, b = next(j for j, t in enumerate(toks) if t[0] == "Lbrace"), max(j for j, t in enumerate(toks) if t[0] == "Rbrace")
+    lines = [f"Unit 0..{len(src)}", f"  Func {toks[0][1]}..{toks[-1][2]}"]
+    lines += [f"    {k} {s}..{e} {src[s:e]!r}" for k, s, e in toks[:a]]
+    lines.append(f"    Block {toks[a][1]}..{toks[b][2]}")
+    lines.append(f"      Lbrace {toks[a][1]}..{toks[a][2]} '{{'")
+    open_stmt = False
+    for k, s, e in toks[a + 1 : b]:
+        if not open_stmt:
+            end = next(t[2] for t in toks[a + 1 : b] if t[2] > s and t[0] == "Semi")
+            lines.append(f"      Stmt {s}..{end}")
+        lines.append(f"        {k} {s}..{e} {src[s:e]!r}")
+        open_stmt = k != "Semi"
+    lines.append(f"      Rbrace {toks[b][1]}..{toks[b][2]} '}}'")
+    lines.append(f"  EndOfFile {len(src)}..{len(src)} \"\"")
+    tags = {"Func": {"statement"}, "Stmt": {"statement"}, "Block": {"block"}}
+    return pw.Tree(SHORT_CFG, tags, "\n".join(lines), src.encode())
+
+
+class ShortBody(unittest.TestCase):
+    ALL, NONE = {"AllowShortFunctionsOnASingleLine": "All"}, {"AllowShortFunctionsOnASingleLine": "None"}
+    ONE, MANY = "f ( ) { x ; }\n", "f ( ) {\n  x ;\n}\n"
+
+    def equal(self, theirs, ours, allow):
+        table = SHORT_CFG["short_bodies"]["permits"]
+        return pw.compare(short_tree(theirs), short_tree(ours), None, None, lambda ex: pw.joinable(ex, allow, table))[0]
+
+    def test_one_line_against_many_is_a_wrap_where_the_option_permits_the_join(self):
+        self.assertTrue(self.equal(self.ONE, self.MANY, self.ALL))
+        self.assertTrue(self.equal(self.MANY, self.ONE, self.ALL))
+        self.assertTrue(self.equal("f ( ) {\n  x ;\n  }\n", self.ONE, self.ALL))
+
+    def test_an_option_that_forces_the_form_stays_a_difference(self):
+        self.assertFalse(self.equal(self.ONE, self.MANY, self.NONE))
+        self.assertFalse(self.equal(self.ONE, self.MANY, {}))
+
+    def test_a_body_of_two_statements_or_with_a_comment_is_not_short(self):
+        two, many = "f ( ) { x ; y ; }\n", "f ( ) {\n  x ;\n  y ;\n}\n"
+        self.assertFalse(self.equal(two, many, self.ALL))
+        self.assertFalse(self.equal("f ( ) { x // c\n ; }\n", "f ( ) {\n x // c\n ; }\n", self.ALL))
+
+    def test_the_brace_placement_stays_exact(self):
+        self.assertFalse(self.equal(self.ONE, "f ( )\n{ x ; }\n", self.ALL))
+
+
 class Wrap(unittest.TestCase):
     def test_a_control_never_moves_a_block_left_of_column_zero(self):
         src = "x =\n      a + {\n  b;\n};\n"
