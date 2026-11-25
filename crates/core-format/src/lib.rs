@@ -29,6 +29,7 @@ pub mod frames;
 pub mod generated;
 mod header_break;
 pub mod ignore;
+mod indent_style;
 pub mod join;
 mod layout;
 mod lines;

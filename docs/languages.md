@@ -447,6 +447,19 @@ The status and the numbers of every language are in the generated table "Languag
 - **Differences:** Sudsy keeps empty statements (`;`). buf drops them.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format buf`, `scripts/parity.sh coverage buf`.
 
+## Batchfile
+
+<!-- generated:measured-batchfile -->
+- **Measured:** In progress.
+  - Format, stable: 0% of the files format stably, by the rules of the formatter (0 of 547 files).
+  - Lint: 22 rules, no reference tool to compare with.
+<!-- /generated -->
+
+- Files: `*.bat` and `*.cmd`.
+- The formatter changes blanks, line ends and the case of commands and keywords. No reference formatter exists: the format column is the stable share and the agreement on a held-out half of the corpus ([ai/design/batchfile.md](ai/design/batchfile.md)).
+- **Options:** `indent_conversion`, `continued_indent`, `space_after_colons`, `indent_size`, `max_blank_lines`.
+- **Differences:** blanks that are part of a value (`set x=y `, `echo x `) stay.
+
 ## C / C++
 
 <!-- generated:measured-c-c -->

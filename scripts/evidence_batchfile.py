@@ -30,7 +30,7 @@ SUDSY = {
     "final newline (per file)": "yes",
     "trailing blanks (per line)": "none",
     "blank lines between statements": "1",
-    "indent characters (per indented line)": "spaces",
+    "indent characters (per indented line)": None,
     "block body indent (per level)": None,
     "closing parenthesis indent": "same as opener",
     "label column": "column 0",
@@ -42,7 +42,7 @@ SUDSY = {
     "blank after REM": "blank",
     "blank after ::": "blank",
     "blanks around a redirection": None,
-    "continued line indent": "none",
+    "continued line indent": None,
 }
 
 WORDS = {"set", "if", "else", "for", "goto", "call", "echo", "exit", "setlocal", "endlocal", "rem", "shift", "pushd", "popd", "cd", "del", "copy", "move",

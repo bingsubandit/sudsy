@@ -2,6 +2,7 @@ lang-json json jsonc
 lang-css css scss less
 lang-html html vue svelte
 lang-cpp c cpp
+lang-batch bat
 lang-cmake cmake
 lang-dockerfile dockerfile
 lang-editorconfig editorconfig

@@ -1,0 +1,75 @@
+// Batchfile (`.bat`, `.cmd`), parsed by the hand-written lexer and parser of crates/lang-batch.
+// A file is a list of lines; a line is a `Sequence` of statements joined by `&`, `&&`, `||`, `|`. A block `( ... )` holds
+// lines. `IF`, `FOR` and `ELSE` hold the rest of their line (or a block) as a `Sequence`. Words are `Argument`s: parts that
+// touch (text, `%VAR%`, `!VAR!`, `^x`, quotes). The text of `echo`, `set` and `title` keeps its blanks, trailing ones too.
+// Format: see crates/core-syntax/src/grammar/mod.rs.
+
+language batch 29 "Batchfile"
+comments line "::"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+// `^` and a line break: the next line goes on the same command.
+token Continuation #trivia #whitespace
+
+// The word of an internal command of cmd (`echo`, `set`, `copy`): a command word that cmd reads without case.
+token Name #restyle #word
+// The word of any other command (a program, a batch file, a path, a variable).
+token Program #word
+// `if`, `for`, `else`, `do`, `in`: written in either case.
+token IfWord #restyle
+token ForWord #restyle
+token ElseWord #restyle
+token DoWord #restyle
+token InWord #restyle
+// `rem`; the text after it is the rest of the line.
+token RemWord #restyle
+token ColonColon "::"
+// A comment text that starts after a blank (`rem`) or with a letter or digit (`::`): the blank in front is the formatter's.
+token CommentText #comment
+// Any other comment text, and the ignored rest of a label line.
+token CommentOther #comment
+// `:name`.
+token Label
+token At "@"
+token LParen "(" #punctuation
+token RParen ")" #punctuation
+token Operator
+token Redirect
+// `/i`, `/f`, `/a` and the other switches of IF and FOR and SET.
+token Option
+// `not`, `exist`, `defined`, `errorlevel`, `cmdextversion` and the comparison words `equ`, `neq`, ...
+token CondWord
+// `==`.
+token Compare "=="
+token Text #part
+// `%name%`, `%1`, `%*`, `%~dp0`, `%%i`.
+token Var #part
+// `!name!`.
+token DelayedVar #part
+// `^` and the character it escapes.
+token Escape #part
+token Quote "\"" #quote
+token Eof
+token Unknown #error
+
+node File = lines:Sequence* Eof
+node Sequence = items:#item*
+node Simple #item = command:#word? arguments:#argument-item*
+node Argument #word #argument-item = parts:#part*
+node Quoted #part = Quote parts:#part* Quote
+node Redirection #argument-item = Redirect target:Argument?
+node CommentLine #item = marker:RemWord text:CommentText?
+node LabelLine #item = name:Label rest:CommentOther?
+node Block #item = LParen lines:Sequence* RParen
+node IfCommand #item = IfWord options:Option* condition:Condition body:Sequence else_clause:ElseClause?
+node Condition = items:#argument-item*
+node ElseClause = ElseWord body:Sequence
+node ForCommand #item = ForWord head:#argument-item* InWord list:ForList? DoWord body:Sequence
+node ForList = LParen items:Argument* RParen

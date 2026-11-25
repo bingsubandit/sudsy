@@ -1,0 +1,26 @@
+vscode-languages: [bat]
+extensions: [bat, cmd]
+formatter: FORMAT
+parse: parser::parse_file
+rules: "&[]"
+format-rows:
+  source-indent: true
+  flush: [Label]
+  align-closers: true
+  option-blanks: [[ColonColon, CommentText, space_after_colons]]
+options:
+  - indent_size: 4
+  - final_newline: true
+  - end_of_line
+  - max_blank_lines: [1, "Largest number of blank lines kept between lines."]
+  - indent_conversion:
+      values: [as_written, spaces, tabs]
+      default: as_written
+      doc: "Indentation of a line: as written, or tabs turned into spaces, or spaces into tabs (a tab is `indent_size` columns)."
+  - continued_indent:
+      values: [as_written, none]
+      default: as_written
+      doc: "Indentation of a line that continues the one before it with `^`: as written, or none when a blank stands before the `^` (the blanks then separate arguments and are not content)."
+  - space_after_colons:
+      default: true
+      doc: "At least one blank after `::` before a comment that starts with a letter or digit (more blanks stay as written)."

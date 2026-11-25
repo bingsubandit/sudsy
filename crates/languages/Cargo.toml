@@ -19,6 +19,7 @@ lang-json.workspace = true
 lang-java.workspace = true
 lang-php.workspace = true
 lang-ruby.workspace = true
+lang-batch.workspace = true
 lang-cmake.workspace = true
 lang-sql.workspace = true
 lang-kotlin.workspace = true

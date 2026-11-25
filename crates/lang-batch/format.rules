@@ -1,0 +1,20 @@
+# Blocks pair for the indentation of their `)`; a `^` ends a continued line.
+[lines]
+open = LParen
+close = RParen
+continuation = ^
+
+# Words of cmd are read without case: its commands and the keywords of IF, FOR and ELSE.
+# Switches, comparison words (`EQU`), labels, variables and arguments keep theirs.
+[case]
+Name|IfWord|ForWord|ElseWord|DoWord|InWord|RemWord : lower
+
+# One blank in front of the `(` of a block and around `) else (`; every other blank is the source's.
+[space]
+kind=At / * : keep
+kind=RParen / kind=ElseWord : yes
+* / kind=LParen&parent=Block : yes
+
+# `rem` and the text after it keep the blanks between them, at least one.
+[at_least_one]
+kind=RemWord / kind=CommentText

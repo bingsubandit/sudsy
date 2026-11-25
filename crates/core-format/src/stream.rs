@@ -41,6 +41,8 @@ pub struct Tk {
     pub trailing: bool,
     /// The matching bracket of an opener or closer.
     pub pair: Option<usize>,
+    /// The text in the case the language's `[case]` rows ask for, when it differs.
+    pub restyled: Option<String>,
 }
 
 impl Tk {
@@ -53,6 +55,25 @@ impl Tk {
     }
 }
 
+/// What a language says about its line stream (`format-rows` of `lang.yaml`).
+#[derive(Clone, Copy)]
+pub struct LineFacts {
+    /// Kinds of tokens that start at column 0 when they start a line outside brackets.
+    pub flush: &'static [&'static str],
+    /// A closing bracket that starts a line stands where the line of its opener starts.
+    pub align_closers: bool,
+    /// Between a token of the first kind and one of the second a blank stands when the boolean option is on.
+    pub option_blanks: &'static [(&'static str, &'static str, &'static str)],
+}
+
+impl LineFacts {
+    pub const NONE: LineFacts = LineFacts {
+        flush: &[],
+        align_closers: false,
+        option_blanks: &[],
+    };
+}
+
 /// The `[lines]` settings of a language.
 #[derive(Default)]
 pub struct StreamRules {
@@ -63,6 +84,12 @@ pub struct StreamRules {
     pub(crate) source_indent: bool,
     pub(crate) blanks: crate::stream_blank::Blanks,
     pub(crate) indents: crate::stream_indent::Indents,
+    /// Kinds that start at column 0 (`RuleFacts::flush`).
+    pub(crate) flush: Vec<SyntaxKind>,
+    /// A closing bracket that starts a line stands where the line of its opener starts.
+    pub(crate) align_closers: bool,
+    /// At least one blank stands between two kinds when a boolean option is on.
+    pub(crate) option_blanks: Vec<(SyntaxKind, SyntaxKind, core_config::OptId)>,
 }
 
 impl StreamRules {
@@ -80,6 +107,9 @@ impl StreamRules {
             source_indent: false,
             blanks: Default::default(),
             indents: Default::default(),
+            flush: Vec::new(),
+            align_closers: false,
+            option_blanks: Vec::new(),
         }
     }
 }
@@ -106,6 +136,7 @@ pub fn collect(g: &Grammar, root: &SyntaxNode, rules: &StreamRules) -> Vec<Tk> {
                 leading: comments::leading_comments(g, &t),
                 trailing: comments::has_trailing_comment(g, &t),
                 pair: None,
+                restyled: None,
                 tok: t.clone(),
             };
             gap(g, &t, &mut tk, rules.continuation);
@@ -132,6 +163,11 @@ fn gap(g: &Grammar, t: &SyntaxToken, tk: &mut Tk, continuation: Option<char>) {
             tk.gap.clear();
         } else if g.has_tag(kind, "whitespace") {
             if continuation.is_some_and(|c| p.text().contains(c)) {
+                if tk.breaks > 0 {
+                    // A continuation that starts its own line joins nothing to the line before.
+                    tk.gap.clear();
+                    continue;
+                }
                 tk.cont = true;
                 tk.cont_gap = std::mem::take(&mut tk.gap);
             } else {
@@ -237,6 +273,9 @@ pub fn emit(
     } else {
         Vec::new()
     };
+    let convert = crate::indent_style::IndentStyle::of(cx.options);
+    let mut open_indent: std::collections::HashMap<usize, String> = Default::default();
+    let mut cur_indent = String::new();
     let shifted = |gap: &str, i: usize| -> String {
         match shifts.get(i) {
             Some(&d) if d != 0 => " ".repeat((gap.len() as isize + d).max(0) as usize),
@@ -249,6 +288,26 @@ pub fn emit(
         rules.indents.heredocs(&tks, &shifts, width)
     } else {
         Default::default()
+    };
+    let indent_of = |tks: &[Tk],
+                     i: usize,
+                     depth: usize,
+                     open_indent: &std::collections::HashMap<usize, String>| {
+        let t = &tks[i];
+        if depth == 0 && rules.flush.contains(&t.kind) {
+            return String::new();
+        }
+        if rules.align_closers
+            && brackets.is_close(t.kind)
+            && let Some(at) = t.pair.and_then(|o| open_indent.get(&o))
+        {
+            return at.clone();
+        }
+        let gap = shifted(&t.gap, i);
+        if t.cont {
+            return convert.continued(&gap, !t.cont_gap.is_empty());
+        }
+        convert.apply(&gap)
     };
     for i in 0..tks.len() {
         let is_eof = Some(tks[i].kind) == eof;
@@ -337,7 +396,8 @@ pub fn emit(
             cur.extend(blank_lines(blank));
             cur.push(doc::hardline());
             if rules.source_indent {
-                cur.push(doc::text(shifted(&tks[i].gap, i)));
+                cur_indent = indent_of(&tks, i, frames.depth(), &open_indent);
+                cur.push(doc::text(cur_indent.clone()));
             }
             cur.extend(inline);
         } else if i > 0 {
@@ -364,7 +424,8 @@ pub fn emit(
                 cur.extend(blank_lines(if last_magic { blank.max(1) } else { blank }));
             }
             if rules.source_indent {
-                cur.push(doc::text(shifted(&tks[i].gap, i)));
+                cur_indent = indent_of(&tks, i, frames.depth(), &open_indent);
+                cur.push(doc::text(cur_indent.clone()));
             }
         }
         if !is_eof {
@@ -373,8 +434,13 @@ pub fn emit(
             let body = heredocs.get(&i);
             cur.push(if let Some(body) = body {
                 doc::verbatim(body.as_str())
-            } else if rules.source_indent && tks[i].first_line != tks[i].last_line {
+            } else if rules.source_indent
+                && (tks[i].first_line != tks[i].last_line || tks[i].text().ends_with([' ', '\t']))
+            {
+                // Blanks at the end of a token are part of it.
                 doc::verbatim(tks[i].text())
+            } else if let Some(text) = &tks[i].restyled {
+                doc::snippet(text)
             } else {
                 cx.token_text(&tks[i].tok)
             });
@@ -382,6 +448,9 @@ pub fn emit(
         }
         if brackets.is_open(tks[i].kind) {
             frames.open(1);
+            if rules.align_closers {
+                open_indent.insert(i, cur_indent.clone());
+            }
         }
     }
     flush(&mut lines, &mut cur, level);
@@ -397,12 +466,23 @@ pub fn format(cx: &FormatCtx<'_>, rows: &crate::rules::RuleFormatter, root: &Syn
     pair_brackets(&mut tks, &rules.brackets);
     for tk in &mut tks {
         tk.newline = tk.breaks > 0 || tk.cont;
+        tk.restyled = rows.cases().fixed(tk.kind, tk.text());
     }
     let spacing = |tks: &[Tk], i: usize| {
         let (prev, cur) = (&tks[i - 1].tok, &tks[i].tok);
         match space.want(prev, cur) {
             Some(true) => " ".into(),
             Some(false) => String::new(),
+            None if rules.option_blanks.iter().any(|&(a, b, option)| {
+                a == tks[i - 1].kind && b == tks[i].kind && cx.options.bool(option)
+            }) =>
+            {
+                if tks[i].gap.is_empty() {
+                    " ".into()
+                } else {
+                    tks[i].gap.clone()
+                }
+            }
             None if tks[i].gap.is_empty() && space.at_least_one(prev, cur) => " ".into(),
             None => tks[i].gap.clone(),
         }

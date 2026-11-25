@@ -178,7 +178,7 @@ fn format_rows(name: &str, v: &Value) -> String {
     };
     let flag = |key: &str| f.get(key).and_then(Value::as_bool).unwrap_or(false);
     format!(
-        "static FORMAT: core_format::rules::LazyRules = core_format::rules::LazyRules::new(|| grammars::{}.get(), include_str!(\"../format.rules\")){}.facts(core_format::rules::RuleFacts {{ exact_end: &{:?}, keep_comment_gap: {}, ..core_format::rules::RuleFacts::DEFAULT }}){}{};\n\n",
+        "static FORMAT: core_format::rules::LazyRules = core_format::rules::LazyRules::new(|| grammars::{}.get(), include_str!(\"../format.rules\")){}.facts(core_format::rules::RuleFacts {{ exact_end: &{:?}, keep_comment_gap: {}, ..core_format::rules::RuleFacts::DEFAULT }}){}{}{};\n\n",
         name.to_uppercase(),
         if flag("source-indent") {
             ".source_indent()"
@@ -189,7 +189,38 @@ fn format_rows(name: &str, v: &Value) -> String {
         flag("keep-comment-gap"),
         blanks(f),
         indents(f),
+        lines(f),
     )
+}
+
+/// `flush`, `align-closers` and `option-blanks` of `format-rows`: the `.lines(..)` builder, or nothing.
+fn lines(f: &Value) -> String {
+    if ["flush", "align-closers", "option-blanks"]
+        .iter()
+        .all(|k| f.get(k).is_none())
+    {
+        return String::new();
+    }
+    let closers = f
+        .get("align-closers")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    format!(
+        ".lines(core_format::stream::LineFacts {{ flush: &{:?}, align_closers: {closers}, option_blanks: &[{}] }})",
+        list(f, "flush"),
+        option_blanks(f),
+    )
+}
+
+/// `option-blanks` of `format-rows`: `[prev kind, next kind, boolean option]` triples as a Rust list.
+fn option_blanks(f: &Value) -> String {
+    let rows = f.get("option-blanks").and_then(Value::as_array);
+    let rows = rows.into_iter().flatten();
+    rows.map(|r| {
+        let part = |i: usize| r.get(i).and_then(Value::as_str).unwrap_or_default();
+        format!("({:?}, {:?}, {:?}), ", part(0), part(1), part(2))
+    })
+    .collect()
 }
 
 /// `blanks` of `format-rows`: the `.blanks(..)` builder, or nothing.
