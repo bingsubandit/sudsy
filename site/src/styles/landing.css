@@ -66,8 +66,8 @@ body:has(.landing) .main-pane, body:has(.landing) main { padding: 0 !important; 
 .cmd pre { flex: 1; min-width: 0; margin: 0; padding: 0.7rem 0.4rem 0.7rem 1rem; overflow-x: auto; background: none; border: 0; }
 .cmd code { font-size: 0.9375rem; white-space: pre; color: var(--sl-color-white); }
 .cmd code::before { content: '$ '; color: var(--pink); }
-.copy { padding: 0.25rem 0.7rem; border: 1px solid var(--sl-color-gray-4); border-radius: 0.375rem; background: var(--sl-color-gray-6); color: var(--sl-color-text); font: inherit; font-size: 0.8125rem; cursor: pointer; }
-.copy:hover { border-color: var(--sl-color-accent); }
+button.copy { padding: 0.25rem 0.7rem; border: 1px solid var(--sl-color-gray-4); border-radius: 0.375rem; background: var(--sl-color-gray-6); color: var(--sl-color-text); font: inherit; font-size: 0.8125rem; cursor: pointer; }
+button.copy:hover { border-color: var(--sl-color-accent); }
 .install-note { padding-top: 0.6rem; font-size: 0.9375rem; color: var(--sl-color-gray-2); }
 .sl-markdown-content .install { margin: 1rem 0; }
 .sl-markdown-content .install :is(pre, p) { margin: 0; }
@@ -100,12 +100,12 @@ body:has(.landing) .main-pane, body:has(.landing) main { padding: 0 !important; 
 .one { display: grid; gap: 2.25rem; }
 .one .sec-text { max-width: 44rem; }
 .pair { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.25rem; }
-.code { margin: 0; min-width: 0; border: 1px solid var(--sl-color-gray-5); border-radius: 0.75rem; background: var(--sl-color-bg-nav); overflow: hidden; }
-.code figcaption { padding: 0.5rem 1rem; border-bottom: 1px solid var(--sl-color-hairline); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sl-color-gray-2); }
-.code pre { margin: 0; padding: 1rem; overflow-x: auto; background: none; border: 0; }
-.code code { font-size: 0.8125rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
-.code .t-add { color: var(--sl-color-green-high); }
-.code .t-del { color: var(--sl-color-red-high); }
+figure.code { margin: 0; min-width: 0; border: 1px solid var(--sl-color-gray-5); border-radius: 0.75rem; background: var(--sl-color-bg-nav); overflow: hidden; }
+figure.code figcaption { padding: 0.5rem 1rem; border-bottom: 1px solid var(--sl-color-hairline); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sl-color-gray-2); }
+figure.code pre { margin: 0; padding: 1rem; overflow-x: auto; background: none; border: 0; }
+figure.code code { font-size: 0.8125rem; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+figure.code .t-add { color: var(--sl-color-green-high); }
+figure.code .t-del { color: var(--sl-color-red-high); }
 
 /* Language grid. */
 .grid { display: grid; gap: 1rem; }
@@ -159,6 +159,6 @@ body:has(.landing) .main-pane, body:has(.landing) main { padding: 0 !important; 
   .race { grid-template-columns: 6.5rem minmax(0, 1fr) 3.8rem; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .button, .copy, .install [role='tab'] { transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+  .button, button.copy, .install [role='tab'] { transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
   .bar-fill, .race .fill { transition: width 0.4s ease-out; }
 }
