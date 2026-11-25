@@ -90,7 +90,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Kotlin | ████████░░ 85% ktlint | █████████░ 92% ktlint | Ready |
 | Vue / Svelte | █████████░ 91% Prettier | ████████░░ 88% eslint-plugin-vue<br>██████████ 100% eslint-plugin-svelte | Ready |
 | Terraform (HCL) | █████████░ 99% terraform fmt | █████████░ 93% tflint | Ready |
-| Angular templates | █████████░ 99% Prettier | 163 rules · no reference tool | Ready |
+| Angular templates | █████████░ 99% Prettier | █████████░ 99% angular-eslint | Ready |
 | INI / EditorConfig / .gitignore | ██████████ 100% stable · no reference tool | 31 rules · no reference tool | Ready |
 | Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
 | GraphQL | █████████░ 99% Prettier | 29 rules · no reference tool | Ready |

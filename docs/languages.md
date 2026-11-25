@@ -36,7 +36,7 @@ The status and the numbers of every language are in the generated table "Languag
   - Lint, eslint-plugin-svelte: 100% of its findings also reported (67 of 67 findings).
 - **Measured (Angular templates):** Ready.
   - Format, Prettier: 99% of the files identical (1,134 of 1,139 files).
-  - Lint: 163 rules, no reference tool to compare with.
+  - Lint, angular-eslint: 99% of its findings also reported (487 of 488 findings).
 <!-- /generated -->
 
 - One parser serves all four. Config sections: `html`, `vue`, `svelte`, `angular`.

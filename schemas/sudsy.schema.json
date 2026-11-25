@@ -724,6 +724,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a class header (name, constructor, supertypes) that the formatter would lay out differently."
             },
+            "click-events-have-key-events": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports an element with a click handler (`(click)`, `@click`) and no `keydown`, `keyup` or `keypress` handler."
+            },
             "collapsible-if": {
               "$ref": "#/definitions/rule",
               "description": "An `if` whose only statement is another `if`, neither having `elif` or `else`."
@@ -1606,6 +1610,10 @@
               "$ref": "#/definitions/rule",
               "description": "A `CASE` branch `ELSE NULL` (sqlfluff ST01)."
             },
+            "empty-content": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a link, button or heading with nothing in it and no `aria-label`, `title` or binding to `innerHTML`, `innerText`, `outerHTML` or `textContent`."
+            },
             "empty-heading": {
               "$ref": "#/definitions/rule",
               "description": "Reports a heading (`<h1>` to `<h6>`) with no text."
@@ -2343,8 +2351,45 @@
               "description": "Reports a string or character literal that writes a backspace, tab, line feed, form feed, carriage return, quote or backslash as an octal or unicode escape (`\\u0009`)."
             },
             "img-alt": {
-              "$ref": "#/definitions/rule",
-              "description": "Reports an `<img>` with no `alt` attribute (WCAG H37)."
+              "description": "Reports an `<img>` with no `alt` attribute (WCAG H37).",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name_counts": {
+                          "default": false,
+                          "description": "A non-empty `aria-label` or `aria-labelledby` (and `title` on `<object>`) counts as the text alternative.",
+                          "type": "boolean"
+                        },
+                        "other_elements": {
+                          "default": false,
+                          "description": "Also check `<area>`, `<object>` and `<input type=\"image\">`.",
+                          "type": "boolean"
+                        },
+                        "skip_hidden": {
+                          "default": true,
+                          "description": "Leave out an element hidden from assistive technology (`aria-hidden`, `role=\"presentation\"` or `none`).",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "implicit-alias": {
               "$ref": "#/definitions/rule",
@@ -2436,6 +2481,10 @@
             "input-missing-label": {
               "$ref": "#/definitions/rule",
               "description": "Reports an `<input>` (not hidden and not a button), `<select>` or `<textarea>` that no label names: it is not inside a `<label>`, no `<label for>` points at its `id`, and it has no `aria-label` or `aria-labelledby`."
+            },
+            "interactive-supports-focus": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports an element with a click or key handler that cannot take focus: no `tabindex`, not a control or link with `href`, and no role that is not a widget (`heading`, `listitem`, `dialog`, ...)."
             },
             "interpolation-check": {
               "$ref": "#/definitions/rule",
@@ -2683,6 +2732,10 @@
             "keyword-identifier": {
               "$ref": "#/definitions/rule",
               "description": "An unquoted name written like a keyword of the dialect (sqlfluff RF04)."
+            },
+            "label-has-control": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `<label>` that names no control: it has no `for` attribute (a bound `[for]` counts) and holds no labelable element (`<input>` that is not hidden, `<select>`, `<textarea>`, `<button>`, `<meter>`, `<output>`, `<progress>`)."
             },
             "lambda-assignment": {
               "$ref": "#/definitions/rule",
@@ -3233,6 +3286,10 @@
               "$ref": "#/definitions/rule",
               "description": "An import at module level after code (docstrings, `__all__`, blocks, and `sys.path` or `os.environ` setup are not code)."
             },
+            "mouse-events-have-key-events": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `mouseover` handler with no `focus` handler and a `mouseout` handler with no `blur` handler on the same element."
+            },
             "multiline-expression-wrapping": {
               "$ref": "#/definitions/rule",
               "description": "Reports an expression that spans lines and starts after code on its line: the value of a property or a function body after `=`, or an argument."
@@ -3497,6 +3554,10 @@
             "no-at-html-tags": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `{@html}` tag."
+            },
+            "no-autofocus": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports an element with an `autofocus` attribute (or a bound `[autofocus]` on an HTML element; on a component it is one of its inputs)."
             },
             "no-automatic-variable-assignment": {
               "$ref": "#/definitions/rule",
@@ -5097,6 +5158,10 @@
             "prefer-const": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `let` variable that is assigned once and could be a `const`: the single write is its initializer, a `for-in` or `for-of` head, or the first assignment statement in the same block as the declaration."
+            },
+            "prefer-control-flow": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `*ngIf` or `*ngFor` attribute and a `[ngSwitch]` binding: the directives that the `@if`, `@for` and `@switch` blocks of Angular 17 replace."
             },
             "prefer-native-element": {
               "$ref": "#/definitions/rule",
@@ -6987,6 +7052,10 @@
             "syntax-specified": {
               "$ref": "#/definitions/rule",
               "description": "Reports a file without `syntax = ...;` or `edition = ...;`, which makes it proto2."
+            },
+            "table-scope": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `scope` attribute on an element other than `<th>`."
             },
             "test-and-or": {
               "$ref": "#/definitions/rule",
@@ -10187,6 +10256,7 @@
           "preset:go/revive",
           "preset:graphql/graphql-eslint-recommended",
           "preset:hcl/tflint-recommended",
+          "preset:html/angular-eslint-recommended",
           "preset:html/eslint-plugin-svelte-recommended",
           "preset:html/eslint-plugin-vue-recommended",
           "preset:html/html-eslint-recommended",
