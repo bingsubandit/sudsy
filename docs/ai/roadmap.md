@@ -19,7 +19,7 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 | 9 | Kotlin | layout rules come from the formatter (`format-diff`, `multiline-start`); misses: `string-template-indent`, `annotation`, `no-consecutive-comments`, `function-literal`, `multiline-loop`, `blank-line-between-when-conditions` (264 of 989), `filename` (single-class check) |
 | 10 | SQL | `PRS` 380, `CP05` 227, `CP02` 187, `RF05` 131, `CV06` 126; 189 parse gaps and 189 layout gaps |
 | 11 | PHP | type analysis (with the corpus dependencies installed: `class.notFound` 254 and `method.notFound` 94 of 1,098 PHPStan findings, `method.void` 42, `variable.undefined` 20, the rest of `new.static` 43 and `return.missing` 22 need other files; the classification is in [design/symbol-index.md](design/symbol-index.md#phase-1-result)); inline-text files (~790) |
-| 12 | Ruby | no formatter run |
+| 12 | Ruby | at the format bar (86%); column alignment of arguments and pairs, `<<-` to `<<~` (33 files), token spacing ([design/ruby.md](design/ruby.md)) |
 | 13 | GraphQL | `naming-convention` 80 of 149 missed, `description-style` 11, `require-deprecation-reason` 10; the schema-bound rules cannot run |
 | 14 | Terraform (HCL) | module-level rules: `terraform_required_providers` 37, `unused_declarations` 31, `typed_variables` 27 |
 | 15 | Java | at the lint bar; 934 files with layout gaps (line comments, chains in ternaries) |

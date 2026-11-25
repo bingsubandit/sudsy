@@ -349,10 +349,7 @@ fn hanging_lists() {
         f("def f\n  raise E.new(\n          a,\n          b: 1,\n        )\nend\n"),
         "def f\n  raise E.new(\n    a,\n    b: 1,\n  )\nend\n"
     );
-    assert_eq!(
-        f("x = [\n      a,\n  b\n    ]\n"),
-        "x = [\n  a,\n  b\n]\n"
-    );
+    assert_eq!(f("x = [\n      a,\n  b\n    ]\n"), "x = [\n  a,\n  b\n]\n");
     let s = "x = f(a, {\n      b: 1\n    })\n";
     assert_eq!(f(s), s);
     let s = "x = f(\n  %w[\n    a\n    b\n  ],\n)\n";

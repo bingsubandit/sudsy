@@ -421,15 +421,16 @@ The status and the numbers of every language are in the generated table "Languag
 ## Ruby
 
 <!-- generated:measured-ruby -->
-- **Measured:** Lint only: Ready.
-  - Format: Sudsy does not format the language.
+- **Measured:** Ready.
+  - Format, RuboCop: 86% of the files identical (16,302 of 18,950 files).
   - Lint, RuboCop: 96% of its findings also reported (7,717 of 8,022 findings).
 <!-- /generated -->
 
-- The formatter keeps files as written.
+- **Formatter:** RuboCop's Layout cops: blank lines, indentation, spacing; every line break of the source stays.
+- **Options:** `max_blank_lines`.
 - **Linter:** RuboCop Lint department. Other departments are not covered.
 - **Presets:** `ruby/rubocop`.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh coverage rubocop`.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format rubocop`, `scripts/parity.sh coverage rubocop`.
 
 ## GraphQL
 

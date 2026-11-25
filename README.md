@@ -92,7 +92,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Terraform (HCL) | █████████░ 99% terraform fmt | █████████░ 93% tflint | Ready |
 | Angular templates | █████████░ 99% Prettier | █████████░ 99% angular-eslint | Ready |
 | INI / EditorConfig / .gitignore | ██████████ 100% stable · no reference tool | 31 rules · no reference tool | Ready |
-| Ruby | none | █████████░ 96% RuboCop | Lint only: Ready |
+| Ruby | ████████░░ 86% RuboCop | █████████░ 96% RuboCop | Ready |
 | GraphQL | █████████░ 99% Prettier | 29 rules · no reference tool | Ready |
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
 | C / C++ | ██████░░░░ 69% clang-format | not measured clang-tidy | In progress |
@@ -132,6 +132,7 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Vue / Svelte | 17 | Prettier | [18](https://prettier.io/docs/options) |
 | Terraform (HCL) | 3 | terraform fmt | [0](https://developer.hashicorp.com/terraform/cli/commands/fmt) |
 | Angular templates | 16 | Prettier | [15](https://prettier.io/docs/options) |
+| Ruby | 6 | RuboCop | [224](https://docs.rubocop.org/rubocop/cops_layout.html) |
 | GraphQL | 6 | Prettier | [5](https://prettier.io/docs/options) |
 | Protobuf | 4 | buf format | [0](https://buf.build/docs/reference/cli/buf/format/) |
 | C / C++ | 48 | clang-format | [257](https://clang.llvm.org/docs/ClangFormatStyleOptions.html) |

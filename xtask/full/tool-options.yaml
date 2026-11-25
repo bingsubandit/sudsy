@@ -139,3 +139,8 @@
   options: 4
   source: "https://github.com/BlankSpruce/gersemi#configuration"
   note: "line_length, indent (spaces or tabs), list_expansion, sort_order (0.29.2); not counted: unsafe (sanity checks), definitions and extensions (command definitions), disable_formatting, warn_about_unknown_commands, color, quiet, workers, cache (modes and output)"
+- language: ruby
+  tool: RuboCop
+  options: 224
+  source: "https://docs.rubocop.org/rubocop/cops_layout.html"
+  note: "the 100 Layout cops of config/default.yml: one switch each plus its own settings (EnforcedStyle, Width, IndentationWidth, Max, Allow* flags; not Enabled, Exclude, Include, Safe, Severity, the SupportedStyles lists, AllowedMethods and AllowedPatterns lists), 1.92.3"

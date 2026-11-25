@@ -159,6 +159,7 @@
   popularity: [{name: Ruby, gh: 449257, so: 5.9}]
   ids: [ruby]
   speed: [Ruby]
+  format: [{tool: rubocop, name: RuboCop, groups: [real-world]}]
   lint: [{tool: rubocop, name: RuboCop}]
 - language: CMake
   popularity: [{name: CMake, gh: 608541, so: 11.7}]

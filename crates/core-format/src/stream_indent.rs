@@ -645,19 +645,20 @@ fn reindent(
     let min = text.split('\n').filter(|l| !blank(l)).map(lead).min();
     let mut closing = lead(label);
     let mut out = text.to_string();
-    if let Some(min) = min {
-        if squiggly && min != want {
-            out = text
-                .split('\n')
-                .map(|l| match () {
-                    // A line of blanks no longer than the indentation is empty in the value.
-                    _ if blank(l) && l.len() <= min => String::new(),
-                    _ => format!("{}{}", " ".repeat(want), &l[min..]),
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-            closing = closing.max(base);
-        }
+    if let Some(min) = min
+        && squiggly
+        && min != want
+    {
+        out = text
+            .split('\n')
+            .map(|l| match () {
+                // A line of blanks no longer than the indentation is empty in the value.
+                _ if blank(l) && l.len() <= min => String::new(),
+                _ => format!("{}{}", " ".repeat(want), &l[min..]),
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        closing = closing.max(base);
     }
     let dashed = squiggly || opener.starts_with("<<-");
     if dashed && closing != base && outer != Some(closing) {
