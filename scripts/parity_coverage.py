@@ -112,13 +112,8 @@ def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out,
     # that name next to the input, as the yaml-test-suite's `error`): a marked file is invalid input and leaves the count, any other
     # rejected file is a Sudsy bug and its findings stay.
     sources = dict(corpus_files(spec, Counter()))
-    rejected = {n for n in (norm(m, after) for m in re.findall(r"^error: (.+?): (?:\d+:\d+:|\1 is not valid UTF-8)", run.stderr, re.M)) if n in sources}
-    marker = spec.get("invalid_marker")
-    invalid = {n for n in rejected if marker and (sources[n].parent / marker).exists()}
-    reference = spec.get("reference_parser")  # a command (`{file}`) that exits non-zero on a syntax error: the language's own parser
-    invalid |= {n for n in rejected - invalid if reference and subprocess.run([a.format(python=sys.executable, file=sources[n]) for a in reference], capture_output=True, check=False).returncode}
-    parse_error = spec.get("parse_error")  # the rule the tool reports for a file it cannot parse: a file Sudsy rejects and the tool reports it for is invalid too
-    invalid |= {f[0] for f in found if parse_error and f[1] == parse_error and f[0] in rejected}
+    rejected = rejected_files(run.stderr, after, sources)
+    invalid = invalid_inputs(spec, sources, rejected, found)
     left = [f for f in found if f[1] in layout and f[0] not in left_out and f[0] not in invalid and not pinned(f)]
     per = Counter(f[1] for f in left)
     print(f"proof: `sudsy format` exit {run.returncode}; formatter findings {len(before)} before, {len(left)} after in {len({f[0] for f in left})} files: "
@@ -127,6 +122,22 @@ def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out,
           f"{len(rejected) - len(invalid)} that it does not (named gaps or Sudsy bugs, counted)"
           + "".join(f"\n  {'gap ' + ','.join(named[n]) if n in (named or {}) else 'bug'}: {n}" for n in sorted(rejected - invalid)))
     return left
+
+
+def rejected_files(stderr, work, sources):
+    """The corpus files `sudsy format` reports (`error: FILE: LINE:COL:`, or `error: FILE: FILE is not valid UTF-8 ...` for a file it cannot read)."""
+    return {n for n in (norm(m, work) for m in re.findall(r"^error: (.+?): (?:\d+:\d+:|\1 is not valid UTF-8)", stderr, re.M)) if n in sources}
+
+
+def invalid_inputs(spec, sources, rejected, found):
+    """The rejected files that are invalid input, which leave the count: marked by the corpus (`invalid_marker`), refused by the language's own
+    parser (`reference_parser`), or both rejected by Sudsy and reported by the tool as unparsable (`parse_error`). A file only Sudsy rejects is a bug."""
+    marker = spec.get("invalid_marker")
+    invalid = {n for n in rejected if marker and (sources[n].parent / marker).exists()}
+    reference = spec.get("reference_parser")  # a command (`{file}`) that exits non-zero on a syntax error: the language's own parser
+    invalid |= {n for n in rejected - invalid if reference and subprocess.run([a.format(python=sys.executable, file=sources[n]) for a in reference], capture_output=True, check=False).returncode}
+    parse_error = spec.get("parse_error")  # the rule the tool reports for a file it cannot parse
+    return invalid | {f[0] for f in found if parse_error and f[1] == parse_error and f[0] in rejected}
 
 
 def norm(path, work):

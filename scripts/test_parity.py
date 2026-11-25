@@ -132,6 +132,16 @@ class Runner(unittest.TestCase):
             diffs.refuted.add("c.txt")  # Sudsy rejects it but the reference parser accepts it
             self.assertEqual(diffs.status("c.txt", None), "REVIEW")
 
+    def test_a_file_only_sudsy_rejects_stays_counted_and_a_nul_refusal_is_a_rejection(self):
+        err = "error: a.sql: 1:1: syntax error\nerror: n.kt: n.kt is not valid UTF-8 text (or holds a NUL byte)\nerror: z.sql: 2:2: x\n"
+        sources = {"a.sql": Path("a.sql"), "n.kt": Path("n.kt"), "z.sql": Path("z.sql")}
+        rejected = pc.rejected_files(err, Path("."), sources)
+        self.assertEqual(rejected, {"a.sql", "n.kt", "z.sql"})
+        found = [("a.sql", "PRS", "m", 1), ("z.sql", "LT01", "m", 1), ("n.kt", "PRS", "m", 1)]
+        invalid = pc.invalid_inputs({"parse_error": "PRS"}, sources, rejected, found)
+        self.assertEqual(invalid, {"a.sql", "n.kt"})  # z.sql: only Sudsy rejects it, the tool parsed it
+        self.assertEqual(pc.invalid_inputs({}, sources, rejected, found), set())
+
     def test_reviewed_finding_is_pinned_per_finding(self):
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)

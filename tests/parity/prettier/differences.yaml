@@ -1,7 +1,7 @@
 ratchet:
   graphql: 123
   json: 4
-  markdown: 96
+  markdown: 106
   real-world-json: 3184
   real-world-yaml: 803
   yaml: 5
