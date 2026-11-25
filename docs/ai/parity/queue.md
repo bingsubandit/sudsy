@@ -28,7 +28,7 @@ New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x
 | Batchfile | 0.51~ | ~1.2 | 2.77~ | 4.35~ | 4.93~ | both: lint Blinter + format none found | estimate: pick only to measure it |
 | Makefile | 0.44 | 0 (paid) | - | 4.33~ | - | format: format mbake | retrofit to no-reference-tool.md; estimate: pick only to measure it |
 | Dockerfile | 0.68 | 0 (paid) | - | 3.57~ | - | format: format dockerfmt | retrofit to no-reference-tool.md; estimate: pick only to measure it |
-| Jupyter Notebook | 0.57~ | ~1 | 1.94~ | 1.94~ | 2.59~ | both: lint ruff check on cells + format ruff format on cells | JSON file with Python cells: the Python leg does the work; estimate: pick only to measure it |
+| Jupyter Notebook | 0.57~ | 0.2 | 2.43~ | 2.59~ | 2.68~ | both: lint ruff check on cells + format ruff format on cells | JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md; estimate: pick only to measure it |
 | Ansible | 0.28~ | ~0.2 | 2.37~ | - | - | lint: lint ansible-lint | YAML with playbook semantics; estimate: pick only to measure it |
 | Gradle | 0.31~ | ~1.2 | 2.10~ | 1.47~ | 2.35~ | both: lint none found + format npm-groovy-lint | build.gradle (Groovy DSL); build.gradle.kts is Kotlin; estimate: pick only to measure it |
 | Kubernetes manifests | 0.41~ | ~0.2 | 2.33~ | - | - | lint: lint kubeconform | estimate: pick only to measure it |

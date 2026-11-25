@@ -458,10 +458,10 @@
   lint: {tool: "StaticLint.jl", gain: ~0.7, cost: {index: true, est: true}, why: "only tool found; Julia runtime; scope analysis; some rules need semantics; archived"}
 - language: Jupyter Notebook
   gh: 1018851
-  parser: ~1.0 # crate serde_json (1.0.154, updated 2026-10)
-  note: "JSON file with Python cells: the Python leg does the work"
-  format: {tool: "ruff format on cells", gain: ~0.4, cost: {est: true}, why: "only tool found; Rust, fast; the Python formatter does the cells; canonical, no width"}
-  lint: {tool: "ruff check on cells", gain: ~0.4, cost: {est: true}, why: "only tool found; Rust, fast; the Python rules do the cells; syntactic rules"}
+  parser: 0.2 # lang-json hosts the cells as Python regions; docs/ai/design/jupyter.md
+  note: "JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md"
+  format: {tool: "ruff format on cells", gain: ~0.4, cost: {parts: 3, est: true}, why: "ruff primary (442M downloads a month); cells of 69% of files equal today, 85% with the final-semicolon rule; JSON layout kept as written"}
+  lint: {tool: "ruff check on cells", gain: ~0.4, cost: {parts: 4, est: true}, why: "ruff default set: 87.9% covered with cells as one module; needs last-expression, per-cell import, await and builtins rules"}
 - language: Just
   parser: ~1.2 # tree-sitter: casey/tree-sitter-just (198 stars, pushed 2026-03)
   format: {tool: "just --fmt", gain: ~0.1, cost: {est: true}, why: "only tool found; official, Rust; marked unstable; canonical, no width"}
