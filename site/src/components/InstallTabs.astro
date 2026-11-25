@@ -1,0 +1,27 @@
+---
+// The install commands as tabs, from scripts/install.mjs. Used by the landing page (twice) and Getting started;
+// `id` keeps the tab ids of several instances apart. The first panel shows without JavaScript.
+import { channels } from '../../scripts/install.mjs';
+const { id } = Astro.props;
+---
+<div class="install" data-tabs>
+  <div class="tab-list js-only" role="tablist" aria-label="Install with">
+    {channels.map((c, i) => (
+      <button type="button" role="tab" id={`${id}-tab-${i}`} aria-controls={`${id}-panel-${i}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1}>{c.label}</button>
+    ))}
+  </div>
+  {channels.map((c, i) => (
+    <div role="tabpanel" id={`${id}-panel-${i}`} aria-labelledby={`${id}-tab-${i}`} hidden={i !== 0} tabindex="0">
+      {c.command && (
+        <div class="cmd">
+          <pre><code>{c.command}</code></pre>
+          <button type="button" class="copy js-only" data-copy={c.command} aria-label={`Copy the ${c.label} command`}>Copy</button>
+        </div>
+      )}
+      {c.note && <p class="install-note" set:html={c.note} />}
+    </div>
+  ))}
+</div>
+<script>
+  import '../scripts/tabs.js';
+</script>

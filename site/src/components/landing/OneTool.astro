@@ -1,0 +1,28 @@
+---
+// The README's before / after of a CI step and the demo repository's `sudsy.yaml` (the file the sessions ran with).
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { esc } from '../../../scripts/badges.mjs';
+import { beforeAfter } from '../../../scripts/landing.mjs';
+const config = readFileSync(resolve(process.cwd(), 'demo/sudsy.yaml'), 'utf8').trimEnd();
+const diff = beforeAfter().split('\n').map((l) => `<span class="${l.startsWith('-') ? 't-del' : l.startsWith('+') ? 't-add' : ''}">${esc(l)}</span>`).join('\n');
+---
+<section class="wrap one" aria-labelledby="one-title">
+  <div class="sec-text">
+    <h2 id="one-title">One tool in place of many</h2>
+    <p>
+      A typical repo runs one tool per language. Each tool has its own install, config file, version pins, editor plugin and CI step.
+      Sudsy is one of each.
+    </p>
+  </div>
+  <div class="pair">
+    <figure class="code" id="before-after">
+      <figcaption>The CI step</figcaption>
+      <pre><code set:html={diff} /></pre>
+    </figure>
+    <figure class="code" id="config">
+      <figcaption>The config</figcaption>
+      <pre><code>{config}</code></pre>
+    </figure>
+  </div>
+</section>

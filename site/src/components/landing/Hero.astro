@@ -1,0 +1,26 @@
+---
+import soap from '../../../../assets/logo/soap_color.svg';
+import InstallTabs from '../InstallTabs.astro';
+import { counts } from '../../../scripts/landing.mjs';
+import { base } from '../../../config.mjs';
+const c = counts();
+---
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap hero-grid">
+    <div class="hero-text">
+      <p class="eyebrow">Formatter and linter, one binary</p>
+      <h1 id="hero-title">A true polyglot formatter and linter for every repo.</h1>
+      <p class="tagline">Fully featured polyglot formatter and linter for 20+ languages. Extremely configurable, plugin-extendable.</p>
+      <InstallTabs id="hero" />
+      <div class="actions">
+        <a class="button primary" href={`${base}/getting-started/`}>Get started</a>
+        <a class="button" href={`${base}/rules/`}>Rules</a>
+        <a class="button ghost" href="https://github.com/bingsubandit/sudsy">GitHub</a>
+      </div>
+      <p class="fine">Ready for {c.ready} languages, early support for {c.progress} more.</p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <img src={soap.src} alt="" width="320" height="320" fetchpriority="high" />
+    </div>
+  </div>
+</section>

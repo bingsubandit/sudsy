@@ -5,6 +5,7 @@
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { base, site, rulesPath, siteData } from '../config.mjs';
+import { installMarkdown } from './install.mjs';
 
 const origin = site + base;
 const twins = new Map(); // slug -> { title, description, text }
@@ -40,14 +41,14 @@ export function handwritten(dir) {
     index: 'Start with [getting started](/sudsy/getting-started/), the [command line](/sudsy/cli/) and the [languages](/sudsy/languages/).',
     rules: 'One page per rule at `rules/<id>.md`; every rule as data in [rules.json](/sudsy/rules.json). Filter by language with the [language pages](/sudsy/languages/); search an id of another tool (`SA1005`, `DL3008`) at `rules/<id>`.',
   };
-  const slugs = { 'getting-started.mdx': 'getting-started', 'cli.md': 'cli', 'index.md': 'index', 'rules/index.mdx': 'rules' };
+  const slugs = { 'getting-started.mdx': 'getting-started', 'cli.md': 'cli', 'index.mdx': 'index', 'rules/index.mdx': 'rules' };
   for (const [file, slug] of Object.entries(slugs)) {
     const text = readFileSync(dir + file, 'utf8');
     const [, front, body] = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
     const get = (k) => front.match(new RegExp(`^(?:  )?${k}: (.*)$`, 'm'))?.[1] ?? '';
-    // Starlight Tabs: each tab becomes a bold label.
+    // The install tabs: each channel becomes a bold label.
     const lines = body.replace(/^import .*\n/gm, '').replace(/<RuleSearch \/>\n?/, '')
-      .replace(/<TabItem label="([^"]*)">\n/g, '**$1**\n').replace(/<\/?(Tabs|TabItem)>\n?/g, '');
+      .replace(/<InstallTabs [^>]*\/>/, installMarkdown());
     twin(slug, { title: get('title'), description: get('description') }, extra[slug] ?? lines);
   }
 }

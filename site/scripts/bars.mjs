@@ -8,11 +8,11 @@ import { esc } from './badges.mjs';
 export const READY = 85;
 
 // `what` completes the label: "Format: 95% of files identical to Prettier".
-export function bar({ share, name, href, what, primary = false }) {
+export function bar({ share, name, href, what, label: given, primary = false }) {
   const measured = share != null;
   const pct = measured ? Math.floor(share) : 0;
   const state = !measured ? 'none' : pct >= READY ? 'ok' : 'low';
-  const label = `${what.task}: ${measured ? `${pct}% of ${what.of}` : 'not measured'}${name ? ` ${what.prep} ${name}` : ''}`;
+  const label = given ?? `${what.task}: ${measured ? `${pct}% of ${what.of}` : 'not measured'}${name ? ` ${what.prep} ${name}` : ''}`;
   const tool = name ? (href ? `<a class="bar-tool" href="${href}">${esc(name)}</a>` : `<span class="bar-tool">${esc(name)}</span>`) : '';
   return `<span class="bar ${state}${primary ? ' primary' : ''}">${tool}<span class="bar-track" role="img" aria-label="${esc(label)}"><span class="bar-fill" style="width:${pct}%"></span><span class="bar-tick"></span></span><span class="bar-num">${measured ? `${pct}%` : 'not measured'}</span></span>`;
 }

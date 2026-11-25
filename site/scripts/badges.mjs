@@ -9,4 +9,7 @@ export const badge = (kind, label, href) => `<span class="badge ${kind}">${href 
 export const languageBadges = (languages) =>
   [...new Map(languages.map((l) => [l.slug, l])).values()].map((l) => badge('lang', l.name, `${base}/languages/${l.slug}/`));
 
-export const pageHead = (badges) => `<div class="page-head">${badges.join('')}</div>`;
+// The status badge of a language row of the support table (`Ready`, `Lint only: Ready`, `In progress`, `not measured`).
+export const statusBadge = (st) => badge(/Ready$/.test(st) ? 'covered' : st === 'not measured' ? 'missing' : 'partial', st);
+
+export const pageHead =(badges) => `<div class="page-head">${badges.join('')}</div>`;

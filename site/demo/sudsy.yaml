@@ -1,0 +1,6 @@
+extends:
+  - preset:python/ruff
+  - preset:js/eslint-recommended
+lint:
+  rules:
+    no-debugger: error

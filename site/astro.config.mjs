@@ -16,12 +16,14 @@ export default defineConfig({
       favicon: '/favicon.svg',
       // Starlight adds the canonical link (from `site`), og:title, og:description and og:url, and the sitemap.
       head: [
+        { tag: 'script', content: "document.documentElement.classList.add('js')" },
         { tag: 'meta', attrs: { property: 'og:image', content: `${site}${base}/og.png` } },
         { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
         { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
         { tag: 'meta', attrs: { name: 'twitter:image', content: `${site}${base}/og.png` } },
       ],
-      customCss: ['./src/styles/site.css'],
+      // `js` on <html> shows what needs a script (tab lists, copy buttons); without it the first panel shows.
+      customCss: ['./src/styles/site.css', './src/styles/landing.css'],
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/bingsubandit/sudsy' }],
       sidebar: [
         { label: 'Getting started', link: '/getting-started/' },
@@ -29,6 +31,7 @@ export default defineConfig({
         { label: 'Rules', link: '/rules/' },
         { label: 'Languages', link: '/languages/' },
         { label: 'How languages are measured', link: '/measured/' },
+        { label: 'Speed comparisons', link: '/speed/' },
         { label: 'Compared tools', link: '/compare/' },
         {
           label: 'Reference',

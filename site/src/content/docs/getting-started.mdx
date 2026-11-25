@@ -2,51 +2,11 @@
 title: Getting started
 description: Install Sudsy, check a project without changing it, fix it, configure it, and run it in your editor and in CI.
 ---
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import InstallTabs from '../../components/InstallTabs.astro';
 
 ## 1. Install
 
-<Tabs>
-
-<TabItem label="npm">
-
-```sh
-npm i -D @sudsylint/sudsy
-```
-
-Run it with `npx sudsy`.
-
-</TabItem>
-<TabItem label="PyPI">
-
-```sh
-pip install sudsy
-```
-
-Or run it without installing: `uvx sudsy`.
-
-</TabItem>
-<TabItem label="Homebrew">
-
-```sh
-brew install bingsubandit/sudsy/sudsy
-```
-
-</TabItem>
-<TabItem label="Scoop">
-
-```sh
-scoop bucket add sudsy https://github.com/bingsubandit/scoop-sudsy; scoop install sudsy
-```
-
-</TabItem>
-<TabItem label="Binary">
-
-Download the archive for your platform (Linux, macOS or Windows, x64 or arm64) from the [GitHub releases](https://github.com/bingsubandit/sudsy/releases) and put `sudsy` on your `PATH`.
-
-</TabItem>
-
-</Tabs>
+<InstallTabs id="start" />
 
 To try it first without installing anything: `npx @sudsylint/sudsy check src/` or `uvx sudsy check src/`.
 

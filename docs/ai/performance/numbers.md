@@ -190,6 +190,8 @@ Astro 7.4.7 + Starlight 0.42.9, same machine, Node 24, one run, 10 000 synthetic
 
 Rule list (`scripts/site.sh list-bench`, headless Chromium, same machine, one run, `astro preview` without compression): the real 833 rules: `/rules/` and its assets 489 KB decoded (`rules-index.json` 281 KB, 51 KB gzipped), all rows rendered in 0.65 s, first filter 73-99 ms, search term 53 ms. 10 000 synthetic rules (`scale-test`: build 187 s, 22 109 pages, 408 MB, Pagefind index 11.8 MB): 3.6 MB decoded, all rows in 4.7 s, first filter 0.4-2.4 s, search term 1.0 s.
 
+Landing page (`scripts/site.sh landing-bench`, headless Chromium on aarch64, 8 cores, median of 5 loads, a static server without compression, local network): 159 KB decoded in 11 requests (HTML 43 KB, JavaScript 96 KB (Starlight's search, theme and the tab script), SVG 15 KB (the logo), CSS 3 KB; the rest of the styles is inlined), largest contentful paint 240 ms at 1280 px and 196 ms at 360 px. No external font, script or image.
+
 ## Not measured repeatably
 - LSP completion/hover/format request latency in `bench.sh`.
 - Config load and discovery on a large repository.

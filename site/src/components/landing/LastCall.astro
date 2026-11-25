@@ -1,0 +1,16 @@
+---
+import InstallTabs from '../InstallTabs.astro';
+import { base } from '../../../config.mjs';
+import { earlyRelease } from '../../../scripts/landing.mjs';
+---
+<section class="wrap last" aria-labelledby="last-title">
+  <h2 id="last-title">Try it on your repo</h2>
+  <p>Read-only: <code>sudsy check</code> reports and changes no files, and needs no config.</p>
+  <InstallTabs id="last" />
+  <div class="actions">
+    <a class="button primary" href={`${base}/getting-started/`}>Get started</a>
+    <a class="button" href={`${base}/rules/`}>Rules</a>
+    <a class="button ghost" href="https://github.com/bingsubandit/sudsy">GitHub</a>
+  </div>
+  <p class="fine">Early release ({earlyRelease()}): config may change in minor versions before 1.0.</p>
+</section>

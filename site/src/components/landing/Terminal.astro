@@ -1,0 +1,37 @@
+---
+// The terminal sessions of src/data/sessions.json (scripts/sessions.mjs runs the CLI on site/demo/): the
+// output is shown as the CLI printed it; only severities and diff lines get a colour class.
+import sessions from '../../data/sessions.json';
+import { esc } from '../../../scripts/badges.mjs';
+
+const paint = (line) => {
+  const t = esc(line);
+  if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) return `<span class="t-meta">${t}</span>`;
+  if (line.startsWith('@@')) return `<span class="t-hunk">${t}</span>`;
+  if (line.startsWith('+')) return `<span class="t-add">${t}</span>`;
+  if (line.startsWith('-')) return `<span class="t-del">${t}</span>`;
+  return t
+    .replace(/^([^\s:]+:\d+:\d+: )error(\[[^\]]*\])/, '$1<span class="t-err">error</span><span class="t-dim">$2</span>')
+    .replace(/^([^\s:]+:\d+:\d+: )warning(\[[^\]]*\])/, '$1<span class="t-warn">warning</span><span class="t-dim">$2</span>');
+};
+---
+<div class="terminal" data-tabs>
+  <div class="term-bar">
+    <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <div class="tab-list js-only" role="tablist" aria-label="Session">
+      {sessions.map((s, i) => (
+        <button type="button" role="tab" id={`term-tab-${s.id}`} aria-controls={`term-panel-${s.id}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1}>{s.label}</button>
+      ))}
+    </div>
+  </div>
+  {sessions.map((s, i) => (
+    <div role="tabpanel" id={`term-panel-${s.id}`} aria-labelledby={`term-tab-${s.id}`} hidden={i !== 0} class="term-body">
+      <pre tabindex="0"><code>{s.steps.map((st) => (
+<Fragment><span class="ln"><span class="t-prompt">$ </span><span class="t-cmd">{st.command}</span>{'\n'}</span><Fragment set:html={st.output.split('\n').map((l) => `<span class="ln">${paint(l)}\n</span>`).join('')} /><span class="ln">{'\n'}</span></Fragment>
+))}</code></pre>
+    </div>
+  ))}
+</div>
+<script>
+  import '../../scripts/tabs.js';
+</script>

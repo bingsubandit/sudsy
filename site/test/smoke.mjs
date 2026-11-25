@@ -5,10 +5,14 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
+import { channels } from '../scripts/install.mjs';
+import { beforeAfter, counts, speedRows } from '../scripts/landing.mjs';
+import { claimText, lintClaim } from '../scripts/speed.mjs';
 
-const PORT = Number(process.env.SITE_PORT ?? 4399); // SITE_PORT: another checkout may be serving on 4399
+// SITE_PORT: another checkout may be serving on 4399; SITE_NO_SERVER tests a server that is already running.
+const PORT = Number(process.env.SITE_PORT ?? 4399);
 const B = `http://localhost:${PORT}/sudsy`;
-const server = spawn('npx', ['astro', 'preview', '--port', String(PORT)], { shell: true, stdio: 'ignore' });
+if (!process.env.SITE_NO_SERVER) spawn('npx', ['astro', 'preview', '--port', String(PORT)], { shell: true, stdio: 'ignore' });
 let browser, page, index;
 const problems = [];
 
@@ -29,7 +33,7 @@ before(async () => {
 });
 after(async () => {
   await browser?.close();
-  spawn('npx', ['astro', 'preview', 'stop'], { shell: true, stdio: 'ignore' }); // astro preview runs as a daemon
+  if (!process.env.SITE_NO_SERVER) spawn('npx', ['astro', 'preview', 'stop'], { shell: true, stdio: 'ignore' }); // astro preview runs as a daemon
 });
 
 // "N of M rules" with every one of the N rows rendered.
@@ -191,13 +195,52 @@ test('tool page links ids to the tool and labels the status', async () => {
   assert.ok(await page.locator('main .badge.covered').count() > 5);
 });
 
-test('a tool with a measured share never says it was not measured', async () => {
-  const tools = JSON.parse(readFileSync(new URL('../../docs/ai/parity/site.json', import.meta.url), 'utf8')).tools;
-  assert.ok(tools.some((t) => t.target != null));
-  for (const t of tools) {
+// The format shares of a tool: the languages that name it as a reference formatter.
+const formatShares = (data, t) => data.languages.flatMap((l) => l.format.filter((x) => x.catalog === t.tool && x.share != null).map((x) => ({ language: l.name, share: x.share })));
+const siteData = () => JSON.parse(readFileSync(new URL('../../docs/ai/parity/site.json', import.meta.url), 'utf8'));
+
+test('a tool with a measured share (lint or format) never says it was not measured', async () => {
+  const data = siteData();
+  assert.ok(data.tools.some((t) => t.target != null));
+  assert.ok(data.tools.some((t) => t.target == null && formatShares(data, t).length), 'a formatter with only a format share exists');
+  for (const t of data.tools) {
     const html = await (await fetch(`${B}/compare/${t.tool}/`)).text();
-    assert.equal(html.includes('not measured on a corpus'), t.target == null, `${t.tool} target ${t.target}`);
+    assert.equal(html.includes('not measured on a corpus'), t.target == null && !formatShares(data, t).length, `${t.tool} target ${t.target}`);
+    for (const f of formatShares(data, t)) assert.ok(html.includes(`${Math.floor(f.share)}% of ${f.language} files identical`), `${t.tool} ${f.language}`);
   }
+});
+
+test('the compared tools index shows the format share of a formatter, per language', async () => {
+  const data = siteData();
+  await page.goto(`${B}/compare/`);
+  const row = page.locator('main table tbody tr', { has: page.locator('a[href$="/compare/prettier/"]') });
+  const labels = await row.locator('.bar-track').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  const prettier = formatShares(data, data.tools.find((t) => t.tool === 'prettier'));
+  assert.equal(labels.length, prettier.length);
+  assert.ok(labels.every((l) => l.startsWith('Format: ') && !l.includes('not measured')), labels.join('\n'));
+  assert.ok(labels.some((l) => l.endsWith('to Prettier for JavaScript / TypeScript') && l.includes('95%')), labels.join('\n'));
+  const both = page.locator('main table tbody tr', { has: page.locator('a[href$="/compare/ruff/"]') });
+  assert.deepEqual(await both.locator('.bar-track').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label').split(':')[0])), ['Lint', 'Format']);
+  assert.equal(await page.locator('main table tbody tr', { has: page.locator('a[href$="/compare/dotnet-format-editorconfig/"]') }).locator('.bar.none').count(), 1);
+});
+
+test('a language page lists its own presets and none of another language', async () => {
+  const data = siteData();
+  const own = (l) => l.presets;
+  for (const l of data.languages) {
+    for (const p of own(l)) {
+      const folder = p.split('/')[0];
+      assert.ok(l.ids.includes(folder)|| folder === 'html', `${l.slug} lists ${p}`);
+    }
+  }
+  await page.goto(`${B}/languages/php/`);
+  const presets = await page.locator('main a[href*="/reference/presets/#"]').allInnerTexts();
+  assert.deepEqual(presets, ['php/phpstan']);
+  await page.goto(`${B}/languages/js/`);
+  const js = await page.locator('main a[href*="/reference/presets/#"]').allInnerTexts();
+  assert.ok(js.includes('js/oxlint') && js.every((p) => p.startsWith('js/')), js.join(' '));
+  await page.goto(`${B}/languages/vue/`); // Vue / Svelte use the presets of the html crate
+  assert.ok((await page.locator('main a[href*="/reference/presets/#"]').allInnerTexts()).includes('html/eslint-plugin-vue-recommended'));
 });
 
 test('tool and language pages have the header badges', async () => {
@@ -221,8 +264,9 @@ test('getting started: install commands equal the README, tabs and steps exist',
   const install = readme.slice(readme.indexOf('## Install'), readme.indexOf('## Why'));
   const commands = [...install.matchAll(/^\| (?:npm|PyPI|Homebrew|Scoop) \| (.*) \|$/gm)].flatMap((m) => [...m[1].matchAll(/`([^`]+)`/g)].map((c) => c[1]));
   assert.ok(commands.length >= 5);
-  const source = readFileSync(new URL('../src/content/docs/getting-started.mdx', import.meta.url), 'utf8');
-  for (const c of commands) assert.ok(source.includes(c), `README command missing on the page: ${c}`);
+  const shown = channels.map((c) => `${c.command ?? ''} ${c.text ?? ''}`).join('\n');
+  for (const c of commands) assert.ok(shown.includes(c), `README command missing on the page: ${c}`);
+  for (const c of channels.filter((x) => x.command)) assert.ok(commands.includes(c.command), `the page has a command the README does not: ${c.command}`);
   await page.goto(`${B}/getting-started/`);
   assert.deepEqual(await page.locator('[role=tab]').allInnerTexts(), ['npm', 'PyPI', 'Homebrew', 'Scoop', 'Binary']);
   assert.equal(await page.locator('main h2').count(), 7);
@@ -260,8 +304,10 @@ test('progress bars: width equals the number, tick at 85, not-measured state, la
   assert.equal(await page.locator('.leg-empty').count(), 1);
   await page.goto(`${B}/compare/`);
   const tools = await barsOf('main table');
-  assert.equal(tools.length, data.tools.length);
-  assert.equal(tools.filter((b) => b.cls.includes('none')).length, data.tools.filter((t) => t.target == null).length);
+  assert.equal(await page.locator('main table tbody tr').count(), data.tools.length);
+  const unmeasured = data.tools.filter((t) => t.target == null && !formatShares(data, t).length);
+  assert.equal(tools.filter((b) => b.cls.includes('none')).length, unmeasured.length);
+  assert.ok(unmeasured.length > 0 && unmeasured.length < data.tools.length / 3, 'a few tools only are not measured');
 });
 
 test('no horizontal overflow on desktop and phone', async () => {
@@ -335,6 +381,154 @@ test('languages: the index follows the data order, every language links to its a
   assert.match(intro, /except PHP-CS-Fixer: measured with the @PER-CS rule set/);
   await page.goto(`${B}/languages/python/`);
   assert.doesNotMatch(await page.locator('.sl-markdown-content').innerText(), /except /);
+});
+
+const sessions = JSON.parse(readFileSync(new URL('../src/data/sessions.json', import.meta.url), 'utf8'));
+
+test('landing page: every section, one h1, the numbers come from the data', async () => {
+  const c = counts();
+  const data = siteData();
+  await page.goto(`${B}/`);
+  for (const id of ['hero-title', 'sessions-title', 'one-title', 'langs-title', 'speed-title', 'why-title', 'last-title']) assert.equal(await page.locator(`#${id}`).count(), 1, id);
+  assert.equal(await page.locator('h1:visible').count(), 1);
+  const text = await page.locator('.landing').innerText();
+  assert.ok(text.includes(`Ready for ${c.ready} languages, early support for ${c.progress} more.`));
+  // the claim is computed from the speed rows and links to the full list, where the losers are marked
+  const claim = lintClaim();
+  assert.ok(claim.total > 0 && text.includes(claimText(claim).replace(/^Faster/, 'faster')));
+  const sub = page.locator('#speed-title').locator('xpath=../p');
+  assert.ok((await sub.innerText()).startsWith(`Sudsy is ${claimText(claim).replace(/^Faster/, 'faster')}.`) && !text.includes('Where Sudsy is slower'));
+  assert.equal(await sub.locator('a').getAttribute('href'), '/sudsy/speed/');
+  assert.equal(await page.locator('.speed ~ .more a', { hasText: 'Every language' }).getAttribute('href'), '/sudsy/speed/');
+  assert.ok(text.includes(`${c.ready} languages ready, ${c.progress} in progress`));
+  assert.ok(text.includes(`${c.rules} rules with their own pages`) && text.includes(`${c.presets} presets`) && text.includes(`${c.safe} rules carry a fix marked safe`));
+  assert.ok(text.includes('Early release (v0.0.x): config may change in minor versions before 1.0.'));
+  // the language grid: one tile per language of the support table, each linked, with its status
+  const tiles = page.locator('.tile');
+  const shown = data.languages.slice(0, 12); // the most popular, in the order of the data; the link leads to the rest
+  assert.equal(await tiles.count(), shown.length);
+  assert.deepEqual(await tiles.locator('.tile-head a').allInnerTexts(), shown.map((l) => l.name));
+  assert.deepEqual(await tiles.locator('.tile-head a').evaluateAll((as) => as.map((a) => new URL(a.href).pathname)), shown.map((l) => `/sudsy/languages/${l.slug}/`));
+  assert.equal(await tiles.locator('.badge.covered').count(), shown.filter((l) => /Ready$/.test(l.status)).length);
+  assert.equal(await page.locator('.landing .more a', { hasText: `All ${data.languages.length} languages` }).getAttribute('href'), '/sudsy/languages/');
+  const first = await tiles.first().locator('.bar-track').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  const f0 = shown[0].format[0];
+  assert.ok(first[0].startsWith(`Format: ${Math.floor(f0.share)}% of files identical to ${f0.name}`) && first.length === 2, first.join('|'));
+  // a tool measured with another rule set says so on its tile
+  for (const l of shown) for (const x of [l.format[0], l.lint[0]].filter((x) => x?.note)) assert.ok(await page.locator('.tile', { hasText: l.name }).locator('.tile-note', { hasText: x.note }).count() === 1, `${l.name}: ${x.note}`);
+  // speed: the generated rows
+  const rows = speedRows();
+  assert.equal(await page.locator('.speed-card').count(), rows.length);
+  for (const r of rows) assert.ok(await page.locator('.speed-card', { hasText: r.verdict }).locator(`text=${r.sudsyText}`).count() >= 1, r.tool);
+  assert.ok(await page.locator('.speed-card .fill').evaluateAll((els) => els.every((e) => parseFloat(e.style.width) > 0 && parseFloat(e.style.width) <= 100)));
+  // reasons: at most six, each linked
+  const cards = page.locator('.card');
+  assert.ok(await cards.count() <= 6 && await cards.count() >= 4);
+  assert.equal(await cards.locator('a').count(), await cards.count());
+});
+
+test('speed page: every measured row, the languages that lose are marked, the claim counts match', async () => {
+  const data = siteData();
+  const claim = lintClaim();
+  await page.goto(`${B}/speed/`);
+  assert.equal(await page.locator('main tbody tr').count(), data.languages.reduce((n, l) => n + l.speed.length, 0));
+  const text = await page.locator('main').innerText();
+  assert.ok(text.includes(`${claimText(claim)}: ${claim.faster.length} of ${claim.total}`));
+  for (const r of claim.slower) assert.ok(text.includes(`${r.language} (${r.tool}, ${r.verdict})`), r.language);
+  assert.equal(await page.locator('main tbody .badge.partial').count(), data.languages.flatMap((l) => l.speed).filter((s) => s[3].includes('slower')).length);
+  assert.ok(claim.slower.length > 0 && claim.left.every((r) => r.reason));
+});
+
+test('landing page: the CI step and the config are the README\'s and the demo\'s', async () => {
+  await page.goto(`${B}/`);
+  assert.equal((await page.locator('#before-after code').textContent()).trimEnd(), beforeAfter());
+  assert.equal((await page.locator('#config code').textContent()).trimEnd(), readFileSync(new URL('../demo/sudsy.yaml', import.meta.url), 'utf8').trimEnd());
+  assert.ok(await page.locator('#before-after .t-del').count() >= 2 && await page.locator('#before-after .t-add').count() === 1);
+});
+
+test('landing page: install tabs switch by click and keyboard, copy works; commands equal the README', async () => {
+  await page.goto(`${B}/`);
+  const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8');
+  for (const id of ['hero', 'last']) {
+    const tabs = page.locator(`#${id}-tab-0`).locator('xpath=..');
+    assert.deepEqual(await tabs.locator('[role=tab]').allInnerTexts(), channels.map((c) => c.label));
+    await page.locator(`#${id}-tab-1`).click();
+    assert.equal(await page.locator(`#${id}-tab-1`).getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator(`#${id}-panel-0`).isVisible(), false);
+    assert.ok((await page.locator(`#${id}-panel-1`).innerText()).includes('pip install sudsy'));
+    await page.locator(`#${id}-tab-1`).press('ArrowRight');
+    assert.equal(await page.locator(`#${id}-tab-2`).getAttribute('aria-selected'), 'true');
+    assert.ok(await page.locator(`#${id}-panel-2`).isVisible());
+    await page.locator(`#${id}-tab-2`).press('End');
+    assert.ok((await page.locator(`#${id}-panel-4`).innerText()).includes('GitHub releases'));
+  }
+  for (const c of channels.filter((x) => x.command)) assert.ok(readme.includes(`\`${c.command}\``) || readme.includes(c.command), c.command);
+  await page.locator('#hero-tab-0').click();
+  await page.evaluate(() => { window.__copied = null; Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (t) => { window.__copied = t; } }, configurable: true }); });
+  await page.locator('#hero-panel-0 .copy').click();
+  await page.waitForFunction(() => window.__copied !== null);
+  assert.equal(await page.evaluate(() => window.__copied), 'npm i -D @sudsylint/sudsy');
+  assert.equal(await page.locator('#hero-panel-0 .copy').innerText(), 'Copied');
+});
+
+test('landing page: the terminal shows what the CLI printed and its tabs switch', async () => {
+  await page.goto(`${B}/`);
+  assert.deepEqual(await page.locator('.terminal [role=tab]').allInnerTexts(), sessions.map((s) => s.label));
+  for (const s of sessions) {
+    await page.locator(`#term-tab-${s.id}`).click();
+    const shown = await page.locator(`#term-panel-${s.id}`).innerText();
+    for (const st of s.steps) assert.ok(shown.includes(`$ ${st.command}`) && shown.includes(st.output.split('\n')[0]) && shown.includes(st.output.split('\n').at(-1)), `${s.id}: ${st.command}`);
+  }
+  assert.ok(sessions[0].steps[0].output.includes('error[no-debugger]') && sessions[2].steps[1].output.includes('@@'));
+  assert.ok(await page.locator('#term-panel-format .t-add').count() > 0 && await page.locator('#term-panel-format .t-del').count() > 0);
+});
+
+test('landing page: usable without JavaScript, with reduced motion, and 360 px wide', async () => {
+  const plain = await browser.newContext({ javaScriptEnabled: false });
+  const p = await plain.newPage();
+  await p.goto(`${B}/`);
+  assert.equal(await p.locator('.hero [role=tabpanel]:visible').count(), 1);
+  assert.ok((await p.locator('.hero [role=tabpanel]:visible').innerText()).includes('npm i -D @sudsylint/sudsy'));
+  assert.equal(await p.locator('.hero .tab-list').isVisible(), false);
+  assert.equal(await p.locator('.hero .copy').first().isVisible(), false);
+  assert.equal(await p.locator('.terminal [role=tabpanel]:visible').count(), 1);
+  assert.equal(await p.locator('.tile').count(), 12);
+  await plain.close();
+  const calm = await browser.newContext({ reducedMotion: 'reduce' });
+  const q = await calm.newPage();
+  await q.goto(`${B}/`);
+  assert.equal(await q.locator('.button.primary').first().evaluate((e) => getComputedStyle(e).transitionDuration), '0s');
+  assert.equal(await q.locator('.bar-fill').first().evaluate((e) => getComputedStyle(e).transitionDuration), '0s');
+  await calm.close();
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(`${B}/`);
+  await noOverflow('360px landing');
+  assert.ok(await page.locator('.hero .install').evaluate((e) => e.getBoundingClientRect().right <= 360));
+  await page.setViewportSize({ width: 1280, height: 720 });
+});
+
+test('landing page and getting started pass axe (WCAG A and AA), light and dark', async () => {
+  const axe = readFileSync(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8');
+  for (const path of ['', 'getting-started/', 'compare/', 'languages/php/']) {
+    for (const scheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto(`${B}/${path}`);
+      await page.evaluate(axe);
+      const bad = await page.evaluate(async () => (await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'] })).violations.map((v) => `${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(', ')}`));
+      assert.deepEqual(bad, [], `${path || 'landing'} ${scheme}`);
+    }
+  }
+  await page.emulateMedia({ colorScheme: 'light' });
+});
+
+test('landing page weight stays small', async () => {
+  const ctx = await browser.newContext();
+  const p = await ctx.newPage();
+  let bytes = 0;
+  p.on('response', async (r) => { try { bytes += (await r.body()).length; } catch {} });
+  await p.goto(`${B}/`, { waitUntil: 'networkidle' });
+  await ctx.close();
+  assert.ok(bytes < 500 * 1024, `${Math.round(bytes / 1024)} KB`);
 });
 
 test('no console or network errors', () => assert.deepEqual(problems, []));

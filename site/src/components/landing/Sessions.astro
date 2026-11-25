@@ -1,0 +1,17 @@
+---
+import Terminal from './Terminal.astro';
+---
+<section class="band" aria-labelledby="sessions-title">
+  <div class="wrap split">
+    <div class="sec-text">
+      <h2 id="sessions-title">Real output</h2>
+      <p>
+        What the command line printed on a small repository: a Python file and a JavaScript file, with the
+        <code>sudsy.yaml</code> shown below. <code>check</code> reports and changes nothing, <code>fix</code> applies the
+        safe fixes and formats, <code>format</code> rewrites the files.
+      </p>
+      <p class="more"><a href="/sudsy/cli/">Every command and the JSON output</a></p>
+    </div>
+    <Terminal />
+  </div>
+</section>

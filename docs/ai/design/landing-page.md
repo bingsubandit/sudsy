@@ -1,6 +1,6 @@
 # Plan: landing page of the site
 
-The page today is a title, the tagline and two buttons. This plan says what goes on it, from a look at what comparable sites show (read as text on 2026-11-25; looks to be checked in a browser by the implementing agent). Structure only: no copied text, art or styling.
+What goes on the landing page, from a look at what comparable sites show (read on 2026-11-25; RuboCop's tabbed terminal sessions and install tabs and dprint's card grid and sections were looked at in a browser). Structure only: no copied text, art or styling. How it is built: [development/site.md](../development/site.md#landing-page).
 
 ## What other sites show
 | Site | Above the fold | Below |
@@ -28,6 +28,5 @@ Common to the useful ones: the claim, a command to copy, real output, numbers ag
 ## Rules
 - Every number comes from generated data (`site.json`, the speed table); nothing is typed into the page, and claims that the data does not support are left out.
 - Light and dark theme, 360 px without horizontal scrolling, usable without JavaScript (tabs show the first panel), no external fonts or scripts, keyboard reachable tabs, reduced motion respected. Page weight and the largest-contentful-paint time go into `docs/ai/performance/numbers.md`.
-- The page uses the components and badge styles of the rule pages; shared parts (install tabs, terminal block) are components used by Getting started too.
+- The page uses the components and badge styles of the rule pages; the install tabs are one component used by Getting started too.
 - `site/test/smoke.mjs`: each section present, the grid holds every language of the support table, tabs switch, the install commands equal the README's.
-- Before it lands: screenshots (desktop and 360 px, light and dark) to the lead, who shows them to the user.

@@ -1,0 +1,37 @@
+---
+// One tile per language of the support table: status, and the share measured against its first reference
+// formatter and first reference linter (the bars of the language pages).
+import { base, siteData } from '../../../config.mjs';
+import { legs } from '../../../scripts/bars.mjs';
+import { statusBadge } from '../../../scripts/badges.mjs';
+import { counts } from '../../../scripts/landing.mjs';
+const { languages, tools } = siteData();
+const withPage = new Set(tools.map((t) => t.tool));
+const c = counts();
+const SHOWN = 12; // the most popular languages, ready first (the order of site.json)
+const shown = languages.slice(0, SHOWN);
+---
+<section class="band" aria-labelledby="langs-title">
+  <div class="wrap">
+    <div class="sec-text wide">
+      <h2 id="langs-title">{c.ready} languages ready, {c.progress} in progress</h2>
+      <p>
+        Each bar is measured on real-world code against the reference tool's default rule set (an exception is named on the tile and
+        on the language page). The tick marks 85%, where a language counts as ready.
+      </p>
+    </div>
+    <ul class="grid langs">
+      {shown.map((l) => (
+        <li class="tile">
+          <div class="tile-head">
+            <a href={`${base}/languages/${l.slug}/`}>{l.name}</a>
+            <Fragment set:html={statusBadge(l.status)} />
+          </div>
+          <div class="legs" set:html={legs({ ...l, format: l.format.slice(0, 1), lint: l.lint.slice(0, 1) }, withPage)} />
+          {[...l.format.slice(0, 1), ...l.lint.slice(0, 1)].filter((x) => x.note).map((x) => <p class="tile-note">{x.name}: {x.note}</p>)}
+        </li>
+      ))}
+    </ul>
+    <p class="more"><a href={`${base}/languages/`}>All {languages.length} languages with every reference tool</a> · <a href={`${base}/measured/`}>How languages are measured</a> · <a href={`${base}/compare/`}>Compared tools, rule by rule</a></p>
+  </div>
+</section>

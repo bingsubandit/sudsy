@@ -1,0 +1,30 @@
+---
+// Six reasons, each linked; the numbers come from rules.json and site.json (scripts/landing.mjs).
+import { base } from '../../../config.mjs';
+import { counts } from '../../../scripts/landing.mjs';
+const c = counts();
+const gh = 'https://github.com/bingsubandit/sudsy/blob/main/docs';
+const reasons = [
+  { title: 'Keep your style', text: `${c.presets} presets set the rules and style of common tools. A preset is plain config, every style choice is a named option, and the language page shows how closely each one matches its tool.`, href: `${base}/reference/presets/`, link: 'Presets' },
+  { title: `${c.rules} rules with their own pages`, text: 'Every rule has a page with a description and, where they exist, an example, its options and the rules of other tools it replaces.', href: `${base}/rules/`, link: 'Search the rules' },
+  { title: 'Safe fixes', text: `${c.safe} rules carry a fix marked safe: by the rule's design it does not change what the code does. Formatting is checked separately, in our tests and corpus runs, by comparing the syntax tree before and after.`, href: `${gh}/rules.md#fixes`, link: 'How fixes work' },
+  { title: 'Your own rules', text: 'Write a rule as a YAML pattern with a fix, or as a sandboxed Wasm plugin.', href: `${gh}/rules.md#pattern-rules`, link: 'Pattern rules' },
+  { title: 'In your editor', text: 'A language server and a VS Code extension: diagnostics, quick fixes, fix all and format on save.', href: `${base}/getting-started/#5-editor`, link: 'Editor setup' },
+  { title: 'In your CI', text: '`sudsy check` exits 1 on an unformatted file or a rule error. Output as GitHub annotations or SARIF.', href: `${base}/getting-started/#6-ci`, link: 'CI setup' },
+];
+const code = (t) => t.split('`');
+---
+<section class="band" aria-labelledby="why-title">
+  <div class="wrap">
+    <div class="sec-text wide"><h2 id="why-title">Why Sudsy</h2></div>
+    <ul class="grid reasons">
+      {reasons.map((r) => (
+        <li class="card">
+          <h3>{r.title}</h3>
+          <p>{code(r.text).map((p, i) => (i % 2 ? <code>{p}</code> : p))}</p>
+          <a href={r.href}>{r.link}</a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>

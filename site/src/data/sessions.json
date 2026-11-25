@@ -1,0 +1,36 @@
+[
+  {
+    "id": "check",
+    "label": "check",
+    "steps": [
+      {
+        "command": "sudsy check",
+        "output": "a.py:1:1: error[format]: the file is not formatted; run `sudsy format`\na.py:1:8: warning[unused-import]: `os` imported but unused\na.py:5:5: warning[unused-variable]: local variable `unused` is assigned to but never used\na.py:6:8: warning[none-comparison]: compare to None with `is` or `is not`, not `==` or `!=`\nb.js:1:1: error[format]: the file is not formatted; run `sudsy format`\nb.js:1:10: error[unused-variable]: 'total' is defined but never used.\nb.js:2:3: error[no-debugger]: a call that stops in a debugger was left in the code\n3 file(s) checked, 4 error(s), 3 warning(s)"
+      }
+    ]
+  },
+  {
+    "id": "fix",
+    "label": "fix",
+    "steps": [
+      {
+        "command": "sudsy fix",
+        "output": "a.py:1:8: warning[unused-import]: `os` imported but unused\na.py:5:5: warning[unused-variable]: local variable `unused` is assigned to but never used\na.py:6:8: warning[none-comparison]: compare to None with `is` or `is not`, not `==` or `!=`\nb.js:1:10: error[unused-variable]: 'total' is defined but never used.\nb.js:2:3: error[no-debugger]: a call that stops in a debugger was left in the code\n2 file(s) changed\n3 file(s) checked, 2 error(s), 3 warning(s)"
+      }
+    ]
+  },
+  {
+    "id": "format",
+    "label": "format",
+    "steps": [
+      {
+        "command": "sudsy format",
+        "output": "3 file(s) checked, 2 reformatted, 1 unchanged"
+      },
+      {
+        "command": "git diff",
+        "output": "diff --git a/a.py b/a.py\nindex 6277239..de20f1c 100644\n--- a/a.py\n+++ b/a.py\n@@ -4,5 +4,5 @@ import os\n def greet(name):\n     unused = 1\n     if name == None:\n-        return 'hello'\n-    return \"hi, \"+name\n+        return \"hello\"\n+    return \"hi, \" + name\ndiff --git a/b.js b/b.js\nindex 210ebd2..118587c 100644\n--- a/b.js\n+++ b/b.js\n@@ -1,6 +1,6 @@\n-function total(items){\n-  debugger\n-  var sum = 0\n-  for (const i of items) sum += i.price\n-  return sum\n+function total(items) {\n+  debugger;\n+  var sum = 0;\n+  for (const i of items) sum += i.price;\n+  return sum;\n }"
+      }
+    ]
+  }
+]

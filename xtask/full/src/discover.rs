@@ -20,7 +20,6 @@ pub(crate) fn generate(
     support_yaml: &str,
     support: &support::Support,
     rule_count: &dyn Fn(&[String]) -> usize,
-    preset_in: &dyn Fn(&str, &[String]) -> bool,
 ) -> Result<Vec<(PathBuf, String)>> {
     let root = xtask::repo_root();
     let rows = support::rows(support_yaml)?;
@@ -57,7 +56,7 @@ pub(crate) fn generate(
             "popularity": (m.popularity.v * 1000.0).round() / 1000.0,
             "popularity_estimate": m.popularity.est,
             "rules": rule_count(&row.ids),
-            "presets": presets.iter().filter(|p| row.ids.iter().any(|i| p.starts_with(&format!("{i}/"))) || preset_in(p, &row.ids)).collect::<Vec<_>>(),
+            "presets": presets.iter().filter(|p| own_preset(providers, &row.ids, p)).collect::<Vec<_>>(),
             "speed": crate::speed::rows_of(&row.speed)?,
         }));
     }
@@ -201,6 +200,17 @@ fn check(providers: &[Box<dyn LanguageProvider>], rows: &[Row]) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// A preset is a row's own when its folder is one of the row's language ids or the crate of one of the
+/// row's languages (`html/` presets belong to HTML, Vue / Svelte and Angular templates). A preset of
+/// another language that only enables a shared rule does not count.
+fn own_preset(providers: &[Box<dyn LanguageProvider>], ids: &[String], preset: &str) -> bool {
+    let folder = preset.split('/').next().unwrap_or_default();
+    ids.iter().any(|i| i == folder)
+        || providers.iter().any(|p| {
+            ids.iter().any(|i| i == p.language()) && p.crate_name() == format!("lang-{folder}")
+        })
 }
 
 /// `<language>/<name>` of every preset file.

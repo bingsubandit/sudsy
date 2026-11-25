@@ -3,8 +3,9 @@
 // the speed table and the parity catalogs), next to rules.json.
 import { existsSync } from 'node:fs';
 import { base, rules, siteData } from '../config.mjs';
-import { badge, languageBadges, pageHead } from './badges.mjs';
-import { bar, legs, READY } from './bars.mjs';
+import { badge, languageBadges, pageHead, statusBadge } from './badges.mjs';
+import { bar, legs, LINT, READY } from './bars.mjs';
+import { speedPage } from './speed.mjs';
 import { SLUG as MEASURED, measuredLink, measuredPage } from './measured.mjs';
 
 const pct = (v) => (v == null ? 'not measured' : `${Math.floor(v)}%`);
@@ -45,6 +46,13 @@ function summary(languages) {
   return `${ready} of ${languages.length} languages are ready, ${progress} ${is(progress)} in progress and ${none} ${is(none)} not measured yet. \`Ready\` means the first tool of each column is at least ${READY}%; the others are shown for reference. Each bar is a share measured on real-world code against the default rule set of the reference tool (a language measured with another set says so on its page); the tick marks ${READY}%. Ready languages come first, then the others, each by how widely the language is used. [How each language is measured](${base}/${MEASURED}/).`;
 }
 
+// The shares measured for one tool: its lint share (the parity target) and the format share of each language
+// that names it as a reference formatter.
+function measured(t, languages) {
+  const format = languages.flatMap((l) => l.format.filter((x) => x.catalog === t.tool && x.share != null).map((x) => ({ language: l.name, tool: x.name, share: x.share })));
+  return { lint: t.target, format };
+}
+
 export function pages({ put, cell, table }) {
   const { languages, tools } = siteData();
   const { toolName, langName, tools: byTool } = names();
@@ -54,9 +62,12 @@ export function pages({ put, cell, table }) {
   for (const t of tools) {
     const n = (c) => t.entries.filter((e) => e[1] === c).length;
     const langs = t.languages.map((l) => langName.get(l)).filter(Boolean);
-    const share = t.target == null
-      ? badge('missing', 'not measured on a corpus')
-      : badge(t.target >= 85 ? 'covered' : 'partial', `${pct(t.target)} of its findings also reported`);
+    const m = measured(t, languages);
+    const shares = [
+      ...(m.lint == null ? [] : [badge(m.lint >= READY ? 'covered' : 'partial', `${pct(m.lint)} of its findings also reported`)]),
+      ...m.format.map((f) => badge(f.share >= READY ? 'covered' : 'partial', `${pct(f.share)} of ${f.language} files identical`)),
+    ];
+    const share = shares.length ? shares.join('') : badge('missing', 'not measured on a corpus');
     const head = pageHead([
       ...languageBadges(langs),
       ...(t.version ? [badge('version', `version ${t.version}`)] : []),
@@ -68,7 +79,7 @@ export function pages({ put, cell, table }) {
     ]);
     const body = [
       head,
-      `Every rule and setting of ${show(t.tool)} in the parity catalog, with the Sudsy equivalent. The share is the part of ${show(t.tool)}'s default set (in scope) whose findings Sudsy also reports on real-world code, with the preset that mirrors it. Where the tool has a page for an entry, the id links to it.`,
+      `Every rule and setting of ${show(t.tool)} in the parity catalog, with the Sudsy equivalent. ${m.lint == null ? '' : `The lint share is the part of ${show(t.tool)}'s default set (in scope) whose findings Sudsy also reports on real-world code, with the preset that mirrors it. `}${m.format.length ? `The format share is the part of real-world files that Sudsy formats to the same text as ${show(t.tool)}. ` : ''}Where the tool has a page for an entry, the id links to it.`,
       "**Status**: `covered`; `partial` (the note says what differs); `not yet` (planned); `deferred`; `not planned`; `SDK` (a .NET SDK diagnostic does it).",
       '<div class="tool-table">\n\n' + table(['Id', 'Sudsy', 'Status', 'Note'], t.entries.map((e) => {
         const id = tick(e[0]).replace(/\|/g, '\\|');
@@ -88,10 +99,14 @@ export function pages({ put, cell, table }) {
     title: 'Compared tools', slug: 'compare',
     description: 'The linters and formatters Sudsy is measured against, with the share of their output it reproduces.',
   }, 'Every tool Sudsy is measured against: its rules and settings, the Sudsy rule for each, and the share of its findings Sudsy also reports.\n\n' +
-    table(['Tool', 'Entries', 'Share of its default set Sudsy reproduces', 'Languages'], tools.map((t) =>
-      [link(`compare/${t.tool}`, show(t.tool)), t.entries.length, bar({ share: t.target, what: { task: show(t.tool), of: 'its default set also reported by Sudsy' } }), languageBadges(t.languages.map((l) => langName.get(l)).filter(Boolean)).join(' ')])));
+    table(['Tool', 'Entries', 'Share Sudsy reproduces', 'Languages'], tools.map((t) => {
+      const m = measured(t, languages);
+      const lint = m.lint == null ? [] : [bar({ share: m.lint, name: m.format.length ? 'Lint' : '', what: LINT, label: `Lint: ${Math.floor(m.lint)}% of ${show(t.tool)} findings also reported` })];
+      const format = m.format.map((f) => bar({ share: f.share, name: f.language, what: { task: 'Format', of: 'files identical', prep: 'to' + ` ${f.tool} for` } }));
+      const bars = [...lint, ...format];
+      return [link(`compare/${t.tool}`, show(t.tool)), t.entries.length, bars.length ? `<div class="leg-bars">${bars.join('')}</div>` : bar({ share: null, what: { task: show(t.tool), of: '' } }), languageBadges(t.languages.map((l) => langName.get(l)).filter(Boolean)).join(' ')];
+    })));
 
-  const statusBadge = (st) => badge(/Ready$/.test(st) ? 'covered' : st === 'not measured' ? 'missing' : 'partial', st);
   const task = (t) => badge('', t);
   for (const l of languages) {
     const parity = l.format.length + l.lint.length;
@@ -123,6 +138,7 @@ export function pages({ put, cell, table }) {
     '<div class="lang-list">' + languages.map((l) => `<div class="lang-row"><div class="lang-head"><a href="${base}/languages/${l.slug}/">${l.name}</a>${statusBadge(l.status)}</div>${legs(l, byTool)}<a class="lang-how" href="${measuredLink(l.slug)}">How ${l.name} is measured</a></div>`).join('') + '</div>',
   ].join('\n\n'));
   written.measured = measuredPage(put);
+  speedPage(put, table, cell);
   return written;
 }
 
