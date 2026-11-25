@@ -83,7 +83,6 @@ concept html-tag-table # users: html
 concept implicit-string-concat # users: python
 concept import-usage-checks # users: js
 concept indent-balance-layout # users: sql
-concept index-rules # users: protobuf (shared)
 concept input-missing-label # users: html
 concept invalid-escape-sequence # users: python (shared)
 concept invalid-job-id # users: github-actions

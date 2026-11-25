@@ -4,6 +4,8 @@
 //! rule that reads the index builds none. Families (rule files name them with `family:`):
 //! - `import-used`: an import none of whose declared names the file uses. Params: `message` with
 //!   `{path}`. A public import re-exports and is left alone.
+//! - `name-resolves`: a name the file writes in a reference position that no file of the project
+//!   or its dependencies declares. Params: `message` with `{name}`. Reports only on `Absent`.
 //! - `member-ref-unique`: a type that two methods name (as request or response, parameter or
 //!   return type) is named by one method only. Params: `message` with `{type}`. The report is on
 //!   each method that names a type some other method names too.
@@ -11,8 +13,8 @@
 //! concept: index-rules
 //! what: A rule that reports from what the symbol index proves about the names a file writes: an import nothing uses, a type named by two methods.
 //! tools: buf IMPORT_USED, buf RPC_REQUEST_RESPONSE_UNIQUE
-//! rules: import-used, rpc-request-response-unique
-//! reads: rule:import-used, rule:rpc-request-response-unique
+//! rules: import-used, rpc-request-response-unique, class-not-found
+//! reads: rule:import-used, rule:rpc-request-response-unique, rule:class-not-found
 
 use crate::{ActiveRule, Diagnostic, Family, FileContext, Params, Rule, RuleContext, RuleMeta};
 use core_semantics::symbols::{Answer, FileSites, Name};
@@ -62,6 +64,11 @@ pub const IMPORT_USED: Family = Family {
     build: build_import_used,
 };
 
+pub const NAME_RESOLVES: Family = Family {
+    name: "name-resolves",
+    build: build_name_resolves,
+};
+
 pub const MEMBER_REF_UNIQUE: Family = Family {
     name: "member-ref-unique",
     build: build_member_ref_unique,
@@ -89,8 +96,9 @@ impl Rule for ImportUsed {
 
     fn check_index(&self, index: &dyn IndexView, ctx: &mut RuleContext<'_>) {
         let sites = index.sites();
+        let uses: Vec<Name> = sites.uses.iter().map(|u| u.name.clone()).collect();
         for import in sites.imports.iter().filter(|i| !i.public) {
-            if let Answer::Known(false) = index.import_declares(&import.path, &sites.uses) {
+            if let Answer::Known(false) = index.import_declares(&import.path, &uses) {
                 ctx.report(import.range, self.message.replace("{path}", &import.path));
             }
         }
@@ -130,6 +138,35 @@ impl Rule for MemberRefUnique {
             });
             if let Some(target) = shared {
                 ctx.report(method.range, self.message.replace("{type}", &target));
+            }
+        }
+    }
+}
+
+struct NameResolves {
+    meta: &'static RuleMeta,
+    message: String,
+}
+
+fn build_name_resolves(meta: &'static RuleMeta, mut p: Params) -> Result<Box<dyn Rule>, String> {
+    let message = p.text("message")?;
+    p.done()?;
+    Ok(Box::new(NameResolves { meta, message }))
+}
+
+impl Rule for NameResolves {
+    fn meta(&self) -> &'static RuleMeta {
+        self.meta
+    }
+
+    fn reads_index(&self) -> bool {
+        true
+    }
+
+    fn check_index(&self, index: &dyn IndexView, ctx: &mut RuleContext<'_>) {
+        for site in &index.sites().uses {
+            if let Answer::Absent = index.resolve(&site.name) {
+                ctx.report(site.range, self.message.replace("{name}", &site.written));
             }
         }
     }

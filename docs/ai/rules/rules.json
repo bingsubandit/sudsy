@@ -19691,6 +19691,30 @@
       "why": "A document has one title: the top-level heading is what tools use as the page title, so a second one makes the title ambiguous, and the outline then has several roots.\n\nTo fix, make the later headings second-level, or split the document."
     },
     {
+      "category": "correctness",
+      "default_level": "off",
+      "description": "Reports a class, interface or trait name written where a class is used (`new`, a type of a parameter, return value or property, `catch`, `instanceof`, the class of a static call or static property) that no file declares. The name is looked up in the project's files and in the files Composer's autoload rules (`composer.json` and the installed packages) name for it. A name outside every autoload prefix, or one that a conditional or run-time declaration may declare, is not reported.",
+      "fix": null,
+      "id": "class-not-found",
+      "languages": [
+        "php"
+      ],
+      "options": [],
+      "presets": [
+        "php/phpstan"
+      ],
+      "upstream": [
+        {
+          "id": "class.notFound",
+          "note": "Only a name that a Composer autoload prefix of the project or its installed packages owns, whose file is missing; a class of an optional package that is not installed (no prefix owns it), the class of `Foo::CONST`, and the names of `extends`, `implements` and `use` are not looked at.",
+          "partial": true,
+          "tool": "phpstan",
+          "url": "https://phpstan.org/error-identifiers"
+        }
+      ],
+      "why": "A class that cannot be found fails at run time with an `Error` the moment the line runs, and a type that cannot be found makes the check of the argument or the return value fail.\n\nTo fix, install the package that holds the class, correct the name or the `use` import, or declare the class."
+    },
+    {
       "category": "suspicious",
       "default_level": "off",
       "description": "Reports a parameter with a type that does not allow `null` and a `null` default (`int $a = null`).",

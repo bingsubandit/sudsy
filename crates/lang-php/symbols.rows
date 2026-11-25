@@ -22,7 +22,7 @@ Trait type trait name=Identifier modifiers=Keyword
 Enum type enum name=Identifier modifiers=Keyword
 Function function name=Identifier,Keyword,Boolean,Null name-after=function params=FunctionLikeParameterList
 Method method name=Identifier,Keyword,Boolean,Null name-after=function params=FunctionLikeParameterList modifiers=Keyword
-FunctionLikeParameter param name=DirectVariable optional=FunctionLikeParameterDefaultValue variadic=Ellipsis modifiers=Keyword
+FunctionLikeParameter param name=DirectVariable optional=FunctionLikeParameterDefaultValue variadic=Ellipsis modifiers=Keyword refs=Identifier
 Constant global-const item=ConstantItem name=Identifier
 ClassLikeConstant const item=ClassLikeConstantItem name=Identifier,Keyword,Boolean,Null modifiers=Keyword
 PlainProperty property item=PropertyConcreteItem,PropertyAbstractItem name=DirectVariable modifiers=Keyword
@@ -37,3 +37,13 @@ MixedUseItemList use-group names=Identifier
 TypedUseItemSequence use-kind
 MaybeTypedUseItem use-kind
 UseItem use-item names=Identifier alias=UseItemAlias
+FunctionLikeReturnTypeHint ignore refs=Identifier
+NullableHint ignore refs=Identifier
+UnionHint ignore refs=Identifier
+IntersectionHint ignore refs=Identifier
+ParenthesizedHint ignore refs=Identifier
+TryCatchClause ignore refs=Identifier
+Binary ignore refs=Identifier
+Instantiation ignore refs=Identifier
+StaticMethodCall ignore refs=object:Identifier
+StaticPropertyAccess ignore refs=object:Identifier

@@ -7,3 +7,4 @@ php:
       no-unset-hookable-property: warn
       no-inner-function: warn
       implicit-nullable-parameter: warn
+      class-not-found: warn

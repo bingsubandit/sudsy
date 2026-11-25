@@ -14,6 +14,7 @@ entries:
   unset.possiblyHookedProperty: rule no-unset-hookable-property | `unset($this->p)` of a property the class declares; a property declared in a parent in another file is not seen.
   property.uninitializedReadonly: planned | core-flow definite assignment, also C#, Java and Kotlin; a readonly property that no path of the constructor assigns.
   return.missing: rule missing-return | A native or `@return` type that is not void, never, mixed or null and a reachable end of the body; `exit` and `die` end a path; a call of a `@return never` function in another file (`bail()`, `abort()`), a type narrowed to every case, and a loop with an inner `break` are not seen (27 extra against 19 covered, so the rule is not in the preset).
+  class.notFound: rule class-not-found | Only a name that a Composer autoload prefix of the project or its installed packages owns, whose file is missing; a class of an optional package that is not installed (no prefix owns it), the class of `Foo::CONST`, and the names of `extends`, `implements` and `use` are not looked at.
   method.void: planned | needs-project-index, the result of a call is used and the method is void; the callee is a method of the class in most cases but also one in another file.
   staticMethod.void: planned | needs-project-index, as method.void, for a static call.
   function.void: planned | needs-project-index, as method.void, for a function.

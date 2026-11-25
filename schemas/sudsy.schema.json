@@ -689,6 +689,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a class, interface or object whose name starts with a lowercase letter or an underscore."
             },
+            "class-not-found": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a class, interface or trait name written where a class is used (`new`, a type of a parameter, return value or property, `catch`, `instanceof`, the class of a static call or static property) that no file declares."
+            },
             "class-pattern": {
               "description": "Reports a class name that does not match the option `pattern`, a regex that by default means kebab-case (`foo-bar`).",
               "oneOf": [

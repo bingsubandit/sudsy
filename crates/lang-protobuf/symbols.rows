@@ -14,8 +14,8 @@ Service type service name=ServiceName
 MessageBody transparent
 EnumBody transparent
 Oneof transparent
-Field property name=Ident refs=Type
-OneofField property name=Ident refs=Type
+Field property name=Ident refs=type:Type
+OneofField property name=Ident refs=type:Type
 MapField property name=Ident refs=Type
 Group type message name=MessageName
 FullIdent reference

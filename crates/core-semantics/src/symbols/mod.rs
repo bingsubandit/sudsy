@@ -209,6 +209,16 @@ pub struct MemberSite {
     pub range: core_syntax::TextRange,
 }
 
+/// A name the file writes where the rows say it is a reference, with the text as written and
+/// where.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UseSite {
+    /// The qualified names the written name can stand for.
+    pub name: Name,
+    pub written: Box<str>,
+    pub range: core_syntax::TextRange,
+}
+
 /// What a file writes, read from its tree by the rules that look at use (an import nothing uses,
 /// a type that two methods name): unlike [`FileSymbols`] it holds offsets and every name of a
 /// body, so nothing that depends on the symbols reads it.
@@ -216,6 +226,6 @@ pub struct MemberSite {
 pub struct FileSites {
     pub imports: Vec<ImportSite>,
     /// Every name the file writes in a place the rows call a reference, resolved.
-    pub uses: Vec<Name>,
+    pub uses: Vec<UseSite>,
     pub methods: Vec<MemberSite>,
 }

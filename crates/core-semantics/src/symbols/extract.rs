@@ -13,7 +13,7 @@ use super::resolve::Alias;
 use super::rows::{Facts, Key, NameKind, Role, Row, Table};
 use super::{
     ConstSymbol, FileImport, FileSites, FileSymbols, Flags, FunctionSymbol, ImportSite, Member,
-    MemberKind, MemberSite, Name, Params, Parent, TypeKind, TypeSymbol,
+    MemberKind, MemberSite, Name, Params, Parent, TypeKind, TypeSymbol, UseSite,
 };
 use core_syntax::roles::code_text;
 use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, WalkEvent};
@@ -233,17 +233,51 @@ impl Extractor<'_> {
         if self.sites.is_none() {
             return;
         }
-        let mut written: Vec<String> = names_in(node, row.kinds(Key::Refs)).collect();
+        let mut written = self.written_refs(node, row);
         if row.role == Role::Reference {
-            written.push(code_text(node));
+            written.push((code_text(node), self.span(node)));
         }
-        let names: Vec<Name> = written
-            .iter()
-            .map(|w| self.name(w, NameKind::Type))
+        let uses: Vec<UseSite> = written
+            .into_iter()
+            .map(|(text, range)| UseSite {
+                name: self.name(&text, NameKind::Type),
+                written: text.into(),
+                range,
+            })
             .collect();
         if let Some(sites) = &mut self.sites {
-            sites.uses.extend(names);
+            sites.uses.extend(uses);
         }
+    }
+
+    /// The names the `refs` of a row take from a node, with where each is written: the own
+    /// children of the listed kinds and the slots' children.
+    fn written_refs(&self, node: &SyntaxNode, row: &Row) -> Vec<(String, core_syntax::TextRange)> {
+        let kinds = row.kinds(Key::Refs);
+        let mut out: Vec<(String, core_syntax::TextRange)> = node
+            .children_with_tokens()
+            .filter_map(|e| match e {
+                SyntaxElement::Token(t) if kinds.contains(&t.kind()) => {
+                    Some((t.text().to_string(), t.text_range()))
+                }
+                SyntaxElement::Node(n) if kinds.contains(&n.kind()) => {
+                    Some((code_text(&n), self.span(&n)))
+                }
+                _ => None,
+            })
+            .collect();
+        for (label, kind) in row.slots() {
+            match self.grammar.slot(node, label) {
+                Some(SyntaxElement::Token(t)) if t.kind() == *kind => {
+                    out.push((t.text().to_string(), t.text_range()));
+                }
+                Some(SyntaxElement::Node(n)) if n.kind() == *kind => {
+                    out.push((code_text(&n), self.span(&n)));
+                }
+                _ => {}
+            }
+        }
+        out
     }
 
     /// Where a node is written, without the comments and blank space around it.
@@ -252,8 +286,9 @@ impl Extractor<'_> {
     }
 
     fn refs(&self, node: &SyntaxNode, row: &Row) -> Vec<Name> {
-        names_in(node, row.kinds(Key::Refs))
-            .map(|w| self.name(&w, NameKind::Type))
+        self.written_refs(node, row)
+            .into_iter()
+            .map(|(w, _)| self.name(&w, NameKind::Type))
             .collect()
     }
 

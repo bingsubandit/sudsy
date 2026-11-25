@@ -23,7 +23,7 @@
 //! (`names`, `adapt`), `use` (an import statement), `use-group` (`names`: the prefix of a group),
 //! `use-kind` (a node whose own keyword says which names it imports), `use-item` (`names`,
 //! `alias`), `file-import` (`names`, `modifiers`), `reference` (a node whose text is a name the file writes), `transparent` (its children count as its
-//! parent's), `ignore` (declares nothing).
+//! parent's), `ignore` (declares nothing; its `refs` still count as names the file writes). A `refs` entry is a kind (the own children of that kind) or `label:Kind` (the grammar's slot `label`, when it holds a `Kind`).
 
 use super::TypeKind;
 use core_syntax::{Grammar, SyntaxKind};
@@ -135,12 +135,19 @@ pub(crate) struct Row {
     /// The name is the first name token after the own token with this text (`function`).
     pub after: String,
     pub relation: Option<super::Relation>,
+    /// `refs` entries written `label:Kind`: the child of the grammar's slot `label`, when it is
+    /// a token or node of `Kind`.
+    slots: Vec<(String, SyntaxKind)>,
     kinds: [Vec<SyntaxKind>; KEYS.len()],
 }
 
 impl Row {
     pub fn kinds(&self, key: Key) -> &[SyntaxKind] {
         &self.kinds[key as usize]
+    }
+
+    pub fn slots(&self) -> &[(String, SyntaxKind)] {
+        &self.slots
     }
 
     pub fn has(&self, key: Key, kind: SyntaxKind) -> bool {
@@ -166,13 +173,14 @@ fn allowed(role: Role) -> &'static [Key] {
         Role::Type => &[Name, Modifiers],
         Role::Heritage | Role::UseGroup => &[Names],
         Role::Function | Role::Method => &[Name, Params, Modifiers, Refs],
-        Role::Param => &[Name, Optional, Variadic, Modifiers],
+        Role::Param => &[Name, Optional, Variadic, Modifiers, Refs],
         Role::Property | Role::Const | Role::Case => &[Item, Name, Modifiers, Refs],
         Role::GlobalConst => &[Item, Name],
         Role::Mixin => &[Names, Adapt],
         Role::UseItem => &[Names, Alias],
         Role::FileImport => &[Names, Modifiers],
-        Role::Use | Role::UseKind | Role::Reference | Role::Transparent | Role::Ignore => &[],
+        Role::Ignore => &[Refs],
+        Role::Use | Role::UseKind | Role::Reference | Role::Transparent => &[],
     }
 }
 
@@ -306,6 +314,7 @@ impl Table {
             file: false,
             after: String::new(),
             relation: None,
+            slots: Vec::new(),
             kinds: Default::default(),
         };
         for w in words {
@@ -331,6 +340,16 @@ impl Table {
                     return Err(format!("`{key}` is no key of the role `{role_word}`"));
                 }
                 for name in value.split(',') {
+                    if let Some((label, kind)) = name.split_once(':').filter(|_| *k == Key::Refs) {
+                        grammar
+                            .field_at(node, label)
+                            .ok_or_else(|| format!("`{kind}` has no slot `{label}`"))?;
+                        let found = grammar
+                            .kind_by_name(kind)
+                            .ok_or_else(|| format!("`{kind}` is no kind of the grammar"))?;
+                        row.slots.push((label.to_string(), found));
+                        continue;
+                    }
                     let found = grammar
                         .kind_by_name(name)
                         .ok_or_else(|| format!("`{name}` is no kind of the grammar"))?;
