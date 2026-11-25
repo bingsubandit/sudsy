@@ -762,7 +762,7 @@ description: >-
   Reports `a.startswith(x) or a.startswith(y)` and the same with `endswith`.
 why: >-
   `startswith` and `endswith` accept a tuple of prefixes or suffixes, so one call with `(x, y)` says
-  the same, and the string is scanned once.
+  the same without repeating the name.
 
   To fix, write `a.startswith((x, y))`.
 example: "x = a.startswith(\"a\") or a.startswith(\"b\")"
@@ -1179,15 +1179,14 @@ id: unsorted-imports
 family: imports
 params: { report: block, message: "the import block is not sorted or not formatted as isort writes it" }
 description: >-
-  Reports a block of imports that differs from the isort layout with its default settings. The
-  sections are `__future__`, the standard library, third party, first party and relative imports,
-  with a blank line between them and after the block (two before a definition at module level).
-  Within a section `import x` comes before `from x import y`, names are in natural order without
-  regard to case, and members are ordered as constants, classes, then the rest. One statement is
-  written for each module, and a `from` import over `line_width` columns (88) is wrapped in
-  parentheses, one member to a line. The options `sections` and `force_sort_within_sections` change
-  the order. A folder or file next to the file, in the project root or in its `src` folder, is first
-  party.
+  Reports a block of imports that differs from the sorted layout. The sections are `__future__`, the
+  standard library, third party, first party and relative imports, with a blank line between them
+  and after the block (two before a definition at module level). Within a section `import x` comes
+  before `from x import y`, names are in natural order without regard to case, and members are
+  ordered as constants, classes, then the rest. One statement is written for each module, and a
+  `from` import over `line_width` columns (88) is wrapped in parentheses, one member to a line. The
+  options `sections` and `force_sort_within_sections` change the order. A folder or file next to the
+  file, in the project root or in its `src` folder, is first party.
 why: >-
   Imports in one fixed order show at a glance which dependencies a file has, a new import has one
   place, and merge conflicts in the import block are rare. An order that a tool can check needs no
@@ -1211,8 +1210,8 @@ description: >-
   reported.
 why: >-
   The cache belongs to the function and is shared by all instances. It stores `self` as part of each
-  key, so every instance that called the method stays alive as long as the cache does, and the
-  memory is never freed.
+  key, so an instance that called the method stays alive until its entry is evicted, and with no
+  size limit (`functools.cache`, `maxsize=None`) for as long as the cache does.
 
   To fix, keep the cache per instance (create it in `__init__`), use `functools.cached_property`, or
   move the work to a function that takes only the values it needs.
@@ -1386,7 +1385,9 @@ id: redefines-builtin-id
 family: scope
 params: { check: redefines-builtin }
 message: "`{name}` shadows a Python builtin"
-description: "A variable, function, class, parameter or import named like a Python builtin (`list`, `id`, `type`, ...; ruff A001 and A002)."
+description: >-
+  Reports a variable, function, class, parameter or import named like a Python builtin (`list`, `id`,
+  `type` and so on). The options `allow` and `kinds` change what is checked.
 example: "list = [1]\ndef f(id): pass"
 severity: off
 category: suspicious

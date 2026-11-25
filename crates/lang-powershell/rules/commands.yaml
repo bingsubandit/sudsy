@@ -21,8 +21,8 @@ description: >-
   `Set-WmiInstance`.
 why: >-
   The WMI cmdlets are not in PowerShell 7 and later. The CIM cmdlets (`Get-CimInstance`,
-  `Invoke-CimMethod`) do the same work, run on all supported platforms and use the newer remoting
-  protocol.
+  `Invoke-CimMethod`) do the same work on Windows, use the newer remoting protocol, and are in both
+  editions.
 
   To fix, use the CIM cmdlet of the same job.
 example: 'Get-WmiObject Win32_Process'

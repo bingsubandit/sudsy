@@ -58,9 +58,7 @@ rule! {
         description: "Reports job ids that differ only in case (job ids are not case sensitive; exact \
                   repeats are a different rule, `no-duplicate-keys`), and step ids repeated within a \
                   job.",
-        why: "Two job ids that differ in case name one job for GitHub, and a reference such as \
-                  `needs.build` can mean either. A repeated step id makes `steps.<id>.outputs` read \
-                  one step or the other.\n\
+        why: "Ids are compared without case, so a reference such as `needs.build` cannot tell two such jobs apart, and `steps.<id>.outputs` cannot tell two steps with one id apart.\n\
                   To fix, give each job and step its own id.",
         example: "jobs:\n  Build: {}\n  build: {}   # reported",
     }

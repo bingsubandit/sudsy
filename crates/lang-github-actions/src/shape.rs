@@ -263,9 +263,7 @@ shape_rule!(
     "Reports a key that a section does not have, a required key or section that is \
      missing, a section of the wrong kind (a list where a map is needed), or an empty \
      one.",
-    "GitHub rejects a workflow with a structural mistake, or ignores the key. A \
-     misspelling such as `stepz` is never run, and the error shows only when the \
-     workflow is pushed and fails to start.\n\
+    "The mistake shows only after the workflow is pushed, when it does not start or does not do what the file seems to say.\n\
      To fix, correct the key, or add what is missing.",
     "on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    stepz: []   # reported"
 );
@@ -297,16 +295,14 @@ shape_rule!(
      version it runs on) is retired, from a list of actions kept with the rule.",
     "GitHub retires the Node runtimes that old action versions use. Their jobs print \
      deprecation warnings and, once the runtime is removed, fail.\n\
-     To fix, update to the version that the message names.",
+     To fix, update the action to a newer version.",
     "on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2   # reported"
 );
 shape_rule!(
     InvalidPermissions,
     "invalid-permissions",
     "Reports a permission scope or value that GitHub does not have.",
-    "GitHub rejects the workflow with an error, or the key has no effect. A misspelling \
-     like `content: read` leaves the scope without the access that the job needs.\n\
-     To fix, use a scope of the permissions documentation, with the value `read`, \
-     `write` or `none`.",
+    "A misspelling like `content: read` does not grant the access that the job needs, and a job that sets `permissions` has no access to the scopes it does not name.\n\
+     To fix, use a known scope with a value it takes (`read`, `write` or `none`).",
     "on: push\npermissions:\n  content: read   # reported\njobs: {}"
 );

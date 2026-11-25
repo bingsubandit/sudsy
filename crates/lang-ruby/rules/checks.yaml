@@ -151,8 +151,8 @@ description: >-
   Reports a space between a method name and a `(` that holds its only argument (`puts (x)`). A call
   whose argument goes on after the parentheses (`puts (1 + 2) * 3`) is not reported.
 why: >-
-  Ruby reads the parentheses as grouping the argument, not as enclosing the arguments of the call,
-  and warns about it. With one argument the result is the same, but the form changes meaning when
+  Ruby reads the parentheses as grouping the argument, not as enclosing the arguments of the call.
+  With one argument the result is the same, but the form changes meaning when
   the code is edited: `puts (1 + 2).abs` calls `abs` on the group inside the call, while
   `puts(1 + 2).abs` calls it on the result of `puts`.
 

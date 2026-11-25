@@ -97,12 +97,9 @@ rule! {
         id: "deprecated-commands",
         category: Correctness,
         default: Error,
-        description: "Reports a script that uses a workflow command that GitHub has disabled: \
-                  `::set-output`, `::save-state`, `::set-env` or `::add-path`.",
+        description: "Reports a script that uses a workflow command that GitHub has disabled or deprecated: `::set-output`, `::save-state`, `::set-env` or `::add-path`.",
         why: "GitHub disabled `set-env` and `add-path` because any tool that prints a line to the \
-                  log could set an environment variable or change the `PATH` of the job, and moved \
-                  `set-output` and `save-state` to files too. A step that still prints the command \
-                  does not set the value, so a later step reads an empty one.\n\
+                  log could set an environment variable or change the `PATH` of the job, so those two no longer work. `set-output` and `save-state` have the same weakness, are deprecated and make the run show a warning.\n\
                   To fix, append to the file the runner provides: `echo \"name=value\" >> \
                   \"$GITHUB_OUTPUT\"`, and `$GITHUB_STATE`, `$GITHUB_ENV` or `$GITHUB_PATH` for the \
                   others.",

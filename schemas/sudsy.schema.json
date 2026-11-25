@@ -1200,7 +1200,7 @@
             },
             "deprecated-commands": {
               "$ref": "#/definitions/rule",
-              "description": "Reports a script that uses a workflow command that GitHub has disabled: `::set-output`, `::save-state`, `::set-env` or `::add-path`."
+              "description": "Reports a script that uses a workflow command that GitHub has disabled or deprecated: `::set-output`, `::save-state`, `::set-env` or `::add-path`."
             },
             "deprecated-import": {
               "$ref": "#/definitions/rule",
@@ -7422,7 +7422,7 @@
               "description": "Reports a `__slots__` list or tuple of strings that is not in natural order."
             },
             "unsorted-imports": {
-              "description": "Reports a block of imports that differs from the isort layout with its default settings.",
+              "description": "Reports a block of imports that differs from the sorted layout.",
               "oneOf": [
                 {
                   "$ref": "#/definitions/level"

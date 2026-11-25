@@ -2,8 +2,8 @@ id: expression-alias
 message: give this expression an alias with AS
 description: >-
   Reports a column of a `SELECT` list that is an expression (a function call, a literal, an
-  operator, a `CASE`) with no alias. A column, `*`, a parenthesised expression and a cast of a
-  column are left alone.
+  operator, a `CASE`) with no alias. A column, `*`, a parenthesised expression and a `::` cast of a
+  column are left alone; `CAST(a AS int)` is a function call and is reported.
 why: >-
   Without an alias the name of the column is chosen by the database (`?column?`, `count`, `sum`,
   `expr1`), and it differs between databases and versions. Code that reads the result by name, and

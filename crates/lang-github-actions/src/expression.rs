@@ -133,8 +133,7 @@ expr_rule!(
      (unbalanced brackets, a string that is not closed, a character expressions do not \
      have, such as a double quote), or that names a context or function that does not \
      exist.",
-    "GitHub rejects the workflow or evaluates the expression to an empty string. The \
-     error appears only when the workflow runs.\n\
+    "The mistake shows only after the workflow is pushed, when the run fails.\n\
      To fix, correct the expression.",
     "name: ${{ github.sha }\nenv:\n  A: ${{ foo.bar }}   # reported"
 );
@@ -145,8 +144,7 @@ expr_rule!(
     "Reports an expression that reads a context, or calls a special function, that the \
      key it is in does not offer (`env` in the `env` of a job, `runner` in a matrix).",
     "Each key of a workflow can use only some contexts, since the others do not exist \
-     yet when it is evaluated. Elsewhere the value is empty, or GitHub rejects the \
-     workflow.\n\
+     yet when it is evaluated. An expression that reads another one does not get its value.\n\
      To fix, use a context the key offers, or move the value to a key that has it.",
     "jobs:\n  a:\n    runs-on: ubuntu-latest\n    env:\n      A: ${{ env.B }}   # reported"
 );
@@ -171,7 +169,7 @@ expr_rule!(
      have, a comparison of values that cannot be compared, a wrong number or type of \
      arguments, or an object where text is expected.",
     "Expressions fail without an error: a property that does not exist is an empty \
-     string, and an object where text is expected becomes a text like `Object`. The \
+     string, and an object where text is expected becomes the text `Object`. The \
      workflow runs with a wrong value.\n\
      To fix, correct the property, or the types.",
     "on: push\nrun-name: ${{ github.events }}   # reported"

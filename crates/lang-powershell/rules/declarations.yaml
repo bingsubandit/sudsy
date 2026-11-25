@@ -19,7 +19,7 @@ description: >-
   Reports a `[switch]` parameter with the default value `$true`.
 why: >-
   A switch is present or absent, and the caller turns it on by naming it. A switch that is on by
-  default can never be turned off by leaving it out, only with the odd form `-Name:$false`.
+  default can be turned off only with the odd form `-Name:$false`.
 
   To fix, invert the meaning, with a name for the opposite (`-NoLog` for `-Log`).
 example: 'param([switch]$Force = $true)'
@@ -90,9 +90,9 @@ message: put $null on the left of the comparison; with an array on the left `$x 
 description: >-
   Reports a `-eq` or `-ne` comparison (or a case variant, as `-ceq`) with `$null` on the right.
 why: >-
-  When the left side is an array, `-eq` and `-ne` filter it and return the elements: `@() -eq $null`
-  is an empty array, which is false, and an array that holds a `$null` is true. The test does not
-  say whether the array itself is `$null`.
+  When the left side is an array, `-eq` and `-ne` filter it and return the elements: `@(1, 2) -eq
+  $null` is an empty array and `@(1, 2) -ne $null` is the whole array. The test does not say whether
+  the value itself is `$null`.
 
   To fix, write `$null` on the left: `$null -eq $x`.
 example: 'if ($x -eq $null) { }'

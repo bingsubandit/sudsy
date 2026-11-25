@@ -636,8 +636,7 @@ impl Rule for ScopeRule {
                 Correctness,
                 Warn,
                 "A variable is read in a function that never assigns it, takes it as a parameter, \
-                 imports it with `use` or declares it with `global` or `static` (PHPStan level 0, \
-                 always undefined variables). A variable passed to a call counts as assigned, \
+                 imports it with `use` or declares it with `global` or `static` . A variable passed to a call counts as assigned, \
                  since the call can take it by reference; a function that uses `extract`, \
                  `parse_str`, `include` or `$$name` is not checked.",
                 "",
@@ -664,7 +663,7 @@ impl Rule for ScopeRule {
                  and empty blocks are left alone. No fix.",
                 "A block parameter that is never read is a value that the block was given for \
                  nothing, or a mistake in the block. A leading `_` says that it is skipped on \
-                 purpose, as with the key of `each_with_index`.\n\
+                 purpose, as when a hash is walked for its values only.\n\
                  To fix, remove the parameter, or prefix its name with `_`.",
                 "items.each { |a, b| puts a }   # b is not used"
             ),

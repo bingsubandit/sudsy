@@ -13868,7 +13868,7 @@
           "url": "https://docs.astral.sh/ruff/rules/F401/"
         }
       ],
-      "why": "An import that nothing uses is dead code. It misleads the reader about what the file depends on, and in many languages it still costs: the module is loaded, which takes time and fails where the module is not installed.\n\nTo fix, remove the import."
+      "why": "An import that nothing uses is dead code. It misleads the reader about what the file depends on, and where an import runs the module, as in Python, it still costs the time to load it and fails where the module is not installed.\n\nTo fix, remove the import."
     },
     {
       "category": "cleanup",
@@ -20186,7 +20186,7 @@
           "url": "https://learn.microsoft.com/powershell/utility-modules/psscriptanalyzer/rules/avoiddefaultvalueswitchparameter"
         }
       ],
-      "why": "A switch is present or absent, and the caller turns it on by naming it. A switch that is on by default can never be turned off by leaving it out, only with the odd form `-Name:$false`.\n\nTo fix, invert the meaning, with a name for the opposite (`-NoLog` for `-Log`)."
+      "why": "A switch is present or absent, and the caller turns it on by naming it. A switch that is on by default can be turned off only with the odd form `-Name:$false`.\n\nTo fix, invert the meaning, with a name for the opposite (`-NoLog` for `-Log`)."
     },
     {
       "category": "suspicious",
@@ -20606,7 +20606,7 @@
           "url": "https://learn.microsoft.com/powershell/utility-modules/psscriptanalyzer/rules/avoidusingwmicmdlet"
         }
       ],
-      "why": "The WMI cmdlets are not in PowerShell 7 and later. The CIM cmdlets (`Get-CimInstance`, `Invoke-CimMethod`) do the same work, run on all supported platforms and use the newer remoting protocol.\n\nTo fix, use the CIM cmdlet of the same job."
+      "why": "The WMI cmdlets are not in PowerShell 7 and later. The CIM cmdlets (`Get-CimInstance`, `Invoke-CimMethod`) do the same work on Windows, use the newer remoting protocol, and are in both editions.\n\nTo fix, use the CIM cmdlet of the same job."
     },
     {
       "category": "correctness",
@@ -20669,7 +20669,7 @@
           "url": "https://learn.microsoft.com/powershell/utility-modules/psscriptanalyzer/rules/possibleincorrectcomparisonwithnull"
         }
       ],
-      "why": "When the left side is an array, `-eq` and `-ne` filter it and return the elements: `@() -eq $null` is an empty array, which is false, and an array that holds a `$null` is true. The test does not say whether the array itself is `$null`.\n\nTo fix, write `$null` on the left: `$null -eq $x`."
+      "why": "When the left side is an array, `-eq` and `-ne` filter it and return the elements: `@(1, 2) -eq $null` is an empty array and `@(1, 2) -ne $null` is the whole array. The test does not say whether the value itself is `$null`.\n\nTo fix, write `$null` on the left: `$null -eq $x`."
     },
     {
       "category": "correctness",
@@ -22168,7 +22168,7 @@
           "url": "https://docs.astral.sh/ruff/rules/B019/"
         }
       ],
-      "why": "The cache belongs to the function and is shared by all instances. It stores `self` as part of each key, so every instance that called the method stays alive as long as the cache does, and the memory is never freed.\n\nTo fix, keep the cache per instance (create it in `__init__`), use `functools.cached_property`, or move the work to a function that takes only the values it needs."
+      "why": "The cache belongs to the function and is shared by all instances. It stores `self` as part of each key, so an instance that called the method stays alive until its entry is evicted, and with no size limit (`functools.cache`, `maxsize=None`) for as long as the cache does.\n\nTo fix, keep the cache per instance (create it in `__init__`), use `functools.cached_property`, or move the work to a function that takes only the values it needs."
     },
     {
       "category": "style",
@@ -24075,7 +24075,7 @@
           "url": "https://docs.astral.sh/ruff/rules/PIE810/"
         }
       ],
-      "why": "`startswith` and `endswith` accept a tuple of prefixes or suffixes, so one call with `(x, y)` says the same, and the string is scanned once.\n\nTo fix, write `a.startswith((x, y))`."
+      "why": "`startswith` and `endswith` accept a tuple of prefixes or suffixes, so one call with `(x, y)` says the same without repeating the name.\n\nTo fix, write `a.startswith((x, y))`."
     },
     {
       "category": "style",
@@ -25401,7 +25401,7 @@
           "url": "https://docs.astral.sh/ruff/rules/F508/"
         }
       ],
-      "why": "A `*` takes its number from the values, and a dict has no order to take it from. Python raises `TypeError: * wants int`.\n\nTo fix, pass a tuple with the width before the value, or write the number in the format."
+      "why": "A `*` takes its number from a tuple of values. Python raises `TypeError: * wants int`.\n\nTo fix, pass a tuple with the width before the value, or write the number in the format."
     },
     {
       "category": "correctness",
@@ -26916,7 +26916,7 @@
     {
       "category": "style",
       "default_level": "off",
-      "description": "Reports a block of imports that differs from the isort layout with its default settings. The sections are `__future__`, the standard library, third party, first party and relative imports, with a blank line between them and after the block (two before a definition at module level). Within a section `import x` comes before `from x import y`, names are in natural order without regard to case, and members are ordered as constants, classes, then the rest. One statement is written for each module, and a `from` import over `line_width` columns (88) is wrapped in parentheses, one member to a line. The options `sections` and `force_sort_within_sections` change the order. A folder or file next to the file, in the project root or in its `src` folder, is first party.",
+      "description": "Reports a block of imports that differs from the sorted layout. The sections are `__future__`, the standard library, third party, first party and relative imports, with a blank line between them and after the block (two before a definition at module level). Within a section `import x` comes before `from x import y`, names are in natural order without regard to case, and members are ordered as constants, classes, then the rest. One statement is written for each module, and a `from` import over `line_width` columns (88) is wrapped in parentheses, one member to a line. The options `sections` and `force_sort_within_sections` change the order. A folder or file next to the file, in the project root or in its `src` folder, is first party.",
       "example": {
         "config": null,
         "fixed": null,
@@ -28164,7 +28164,7 @@
           "url": "https://docs.rubocop.org/rubocop/latest/cops_lint.html#lintparenthesesasgroupedexpression"
         }
       ],
-      "why": "Ruby reads the parentheses as grouping the argument, not as enclosing the arguments of the call, and warns about it. With one argument the result is the same, but the form changes meaning when the code is edited: `puts (1 + 2).abs` calls `abs` on the group inside the call, while `puts(1 + 2).abs` calls it on the result of `puts`.\n\nTo fix, remove the space before `(`."
+      "why": "Ruby reads the parentheses as grouping the argument, not as enclosing the arguments of the call. With one argument the result is the same, but the form changes meaning when the code is edited: `puts (1 + 2).abs` calls `abs` on the group inside the call, while `puts(1 + 2).abs` calls it on the result of `puts`.\n\nTo fix, remove the space before `(`."
     },
     {
       "category": "suspicious",
@@ -28489,7 +28489,7 @@
           "url": "https://docs.rubocop.org/rubocop/latest/cops_lint.html#lintunusedblockargument"
         }
       ],
-      "why": "A block parameter that is never read is a value that the block was given for nothing, or a mistake in the block. A leading `_` says that it is skipped on purpose, as with the key of `each_with_index`.\n\nTo fix, remove the parameter, or prefix its name with `_`."
+      "why": "A block parameter that is never read is a value that the block was given for nothing, or a mistake in the block. A leading `_` says that it is skipped on purpose, as when a hash is walked for its values only.\n\nTo fix, remove the parameter, or prefix its name with `_`."
     },
     {
       "category": "cleanup",
@@ -30917,7 +30917,7 @@
           "url": "https://docs.sqlfluff.com/en/stable/reference/rules/ambiguous#am01"
         }
       ],
-      "why": "The grouping already makes the rows distinct, so `DISTINCT` does nothing, and the database may still sort or hash the result a second time. It also suggests a duplicate problem that the query does not have.\n\nTo fix, remove `DISTINCT`."
+      "why": "When the select list has all the grouping columns, the rows are distinct already and `DISTINCT` does nothing. When it leaves one out (`SELECT DISTINCT a ... GROUP BY a, b`), `DISTINCT` does change the result, and the grouping by the other column is probably a mistake.\n\nTo fix, remove `DISTINCT`, or group by the selected columns only."
     },
     {
       "category": "style",
@@ -31058,7 +31058,7 @@
     {
       "category": "style",
       "default_level": "off",
-      "description": "Reports a column of a `SELECT` list that is an expression (a function call, a literal, an operator, a `CASE`) with no alias. A column, `*`, a parenthesised expression and a cast of a column are left alone.",
+      "description": "Reports a column of a `SELECT` list that is an expression (a function call, a literal, an operator, a `CASE`) with no alias. A column, `*`, a parenthesised expression and a `::` cast of a column are left alone; `CAST(a AS int)` is a function call and is reported.",
       "example": {
         "config": null,
         "fixed": null,
@@ -32138,7 +32138,7 @@
           "url": "https://docs.sqlfluff.com/en/stable/reference/rules/structure#st03"
         }
       ],
-      "why": "The expression is defined and never used, so the reader has to read it to find out. The database may still run it.\n\nTo fix, remove it, or use it."
+      "why": "The expression is defined and never used, so the reader has to read the whole statement to find out that it does not matter.\n\nTo fix, remove it, or use it."
     },
     {
       "category": "correctness",
@@ -32325,7 +32325,7 @@
     {
       "category": "correctness",
       "default_level": "error",
-      "description": "Reports a script that uses a workflow command that GitHub has disabled: `::set-output`, `::save-state`, `::set-env` or `::add-path`.",
+      "description": "Reports a script that uses a workflow command that GitHub has disabled or deprecated: `::set-output`, `::save-state`, `::set-env` or `::add-path`.",
       "example": {
         "config": null,
         "fixed": null,
@@ -32362,7 +32362,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-deprecated-workflow-commands"
         }
       ],
-      "why": "GitHub disabled `set-env` and `add-path` because any tool that prints a line to the log could set an environment variable or change the `PATH` of the job, and moved `set-output` and `save-state` to files too. A step that still prints the command does not set the value, so a later step reads an empty one.\n\nTo fix, append to the file the runner provides: `echo \"name=value\" >> \"$GITHUB_OUTPUT\"`, and `$GITHUB_STATE`, `$GITHUB_ENV` or `$GITHUB_PATH` for the others."
+      "why": "GitHub disabled `set-env` and `add-path` because any tool that prints a line to the log could set an environment variable or change the `PATH` of the job, so those two no longer work. `set-output` and `save-state` have the same weakness, are deprecated and make the run show a warning.\n\nTo fix, append to the file the runner provides: `echo \"name=value\" >> \"$GITHUB_OUTPUT\"`, and `$GITHUB_STATE`, `$GITHUB_ENV` or `$GITHUB_PATH` for the others."
     },
     {
       "category": "style",
@@ -32492,7 +32492,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-job-step-ids"
         }
       ],
-      "why": "Two job ids that differ in case name one job for GitHub, and a reference such as `needs.build` can mean either. A repeated step id makes `steps.<id>.outputs` read one step or the other.\n\nTo fix, give each job and step its own id."
+      "why": "Ids are compared without case, so a reference such as `needs.build` cannot tell two such jobs apart, and `steps.<id>.outputs` cannot tell two steps with one id apart.\n\nTo fix, give each job and step its own id."
     },
     {
       "category": "correctness",
@@ -32535,7 +32535,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-contexts-and-builtin-func"
         }
       ],
-      "why": "Each key of a workflow can use only some contexts, since the others do not exist yet when it is evaluated. Elsewhere the value is empty, or GitHub rejects the workflow.\n\nTo fix, use a context the key offers, or move the value to a key that has it."
+      "why": "Each key of a workflow can use only some contexts, since the others do not exist yet when it is evaluated. An expression that reads another one does not get its value.\n\nTo fix, use a context the key offers, or move the value to a key that has it."
     },
     {
       "category": "correctness",
@@ -32608,7 +32608,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-type-check-expression"
         }
       ],
-      "why": "Expressions fail without an error: a property that does not exist is an empty string, and an object where text is expected becomes a text like `Object`. The workflow runs with a wrong value.\n\nTo fix, correct the property, or the types."
+      "why": "Expressions fail without an error: a property that does not exist is an empty string, and an object where text is expected becomes the text `Object`. The workflow runs with a wrong value.\n\nTo fix, correct the property, or the types."
     },
     {
       "category": "style",
@@ -32910,7 +32910,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-syntax-expression"
         }
       ],
-      "why": "GitHub rejects the workflow or evaluates the expression to an empty string. The error appears only when the workflow runs.\n\nTo fix, correct the expression."
+      "why": "The mistake shows only after the workflow is pushed, when the run fails.\n\nTo fix, correct the expression."
     },
     {
       "category": "correctness",
@@ -33063,7 +33063,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#permissions"
         }
       ],
-      "why": "GitHub rejects the workflow with an error, or the key has no effect. A misspelling like `content: read` leaves the scope without the access that the job needs.\n\nTo fix, use a scope of the permissions documentation, with the value `read`, `write` or `none`."
+      "why": "A misspelling like `content: read` does not grant the access that the job needs, and a job that sets `permissions` has no access to the scopes it does not name.\n\nTo fix, use a known scope with a value it takes (`read`, `write` or `none`)."
     },
     {
       "category": "suspicious",
@@ -33634,7 +33634,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-runner-labels"
         }
       ],
-      "why": "GitHub retires the Node runtimes that old action versions use. Their jobs print deprecation warnings and, once the runtime is removed, fail.\n\nTo fix, update to the version that the message names."
+      "why": "GitHub retires the Node runtimes that old action versions use. Their jobs print deprecation warnings and, once the runtime is removed, fail.\n\nTo fix, update the action to a newer version."
     },
     {
       "category": "style",
@@ -34013,7 +34013,7 @@
           "url": "https://github.com/rhysd/actionlint/blob/v1.7.12/docs/checks.md#check-missing-required-duplicate-keys"
         }
       ],
-      "why": "GitHub rejects a workflow with a structural mistake, or ignores the key. A misspelling such as `stepz` is never run, and the error shows only when the workflow is pushed and fails to start.\n\nTo fix, correct the key, or add what is missing."
+      "why": "The mistake shows only after the workflow is pushed, when it does not start or does not do what the file seems to say.\n\nTo fix, correct the key, or add what is missing."
     },
     {
       "category": "correctness",

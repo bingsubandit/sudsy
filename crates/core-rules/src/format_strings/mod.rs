@@ -151,7 +151,7 @@ rules! {
     PercentStar "percent-format-star-requires-sequence" Correctness Warn
         "`%`-format string `*` specifier requires a sequence"
         "Reports a `%` format with a `*` width or precision applied to a dict."
-        "A `*` takes its number from the values, and a dict has no order to take it from. \
+        "A `*` takes its number from a tuple of values. \
          Python raises `TypeError: * wants int`.\n\
          To fix, pass a tuple with the width before the value, or write the number in the \
          format."

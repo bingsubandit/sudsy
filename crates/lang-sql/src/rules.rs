@@ -64,10 +64,11 @@ rule! {
         category: Suspicious,
         default: Warn,
         description: "Reports `SELECT DISTINCT` in a query that has `GROUP BY`.",
-        why: "The grouping already makes the rows distinct, so `DISTINCT` does nothing, and the \
-                  database may still sort or hash the result a second time. It also suggests a \
-                  duplicate problem that the query does not have.\n\
-                  To fix, remove `DISTINCT`.",
+        why: "When the select list has all the grouping columns, the rows are distinct already and \
+                  `DISTINCT` does nothing. When it leaves one out (`SELECT DISTINCT a ... GROUP BY a, \
+                  b`), `DISTINCT` does change the result, and the grouping by the other column is \
+                  probably a mistake.\n\
+                  To fix, remove `DISTINCT`, or group by the selected columns only.",
         example: "select distinct a from t group by a",
         kinds: &[k::SELECT_STATEMENT],
     }
@@ -92,8 +93,8 @@ rule! {
         category: Suspicious,
         default: Warn,
         description: "Reports a common table expression that nothing in the `WITH` statement refers to.",
-        why: "The expression is defined and never used, so the reader has to read it to find out. \
-                  The database may still run it.\n\
+        why: "The expression is defined and never used, so the reader has to read the whole \
+                  statement to find out that it does not matter.\n\
                   To fix, remove it, or use it.",
         example: "with a as (select 1) select 2",
         kinds: &[k::WITH_COMPOUND_STATEMENT],
