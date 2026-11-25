@@ -47,6 +47,11 @@ pub struct IndentFacts {
     pub heredoc_bodies: &'static [&'static str],
     /// Kinds between a call and its heredoc argument (the argument list).
     pub heredoc_wrappers: &'static [&'static str],
+    /// Kinds of the brackets that open and close a list of elements, in the same order.
+    pub open_brackets: &'static [&'static str],
+    pub close_brackets: &'static [&'static str],
+    /// Kinds whose children are the elements of a list (arguments, array and hash elements).
+    pub elements: &'static [&'static str],
 }
 
 impl IndentFacts {
@@ -66,6 +71,9 @@ impl IndentFacts {
         heredoc_openers: &[],
         heredoc_bodies: &[],
         heredoc_wrappers: &[],
+        open_brackets: &[],
+        close_brackets: &[],
+        elements: &[],
     };
 }
 
@@ -86,6 +94,20 @@ pub struct Indents {
     heredoc_openers: Vec<SyntaxKind>,
     heredoc_bodies: Vec<SyntaxKind>,
     heredoc_wrappers: Vec<SyntaxKind>,
+    open_brackets: Vec<SyntaxKind>,
+    close_brackets: Vec<SyntaxKind>,
+    elements: Vec<SyntaxKind>,
+}
+
+/// A bracket that is open at the current token.
+struct Open {
+    /// The source line of the opener, and whether it is the last token of that line.
+    at: usize,
+    line: usize,
+    hanging: bool,
+    /// The source line of the first element, and how far the line of the last element moved.
+    first: Option<usize>,
+    shift: isize,
 }
 
 /// For the first token of each line: the nodes that start with it, innermost first, and the node
@@ -217,6 +239,9 @@ impl Indents {
             heredoc_openers: kinds(facts.heredoc_openers),
             heredoc_bodies: kinds(facts.heredoc_bodies),
             heredoc_wrappers: kinds(facts.heredoc_wrappers),
+            open_brackets: kinds(facts.open_brackets),
+            close_brackets: kinds(facts.close_brackets),
+            elements: kinds(facts.elements),
         }
     }
 
@@ -292,21 +317,70 @@ impl Indents {
             moved: Lines::new(lines),
             bodies: Default::default(),
         };
+        let mut open: Vec<Open> = Vec::new();
         for i in 0..tks.len() {
-            if !(i == 0 || tks[i].newline) || Some(tks[i].kind) == eof {
-                continue;
+            if (i == 0 || tks[i].newline) && Some(tks[i].kind) != eof {
+                let line = tks[i].first_line;
+                let src = tks[i].gap.len() as isize;
+                let shift = match self.target(&pass, i) {
+                    Some(t) => t as isize - src,
+                    None => match self.in_list(&pass, i, open.last_mut()) {
+                        Some(t) => t as isize - src,
+                        None => open
+                            .iter()
+                            .rev()
+                            .find(|o| o.hanging && o.first.is_some())
+                            .map_or_else(|| self.inherited(&pass, i), |o| o.shift),
+                    },
+                };
+                pass.indent.insert(line, (src + shift).max(0) as usize);
+                pass.moved.insert(line, shift);
+                shifts[i] = shift;
             }
-            let line = tks[i].first_line;
-            let src = tks[i].gap.len() as isize;
-            let shift = match self.target(&pass, i) {
-                Some(t) => t as isize - src,
-                None => self.inherited(&pass, i),
-            };
-            pass.indent.insert(line, (src + shift).max(0) as usize);
-            pass.moved.insert(line, shift);
-            shifts[i] = shift;
+            let kind = tks[i].kind;
+            if self.open_brackets.contains(&kind) {
+                open.push(Open {
+                    at: i,
+                    line: tks[i].first_line,
+                    hanging: tks.get(i + 1).is_some_and(|n| n.newline),
+                    first: None,
+                    shift: 0,
+                });
+            } else if self.close_brackets.contains(&kind) {
+                open.pop();
+            }
         }
         shifts
+    }
+
+    /// Where the line that starts with token `i` stands in the list the innermost open bracket
+    /// holds, when the bracket is the last token of its line: the first element one step in from
+    /// the line of the bracket, later elements under it, the closer at the line of the bracket.
+    fn in_list(&self, pass: &Pass<'_, '_>, i: usize, top: Option<&mut Open>) -> Option<usize> {
+        let top = top.filter(|o| o.hanging)?;
+        if self.close_brackets.contains(&pass.tks[i].kind) {
+            return pass.indent.get(&top.line).copied();
+        }
+        let lead = pass.leads.of(i);
+        // The element belongs to the list that the bracket opens.
+        let list = lead.outermost(&self.elements)?.parent()?;
+        let o = top.at;
+        let j = pass
+            .cx
+            .first_token(&list)
+            .and_then(|t| self.index(pass, &t))?;
+        if j != o && !(j == o + 1 && pass.tks[o].tok.parent() == list.parent()) {
+            return None;
+        }
+        let at = match top.first {
+            None => {
+                top.first = Some(pass.tks[i].first_line);
+                *pass.indent.get(&top.line)? + pass.width
+            }
+            Some(first) => *pass.indent.get(&first)?,
+        };
+        top.shift = at as isize - pass.tks[i].gap.len() as isize;
+        Some(at)
     }
 
     /// The line the token is on, of a token of the stream.

@@ -33,6 +33,9 @@ format-rows:
     heredoc-openers: [DocStart]
     heredoc-bodies: [HeredocBody]
     heredoc-wrappers: [Arguments]
+    open-brackets: [LParen, LBracket, LBrace, EmbBegin]
+    close-brackets: [RParen, RBracket, RBrace]
+    elements: [Arguments, Array, Hash]
 parse: adapter::parse_file
 options:
   - indent_size: 2

@@ -220,7 +220,7 @@ fn indents(f: &Value) -> String {
     };
     let field = |name: &str, key: &str| format!("{name}: &{:?}, ", list(b, key));
     format!(
-        ".indents(core_format::stream_indent::IndentFacts {{ {}{}{}{}{}{}{}{}{}{}{}{}{}{}{} }})",
+        ".indents(core_format::stream_indent::IndentFacts {{ {}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{} }})",
         field("statements", "statements"),
         field("frames", "frames"),
         field("operations", "operations"),
@@ -236,6 +236,9 @@ fn indents(f: &Value) -> String {
         field("heredoc_openers", "heredoc-openers"),
         field("heredoc_bodies", "heredoc-bodies"),
         field("heredoc_wrappers", "heredoc-wrappers"),
+        field("open_brackets", "open-brackets"),
+        field("close_brackets", "close-brackets"),
+        field("elements", "elements"),
     )
 }
 
