@@ -831,6 +831,14 @@
             {
               "type": "SYMBOL",
               "name": "expansion"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "double_quoted_string"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "single_quoted_string"
             }
           ]
         },
@@ -942,7 +950,7 @@
             "type": "ALIAS",
             "content": {
               "type": "PATTERN",
-              "value": "[a-zA-Z0-9_]+"
+              "value": "[^\\s=\"'$\\\\`#]+"
             },
             "named": true,
             "value": "unquoted_string"
@@ -1269,17 +1277,8 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "json_string_array"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "shell_command"
-                }
-              ]
+              "type": "SYMBOL",
+              "name": "_json_or_shell_command"
             },
             {
               "type": "BLANK"
@@ -1363,7 +1362,7 @@
         },
         {
           "type": "PATTERN",
-          "value": "'([^'\\\\`\\n]|[\\\\`].)*'"
+          "value": "'([^'\\\\`\\n]|[\\\\`][^\\n'])*[\\\\`]?'"
         },
         {
           "type": "SYMBOL",
@@ -2748,7 +2747,7 @@
         },
         {
           "type": "PATTERN",
-          "value": "'([^'\\\\`\\n]|[\\\\`].)*'"
+          "value": "'([^'\\\\`\\n]|[\\\\`][^\\n'])*[\\\\`]?'"
         },
         {
           "type": "SYMBOL",
@@ -2862,7 +2861,14 @@
                 "type": "IMMEDIATE_TOKEN",
                 "content": {
                   "type": "PATTERN",
-                  "value": "[\\\\`][^\\r\\n]"
+                  "value": "[\\\\`][^\\r\\n']"
+                }
+              },
+              {
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "[\\\\`]"
                 }
               },
               {

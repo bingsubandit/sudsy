@@ -1,0 +1,24 @@
+differences:
+  shell-layout: gap  the shell text of RUN, CMD, ENTRYPOINT and HEALTHCHECK is kept as written (continued lines keep their relative indent); dockerfmt lays it out with mvdan/sh (`&&` at the line start, one level of nesting, joined and split lines)
+  env-legacy: gap  `ENV key value` is kept; dockerfmt writes `ENV key=value`
+  copy-json: gap  `COPY ["a", "b"]` and `ADD [...]` stay in JSON form; dockerfmt writes plain arguments when the form has no JSON-only meaning
+  comment-space: gap  `#word` is kept; dockerfmt writes `# word` (a letter or digit after the `#`)
+  blank-lines: gap  a blank line at the start of a file is dropped, and blanks between instructions follow `max_blank_lines`; dockerfmt keeps one leading blank line
+  copy-layout: gap  a continued COPY, ADD or SHELL keeps its arguments as written; dockerfmt puts every argument on a line of its own
+  maintainer: gap  `MAINTAINER x` is kept; dockerfmt writes `LABEL org.opencontainers.image.authors="x"`, which changes metadata and is not done
+files:
+  deciding: shell-layout:90, env-legacy:96, copy-json:35, comment-space:2, blank-lines:1, copy-layout:2, maintainer:1
+  held-out: shell-layout:77, env-legacy:26, copy-json:2, comment-space:5, blank-lines:2, copy-layout:4
+ratchet:
+  deciding: 115
+  held-out: 103
+target-files:
+  deciding: 342
+  held-out: 219
+second-format:
+  deciding: 0
+  held-out: 0
+refused:
+  deciding: 0
+  held-out: 0
+unclassified: 0

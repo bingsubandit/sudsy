@@ -208,6 +208,29 @@
         {"dir": "tests/conformance/corpus/shell", "suffixes": [".sh", ".bash"], "prefix": "corpus/", "recursive": true, "ratchet": "real-world"}
       ]
     },
+    "dockerfmt": {"speed": {"language": "Dockerfile", "label": "dockerfmt", "corpus": {"group": "deciding", "text": "the Dockerfile corpus (22 projects)"}, "format": ["{exe}", "--check", "{files}"]},
+      "catalog": "dockerfmt",
+      "install": {
+        "release": "https://github.com/reteps/dockerfmt/releases/download/v{version}/{asset}",
+        "assets": {
+          "linux-x86_64": "dockerfmt-v{version}-linux-amd64.tar.gz",
+          "linux-aarch64": "dockerfmt-v{version}-linux-arm64.tar.gz",
+          "darwin-arm64": "dockerfmt-v{version}-darwin-arm64.tar.gz",
+          "darwin-x86_64": "dockerfmt-v{version}-darwin-amd64.tar.gz"
+        },
+        "exe": "dockerfmt"
+      },
+      "fetch": ["tests/conformance/fetch-dockerfile-corpus.sh", "tests/conformance/fetch-dockerfile-evidence-corpus.sh"],
+      "command": ["{exe}"],
+      "input": "stdin",
+      "tool_may_reject": true,
+      "fixtures": [
+        {"dir": "tests/conformance/corpus/dockerfile", "suffixes": [""], "names": "^(Dockerfile(\\..*)?|.*\\.[Dd]ockerfile)$", "only": ["golang/", "python/", "nginx/", "postgres/", "dotnet-docker/"], "prefix": "dockerfile/", "recursive": true, "copy_as": ".dockerfile", "ratchet": "deciding"},
+        {"dir": "tests/conformance/corpus/dockerfile-evidence", "suffixes": [""], "names": "^(Dockerfile(\\..*)?|.*\\.[Dd]ockerfile)$", "only": ["cockroach/", "grafana/", "istio/", "kind/", "microservices-demo/", "next.js/", "docker-node/", "tensorflow/", "vault/"], "prefix": "dockerfile-evidence/", "recursive": true, "copy_as": ".dockerfile", "ratchet": "deciding"},
+        {"dir": "tests/conformance/corpus/dockerfile", "suffixes": [""], "names": "^(Dockerfile(\\..*)?|.*\\.[Dd]ockerfile)$", "only": ["moby/", "buildx/"], "prefix": "dockerfile/", "recursive": true, "copy_as": ".dockerfile", "ratchet": "held-out"},
+        {"dir": "tests/conformance/corpus/dockerfile-evidence", "suffixes": [""], "names": "^(Dockerfile(\\..*)?|.*\\.[Dd]ockerfile)$", "only": ["airflow/", "argo-cd/", "beats/", "core/", "docker/", "opentelemetry-demo/", "prometheus/", "pytorch/", "traefik/", "mastodon/"], "prefix": "dockerfile-evidence/", "recursive": true, "copy_as": ".dockerfile", "ratchet": "held-out"}
+      ]
+    },
     "google-java-format": {"speed": {"language": "Java", "label": "google-java-format", "corpus": {"group": "real-world", "text": "the Java corpus (5 projects)"}, "format": ["{exe}", "--dry-run", "--skip-javadoc-formatting", "--skip-removing-unused-imports", "--skip-reflowing-long-strings", "{files}"]}, 
       "catalog": "google-java-format",
       "install": {

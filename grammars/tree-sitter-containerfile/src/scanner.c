@@ -883,9 +883,16 @@ bool tree_sitter_containerfile_external_scanner_scan(void *payload, TSLexer *lex
         return true;
     }
 
-    if (valid_symbols[INVALID_JSON_ARRAY_SHELL_COMMAND] &&
-        scan_invalid_json_array_shell_command(state, lexer)) {
-        return true;
+    if (valid_symbols[INVALID_JSON_ARRAY_SHELL_COMMAND]) {
+        while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+            lexer->advance(lexer, true);
+        }
+        // The scan moves the lexer on, so after it no other token is tried:
+        // a valid JSON array is the parser's to lex (where a newline is also
+        // a valid token, as after HEALTHCHECK CMD, it would swallow the line).
+        if (lexer->lookahead == '[') {
+            return scan_invalid_json_array_shell_command(state, lexer);
+        }
     }
 
     if (valid_symbols[COMMENT] && scan_comment(state, lexer)) {

@@ -24,7 +24,6 @@ Corpus of each row ([docs/languages.md](languages.md) has the sources):
 - Python: the Python corpus (Django, Requests, Flask, Click, HTTPX, pytest, Black)
 - YAML: the GitHub Actions workflows of real repositories, 8 copies, without 16 files Sudsy cannot parse and the GitHub Actions workflows of real repositories and the yaml-test-suite cases
 - Shell: the shell script corpus
-- Dockerfile: the Dockerfile corpus
 - SQL: the ANSI dialect fixtures of sqlfluff, without 3 files Sudsy cannot parse
 - Java: the Java corpus (5 projects)
 - GitHub Actions: the GitHub Actions workflows of real repositories
@@ -43,6 +42,7 @@ Corpus of each row ([docs/languages.md](languages.md) has the sources):
 - Angular: 453 files, without 7 files Sudsy cannot parse
 - Ruby: the Ruby corpus
 - Protobuf: the Protobuf corpus and the Protobuf corpus, one module per project
+- Dockerfile: the Dockerfile corpus
 - PHP: the PHP corpus and 10390 files, without 1 files Sudsy cannot parse
 <!-- /generated -->
 

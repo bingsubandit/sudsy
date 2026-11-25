@@ -8,6 +8,9 @@
 
 use crate::doc::{self, Doc};
 
+/// Columns of a tab when the indentation of continued lines is compared.
+const TAB_COLUMNS: usize = 4;
+
 /// One logical line: the parts up to the first continuation, then the indented rest.
 #[derive(Default)]
 pub struct Continued {
@@ -52,7 +55,9 @@ impl Continued {
     /// Text of several lines, a continuation ending each but the last: the first line goes on,
     /// every further line is indented and ends in ` \` (blanks before the escape character
     /// collapse), except inside a quote, where a line stays as written. A line that starts with
-    /// `#` is a comment and never opens a quote.
+    /// `#` is a comment and never opens a quote. The further lines keep their indentation
+    /// relative to the least indented of them (a tab counts [`TAB_COLUMNS`]): nested levels stay
+    /// nested, the base level becomes the one level of the continuation.
     pub fn text(&mut self, text: &str) {
         let lines: Vec<&str> = text.split('\n').map(|l| l.trim_end_matches('\r')).collect();
         let esc = match lines[0].trim_end().chars().last() {
@@ -60,9 +65,19 @@ impl Continued {
             _ => '\\',
         };
         let mut quote = None::<char>;
-        for (i, raw) in lines.iter().enumerate() {
+        // (verbatim, lead columns, body) of each line
+        let mut parts = Vec::with_capacity(lines.len());
+        for raw in &lines {
             let verbatim = quote.is_some();
             let line = if verbatim { raw } else { raw.trim_start() };
+            let lead = if verbatim {
+                0
+            } else {
+                raw[..raw.len() - line.len()]
+                    .chars()
+                    .map(|c| if c == '\t' { TAB_COLUMNS } else { 1 })
+                    .sum::<usize>()
+            };
             let comment = !verbatim && line.starts_with('#');
             if !comment {
                 let mut chars = line.chars();
@@ -94,12 +109,38 @@ impl Continued {
                 }
                 _ => body.to_string(),
             };
+            parts.push((
+                verbatim,
+                if body.is_empty() { usize::MAX } else { lead },
+                body,
+            ));
+        }
+        let base = parts
+            .iter()
+            .skip(1)
+            .filter(|(verbatim, _, body)| !verbatim && !body.starts_with('#'))
+            .map(|(_, lead, _)| *lead)
+            .min()
+            .filter(|&b| b != usize::MAX)
+            .unwrap_or(0);
+        for (i, (verbatim, lead, body)) in parts.into_iter().enumerate() {
             match (i, verbatim) {
                 (0, _) => self.push(doc::text(body)),
                 (_, true) => self.tail.push(doc::line_start(body)),
                 _ => {
                     self.tail.push(doc::hardline());
-                    self.tail.push(doc::text(body));
+                    let nested = if body.starts_with('#') || lead == usize::MAX {
+                        0
+                    } else {
+                        lead.saturating_sub(base)
+                    };
+                    self.tail.push(if nested == 0 {
+                        doc::text(body)
+                    } else {
+                        let mut deeper = " ".repeat(nested);
+                        deeper.push_str(&body);
+                        doc::text(deeper)
+                    });
                 }
             }
         }

@@ -109,6 +109,11 @@
   options: 101
   source: "https://github.com/pinterest/ktlint/blob/1.8.0/documentation/release-latest/docs/rules/configuration-ktlint.md"
   note: "85 rule switches (ktlint_standard_<rule>) of the rules that can autocorrect, 16 properties: ktlint_code_style, indent_style, indent_size, max_line_length, insert_final_newline, ij_kotlin_allow_trailing_comma, ij_kotlin_allow_trailing_comma_on_call_site, ij_kotlin_imports_layout, ij_kotlin_indent_before_arrow_on_new_line, ij_kotlin_line_break_after_multiline_when_entry and 6 ktlint_* wrapping and annotation settings; not the 17 report-only rules and the 4 naming and back-ticked settings (1.8.0)"
+- language: dockerfile
+  tool: dockerfmt
+  options: 3
+  source: "https://github.com/reteps/dockerfmt/blob/v1.0.0/README.md"
+  note: "--indent, --use-tabs, --newline (and the editorconfig keys that set them); not -s (the redirect blank is shell code of RUN: Shell's row), -c, -d, -w (modes) (1.0.0)"
 - language: shell
   tool: shfmt
   options: 8

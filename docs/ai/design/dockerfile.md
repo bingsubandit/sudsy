@@ -1,6 +1,6 @@
 # Design: Dockerfile format evidence
 
-The Dockerfile formatter ([../formatting/dockerfile.md](../formatting/dockerfile.md)) predates [../development/no-reference-tool.md](../development/no-reference-tool.md). This page holds the evidence that page asks for: sources, corpus, decision table, numbers. Reproduce with `python3 scripts/dockerfile_evidence.py <sudsy> <dockerfmt> <work-dir>` (read-only on the corpus; it prints every table below) and `scripts/parity.sh stability dockerfile`. No formatter change is part of it.
+The Dockerfile formatter ([../formatting/dockerfile.md](../formatting/dockerfile.md)) predates [../development/no-reference-tool.md](../development/no-reference-tool.md). This page holds the evidence that page asks for: sources, corpus, decision table, numbers. The numbers below are those of the decision, measured before the parser fixes and the nested continuation indent; the current ones are `scripts/parity.sh format dockerfmt`. Reproduce with `python3 scripts/dockerfile_evidence.py <sudsy> <dockerfmt> <work-dir>` (read-only on the corpus; it prints every table below) and `scripts/parity.sh stability dockerfile`.
 
 ## Sources
 Looked up 2026-11-25 (GitHub API, npm, PyPI, Homebrew, VS Code Marketplace, conform.nvim and mega-linter files):

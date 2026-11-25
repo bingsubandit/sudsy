@@ -174,10 +174,9 @@
   lint: [{tool: revive, name: revive}]
 - language: Dockerfile
   popularity: [{name: Dockerfile, gh: 2143139, so: 46.3}]
-  exempt: true
   ids: [dockerfile]
   speed: [Dockerfile]
-  stability: [dockerfile]
+  format: [{tool: dockerfmt, name: dockerfmt, groups: [deciding, held-out]}]
   lint: [{tool: hadolint, name: hadolint}]
 - language: Makefile
   popularity: [{name: Makefile, gh: 966194, so: 17.8}]
