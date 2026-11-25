@@ -8368,6 +8368,95 @@
       },
       "type": "object"
     },
+    "batch": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "additionalProperties": false,
+          "properties": {
+            "continued_indent": {
+              "default": "as_written",
+              "description": "Indentation of a line that continues the one before it with `^`: as written, or none when a blank stands before the `^` (the blanks then separate arguments and are not content).",
+              "enum": [
+                "as_written",
+                "none"
+              ],
+              "type": "string"
+            },
+            "end_of_line": {
+              "default": "auto",
+              "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+              "enum": [
+                "auto",
+                "lf",
+                "crlf"
+              ],
+              "type": "string"
+            },
+            "final_newline": {
+              "default": true,
+              "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_conversion": {
+              "default": "as_written",
+              "description": "Indentation of a line: as written, or tabs turned into spaces, or spaces into tabs (a tab is `indent_size` columns).",
+              "enum": [
+                "as_written",
+                "spaces",
+                "tabs"
+              ],
+              "type": "string"
+            },
+            "indent_size": {
+              "default": 4,
+              "description": "Columns per indentation level (also the width of a tab).",
+              "maximum": 16,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "max_blank_lines": {
+              "default": 1,
+              "description": "Largest number of blank lines kept between lines.",
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "space_after_colons": {
+              "default": true,
+              "description": "At least one blank after `::` before a comment that starts with a letter or digit (more blanks stay as written).",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "lint": {
+          "$ref": "#/definitions/lint"
+        },
+        "semantics": {
+          "additionalProperties": false,
+          "description": "Facts about methods that the flow analyses use.",
+          "properties": {
+            "does_not_return": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "pure": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "c": {
       "additionalProperties": false,
       "properties": {
@@ -12146,6 +12235,7 @@
           "html",
           "cpp",
           "c",
+          "batch",
           "cmake",
           "dockerfile",
           "editorconfig",
@@ -12547,6 +12637,95 @@
                       "ignore"
                     ],
                     "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "lint": {
+                "$ref": "#/definitions/lint"
+              },
+              "semantics": {
+                "additionalProperties": false,
+                "description": "Facts about methods that the flow analyses use.",
+                "properties": {
+                  "does_not_return": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "pure": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "batch": {
+            "additionalProperties": false,
+            "properties": {
+              "format": {
+                "additionalProperties": false,
+                "properties": {
+                  "continued_indent": {
+                    "default": "as_written",
+                    "description": "Indentation of a line that continues the one before it with `^`: as written, or none when a blank stands before the `^` (the blanks then separate arguments and are not content).",
+                    "enum": [
+                      "as_written",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "end_of_line": {
+                    "default": "auto",
+                    "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+                    "enum": [
+                      "auto",
+                      "lf",
+                      "crlf"
+                    ],
+                    "type": "string"
+                  },
+                  "final_newline": {
+                    "default": true,
+                    "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_conversion": {
+                    "default": "as_written",
+                    "description": "Indentation of a line: as written, or tabs turned into spaces, or spaces into tabs (a tab is `indent_size` columns).",
+                    "enum": [
+                      "as_written",
+                      "spaces",
+                      "tabs"
+                    ],
+                    "type": "string"
+                  },
+                  "indent_size": {
+                    "default": 4,
+                    "description": "Columns per indentation level (also the width of a tab).",
+                    "maximum": 16,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "max_blank_lines": {
+                    "default": 1,
+                    "description": "Largest number of blank lines kept between lines.",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "space_after_colons": {
+                    "default": true,
+                    "description": "At least one blank after `::` before a comment that starts with a letter or digit (more blanks stay as written).",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"

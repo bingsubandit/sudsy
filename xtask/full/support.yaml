@@ -186,6 +186,12 @@
   speed: [Makefile]
   stability: [makefile]
   lint: [{tool: checkmake, name: checkmake}]
+- language: Batchfile
+  popularity: [{name: Batchfile, gh: 815225}]
+  evidence: batchfile
+  ids: [batch]
+  speed: [Batchfile]
+  stability: [batchfile]
 - language: GitHub Actions
   popularity: [{name: GitHub Actions, estimate: {value: 0.5, basis: "lead's estimate 2026-11-25, how common the file is in repositories; no survey lists data formats"}}]
   exempt: true

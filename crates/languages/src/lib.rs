@@ -44,6 +44,7 @@ pub fn providers() -> Vec<Box<dyn LanguageProvider>> {
         Box::new(lang_cpp::provider(lang_cpp::Dialect::Cpp)),
         Box::new(lang_cpp::provider(lang_cpp::Dialect::C)),
         // generated:providers
+        Box::new(lang_batch::provider()),
         Box::new(lang_cmake::provider()),
         Box::new(lang_dockerfile::provider()),
         Box::new(lang_editorconfig::provider()),

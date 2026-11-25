@@ -342,6 +342,7 @@ pub struct LazyRules {
     option_kinds: OptionKinds,
     source_indent: bool,
     blank_facts: crate::stream_blank::BlankFacts,
+    line_facts: crate::stream::LineFacts,
     indent_facts: crate::stream_indent::IndentFacts,
     cell: OnceLock<RuleFormatter>,
 }
@@ -376,6 +377,7 @@ impl LazyRules {
             option_kinds: &[],
             source_indent: false,
             blank_facts: crate::stream_blank::BlankFacts::NONE,
+            line_facts: crate::stream::LineFacts::NONE,
             indent_facts: crate::stream_indent::IndentFacts::NONE,
             cell: OnceLock::new(),
         }
@@ -420,6 +422,12 @@ impl LazyRules {
         self
     }
 
+    /// The language's facts of the line stream ([`crate::stream::LineFacts`]).
+    pub const fn lines(mut self, facts: crate::stream::LineFacts) -> LazyRules {
+        self.line_facts = facts;
+        self
+    }
+
     /// The language's [`RuleFacts`].
     pub const fn facts(mut self, facts: RuleFacts) -> LazyRules {
         self.facts = facts;
@@ -439,6 +447,16 @@ impl LazyRules {
                 crate::stream_blank::Blanks::new((self.grammar)(), self.blank_facts);
             rules.stream.indents =
                 crate::stream_indent::Indents::new((self.grammar)(), self.indent_facts);
+            let g = (self.grammar)();
+            let kind = |n: &str| {
+                g.kind_by_name(n)
+                    .unwrap_or_else(|| panic!("format-rows: kind `{n}`"))
+            };
+            rules.stream.flush = self.line_facts.flush.iter().map(|n| kind(n)).collect();
+            rules.stream.align_closers = self.line_facts.align_closers;
+            rules.stream.option_blanks = (self.line_facts.option_blanks.iter())
+                .map(|(a, b, o)| (kind(a), kind(b), core_config::opt::must(o)))
+                .collect();
             rules.file.blocks = self.blocks;
             rules.file.signatures = self.signatures;
             rules
