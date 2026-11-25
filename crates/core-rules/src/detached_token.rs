@@ -50,6 +50,9 @@ impl Rule for DetachedToken {
             .descendants_with_tokens()
             .filter_map(|e| e.into_token())
         {
+            if t.text_range().is_empty() {
+                continue; // layout markers (indent, dedent) are not code
+            }
             if g.name(t.kind()) != self.kind {
                 previous_kind = false;
                 if g.has_tag(t.kind(), "comment") {
@@ -64,7 +67,11 @@ impl Rule for DetachedToken {
             let before = file.text[..usize::from(range.start())].trim_end();
             let detached = previous_kind || comment || before.len() < usize::from(range.start());
             previous_kind = true;
-            let from = if comment { code_end } else { TextSize::of(before) };
+            let from = if comment {
+                code_end
+            } else {
+                TextSize::of(before)
+            };
             let reported = detached && (comment || !before.is_empty());
             code_end = range.end();
             comment = false;
