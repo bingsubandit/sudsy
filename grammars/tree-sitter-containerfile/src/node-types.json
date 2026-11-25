@@ -910,11 +910,19 @@
       "required": false,
       "types": [
         {
+          "type": "double_quoted_string",
+          "named": true
+        },
+        {
           "type": "expansion",
           "named": true
         },
         {
           "type": "line_continuation",
+          "named": true
+        },
+        {
+          "type": "single_quoted_string",
           "named": true
         }
       ]

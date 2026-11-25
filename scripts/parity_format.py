@@ -227,7 +227,10 @@ def fixtures(config, folder, filters):
             walk = base.rglob("*") if source.get("recursive") else base.iterdir()
             paths = [(p.relative_to(base).as_posix(), p) for p in sorted(walk) if p.is_file() and ".git" not in p.parts]
         for rel, path in paths:
-            if not rel.endswith(suffixes) or path.name == "sudsy.yaml" or not rel.startswith(source.get("only", "")):
+            only = source.get("only", "")
+            if not rel.endswith(suffixes) or path.name == "sudsy.yaml" or not rel.startswith(tuple(only) if isinstance(only, list) else only):
+                continue
+            if "names" in source and not re.search(source["names"], path.name):  # the file names of a language with no extension (`Dockerfile`, `Dockerfile.dev`)
                 continue
             if rel.startswith(source.get("skip", "\0")):
                 filters["skip"] += 1

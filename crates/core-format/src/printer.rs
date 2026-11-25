@@ -18,6 +18,20 @@ pub struct PrintOptions {
     pub use_tabs: bool,
     /// With tabs, an alignment is tabs for each whole indent width and spaces for the rest.
     pub align_with_tabs: bool,
+    /// Every line break of the document is a line continuation (the code of a Dockerfile `RUN`).
+    pub continuation: Option<Continuation>,
+}
+
+/// The continuation character of the hosts whose code is read as continued lines.
+pub const CONTINUATION_ESCAPE: char = '\\';
+
+/// The line breaks of code that is one logical line: a line that holds code ends in ` <escape>`, a
+/// line of blanks gets the escape character after them, a line that is a whole comment (the
+/// character `comment` starts it) gets nothing, and neither does a line break inside text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Continuation {
+    pub escape: char,
+    pub comment: char,
 }
 
 impl Default for PrintOptions {
@@ -27,6 +41,7 @@ impl Default for PrintOptions {
             indent_width: 2,
             use_tabs: false,
             align_with_tabs: false,
+            continuation: None,
         }
     }
 }
@@ -304,7 +319,23 @@ impl<'a> Printer<'a> {
         self.opts.line_width as isize - self.pos as isize
     }
 
+    /// The line that ends here is continued: see [`Continuation`].
+    fn continue_line(&mut self, c: Continuation) {
+        let line = self.out.rfind('\n').map_or(0, |i| i + 1);
+        let code = self.out[line..].trim();
+        if self.out.is_empty() {
+        } else if code.is_empty() {
+            self.out.push(c.escape);
+        } else if !code.starts_with(c.comment) {
+            self.out.push(' ');
+            self.out.push(c.escape);
+        }
+    }
+
     fn newline(&mut self, indent: usize) {
+        if let Some(c) = self.opts.continuation {
+            self.continue_line(c);
+        }
         let trimmed = self.out.trim_end_matches([' ', '\t']).len().max(self.keep);
         self.out.truncate(trimmed);
         self.out.push('\n');

@@ -1193,6 +1193,24 @@ pub fn break_after(g: &Grammar, tok: &SyntaxToken) -> bool {
     .unwrap_or(false)
 }
 
+/// The value of the parser directive `<marker> name=value` that stands among the comments before
+/// the first token of `root`'s text (names compare ignoring case, blanks around the value go).
+pub fn parser_directive(g: &Grammar, root: &SyntaxNode, name: &str) -> Option<String> {
+    let marker = g.comments.line.as_deref()?;
+    let first = root
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .find(|t| !g.is_trivia(t.kind()))?;
+    leading_comments(g, &first).iter().find_map(|c| {
+        let text = c.text();
+        let body = text.trim_start_matches(marker);
+        let (key, value) = body.split_once('=')?;
+        key.trim()
+            .eq_ignore_ascii_case(name)
+            .then(|| value.replace(' ', ""))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

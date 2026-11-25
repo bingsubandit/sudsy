@@ -49,7 +49,13 @@ pub fn provider_of_composite(spec: Spec, composite: Option<Composite>) -> Parser
     let engine = Engine::with_composite(spec.language, spec.grammar, spec.mapping, composite);
     let validate = spec.validate;
     let parse = move |file: &provider_api::SourceFile| {
-        let mut parsed = engine.parse(&file.text);
+        let continued =
+            file.language_version.as_deref() == Some(core_format::EmbedMode::Continued.name());
+        let mut parsed = if continued {
+            engine.parse_continued(&file.text)
+        } else {
+            engine.parse(&file.text)
+        };
         if let (true, Some(validate)) = (parsed.errors.is_empty(), validate) {
             parsed.errors = validate(&parsed.tree, &file.text);
         }

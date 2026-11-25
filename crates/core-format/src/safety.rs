@@ -429,6 +429,19 @@ pub fn verify(
     after: &str,
     reparse: impl FnOnce(&str) -> Result<SyntaxNode, String>,
 ) -> Result<(), FormatError> {
+    verify_with(g, formatter, options, before_tree, after, reparse, None)
+}
+
+/// [`verify`] for a host whose code of other languages `embedder` compares.
+pub fn verify_with(
+    g: &Grammar,
+    formatter: &dyn NodeFormatter,
+    options: &core_config::ResolvedOptions,
+    before_tree: &SyntaxNode,
+    after: &str,
+    reparse: impl FnOnce(&str) -> Result<SyntaxNode, String>,
+    embedder: Option<&dyn crate::Embedder>,
+) -> Result<(), FormatError> {
     let after_tree = reparse(after)
         .map_err(|e| FormatError::Safety(format!("the output does not parse: {e}")))?;
     let as_line = options.get(core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE)
@@ -447,6 +460,9 @@ pub fn verify(
         same_values(g, formatter, options, before_tree, &after_tree)
             .map_err(FormatError::Safety)?;
     }
+    formatter
+        .embedded_check(before_tree, &after_tree, options, embedder)
+        .map_err(FormatError::Safety)?;
     formatter
         .extra_check_with(before_tree, &after_tree, options)
         .map_err(FormatError::Safety)

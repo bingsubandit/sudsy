@@ -351,6 +351,190 @@ pub fn redundant_semicolons(
     }
 }
 
+/// The kinds and keywords of [`keyword_forms`]: the instruction node, its keyword token, the token
+/// that holds a legacy `key value` pair and the tokens of a JSON array.
+pub struct KeywordForms<'a> {
+    pub instruction: core_syntax::SyntaxKind,
+    pub keyword: core_syntax::SyntaxKind,
+    pub pair: core_syntax::SyntaxKind,
+    /// Instructions whose `pair` token `key value` may be written `key=value`.
+    pub pair_keywords: &'a [&'a str],
+    /// The tokens of a JSON array: `[`, a string, `,`, `]`.
+    pub array: [core_syntax::SyntaxKind; 4],
+    /// Instructions whose JSON array of plain words may be written as arguments.
+    pub array_keywords: &'a [&'a str],
+}
+
+/// The value a word of an instruction has once its quotes and escapes are read (`$` stays: it is
+/// read the same wherever the word stands), and whether an unquoted blank splits it into several
+/// words. `None` for an unterminated quote or escape.
+fn read_word(raw: &str, escape: char) -> Option<(String, bool)> {
+    let mut out = String::with_capacity(raw.len());
+    let mut chars = raw.chars();
+    let (mut quote, mut split) = (None::<char>, false);
+    while let Some(c) = chars.next() {
+        match (quote, c) {
+            (Some(q), _) if c == q => quote = None,
+            (None, '"' | '\'') => quote = Some(c),
+            (Some('"'), _) if c == escape => match chars.next()? {
+                n @ ('"' | '$') => out.push(n),
+                n if n == escape => out.push(n),
+                n => {
+                    out.push(c);
+                    out.push(n);
+                }
+            },
+            (None, _) if c == escape => out.push(chars.next()?),
+            (None, ' ' | '\t') => {
+                split = true;
+                out.push(c);
+            }
+            _ => out.push(c),
+        }
+    }
+    quote.is_none().then_some((out, split))
+}
+
+/// `key=value` for the legacy `key value` (the value is the rest of the line after the blanks),
+/// when the two are read the same: a value without a quote goes in double quotes if it has blanks,
+/// a quoted value stays. The new text is read again with [`read_word`], independently of how it
+/// was made: it must be one word with the value of the old text.
+fn legacy_pair(text: &str, escape: char) -> Option<String> {
+    let name_end = text.find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))?;
+    let (name, rest) = text.split_at(name_end);
+    if name.is_empty() || name.starts_with(|c: char| c.is_ascii_digit()) {
+        return None;
+    }
+    let value = rest.strip_prefix([' ', '\t'])?.trim();
+    if value.is_empty() || value.contains(['\n', '\r']) {
+        return None;
+    }
+    let new = if value.contains([' ', '\t']) && !value.contains(['"', '\'']) {
+        format!("{name}=\"{value}\"")
+    } else {
+        format!("{name}={value}")
+    };
+    let (old, _) = read_word(value, escape)?;
+    let (read, split) = read_word(new.split_once('=')?.1, escape)?;
+    (read == old && !split).then_some(new)
+}
+
+/// The edit that turns the JSON array that `open` starts into plain arguments, when every element
+/// is a plain word and the array is on one line. The words are read again from the new text.
+fn array_words(
+    open: &SyntaxToken,
+    [_, string, comma, close]: [core_syntax::SyntaxKind; 4],
+    text: &str,
+) -> Option<(usize, usize, String)> {
+    let plain = |s: &str| {
+        !s.starts_with('-')
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || "_./:@%+,=~*?^-".contains(c))
+    };
+    let mut words = Vec::new();
+    let (mut expect_string, mut end) = (true, None);
+    let mut next = open.next_token();
+    while let Some(t) = next {
+        match t.kind() {
+            k if k == string && expect_string => {
+                let word = t.text().strip_prefix('"')?.strip_suffix('"')?;
+                words.push(word.to_string());
+                expect_string = false;
+            }
+            k if k == comma && !expect_string => expect_string = true,
+            k if k == close && !expect_string => {
+                end = Some(t.text_range().end());
+                break;
+            }
+            // (blanks only: a comment, a line break or a continuation stops the rewrite)
+            _ if t.text().trim().is_empty() && !t.text().contains('\n') => {}
+            _ => return None,
+        }
+        next = t.next_token();
+    }
+    let (start, end) = (usize::from(open.text_range().start()), usize::from(end?));
+    let new = words.join(" ");
+    let read: Vec<&str> = new.split(' ').collect();
+    (words.len() > 1
+        && words.iter().all(|w| plain(w))
+        && read.len() == words.len()
+        && read.iter().zip(&words).all(|(a, b)| a == b)
+        && !text[start..end].contains('\n'))
+    .then_some((start, end, new))
+}
+
+/// The edits of the equivalent forms of an instruction's arguments (see [`KeywordForms`]): the
+/// legacy `key value` pair as `key=value` where `pairs`, the JSON array as words where `arrays`.
+/// `escape` is the file's escape character.
+pub fn keyword_forms(
+    tree: &SyntaxNode,
+    text: &str,
+    forms: &KeywordForms<'_>,
+    (pairs, arrays, escape): (bool, bool, char),
+    edits: &mut Vec<(usize, usize, String)>,
+) {
+    let named =
+        |set: &[&str], t: &SyntaxToken| set.iter().any(|w| t.text().eq_ignore_ascii_case(w));
+    for node in tree.descendants().filter(|n| n.kind() == forms.instruction) {
+        let Some(keyword) = node
+            .children_with_tokens()
+            .filter_map(|e| e.into_token())
+            .find(|t| t.kind() == forms.keyword)
+        else {
+            continue;
+        };
+        let (pair, array) = (
+            pairs && named(forms.pair_keywords, &keyword),
+            arrays && named(forms.array_keywords, &keyword),
+        );
+        if !(pair || array) {
+            continue;
+        }
+        for t in node.children_with_tokens().filter_map(|e| e.into_token()) {
+            if pair && t.kind() == forms.pair {
+                if let Some(new) = legacy_pair(t.text(), escape) {
+                    let r = t.text_range();
+                    edits.push((usize::from(r.start()), usize::from(r.end()), new));
+                }
+            } else if array && t.kind() == forms.array[0] {
+                edits.extend(array_words(&t, forms.array, text));
+            }
+        }
+    }
+}
+
+/// A line comment whose marker run (`#`, `##`) is followed by a letter or digit gets a blank after
+/// it (`#x` as `# x`); `skip` names the comment tokens that stay as written. Edits
+/// `(from, to, text)`.
+pub fn comment_space(
+    grammar: &Grammar,
+    tree: &SyntaxNode,
+    skip: impl Fn(&SyntaxToken) -> bool,
+    edits: &mut Vec<(usize, usize, String)>,
+) {
+    let Some(marker) = grammar.comments.line.as_deref() else {
+        return;
+    };
+    for t in tree
+        .descendants_with_tokens()
+        .filter_map(|e| e.into_token())
+        .filter(|t| grammar.has_tag(t.kind(), "comment"))
+    {
+        let mut rest = t.text();
+        let mut at = usize::from(t.text_range().start());
+        if !rest.starts_with(marker) {
+            continue;
+        }
+        while let Some(r) = rest.strip_prefix(marker) {
+            rest = r;
+            at += marker.len();
+        }
+        if rest.starts_with(char::is_alphanumeric) && !skip(&t) {
+            edits.push((at, at, " ".into()));
+        }
+    }
+}
+
 /// `fun f(): T { return x }` becomes `fun f(): T = x` (also `throw`): a function whose body is one
 /// `#return` or `#throw` without a label and without comments. A `throw` body of a function with
 /// no declared type gets the first of `redundant_return_types` (`fun f(): Unit = throw x`: the

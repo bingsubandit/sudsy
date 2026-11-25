@@ -190,11 +190,11 @@ The status and the numbers of every language are in the generated table "Languag
 
 <!-- generated:measured-dockerfile -->
 - **Measured:** Ready.
-  - Format, stable: 98% of the files format stably, by the rules of the formatter (554 of 563 files).
+  - Format, dockerfmt: 86% of the files identical (484 of 561 files).
   - Lint, hadolint: 91% of its findings also reported (685 of 751 findings).
 <!-- /generated -->
 
-- The formatter fixes keyword case and blank lines. No reference formatter exists: the format column is the stable share.
+- The formatter fixes keyword case and blank lines and keeps nested continuation lines nested. The reference formatter is dockerfmt, which also lays out the shell code of `RUN` and rewrites legacy `ENV` and `COPY` forms: those are the open differences.
 - **Linter:** hadolint.
 - **Presets:** `dockerfile/hadolint`.
 - **Options:** `max_blank_lines`.

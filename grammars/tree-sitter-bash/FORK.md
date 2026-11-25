@@ -10,3 +10,4 @@ Changes (valid Bash the upstream grammar rejects or mis-parses):
 - `grammar.js` `variable_assignments`: dynamic precedence 1, so `a=1 b=2` + line break + `cmd` is two statements, not one command.
 - `grammar.js` `_extglob_blob` and `src/scanner.c` (extglob scan): a single-quoted string inside a case pattern (`--only=*' '*)`, `*\'*`).
 - `grammar.js` `redirected_statement`: a here-string may follow other redirects (`cat 2>&1 <<< "x"`).
+- `grammar.js` `_statement_not_pipeline`: no `list`, so `a >b && f | c | s | x && r` at the end of the text is a list of a pipeline, not a pipeline whose last element is a list.

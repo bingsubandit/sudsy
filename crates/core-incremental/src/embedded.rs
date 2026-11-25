@@ -8,14 +8,13 @@ use crate::failure::{Failure, Stage};
 use crate::inputs::{ExtensionSet, File};
 use crate::queries::{config, source_file};
 use core_config::{FileInput, OptionValue, ResolvedOptions};
-use core_format::{DirectiveTable, EmbedMode, Embedder};
+use core_format::{DirectiveTable, EmbedMode, Embedder, Forward};
 use core_rules::engine::ActiveRule;
 use core_rules::{Diagnostic, Edit, FileContext, LineIndex, activate, run_file};
 use core_syntax::{SyntaxNode, TextRange};
 use provider_api::embedded::{EmbeddedParse, Resolved, parse_regions, resolve};
 use provider_api::{LanguageProvider, SourceFile, format_file, resolve_dialect};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 /// Names the host's option that turns the formatting of embedded code off (Prettier's
@@ -311,13 +310,24 @@ fn format_with(db: &dyn Db, language: &str, prepared: &Prepared, code: &str) -> 
     Some(out.trim_end_matches('\n').to_string())
 }
 
+/// The options of one embedded language, prepared for a mode and size and the host options
+/// forwarded into them.
+struct PreparedFor {
+    language: String,
+    mode: EmbedMode,
+    size: (usize, bool),
+    forwarded: Vec<(core_config::OptId, OptionValue)>,
+    options: Prepared,
+}
+
 /// The embedder a host formatter runs under: other languages' code, formatted by their
 /// providers with the config of the file.
 pub(crate) struct Engine<'a> {
     db: &'a dyn Db,
     file: File,
-    /// Options per (language, mode, width, quotes): resolved once per file, not per snippet.
-    prepared: RefCell<HashMap<(String, EmbedMode, usize, bool), Prepared>>,
+    /// Options per language, mode, size and forwarded host options: resolved once per file, not
+    /// per snippet.
+    prepared: RefCell<Vec<PreparedFor>>,
 }
 
 impl<'a> Engine<'a> {
@@ -328,6 +338,55 @@ impl<'a> Engine<'a> {
             prepared: RefCell::default(),
         }
     }
+
+    /// The prepared options of `language`: found by comparing, so that a lookup allocates nothing.
+    fn prepared_for(
+        &self,
+        language: &str,
+        mode: EmbedMode,
+        size: (usize, bool),
+        forward: Forward<'_>,
+    ) -> Prepared {
+        let values = || {
+            forward
+                .ids
+                .iter()
+                .filter_map(|id| Some((*id, forward.host.get(*id)?)))
+        };
+        let mut all = self.prepared.borrow_mut();
+        let found = all.iter().find(|p| {
+            p.language == language
+                && p.mode == mode
+                && p.size == size
+                && p.forwarded.len() == values().count()
+                && p.forwarded
+                    .iter()
+                    .zip(values())
+                    .all(|((id, v), (id2, v2))| *id == id2 && v == v2)
+        });
+        if let Some(p) = found {
+            return p.options.clone();
+        }
+        let forwarded: Vec<_> = values().map(|(id, v)| (id, v.clone())).collect();
+        let options = prepare(self.db, self.file, language, mode, Some(size.0), size.1).map(|p| {
+            if forwarded.is_empty() {
+                return p;
+            }
+            let (mut options, version) = (*p).clone();
+            for (id, value) in &forwarded {
+                options.set(*id, value.clone());
+            }
+            Rc::new((options, version))
+        });
+        all.push(PreparedFor {
+            language: language.to_string(),
+            mode,
+            size,
+            forwarded,
+            options: options.clone(),
+        });
+        options
+    }
 }
 
 impl Embedder for Engine<'_> {
@@ -336,25 +395,43 @@ impl Embedder for Engine<'_> {
         language: &str,
         mode: EmbedMode,
         code: &str,
-        width: usize,
-        single_quotes: bool,
+        size: (usize, bool),
+        forward: Forward<'_>,
     ) -> Option<String> {
-        let prepared = self
-            .prepared
-            .borrow_mut()
-            .entry((language.to_string(), mode, width, single_quotes))
-            .or_insert_with(|| {
-                prepare(
-                    self.db,
-                    self.file,
-                    language,
-                    mode,
-                    Some(width),
-                    single_quotes,
-                )
-            })
-            .clone();
+        let prepared = self.prepared_for(language, mode, size, forward);
         format_with(self.db, language, &prepared, code)
+    }
+
+    fn same_code(
+        &self,
+        language: &str,
+        mode: EmbedMode,
+        (before, after): (&str, &str),
+        size: (usize, bool),
+        forward: Forward<'_>,
+    ) -> Result<(), String> {
+        let prepared = self.prepared_for(language, mode, size, forward);
+        let (provider, _) = lookup(self.db, language).ok_or("the language is unknown")?;
+        let (options, version) = &**prepared.as_ref().ok_or("the language has no options")?;
+        let parse = |text: &str| {
+            let mut source = SourceFile::new(format!("embedded.{language}"), 1, text.to_string());
+            source.language_version = version.clone();
+            let parsed = provider.parse(&source).map_err(|e| e.to_string())?;
+            match parsed.errors.first() {
+                Some(e) => Err(format!("`{language}` text does not parse: {}", e.message)),
+                None => Ok(parsed.tree),
+            }
+        };
+        let tree = parse(before)?;
+        core_format::safety::verify(
+            provider.grammar(),
+            provider.formatter(),
+            options,
+            &tree,
+            after,
+            parse,
+        )
+        .map_err(|e| e.to_string())
     }
 }
 

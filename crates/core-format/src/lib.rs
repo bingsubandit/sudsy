@@ -52,7 +52,9 @@ pub mod tag_layout;
 pub mod testing;
 pub mod verbatim;
 
-pub use context::{DefaultFormatter, EmbedMode, Embedder, FormatCtx, NodeFormatter, Variants};
+pub use context::{
+    DefaultFormatter, EmbedMode, Embedder, FormatCtx, Forward, NodeFormatter, Variants,
+};
 pub use directives::{DIRECTIVES_VERSION, Directive, DirectiveConflict, DirectiveTable, NodeKey};
 pub use doc::Doc;
 pub use error::FormatError;
@@ -124,7 +126,27 @@ pub fn print_options(options: &ResolvedOptions) -> PrintOptions {
             options.get(core_config::opt::ALIGN_WITH_TABS),
             Some(core_config::OptionValue::Bool(true))
         ),
+        continuation: None,
     }
+}
+
+/// The printer settings for the final print of a tree: the code of a host whose line breaks are
+/// line continuations (`EmbedMode::Continued`) is printed with them.
+fn tree_print_options(cx: &FormatCtx<'_>) -> PrintOptions {
+    let mut opts = print_options(cx.options);
+    if EmbedMode::of(cx.options) == Some(EmbedMode::Continued) {
+        opts.continuation = cx
+            .grammar
+            .comments
+            .line
+            .as_deref()
+            .and_then(|m| m.chars().next())
+            .map(|comment| printer::Continuation {
+                escape: printer::CONTINUATION_ESCAPE,
+                comment,
+            });
+    }
+    opts
 }
 
 /// Line break style of a file: the first line break found decides.
@@ -168,7 +190,7 @@ impl LineEnding {
 pub fn format_tree(root: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<String, FormatError> {
     take_peak();
     let mut doc = cx.format_unguarded(root)?;
-    let (mut printed, mut keep) = printer::print_protected(&mut doc, &print_options(cx.options));
+    let (mut printed, mut keep) = printer::print_protected(&mut doc, &tree_print_options(cx));
     if cx.comment_style.block_as_line {
         comments::settle_block_comments(cx.grammar, &mut printed, &mut keep);
     }
@@ -196,7 +218,16 @@ pub fn format_tree(root: &SyntaxNode, cx: &FormatCtx<'_>) -> Result<String, Form
     };
     out.truncate(out.trim_end_matches(['\n', ' ', '\t']).len().max(keep));
     let final_newline = cx.options.flag(core_config::shared::FINAL_NEWLINE, true);
-    if final_newline && !cx.exact_end(root) && !out.is_empty() && !out.ends_with('\n') {
+    // `keep_final_newline`: a file that has no final newline gets none.
+    let kept = cx.options.flag(core_config::opt::KEEP_FINAL_NEWLINE, false) && {
+        let text = root.text();
+        let len = text.len();
+        len > rowan::TextSize::from(0)
+            && text
+                .char_at(len - rowan::TextSize::from(1))
+                .is_some_and(|c| c != '\n')
+    };
+    if final_newline && !kept && !cx.exact_end(root) && !out.is_empty() && !out.ends_with('\n') {
         out.push('\n');
     }
     let ending = match cx.options.text(core_config::shared::END_OF_LINE) {

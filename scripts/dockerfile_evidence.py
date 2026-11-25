@@ -316,6 +316,18 @@ def classify1(x, y):
     return (f"{kw}: argument text rewritten", False)
 
 
+# Gap names of tests/parity/dockerfmt/differences.yaml, in the order that picks the first cause of a differing file.
+GAPS = (("comment-space", "comment:"), ("blank-lines", "blank lines"), ("copy-layout", ": continuation, indent or blank"),
+        ("maintainer", "MAINTAINER"), ("env-legacy", "ENV: legacy"), ("copy-json", "JSON array"))
+
+
+def first_cause(cs):
+    for name, key in GAPS:
+        if any(key in c for c, _ in cs):
+            return name
+    return "shell-layout" if all(sh for _, sh in cs) else "other"
+
+
 def compare(corpus, held, sud, df):
     equal, unchanged = 0, 0
     nfiles = 0
@@ -336,11 +348,16 @@ def compare(corpus, held, sud, df):
             shell_only += 1
         elif all(c[0].startswith(REWRITES) for c in fine):
             rewrite_only += 1
+        FIRST[(name in HELD_NAMES, first_cause(cs))] += 1
         for c, sh in cs:
             causes_all[(c, sh)] += 1
             files_by_cause[(c, sh)].add(name)
         harm.append(name)
     return nfiles, equal, diff_files, shell_only, causes_all, files_by_cause, rewrite_only
+
+
+FIRST = Counter()
+HELD_NAMES = set()
 
 
 def main():
@@ -355,6 +372,7 @@ def main():
     for (p, n, _), s, d in zip(corpus, sud, df):
         if s is None or d is None:
             print(f"  failed: {n} ({'Sudsy' if s is None else 'dockerfmt'})")
+    HELD_NAMES.update(n for p, n, _ in corpus if p in held)
     ok = [(c, s, d) for c, s, d in zip(corpus, sud, df) if s is not None and d is not None]
     for label, who in (("held out", lambda p: p in held), ("all", lambda p: True)):
         sub = [(c, s, d) for c, s, d in ok if who(c[0])]
@@ -368,6 +386,7 @@ def main():
         diff = list(unified_diff(f.read_text(encoding="utf-8").splitlines(), s.splitlines(), "source", "sudsy", lineterm="", n=0))
         print(f"=== {n}: {len(diff)} diff lines")
         print("\n".join(l[:150] for l in diff[2:12]))
+    FIRST.clear()
     for label, sel in (("all", lambda p: True), ("held out", lambda p: p in held), ("deciding", lambda p: p in deciding)):
         sub = [(c, s, d) for c, s, d in zip(corpus, sud, df) if sel(c[0])]
         n, eq, dif, sh, ca, fb, rw = compare([c for c, _, _ in sub], held, [s for _, s, _ in sub], [d for _, _, d in sub])
@@ -375,10 +394,13 @@ def main():
               f"equal if shell left out: {eq + sh} ({100 * (eq + sh) / max(n, 1):.1f}%); "
               f"also left out the rewrites (legacy ENV, COPY JSON, MAINTAINER): {eq + sh + rw} ({100 * (eq + sh + rw) / max(n, 1):.1f}%)")
         if label == "all":
+            print("first cause per half (deciding, held-out):", {k: (FIRST[(False, k)], FIRST[(True, k)]) for k in sorted({k for _, k in FIRST})})
             if len(sys.argv) > 4:
                 for e in EXAMPLES.get(sys.argv[4], [])[:int(sys.argv[5]) if len(sys.argv) > 5 else 3]:
                     print("--- sudsy\n" + e[0] + "\n--- dockerfmt\n" + e[1])
             for (c, shell), k in ca.most_common(15):
+                if len(sys.argv) > 4 and sys.argv[4] == c:
+                    print("   files: " + ", ".join(sorted(fb[(c, shell)])[:8]))
                 print(f"  {k:6d} {len(fb[(c, shell)]):4d} files  {'[shell] ' if shell else ''}{c}")
 
 

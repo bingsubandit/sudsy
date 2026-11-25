@@ -305,3 +305,69 @@ fn python_fences_are_formatted_and_linted_with_the_python_config() {
     assert_eq!(linted.len(), 1, "{linted:?}");
     assert!(linted[0].1.starts_with("os\n"), "{linted:?}");
 }
+
+/// The shell code of `RUN` is laid out by the shell formatter, line breaks are continuations; the
+/// options of the `dockerfmt` preset are written out.
+#[test]
+fn run_shell_is_laid_out_as_continued_lines() {
+    let db = db(
+        "dockerfile:\n  format:\n    key_value_pairs: true\n    json_copy_as_words: true\n    comment_space: true\n    keep_final_newline: true\n",
+    );
+    let f = |text: &str| formatted(&db, "Dockerfile", text);
+    // a pipeline after `&&` starts level with it, the later `|` lines go one level in
+    assert_eq!(
+        f("FROM a\nRUN a b > /dev/null \\\n  && f \\\n    | c \\\n    | s \\\n    | x \\\n  && r"),
+        "FROM a\nRUN a b > /dev/null \\\n    && f \\\n    | c \\\n        | s \\\n        | x \\\n    && r"
+    );
+    // control flow keeps its `;`, a `case` arm drops the one before `;;`, a subshell the last
+    assert_eq!(
+        f(
+            "FROM a\nRUN if a; then \\\n  b; \\\n  fi; \\\n  for x in 1 2; do \\\n  echo $x; \\\n  done"
+        ),
+        "FROM a\nRUN if a; then \\\n        b; \\\n    fi; \\\n    for x in 1 2; do \\\n        echo $x; \\\n    done"
+    );
+    assert_eq!(
+        f("FROM a\nRUN case $x in \\\n  a) \\\n  b; \\\n  ;; \\\n  c) d;; \\\n  esac"),
+        "FROM a\nRUN case $x in \\\n        a) \\\n            b \\\n            ;; \\\n        c) d ;; \\\n    esac"
+    );
+    assert_eq!(
+        f("FROM a\nRUN (a; \\\n b;) && \\\n  c"),
+        "FROM a\nRUN ( \\\n        a; \\\n        b \\\n    ) \\\n        && c"
+    );
+    // a comment line stays between the lines, a multi-line quote stays verbatim
+    assert_eq!(
+        f("FROM a\nRUN a \\\n  # note\n  && b \\\n  && c"),
+        "FROM a\nRUN a \\\n    # note\n    && b \\\n    && c"
+    );
+    assert_eq!(
+        f("FROM a\nRUN echo \"x  \\\n   y\" \\\n  && b"),
+        "FROM a\nRUN echo \"x  \\\n   y\" \\\n    && b"
+    );
+    // `RUN \` and the command on the next line joins, unless a comment follows
+    assert_eq!(f("FROM a\nRUN \\\n  a && b"), "FROM a\nRUN a && b");
+    assert_eq!(
+        f("FROM a\nRUN \\\n  # c\n  a"),
+        "FROM a\nRUN \\\n    # c\n    a"
+    );
+    // shell text that does not parse stays as written
+    let bad = "FROM a\nRUN Write-Host (a)  b";
+    assert_eq!(f(bad), bad);
+}
+
+#[test]
+fn dockerfile_rewrites_are_options() {
+    let text = "FROM a\nENV A b c\nENV P=1 \\\n  Q=2\nLABEL k v\nCOPY [\"a\", \"/d/\"]\n#x\n##y";
+    // off by default: only the layout changes
+    let off = db("");
+    assert_eq!(
+        formatted(&off, "Dockerfile", text),
+        "FROM a\nENV A b c\nENV P=1 \\\n    Q=2\nLABEL k v\nCOPY [\"a\", \"/d/\"]\n#x\n##y\n"
+    );
+    let on = db(
+        "dockerfile:\n  format:\n    key_value_pairs: true\n    json_copy_as_words: true\n    comment_space: true\n    keep_final_newline: true\n",
+    );
+    assert_eq!(
+        formatted(&on, "Dockerfile", text),
+        "FROM a\nENV A=\"b c\"\nENV P=1 \\\n    Q=2\nLABEL k=v\nCOPY a /d/\n# x\n## y"
+    );
+}
