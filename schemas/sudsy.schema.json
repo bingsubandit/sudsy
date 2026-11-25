@@ -3955,7 +3955,7 @@
               ]
             },
             "no-empty-catch": {
-              "description": "Reports a `catch`, `except` or `rescue` clause whose body has no statement and no comment (`catch (e) { }`; in Python a lone `pass` counts as no statement; a comment on a later line than the clause starts on, after its last token on that line or indented deeper than the clause, belongs to it).",
+              "description": "Reports a `catch`, `except` or `rescue` clause whose body has no statement and no comment (`catch (e) { }`; in Python a lone `pass` counts as no statement).",
               "oneOf": [
                 {
                   "$ref": "#/definitions/level"

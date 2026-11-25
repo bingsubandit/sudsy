@@ -2,9 +2,10 @@ id: no-empty-catch
 message: 'the catch clause is empty: the error is swallowed'
 description: >-
   Reports a `catch`, `except` or `rescue` clause whose body has no statement and no comment (`catch
-  (e) { }`; in Python a lone `pass` counts as no statement; a comment on a later line than the clause starts on, after its last token
-  on that line or indented deeper than the clause, belongs to it). With the option `comment_handles` off a
-  comment does not count either. With `broad_only` only a clause that catches everything, or one of
+  (e) { }`; in Python a lone `pass` counts as no statement). A comment belongs to the clause when it
+  is on a later line than the clause starts on, after the clause's last token on that line, or
+  indented deeper than the clause. With the option `comment_handles` off a comment does not count
+  either. With `broad_only` only a clause that catches everything, or one of
   the exception types of the option `types`, is reported.
 why: >-
   An empty handler swallows the error without a trace: the program goes on in a state it did not
