@@ -46,10 +46,8 @@ differences:
   kt-if-else-braced: "gap  ktlint braces an `if`/`else` that Sudsy leaves bare, or the reverse; fix: the shared curly rule"
   kt-lambda-other: "gap  a lambda is laid out differently, cause not classified yet; fix: classify further"
   kt-break-after-s: "gap  Sudsy breaks after `=` where ktlint does not; fix: see break-after-=/->(sudsy)"
-  kt-nul-byte: "gap  a Kotlin file with a NUL byte inside a string (ktor's SSE test data) is valid for ktlint; Sudsy refuses every UTF-8 file with a NUL byte (provider-api, a guard against wide encodings without a mark), so its findings stay missing; fix: accept NUL in a file that is valid UTF-8 when the language's parser takes it"
   kt-ctor-annot-header: "gap  the annotated constructor header differs; fix: classify further"
 files:
-  kotlin/ktor/ktor-client/ktor-client-tests/common/test/io/ktor/client/tests/plugins/SSESessionParserTest.kt: kt-nul-byte
   corpus/kotlin/libraries/stdlib/build.gradle.kts: kt-template-braces
   corpus/kotlin/libraries/stdlib/common-non-jvm/src/kotlin/text/unicode/CodePointIteration.kt: kt-semi-or-comma
   corpus/kotlin/libraries/stdlib/common/src/generated/_Arrays.kt: kt-if-add-braces
