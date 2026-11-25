@@ -89,9 +89,6 @@
   support: INI / EditorConfig / .gitignore
   retrofit: true
   format: {tool: "none found", gain: 1.0, cost: {parts: 1, est: true}, why: "no reference tool: the corpus, decision table and agreement number of docs/ai/development/no-reference-tool.md are still to add"}
-- language: Dockerfile
-  retrofit: true
-  format: {tool: "dockerfmt", gain: 0.4, cost: {parts: 3, est: true}, why: "npm @reteps/dockerfmt 1.55M a month (the engine of prettier-plugin-sh, 1.88M), 629 stars, pushed 2026-11-14, Go binary; the editor formatters (docker-language-server, dockerfile-utils) only indent; on the 563-file corpus (docs/ai/design/dockerfile.md) 45% of the held-out files equal, 84% without RUN shell code, 97% also without the rewrites; parts: shell layout of RUN, syntax rewrites (legacy ENV, COPY JSON, MAINTAINER), nested continuation indent"}
 - language: Makefile
   retrofit: true
   format: {tool: "mbake", gain: 0.7, cost: {layout: whitespace, parts: 5, est: true}, why: "PyPI mbake 73k a month, 767 stars, pushed 2026-11-09, conform.nvim and pre-commit hook, VS Code extension 9k installs, Python; a partial tool (blanks, recipe tabs, backslashes, blank lines; no conditional or continuation indent, no parse); on the 1,021-file corpus (docs/ai/design/makefile.md) 60% of the held-out files equal, 75% without indentation, 100% without blanks; Sudsy agreement 80.7% (rows below 60%: conditional body indent, rule continuation indent), stable 78% (223 files do not parse: variable names with a reference); parts: parse names with references, conditional indent default, continuation indent as written, trailing blanks of values, glued `+=` and `?=`"}

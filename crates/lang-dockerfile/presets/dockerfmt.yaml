@@ -1,0 +1,9 @@
+# Formats like dockerfmt, Docker's Dockerfile formatter: the legacy `key value` of ENV and LABEL as
+# `key=value`, the JSON array of COPY and ADD as plain arguments (where both read the same), a blank
+# after the `#` of a comment, and no final newline added to a file that has none.
+dockerfile:
+  format:
+    key_value_pairs: true
+    json_copy_as_words: true
+    comment_space: true
+    keep_final_newline: true

@@ -1,0 +1,24 @@
+differences:
+  shell-layout: gap  shell layouts that differ from mvdan/sh (the level of a deeply continued argument list, a redirect on a line of its own), a long `;` list in one line and `ADD --chmod` continuations, a `RUN` whose double space dockerfmt keeps, comment placement beside a `;`-only line
+  env-legacy: gap  a multi-line `ENV KEY \` legacy value is kept; dockerfmt writes it as one quoted string
+  heredoc-body: gap  the body of `RUN <<EOT` stays as written (heredoc bodies are kept) and dockerfmt formats it as shell
+  blank-lines: gap  a blank line at the start of a file is dropped; dockerfmt keeps it
+  copy-layout: gap  a continued COPY or ADD keeps its arguments as written; dockerfmt puts every argument on a line of its own
+  escape: gap  a file with `# escape=` and PowerShell stays as written; dockerfmt changes it
+  maintainer: gap  `MAINTAINER x` is kept; dockerfmt writes `LABEL org.opencontainers.image.authors="x"`, which changes metadata and is not done
+files:
+  deciding: shell-layout:41, env-legacy:7, heredoc-body:5, blank-lines:2, copy-layout:1, escape:1, maintainer:1
+  held-out: shell-layout:7, copy-layout:4, heredoc-body:5, blank-lines:2, escape:1
+ratchet:
+  deciding: 284
+  held-out: 200
+target-files:
+  deciding: 342
+  held-out: 219
+second-format:
+  deciding: 0
+  held-out: 0
+refused:
+  deciding: 0
+  held-out: 0
+unclassified: 0

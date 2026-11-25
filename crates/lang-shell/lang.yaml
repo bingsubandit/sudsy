@@ -25,6 +25,13 @@ options:
       values: ["keep", "reindent"]
       default: "keep"
       doc: "The body and the delimiter of a `<<-` heredoc: `keep` leaves them as written; `reindent` drops their leading tabs (which `<<-` ignores) and indents the body one level and the delimiter as deep as the command (tab indentation only)."
+  - binary_operator_line: ["end"]
+  - space_redirects:
+      default: false
+      doc: "A blank after the operator of a redirect that opens a file (`> file`, `>> file`, `< file`; shfmt's `-sr`); `>&2` and `2>&1` never get one."
+  - indent_case_arms:
+      default: false
+      doc: "The arms of a `case` one level inside it (shfmt's `-ci`)."
   - case_last_terminator:
       values: ["keep", "add"]
       default: "keep"

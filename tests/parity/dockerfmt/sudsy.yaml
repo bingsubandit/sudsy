@@ -1,0 +1,3 @@
+# The Sudsy side of the comparison with dockerfmt: the dockerfmt preset.
+extends:
+  - preset:dockerfile/dockerfmt

@@ -1,0 +1,16 @@
+tool: "dockerfmt"
+version: "1.0.0 (GitHub release; the version `scripts/parity.sh format dockerfmt` downloads)"
+languages: ["dockerfile"]
+rule-url: none
+sources:
+  - "https://github.com/reteps/dockerfmt"
+  - "docs/ai/design/dockerfile.md (why dockerfmt is the primary tool, the corpus and the decision table)"
+scope: "dockerfmt's formatting behaviour on the Dockerfile corpus (`tests/conformance/fetch-dockerfile-corpus.sh`, `fetch-dockerfile-evidence-corpus.sh`: 563 files of 22 projects, half deciding, half held out) with its defaults (4 spaces, trailing newline, spaced redirects); the known differences are `tests/parity/dockerfmt/differences.yaml`."
+entries:
+  indent: option dockerfile.format.indent_size
+  use-tabs: option dockerfile.format.indent_style
+  newline: option dockerfile.format.final_newline
+  space-redirects: deferred | Shell formatter option, not yet read for the shell of RUN.
+  check: wontfix output mode of the tool
+  diff: wontfix output mode of the tool
+  write: wontfix output mode of the tool

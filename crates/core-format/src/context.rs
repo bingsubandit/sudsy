@@ -33,16 +33,20 @@ pub enum EmbedMode {
     NgNested,
     /// A list of declarations (`style=""`).
     Declarations,
+    /// A whole file whose line breaks are line continuations (the shell code of a Dockerfile `RUN`):
+    /// every statement separator stays, a break between statements is a continuation.
+    Continued,
 }
 
 impl EmbedMode {
-    const ALL: [EmbedMode; 6] = [
+    const ALL: [EmbedMode; 7] = [
         EmbedMode::Program,
         EmbedMode::Expression,
         EmbedMode::ExpressionIndented,
         EmbedMode::NgExpression,
         EmbedMode::NgNested,
         EmbedMode::Declarations,
+        EmbedMode::Continued,
     ];
 
     /// The name the other language's provider reads in its `embed_mode` option.
@@ -54,6 +58,7 @@ impl EmbedMode {
             EmbedMode::NgExpression => "ng-expression",
             EmbedMode::NgNested => "ng-nested",
             EmbedMode::Declarations => "declarations",
+            EmbedMode::Continued => "continued",
         }
     }
 
@@ -102,7 +107,10 @@ impl EmbedMode {
 
     /// Is the code one expression (not a program or declarations)?
     pub fn is_expression(self) -> bool {
-        !matches!(self, EmbedMode::Program | EmbedMode::Declarations)
+        !matches!(
+            self,
+            EmbedMode::Program | EmbedMode::Declarations | EmbedMode::Continued
+        )
     }
 
     /// Does a binary's continuation indent its operands?
@@ -121,14 +129,49 @@ impl EmbedMode {
 /// text without a final line break, or `None` when the code does not parse or the language is
 /// unknown. `single_quotes`: the host's own quote is `"` (an attribute value), so strings prefer `'`.
 pub trait Embedder {
+    /// `forward` replaces options of the other language's resolved set with the host's values
+    /// (the host's indentation, for code that is laid out in the host's lines).
     fn format(
         &self,
         language: &str,
         mode: EmbedMode,
         code: &str,
-        width: usize,
-        single_quotes: bool,
+        size: (usize, bool),
+        forward: Forward<'_>,
     ) -> Option<String>;
+
+    /// Does `after` read as `before` to the provider of `language` (its tree and its own value
+    /// comparison, comments included)? `Err` says what differs, or that the language is unknown
+    /// or a text does not parse.
+    fn same_code(
+        &self,
+        language: &str,
+        mode: EmbedMode,
+        texts: (&str, &str),
+        size: (usize, bool),
+        forward: Forward<'_>,
+    ) -> Result<(), String>;
+}
+
+/// Host options that an [`Embedder`] copies into the options of the embedded language.
+#[derive(Clone, Copy)]
+pub struct Forward<'a> {
+    pub host: &'a core_config::ResolvedOptions,
+    pub ids: &'a [core_config::OptId],
+}
+
+/// Tokens of one kind that hold code of another language, for the safety check
+/// ([`NodeFormatter::embedded_text`]).
+#[derive(Clone, Copy)]
+pub struct EmbeddedText {
+    pub kind: core_syntax::SyntaxKind,
+    pub language: &'static str,
+    pub mode: EmbedMode,
+    /// The host options the embedded language takes over.
+    pub forward: &'static [core_config::OptId],
+    /// The code of a token's text as the embedded language reads it, and the width it is given.
+    pub read: fn(&str) -> String,
+    pub size: (usize, bool),
 }
 
 /// A provider's formatting code. Nodes it does not handle fall back to the shared shape of their
@@ -159,6 +202,12 @@ pub trait NodeFormatter: Send + Sync {
         _options: &core_config::ResolvedOptions,
     ) -> Result<(), String> {
         self.extra_check(before, after)
+    }
+
+    /// The tokens of this kind hold code of another language (shell text of a Dockerfile): the
+    /// safety check compares them as that language reads them, through the embedder.
+    fn embedded_text(&self) -> Option<EmbeddedText> {
+        None
     }
 
     /// What the safety check compares of a `#restyle` token or node of the input and of the
@@ -408,6 +457,11 @@ impl<'a> FormatCtx<'a> {
         self
     }
 
+    /// Does the host run under an engine that formats other languages' code?
+    pub fn has_embedder(&self) -> bool {
+        self.embedder.is_some()
+    }
+
     /// `code` of `language` formatted for `width` columns (see [`Embedder`]).
     pub fn embed(
         &self,
@@ -417,8 +471,24 @@ impl<'a> FormatCtx<'a> {
         width: usize,
         single_quotes: bool,
     ) -> Option<String> {
+        self.embed_with(language, mode, code, (width, single_quotes), &[])
+    }
+
+    /// [`FormatCtx::embed`] with the host options `forward` copied into the other language's.
+    pub fn embed_with(
+        &self,
+        language: &str,
+        mode: EmbedMode,
+        code: &str,
+        (width, single_quotes): (usize, bool),
+        forward: &[core_config::OptId],
+    ) -> Option<String> {
+        let forward = Forward {
+            host: self.options,
+            ids: forward,
+        };
         self.embedder?
-            .format(language, mode, code, width, single_quotes)
+            .format(language, mode, code, (width, single_quotes), forward)
     }
 
     /// The member chain policy of the options, built once per file.

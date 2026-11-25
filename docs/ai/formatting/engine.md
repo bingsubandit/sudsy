@@ -46,7 +46,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `bin_pack_parameters` | bool | cpp `true`, c `true` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |
 | `binary_indent` | int 1-4 | java `2`, js `1`, csharp `1` |
-| `binary_operator_line` | `start`, `end` | java `start`, js `end`, csharp `start` |
+| `binary_operator_line` | `start`, `end` | dockerfile `start`, java `start`, js `end`, shell `end`, csharp `start` |
 | `blank_lines_after_key` | `preserve`, `remove` | yaml `preserve`, github-actions `preserve` |
 | `brace_wrapping` | list of words | cpp `[]`, c `[]` |
 | `braced_list_padding` | bool | cpp `false`, c `false` |
@@ -81,6 +81,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `hug_first_argument` | bool | java `false`, js `true` |
 | `hug_last_argument` | `never`, `sole`, `sole_bare`, `last` | java `sole`, js `last`, csharp `last` |
 | `indent_braces` | bool | cpp `false`, c `false` |
+| `indent_case_arms` | bool | dockerfile `true`, shell `false` |
 | `indent_case_labels` | bool | cpp `false`, c `false` |
 | `indent_comment_lines` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
 | `indent_expression_operands` | bool | html `false`, angular `false`, vue `false`, svelte `false` |
@@ -119,6 +120,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `single_quote` | bool | css `false`, scss `false`, less `false` |
 | `space_after_cast` | bool | cpp `false`, c `false` |
 | `space_before_parens` | `never`, `control_statements`, `always` | cpp `control_statements`, c `control_statements` |
+| `space_redirects` | bool | dockerfile `true`, shell `false` |
 | `spaces_before_trailing_comments` | int 0-16 | cpp `1`, c `1` |
 | `split_empty_braces` | list of words | cpp `[]`, c `[]` |
 | `trailing_commas` | json: `never`, `multiline`; js: `all`, `es5`, `none`; kotlin: `never`, `multiline`; php: `never`, `multiline`; toml: `never`, `multiline`; csharp: `preserve`, `never`, `multiline` | json `never`, js `all`, kotlin `multiline`, php `multiline`, toml `multiline`, csharp `preserve` |

@@ -76,7 +76,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Python | █████████░ 97% ruff format | █████████░ 94% ruff | Ready |
 | YAML | █████████░ 94% Prettier | █████████░ 98% yamllint | Ready |
 | Shell | ████████░░ 86% shfmt | ████████░░ 86% ShellCheck | Ready |
-| Dockerfile | █████████░ 98% stable · no reference tool | █████████░ 91% hadolint | Ready |
+| Dockerfile | ████████░░ 86% dockerfmt | █████████░ 91% hadolint | Ready |
 | SQL | ████████░░ 85% sqlfluff | █████████░ 90% sqlfluff | Ready |
 | Java | █████████░ 91% google-java-format | ████████░░ 88% Checkstyle | Ready |
 | GitHub Actions | █████████░ 99% stable · no reference tool | ████████░░ 87% actionlint | Ready |
@@ -120,7 +120,8 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Markdown | 5 | Prettier | [5](https://prettier.io/docs/options) |
 | Python | 13 | ruff format | [11](https://docs.astral.sh/ruff/settings/#format) |
 | YAML | 14 | Prettier | [7](https://prettier.io/docs/options) |
-| Shell | 8 | shfmt | [8](https://github.com/mvdan/sh/blob/v3.14.1/cmd/shfmt/shfmt.1.scd) |
+| Shell | 11 | shfmt | [8](https://github.com/mvdan/sh/blob/v3.14.1/cmd/shfmt/shfmt.1.scd) |
+| Dockerfile | 12 | dockerfmt | [3](https://github.com/reteps/dockerfmt/blob/v1.0.0/README.md) |
 | SQL | 14 | sqlfluff | [68](https://docs.sqlfluff.com/en/stable/configuration/default_configuration.html) |
 | Java | 23 | google-java-format | [8](https://github.com/google/google-java-format#from-the-command-line) |
 | C# | 93 | CSharpier | [4](https://csharpier.com/docs/Configuration) |

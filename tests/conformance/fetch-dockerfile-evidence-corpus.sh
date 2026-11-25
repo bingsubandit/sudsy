@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Fetches 20 more pinned projects for the Dockerfile format evidence (docs/ai/design/dockerfile.md) into
+# Fetches 19 more pinned projects for the Dockerfile format evidence (docs/ai/design/dockerfile.md) into
 # tests/conformance/corpus/dockerfile-evidence/<repo> (gitignored); the projects were chosen before any result was
-# seen; templates and ignore lists named Dockerfile.* are not Dockerfiles. Together with fetch-dockerfile-corpus.sh they make the 27 repositories (23 projects) of the evidence.
+# seen; templates and ignore lists named Dockerfile.* are not Dockerfiles. Together with fetch-dockerfile-corpus.sh they make the 26 repositories (22 projects) of the evidence; envoy is not in the list: its only file, Dockerfile.in, is a template, so nothing would be left to fetch.
 export TARBALL_LENIENT=1
 source "$(dirname "$0")/tarball-corpus.sh"
 P='*/Dockerfile */Dockerfile.* */*.Dockerfile */*.dockerfile !*/vendor/* !*/node_modules/* !*/testdata/* !*/third_party/* !*/Dockerfile.tmpl !*/Dockerfile.in !*/Dockerfile.dockerignore'

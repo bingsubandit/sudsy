@@ -366,7 +366,15 @@ fn format_checked(
                 None => Ok(result.tree),
             }
         };
-        safety::verify(grammar, provider.formatter(), options, tree, text, reparse)
+        safety::verify_with(
+            grammar,
+            provider.formatter(),
+            options,
+            tree,
+            text,
+            reparse,
+            embedder,
+        )
     };
     let mut variants = Reparses {
         provider,

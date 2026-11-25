@@ -10172,6 +10172,20 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "binary_operator_line": {
+              "default": "start",
+              "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+              "enum": [
+                "start",
+                "end"
+              ],
+              "type": "string"
+            },
+            "comment_space": {
+              "default": false,
+              "description": "A line comment whose `#` run is followed by a letter or digit gets a blank after it (`#x` as `# x`); a parser directive before the first instruction stays.",
+              "type": "boolean"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -10185,6 +10199,11 @@
             "final_newline": {
               "default": true,
               "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_case_arms": {
+              "default": true,
+              "description": "The arms of a `case` in the shell code of `RUN` one level inside it.",
               "type": "boolean"
             },
             "indent_size": {
@@ -10203,12 +10222,32 @@
               ],
               "type": "string"
             },
+            "json_copy_as_words": {
+              "default": false,
+              "description": "The JSON array of `COPY` and `ADD` as plain arguments (`COPY [\"a\", \"b\"]` as `COPY a b`) where every element is a plain path word (letters, digits and `_./:@%+,=~*?^-`, not starting with `-`) and the array is on one line.",
+              "type": "boolean"
+            },
+            "keep_final_newline": {
+              "default": false,
+              "description": "A file that does not end with a line break stays without one (the final newline is not added).",
+              "type": "boolean"
+            },
+            "key_value_pairs": {
+              "default": false,
+              "description": "`ENV` and `LABEL` in the legacy form `key value` as `key=value` (a value with blanks in double quotes), where both read as the same value: the value has no quote and no backslash, or is one word (a backslash stays as written), or is one quoted string.",
+              "type": "boolean"
+            },
             "max_blank_lines": {
               "default": 1,
               "description": "Largest number of blank lines kept between instructions and comments.",
               "maximum": 10,
               "minimum": 0,
               "type": "integer"
+            },
+            "space_redirects": {
+              "default": true,
+              "description": "A blank after the operator of a redirect that opens a file in the shell code of `RUN` (`> file`).",
+              "type": "boolean"
             }
           },
           "type": "object"
@@ -10324,6 +10363,7 @@
           "preset:csharp/unity",
           "preset:css/stylelint-recommended",
           "preset:css/stylelint-standard",
+          "preset:dockerfile/dockerfmt",
           "preset:dockerfile/hadolint",
           "preset:github-actions/actionlint",
           "preset:go/revive",
@@ -14382,6 +14422,20 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "binary_operator_line": {
+                    "default": "start",
+                    "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+                    "enum": [
+                      "start",
+                      "end"
+                    ],
+                    "type": "string"
+                  },
+                  "comment_space": {
+                    "default": false,
+                    "description": "A line comment whose `#` run is followed by a letter or digit gets a blank after it (`#x` as `# x`); a parser directive before the first instruction stays.",
+                    "type": "boolean"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -14395,6 +14449,11 @@
                   "final_newline": {
                     "default": true,
                     "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_case_arms": {
+                    "default": true,
+                    "description": "The arms of a `case` in the shell code of `RUN` one level inside it.",
                     "type": "boolean"
                   },
                   "indent_size": {
@@ -14413,12 +14472,32 @@
                     ],
                     "type": "string"
                   },
+                  "json_copy_as_words": {
+                    "default": false,
+                    "description": "The JSON array of `COPY` and `ADD` as plain arguments (`COPY [\"a\", \"b\"]` as `COPY a b`) where every element is a plain path word (letters, digits and `_./:@%+,=~*?^-`, not starting with `-`) and the array is on one line.",
+                    "type": "boolean"
+                  },
+                  "keep_final_newline": {
+                    "default": false,
+                    "description": "A file that does not end with a line break stays without one (the final newline is not added).",
+                    "type": "boolean"
+                  },
+                  "key_value_pairs": {
+                    "default": false,
+                    "description": "`ENV` and `LABEL` in the legacy form `key value` as `key=value` (a value with blanks in double quotes), where both read as the same value: the value has no quote and no backslash, or is one word (a backslash stays as written), or is one quoted string.",
+                    "type": "boolean"
+                  },
                   "max_blank_lines": {
                     "default": 1,
                     "description": "Largest number of blank lines kept between instructions and comments.",
                     "maximum": 10,
                     "minimum": 0,
                     "type": "integer"
+                  },
+                  "space_redirects": {
+                    "default": true,
+                    "description": "A blank after the operator of a redirect that opens a file in the shell code of `RUN` (`> file`).",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"
@@ -17083,6 +17162,15 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "binary_operator_line": {
+                    "default": "end",
+                    "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+                    "enum": [
+                      "start",
+                      "end"
+                    ],
+                    "type": "string"
+                  },
                   "case_last_terminator": {
                     "default": "keep",
                     "description": "The last arm of a `case` without `;;`: `keep` leaves it as written, `add` ends it with `;;`.",
@@ -17125,6 +17213,11 @@
                     ],
                     "type": "string"
                   },
+                  "indent_case_arms": {
+                    "default": false,
+                    "description": "The arms of a `case` one level inside it (shfmt's `-ci`).",
+                    "type": "boolean"
+                  },
                   "indent_size": {
                     "default": 4,
                     "description": "Columns per indentation level (also the width of a tab).",
@@ -17147,6 +17240,11 @@
                     "maximum": 10,
                     "minimum": 0,
                     "type": "integer"
+                  },
+                  "space_redirects": {
+                    "default": false,
+                    "description": "A blank after the operator of a redirect that opens a file (`> file`, `>> file`, `< file`; shfmt's `-sr`); `>&2` and `2>&1` never get one.",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"
@@ -18565,6 +18663,15 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "binary_operator_line": {
+              "default": "end",
+              "description": "Where an operator of a chain (`a + b + c`) that does not fit goes: `start` breaks before it and puts one operand per line; `end` keeps it at the end of the line and moves an operand down only when it does not fit (a chain that mixes node kinds breaks at every operator).",
+              "enum": [
+                "start",
+                "end"
+              ],
+              "type": "string"
+            },
             "case_last_terminator": {
               "default": "keep",
               "description": "The last arm of a `case` without `;;`: `keep` leaves it as written, `add` ends it with `;;`.",
@@ -18607,6 +18714,11 @@
               ],
               "type": "string"
             },
+            "indent_case_arms": {
+              "default": false,
+              "description": "The arms of a `case` one level inside it (shfmt's `-ci`).",
+              "type": "boolean"
+            },
             "indent_size": {
               "default": 4,
               "description": "Columns per indentation level (also the width of a tab).",
@@ -18629,6 +18741,11 @@
               "maximum": 10,
               "minimum": 0,
               "type": "integer"
+            },
+            "space_redirects": {
+              "default": false,
+              "description": "A blank after the operator of a redirect that opens a file (`> file`, `>> file`, `< file`; shfmt's `-sr`); `>&2` and `2>&1` never get one.",
+              "type": "boolean"
             }
           },
           "type": "object"

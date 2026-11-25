@@ -5,8 +5,7 @@ fn opts(width: usize) -> PrintOptions {
     PrintOptions {
         line_width: width,
         indent_width: 2,
-        use_tabs: false,
-        align_with_tabs: false,
+        ..PrintOptions::default()
     }
 }
 
@@ -103,7 +102,7 @@ fn tabs_indent_with_tab_characters() {
         line_width: 80,
         indent_width: 4,
         use_tabs: true,
-        align_with_tabs: false,
+        ..PrintOptions::default()
     };
     assert_eq!(print(&mut d, &o), "a\n\tb");
 }

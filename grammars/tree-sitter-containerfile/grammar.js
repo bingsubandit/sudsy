@@ -286,7 +286,12 @@ export default grammar({
 
     _user_name_or_group: ($) =>
       seq(
-        choice(/([a-zA-Z_][-A-Za-z0-9_.]*|[0-9]+)/, $.expansion),
+        choice(
+          /([a-zA-Z_][-A-Za-z0-9_.]*|[0-9]+)/,
+          $.expansion,
+          $.double_quoted_string,
+          $.single_quoted_string,
+        ),
         repeat($._immediate_user_name_or_group_fragment),
       ),
 
@@ -316,7 +321,7 @@ export default grammar({
 
     arg_pair: ($) =>
       seq(
-        field('name', alias(/[a-zA-Z0-9_]+/, $.unquoted_string)),
+        field('name', alias(/[^\s="'$\\`#]+/, $.unquoted_string)),
         optional(
           seq(
             token.immediate('='),
@@ -373,7 +378,7 @@ export default grammar({
     _healthcheck_cmd_instruction: ($) =>
       seq(
         keyword($, /[cC][mM][dD]/, 'CMD'),
-        optional(choice($.json_string_array, $.shell_command)),
+        optional($._json_or_shell_command),
       ),
 
     _healthcheck_raw_command: ($) =>
@@ -398,7 +403,7 @@ export default grammar({
       choice(
         seq($.heredoc_marker, /[ \t]*/),
         /"([^"\\`\n]|[\\`].)*"/,
-        /'([^'\\`\n]|[\\`].)*'/,
+        /'([^'\\`\n]|[\\`][^\n'])*[\\`]?'/,
         $._shell_double_quoted_fragment,
         $._shell_single_quoted_fragment,
         /[,=-]/,
@@ -780,7 +785,7 @@ export default grammar({
         //
         seq($.heredoc_marker, /[ \t]*/),
         /"([^"\\`\n]|[\\`].)*"/,
-        /'([^'\\`\n]|[\\`].)*'/,
+        /'([^'\\`\n]|[\\`][^\n'])*[\\`]?'/,
         $._shell_double_quoted_fragment,
         $._shell_single_quoted_fragment,
         /[,=-]/,
@@ -810,7 +815,8 @@ export default grammar({
         repeat(
           choice(
             token.immediate(prec(1, /[^'\\`\n]+/)),
-            token.immediate(/[\\`][^\r\n]/),
+            token.immediate(/[\\`][^\r\n']/),
+            token.immediate(/[\\`]/),
             alias($.required_line_continuation, $.line_continuation),
             $.line_continuation,
           ),

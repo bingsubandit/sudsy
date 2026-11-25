@@ -429,6 +429,19 @@ pub fn verify(
     after: &str,
     reparse: impl FnOnce(&str) -> Result<SyntaxNode, String>,
 ) -> Result<(), FormatError> {
+    verify_with(g, formatter, options, before_tree, after, reparse, None)
+}
+
+/// [`verify`] for a host whose code of other languages `embedder` compares.
+pub fn verify_with(
+    g: &Grammar,
+    formatter: &dyn NodeFormatter,
+    options: &core_config::ResolvedOptions,
+    before_tree: &SyntaxNode,
+    after: &str,
+    reparse: impl FnOnce(&str) -> Result<SyntaxNode, String>,
+    embedder: Option<&dyn crate::Embedder>,
+) -> Result<(), FormatError> {
     let after_tree = reparse(after)
         .map_err(|e| FormatError::Safety(format!("the output does not parse: {e}")))?;
     let as_line = options.get(core_config::opt::SINGLE_BLOCK_COMMENT_AS_LINE)
@@ -447,9 +460,59 @@ pub fn verify(
         same_values(g, formatter, options, before_tree, &after_tree)
             .map_err(FormatError::Safety)?;
     }
+    if let Some(spec) = formatter.embedded_text() {
+        embedded_same(&spec, before_tree, &after_tree, options, embedder)
+            .map_err(FormatError::Safety)?;
+    }
     formatter
         .extra_check_with(before_tree, &after_tree, options)
         .map_err(FormatError::Safety)
+}
+
+/// The tokens of `spec.kind` of both trees, compared as code of `spec.language`: the same count
+/// (a lost or added text is a change), and each pair read as the same code when its text differs.
+fn embedded_same(
+    spec: &crate::context::EmbeddedText,
+    before: &SyntaxNode,
+    after: &SyntaxNode,
+    options: &core_config::ResolvedOptions,
+    embedder: Option<&dyn crate::Embedder>,
+) -> Result<(), String> {
+    let texts = |tree: &SyntaxNode| {
+        tree.descendants_with_tokens()
+            .filter_map(|e| e.into_token())
+            .filter(|t| t.kind() == spec.kind)
+            .map(|t| (spec.read)(t.text()))
+            .collect::<Vec<_>>()
+    };
+    let (x, y) = (texts(before), texts(after));
+    if x.len() != y.len() {
+        return Err(format!(
+            "{} {} texts became {}",
+            x.len(),
+            spec.language,
+            y.len()
+        ));
+    }
+    for (x, y) in x.iter().zip(&y) {
+        if x == y {
+            continue;
+        }
+        let embedder = embedder.ok_or_else(|| {
+            format!(
+                "the {} text changed without a {} formatter",
+                spec.language, spec.language
+            )
+        })?;
+        let forward = crate::Forward {
+            host: options,
+            ids: spec.forward,
+        };
+        embedder
+            .same_code(spec.language, spec.mode, (x, y), spec.size, forward)
+            .map_err(|e| format!("{} text: {e}", spec.language))?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -488,5 +551,34 @@ mod tests {
         assert_ne!(key("/* a */", true), key("// a // b", true));
         // (a line comment never equals a different block comment)
         assert_ne!(key("// a", true), key("/* b */", true));
+    }
+
+    #[test]
+    fn a_lost_or_added_embedded_text_is_refused_by_count() {
+        use core_syntax::TreeBuilder;
+        let g = grammars::json();
+        let tree = |n: usize| {
+            let mut b = TreeBuilder::new();
+            b.start_node(g.kind_by_name("Document").unwrap());
+            for _ in 0..n {
+                b.token(g.kind_by_name("Number").unwrap(), "1");
+            }
+            b.token(g.kind_by_name("Eof").unwrap(), "");
+            b.finish_node();
+            SyntaxNode::new_root(b.finish())
+        };
+        let spec = crate::context::EmbeddedText {
+            kind: g.kind_by_name("Number").unwrap(),
+            language: "x",
+            mode: crate::EmbedMode::Continued,
+            forward: &[],
+            read: str::to_string,
+            size: (80, false),
+        };
+        let options = core_config::ResolvedOptions::default();
+        assert!(embedded_same(&spec, &tree(2), &tree(2), &options, None).is_ok());
+        let lost = embedded_same(&spec, &tree(2), &tree(1), &options, None);
+        assert!(lost.unwrap_err().contains("2 x texts became 1"));
+        assert!(embedded_same(&spec, &tree(1), &tree(2), &options, None).is_err());
     }
 }

@@ -239,9 +239,14 @@ impl Converter {
         }
     }
 
-    fn convert(&self, src: &str, root: Node) -> ParseResult {
-        let mut s = Scan::default();
+    fn convert(&self, src: &str, root: Node, comments: Vec<Tok>) -> ParseResult {
+        let mut s = Scan {
+            pending: comments,
+            ..Scan::default()
+        };
         self.scan(src, root, &mut s);
+        s.pending.clear();
+        s.comments.sort_by_key(|c| c.start);
         // The root's last event is its Exit: the Eof token goes just before it.
         s.real.push(Tok {
             kind: self.eof,
@@ -663,6 +668,15 @@ impl Engine {
 
     /// Adapter conversion alone (the second step of [`Engine::parse`]).
     pub fn convert(&self, text: &str, tree: &tree_sitter::Tree) -> ParseResult {
+        self.convert_with(text, tree, Vec::new())
+    }
+
+    fn convert_with(
+        &self,
+        text: &str,
+        tree: &tree_sitter::Tree,
+        comments: Vec<Tok>,
+    ) -> ParseResult {
         let conv = self.converter.get_or_init(|| {
             Converter::new(
                 &tree.language(),
@@ -671,11 +685,49 @@ impl Engine {
                 self.composite,
             )
         });
-        conv.convert(text, tree.root_node())
+        conv.convert(text, tree.root_node(), comments)
     }
 
     pub fn parse(&self, text: &str) -> ParseResult {
         self.convert(text, &self.parse_raw(text))
+    }
+
+    /// [`Engine::parse`] of the code of a host whose line breaks are line continuations: every
+    /// line after the first that starts with the language's line comment marker is a comment line
+    /// that the host drops before the code is read (Docker does so with the comment lines of a
+    /// continued instruction). Tree-sitter reads the text with those lines blanked (spaces, then the
+    /// continuation character, so the line joins its neighbours); the tree has
+    /// them as comments.
+    pub fn parse_continued(&self, text: &str) -> ParseResult {
+        let grammar = self.grammar.get();
+        let (Some(marker), Some(def)) = (
+            grammar.comments.line.as_deref(),
+            grammar.kinds_with_tag("comment").next(),
+        ) else {
+            return self.parse(text);
+        };
+        let kind = def.kind;
+        let (mut blanked, mut comments, mut at) = (String::new(), Vec::new(), 0);
+        for (i, line) in text.split_inclusive('\n').enumerate() {
+            let body = line.trim_end_matches(['\n', '\r']);
+            let code = body.trim_start_matches([' ', '\t']);
+            if i > 0 && code.starts_with(marker) {
+                comments.push(Tok {
+                    kind,
+                    start: at + body.len() - code.len(),
+                    end: at + body.len(),
+                });
+                // (the blanked line still continues the line before it)
+                blanked.push_str(&" ".repeat(body.len() - 1));
+                blanked.push(core_format::printer::CONTINUATION_ESCAPE);
+                blanked.push_str(&line[body.len()..]);
+            } else {
+                blanked.push_str(line);
+            }
+            at += line.len();
+        }
+        comments.reverse();
+        self.convert_with(text, &self.parse_raw(&blanked), comments)
     }
 }
 

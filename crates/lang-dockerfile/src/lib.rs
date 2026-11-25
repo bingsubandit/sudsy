@@ -4,6 +4,7 @@
 //! concept: none (glue: provider entry)
 
 mod format;
+mod rewrite;
 mod rules;
 
 pub use format::{DockerfileFormatter, option_schema};

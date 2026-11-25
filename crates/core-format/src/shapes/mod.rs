@@ -18,6 +18,7 @@ mod commands;
 mod compound;
 mod conditional;
 pub mod continuation;
+pub mod continuation_flow;
 mod declaration;
 pub mod fill;
 pub mod flow;
