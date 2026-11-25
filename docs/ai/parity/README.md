@@ -109,7 +109,7 @@ Not measured:
 | detekt, PMD, PHPCS | not catalogued |
 | eslint-plugin-jsonc | the JSON corpus is a parser test suite (JSONTestSuite), no real-world files |
 | stylelint-scss, stylelint-less | plugin rules without a recommended set of their own; need SCSS and Less configs and parsers |
-| angular-eslint, graphql-eslint, biome, taplo, terraform | no coverage entry yet (fixtures only) |
+| graphql-eslint, biome, taplo, terraform | no coverage entry yet (fixtures only) |
 
 Sets and corpora of each run: [../development/parity.md](../development/parity.md#coverage-mode). Findings of `formatter` entries are left out; a file the tool cannot read is left out and counted by the run. The layout rules that are `planned` in a catalog (html-eslint `indent`, ktlint `function-signature`) count as missing until the catalog says `formatter` ([../roadmap.md](../roadmap.md#small-tasks)).
 

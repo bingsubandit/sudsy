@@ -24,3 +24,7 @@ select 1 ;
 select 2
 --      ^ detached-semicolon
 ;
+select 3 /* c */;
+--      ^^^^^^^^^ detached-semicolon
+--                ^ detached-semicolon
+/* d */;

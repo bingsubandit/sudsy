@@ -1,9 +1,10 @@
 //! The `detached-token` family: a token of the named kind that must follow the code before it
-//! directly (the `;` that ends a statement), not after spaces, a line break or a token of its own
-//! kind. Params: `kind` (the token kind name).
+//! directly (the `;` that ends a statement), not after spaces, a line break, a comment or a token
+//! of its own kind. Params: `kind` (the token kind name).
 //!
-//! The report starts where the code before the token ends, so it is on the line of that code,
-//! and runs to the token or to the end of that line.
+//! The report starts where the code before the token ends (the start of the file when a comment
+//! is all there is before it), so it is on the line of that code, and runs to the token or to the
+//! end of that line.
 //!
 //! concept: detached-token-family
 //! what: Reports a terminator token written after white space or another terminator instead of right after the code.
@@ -41,6 +42,9 @@ impl Rule for DetachedToken {
     fn check_file(&self, file: &FileContext<'_>, ctx: &mut RuleContext<'_>) {
         let g = file.grammar;
         let mut previous_kind = false;
+        // The end of the last token that is not trivia, and whether a comment follows it.
+        let mut code_end = TextSize::from(0);
+        let mut comment = false;
         for t in file
             .root
             .descendants_with_tokens()
@@ -48,15 +52,24 @@ impl Rule for DetachedToken {
         {
             if g.name(t.kind()) != self.kind {
                 previous_kind = false;
+                if g.has_tag(t.kind(), "comment") {
+                    comment = true;
+                } else if !g.is_trivia(t.kind()) {
+                    code_end = t.text_range().end();
+                    comment = false;
+                }
                 continue;
             }
             let range = t.text_range();
             let before = file.text[..usize::from(range.start())].trim_end();
-            let detached = previous_kind || before.len() < usize::from(range.start());
+            let detached = previous_kind || comment || before.len() < usize::from(range.start());
             previous_kind = true;
-            if detached && !before.is_empty() {
-                let from = TextSize::of(before);
-                let line_end = file.text[before.len()..]
+            let from = if comment { code_end } else { TextSize::of(before) };
+            let reported = detached && (comment || !before.is_empty());
+            code_end = range.end();
+            comment = false;
+            if reported {
+                let line_end = file.text[usize::from(from)..]
                     .find('\n')
                     .map_or(range.end(), |n| from + TextSize::from(n as u32));
                 ctx.report(

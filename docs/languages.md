@@ -43,11 +43,11 @@ The status and the numbers of every language are in the generated table "Languag
 - **Formatter:** Prettier 3.9.10 (Svelte: with prettier-plugin-svelte 3.5.2).
 
 - **Corpora:** real-world files (the HTML group adds the demo pages of mdn's dom, webaudio, web-components, pwa, js, html and webgl examples, Web-Dev-For-Beginners and html5-boilerplate) and Prettier's own tests for HTML, Vue and Svelte; the prettier-plugin-svelte samples; Angular components and Prettier's Angular tests (`--parser angular`).
-- **Linters:** html-validate, htmlhint, html-eslint, eslint-plugin-vue, eslint-plugin-svelte. Angular: a few angular-eslint rules, no coverage run.
-- **Presets:** `html/html-validate-recommended`, `html/html-validate-standard`, `html/htmlhint`, `html/html-eslint-recommended`, `html/eslint-plugin-vue-recommended`, `html/eslint-plugin-svelte-recommended`.
+- **Linters:** html-validate, htmlhint, html-eslint, eslint-plugin-vue, eslint-plugin-svelte. angular-eslint (Angular templates).
+- **Presets:** `html/html-validate-recommended`, `html/html-validate-standard`, `html/htmlhint`, `html/html-eslint-recommended`, `html/eslint-plugin-vue-recommended`, `html/eslint-plugin-svelte-recommended`, `html/angular-eslint-recommended`.
 - **Options:** `whitespace_sensitivity`, `bracket_same_line`, `single_attribute_per_line`, `embedded_language_formatting`. Vue and Svelte add `indent_script_and_style`. Default `line_width` is 80.
 - **Differences:** Vue and Svelte differ most. The named gaps are in the source checkout.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier-html`, `scripts/parity.sh format prettier-angular`, `scripts/parity.sh coverage html-validate`.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier-html`, `scripts/parity.sh format prettier-angular`, `scripts/parity.sh coverage html-validate`, `scripts/parity.sh coverage angular-eslint`.
 
 ## JavaScript / TypeScript
 
