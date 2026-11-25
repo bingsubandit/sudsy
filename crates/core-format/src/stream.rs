@@ -244,6 +244,12 @@ pub fn emit(
         }
     };
 
+    let heredocs = if rules.source_indent {
+        let width = cx.options.int(core_config::shared::INDENT_SIZE) as usize;
+        rules.indents.heredocs(&tks, &shifts, width)
+    } else {
+        Default::default()
+    };
     for i in 0..tks.len() {
         let is_eof = Some(tks[i].kind) == eof;
         if is_eof && tks[i].leading.is_empty() {
@@ -362,14 +368,16 @@ pub fn emit(
             }
         }
         if !is_eof {
-            // A token that spans lines is text of its own: its lines are not touched.
-            cur.push(
-                if rules.source_indent && tks[i].first_line != tks[i].last_line {
-                    doc::verbatim(tks[i].text())
-                } else {
-                    cx.token_text(&tks[i].tok)
-                },
-            );
+            // A token that spans lines is text of its own: its lines are not touched, except the
+            // heredocs that stand in from their opener's line.
+            let body = heredocs.get(&i);
+            cur.push(if let Some(body) = body {
+                doc::verbatim(body.as_str())
+            } else if rules.source_indent && tks[i].first_line != tks[i].last_line {
+                doc::verbatim(tks[i].text())
+            } else {
+                cx.token_text(&tks[i].tok)
+            });
             cur.push(cx.trailing_comments_doc(&tks[i].tok));
         }
         if brackets.is_open(tks[i].kind) {

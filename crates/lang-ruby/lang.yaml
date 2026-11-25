@@ -30,6 +30,9 @@ format-rows:
     keyword-frames: [If, Unless, While, Until, Case, When, Else, Rescue, Ensure]
     branches: [Else, Rescue, Ensure, When]
     closers: [end, "}"]
+    heredoc-openers: [DocStart]
+    heredoc-bodies: [HeredocBody]
+    heredoc-wrappers: [Arguments]
 parse: adapter::parse_file
 options:
   - indent_size: 2

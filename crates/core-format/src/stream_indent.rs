@@ -42,6 +42,11 @@ pub struct IndentFacts {
     pub branches: &'static [&'static str],
     /// Words that close a frame.
     pub closers: &'static [&'static str],
+    /// Kinds of the opener of a heredoc (`<<~EOS`) and of its body, which holds its closing label.
+    pub heredoc_openers: &'static [&'static str],
+    pub heredoc_bodies: &'static [&'static str],
+    /// Kinds between a call and its heredoc argument (the argument list).
+    pub heredoc_wrappers: &'static [&'static str],
 }
 
 impl IndentFacts {
@@ -58,6 +63,9 @@ impl IndentFacts {
         keyword_frames: &[],
         branches: &[],
         closers: &[],
+        heredoc_openers: &[],
+        heredoc_bodies: &[],
+        heredoc_wrappers: &[],
     };
 }
 
@@ -75,6 +83,9 @@ pub struct Indents {
     attached: Vec<SyntaxKind>,
     keyword_frames: Vec<SyntaxKind>,
     branches: Vec<SyntaxKind>,
+    heredoc_openers: Vec<SyntaxKind>,
+    heredoc_bodies: Vec<SyntaxKind>,
+    heredoc_wrappers: Vec<SyntaxKind>,
 }
 
 /// For the first token of each line: the nodes that start with it, innermost first, and the node
@@ -203,7 +214,56 @@ impl Indents {
             attached: kinds(facts.attached),
             keyword_frames: kinds(facts.keyword_frames),
             branches: kinds(facts.branches),
+            heredoc_openers: kinds(facts.heredoc_openers),
+            heredoc_bodies: kinds(facts.heredoc_bodies),
+            heredoc_wrappers: kinds(facts.heredoc_wrappers),
         }
+    }
+
+    /// The first token of the outermost call that has the heredoc of `opener` as an argument or
+    /// receiver (through calls and argument lists only).
+    fn heredoc_outer(&self, opener: &SyntaxToken) -> Option<SyntaxToken> {
+        let mut outer = None;
+        for n in opener.parent()?.ancestors().skip(1) {
+            if self.chains.contains(&n.kind()) {
+                outer = Some(n);
+            } else if !self.heredoc_wrappers.contains(&n.kind()) {
+                break;
+            }
+        }
+        outer?.first_token()
+    }
+
+    /// The text that replaces the body of the heredocs of the file, by token index
+    /// (`shifts`: how far the line of each token moves). A body that is not at `width` in from its opener's line is moved there when
+    /// its opener is `<<~` (the value stays: every line loses the same indentation); the closing label stands at the opener's
+    /// line, or where it is when the line of the call that holds the heredoc has it.
+    pub fn heredocs(&self, tks: &[Tk], shifts: &[isize], width: usize) -> HashMap<usize, String> {
+        let mut out = HashMap::new();
+        let mut openers: std::collections::VecDeque<(usize, usize)> = Default::default();
+        let mut line_indents: HashMap<usize, usize> = HashMap::new();
+        let mut line_indent = 0;
+        for (i, tk) in tks.iter().enumerate() {
+            let is_body = self.heredoc_bodies.contains(&tk.kind);
+            if !is_body && (i == 0 || tk.newline) {
+                let shift = shifts.get(i).copied().unwrap_or(0);
+                line_indent = (tk.gap.len() as isize + shift).max(0) as usize;
+                line_indents.insert(tk.first_line, line_indent);
+            }
+            if self.heredoc_openers.contains(&tk.kind) {
+                openers.push_back((i, line_indent));
+            } else if is_body && let Some((o, base)) = openers.pop_front() {
+                let outer = self.heredoc_outer(&tks[o].tok).and_then(|t| {
+                    let at = tks
+                        .partition_point(|k| k.tok.text_range().start() < t.text_range().start());
+                    line_indents.get(&tks.get(at)?.first_line).copied()
+                });
+                if let Some(body) = reindent(tks[o].text(), tk.text(), (base, outer), width) {
+                    out.insert(i, body);
+                }
+            }
+        }
+        out
     }
 
     pub fn is_empty(&self) -> bool {
@@ -480,4 +540,49 @@ impl Indents {
         };
         pass.indent.get(&line).copied()
     }
+}
+
+/// The body with its closing label of one heredoc: see
+/// [`Indents::heredocs`].
+fn reindent(
+    opener: &str,
+    body: &str,
+    (base, outer): (usize, Option<usize>),
+    width: usize,
+) -> Option<String> {
+    let squiggly = opener.starts_with("<<~");
+    if body.contains(['\r', '\t']) {
+        return None;
+    }
+    let (text, label) = body.rsplit_once('\n')?;
+    let blank = |l: &str| l.trim().is_empty();
+    let lead = |l: &str| l.len() - l.trim_start().len();
+    let want = base + width;
+    let min = text.split('\n').filter(|l| !blank(l)).map(lead).min();
+    let mut closing = lead(label);
+    let mut out = text.to_string();
+    if let Some(min) = min {
+        if squiggly && min != want {
+            out = text
+                .split('\n')
+                .map(|l| match () {
+                    // A line of blanks no longer than the indentation is empty in the value.
+                    _ if blank(l) && l.len() <= min => String::new(),
+                    _ => format!("{}{}", " ".repeat(want), &l[min..]),
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            closing = closing.max(base);
+        }
+    }
+    let dashed = squiggly || opener.starts_with("<<-");
+    if dashed && closing != base && outer != Some(closing) {
+        closing = base;
+    }
+    let label = format!(
+        "{}{}",
+        " ".repeat(if dashed { closing } else { lead(label) }),
+        label.trim_start()
+    );
+    Some(format!("{out}\n{label}"))
 }
