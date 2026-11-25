@@ -1,6 +1,6 @@
 ratchet:
   dockerfile: 554
-  makefile: 796
+  makefile: 1008
   github-actions: 393
   ini: 8
   editorconfig: 3

@@ -15,11 +15,11 @@ token Newline #trivia #newline
 token Comment #trivia #comment
 
 // A target, prerequisite, variable name or argument: a word, a variable reference, a function call or a quoted string.
-token Word
+token Word #restyle
 // A directive keyword: `include`, `ifeq`, `else`, `endif`, `define`, `export`, ...
 token Keyword #restyle
 // The `=`, `:=`, `::=`, `?=`, `+=` or `!=` of an assignment.
-token Op
+token Op #restyle
 // The value of an assignment (and the shell command of `!=`): blanks around it and line breaks inside it are not meaningful to the formatter.
 token Value #literal #restyle
 // The body of a `define`, one token.

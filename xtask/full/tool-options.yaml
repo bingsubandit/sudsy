@@ -144,3 +144,8 @@
   options: 224
   source: "https://docs.rubocop.org/rubocop/cops_layout.html"
   note: "the 100 Layout cops of config/default.yml: one switch each plus its own settings (EnforcedStyle, Width, IndentationWidth, Max, Allow* flags; not Enabled, Exclude, Include, Safe, Severity, the SupportedStyles lists, AllowedMethods and AllowedPatterns lists), 1.92.3"
+- language: makefile
+  tool: mbake
+  options: 17
+  source: "https://github.com/EbodShojaei/bake#configuration"
+  note: "the [formatter] table of the 1.5.0 config (FormatterConfig): spacing of assignments and colons, line continuations, max_line_length, the three .PHONY options, trailing whitespace, final newline, empty lines (two), recipe tabs, nested conditional indent, tab_width, the two alignment options; not counted: the [general] debug, verbose and error-format settings"

@@ -5,7 +5,7 @@
 <p align="center"><b>A true polyglot formatter and linter for every repo.</b><br>
 One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest.<br>
 Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
-<b><!-- generated:support-headline -->Ready for 26 languages, early support for 3 more.<!-- /generated --></b></p>
+<b><!-- generated:support-headline -->Ready for 27 languages, early support for 2 more.<!-- /generated --></b></p>
 
 <p align="center">
 <a href="https://github.com/bingsubandit/sudsy/releases"><img alt="release" src="https://img.shields.io/github/v/release/bingsubandit/sudsy"></a>
@@ -18,7 +18,7 @@ Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, GitHub Actions, C#, PowerShell, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
+> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, GitHub Actions, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
 
 ## Install
 
@@ -82,6 +82,7 @@ Each number is measured on real-world code against the default rule set of the r
 | GitHub Actions | █████████░ 99% stable · no reference tool | ████████░░ 87% actionlint | Ready |
 | C# | ████████░░ 85% CSharpier | ████████░░ 87% StyleCop<br>░░░░░░░░░░ 0% Roslynator | Ready |
 | PowerShell | █████████░ 92% Invoke-Formatter | ████████░░ 87% PSScriptAnalyzer | Ready |
+| Makefile | ████████░░ 88% mbake | ██████████ 100% checkmake | Ready |
 | TOML | █████████░ 98% taplo | 22 rules · no reference tool | Ready |
 | XML | ██████████ 100% CSharpier XML | 24 rules · no reference tool | Ready |
 | Go | none | █████████░ 97% revive | Lint only: Ready |
@@ -95,7 +96,6 @@ Each number is measured on real-world code against the default rule set of the r
 | GraphQL | █████████░ 99% Prettier | 29 rules · no reference tool | Ready |
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
 | C / C++ | ██████░░░░ 69% clang-format | not measured clang-tidy | In progress |
-| Makefile | ███████░░░ 77% stable · no reference tool | ██████████ 100% checkmake | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 36% PHPStan | In progress |
 
 Notes: clang-format (C / C++): line wrapping is not compared. PHP-CS-Fixer (PHP): measured with the `@PER-CS` rule set (the default of PHP-CS-Fixer 3 is `@PSR12`, which `@PER-CS` contains).
@@ -103,7 +103,7 @@ Notes: clang-format (C / C++): line wrapping is not compared. PHP-CS-Fixer (PHP)
 The rows are ordered by how widely the language is used. Every number is measured against each reference tool's default rule set; a row measured with another set says so in the notes above. How each language is measured, with the tool versions and corpora: [docs/languages.md](docs/languages.md#how-to-read-the-numbers). Presets: [configuration](docs/configuration.md#presets).
 <!-- /generated -->
 
-All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSON, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, C#, PowerShell, TOML, XML, Go, CMake, Kotlin, HCL, EditorConfig, Gitignore, INI, Ruby, GraphQL, Protobuf, C/C++, Makefile and PHP<!-- /generated -->. Corpora, tool versions and the main differences per language: [docs/languages.md](docs/languages.md).
+All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSON, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, HCL, EditorConfig, Gitignore, INI, Ruby, GraphQL, Protobuf, C/C++ and PHP<!-- /generated -->. Corpora, tool versions and the main differences per language: [docs/languages.md](docs/languages.md).
 
 ## Highly configurable
 
@@ -125,6 +125,7 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Java | 23 | google-java-format | [8](https://github.com/google/google-java-format#from-the-command-line) |
 | C# | 93 | CSharpier | [4](https://csharpier.com/docs/Configuration) |
 | PowerShell | 5 | Invoke-Formatter | [33](https://github.com/PowerShell/PSScriptAnalyzer/tree/1.25.0/docs/Rules) |
+| Makefile | 11 | mbake | [17](https://github.com/EbodShojaei/bake#configuration) |
 | TOML | 11 | taplo | [19](https://taplo.tamasfe.dev/configuration/formatter-options.html) |
 | XML | 6 | CSharpier XML | [5](https://csharpier.com/docs/Configuration) |
 | CMake | 7 | gersemi | [4](https://github.com/BlankSpruce/gersemi#configuration) |
@@ -186,6 +187,7 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | C# (.editorconfig) | Format | dotnet format | 5.2× faster | 1.93 s / 10.05 s | 537 / 807 MB |
 | PowerShell | Format | Invoke-Formatter | 38× faster | 0.11 s / 4.38 s | 165 / 163 MB |
 |  | Lint | PSScriptAnalyzer | 151× faster | 0.13 s / 20.17 s | 136 / 313 MB |
+| Makefile | Lint | checkmake | 3.7× slower | 0.059 s / 0.016 s | 70 / 28 MB |
 | TOML | Format | taplo | 1.6× faster | 0.012 s / 0.019 s | 45 / 40 MB |
 | XML | Format | CSharpier | 4.0× faster | 0.11 s / 0.44 s | 104 / 97 MB |
 | Go | Lint | revive | 1.2× slower | 18.07 s / 14.47 s | 2643 / 4115 MB |
@@ -201,7 +203,6 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | Ruby | Lint | RuboCop | 88× faster | 3.00 s / 264.55 s | 1180 / 377 MB |
 | Protobuf | Format | buf | 3.3× faster | 0.069 s / 0.23 s | 115 / 75 MB |
 |  | Lint | buf | 1.3× faster | 0.091 s / 0.12 s | 123 / 39 MB |
-| Makefile | Lint | checkmake | 3.7× slower | 0.059 s / 0.016 s | 70 / 28 MB |
 | PHP | Format | PHP-CS-Fixer | 161× faster | 1.77 s / 285.46 s | 1161 / 70 MB |
 |  | Lint | PHPStan | 84× faster | 1.44 s / 120.93 s | 1194 / 499 MB |
 
