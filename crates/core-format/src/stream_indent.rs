@@ -324,7 +324,7 @@ impl Indents {
                 let src = tks[i].gap.len() as isize;
                 let shift = match self.target(&pass, i) {
                     Some(t) => t as isize - src,
-                    None => match self.in_list(&pass, i, open.last_mut()) {
+                    None => match self.in_list(&pass, i, &mut open) {
                         Some(t) => t as isize - src,
                         None => open
                             .iter()
@@ -356,8 +356,13 @@ impl Indents {
     /// Where the line that starts with token `i` stands in the list the innermost open bracket
     /// holds, when the bracket is the last token of its line: the first element one step in from
     /// the line of the bracket, later elements under it, the closer at the line of the bracket.
-    fn in_list(&self, pass: &Pass<'_, '_>, i: usize, top: Option<&mut Open>) -> Option<usize> {
-        let top = top.filter(|o| o.hanging)?;
+    fn in_list(&self, pass: &Pass<'_, '_>, i: usize, open: &mut [Open]) -> Option<usize> {
+        let (top, outer) = open.split_last_mut()?;
+        // A list in the arguments of a call whose first argument is on the line of its bracket
+        // stands where the call's arguments stand.
+        if !top.hanging || outer.iter().any(|o| !o.hanging && o.line == top.line) {
+            return None;
+        }
         if self.close_brackets.contains(&pass.tks[i].kind) {
             return pass.indent.get(&top.line).copied();
         }

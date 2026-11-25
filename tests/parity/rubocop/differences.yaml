@@ -38,14 +38,14 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   Lint/SendWithMixinArgument: 1
   Lint/Void: 1
 ratchet:
-  real-world: 15592
+  real-world: 16302
 target-files:
   real-world: 18950
 second-format:
   real-world: 0
 regressions:
-  real-world: 22
-unclassified: 3350
+  real-world: 32
+unclassified: 2640
 differences:
   literal-lines-moved: choice  RuboCop's cops that shift a block (MultilineMethodCallIndentation, FirstArgumentIndentation, ClosingParenthesisIndentation) also move the lines inside a multi-line regex or heredoc that the block holds, which changes the value (rails/railties/test/generators/actions_test.rb, a `/x` regex with interpolation, has the line `^` at 10 blanks and RuboCop writes it at 8; the Prism tree of the regex differs); Sudsy never moves a line of a multi-line token
   heredoc-trailing-blank: choice  RuboCop's TrailingWhitespace deletes the blank at the end of a line inside a `<<-` heredoc, which changes the string (discourse/plugins/chat/lib/chat/user_notifications_extension.rb has `SELECT min_unread_id ` in a SQL body and RuboCop writes `SELECT min_unread_id`); Sudsy keeps the body as written
@@ -65,11 +65,11 @@ intentional:
   heredoc-trailing-blank: tool-wrong
   infinite-loop: tool-wrong
 pins:
-  corpus/discourse/plugins/chat/lib/chat/channel_fetcher.rb: 7af721b62d0a4106
+  corpus/discourse/plugins/chat/lib/chat/channel_fetcher.rb: 7f75a5ebaacabe11
   corpus/discourse/plugins/chat/lib/chat/user_notifications_extension.rb: 170d77adeab9c5bb
   corpus/discourse/plugins/discourse-ai/app/models/llm_credit_allocation.rb: 42bab525696aaae7
-  corpus/discourse/plugins/discourse-ai/lib/completions/xml_tool_processor.rb: 678dd3fb0f539cfe
-  corpus/rails/actionpack/test/controller/routing_test.rb: 7107d2bf5f3293ea
+  corpus/discourse/plugins/discourse-ai/lib/completions/xml_tool_processor.rb: a4f484c92544b3fd
+  corpus/rails/actionpack/test/controller/routing_test.rb: bd29280d939628ad
   corpus/rails/actiontext/lib/action_text/markdown_conversion.rb: 70f9bc3267544e40
-  corpus/rails/activerecord/lib/active_record/connection_adapters/abstract_mysql_adapter.rb: 7d04c844a60c76e2
+  corpus/rails/activerecord/lib/active_record/connection_adapters/abstract_mysql_adapter.rb: 625260be6abaca68
   corpus/rails/railties/test/generators/actions_test.rb: faed9da84867bf9f

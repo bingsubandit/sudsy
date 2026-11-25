@@ -339,6 +339,26 @@ fn heredoc_indentation() {
     assert_eq!(f(s), s);
 }
 
+/// A list whose bracket ends its line: the first element stands one step in from the line of the
+/// bracket, later elements under it, the closer at the line of the bracket; a list in a call whose
+/// first argument is on the bracket's line, and the lines of a `%w[` list, stay.
+#[test]
+fn hanging_lists() {
+    let f = fmt;
+    assert_eq!(
+        f("def f\n  raise E.new(\n          a,\n          b: 1,\n        )\nend\n"),
+        "def f\n  raise E.new(\n    a,\n    b: 1,\n  )\nend\n"
+    );
+    assert_eq!(
+        f("x = [\n      a,\n  b\n    ]\n"),
+        "x = [\n  a,\n  b\n]\n"
+    );
+    let s = "x = f(a, {\n      b: 1\n    })\n";
+    assert_eq!(f(s), s);
+    let s = "x = f(\n  %w[\n    a\n    b\n  ],\n)\n";
+    assert_eq!(f(s), s);
+}
+
 /// Dots that start a line stand under the first dot of the chain, or one step in from its
 /// statement; the second operand of a condition stands under the first.
 #[test]
