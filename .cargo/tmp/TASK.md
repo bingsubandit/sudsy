@@ -1,0 +1,3 @@
+Task: measurement only. Batchfile (.bat/.cmd): measure whether queue.md score 4.6 holds; compare parser candidates; build nothing, land nothing.
+Write .cargo/tmp/batch.md: 1 corpus (>=1000 files, pinned permissive repos, fetch script, sizes); 2 parser candidates (tree-sitter, Rust crate, hand-written; speed, ERROR share, cmd syntax coverage, binary size, maintenance; recommendation); 3 format leg (tools, no-reference-tool rules, whitespace-significant places); 4 lint leg (linters, rule checklist, shared coverage); 5 corrected cost/score vs Angular lint, Gradle, Jupyter, Ruby format, Kubernetes; opinion.
+Standards: SLOT /scratch/slots/sudsy/8, write only in worktree+slot, WIP commits, waits <5min, generic client name for downloads, downloads untrusted.

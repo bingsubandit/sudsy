@@ -1,0 +1,159 @@
+caret continuation
+mycmd.exe --a ^
+    --b ^
+    --c
+=====
+percent vars and modifiers
+echo %~dp0 %1 %* %PATH% %x:a=b% %x:~0,3% %%~dpnxi
+=====
+delayed expansion
+setlocal enabledelayedexpansion
+set x=1
+echo !x! !arr[%i%]!
+endlocal
+=====
+for plain
+for %%i in (a b c) do echo %%i
+=====
+for /f usebackq block
+for /f "usebackq tokens=1,2 delims=," %%a in ("file.txt") do (
+  echo %%a %%b
+)
+=====
+for /f command
+for /f "delims=" %%a in ('dir /b') do set x=%%a
+=====
+for /l and /d and /r
+for /l %%i in (1,1,10) do echo %%i
+for /d %%d in (*) do echo %%d
+for /r . %%f in (*.txt) do echo %%f
+=====
+for caret escaped options
+for /f tokens^=1^,2 %%a in (x) do echo %%a
+=====
+if else block
+if exist "a" (
+  echo yes
+) else (
+  echo no
+)
+=====
+if else if chain
+if "%1"=="a" (
+  echo a
+) else if "%1"=="b" (
+  echo b
+) else (
+  echo c
+)
+=====
+if errorlevel and defined and /i and not
+if errorlevel 1 exit /b 1
+if defined x echo y
+if /i "%a%"=="B" echo ok
+if not exist "%x%" mkdir "%x%"
+if %errorlevel% neq 0 goto :fail
+if not ERRORLEVEL == 0 (
+  echo bad
+)
+=====
+if compare no spaces and one line else
+if "%~1"=="" goto :usage
+if exist a (del a) else (echo none)
+=====
+labels and goto call
+:start
+call :sub arg
+goto :eof
+:sub
+exit /b 0
+=====
+rem and colon comments
+REM comment
+rem. also
+@rem hidden
+:: colon comment
+echo x & rem trailing
+=====
+redirections
+echo x > out.txt
+echo y >> out.txt 2>&1
+dir > nul 2> nul
+sort < in.txt
+type a.txt | findstr /i foo
+cmd 1>&2
+=====
+echo variants
+echo.
+echo(
+echo off
+@echo off
+echo Hello (world) !
+echo %x% | findstr y
+echo ^| ^> escaped
+echo.%x%
+=====
+set variants
+set x=1
+set "x=1 2"
+set /a y=1+2
+set /a "z=(1+2)*3"
+set /p name=Enter:
+set x=
+set x
+=====
+conditional operators
+a && b || c
+a & b
+(echo a & echo b) > out.txt
+=====
+nested blocks
+if 1==1 (
+  for %%i in (a b) do (
+    if "%%i"=="a" (
+      echo a
+    )
+  )
+)
+=====
+call with percent escapes
+call set "x=%%y%%"
+call "%SCRIPT%" %*
+start "" /b cmd /c "echo hi"
+cmd /v:on /c "echo !x!"
+=====
+misc builtins
+title My Window
+color 0a
+pause >nul
+shift /1
+setlocal
+endlocal & set "x=%x%"
+exit /b %errorlevel%
+=====
+block comment idioms
+(
+  echo a
+  :: comment in block
+  rem comment in block
+)
+=====
+quotes with special chars
+echo "a & b" > "c d.txt"
+set "p=C:\Program Files (x86)\x"
+if exist "C:\Program Files (x86)\x" echo ok
+=====
+parens in unquoted if body
+if exist foo (echo (nested) text)
+=====
+percent in label and goto with variable
+goto :%1
+goto %target%
+=====
+unicode and tabs
+echo	tab	separated
+echo héllo
+=====
+heredoc style polyglot
+@echo off & setlocal
+powershell -nop -c "& { 1+1 }"
