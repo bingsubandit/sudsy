@@ -46,8 +46,10 @@ differences:
   kt-if-else-braced: "gap  ktlint braces an `if`/`else` that Sudsy leaves bare, or the reverse; fix: the shared curly rule"
   kt-lambda-other: "gap  a lambda is laid out differently, cause not classified yet; fix: classify further"
   kt-break-after-s: "gap  Sudsy breaks after `=` where ktlint does not; fix: see break-after-=/->(sudsy)"
+  kt-nul-byte: "gap  a Kotlin file with a NUL byte inside a string (ktor's SSE test data) is valid for ktlint; Sudsy refuses every UTF-8 file with a NUL byte (provider-api, a guard against wide encodings without a mark), so its findings stay missing; fix: accept NUL in a file that is valid UTF-8 when the language's parser takes it"
   kt-ctor-annot-header: "gap  the annotated constructor header differs; fix: classify further"
 files:
+  kotlin/ktor/ktor-client/ktor-client-tests/common/test/io/ktor/client/tests/plugins/SSESessionParserTest.kt: kt-nul-byte
   corpus/kotlin/libraries/stdlib/build.gradle.kts: kt-template-braces
   corpus/kotlin/libraries/stdlib/common-non-jvm/src/kotlin/text/unicode/CodePointIteration.kt: kt-semi-or-comma
   corpus/kotlin/libraries/stdlib/common/src/generated/_Arrays.kt: kt-if-add-braces
@@ -877,10 +879,10 @@ files:
   corpus/nowinandroid/feature/search/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/search/impl/SearchViewModel.kt: kt-dot-chain-sudsy
   corpus/nowinandroid/feature/topic/impl/src/main/kotlin/com/google/samples/apps/nowinandroid/feature/topic/impl/TopicScreen.kt: kt-comment-other
   corpus/nowinandroid/lint/src/test/kotlin/com/google/samples/apps/nowinandroid/lint/designsystem/DesignSystemDetectorTest.kt: kt-raw-string-lines
-measured: {covered: 109702, total: 118836, main: '7514c1f3'}  # of the target; `main`: the origin/main commit the measured tree is based on
+measured: {covered: 109638, total: 118837, main: 'bede0bee'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
-  function-signature: 1660
-  multiline-expression-wrapping: 904
+  function-signature: 1665
+  multiline-expression-wrapping: 933
   blank-line-between-when-conditions: 726
   string-template-indent: 534
   indent: 509
@@ -909,22 +911,23 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   parameter-list-wrapping: 61
   spacing-between-declarations-with-comments: 55
   mixed-condition-operators: 52
-  chain-method-continuation: 42
+  chain-method-continuation: 47
   no-semi: 39
   comment-spacing: 36
   function-expression-body: 36
   class-signature: 34
   value-parameter-comment: 34
   string-template: 26
+  trailing-comma-on-call-site: 23
   spacing-between-declarations-with-annotations: 20
   enum-wrapping: 17
   no-empty-file: 11
   property-naming: 9
+  no-wildcard-imports: 8
   property-wrapping: 8
   unnecessary-parentheses-before-trailing-lambda: 7
   no-line-break-before-assignment: 6
   no-multi-spaces: 6
-  trailing-comma-on-call-site: 6
   annotation-spacing: 5
   no-empty-class-body: 5
   parameter-list-spacing: 5
@@ -941,4 +944,5 @@ missed:  # rule -> findings that count as missing, layout left after `sudsy form
   enum-entry-name-case: 1
   keyword-spacing: 1
   modifier-list-spacing: 1
+  no-empty-first-line-in-class-body: 1
   paren-spacing: 1
