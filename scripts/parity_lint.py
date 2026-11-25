@@ -629,7 +629,7 @@ def proof_plain(tool, prefix, work, sudsy, preset, layout, fatal, before, pinned
     found, _ = run_plain(tool, prefix, after)
     left = [f for f in found if f[1] in layout and f[0] not in fatal and not pinned(f)]
     per = collections.Counter(f[1] for f in left)
-    rejected = sorted({Path(m).name for m in re.findall(r"^error: (.+?): \d+:\d+:", run.stderr, re.M)})
+    rejected = sorted({Path(m).name for m in re.findall(r"^error: (.+?): (?:\d+:\d+:|\1 is not valid UTF-8)", run.stderr, re.M)})
     print(f"proof: `sudsy format` exit {run.returncode}; formatter findings {len(before)} before, {len(left)} after in {len({f[0] for f in left})} files: "
           + (", ".join(f"{r} {n}" for r, n in per.most_common(12)) or "none"))
     print(f"proof: `sudsy format` rejects {len(rejected)} files (Sudsy bugs, counted)" + "".join(f"\n  bug: {n}" for n in rejected))

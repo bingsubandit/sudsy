@@ -112,7 +112,7 @@ def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out,
     # that name next to the input, as the yaml-test-suite's `error`): a marked file is invalid input and leaves the count, any other
     # rejected file is a Sudsy bug and its findings stay.
     sources = dict(corpus_files(spec, Counter()))
-    rejected = {n for n in (norm(m, after) for m in re.findall(r"^error: (.+?): \d+:\d+:", run.stderr, re.M)) if n in sources}
+    rejected = {n for n in (norm(m, after) for m in re.findall(r"^error: (.+?): (?:\d+:\d+:|\1 is not valid UTF-8)", run.stderr, re.M)) if n in sources}
     marker = spec.get("invalid_marker")
     invalid = {n for n in rejected if marker and (sources[n].parent / marker).exists()}
     reference = spec.get("reference_parser")  # a command (`{file}`) that exits non-zero on a syntax error: the language's own parser
