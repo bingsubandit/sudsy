@@ -36,6 +36,10 @@
   speed: [Python]
   format: [{tool: ruff, name: ruff format, groups: [real-world]}]
   lint: [{tool: ruff, name: ruff}]
+- language: Jupyter Notebook
+  popularity: [{name: Jupyter Notebook, gh: 1018851}]
+  ids: [jupyter]
+  format: [{tool: ruff-notebook, name: ruff format, groups: [real-world]}]
 - language: Protobuf
   popularity: [{name: Protobuf, estimate: {value: 0.2, basis: "lead's estimate 2026-11-25, how common the file is in repositories; no survey lists data formats"}}]
   ids: [protobuf]

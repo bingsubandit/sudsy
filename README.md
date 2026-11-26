@@ -5,7 +5,7 @@
 <p align="center"><b>A true polyglot formatter and linter for every repo.</b><br>
 One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest.<br>
 Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
-<b><!-- generated:support-headline -->Ready for 27 languages, early support for 3 more.<!-- /generated --></b></p>
+<b><!-- generated:support-headline -->Ready for 28 languages, early support for 3 more.<!-- /generated --></b></p>
 
 <p align="center">
 <a href="https://github.com/bingsubandit/sudsy/releases"><img alt="release" src="https://img.shields.io/github/v/release/bingsubandit/sudsy"></a>
@@ -18,7 +18,7 @@ Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, GitHub Actions, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
+> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Jupyter Notebook, Java, GitHub Actions, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
 
 ## Install
 
@@ -78,6 +78,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Shell | ████████░░ 86% shfmt | ████████░░ 86% ShellCheck | Ready |
 | Dockerfile | ████████░░ 86% dockerfmt | █████████░ 91% hadolint | Ready |
 | SQL | ████████░░ 85% sqlfluff | █████████░ 90% sqlfluff | Ready |
+| Jupyter Notebook | ████████░░ 89% ruff format | 22 rules · no reference tool | Ready |
 | Java | █████████░ 91% google-java-format | ████████░░ 88% Checkstyle | Ready |
 | GitHub Actions | █████████░ 99% stable · no reference tool | ████████░░ 87% actionlint | Ready |
 | C# | ████████░░ 85% CSharpier | ████████░░ 87% StyleCop<br>░░░░░░░░░░ 0% Roslynator | Ready |
@@ -119,11 +120,12 @@ All languages: <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSO
 | JSON / JSONC | 10 | Prettier | [7](https://prettier.io/docs/options) |
 | JSON / JSONC | 10 | Biome | [9](https://biomejs.dev/reference/configuration/#json) |
 | Markdown | 5 | Prettier | [5](https://prettier.io/docs/options) |
-| Python | 13 | ruff format | [11](https://docs.astral.sh/ruff/settings/#format) |
+| Python | 17 | ruff format | [11](https://docs.astral.sh/ruff/settings/#format) |
 | YAML | 14 | Prettier | [7](https://prettier.io/docs/options) |
 | Shell | 11 | shfmt | [8](https://github.com/mvdan/sh/blob/v3.14.1/cmd/shfmt/shfmt.1.scd) |
 | Dockerfile | 12 | dockerfmt | [3](https://github.com/reteps/dockerfmt/blob/v1.0.0/README.md) |
 | SQL | 14 | sqlfluff | [68](https://docs.sqlfluff.com/en/stable/configuration/default_configuration.html) |
+| Jupyter Notebook | 11 | ruff format | [11](https://docs.astral.sh/ruff/settings/#format) |
 | Java | 23 | google-java-format | [8](https://github.com/google/google-java-format#from-the-command-line) |
 | C# | 93 | CSharpier | [4](https://csharpier.com/docs/Configuration) |
 | PowerShell | 5 | Invoke-Formatter | [33](https://github.com/PowerShell/PSScriptAnalyzer/tree/1.25.0/docs/Rules) |

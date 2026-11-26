@@ -26,7 +26,7 @@ New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x
 | Language | Demand | Parser | Lint | Format | Both | Suggestion | Notes |
 |---|---|---|---|---|---|---|---|
 | Batchfile | 0.51~ | 0 (paid) | 6.09~ | - | - | lint: lint Blinter | estimate: pick only to measure it |
-| Jupyter Notebook | 0.57~ | 0.2 | 2.43~ | 2.59~ | 2.68~ | both: lint ruff check on cells + format ruff format on cells | JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md; estimate: pick only to measure it |
+| Jupyter Notebook | 0.57~ | 0 (paid) | 2.78~ | - | - | lint: lint ruff check on cells | JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md; estimate: pick only to measure it |
 | Ansible | 0.28~ | ~0.2 | 2.37~ | - | - | lint: lint ansible-lint | YAML with playbook semantics; estimate: pick only to measure it |
 | Gradle | 0.31~ | ~1.2 | 2.10~ | 1.47~ | 2.35~ | both: lint none found + format npm-groovy-lint | build.gradle (Groovy DSL); build.gradle.kts is Kotlin; estimate: pick only to measure it |
 | Kubernetes manifests | 0.41~ | ~0.2 | 2.33~ | - | - | lint: lint kubeconform | estimate: pick only to measure it |
@@ -591,7 +591,7 @@ Lint: target 96.2% (7717 of 8022, 305 missed, measured on 7514c1f3); rules by mi
 
 ## ruff
 
-Format: unclassified 0 of 226 differing files (0%).
+Format: unclassified 0 of 225 differing files (0%).
 1. `comment-placement` (59 files): 59 files first differ here: comments in unusual places (after an operator, between `lambda` and its body, after a bracket, around keywords) and trailing comments that count for the width. fix: dangling-comment placement in the shared comments engine with a per-construct option
 2. `fmt-directives` (44 files): 44 files first differ here: `# fmt: off` / `# fmt: on` / `# fmt: skip` regions: skip on compound headers and bodies on the header line, off inside brackets, blank lines around a region. fix: extend the shared ignore rows to ruff region rules (header skip, bracket-level off) and read the blank-line policy of a region from lang.yaml
 3. `blank-lines` (28 files): 28 files first differ here: blank lines around comments, decorators, stub bodies and after a block opener that ruff keeps or adds differently. fix: blank-line rules per comment placement in the shared block layout, read as options; also open: a function body keeps a blank line before its first comment, no blank line before the first `case` of a `match` (+3 files once the block blank rules are on the shared shapes)
@@ -619,6 +619,16 @@ Lint: target 94.6% (4132 of 4367, 235 missed, measured on 7514c1f3); rules by mi
 15. `PLE2502` (3 missed)
 
 43 more rules: 61 missed.
+
+## ruff-notebook
+
+Format: unclassified 0 of 103 differing files (0%).
+1. `fstring-fields` (35 files): 35 files first differ here: the expressions inside f-string replacement fields (`{idx+1}` is `{idx + 1}`, quotes and breaks inside) are formatted by ruff and kept as written here. fix: parse each replacement field with the Python grammar and format it flat in the shared string literal code (the same cause as `fstring-quotes` of the ruff leg)
+2. `layout-other` (26 files): 26 files first differ here: single-cause layouts of the Python formatter (a call chain in parentheses, `with` items and trailing commas, return annotations, unpacking targets). fix: one shape rule each (`misc`, `binary-layout`, `bracket-split` of the ruff leg)
+3. `comment-width` (23 files): 23 files first differ here: a trailing comment counts for the width of the bracket that ends the line: ruff splits `x={...},  # long comment` and a call whose last line is the comment's, here the line stays one. fix: the comment's reserved width in the shared bracket-split shapes (`comment-placement` of the ruff leg)
+4. `multiline-string-arg` (13 files): 13 files first differ here: a call whose only argument is a multi-line string: ruff keeps `f("""` on the call's line and the closing `""")` with it, here the argument moves to its own lines. fix: hug a lone multi-line string argument in the shared delimited-list shape (`bracket-split` of the ruff leg)
+5. `blank-lines` (4 files): 4 files first differ here: blank lines around comments and after a block opener that ruff keeps or adds differently. fix: the blank-line rules of the shared block layout (`blank-lines` of the ruff leg)
+6. `comment-placement` (2 files): 2 files first differ here: comments after a bracket or an operator that ruff moves. fix: dangling-comment placement in the shared comments engine
 
 ## shellcheck
 

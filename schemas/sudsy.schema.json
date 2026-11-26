@@ -11848,6 +11848,129 @@
       },
       "type": "object"
     },
+    "jupyter": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "additionalProperties": false,
+          "properties": {
+            "array_bracket_spacing": {
+              "default": false,
+              "description": "Spaces inside the brackets of a one-line sequence or array: `[ 1, 2 ]` or `[1, 2]`.",
+              "type": "boolean"
+            },
+            "bracket_spacing": {
+              "default": true,
+              "description": "Spaces inside the braces of a one-line mapping or object: `{ a: 1 }` or `{a: 1}`.",
+              "type": "boolean"
+            },
+            "collapse": {
+              "default": "preserve",
+              "description": "Objects and arrays on one line: `preserve` keeps one that has a line break between its brackets expanded and puts the others on one line if they fit; `always` puts every one that fits on one line; `never` puts every non-empty one on several lines; `opening_break` keeps an object expanded when a line break follows its opening brace and puts every array that fits on one line.",
+              "enum": [
+                "preserve",
+                "always",
+                "never",
+                "opening_break"
+              ],
+              "type": "string"
+            },
+            "dialect": {
+              "default": "auto",
+              "description": "JSON or JSONC (comments, trailing commas); `auto` decides by file name.",
+              "enum": [
+                "auto",
+                "json",
+                "jsonc"
+              ],
+              "type": "string"
+            },
+            "embedded_language_formatting": {
+              "default": "auto",
+              "description": "Format the code cells with the formatter of the notebook's kernel language (`auto`), or keep them as written (`off`). A cell that does not parse, a `%%` cell magic other than Python's and a notebook of another kernel language are kept either way.",
+              "enum": [
+                "auto",
+                "off"
+              ],
+              "type": "string"
+            },
+            "end_of_line": {
+              "default": "auto",
+              "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+              "enum": [
+                "auto",
+                "lf",
+                "crlf"
+              ],
+              "type": "string"
+            },
+            "final_newline": {
+              "default": true,
+              "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_size": {
+              "default": 2,
+              "description": "Columns per indentation level (also the width of a tab).",
+              "maximum": 16,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "indent_style": {
+              "default": "space",
+              "description": "Indent with spaces or tabs.",
+              "enum": [
+                "space",
+                "tab"
+              ],
+              "type": "string"
+            },
+            "line_width": {
+              "default": 80,
+              "description": "Preferred maximum line width in columns.",
+              "maximum": 1000,
+              "minimum": 20,
+              "type": "integer"
+            },
+            "trailing_commas": {
+              "default": "never",
+              "description": "Trailing commas after the last item of a multi-line object or array (JSONC only).",
+              "enum": [
+                "never",
+                "multiline"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "lint": {
+          "$ref": "#/definitions/lint"
+        },
+        "semantics": {
+          "additionalProperties": false,
+          "description": "Facts about methods that the flow analyses use.",
+          "properties": {
+            "does_not_return": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "pure": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "kotlin": {
       "additionalProperties": false,
       "properties": {
@@ -12301,6 +12424,7 @@
           "xml",
           "yaml",
           "github-actions",
+          "jupyter",
           "angular",
           "vue",
           "svelte",
@@ -16173,6 +16297,129 @@
             },
             "type": "object"
           },
+          "jupyter": {
+            "additionalProperties": false,
+            "properties": {
+              "format": {
+                "additionalProperties": false,
+                "properties": {
+                  "array_bracket_spacing": {
+                    "default": false,
+                    "description": "Spaces inside the brackets of a one-line sequence or array: `[ 1, 2 ]` or `[1, 2]`.",
+                    "type": "boolean"
+                  },
+                  "bracket_spacing": {
+                    "default": true,
+                    "description": "Spaces inside the braces of a one-line mapping or object: `{ a: 1 }` or `{a: 1}`.",
+                    "type": "boolean"
+                  },
+                  "collapse": {
+                    "default": "preserve",
+                    "description": "Objects and arrays on one line: `preserve` keeps one that has a line break between its brackets expanded and puts the others on one line if they fit; `always` puts every one that fits on one line; `never` puts every non-empty one on several lines; `opening_break` keeps an object expanded when a line break follows its opening brace and puts every array that fits on one line.",
+                    "enum": [
+                      "preserve",
+                      "always",
+                      "never",
+                      "opening_break"
+                    ],
+                    "type": "string"
+                  },
+                  "dialect": {
+                    "default": "auto",
+                    "description": "JSON or JSONC (comments, trailing commas); `auto` decides by file name.",
+                    "enum": [
+                      "auto",
+                      "json",
+                      "jsonc"
+                    ],
+                    "type": "string"
+                  },
+                  "embedded_language_formatting": {
+                    "default": "auto",
+                    "description": "Format the code cells with the formatter of the notebook's kernel language (`auto`), or keep them as written (`off`). A cell that does not parse, a `%%` cell magic other than Python's and a notebook of another kernel language are kept either way.",
+                    "enum": [
+                      "auto",
+                      "off"
+                    ],
+                    "type": "string"
+                  },
+                  "end_of_line": {
+                    "default": "auto",
+                    "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+                    "enum": [
+                      "auto",
+                      "lf",
+                      "crlf"
+                    ],
+                    "type": "string"
+                  },
+                  "final_newline": {
+                    "default": true,
+                    "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_size": {
+                    "default": 2,
+                    "description": "Columns per indentation level (also the width of a tab).",
+                    "maximum": 16,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "indent_style": {
+                    "default": "space",
+                    "description": "Indent with spaces or tabs.",
+                    "enum": [
+                      "space",
+                      "tab"
+                    ],
+                    "type": "string"
+                  },
+                  "line_width": {
+                    "default": 80,
+                    "description": "Preferred maximum line width in columns.",
+                    "maximum": 1000,
+                    "minimum": 20,
+                    "type": "integer"
+                  },
+                  "trailing_commas": {
+                    "default": "never",
+                    "description": "Trailing commas after the last item of a multi-line object or array (JSONC only).",
+                    "enum": [
+                      "never",
+                      "multiline"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "lint": {
+                "$ref": "#/definitions/lint"
+              },
+              "semantics": {
+                "additionalProperties": false,
+                "description": "Facts about methods that the flow analyses use.",
+                "properties": {
+                  "does_not_return": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "pure": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
           "kotlin": {
             "additionalProperties": false,
             "properties": {
@@ -17129,6 +17376,16 @@
               "format": {
                 "additionalProperties": false,
                 "properties": {
+                  "dialect": {
+                    "default": "auto",
+                    "description": "`ipython` also reads IPython syntax: lines of `%magic`, `!shell` and `?help` stay as written. `auto` is Python.",
+                    "enum": [
+                      "auto",
+                      "python",
+                      "ipython"
+                    ],
+                    "type": "string"
+                  },
                   "end_of_line": {
                     "default": "auto",
                     "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -17159,6 +17416,16 @@
                       "tab"
                     ],
                     "type": "string"
+                  },
+                  "keep_final_semicolon": {
+                    "default": false,
+                    "description": "Keep the `;` after the last statement of the file (a notebook cell: the semicolon hides the cell's output, so it is code).",
+                    "type": "boolean"
+                  },
+                  "keep_statement_parentheses": {
+                    "default": false,
+                    "description": "Keep one pair of parentheses around an expression statement written with them (a notebook cell shows the value of its last expression).",
+                    "type": "boolean"
                   },
                   "line_width": {
                     "default": 88,
@@ -17210,6 +17477,11 @@
                       "soft"
                     ],
                     "type": "string"
+                  },
+                  "module_docstring": {
+                    "default": true,
+                    "description": "Format the first string of a module as its docstring (quotes, indentation, the blank line after it). A notebook cell has none.",
+                    "type": "boolean"
                   },
                   "paren_line_end_parents": {
                     "default": [
@@ -18630,6 +18902,16 @@
         "format": {
           "additionalProperties": false,
           "properties": {
+            "dialect": {
+              "default": "auto",
+              "description": "`ipython` also reads IPython syntax: lines of `%magic`, `!shell` and `?help` stay as written. `auto` is Python.",
+              "enum": [
+                "auto",
+                "python",
+                "ipython"
+              ],
+              "type": "string"
+            },
             "end_of_line": {
               "default": "auto",
               "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
@@ -18660,6 +18942,16 @@
                 "tab"
               ],
               "type": "string"
+            },
+            "keep_final_semicolon": {
+              "default": false,
+              "description": "Keep the `;` after the last statement of the file (a notebook cell: the semicolon hides the cell's output, so it is code).",
+              "type": "boolean"
+            },
+            "keep_statement_parentheses": {
+              "default": false,
+              "description": "Keep one pair of parentheses around an expression statement written with them (a notebook cell shows the value of its last expression).",
+              "type": "boolean"
             },
             "line_width": {
               "default": 88,
@@ -18711,6 +19003,11 @@
                 "soft"
               ],
               "type": "string"
+            },
+            "module_docstring": {
+              "default": true,
+              "description": "Format the first string of a module as its docstring (quotes, indentation, the blank line after it). A notebook cell has none.",
+              "type": "boolean"
             },
             "paren_line_end_parents": {
               "default": [

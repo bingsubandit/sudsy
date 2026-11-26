@@ -7,10 +7,11 @@ use super::comment::*;
 use super::docstring;
 use super::stmt;
 use super::util::*;
+use crate::format::{keep_final_semicolon, module_docstring};
 use crate::generated::kind as k;
 use core_format::FormatCtx;
 use core_format::comments;
-use core_format::doc::{Doc, concat, hardline, indent};
+use core_format::doc::{Doc, concat, hardline, indent, lit};
 use core_syntax::SyntaxNode;
 use core_syntax::roles::{has, has_any};
 use std::cell::Cell;
@@ -117,6 +118,15 @@ fn is_docstring(n: &SyntaxNode) -> bool {
         })
 }
 
+/// Can the first statement of a block of this kind be a docstring?
+fn has_docstring(cx: &FormatCtx<'_>, seq: Seq) -> bool {
+    match seq {
+        Seq::Other => false,
+        Seq::Module => module_docstring(cx.options),
+        _ => true,
+    }
+}
+
 /// The statements of a block, one per line with the blank lines of ruff.
 pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq: Seq) -> R {
     let cap = if top { 2 } else { 1 };
@@ -135,6 +145,13 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
             if let Some(c) = all.get(consumed - 1) {
                 src = c.breaks_after.saturating_sub(1);
             }
+        }
+        // ruff counts the blank lines after a statement from its end: a `;` there hides them.
+        if i > 0
+            && !has_any(stmts[i - 1].kind(), COMPOUND)
+            && semicolon(cx, &stmts[i - 1]).is_some()
+        {
+            src = 0;
         }
         // Comments followed by a blank line stay with the statement before.
         let mut own_doc = Doc::Nil;
@@ -159,10 +176,10 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
             }
         }
         let mut blank = src.min(cap);
-        let docstring = i == 0 && seq != Seq::Other && is_docstring(s);
+        let docstring = i == 0 && has_docstring(cx, seq) && is_docstring(s);
         if i > 0 {
             let prev = &stmts[i - 1];
-            let prev_doc = i == 1 && seq != Seq::Other && is_docstring(prev);
+            let prev_doc = i == 1 && has_docstring(cx, seq) && is_docstring(prev);
             let after_def = own_doc == Doc::Nil && ends_with_def(prev);
             if has_any(s.kind(), DEF) && src == 0 && is_stub(cx, prev) && own_doc == Doc::Nil {
                 blank = 0;
@@ -175,7 +192,12 @@ pub(crate) fn sequence(cx: &FormatCtx<'_>, stmts: &[SyntaxNode], top: bool, seq:
             }
             parts.push(hardline());
         } else if own_doc != Doc::Nil {
-            blank = if has_any(s.kind(), DEF) { cap } else { blank };
+            // (comments of the definition still to print: they keep the blank lines of the source)
+            blank = if has_any(s.kind(), DEF) && cx.remaining_comments(&first).is_empty() {
+                cap
+            } else {
+                blank
+            };
             parts.push(hardline());
         } else if docstring || matches!(seq, Seq::Class | Seq::Module) {
             blank = 0;
@@ -234,11 +256,20 @@ pub(crate) fn item(cx: &FormatCtx<'_>, s: &SyntaxNode, docstring: bool) -> R {
     if let Some(l) = &last {
         cx.hold_trailing(l);
     }
-    let body = if docstring {
+    let mut body = if docstring {
         docstring::statement(cx, s)?
     } else {
         stmt::statement(cx, s)?
     };
+    // The `;` that ends the file is code (a notebook cell's, which hides its output).
+    if !compound
+        && keep_final_semicolon(cx.options)
+        && s.parent().is_some_and(|p| p.kind() == k::MOD_MODULE)
+        && s.next_sibling().is_none()
+        && semicolon(cx, s).is_some()
+    {
+        body = concat(vec![body, lit(";")]);
+    }
     let trailing = last.map_or(Doc::Nil, |l| trailing_inline(cx, &l));
     let after_semicolon = semicolon(cx, s)
         .filter(|_| !compound)

@@ -167,7 +167,7 @@ pub fn format_parsed_with(
 
 /// The rewrite rounds on a parsed file: the file and its tree after the rewrites, `None` when
 /// nothing was rewritten.
-pub(crate) fn rewrite_loop(
+pub fn rewrite_loop(
     provider: &dyn LanguageProvider,
     file: &SourceFile,
     parsed: &ParseResult,
@@ -489,17 +489,23 @@ pub fn resolve_dialect(
     options: &mut ResolvedOptions,
     matcher_dialect: Option<String>,
 ) -> Option<String> {
-    if let Some(core_config::OptionValue::String(v)) = options.get(core_config::opt::TARGET_VERSION)
-    {
-        return Some(v.clone());
+    let target = match options.get(core_config::opt::TARGET_VERSION) {
+        Some(core_config::OptionValue::String(v)) => Some(v.clone()),
+        _ => None,
+    };
+    let chosen = match options.get(core_config::opt::DIALECT) {
+        Some(core_config::OptionValue::String(s)) if s != "auto" => Some(s.clone()),
+        Some(_) => matcher_dialect,
+        None => None,
+    };
+    if let Some(c) = &chosen {
+        options.set(
+            core_config::opt::DIALECT,
+            core_config::OptionValue::String(c.clone()),
+        );
     }
-    let chosen = match options.get(core_config::opt::DIALECT)? {
-        core_config::OptionValue::String(s) if s != "auto" => Some(s.clone()),
-        _ => matcher_dialect,
-    }?;
-    options.set(
-        core_config::opt::DIALECT,
-        core_config::OptionValue::String(chosen.clone()),
-    );
-    Some(chosen)
+    match (chosen, target) {
+        (Some(d), Some(t)) => Some(format!("{d} {t}")),
+        (d, t) => d.or(t),
+    }
 }

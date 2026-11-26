@@ -25,6 +25,7 @@ Current state only; history is in git. Update the doc of the area you change in 
 | [formatting/engine.md](formatting/engine.md) | Layout doc, printer, shapes, directives, comments, safety check |
 | [formatting/csharp.md](formatting/csharp.md) | C# formatter and options |
 | [formatting/json.md](formatting/json.md) | JSON/JSONC parser, formatter, options |
+| [formatting/jupyter.md](formatting/jupyter.md) | Notebooks: JSON host, Python cells as embedded regions, parity |
 | [formatting/css.md](formatting/css.md) | CSS / SCSS / Less hand-written parser, Prettier-style formatter, options, conformance |
 | [formatting/yaml.md](formatting/yaml.md) | YAML parser, data model, formatter, options |
 | [formatting/github-actions.md](formatting/github-actions.md) | GitHub Actions workflows and `action.yml`: selection by path, embedded `run:` scripts, rules after actionlint |

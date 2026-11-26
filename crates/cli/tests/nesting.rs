@@ -10,6 +10,7 @@ const DEPTH: usize = 20_000;
 /// openers and as many closers. Every provider needs a row.
 const NESTED: &[(&str, &str, &str, &str, &str)] = &[
     ("json", "a.json", "", "[", "]"),
+    ("jupyter", "a.ipynb", "", "[", "]"),
     ("css", "a.css", "a { width: ", "calc(", ")"),
     ("scss", "a.scss", "a { width: ", "calc(", ")"),
     ("less", "a.less", "a { width: ", "calc(", ")"),

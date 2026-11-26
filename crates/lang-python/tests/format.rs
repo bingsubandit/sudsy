@@ -306,3 +306,43 @@ fn comments_stable() {
         "variable = (\n    something  # a comment\n    .first_method(\"some string\")\n)\nrows = [\n    (1 << j)  # first\n    | (1 << (n + i - j + n - 1))  # second\n    | (1 << (n + 2 * n - 1 + i + j))\n    for j in rangen\n]\n(\n    lambda  # comment 1\n    *args, **kwargs:  # comment 2\n    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(*args, **kwargs) + 1\n)\n____aaa = (\n    \"aaaaaaaaaaaaaaaaaaaaa\" \"aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbvvvvvvvvvvvvvvv\"\n)  # c\nc = a + \"ab\" * b  # comment\n"
     );
 }
+
+/// What ruff does with a `;`, a comment that does not fit, and a power under a unary operator
+/// (ruff 0.17.4 output for each input).
+#[test]
+fn semicolons_comment_widths_and_powers() {
+    let long = format!("# {}", "a".repeat(80));
+    assert_eq!(fmt("a()\nb();\n\nc()\n"), "a()\nb()\nc()\n");
+    assert_eq!(
+        fmt(&format!(
+            "if (x == y):  {long}\n    pass\nz = name  {long}\n"
+        )),
+        format!("if (\n    x == y\n):  {long}\n    pass\nz = name  {long}\n")
+    );
+    assert_eq!(
+        fmt("y = -x**3\nz = not a.b**2\n"),
+        "y = -(x**3)\nz = not (a.b**2)\n"
+    );
+}
+
+/// The options a notebook cell sets: the last `;` stays, a first string is no docstring and the
+/// parentheses of an expression statement stay.
+#[test]
+fn cell_options() {
+    let on = |name: &'static str, v: bool| (name, OptionValue::Bool(v));
+    assert_eq!(
+        fmt_with(vec![on("keep_final_semicolon", true)], "x=1;\ny=2;\n"),
+        "x = 1\ny = 2;\n"
+    );
+    assert_eq!(
+        fmt_with(vec![on("module_docstring", false)], "'''  a  '''\nx=1\n"),
+        "\"\"\"  a  \"\"\"\nx = 1\n"
+    );
+    assert_eq!(
+        fmt_with(
+            vec![on("keep_statement_parentheses", true)],
+            "(a.b(1))\nx=1\n"
+        ),
+        "(a.b(1))\nx = 1\n"
+    );
+}

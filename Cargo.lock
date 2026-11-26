@@ -1964,6 +1964,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-jupyter"
+version = "0.0.3"
+dependencies = [
+ "core-config",
+ "core-format",
+ "core-incremental",
+ "core-rules",
+ "core-syntax",
+ "lang-json",
+ "lang-python",
+ "provider-api",
+]
+
+[[package]]
 name = "lang-kotlin"
 version = "0.0.3"
 dependencies = [
@@ -2197,6 +2211,7 @@ dependencies = [
  "lang-java",
  "lang-js",
  "lang-json",
+ "lang-jupyter",
  "lang-kotlin",
  "lang-makefile",
  "lang-markdown",

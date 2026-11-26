@@ -219,6 +219,21 @@ The status and the numbers of every language are in the generated table "Languag
   - Layout of some constructs is not written: expressions, joins, CASE, CTEs, comments. Those parts stay as written.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format sqlfluff`, `scripts/parity.sh coverage sqlfluff`.
 
+## Jupyter Notebook
+
+<!-- generated:measured-jupyter-notebook -->
+- **Measured:** Ready.
+  - Format, ruff format: 89% of the files identical (871 of 974 files).
+  - Lint: 22 rules, no reference tool to compare with.
+<!-- /generated -->
+
+- Config section: `jupyter`, on top of `json`.
+- **Formatter:** the code cells of a notebook whose kernel language is Python, formatted like `.py` files (`python` section options; IPython `%`, `!` and `?` lines stay as written, the `;` that ends a cell stays). Every byte outside the `source` of a code cell stays as written; a cell that does not parse stays as written.
+  - Compared with `ruff format` on the source of every code cell; ruff writes the JSON with its own layout, Sudsy never does.
+- **Linter:** not yet.
+- **Options:** `embedded_language_formatting` (`off` keeps the cells as written).
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format ruff-notebook`.
+
 ## Java
 
 <!-- generated:measured-java -->

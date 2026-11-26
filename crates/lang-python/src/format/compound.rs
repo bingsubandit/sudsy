@@ -41,7 +41,10 @@ pub(crate) fn compound(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         let e = &ks[i];
         match e {
             SyntaxElement::Token(t) if t.kind() == k::COLON => {
+                // (a comment after the colon counts for the width of the header)
+                cx.hold_trailing(t);
                 parts.push(cx.token(t));
+                parts.push(trailing_inline(cx, t));
                 if node.kind() == k::STMT_MATCH {
                     let cases: Vec<SyntaxNode> = ks[i + 1..]
                         .iter()

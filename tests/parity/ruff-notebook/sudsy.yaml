@@ -1,0 +1,28 @@
+# The Sudsy side of the fixture comparison with ruff: every rule the catalog maps (`--select` of their codes), so the
+# preset of ruff's default set plus the mapped rules that are not in it.
+extends: [preset:python/ruff]
+python:
+  lint:
+    rules:
+      ambiguous-class-name: warn
+      ambiguous-function-name: warn
+      ambiguous-variable-name: warn
+      assert-false: warn
+      forward-annotation-syntax-error: warn
+      if-expr-with-twisted-arms: warn
+      lambda-assignment: warn
+      module-import-not-at-top-of-file: warn
+      multiple-imports-on-one-line: warn
+      multiple-statements-on-one-line-colon: warn
+      multiple-statements-on-one-line-semicolon: warn
+      none-comparison: warn
+      not-in-test: warn
+      not-is-test: warn
+      no-print: warn
+      raise-without-from-inside-except: warn
+      boolean-literal-comparison: warn
+      type-comparison: warn
+      no-wildcard-imports: warn
+      undefined-local-with-import-star-usage: warn
+      useless-semicolon: warn
+      zip-without-explicit-strict: warn

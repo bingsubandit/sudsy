@@ -139,6 +139,7 @@ export const documentSelector = [
   { scheme: "file", pattern: "**/*.uxml" },
   { scheme: "file", pattern: "**/*.yaml" },
   { scheme: "file", pattern: "**/*.yml" },
+  { scheme: "file", pattern: "**/*.ipynb" },
   { scheme: "file", pattern: "**/*.vue" },
   { scheme: "file", pattern: "**/*.svelte" },
   { scheme: "file", pattern: "**/*.cs" },

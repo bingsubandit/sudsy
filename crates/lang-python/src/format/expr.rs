@@ -71,6 +71,7 @@ fn expr_inner(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
         | k::EXPR_BOOLEAN_LITERAL
         | k::EXPR_NONE_LITERAL
         | k::EXPR_ELLIPSIS_LITERAL
+        | k::EXPR_IPY_ESCAPE_COMMAND
         | k::IDENTIFIER => plain(cx, node),
         k::EXPR_NUMBER_LITERAL => number(cx, node),
         k::EXPR_STRING_LITERAL | k::EXPR_BYTES_LITERAL | k::EXPR_F_STRING | k::EXPR_T_STRING => {
@@ -316,6 +317,7 @@ fn parenthesized_node(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
 /// Does a comment stand after the head of an attribute chain, between the dot and the names, or between a
 /// callee and its `(` or `[`?
 pub(crate) fn chain_has_comments(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
+    let last = cx.last_token(node);
     let mut cur = node.clone();
     loop {
         match cur.kind() {
@@ -329,6 +331,10 @@ pub(crate) fn chain_has_comments(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool 
                 }
                 for e in cur.children_with_tokens().skip(1) {
                     let hit = match &e {
+                        // (a comment after the end of the whole chain is the line's)
+                        SyntaxElement::Token(t) if Some(t) == last.as_ref() => {
+                            !core_format::comments::leading_comments(cx.grammar, t).is_empty()
+                        }
                         SyntaxElement::Token(t) => {
                             !cx.grammar.is_trivia(t.kind()) && has_comments(cx, t)
                         }

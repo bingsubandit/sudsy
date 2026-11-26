@@ -107,6 +107,7 @@ lang-html = { path = "crates/lang-html" }
 lang-cpp = { path = "crates/lang-cpp" }
 lang-yaml = { path = "crates/lang-yaml" }
 lang-github-actions = { path = "crates/lang-github-actions" }
+lang-jupyter = { path = "crates/lang-jupyter" }
 # generated:languages
 lang-dockerfile = { path = "crates/lang-dockerfile", default-features = false }
 lang-editorconfig = { path = "crates/lang-editorconfig", default-features = false }

@@ -1,5 +1,7 @@
 # Design: Jupyter Notebook evidence
 
+Built (format leg, option A): [../formatting/jupyter.md](../formatting/jupyter.md). M1, M4 and M5 exist (escaped regions, `Mode::Ipython`, the region check); M2, M3 (lint) and M6 are open. The measurements below are the evidence it was built on.
+
 Measurements before any Jupyter product code (method: [../development/no-reference-tool.md](../development/no-reference-tool.md), [../architecture/adding-a-language.md](../architecture/adding-a-language.md)). Scripts: `scripts/evidence_jupyter*.py` (facts for `scripts/evidence.py`, cell statistics, format and lint baselines, a JSON byte-splice model). Ruff 0.17.4 in a venv, Sudsy debug build with optimizations. Sudsy ignores `.ipynb` today and the LSP has no notebook support.
 
 ## Corpus
@@ -73,7 +75,7 @@ Files with no missing and no extra finding: 359 of 877 (40.9%); with the noteboo
 Not verified: a Rust splice speed, the integrated pipeline, LSP behaviour, nbQA on the corpus, hand reading beyond about 30 cells, causes of the black and ruff disagreements.
 
 ## Performance
-A 20 MB notebook through the existing JSON grammar: lint 0.24 s (138 MB), format 0.29 to 0.32 s (180 MB), about 70 MB/s and a tree about 7 times the file. Ruff on the same file: format 0.24 s (78 MB), check 0.18 s (40 MB). A median file costs under 0.06 s. A scanner that skips outputs would touch at most 1% of the bytes of the large files. Not measured for the Rust pipeline.
+A 20 MB notebook through the existing JSON grammar: lint 0.24 s (138 MB), format 0.29 to 0.32 s (180 MB), about 70 MB/s and a tree about 7 times the file. Ruff on the same file: format 0.24 s (78 MB), check 0.18 s (40 MB). A median file costs under 0.06 s. A scanner that skips outputs would touch at most 1% of the bytes of the large files. Rust pipeline (`perf-bench fixed ipynb format`, release, aarch64 Linux agent host): the same 20.9 MB file formats in 0.17 to 0.19 s, 115 MB.
 
 ## Parts
 Exist: `lang-json` parser and formatter; embedded regions (`embed` grammar rows, `KeyEmbeds` with one user, `Embedded` with carved parts, `strip`, `to_host`, region format write-back, host suppression); the Python provider on `ruff_python_parser` (it has `Mode::Ipython`, unused); the core-format safety check; the parity framework with `tool-wrong` and `choice`.

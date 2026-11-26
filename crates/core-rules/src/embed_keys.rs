@@ -12,6 +12,7 @@
 use crate::hooks::RuleHooks;
 use crate::regex::{Meta, meta_regex};
 use core_syntax::embedded::size;
+use core_syntax::escaped::Escaped;
 use core_syntax::{Embedded, Grammar, SyntaxElement, SyntaxNode, SyntaxNodeExt, TextRange};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -29,6 +30,10 @@ pub struct KeyEmbed {
     pub language: &'static str,
     /// The code is only code when the scalar at this path starts with the text.
     pub when: Option<(&'static str, &'static str)>,
+    /// Option values of the language that the host sets for this code.
+    pub settings: &'static [(&'static str, &'static str)],
+    /// The row's language is the default only when nothing is at this path; else no language.
+    pub unless: Option<&'static str>,
 }
 
 pub struct KeyEmbeds {
@@ -41,6 +46,14 @@ pub struct KeyEmbeds {
     pub plain: &'static str,
     pub block_header: &'static str,
     pub literal: &'static str,
+    /// The code is held in escaped string literals (a string, or an array of them: JSON), not in
+    /// a scalar: the regions decode them (`core_syntax::escaped`) and `format` lets the language
+    /// rewrite them.
+    pub escaped: bool,
+    pub format: bool,
+    /// Text that is not code of the row's language: a line that matches the first regex and not
+    /// the second (a notebook's `%%bash` cell magic).
+    pub foreign: Option<(&'static str, &'static str)>,
 }
 
 struct Reader<'a> {
@@ -100,7 +113,9 @@ impl Reader<'_> {
         } else if self.g.has_tag(node.kind(), "sequence") {
             for (i, item) in node.children().enumerate() {
                 let value = match self.g.slot(&item, "value") {
-                    Some(v) if self.g.has_field(item.kind(), "value") => v.into_node(),
+                    Some(SyntaxElement::Node(v)) if self.g.has_field(item.kind(), "value") => {
+                        Some(v)
+                    }
                     _ => Some(item),
                 };
                 visit(i.to_string(), value);
@@ -224,7 +239,8 @@ fn search(
     for row in spec.rows {
         let others = (row.words.iter().copied())
             .chain(row.guess.map(|g| g.0))
-            .chain(row.when.map(|w| w.0));
+            .chain(row.when.map(|w| w.0))
+            .chain(row.unless);
         patterns.extend(std::iter::once(row.path).chain(others).map(pattern));
     }
     let mut seen = Seen::default();
@@ -244,7 +260,18 @@ fn search(
                 }
             }
             let language = language(spec, row, &r, &seen, &caught);
-            out.extend(region(spec, &r, &seen.nodes[path], language, &carve));
+            let value = &seen.nodes[path];
+            let found = if spec.escaped {
+                escaped_region(spec, &r, value, language)
+            } else {
+                region(spec, &r, value, language, &carve)
+            };
+            out.extend(found.map(|mut e| {
+                e.settings = (row.settings.iter())
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect();
+                e
+            }));
         }
     }
     out.sort_by_key(|e| e.range.start());
@@ -279,6 +306,7 @@ fn language(
             {
                 language
             }
+            _ if row.unless.is_some_and(|p| seen.at(p, caught).is_some()) => "",
             _ => row.language,
         },
     }
@@ -330,4 +358,36 @@ fn region(
         range,
         carved,
     ))
+}
+
+/// The region of a string, or of an array of strings, whose code is the decoded text.
+fn escaped_region(
+    spec: &KeyEmbeds,
+    r: &Reader<'_>,
+    value: &SyntaxNode,
+    language: &str,
+) -> Option<Embedded> {
+    let node = r.inner(value);
+    let string = |n: &SyntaxNode| n.tokens().find(|t| r.g.has_tag(t.kind(), "string"));
+    let tokens: Vec<_> = if r.g.has_tag(node.kind(), "sequence") {
+        node.children().map(|c| string(&c)).collect::<Option<_>>()?
+    } else {
+        vec![string(&node)?]
+    };
+    let syntax = r.g.string_row(tokens.first()?.kind());
+    let pieces = tokens.iter().map(|t| t.text_range()).collect();
+    let list = r.g.has_tag(node.kind(), "sequence");
+    let escaped = Escaped::new(syntax, pieces, list, r.text)?;
+    let foreign = spec.foreign.is_some_and(|(lines, except)| {
+        let (lines, except) = (carve_regex(lines), carve_regex(except));
+        (escaped.code().lines()).any(|l| lines.is_match(l) && !except.is_match(l))
+    });
+    let mut region = Embedded::new(
+        if foreign { "" } else { language },
+        node.text_range(),
+        Vec::new(),
+    )
+    .with_escaped(escaped);
+    region.format = spec.format;
+    Some(region)
 }

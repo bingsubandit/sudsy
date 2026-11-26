@@ -23,6 +23,19 @@ options:
       values: ["respect", "ignore"]
       default: "respect"
       doc: "`respect` keeps a collection, call or parameter list that has a trailing comma expanded one item per line; `ignore` joins it when it fits and removes the comma."
+  - keep_final_semicolon:
+      default: false
+      doc: "Keep the `;` after the last statement of the file (a notebook cell: the semicolon hides the cell's output, so it is code)."
+  - keep_statement_parentheses:
+      default: false
+      doc: "Keep one pair of parentheses around an expression statement written with them (a notebook cell shows the value of its last expression)."
+  - module_docstring:
+      default: true
+      doc: "Format the first string of a module as its docstring (quotes, indentation, the blank line after it). A notebook cell has none."
+  - dialect:
+      values: ["auto", "python", "ipython"]
+      default: "auto"
+      doc: "`ipython` also reads IPython syntax: lines of `%magic`, `!shell` and `?help` stay as written. `auto` is Python."
   - target_version:
       values: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
       default: "3.14"

@@ -6,14 +6,16 @@ use super::expr::{self, expr as expr_doc};
 use super::list;
 use super::paren;
 use super::util::*;
+use crate::format::keep_statement_parentheses;
 use crate::generated::kind as k;
 use core_format::FormatCtx;
-use core_format::doc::{Doc, concat};
+use core_format::doc::{Doc, concat, lit};
+use core_format::shapes;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 
 pub(crate) fn statement(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     match node.kind() {
-        k::STMT_PASS | k::STMT_BREAK | k::STMT_CONTINUE => Ok(concat(
+        k::STMT_PASS | k::STMT_BREAK | k::STMT_CONTINUE | k::STMT_IPY_ESCAPE_COMMAND => Ok(concat(
             kids(cx, node)
                 .iter()
                 .map(|e| expr::elem(cx, e))
@@ -24,6 +26,15 @@ pub(crate) fn statement(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
                 .children()
                 .next()
                 .ok_or_else(|| shape_error("StmtExpr"))?;
+            let inner = paren::strip(cx, &e);
+            if e.kind() == k::PARENTHESIZED
+                && inner.kind() != k::PARENTHESIZED
+                && keep_statement_parentheses(cx.options)
+            {
+                // (a notebook cell shows the value of its last expression: the parentheses stay)
+                let d = with_fluent(false, || with_open(true, || expr_doc(cx, &inner)))?;
+                return Ok(shapes::enclosed(lit("("), d, lit(")")));
+            }
             with_fluent(false, || paren::maybe_parenthesize(cx, &e))
         }
         k::STMT_RETURN => keyword_value(cx, node, k::RETURN),

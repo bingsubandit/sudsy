@@ -28,27 +28,33 @@ use ruff_text_size::Ranged;
 
 /// The newest stable version unless the file's `target_version` names another.
 pub fn parse_file(file: &SourceFile) -> ParseResult {
-    let target = (file.language_version.as_deref())
-        .and_then(|v| v.parse().ok())
+    // The version words of the file: a Python version and the dialect (`ipython`).
+    let words = || {
+        file.language_version
+            .as_deref()
+            .unwrap_or("")
+            .split_whitespace()
+    };
+    let target = words()
+        .find_map(|v| v.parse().ok())
         .unwrap_or(PythonVersion::latest());
-    parse(&file.text, target)
-}
-
-pub fn parse(src: &str, target: PythonVersion) -> ParseResult {
-    let result = tree(src, target);
-    crate::semantic::note_parse(src, !result.errors.is_empty(), u32::from(target.minor));
+    let mode = if words().any(|w| w == "ipython") {
+        Mode::Ipython
+    } else {
+        Mode::Module
+    };
+    let result = tree(&file.text, target, mode);
+    let minor = u32::from(target.minor);
+    crate::semantic::note_parse(&file.text, !result.errors.is_empty(), minor);
     result
 }
 
-fn tree(src: &str, target: PythonVersion) -> ParseResult {
-    let parsed = parse_unchecked(
-        src,
-        ParseOptions::from(Mode::Module).with_target_version(target),
-    );
+fn tree(src: &str, target: PythonVersion, mode: Mode) -> ParseResult {
+    let parsed = parse_unchecked(src, ParseOptions::from(mode).with_target_version(target));
     let grammar = grammars::PYTHON.get();
     // Our token kinds by `TokenKind`, our node kinds by `NodeKind`.
     let mut tokens_by_kind = KindNames::new(grammar, 128, |_| false);
-    let nodes_by_kind = KindNames::new(grammar, 128, |n| n.contains("Ipy") || n.starts_with("Mod"));
+    let nodes_by_kind = KindNames::new(grammar, 128, |n| n.starts_with("Mod"));
     let tokens: Vec<Tok> = (parsed.tokens().iter())
         .filter(|t| {
             t.start() != t.end()
@@ -95,7 +101,7 @@ fn tree(src: &str, target: PythonVersion) -> ParseResult {
 
 /// The parse of a piece of code found in a string (a quoted annotation), for the newest version.
 pub fn parse_snippet(src: &str) -> ParseResult {
-    tree(src, PythonVersion::latest())
+    tree(src, PythonVersion::latest(), Mode::Module)
 }
 
 /// The errors of the parse, one per statement (the innermost one that contains it): the first

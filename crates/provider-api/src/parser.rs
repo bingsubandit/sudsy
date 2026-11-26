@@ -49,6 +49,8 @@ pub struct ParserProvider {
     /// The name and config base of a dialect that has a provider of its own.
     dialect: Option<(&'static str, &'static str)>,
     format_parse: bool,
+    /// The code at key paths of a data file.
+    key_embeds: Option<&'static core_rules::embed_keys::KeyEmbeds>,
     symbols: Option<&'static core_semantics::symbols::SymbolLang>,
 }
 
@@ -91,6 +93,7 @@ impl ParserProvider {
             },
             dialect: None,
             format_parse: false,
+            key_embeds: None,
             symbols: None,
         }
     }
@@ -105,6 +108,12 @@ impl ParserProvider {
     /// (`core_patterns::SnippetParser::contexts`).
     pub fn with_snippet_contexts(self, contexts: &'static [(&'static str, &'static str)]) -> Self {
         self.parse.set_contexts(contexts);
+        self
+    }
+
+    /// The code of other languages at key paths of the file (a notebook's cells), found by `spec`.
+    pub fn with_key_embeds(mut self, spec: &'static core_rules::embed_keys::KeyEmbeds) -> Self {
+        self.key_embeds = Some(spec);
         self
     }
 
@@ -175,6 +184,9 @@ impl LanguageProvider for ParserProvider {
 
     fn embedded(&self, root: &SyntaxNode, text: &str) -> Vec<Embedded> {
         let grammar = self.grammar.get();
+        if let Some(spec) = self.key_embeds {
+            return core_rules::embed_keys::find(spec, grammar, self.hooks, root, text).to_vec();
+        }
         if grammar.embed_rows().is_empty() {
             return Vec::new();
         }

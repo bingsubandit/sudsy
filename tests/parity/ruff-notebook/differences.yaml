@@ -1,0 +1,18 @@
+differences:
+  fstring-fields: "gap  35 files first differ here: the expressions inside f-string replacement fields (`{idx+1}` is `{idx + 1}`, quotes and breaks inside) are formatted by ruff and kept as written here. fix: parse each replacement field with the Python grammar and format it flat in the shared string literal code (the same cause as `fstring-quotes` of the ruff leg)"
+  comment-width: "gap  23 files first differ here: a trailing comment counts for the width of the bracket that ends the line: ruff splits `x={...},  # long comment` and a call whose last line is the comment's, here the line stays one. fix: the comment's reserved width in the shared bracket-split shapes (`comment-placement` of the ruff leg)"
+  multiline-string-arg: "gap  13 files first differ here: a call whose only argument is a multi-line string: ruff keeps `f(\"\"\"` on the call's line and the closing `\"\"\")` with it, here the argument moves to its own lines. fix: hug a lone multi-line string argument in the shared delimited-list shape (`bracket-split` of the ruff leg)"
+  layout-other: "gap  26 files first differ here: single-cause layouts of the Python formatter (a call chain in parentheses, `with` items and trailing commas, return annotations, unpacking targets). fix: one shape rule each (`misc`, `binary-layout`, `bracket-split` of the ruff leg)"
+  blank-lines: "gap   4 files first differ here: blank lines around comments and after a block opener that ruff keeps or adds differently. fix: the blank-line rules of the shared block layout (`blank-lines` of the ruff leg)"
+  comment-placement: "gap   2 files first differ here: comments after a bracket or an operator that ruff moves. fix: dangling-comment placement in the shared comments engine"
+files:
+  real-world: fstring-fields:35, comment-width:23, multiline-string-arg:13, layout-other:26, blank-lines:4, comment-placement:2
+ratchet:
+  real-world: 871
+target-files:
+  real-world: 974
+second-format:
+  real-world: 0
+unclassified: 0
+refused:
+  real-world: 0

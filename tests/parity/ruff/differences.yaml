@@ -13,7 +13,7 @@ files:
   ruff-fixtures: comment-placement:39, fmt-directives:24, blank-lines:21, misc:9, bracket-split:9, binary-layout:6, docstring:5, fstring-quotes:5, implicit-concat:4
   real-world: comment-placement:5, binary-layout:5, implicit-concat:4, fstring-quotes:4, docstring:3, bracket-split:3, misc:1
 ratchet:
-  black-tests: 218
+  black-tests: 219
   ruff-fixtures: 137
   real-world: 1060
 target-files:

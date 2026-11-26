@@ -150,6 +150,9 @@ token TStringStart #string #restyle
 token TStringMiddle #string #restyle
 token TStringEnd #string #restyle
 
+// A line of IPython syntax (`%magic`, `!shell`, `?help`; only parsed in the `ipython` dialect).
+token IpyEscapeCommand
+
 // Zero-width end-of-file token; it carries the leading trivia of the file's tail.
 token EndOfFile
 // Text the lexer could not classify.
@@ -190,6 +193,7 @@ node StmtImport #statement #import =
 node StmtImportFrom #statement #import =
     From #dots* module:Identifier? Import path=names:Alias*
 node StmtGlobal #statement #opaque
+node StmtIpyEscapeCommand #statement #opaque
 node StmtNonlocal #statement #opaque
 node StmtExpr #statement #expression-statement = expression=value:#expression
 node StmtPass #statement #empty-statement
@@ -242,6 +246,7 @@ node ExprAttribute #expression #part #member-access #pure =
 node ExprSubscript #expression #part #index =
     object:#expression Lsqb arguments:#expression Rsqb
 node ExprStarred #expression #part #opaque #rest
+node ExprIpyEscapeCommand #expression #part #opaque
 node ExprName #expression #part #reference #pure =
     name:Name
 node ExprList #expression #part #opaque #collection #display #pure

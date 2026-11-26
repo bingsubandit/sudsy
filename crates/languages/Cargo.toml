@@ -28,6 +28,7 @@ lang-html.workspace = true
 lang-cpp.workspace = true
 lang-yaml.workspace = true
 lang-github-actions.workspace = true
+lang-jupyter.workspace = true
 # generated:dependencies
 lang-dockerfile.workspace = true
 lang-editorconfig.workspace = true

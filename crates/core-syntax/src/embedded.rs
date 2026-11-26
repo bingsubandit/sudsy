@@ -6,6 +6,7 @@
 //! tools: Prettier embedded languages, shellcheck in Dockerfile RUN
 //! reads: grammar:embed
 
+use crate::escaped::Escaped;
 use crate::{TextRange, TextSize};
 
 /// The `TextSize` of a byte offset or length.
@@ -31,6 +32,12 @@ pub struct Embedded {
     /// Whether the language's own rules run on the code. A host that reads the parse itself (a Vue
     /// `<script>`, whose names the template uses) leaves it off.
     pub lint: bool,
+    /// The code is held in escaped string literals of the host (`range` is the literal, or the
+    /// array of them): the code is their decoded text, not `range`'s.
+    pub escaped: Option<Escaped>,
+    /// Option values the host sets for the code's language (`dialect` `ipython`), as the config
+    /// would write them.
+    pub settings: Vec<(String, String)>,
 }
 
 impl Embedded {
@@ -59,12 +66,23 @@ impl Embedded {
             format: false,
             strip: false,
             lint: true,
+            escaped: None,
+            settings: Vec::new(),
         }
+    }
+
+    /// The region whose code is held in the string literals `escaped` describes.
+    pub fn with_escaped(mut self, escaped: Escaped) -> Self {
+        self.escaped = Some(escaped);
+        self
     }
 
     /// The region's text with the carved parts blanked: as long as the region, so an offset in
     /// the result is an offset from `range.start()`.
     pub fn blanked(&self, text: &str) -> String {
+        if let Some(e) = &self.escaped {
+            return e.code().to_string();
+        }
         let mut out = text[self.range].to_string();
         for c in &self.carved {
             let at = usize::from(c.start() - self.range.start())
@@ -76,6 +94,9 @@ impl Embedded {
 
     /// The text to parse: stripped or blanked, as the region says.
     pub fn code(&self, text: &str) -> String {
+        if let Some(e) = &self.escaped {
+            return e.code().to_string();
+        }
         if self.strip {
             self.stripped(text)
         } else {
@@ -86,6 +107,9 @@ impl Embedded {
     /// The host offset of `at`, an offset in `code()`; `end` for the end of a range, which stays
     /// before a carved part that starts there.
     pub fn to_host(&self, at: TextSize, end: bool) -> TextSize {
+        if let Some(e) = &self.escaped {
+            return e.to_host(at, end);
+        }
         let mut host = self.range.start() + at;
         if self.strip {
             let mut removed = TextSize::from(0);
@@ -104,6 +128,9 @@ impl Embedded {
 
     /// The region's text without the carved parts: the code as it reads outside the host.
     pub fn stripped(&self, text: &str) -> String {
+        if let Some(e) = &self.escaped {
+            return e.code().to_string();
+        }
         let (mut out, mut from) = (String::new(), self.range.start());
         for c in &self.carved {
             out.push_str(&text[TextRange::new(from, c.start())]);

@@ -29,6 +29,11 @@
   options: 11
   source: "https://docs.astral.sh/ruff/settings/#format"
   note: "ruff config format (preview, indent-style, quote-style, nested-string-quote-style, skip-magic-trailing-comma, line-ending, docstring-code-format, docstring-code-line-length; not exclude) plus line-length, indent-width, target-version (changes with-statement parentheses); 0.17.4"
+- language: jupyter
+  tool: ruff format
+  options: 11
+  source: "https://docs.astral.sh/ruff/settings/#format"
+  note: "ruff formats the code cells of a notebook with the options of Python (line-length, indent-width, quote-style, ...); 0.17.4"
 - language: protobuf
   tool: buf format
   options: 0

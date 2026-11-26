@@ -153,6 +153,10 @@ fn keeps_host(region: &core_syntax::Embedded, edit: &Edit) -> bool {
 /// `formatted`, the host's output, with the code of its embedded regions formatted by their own
 /// languages and indented as the region is. Code that does not parse or whose language nobody
 /// handles stays as written; so does everything when the result would not read back the same.
+/// A host that keeps its own text (a notebook) is not parsed again: its regions are the input's.
+/// Code held in escaped literals is written back in the host's form, and checked by its own
+/// language (the same code before and after) and by reading the literals back; a cell that fails
+/// stays as written.
 pub(crate) fn format_embedded(
     db: &dyn Db,
     file: File,
@@ -167,26 +171,50 @@ pub(crate) fn format_embedded(
         all.retain(|r| r.format);
         all
     };
-    if off || !host.formats_embedded() || regions(input_root, file.text(db)).is_empty() {
+    let input = file.text(db);
+    let before = if off || !host.formats_embedded() {
+        Vec::new()
+    } else {
+        regions(input_root, input)
+    };
+    if before.is_empty() {
         return formatted;
     }
     let source = SourceFile {
         text: formatted.clone(),
         ..source_file(db, file, None)
     };
-    let Ok(parsed) = provider_api::guard::parse(host, &source) else {
-        return formatted;
+    let kept = formatted == *input;
+    let regions = if kept {
+        before
+    } else {
+        let Ok(parsed) = provider_api::guard::parse(host, &source) else {
+            return formatted;
+        };
+        regions(&parsed.tree, &formatted)
     };
-    let regions = regions(&parsed.tree, &formatted);
     let crlf = formatted.contains("\r\n");
     let mut out = formatted.clone();
+    let mut prepared = PreparedByRegion::default();
     // From the last region on, so that the offsets of the others stay valid.
     for r in regions.iter().rev() {
-        let Some(code) = format_code(db, file, &r.language, &r.stripped(&formatted)) else {
+        let code = r.stripped(&formatted);
+        let options = prepared.get(db, file, r);
+        let Some(new) = format_code(db, &r.language, &options, &code, r.escaped.is_some()) else {
             continue;
         };
+        if let Some(e) = &r.escaped {
+            let written = e.write(r.range, &formatted, &new);
+            if !written_back(e, &written, &new)
+                || !same_cell(db, &r.language, &options, &code, &new)
+            {
+                continue;
+            }
+            out.replace_range(std::ops::Range::<usize>::from(r.range), &written);
+            continue;
+        }
         let prefix = prefix_of(r, &formatted);
-        let lines: Vec<String> = (code.lines())
+        let lines: Vec<String> = (new.lines())
             .map(|l| {
                 if l.is_empty() {
                     prefix.trim_end().into()
@@ -200,6 +228,9 @@ pub(crate) fn format_embedded(
             &lines.join(if crlf { "\r\n" } else { "\n" }),
         );
     }
+    if regions.iter().all(|r| r.escaped.is_some()) {
+        return out;
+    }
     // The fences must still be there, with the code just written.
     let again = SourceFile {
         text: out.clone(),
@@ -208,6 +239,77 @@ pub(crate) fn format_embedded(
     match provider_api::guard::parse(host, &again) {
         Ok(p) if p.errors.is_empty() && regions_agree(host, &p.tree, &out, &regions) => out,
         _ => formatted,
+    }
+}
+
+/// Do the literals of `written` read back as `code`?
+fn written_back(e: &core_syntax::escaped::Escaped, written: &str, code: &str) -> bool {
+    e.reads_back(written, code)
+}
+
+/// The options of each language of the regions, prepared once.
+#[derive(Default)]
+struct PreparedByRegion {
+    all: Vec<(String, Settings, Prepared)>,
+}
+
+/// The option values a host sets for a region.
+type Settings = Vec<(String, String)>;
+
+impl PreparedByRegion {
+    fn get(&mut self, db: &dyn Db, file: File, r: &core_syntax::Embedded) -> Prepared {
+        let found = self
+            .all
+            .iter()
+            .find(|(l, s, _)| *l == r.language && *s == r.settings);
+        if let Some((_, _, p)) = found {
+            return p.clone();
+        }
+        let p = prepare(db, file, &r.language, EmbedMode::Program, None, false)
+            .map(|p| settled(&p, &r.settings));
+        self.all
+            .push((r.language.clone(), r.settings.clone(), p.clone()));
+        p
+    }
+}
+
+/// `prepared` with the option values a host sets for its code.
+fn settled(
+    prepared: &Rc<(ResolvedOptions, Option<String>)>,
+    settings: &[(String, String)],
+) -> Rc<(ResolvedOptions, Option<String>)> {
+    if settings.is_empty() {
+        return prepared.clone();
+    }
+    let (mut options, mut version) = (**prepared).clone();
+    for (name, value) in settings {
+        let Some(id) = core_config::opt::id(name) else {
+            continue;
+        };
+        let value = match value.as_str() {
+            "true" => OptionValue::Bool(true),
+            "false" => OptionValue::Bool(false),
+            v => OptionValue::String(v.into()),
+        };
+        // The dialect also reaches the parse, which reads it from the language version.
+        if id == core_config::opt::DIALECT {
+            let target = (version.iter().flat_map(|v| v.split_whitespace()))
+                .find(|w| w.starts_with(|c: char| c.is_ascii_digit()))
+                .map(str::to_string);
+            version = Some(match target {
+                Some(t) => format!("{value_text} {t}", value_text = value_text(&value)),
+                None => value_text(&value),
+            });
+        }
+        options.set(id, value);
+    }
+    Rc::new((options, version))
+}
+
+fn value_text(value: &OptionValue) -> String {
+    match value {
+        OptionValue::String(s) => s.clone(),
+        other => format!("{other:?}"),
     }
 }
 
@@ -242,11 +344,30 @@ fn regions_agree(
 }
 
 /// The formatted code, if its language is known and it parses; `None` also when nothing changes.
-fn format_code(db: &dyn Db, file: File, language: &str, code: &str) -> Option<String> {
+/// Code held in escaped literals counts its trailing newlines (the formatter drops them).
+fn format_code(
+    db: &dyn Db,
+    language: &str,
+    prepared: &Prepared,
+    code: &str,
+    exact: bool,
+) -> Option<String> {
     let code = code.replace("\r\n", "\n");
-    let prepared = prepare(db, file, language, EmbedMode::Program, None, false);
-    let out = format_with(db, language, &prepared, &code)?;
-    (!out.is_empty() && out != code.trim_end_matches('\n')).then_some(out)
+    let out = format_with(db, language, prepared, &code)?;
+    let same = if exact {
+        &code
+    } else {
+        code.trim_end_matches('\n')
+    };
+    (!out.is_empty() && out != same).then_some(out)
+}
+
+/// Does `after` read as the same code as `before`, by the safety check of the language?
+fn same_cell(db: &dyn Db, language: &str, prepared: &Prepared, before: &str, after: &str) -> bool {
+    let (Some((provider, _)), Some(p)) = (lookup(db, language), prepared.as_ref()) else {
+        return false;
+    };
+    same_code(provider, language, &p.0, &p.1, (before, after)).is_ok()
 }
 
 /// The options an embedded `language` is formatted with and its language version.
@@ -413,26 +534,51 @@ impl Embedder for Engine<'_> {
         let prepared = self.prepared_for(language, mode, size, forward);
         let (provider, _) = lookup(self.db, language).ok_or("the language is unknown")?;
         let (options, version) = &**prepared.as_ref().ok_or("the language has no options")?;
-        let parse = |text: &str| {
-            let mut source = SourceFile::new(format!("embedded.{language}"), 1, text.to_string());
-            source.language_version = version.clone();
-            let parsed = provider.parse(&source).map_err(|e| e.to_string())?;
-            match parsed.errors.first() {
-                Some(e) => Err(format!("`{language}` text does not parse: {}", e.message)),
-                None => Ok(parsed.tree),
-            }
-        };
-        let tree = parse(before)?;
-        core_format::safety::verify(
-            provider.grammar(),
-            provider.formatter(),
-            options,
-            &tree,
-            after,
-            parse,
-        )
-        .map_err(|e| e.to_string())
+        same_code(provider, language, options, version, (before, after))
     }
+}
+
+/// `after` as code of `language` against `before`: both parse and the safety check passes.
+fn same_code(
+    provider: &dyn LanguageProvider,
+    language: &str,
+    options: &ResolvedOptions,
+    version: &Option<String>,
+    (before, after): (&str, &str),
+) -> Result<(), String> {
+    let source_of = |text: &str| {
+        let mut source = SourceFile::new(format!("embedded.{language}"), 1, text.to_string());
+        source.language_version = version.clone();
+        source
+    };
+    let parse = |text: &str| {
+        let parsed = provider
+            .parse(&source_of(text))
+            .map_err(|e| e.to_string())?;
+        match parsed.errors.first() {
+            Some(e) => Err(format!("`{language}` text does not parse: {}", e.message)),
+            None => Ok(parsed.tree),
+        }
+    };
+    let mut tree = parse(before)?;
+    // The formatter rewrites the source first (a comment's `# `): the check follows the rewrite.
+    let (source, first) = (source_of(before), provider.parse(&source_of(before)));
+    let first = first.map_err(|e| e.to_string())?;
+    if let Some((_, rewritten)) =
+        provider_api::format::rewrite_loop(provider, &source, &first, options)
+            .map_err(|e| e.to_string())?
+    {
+        tree = rewritten.tree;
+    }
+    core_format::safety::verify(
+        provider.grammar(),
+        provider.formatter(),
+        options,
+        &tree,
+        after,
+        parse,
+    )
+    .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
@@ -452,6 +598,8 @@ mod tests {
             format: true,
             strip: false,
             lint: true,
+            escaped: None,
+            settings: Vec::new(),
         };
         let edit = |a: u32, b: u32, t: &str| {
             Edit::replace(core_syntax::TextRange::new(a.into(), b.into()), t)

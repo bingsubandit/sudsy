@@ -8,6 +8,7 @@ use super::util::*;
 use crate::generated::kind as k;
 use core_format::FormatCtx;
 use core_format::doc::{Doc, concat, group, hardline, lit};
+use core_format::shapes;
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 
 /// Binding strength of a binary operator (higher binds tighter).
@@ -263,7 +264,19 @@ pub(crate) fn unary(cx: &FormatCtx<'_>, node: &SyntaxNode) -> R {
     let ks = kids(cx, node);
     let mut parts = Vec::new();
     for e in &ks {
-        parts.push(elem(cx, e)?);
+        // The operand that is a power is written in parentheses: `-(x**2)`.
+        let power = e.as_node().map(|n| super::paren::strip(cx, n)).filter(|n| {
+            n.kind() == k::EXPR_BIN_OP
+                && n.children_with_tokens()
+                    .any(|c| c.as_token().is_some_and(|t| t.kind() == k::DOUBLE_STAR))
+                && !n
+                    .descendants_with_tokens()
+                    .any(|c| c.as_token().is_some_and(|t| t.kind() == k::COMMENT))
+        });
+        match power {
+            Some(n) => parts.push(shapes::enclosed(lit("("), expr(cx, &n)?, lit(")"))),
+            None => parts.push(elem(cx, e)?),
+        }
         if tok_kind(e) == Some(k::NOT) {
             parts.push(sp());
         }

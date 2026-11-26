@@ -61,7 +61,7 @@ pub fn provider() -> ParserProvider {
 
 /// The dialect a file is parsed as: the one chosen in `file.language_version` (set from the
 /// `dialect` option or the matcher), else decided by the file name.
-fn parse_file(file: &SourceFile) -> ParseResult {
+pub fn parse_file(file: &SourceFile) -> ParseResult {
     let named = (file.language_version.as_deref()).and_then(Dialect::from_name);
     let dialect = named.unwrap_or_else(|| {
         let path = Path::new(&file.id);

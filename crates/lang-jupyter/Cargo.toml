@@ -1,0 +1,26 @@
+[package]
+name = "lang-jupyter"
+autotests = false
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[dependencies]
+core-config.workspace = true
+core-format.workspace = true
+core-rules.workspace = true
+core-syntax.workspace = true
+lang-json.workspace = true
+provider-api.workspace = true
+
+[dev-dependencies]
+core-incremental.workspace = true
+lang-python.workspace = true
+
+[lints]
+workspace = true
+
+[[test]]
+name = "integration"
+path = "tests/main.rs"

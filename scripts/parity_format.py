@@ -226,12 +226,18 @@ def fixtures(config, folder, filters):
         else:
             walk = base.rglob("*") if source.get("recursive") else base.iterdir()
             paths = [(p.relative_to(base).as_posix(), p) for p in sorted(walk) if p.is_file() and ".git" not in p.parts]
+        seen = Counter()  # `per_dir`: the first N files by path of each top folder (a project of a corpus)
         for rel, path in paths:
             only = source.get("only", "")
             if not rel.endswith(suffixes) or path.name == "sudsy.yaml" or not rel.startswith(tuple(only) if isinstance(only, list) else only):
                 continue
             if "names" in source and not re.search(source["names"], path.name):  # the file names of a language with no extension (`Dockerfile`, `Dockerfile.dev`)
                 continue
+            if "per_dir" in source:
+                seen[rel.split("/")[0]] += 1
+                if seen[rel.split("/")[0]] > source["per_dir"]:
+                    filters["per_dir"] += 1
+                    continue
             if rel.startswith(source.get("skip", "\0")):
                 filters["skip"] += 1
                 continue
@@ -509,6 +515,19 @@ class Differences:
         return bad
 
 
+def notebook_cells(text):
+    """What a notebook comparison keeps (`compare: notebook-cells`): the type and the source of each cell. The tool writes
+    the JSON with its own layout (indent, key order, escapes, ids, dropped null fields); Sudsy keeps every byte outside
+    the code cells as written, which its safety check guarantees."""
+    try:
+        cells = json.loads(text).get("cells")
+    except (ValueError, AttributeError):
+        return text
+    if cells is None:
+        return text
+    return json.dumps([[c.get("cell_type"), "".join(c["source"]) if isinstance(c.get("source"), list) else c.get("source")] for c in cells])
+
+
 def verdict(name, theirs, ours, diffs, label, quiet=False, group="fixtures"):
     """Prints the result of one fixture; returns 1 for a mismatch. `quiet`: no line for an equal pair, no diff."""
     if theirs is not None and theirs == ours:
@@ -682,6 +701,8 @@ def main():
             theirs, ours = (parity_landing.normalize(config, t) if t is not None else None for t in (theirs, ours))
             masked = not before and theirs == ours
         flagged["ignore_trailing_blanks"] += masked
+        if config.get("compare") == "notebook-cells":
+            theirs, ours = (notebook_cells(t) if t is not None else None for t in (theirs, ours))
         if checker and theirs is not None:
             wrapped[name] = parity_wrap.file_result(checker, config["wrap_compare"], styles, style, theirs, ours, copy, controlled, lambda variant: upstream(config, prefix, version, copy, here, f"{style}~{variant}", work / "variants"))
         return theirs, ours, unstable, refused
@@ -767,7 +788,7 @@ def main():
     for flag, why in known.flags.items():  # reference-tool flags that turn a feature off: named gaps, with the files they apply to
         count = filters["skip_with"] if flag == "skip_with" else flagged[flag] if flag in flagged else len(found)
         print(f"flag {flag} (gap): {count} fixtures; {why}")
-    print("input filters: " + ", ".join(f"{k} {filters[k]}" for k in ("non-UTF-8 files", "skip", "skip_with", "generated") if k != "generated" or "generated" in config) + f", rejected by {tool} {rejected}")
+    print("input filters: " + ", ".join(f"{k} {filters[k]}" for k in ("non-UTF-8 files", "skip", "skip_with", "per_dir", "generated") if k != "generated" or "generated" in config) + f", rejected by {tool} {rejected}")
     if "--pin" in sys.argv:  # for the lead to paste into `pins:` after review: the runner never writes them
         print("pins (tool-wrong names):")
         for (name, *_), (_, ours, *_) in zip(found, results):

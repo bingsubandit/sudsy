@@ -71,6 +71,7 @@ pub fn providers() -> Vec<Box<dyn LanguageProvider>> {
         // /generated
         // After YAML: a workflow file matches both, and the later of equal matches wins.
         Box::new(lang_github_actions::GithubActionsProvider::new()),
+        Box::new(lang_jupyter::provider()),
         Box::new(lang_html::angular_provider()),
         Box::new(lang_html::vue_provider()),
         Box::new(lang_html::svelte_provider()),

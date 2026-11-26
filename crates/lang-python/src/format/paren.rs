@@ -110,6 +110,7 @@ fn maybe_parenthesize_inner(
                 expanded(|| list::bare_tuple_ungrouped(cx, &inner))
             }
         }
+        k::EXPR_ATTRIBUTE | k::EXPR_UNARY_OP if is_plain(&inner) => best_fit(cx, &inner, prefix, e),
         k::EXPR_BIN_OP | k::EXPR_BOOL_OP | k::EXPR_COMPARE | k::EXPR_UNARY_OP => {
             if can_omit(cx, &inner) {
                 // The brackets split instead of the operators when the line up to the first one fits
@@ -238,6 +239,40 @@ fn starts_with_atom(n: &SyntaxNode) -> bool {
     )
 }
 
+/// Names, numbers and constants joined by `.` and unary operators: no place to break inside.
+fn is_plain(n: &SyntaxNode) -> bool {
+    let comment = n
+        .descendants_with_tokens()
+        .any(|e| e.as_token().is_some_and(|t| t.kind() == k::COMMENT));
+    !comment
+        && n.descendants().all(|d| {
+            matches!(
+                d.kind(),
+                k::EXPR_ATTRIBUTE
+                    | k::EXPR_UNARY_OP
+                    | k::EXPR_NAME
+                    | k::IDENTIFIER
+                    | k::EXPR_NUMBER_LITERAL
+                    | k::EXPR_BOOLEAN_LITERAL
+                    | k::EXPR_NONE_LITERAL
+            )
+        })
+}
+
+/// Does a comment (not a tool's pragma) follow the expression at the end of its line?
+fn has_line_comment(cx: &FormatCtx<'_>, e: &SyntaxNode) -> bool {
+    cx.last_token(e).is_some_and(|last| {
+        // (the colon of a header carries the comment after it)
+        let colon = std::iter::successors(last.next_token(), |n| n.next_token())
+            .find(|n| !cx.grammar.is_trivia(n.kind()))
+            .filter(|n| n.kind() == k::COLON);
+        (colon.is_some() || ends_logical_line(cx, &last))
+            && core_format::comments::trailing_comments(cx.grammar, &colon.unwrap_or(last))
+                .iter()
+                .any(|c| !is_pragma(&c.text()))
+    })
+}
+
 /// Parentheses only when the expression fits on a line of its own inside them and the line
 /// before it fits with the opening one.
 fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize, outer: &SyntaxNode) -> R {
@@ -253,6 +288,13 @@ fn best_fit(cx: &FormatCtx<'_>, inner: &SyntaxNode, prefix: usize, outer: &Synta
         );
     }
     match d.flat_width() {
+        // (a comment after the line that is too wide alone does not make the atom break)
+        Some(_)
+            if has_line_comment(cx, outer)
+                && shapes::head_fits(cx, outer, prefix, &d, depth() * s.indent, s.width) =>
+        {
+            Ok(d)
+        }
         Some(w)
             if (depth() + 1) * s.indent + w <= s.width && depth() * s.indent + prefix < s.width =>
         {
