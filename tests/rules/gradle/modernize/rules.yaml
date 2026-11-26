@@ -1,0 +1,7 @@
+no-apply-plugin: warn
+no-compile-sdk-version: warn
+no-build-tools-version: warn
+no-java-convention-compatibility: warn
+no-build-dir: warn
+no-floating-version: warn
+no-tasks-create: warn

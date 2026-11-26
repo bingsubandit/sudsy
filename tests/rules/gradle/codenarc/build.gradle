@@ -1,0 +1,69 @@
+import java.util.List
+^^^^^^^^^^^^^^^^^^^^^ unused-import
+import foo.Bar
+^^^^^^^^^^^^^^ unused-import
+import a.b.Used
+import a.b.*
+import a.Q as Alias
+^^^^^^^^^^^^^^^^^^^ unused-import
+import a.Z as Zed
+
+def unused = 1
+//  ^^^^^^ unused-variable
+def used = 2
+def viaString = 3
+def viaBrace = 4
+def quoted = 5
+//  ^^^^^^ unused-variable
+def single = 6
+//  ^^^^^^ unused-variable
+def String typed = 'x'
+println used
+println "x $viaString ${viaBrace.x + 1}"
+println '$single ${quoted}'
+println(Used)
+println(Zed)
+
+if (x) { }
+//     ^^^ no-empty-block
+if (x) {
+    // todo
+}
+if (x) { run() } else { }
+//                    ^^^ no-empty-block
+if (x) { run() }
+
+try { run() } catch (e) { }
+
+
+def m = ["${a}": 1, 'b': 2, "c": 3]
+//  ^ unused-variable
+//       ^^^^^^^^^ no-gstring-map-key
+foo("$a": 1, b: 2)
+//  ^^^^^^^ no-gstring-map-key
+def s = '${x}'
+//  ^ unused-variable
+def t = "${x}"
+//  ^ unused-variable
+def u = '$x'
+//  ^ unused-variable
+
+if (a & b) { run() }
+if (a | b && c) { run() }
+def r = (a & b) ? 1 : 2
+//  ^ unused-variable
+if (a && b) { run() }
+def bits = a & b
+//  ^^^^ unused-variable
+
+def f(x) {
+    println 1
+    return x
+    println 2
+//  ^^^^^^^^^ unreachable-code
+}
+def g() {
+    throw new Exception('x')
+    a = 1
+//  ^^^^^ unreachable-code
+}

@@ -1,0 +1,45 @@
+apply plugin: 'java'
+^^^^^ no-apply-plugin
+plugins {
+    id 'java'
+}
+android {
+    compileSdkVersion 34
+//  ^^^^^^^^^^^^^^^^^ no-compile-sdk-version
+    compileSdk 34
+    buildToolsVersion '34.0.0'
+//  ^^^^^^^^^^^^^^^^^ no-build-tools-version
+}
+sourceCompatibility = 1.8
+^^^^^^^^^^^^^^^^^^^ no-java-convention-compatibility
+targetCompatibility = JavaVersion.VERSION_1_8
+^^^^^^^^^^^^^^^^^^^ no-java-convention-compatibility
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+compileJava {
+    sourceCompatibility = '11'
+}
+subprojects {
+    sourceCompatibility = 1.8
+//  ^^^^^^^^^^^^^^^^^^^ no-java-convention-compatibility
+}
+def out = "$buildDir/out"
+//        ^^^^^^^^^^^^^^^ no-build-dir
+def dir = project.buildDir
+//                ^^^^^^^^ no-build-dir
+def ok = layout.buildDirectory
+dependencies {
+    implementation 'a:b:1.+'
+//  ^^^^^^^^^^^^^^ no-floating-version
+    implementation "a:b:latest.release"
+//  ^^^^^^^^^^^^^^ no-floating-version
+    implementation 'a:b:1.2.3'
+    implementation 'a:b:1.+:sources'
+//  ^^^^^^^^^^^^^^ no-floating-version
+}
+tasks.create('hello') { }
+^^^^^ no-tasks-create
+project.tasks.create('hi')
+^^^^^^^ no-tasks-create
+tasks.register('ok') { }

@@ -1,0 +1,67 @@
+dependencies {
+    compile 'a:b:1'
+//  ^^^^^^^ no-removed-configuration
+    testCompile("junit:junit:4.13")
+//  ^^^^^^^^^^^ no-removed-configuration
+    compile group: 'g', name: 'n', version: '1'
+//  ^^^^^^^ no-removed-configuration
+    runtime project(':x')
+//  ^^^^^^^ no-removed-configuration
+    compileOnly 'a:b:1'
+    testCompileOnly 'a:b:1'
+    implementation 'a:b:1'
+    constraints {
+        runtime 'a:b:1'
+    }
+}
+configurations {
+    compile
+}
+repositories {
+    jcenter()
+//  ^^^^^^^ no-jcenter
+    mavenCentral()
+}
+android {
+    lintOptions {
+//  ^^^^^^^^^^^ no-lint-options
+        abortOnError false
+    }
+    lint {
+        abortOnError false
+    }
+}
+jar {
+    baseName = 'app'
+//  ^^^^^^^^ no-legacy-archive-property
+    archiveClassifier = 'x'
+}
+tasks.withType(Zip) {
+    classifier = 'y'
+//  ^^^^^^^^^^ no-legacy-archive-property
+}
+jar.extension = 'z'
+^^^ no-legacy-archive-property
+def lib = [classifier: 'sources']
+publishing {
+    artifact(file) {
+        classifier = 'sources'
+    }
+}
+mainClassName = 'a.Main'
+^^^^^^^^^^^^^ no-main-class-name
+application {
+    mainClassName = 'a.Main'
+//  ^^^^^^^^^^^^^ no-main-class-name
+    mainClass = 'a.Main'
+}
+startScripts {
+    mainClassName = 'a.Main'
+}
+uploadArchives {
+^^^^^^^^^^^^^^ no-upload-archives
+    repositories { }
+}
+apply plugin: 'maven'
+^^^^^ no-upload-archives
+apply plugin: 'java'

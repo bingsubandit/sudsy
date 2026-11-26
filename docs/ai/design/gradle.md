@@ -51,6 +51,8 @@ No tool reads Gradle semantics offline, so the leg follows no-reference-tool.md 
 
 Checklist candidates from the Gradle upgrade guides and the Android plugin API, yield on the corpus (`scripts/evidence_gradle_checks.py`; occurrences / files / projects): `apply plugin:` 869 / 388 / 34; Android `compileSdkVersion` family 481 / 176 / 10; `sourceCompatibility` outside `java {}` 266 / 111 / 25; `buildDir` 145 / 94 / 24; `buildToolsVersion` 136 / 136 / 6; dynamic versions 48 / 30 / 7; `lintOptions` 56 / 56 / 7; removed `compile`/`testCompile` 24 / 11 / 4; `jcenter()` 23 / 12 / 2; `tasks.create` 22 / 19 / 7; archive `baseName`/`classifier` 16 / 14 / 5; `mainClassName` 10 / 8 / 4; `uploadArchives` 1; http:// repository and `<<` tasks 0. Some need the Gradle version and are style (apply plugin, tasks.create). The checklist is not yet reviewed with sources and examples (lead checkpoint), the precision sample is not run.
 
+Built: checklist 85.7% (18 of 21; the three others are `planned`), precision 97.2% (rule list, presets and gaps in [../formatting/gradle.md](../formatting/gradle.md#lint); judged sample `tests/parity/gradle/precision.md`).
+
 Recommendation: lint leg with no reference tool: the checklist above plus the 8 CodeNarc rules that read the file; Android lint and Nebula named as partial sources, left out for needing a build.
 
 ## Parser

@@ -1,0 +1,18 @@
+id: no-gstring-map-key
+message: "a GString as a map key: the key is a `GString`, which does not equal the same `String`"
+description: >-
+  Reports a map entry or a named argument whose key is a double-quoted string with `$`
+  (`["${a}": 1]`). Source: CodeNarc GStringAsMapKey
+  (https://codenarc.org/codenarc-rules-groovyism.html#gstringasmapkey-rule).
+why: >-
+  A `GString` and a `String` with the same text have different hash codes, so `map['x1']` does not
+  find the entry written with `"x${n}"`. The lookup silently returns `null`.
+
+  To fix, convert the key to a `String` (`"x${n}".toString()`), or use a variable.
+example: "def m = [\"${a}\": 1]"
+severity: warn
+category: suspicious
+rule:
+  any:
+    - { kind: MapEntry, regex: '^"(?:[^"$\\]|\\.)*\$(?:[^"\\]|\\.)*"\s*:' }
+    - { kind: NamedArgument, regex: '^"(?:[^"$\\]|\\.)*\$(?:[^"\\]|\\.)*"\s*:' }

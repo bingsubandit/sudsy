@@ -4,6 +4,8 @@
 
 language gradle 30 "Gradle"
 comments line "//" block "/*" "*/"
+rule no-empty-block
+rule no-floating-version floating "^\\w+\\s*\\(?\\s*[\\x22\\x27][^\\x22\\x27\\s:]+:[^\\x22\\x27\\s:]+:([^\\x22\\x27\\s:]*\\+|latest\\.(release|integration))(:[^\\x22\\x27\\s:]+)?[\\x22\\x27]"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"
@@ -17,12 +19,14 @@ token Newline #trivia #newline
 token Comment #trivia #comment
 
 // A name: a variable, a method, a property, a type.
-token Ident
-// Reserved words (`def`, `if`, `class`, `in`, `instanceof`, `as`, ...), and `true`, `false`, `null`.
-token Keyword
-token Number #literal
+token Ident #operand #head
+// Reserved words (`def`, `if`, `class`, `in`, `instanceof`, `as`, ...).
+token Keyword #head
+token Boolean #literal #operand
+token Null #literal #operand
+token Number #literal #operand
 // A string of any kind (quoted, triple, slashy, dollar-slashy), delimiters and interpolations included.
-token String #literal #string
+token String #literal #string #operand
 // The operators of expressions: `+ - * / % ** ! ~ == != < > <= >= <=> && || & | ^ << >> ++ -- =~ ==~ ?: ..` and the others.
 token Op
 // `=` and the compound assignments.
@@ -44,10 +48,10 @@ token Text
 token Eof
 token Unknown #error
 
-node Document
-node Closure
+node Document #scope
+node Closure #scope #function = Open ClosureParameters? body:#statement* Close
 node ClosureParameters
-node Block
+node Block #block #scope = Open items:#statement* Close
 node ClassBody
 node EnumBody
 node SwitchBlock
@@ -56,7 +60,7 @@ node ListLiteral
 node MapLiteral
 node MapEntry
 node NamedArgument
-node CommandChain
+node CommandChain #statement #expression-statement
 node ParenthesizedExpression
 node FormalParameters
 node BinaryExpression
@@ -66,3 +70,19 @@ node ElvisExpression
 node RangeExpression
 node SpreadArguments
 node SwitchCase
+node ImportDeclaration #opaque
+node LocalVariableDeclaration #statement #opaque
+node VariableDeclarator #opaque
+node IfStatement #statement #conditional #opaque
+node TryStatement #statement #try #opaque
+node CatchClause #catch #opaque
+node AssertStatement #statement #assert #opaque
+node ReturnStatement #statement #return #opaque
+node ThrowStatement #statement #throw #opaque
+node BreakStatement #statement #break #opaque
+node ContinueStatement #statement #continue #opaque
+node ExpressionStatement #statement #expression-statement #opaque
+node MethodDeclaration #function #scope = heads:#head* FormalParameters body:Block
+node MethodInvocation
+node AssignmentExpression
+node FieldAccess

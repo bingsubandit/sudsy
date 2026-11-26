@@ -31,7 +31,7 @@
 //!
 //! Fact lines: `names`, `hosts`, `dynamic`, `conventions`, `labels`, `methods`, `blocks`,
 //! `redeclared-in`, `parameter-properties`, `globals` (words), `bare`, `top-unchecked`, `docs`,
-//! `markup`, `interpolated`, `unused-prefix` (one word), `flavor NAME suffix...`,
+//! `markup`, `unused-prefix` (one word), `interpolated Kind [open]` (a token whose `#{...}`, or `open`, words are reads), `flavor NAME suffix...`,
 //! `scope-name Kind name...`, `globals-if FLAVOR name...`, `set NAME word...`, and
 //! `ordered key=value...` (see [`Ordered`]; `overload`, `ignored`, `value-form`, `note-form` repeat).
 
@@ -85,6 +85,8 @@ pub struct Spec {
     pub methods: Words,
     pub blocks: Words,
     pub interpolated: &'static str,
+    /// What opens an interpolation in an `interpolated` token (default `#{`).
+    pub interpolated_open: &'static str,
     pub unused_prefix: &'static str,
     pub ordered: Option<Ordered>,
 }
@@ -401,7 +403,10 @@ impl Spec {
 
     /// Read the text of a `scope.rows` file.
     pub fn parse(source: &'static str) -> Result<Spec, String> {
-        let mut spec = Spec::default();
+        let mut spec = Spec {
+            interpolated_open: "#{",
+            ..Spec::default()
+        };
         let mut sets: HashMap<&str, Words> = HashMap::new();
         let mut w = Vec::new();
         let strip = |line: &'static str| line.split_once("//").map_or(line, |(l, _)| l);
@@ -437,7 +442,12 @@ impl Spec {
                 "top-unchecked" => spec.top_unchecked = true,
                 "docs" => spec.docs = one(),
                 "markup" => spec.markup = one(),
-                "interpolated" => spec.interpolated = one(),
+                "interpolated" => {
+                    spec.interpolated = one();
+                    if let Some(open) = rest.get(1) {
+                        spec.interpolated_open = text(open);
+                    }
+                }
                 "unused-prefix" => spec.unused_prefix = one(),
                 "flavor" => spec.flavors.push((one(), leak(rest[1..].to_vec()))),
                 "globals-if" => spec

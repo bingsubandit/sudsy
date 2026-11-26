@@ -1,0 +1,29 @@
+id: no-floating-version
+per-language: true
+message: the dependency version floats; pin it so builds are reproducible
+description: >-
+  Reports a dependency whose version is a range or wildcard that resolves to the newest match on
+  the day of the build (`1.*` in a NuGet `PackageReference`, `1.+` or `latest.release` in a Gradle
+  dependency notation). Each language gives the `floating` pattern for the text of the declaration
+  (an attribute, or a statement) and the `owner` pattern for the text of what holds it (the tag of
+  an attribute). No fix, because the version to pin is a decision. Sources: NuGet floating versions
+  (https://learn.microsoft.com/nuget/concepts/package-versioning#floating-versions) and Gradle
+  dynamic versions (https://docs.gradle.org/current/userguide/dependency_versions.html).
+why: >-
+  A floating version restores whatever is the newest match on the day of the build. Two builds of
+  the same commit can use different packages, a new release can break the build without a change in
+  the repository, and a compromised release arrives without anyone reading it.
+
+  To fix, pin the version (`1.2.3`), and update it on purpose (dependency locking can pin what a
+  floating version resolves to).
+example: '<PackageReference Include="X" Version="1.*" />   <!-- Version="1.2.3" -->'
+severity: off
+category: suspicious
+report-on: first-token
+options:
+  - { name: floating, type: regex, default: '\b\B', description: A regular expression for a declaration whose version floats }
+  - { name: owner, type: regex, default: '^', description: A regular expression for what a declaration must sit in }
+rule:
+  role: [key-value, expression-statement]
+  regex-option: floating
+  parent: { regex-option: owner }

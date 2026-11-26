@@ -2,9 +2,9 @@
   <ItemGroup>
     <PackageReference Include="A" Version="1.0.0" />
     <PackageReference Include="B" Version="1.*" />
-//                                ^^^^^^^^^^^^^ no-floating-package-version
+//                                ^^^^^^^ no-floating-version
     <PackageVersion Include="C" Version="*" ></PackageVersion>
-//                              ^^^^^^^^^^^ no-floating-package-version
+//                              ^^^^^^^ no-floating-version
     <Other Include="D" Version="1.*" />
   </ItemGroup>
 </Project>

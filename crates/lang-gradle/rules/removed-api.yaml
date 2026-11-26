@@ -1,0 +1,142 @@
+id: no-removed-configuration
+message: "the `${CONF}` configuration was removed (Gradle 7, Android Gradle Plugin 7): use `implementation`, `api` or `runtimeOnly`"
+description: >-
+  Reports a dependency declared in a `dependencies` block with a configuration that Gradle 7 removed:
+  `compile`, `testCompile`, `runtime`, `testRuntime`, and the Android `debugCompile`,
+  `releaseCompile` and `androidTestCompile`. Written as `compile 'a:b:1'`, `compile('a:b:1')` and
+  `compile group: ...`. `compileOnly`, `testCompileOnly` and `runtimeOnly` are not reported. Sources:
+  https://docs.gradle.org/current/userguide/upgrading_version_6.html ("In Gradle 7, both the compile
+  and runtime configurations are removed") and
+  https://developer.android.com/build/releases/past-releases/agp-7-0-0-release-notes.
+why: >-
+  A build that still names these configurations fails on Gradle 7 and later with "Could not find
+  method compile()". The replacement is not a rename: `implementation` hides the dependency from
+  consumers of the module and `api` exposes it, so the choice is the author's.
+
+  To fix, use `implementation` for what the module needs itself and `api` for what its public
+  types expose (`testImplementation` for tests).
+example: "dependencies {\n    compile 'junit:junit:4.13'\n}"
+severity: warn
+category: correctness
+report-on: first-token
+rule:
+  any:
+    - { kind: CommandChain, regex: '^(?<CONF>compile|testCompile|runtime|testRuntime|debugCompile|releaseCompile|androidTestCompile)(?:\s|\()' }
+    - { kind: MethodInvocation, regex: '^(?<CONF>compile|testCompile|runtime|testRuntime|debugCompile|releaseCompile|androidTestCompile)\s*\(' }
+    - { kind: ExpressionStatement, regex: '^(?<CONF>compile|testCompile|runtime|testRuntime|debugCompile|releaseCompile|androidTestCompile)$' }
+  inside: { kind: CommandChain, regex: '^dependencies\s*\{' }
+  not-inside: { kind: CommandChain, regex: '^constraints\s*\{' }
+---
+id: no-jcenter
+message: "`jcenter()` is deprecated: JFrog closed JCenter, use `mavenCentral()`"
+description: >-
+  Reports the `jcenter()` repository, written `jcenter()` or `jcenter { ... }`. Source:
+  https://docs.gradle.org/current/userguide/upgrading_version_6.html ("Gradle emits a deprecation
+  warning when jcenter() is used as a repository and this method is scheduled to be removed in
+  Gradle 8.0").
+why: >-
+  JCenter is read-only and the service is closed, so artifacts that are not on Maven Central or
+  another repository cannot be fetched, and a build that depends on it fails when a cache is cold.
+
+  To fix, use `mavenCentral()` (and `google()` for Android artifacts).
+example: "repositories {\n    jcenter()\n}"
+severity: warn
+category: correctness
+report-on: first-token
+rule:
+  any:
+    - { kind: MethodInvocation, regex: '^jcenter\s*\(' }
+    - { kind: CommandChain, regex: '^jcenter\s*\{' }
+---
+id: no-lint-options
+message: "`lintOptions` is deprecated: use the `lint` block"
+description: >-
+  Reports a `lintOptions { }` block of the Android Gradle Plugin. Source: the DSL page of the plugin,
+  https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/CommonExtension
+  ("This function is deprecated. Renamed to lint").
+why: >-
+  The block was renamed and the old name is removed from newer plugin versions, so a build that
+  keeps it stops working when the plugin is updated.
+
+  To fix, rename `lintOptions` to `lint`; the settings inside keep their names (a few take `=`).
+example: "android {\n    lintOptions {\n        abortOnError false\n    }\n}"
+severity: warn
+category: correctness
+report-on: first-token
+rule:
+  kind: CommandChain
+  regex: '^lintOptions\s*\{'
+---
+id: no-legacy-archive-property
+message: "`${PROP}` was removed from archive tasks (Gradle 8): use the `archive...` property, for example `archiveBaseName`"
+description: >-
+  Reports an assignment of `baseName`, `classifier`, `appendix` or `extension` (`baseName = 'a'`,
+  `jar.baseName = 'a'`) inside the block of an archive task (`jar`, `war`, `zip`, `tar`, a task of type `Jar`) or
+  on one, the properties of archive tasks that Gradle 8 removed. Source: https://docs.gradle.org/current/userguide/upgrading_version_7.html
+  ("The deprecated appendix, archiveName, archivePath, baseName, classifier, destinationDir,
+  extension and version properties of the AbstractArchiveTask task type have been removed"). The
+  `version` property is not checked: the project has one of the same name.
+why: >-
+  The old names fail on Gradle 8 with "Could not set unknown property". The new ones are properties
+  (`archiveBaseName`, `archiveClassifier`, `archiveAppendix`, `archiveExtension`) set with `.set()`
+  or `=`.
+
+  To fix, write the `archive...` name.
+example: "jar {\n    baseName = 'app'\n}"
+severity: warn
+category: correctness
+report-on: first-token
+rule:
+  kind: AssignmentExpression
+  regex: '^(?:\w+\.)?(?<PROP>baseName|classifier|appendix|extension)\s*='
+  any:
+    - { regex: '^(?:jar|war|ear|zip|tar|\w+Jar|\w+War)\.' }
+    - inside: { kind: CommandChain, regex: '^(?:jar|war|ear|zip|tar|\w+Jar|\w+War)\s*\{' }
+    - inside: { kind: MethodInvocation, regex: '^[^{]*\b(?:Jar|Zip|Tar|War|Ear)\b' }
+---
+id: no-main-class-name
+message: "`mainClassName` was removed (Gradle 8): use `application { mainClass = ... }`"
+description: >-
+  Reports an assignment to `mainClassName`, the property of the `application` plugin, at the top of a script or in `application { }`. A task's own property of that name (`startScripts`) is not reported. Source:
+  https://docs.gradle.org/current/userguide/upgrading_version_7.html ("The deprecated mainClassName
+  property of the JavaApplication interface has been removed", "Use the mainClass property
+  instead").
+why: >-
+  The build fails on Gradle 8 with "Could not set unknown property 'mainClassName'", and the `run`
+  and `startScripts` tasks have no main class.
+
+  To fix, write `application { mainClass = 'a.B' }`.
+example: "mainClassName = 'a.Main'"
+severity: warn
+category: correctness
+report-on: first-token
+rule:
+  kind: AssignmentExpression
+  regex: '^(?:application\.)?mainClassName\s*='
+  parent:
+    kind: ExpressionStatement
+    parent:
+      any:
+        - { kind: Document }
+        - { kind: Closure, parent: { kind: CommandChain, regex: '^application\s*\{' } }
+---
+id: no-upload-archives
+message: "`uploadArchives` and the `maven` plugin were removed (Gradle 7): use `maven-publish`"
+description: >-
+  Reports an `uploadArchives { }` block and `apply plugin: 'maven'`. Sources:
+  https://docs.gradle.org/current/userguide/upgrading_version_5.html ("The uploadArchives task and
+  the maven plugin are deprecated") and https://docs.gradle.org/current/userguide/upgrading_version_6.html
+  ("It has been removed in Gradle 7").
+why: >-
+  Both are gone from Gradle 7, so the build fails to configure. Publishing moved to the
+  `maven-publish` plugin and its `publishing { }` block, which also writes correct module metadata.
+
+  To fix, apply `maven-publish` and declare a `publication` and a repository.
+example: "uploadArchives {\n    repositories { }\n}"
+severity: warn
+category: correctness
+report-on: first-token
+rule:
+  any:
+    - { kind: CommandChain, regex: '^uploadArchives\s*\{' }
+    - { kind: CommandChain, regex: '^apply\s+plugin\s*:\s*[''"]maven[''"]' }

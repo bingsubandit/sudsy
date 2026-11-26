@@ -308,7 +308,7 @@ pub fn model(lang: &ScopeLang, file: &FileContext<'_>) -> Rc<Model> {
                 expansions::add_reads(&mut model, file, lang);
             }
             if !lang.spec().interpolated.is_empty() {
-                interpolation_reads(&mut model, file, lang.spec().interpolated);
+                interpolation_reads(&mut model, file, lang.spec());
             }
             model
         })
@@ -422,7 +422,7 @@ pub fn build(
         ("unused-variable", Some("unpacked")) => Check::UnusedUnpacked,
         (_, Some(mode)) => return Err(format!("param `mode`: unknown mode `{mode}`")),
         (name, None) => match name {
-            "unused-import" if lang.is_ordered() => Check::UnusedImport,
+            "unused-import" => Check::UnusedImport,
             "undefined-export" if lang.is_ordered() => Check::UndefinedExport,
             "undefined-variable" => Check::UndefinedVariable,
             "unused-variable" => Check::UnusedVariable,
@@ -947,14 +947,16 @@ impl Rule for ScopeRule {
     }
 }
 
-/// The names written in the `#{...}` of the tokens of kind `token` are reads in the scope the
-/// token is in.
-fn interpolation_reads(model: &mut Model, file: &FileContext<'_>, token: &str) {
+/// The names written in the interpolations (`#{...}`, or the opener the row names) of the tokens of
+/// the kind the `interpolated` row names are reads in the scope the token is in. A single-quoted
+/// token is not interpolated.
+fn interpolation_reads(model: &mut Model, file: &FileContext<'_>, spec: &Spec) {
+    let (token, open) = (spec.interpolated, spec.interpolated_open);
     let Some(kind) = file.grammar.kind_by_name(token) else {
         return;
     };
     let mut last = None;
-    for t in file.text.match_indices("#{").filter_map(|(at, _)| {
+    for t in file.text.match_indices(open).filter_map(|(at, _)| {
         file.root
             .token_at_offset(core_syntax::TextSize::new(at as u32))
             .right_biased()
@@ -965,6 +967,9 @@ fn interpolation_reads(model: &mut Model, file: &FileContext<'_>, token: &str) {
             continue;
         }
         let Some(parent) = t.parent() else { continue };
+        if t.text().starts_with('\'') {
+            continue;
+        }
         // The body comes after the line of its opener, which is where the names are in scope:
         // the scopes that touch that line see the reads.
         let end = usize::from(at).saturating_sub(1);
@@ -982,7 +987,7 @@ fn interpolation_reads(model: &mut Model, file: &FileContext<'_>, token: &str) {
         let mut words = Vec::new();
         for (i, c) in text.char_indices().chain([(text.len(), ' ')]) {
             if depth == 0 {
-                if text[i..].starts_with("#{") {
+                if text[i..].starts_with(open) {
                     depth = 1;
                 }
                 continue;

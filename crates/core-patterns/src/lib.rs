@@ -38,6 +38,7 @@ pub const SHARED_IDS: &[&str] = &[
     "no-empty-block",
     "no-empty-catch",
     "no-eval",
+    "no-floating-version",
     "no-print",
     "no-self-assign",
     "no-self-compare",

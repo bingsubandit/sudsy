@@ -542,7 +542,7 @@ The status and the numbers of every language are in the generated table "Languag
 <!-- generated:measured-gradle -->
 - **Measured:** In progress.
   - Format, stable: 99% of the files format stably, by the rules of the formatter (6,442 of 6,481 files).
-  - Lint: 30 rules, no reference tool to compare with.
+  - Lint: 48 rules, no reference tool to compare with.
 <!-- /generated -->
 
 - Files: `*.gradle` (Groovy DSL).

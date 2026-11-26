@@ -1,0 +1,34 @@
+id: unused-import
+family: scope
+params: { check: unused-import }
+message: "the import of `{name}` is not used"
+description: >-
+  Reports an `import` whose name nothing in the script reads, also not inside a double-quoted string
+  (`"${Name}"`). Imports with `*` are not checked, and an `import ... as Alias` is checked under its
+  alias. Source: CodeNarc UnusedImport (https://codenarc.org/codenarc-rules-imports.html#unusedimport-rule).
+why: >-
+  An import that nothing uses is left over from code that was removed, and it makes a reader look
+  for a use that is not there. A build script is edited by many people and the stale line stays.
+
+  To fix, delete the import.
+example: "import java.util.List\ntask hello { doLast { println 'hi' } }"
+severity: off
+category: cleanup
+---
+id: unused-variable
+family: scope
+params: { check: unused-local-variable }
+message: "the variable `{name}` is never used"
+description: >-
+  Reports a variable declared with `def` or a type that the script never reads, in code or in a
+  double-quoted string (`"$name"`, `"${name.x}"`). A name that starts with `_` is not checked.
+  Source: CodeNarc UnusedVariable (https://codenarc.org/codenarc-rules-unused.html#unusedvariable-rule).
+why: >-
+  A variable that is assigned and never read is a leftover of an earlier version, or a sign that a
+  result was forgotten. In a build script it often keeps a computation (a file read, a command run)
+  alive for nothing.
+
+  To fix, delete the variable, or use it.
+example: "def unused = 1"
+severity: off
+category: cleanup

@@ -8239,6 +8239,7 @@
         "cpp",
         "csharp",
         "go",
+        "gradle",
         "java",
         "js",
         "kotlin",
@@ -8268,6 +8269,7 @@
       ],
       "presets": [
         "go/revive",
+        "gradle/codenarc",
         "js/eslint-recommended"
       ],
       "upstream": [
@@ -8586,6 +8588,7 @@
         "cpp",
         "csharp",
         "go",
+        "gradle",
         "java",
         "js",
         "kotlin",
@@ -8603,6 +8606,7 @@
       ],
       "presets": [
         "go/revive",
+        "gradle/codenarc",
         "js/eslint-recommended",
         "js/biome-recommended",
         "js/oxlint"
@@ -13442,6 +13446,714 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "Reports `apply plugin: 'name'`, the legacy way to apply a plugin. It is not deprecated, so the rule is a style choice and is on only in the preset `gradle/modernize`. Reference: https://docs.gradle.org/current/userguide/plugins.html.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apply plugin: 'java'\nplugins {\n    id 'java'\n}\nandroid {\n    compileSdkVersion 34\n    compileSdk 34\n    buildToolsVersion '34.0.0'\n}\nsourceCompatibility = 1.8\ntargetCompatibility = JavaVersion.VERSION_1_8\njava {\n    sourceCompatibility = JavaVersion.VERSION_17\n}\ncompileJava {\n    sourceCompatibility = '11'\n}\nsubprojects {\n    sourceCompatibility = 1.8\n}\ndef out = \"$buildDir/out\"\ndef dir = project.buildDir\ndef ok = layout.buildDirectory\ndependencies {\n    implementation 'a:b:1.+'\n    implementation \"a:b:latest.release\"\n    implementation 'a:b:1.2.3'\n    implementation 'a:b:1.+:sources'\n}\ntasks.create('hello') { }\nproject.tasks.create('hi')\ntasks.register('ok') { }\n",
+        "language": "gradle",
+        "other_lines": [
+          6,
+          8,
+          10,
+          11,
+          19,
+          21,
+          22,
+          25,
+          26,
+          28,
+          30,
+          31
+        ],
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-apply-plugin",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "The `plugins` block resolves a plugin before the rest of the script runs, so its extensions are type-safe in the editor and Gradle can cache and share plugin classpaths. `apply plugin:` runs in order with the other statements and is invisible to that machinery.\n\nTo fix, move the plugin to the `plugins { }` block at the top of the script."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports `buildDir` (also `project.buildDir` and `$buildDir` in a double-quoted string). Source: https://docs.gradle.org/current/userguide/upgrading_version_8.html (\"The Project.buildDir property is deprecated\", replaced by `Project.layout.buildDirectory`). It needs Gradle 8.3 or later, so the rule is on only in the preset `gradle/modernize`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apply plugin: 'java'\nplugins {\n    id 'java'\n}\nandroid {\n    compileSdkVersion 34\n    compileSdk 34\n    buildToolsVersion '34.0.0'\n}\nsourceCompatibility = 1.8\ntargetCompatibility = JavaVersion.VERSION_1_8\njava {\n    sourceCompatibility = JavaVersion.VERSION_17\n}\ncompileJava {\n    sourceCompatibility = '11'\n}\nsubprojects {\n    sourceCompatibility = 1.8\n}\ndef out = \"$buildDir/out\"\ndef dir = project.buildDir\ndef ok = layout.buildDirectory\ndependencies {\n    implementation 'a:b:1.+'\n    implementation \"a:b:latest.release\"\n    implementation 'a:b:1.2.3'\n    implementation 'a:b:1.+:sources'\n}\ntasks.create('hello') { }\nproject.tasks.create('hi')\ntasks.register('ok') { }\n",
+        "language": "gradle",
+        "other_lines": [
+          1,
+          6,
+          8,
+          10,
+          11,
+          19,
+          25,
+          26,
+          28,
+          30,
+          31
+        ],
+        "spans": [
+          {
+            "column": 11,
+            "length": 15,
+            "line": 21
+          },
+          {
+            "column": 19,
+            "length": 8,
+            "line": 22
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-build-dir",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "`buildDir` is a plain `File` fixed when the script runs, so a change of the build directory made later is not seen by what read it. `layout.buildDirectory` is a lazy property and the replacement Gradle deprecates it for.\n\nTo fix, write `layout.buildDirectory` (`.get().asFile` where a `File` is needed)."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports `buildToolsVersion '34.0.0'` in the `android` block. Source: the DSL page lists the method as deprecated in favour of the property, https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/CommonExtension. The plugin version from which the default is enough is not on the pages read, so the rule is on only in the preset `gradle/modernize`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apply plugin: 'java'\nplugins {\n    id 'java'\n}\nandroid {\n    compileSdkVersion 34\n    compileSdk 34\n    buildToolsVersion '34.0.0'\n}\nsourceCompatibility = 1.8\ntargetCompatibility = JavaVersion.VERSION_1_8\njava {\n    sourceCompatibility = JavaVersion.VERSION_17\n}\ncompileJava {\n    sourceCompatibility = '11'\n}\nsubprojects {\n    sourceCompatibility = 1.8\n}\ndef out = \"$buildDir/out\"\ndef dir = project.buildDir\ndef ok = layout.buildDirectory\ndependencies {\n    implementation 'a:b:1.+'\n    implementation \"a:b:latest.release\"\n    implementation 'a:b:1.2.3'\n    implementation 'a:b:1.+:sources'\n}\ntasks.create('hello') { }\nproject.tasks.create('hi')\ntasks.register('ok') { }\n",
+        "language": "gradle",
+        "other_lines": [
+          1,
+          6,
+          10,
+          11,
+          19,
+          21,
+          22,
+          25,
+          26,
+          28,
+          30,
+          31
+        ],
+        "spans": [
+          {
+            "column": 5,
+            "length": 17,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-build-tools-version",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "A pinned build tools version has to be installed on every machine and every CI image, and it goes stale; the plugin ships with a default that matches its own version.\n\nTo fix, delete the line, or set the `buildToolsVersion` property when a specific version is needed."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports `compileSdkVersion 34` in the `android` block. The replacement `compileSdk` exists from a plugin version this rule cannot see, so the rule is on only in the preset `gradle/modernize`. Source: https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/CommonExtension (\"This function is deprecated. Replaced by compileSdk\"). `minSdkVersion` and `targetSdkVersion` are not checked: no page read names their replacement.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apply plugin: 'java'\nplugins {\n    id 'java'\n}\nandroid {\n    compileSdkVersion 34\n    compileSdk 34\n    buildToolsVersion '34.0.0'\n}\nsourceCompatibility = 1.8\ntargetCompatibility = JavaVersion.VERSION_1_8\njava {\n    sourceCompatibility = JavaVersion.VERSION_17\n}\ncompileJava {\n    sourceCompatibility = '11'\n}\nsubprojects {\n    sourceCompatibility = 1.8\n}\ndef out = \"$buildDir/out\"\ndef dir = project.buildDir\ndef ok = layout.buildDirectory\ndependencies {\n    implementation 'a:b:1.+'\n    implementation \"a:b:latest.release\"\n    implementation 'a:b:1.2.3'\n    implementation 'a:b:1.+:sources'\n}\ntasks.create('hello') { }\nproject.tasks.create('hi')\ntasks.register('ok') { }\n",
+        "language": "gradle",
+        "other_lines": [
+          1,
+          8,
+          10,
+          11,
+          19,
+          21,
+          22,
+          25,
+          26,
+          28,
+          30,
+          31
+        ],
+        "spans": [
+          {
+            "column": 5,
+            "length": 17,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-compile-sdk-version",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "The method form is deprecated in the plugin's DSL and warns on every sync in current versions. `compileSdk` is a property and takes the integer directly.\n\nTo fix, write `compileSdk 34` (or `compileSdk = 34`)."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a dependency whose version is a range or wildcard that resolves to the newest match on the day of the build (`1.*` in a NuGet `PackageReference`, `1.+` or `latest.release` in a Gradle dependency notation). Each language gives the `floating` pattern for the text of the declaration (an attribute, or a statement) and the `owner` pattern for the text of what holds it (the tag of an attribute). No fix, because the version to pin is a decision. Sources: NuGet floating versions (https://learn.microsoft.com/nuget/concepts/package-versioning#floating-versions) and Gradle dynamic versions (https://docs.gradle.org/current/userguide/dependency_versions.html).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<Project>\n  <ItemGroup>\n    <PackageReference Include=\"A\" Version=\"1.0.0\" />\n    <PackageReference Include=\"B\" Version=\"1.*\" />\n    <PackageVersion Include=\"C\" Version=\"*\" ></PackageVersion>\n    <Other Include=\"D\" Version=\"1.*\" />\n  </ItemGroup>\n</Project>\n",
+        "language": "xml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 35,
+            "length": 7,
+            "line": 4
+          },
+          {
+            "column": 33,
+            "length": 7,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-floating-version",
+      "languages": [
+        "gradle",
+        "xml"
+      ],
+      "options": [
+        {
+          "default": "^\\w+\\s*\\(?\\s*[\\x22\\x27][^\\x22\\x27\\s:]+:[^\\x22\\x27\\s:]+:([^\\x22\\x27\\s:]*\\+|latest\\.(release|integration))(:[^\\x22\\x27\\s:]+)?[\\x22\\x27]",
+          "description": "A regular expression for a declaration whose version floats",
+          "name": "floating",
+          "type": "string"
+        },
+        {
+          "default": "^",
+          "description": "A regular expression for what a declaration must sit in",
+          "name": "owner",
+          "type": "string"
+        }
+      ],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "A floating version restores whatever is the newest match on the day of the build. Two builds of the same commit can use different packages, a new release can break the build without a change in the repository, and a compromised release arrives without anyone reading it.\n\nTo fix, pin the version (`1.2.3`), and update it on purpose (dependency locking can pin what a floating version resolves to)."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "warn",
+      "description": "Reports a map entry or a named argument whose key is a double-quoted string with `$` (`[\"${a}\": 1]`). Source: CodeNarc GStringAsMapKey (https://codenarc.org/codenarc-rules-groovyism.html#gstringasmapkey-rule).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import java.util.List\nimport foo.Bar\nimport a.b.Used\nimport a.b.*\nimport a.Q as Alias\nimport a.Z as Zed\n\ndef unused = 1\ndef used = 2\ndef viaString = 3\ndef viaBrace = 4\ndef quoted = 5\ndef single = 6\ndef String typed = 'x'\nprintln used\nprintln \"x $viaString ${viaBrace.x + 1}\"\nprintln '$single ${quoted}'\nprintln(Used)\nprintln(Zed)\n\nif (x) { }\nif (x) {\n    // todo\n}\nif (x) { run() } else { }\nif (x) { run() }\n\ntry { run() } catch (e) { }\n\n\ndef m = [\"${a}\": 1, 'b': 2, \"c\": 3]\nfoo(\"$a\": 1, b: 2)\ndef s = '${x}'\ndef t = \"${x}\"\ndef u = '$x'\n\nif (a & b) { run() }\nif (a | b && c) { run() }\ndef r = (a & b) ? 1 : 2\nif (a && b) { run() }\ndef bits = a & b\n\ndef f(x) {\n    println 1\n    return x\n    println 2\n}\ndef g() {\n    throw new Exception('x')\n    a = 1\n}\n",
+        "language": "gradle",
+        "other_lines": [
+          1,
+          2,
+          5,
+          8,
+          12,
+          13,
+          21,
+          25,
+          33,
+          34,
+          35,
+          39,
+          41,
+          46,
+          50
+        ],
+        "spans": [
+          {
+            "column": 10,
+            "length": 9,
+            "line": 31
+          },
+          {
+            "column": 5,
+            "length": 7,
+            "line": 32
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-gstring-map-key",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/codenarc"
+      ],
+      "upstream": [],
+      "why": "A `GString` and a `String` with the same text have different hash codes, so `map['x1']` does not find the entry written with `\"x${n}\"`. The lookup silently returns `null`.\n\nTo fix, convert the key to a `String` (`\"x${n}\".toString()`), or use a variable."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports `sourceCompatibility = ...` or `targetCompatibility = ...` at the top of a script or directly in `allprojects { }` / `subprojects { }`. The settings of a task (`compileJava { ... }`) and the `java { }` block are not reported. Source: https://docs.gradle.org/current/userguide/upgrading_version_8.html (\"The convention properties the java plugin contributed have been deprecated and scheduled for removal in Gradle 9.0.0\"). It needs Gradle 8.2 or later, so the rule is on only in the preset `gradle/modernize`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apply plugin: 'java'\nplugins {\n    id 'java'\n}\nandroid {\n    compileSdkVersion 34\n    compileSdk 34\n    buildToolsVersion '34.0.0'\n}\nsourceCompatibility = 1.8\ntargetCompatibility = JavaVersion.VERSION_1_8\njava {\n    sourceCompatibility = JavaVersion.VERSION_17\n}\ncompileJava {\n    sourceCompatibility = '11'\n}\nsubprojects {\n    sourceCompatibility = 1.8\n}\ndef out = \"$buildDir/out\"\ndef dir = project.buildDir\ndef ok = layout.buildDirectory\ndependencies {\n    implementation 'a:b:1.+'\n    implementation \"a:b:latest.release\"\n    implementation 'a:b:1.2.3'\n    implementation 'a:b:1.+:sources'\n}\ntasks.create('hello') { }\nproject.tasks.create('hi')\ntasks.register('ok') { }\n",
+        "language": "gradle",
+        "other_lines": [
+          1,
+          6,
+          8,
+          21,
+          22,
+          25,
+          26,
+          28,
+          30,
+          31
+        ],
+        "spans": [
+          {
+            "column": 1,
+            "length": 19,
+            "line": 10
+          },
+          {
+            "column": 1,
+            "length": 19,
+            "line": 11
+          },
+          {
+            "column": 5,
+            "length": 19,
+            "line": 19
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-java-convention-compatibility",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "The project-level convention is removed in Gradle 9, where the script fails with \"Could not set unknown property\". The `java { }` block (or a toolchain) is the supported place.\n\nTo fix, write `java { sourceCompatibility = JavaVersion.VERSION_17 }`, or use a toolchain."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports the `jcenter()` repository, written `jcenter()` or `jcenter { ... }`. Source: https://docs.gradle.org/current/userguide/upgrading_version_6.html (\"Gradle emits a deprecation warning when jcenter() is used as a repository and this method is scheduled to be removed in Gradle 8.0\").",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "dependencies {\n    compile 'a:b:1'\n    testCompile(\"junit:junit:4.13\")\n    compile group: 'g', name: 'n', version: '1'\n    runtime project(':x')\n    compileOnly 'a:b:1'\n    testCompileOnly 'a:b:1'\n    implementation 'a:b:1'\n    constraints {\n        runtime 'a:b:1'\n    }\n}\nconfigurations {\n    compile\n}\nrepositories {\n    jcenter()\n    mavenCentral()\n}\nandroid {\n    lintOptions {\n        abortOnError false\n    }\n    lint {\n        abortOnError false\n    }\n}\njar {\n    baseName = 'app'\n    archiveClassifier = 'x'\n}\ntasks.withType(Zip) {\n    classifier = 'y'\n}\njar.extension = 'z'\ndef lib = [classifier: 'sources']\npublishing {\n    artifact(file) {\n        classifier = 'sources'\n    }\n}\nmainClassName = 'a.Main'\napplication {\n    mainClassName = 'a.Main'\n    mainClass = 'a.Main'\n}\nstartScripts {\n    mainClassName = 'a.Main'\n}\nuploadArchives {\n    repositories { }\n}\napply plugin: 'maven'\napply plugin: 'java'\n",
+        "language": "gradle",
+        "other_lines": [
+          2,
+          3,
+          4,
+          5,
+          21,
+          29,
+          33,
+          35,
+          42,
+          44,
+          50,
+          53
+        ],
+        "spans": [
+          {
+            "column": 5,
+            "length": 7,
+            "line": 17
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-jcenter",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "JCenter is read-only and the service is closed, so artifacts that are not on Maven Central or another repository cannot be fetched, and a build that depends on it fails when a cache is cold.\n\nTo fix, use `mavenCentral()` (and `google()` for Android artifacts)."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports an assignment of `baseName`, `classifier`, `appendix` or `extension` (`baseName = 'a'`, `jar.baseName = 'a'`) inside the block of an archive task (`jar`, `war`, `zip`, `tar`, a task of type `Jar`) or on one, the properties of archive tasks that Gradle 8 removed. Source: https://docs.gradle.org/current/userguide/upgrading_version_7.html (\"The deprecated appendix, archiveName, archivePath, baseName, classifier, destinationDir, extension and version properties of the AbstractArchiveTask task type have been removed\"). The `version` property is not checked: the project has one of the same name.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "dependencies {\n    compile 'a:b:1'\n    testCompile(\"junit:junit:4.13\")\n    compile group: 'g', name: 'n', version: '1'\n    runtime project(':x')\n    compileOnly 'a:b:1'\n    testCompileOnly 'a:b:1'\n    implementation 'a:b:1'\n    constraints {\n        runtime 'a:b:1'\n    }\n}\nconfigurations {\n    compile\n}\nrepositories {\n    jcenter()\n    mavenCentral()\n}\nandroid {\n    lintOptions {\n        abortOnError false\n    }\n    lint {\n        abortOnError false\n    }\n}\njar {\n    baseName = 'app'\n    archiveClassifier = 'x'\n}\ntasks.withType(Zip) {\n    classifier = 'y'\n}\njar.extension = 'z'\ndef lib = [classifier: 'sources']\npublishing {\n    artifact(file) {\n        classifier = 'sources'\n    }\n}\nmainClassName = 'a.Main'\napplication {\n    mainClassName = 'a.Main'\n    mainClass = 'a.Main'\n}\nstartScripts {\n    mainClassName = 'a.Main'\n}\nuploadArchives {\n    repositories { }\n}\napply plugin: 'maven'\napply plugin: 'java'\n",
+        "language": "gradle",
+        "other_lines": [
+          2,
+          3,
+          4,
+          5,
+          17,
+          21,
+          42,
+          44,
+          50,
+          53
+        ],
+        "spans": [
+          {
+            "column": 5,
+            "length": 8,
+            "line": 29
+          },
+          {
+            "column": 5,
+            "length": 10,
+            "line": 33
+          },
+          {
+            "column": 1,
+            "length": 3,
+            "line": 35
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-legacy-archive-property",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The old names fail on Gradle 8 with \"Could not set unknown property\". The new ones are properties (`archiveBaseName`, `archiveClassifier`, `archiveAppendix`, `archiveExtension`) set with `.set()` or `=`.\n\nTo fix, write the `archive...` name."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a `lintOptions { }` block of the Android Gradle Plugin. Source: the DSL page of the plugin, https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/CommonExtension (\"This function is deprecated. Renamed to lint\").",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "dependencies {\n    compile 'a:b:1'\n    testCompile(\"junit:junit:4.13\")\n    compile group: 'g', name: 'n', version: '1'\n    runtime project(':x')\n    compileOnly 'a:b:1'\n    testCompileOnly 'a:b:1'\n    implementation 'a:b:1'\n    constraints {\n        runtime 'a:b:1'\n    }\n}\nconfigurations {\n    compile\n}\nrepositories {\n    jcenter()\n    mavenCentral()\n}\nandroid {\n    lintOptions {\n        abortOnError false\n    }\n    lint {\n        abortOnError false\n    }\n}\njar {\n    baseName = 'app'\n    archiveClassifier = 'x'\n}\ntasks.withType(Zip) {\n    classifier = 'y'\n}\njar.extension = 'z'\ndef lib = [classifier: 'sources']\npublishing {\n    artifact(file) {\n        classifier = 'sources'\n    }\n}\nmainClassName = 'a.Main'\napplication {\n    mainClassName = 'a.Main'\n    mainClass = 'a.Main'\n}\nstartScripts {\n    mainClassName = 'a.Main'\n}\nuploadArchives {\n    repositories { }\n}\napply plugin: 'maven'\napply plugin: 'java'\n",
+        "language": "gradle",
+        "other_lines": [
+          2,
+          3,
+          4,
+          5,
+          17,
+          29,
+          33,
+          35,
+          42,
+          44,
+          50,
+          53
+        ],
+        "spans": [
+          {
+            "column": 5,
+            "length": 11,
+            "line": 21
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-lint-options",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The block was renamed and the old name is removed from newer plugin versions, so a build that keeps it stops working when the plugin is updated.\n\nTo fix, rename `lintOptions` to `lint`; the settings inside keep their names (a few take `=`)."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports an assignment to `mainClassName`, the property of the `application` plugin, at the top of a script or in `application { }`. A task's own property of that name (`startScripts`) is not reported. Source: https://docs.gradle.org/current/userguide/upgrading_version_7.html (\"The deprecated mainClassName property of the JavaApplication interface has been removed\", \"Use the mainClass property instead\").",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "dependencies {\n    compile 'a:b:1'\n    testCompile(\"junit:junit:4.13\")\n    compile group: 'g', name: 'n', version: '1'\n    runtime project(':x')\n    compileOnly 'a:b:1'\n    testCompileOnly 'a:b:1'\n    implementation 'a:b:1'\n    constraints {\n        runtime 'a:b:1'\n    }\n}\nconfigurations {\n    compile\n}\nrepositories {\n    jcenter()\n    mavenCentral()\n}\nandroid {\n    lintOptions {\n        abortOnError false\n    }\n    lint {\n        abortOnError false\n    }\n}\njar {\n    baseName = 'app'\n    archiveClassifier = 'x'\n}\ntasks.withType(Zip) {\n    classifier = 'y'\n}\njar.extension = 'z'\ndef lib = [classifier: 'sources']\npublishing {\n    artifact(file) {\n        classifier = 'sources'\n    }\n}\nmainClassName = 'a.Main'\napplication {\n    mainClassName = 'a.Main'\n    mainClass = 'a.Main'\n}\nstartScripts {\n    mainClassName = 'a.Main'\n}\nuploadArchives {\n    repositories { }\n}\napply plugin: 'maven'\napply plugin: 'java'\n",
+        "language": "gradle",
+        "other_lines": [
+          2,
+          3,
+          4,
+          5,
+          17,
+          21,
+          29,
+          33,
+          35,
+          50,
+          53
+        ],
+        "spans": [
+          {
+            "column": 1,
+            "length": 13,
+            "line": 42
+          },
+          {
+            "column": 5,
+            "length": 13,
+            "line": 44
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-main-class-name",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The build fails on Gradle 8 with \"Could not set unknown property 'mainClassName'\", and the `run` and `startScripts` tasks have no main class.\n\nTo fix, write `application { mainClass = 'a.B' }`."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a dependency declared in a `dependencies` block with a configuration that Gradle 7 removed: `compile`, `testCompile`, `runtime`, `testRuntime`, and the Android `debugCompile`, `releaseCompile` and `androidTestCompile`. Written as `compile 'a:b:1'`, `compile('a:b:1')` and `compile group: ...`. `compileOnly`, `testCompileOnly` and `runtimeOnly` are not reported. Sources: https://docs.gradle.org/current/userguide/upgrading_version_6.html (\"In Gradle 7, both the compile and runtime configurations are removed\") and https://developer.android.com/build/releases/past-releases/agp-7-0-0-release-notes.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "dependencies {\n    compile 'a:b:1'\n    testCompile(\"junit:junit:4.13\")\n    compile group: 'g', name: 'n', version: '1'\n    runtime project(':x')\n    compileOnly 'a:b:1'\n    testCompileOnly 'a:b:1'\n    implementation 'a:b:1'\n    constraints {\n        runtime 'a:b:1'\n    }\n}\nconfigurations {\n    compile\n}\nrepositories {\n    jcenter()\n    mavenCentral()\n}\nandroid {\n    lintOptions {\n        abortOnError false\n    }\n    lint {\n        abortOnError false\n    }\n}\njar {\n    baseName = 'app'\n    archiveClassifier = 'x'\n}\ntasks.withType(Zip) {\n    classifier = 'y'\n}\njar.extension = 'z'\ndef lib = [classifier: 'sources']\npublishing {\n    artifact(file) {\n        classifier = 'sources'\n    }\n}\nmainClassName = 'a.Main'\napplication {\n    mainClassName = 'a.Main'\n    mainClass = 'a.Main'\n}\nstartScripts {\n    mainClassName = 'a.Main'\n}\nuploadArchives {\n    repositories { }\n}\napply plugin: 'maven'\napply plugin: 'java'\n",
+        "language": "gradle",
+        "other_lines": [
+          17,
+          21,
+          29,
+          33,
+          35,
+          42,
+          44,
+          50,
+          53
+        ],
+        "spans": [
+          {
+            "column": 5,
+            "length": 7,
+            "line": 2
+          },
+          {
+            "column": 5,
+            "length": 11,
+            "line": 3
+          },
+          {
+            "column": 5,
+            "length": 7,
+            "line": 4
+          },
+          {
+            "column": 5,
+            "length": 7,
+            "line": 5
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-removed-configuration",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "A build that still names these configurations fails on Gradle 7 and later with \"Could not find method compile()\". The replacement is not a rename: `implementation` hides the dependency from consumers of the module and `api` exposes it, so the choice is the author's.\n\nTo fix, use `implementation` for what the module needs itself and `api` for what its public types expose (`testImplementation` for tests)."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports `tasks.create(...)` and `project.tasks.create(...)`. Source: https://docs.gradle.org/current/userguide/task_configuration_avoidance.html (\"The create(...) API eagerly creates and configures tasks when called and should be avoided\"). It is a style choice, so the rule is on only in the preset `gradle/modernize`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apply plugin: 'java'\nplugins {\n    id 'java'\n}\nandroid {\n    compileSdkVersion 34\n    compileSdk 34\n    buildToolsVersion '34.0.0'\n}\nsourceCompatibility = 1.8\ntargetCompatibility = JavaVersion.VERSION_1_8\njava {\n    sourceCompatibility = JavaVersion.VERSION_17\n}\ncompileJava {\n    sourceCompatibility = '11'\n}\nsubprojects {\n    sourceCompatibility = 1.8\n}\ndef out = \"$buildDir/out\"\ndef dir = project.buildDir\ndef ok = layout.buildDirectory\ndependencies {\n    implementation 'a:b:1.+'\n    implementation \"a:b:latest.release\"\n    implementation 'a:b:1.2.3'\n    implementation 'a:b:1.+:sources'\n}\ntasks.create('hello') { }\nproject.tasks.create('hi')\ntasks.register('ok') { }\n",
+        "language": "gradle",
+        "other_lines": [
+          1,
+          6,
+          8,
+          10,
+          11,
+          19,
+          21,
+          22,
+          25,
+          26,
+          28
+        ],
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 30
+          },
+          {
+            "column": 1,
+            "length": 7,
+            "line": 31
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-tasks-create",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/modernize"
+      ],
+      "upstream": [],
+      "why": "`create` builds and configures the task on every run of the build, whether or not it is asked for. `register` defers that until the task is needed, which shortens configuration time in large builds.\n\nTo fix, write `tasks.register(name) { ... }`; code that needs the task object at once can stay."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports an `uploadArchives { }` block and `apply plugin: 'maven'`. Sources: https://docs.gradle.org/current/userguide/upgrading_version_5.html (\"The uploadArchives task and the maven plugin are deprecated\") and https://docs.gradle.org/current/userguide/upgrading_version_6.html (\"It has been removed in Gradle 7\").",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "dependencies {\n    compile 'a:b:1'\n    testCompile(\"junit:junit:4.13\")\n    compile group: 'g', name: 'n', version: '1'\n    runtime project(':x')\n    compileOnly 'a:b:1'\n    testCompileOnly 'a:b:1'\n    implementation 'a:b:1'\n    constraints {\n        runtime 'a:b:1'\n    }\n}\nconfigurations {\n    compile\n}\nrepositories {\n    jcenter()\n    mavenCentral()\n}\nandroid {\n    lintOptions {\n        abortOnError false\n    }\n    lint {\n        abortOnError false\n    }\n}\njar {\n    baseName = 'app'\n    archiveClassifier = 'x'\n}\ntasks.withType(Zip) {\n    classifier = 'y'\n}\njar.extension = 'z'\ndef lib = [classifier: 'sources']\npublishing {\n    artifact(file) {\n        classifier = 'sources'\n    }\n}\nmainClassName = 'a.Main'\napplication {\n    mainClassName = 'a.Main'\n    mainClass = 'a.Main'\n}\nstartScripts {\n    mainClassName = 'a.Main'\n}\nuploadArchives {\n    repositories { }\n}\napply plugin: 'maven'\napply plugin: 'java'\n",
+        "language": "gradle",
+        "other_lines": [
+          2,
+          3,
+          4,
+          5,
+          17,
+          21,
+          29,
+          33,
+          35,
+          42,
+          44
+        ],
+        "spans": [
+          {
+            "column": 1,
+            "length": 14,
+            "line": 50
+          },
+          {
+            "column": 1,
+            "length": 5,
+            "line": 53
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-upload-archives",
+      "languages": [
+        "gradle"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "Both are gone from Gradle 7, so the build fails to configure. Publishing moved to the `maven-publish` plugin and its `publishing { }` block, which also writes correct module metadata.\n\nTo fix, apply `maven-publish` and declare a `publication` and a repository."
+    },
+    {
+      "category": "cleanup",
+      "default_level": "off",
+      "description": "Reports an `import` whose name nothing in the script reads, also not inside a double-quoted string (`\"${Name}\"`). Imports with `*` are not checked, and an `import ... as Alias` is checked under its alias. Source: CodeNarc UnusedImport (https://codenarc.org/codenarc-rules-imports.html#unusedimport-rule).",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import java.util.List;\nimport java.util.Map;\nimport java.util.Set;\nimport java.io.*;\nimport static java.lang.Math.max;\nimport static java.lang.Math.min;\n\n/** Uses {@link Set}. */\nclass A {\n  List<String> xs;\n\n  int f() {\n    return max(1, 2);\n  }\n}\n",
+        "language": "java",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 21,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 33,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "unused-import",
+      "languages": [
+        "gradle",
+        "java",
+        "kotlin",
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "gradle/codenarc",
+        "kotlin/ktlint",
+        "python/ruff"
+      ],
+      "upstream": [
+        {
+          "id": "UnusedImports",
+          "note": "Names in Javadoc count as used; no option to turn that off.",
+          "partial": true,
+          "tool": "checkstyle",
+          "url": "https://checkstyle.org/checks/imports/unusedimports.html#UnusedImports"
+        },
+        {
+          "id": "no-unused-imports",
+          "partial": false,
+          "tool": "ktlint",
+          "url": "https://ktlint.github.io/ktlint/1.8.0/rules/standard/#no-unused-imports"
+        },
+        {
+          "id": "F401",
+          "partial": false,
+          "tool": "ruff",
+          "url": "https://docs.astral.sh/ruff/rules/F401/"
+        }
+      ],
+      "why": "An import that nothing uses is left over from code that was removed, and it makes a reader look for a use that is not there. A build script is edited by many people and the stale line stays.\n\nTo fix, delete the import."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "Reports a name that does not follow the style set for what it names: operations, fragments, variables, fields, arguments, types, enum values and directives. `PascalCase` and `camelCase` allow letters and digits only, `snake_case` and `UPPER_CASE` forbid the other case; leading underscores are ignored. No fix: renaming changes the schema or the queries that use it.",
       "example": {
         "config": null,
@@ -15234,64 +15946,6 @@
         }
       ],
       "why": "A fixed form (`TODO:`) lets people and tools find the open items by one search. A variant spelled differently is not found.\n\nTo fix, write `TODO:`."
-    },
-    {
-      "category": "cleanup",
-      "default_level": "off",
-      "description": "Reports an import whose name the file does not use. Imports with `*` are not checked, and a name in a doc comment counts as a use where the language has doc comments. No fix: removing an import can change which declaration a name means.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "import java.util.List;\nimport java.util.Map;\nimport java.util.Set;\nimport java.io.*;\nimport static java.lang.Math.max;\nimport static java.lang.Math.min;\n\n/** Uses {@link Set}. */\nclass A {\n  List<String> xs;\n\n  int f() {\n    return max(1, 2);\n  }\n}\n",
-        "language": "java",
-        "other_lines": [],
-        "spans": [
-          {
-            "column": 1,
-            "length": 21,
-            "line": 2
-          },
-          {
-            "column": 1,
-            "length": 33,
-            "line": 6
-          }
-        ]
-      },
-      "fix": null,
-      "id": "unused-import",
-      "languages": [
-        "java",
-        "kotlin",
-        "python"
-      ],
-      "options": [],
-      "presets": [
-        "kotlin/ktlint",
-        "python/ruff"
-      ],
-      "upstream": [
-        {
-          "id": "UnusedImports",
-          "note": "Names in Javadoc count as used; no option to turn that off.",
-          "partial": true,
-          "tool": "checkstyle",
-          "url": "https://checkstyle.org/checks/imports/unusedimports.html#UnusedImports"
-        },
-        {
-          "id": "no-unused-imports",
-          "partial": false,
-          "tool": "ktlint",
-          "url": "https://ktlint.github.io/ktlint/1.8.0/rules/standard/#no-unused-imports"
-        },
-        {
-          "id": "F401",
-          "partial": false,
-          "tool": "ruff",
-          "url": "https://docs.astral.sh/ruff/rules/F401/"
-        }
-      ],
-      "why": "An import that nothing uses is dead code. It misleads the reader about what the file depends on, and where an import runs the module, as in Python, it still costs the time to load it and fails where the module is not installed.\n\nTo fix, remove the import."
     },
     {
       "category": "cleanup",
@@ -33684,39 +34338,6 @@
     {
       "category": "suspicious",
       "default_level": "off",
-      "description": "Reports a `PackageReference` or `PackageVersion` whose `Version` contains `*` (`1.*`), on the attribute. No fix, because the version to pin is a decision.",
-      "example": {
-        "config": null,
-        "fixed": null,
-        "input": "<Project>\n  <ItemGroup>\n    <PackageReference Include=\"A\" Version=\"1.0.0\" />\n    <PackageReference Include=\"B\" Version=\"1.*\" />\n    <PackageVersion Include=\"C\" Version=\"*\" ></PackageVersion>\n    <Other Include=\"D\" Version=\"1.*\" />\n  </ItemGroup>\n</Project>\n",
-        "language": "xml",
-        "other_lines": [],
-        "spans": [
-          {
-            "column": 35,
-            "length": 13,
-            "line": 4
-          },
-          {
-            "column": 33,
-            "length": 11,
-            "line": 5
-          }
-        ]
-      },
-      "fix": null,
-      "id": "no-floating-package-version",
-      "languages": [
-        "xml"
-      ],
-      "options": [],
-      "presets": [],
-      "upstream": [],
-      "why": "A floating version restores whatever is the newest match on the day of the build. Two builds of the same commit can use different packages, a new release can break the build without a change in the repository, and a compromised release arrives without anyone reading it.\n\nTo fix, pin the version (`1.2.3`), and update it on purpose."
-    },
-    {
-      "category": "suspicious",
-      "default_level": "off",
       "description": "Reports a plain `yes`, `no`, `on`, `off`, `True`, `TRUE`, `False` or `FALSE` (in the usual casings), which are booleans to a YAML 1.1 parser and strings to a YAML 1.2 parser. Lowercase `true` and `false` are not reported. The fix quotes the value and is unsafe.",
       "example": {
         "config": null,
@@ -47779,6 +48400,7 @@
       "id": "unused-variable",
       "languages": [
         "csharp",
+        "gradle",
         "js",
         "powershell",
         "python",
@@ -47786,6 +48408,7 @@
       ],
       "options": [],
       "presets": [
+        "gradle/codenarc",
         "js/eslint-recommended",
         "js/typescript-eslint-recommended",
         "js/biome-recommended",

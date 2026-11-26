@@ -4,6 +4,7 @@
 //! concept: none (glue: provider entry)
 
 mod rules;
+mod scope;
 
 use core_config::shared;
 

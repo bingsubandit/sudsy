@@ -1,0 +1,137 @@
+id: no-apply-plugin
+message: "use the `plugins { id '...' }` block instead of `apply plugin:`"
+description: >-
+  Reports `apply plugin: 'name'`, the legacy way to apply a plugin. It is not deprecated, so the rule
+  is a style choice and is on only in the preset `gradle/modernize`. Reference:
+  https://docs.gradle.org/current/userguide/plugins.html.
+why: >-
+  The `plugins` block resolves a plugin before the rest of the script runs, so its extensions are
+  type-safe in the editor and Gradle can cache and share plugin classpaths. `apply plugin:` runs in
+  order with the other statements and is invisible to that machinery.
+
+  To fix, move the plugin to the `plugins { }` block at the top of the script.
+example: "apply plugin: 'java'"
+severity: off
+category: style
+report-on: first-token
+rule:
+  kind: CommandChain
+  regex: '^apply\s+plugin\s*:'
+---
+id: no-compile-sdk-version
+message: "`compileSdkVersion` is deprecated: use `compileSdk`"
+description: >-
+  Reports `compileSdkVersion 34` in the `android` block. The replacement `compileSdk` exists from a
+  plugin version this rule cannot see, so the rule is on only in the preset `gradle/modernize`.
+  Source: https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/CommonExtension
+  ("This function is deprecated. Replaced by compileSdk"). `minSdkVersion` and `targetSdkVersion`
+  are not checked: no page read names their replacement.
+why: >-
+  The method form is deprecated in the plugin's DSL and warns on every sync in current versions.
+  `compileSdk` is a property and takes the integer directly.
+
+  To fix, write `compileSdk 34` (or `compileSdk = 34`).
+example: "android {\n    compileSdkVersion 34\n}"
+severity: off
+category: style
+report-on: first-token
+rule:
+  any:
+    - { kind: CommandChain, regex: '^compileSdkVersion\s' }
+    - { kind: MethodInvocation, regex: '^compileSdkVersion\s*\(' }
+  inside: { kind: CommandChain, regex: '^android\s*\{' }
+---
+id: no-build-tools-version
+message: "`buildToolsVersion` is not needed: the plugin picks a default"
+description: >-
+  Reports `buildToolsVersion '34.0.0'` in the `android` block. Source: the DSL page lists the method
+  as deprecated in favour of the property,
+  https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/CommonExtension.
+  The plugin version from which the default is enough is not on the pages read, so the rule is on
+  only in the preset `gradle/modernize`.
+why: >-
+  A pinned build tools version has to be installed on every machine and every CI image, and it goes
+  stale; the plugin ships with a default that matches its own version.
+
+  To fix, delete the line, or set the `buildToolsVersion` property when a specific version is needed.
+example: "android {\n    buildToolsVersion '34.0.0'\n}"
+severity: off
+category: style
+report-on: first-token
+rule:
+  any:
+    - { kind: CommandChain, regex: '^buildToolsVersion\s' }
+    - { kind: MethodInvocation, regex: '^buildToolsVersion\s*\(' }
+  inside: { kind: CommandChain, regex: '^android\s*\{' }
+---
+id: no-java-convention-compatibility
+message: "`${PROP}` set on the project is deprecated: set it in the `java { }` block"
+description: >-
+  Reports `sourceCompatibility = ...` or `targetCompatibility = ...` at the top of a script or
+  directly in `allprojects { }` / `subprojects { }`. The settings of a task (`compileJava { ... }`)
+  and the `java { }` block are not reported. Source:
+  https://docs.gradle.org/current/userguide/upgrading_version_8.html ("The convention properties the
+  java plugin contributed have been deprecated and scheduled for removal in Gradle 9.0.0"). It
+  needs Gradle 8.2 or later, so the rule is on only in the preset `gradle/modernize`.
+why: >-
+  The project-level convention is removed in Gradle 9, where the script fails with "Could not set
+  unknown property". The `java { }` block (or a toolchain) is the supported place.
+
+  To fix, write `java { sourceCompatibility = JavaVersion.VERSION_17 }`, or use a toolchain.
+example: "sourceCompatibility = 1.8"
+severity: off
+category: style
+report-on: first-token
+rule:
+  kind: AssignmentExpression
+  regex: '^(?<PROP>sourceCompatibility|targetCompatibility)\s*='
+  parent:
+    kind: ExpressionStatement
+    parent:
+      any:
+        - { kind: Document }
+        - { kind: Closure, parent: { kind: CommandChain, regex: '^(?:allprojects|subprojects)\s*\{' } }
+---
+id: no-build-dir
+message: "`buildDir` is deprecated: use `layout.buildDirectory`"
+description: >-
+  Reports `buildDir` (also `project.buildDir` and `$buildDir` in a double-quoted string). Source:
+  https://docs.gradle.org/current/userguide/upgrading_version_8.html ("The Project.buildDir property
+  is deprecated", replaced by `Project.layout.buildDirectory`). It needs Gradle 8.3 or later, so the
+  rule is on only in the preset `gradle/modernize`.
+why: >-
+  `buildDir` is a plain `File` fixed when the script runs, so a change of the build directory made
+  later is not seen by what read it. `layout.buildDirectory` is a lazy property and the replacement
+  Gradle deprecates it for.
+
+  To fix, write `layout.buildDirectory` (`.get().asFile` where a `File` is needed).
+example: "def out = \"$buildDir/out\""
+severity: off
+category: style
+rule:
+  kind: Document
+token:
+  kind: [Ident, String]
+  deep: true
+  needs: buildDir
+  regex: '^buildDir$|^"(?s:.*)\$\{?(?:project\.)?buildDir\b'
+---
+id: no-tasks-create
+message: "use `tasks.register` instead of `tasks.create`"
+description: >-
+  Reports `tasks.create(...)` and `project.tasks.create(...)`. Source:
+  https://docs.gradle.org/current/userguide/task_configuration_avoidance.html ("The create(...) API
+  eagerly creates and configures tasks when called and should be avoided"). It is a style choice, so
+  the rule is on only in the preset `gradle/modernize`.
+why: >-
+  `create` builds and configures the task on every run of the build, whether or not it is asked for.
+  `register` defers that until the task is needed, which shortens configuration time in large builds.
+
+  To fix, write `tasks.register(name) { ... }`; code that needs the task object at once can stay.
+example: "tasks.create('hello') { }"
+severity: off
+category: style
+report-on: first-token
+rule:
+  kind: MethodInvocation
+  regex: '^(?:project\.)?tasks\.create\b'

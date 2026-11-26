@@ -9,7 +9,7 @@ static FORMAT: core_format::rules::LazyRules = core_format::rules::LazyRules::ne
 
 #[rustfmt::skip]
 pub fn provider() -> ParserProvider {
-    provider_of_composite(Spec { crate_name: env!("CARGO_PKG_NAME"), language: || core_packs::language!("gradle", tree_sitter_groovy::LANGUAGE), grammar: grammars::GRADLE, mapping: &MAPPING, extensions: &["gradle"], file_names: &[], schema: option_schema(), formatter: &FORMAT, hooks: &core_rules::DEFAULT_HOOKS, rules: rules::RULES, pattern_files: provider_api::pattern_files!(), families: &[], validate: None }, Some(COMPOSITE))
+    provider_of_composite(Spec { crate_name: env!("CARGO_PKG_NAME"), language: || core_packs::language!("gradle", tree_sitter_groovy::LANGUAGE), grammar: grammars::GRADLE, mapping: &MAPPING, extensions: &["gradle"], file_names: &[], schema: option_schema(), formatter: &FORMAT, hooks: &core_rules::DEFAULT_HOOKS, rules: rules::RULES, pattern_files: provider_api::pattern_files!(), families: &[scope::FAMILY], validate: None }, Some(COMPOSITE))
 }
 
 pub const MAPPING: Mapping = Mapping {
@@ -37,6 +37,7 @@ pub const MAPPING: Mapping = Mapping {
         ("?=", "Assign"),
         ("||=", "Assign"),
         ("&&=", "Assign"),
+        ("boolean_literal", "Boolean"),
         (")", "Close"),
         ("]", "Close"),
         ("}", "Close"),
@@ -54,8 +55,6 @@ pub const MAPPING: Mapping = Mapping {
         ("::", "Dot"),
         ("identifier", "Ident"),
         ("type_identifier", "Ident"),
-        ("boolean_literal", "Keyword"),
-        ("null_literal", "Keyword"),
         ("abstract", "Keyword"),
         ("as", "Keyword"),
         ("assert", "Keyword"),
@@ -106,6 +105,7 @@ pub const MAPPING: Mapping = Mapping {
         ("yield", "Keyword"),
         ("!instanceof", "Keyword"),
         ("!in", "Keyword"),
+        ("null_literal", "Null"),
         ("number_literal", "Number"),
         ("!", "Op"),
         ("!=", "Op"),
@@ -174,6 +174,22 @@ pub const MAPPING: Mapping = Mapping {
         ("range_expression", "RangeExpression"),
         ("spread_arguments", "SpreadArguments"),
         ("switch_case", "SwitchCase"),
+        ("import_declaration", "ImportDeclaration"),
+        ("local_variable_declaration", "LocalVariableDeclaration"),
+        ("variable_declarator", "VariableDeclarator"),
+        ("if_statement", "IfStatement"),
+        ("assert_statement", "AssertStatement"),
+        ("return_statement", "ReturnStatement"),
+        ("throw_statement", "ThrowStatement"),
+        ("break_statement", "BreakStatement"),
+        ("continue_statement", "ContinueStatement"),
+        ("expression_statement", "ExpressionStatement"),
+        ("method_declaration", "MethodDeclaration"),
+        ("method_invocation", "MethodInvocation"),
+        ("assignment_expression", "AssignmentExpression"),
+        ("field_access", "FieldAccess"),
+        ("try_statement", "TryStatement"),
+        ("catch_clause", "CatchClause"),
         (",", "Comma"),
         (";", "Semi"),
         (":", "Colon"),

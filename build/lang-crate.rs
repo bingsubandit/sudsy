@@ -31,34 +31,38 @@ fn main() {
     files.sort();
     let shared = manifest.join("../core-patterns/shared");
     println!("cargo:rerun-if-changed=../core-patterns/shared");
-    let mut shared_files: Vec<PathBuf> = match grammar.requires_roles {
-        true => fs::read_dir(&shared)
-            .into_iter()
-            .flatten()
-            .map(|e| e.unwrap().path())
-            .filter(|p| p.extension().is_some_and(|e| e == "yaml"))
-            // A rule none of whose roles a node of the grammar has is not built in at all.
-            .filter(|p| {
-                let text = fs::read_to_string(p).unwrap();
-                // A `per-language` rule without a `rule` row of the grammar is never listed.
-                let id = p.file_stem().unwrap().to_string_lossy();
-                if text.contains("per-language: true") && grammar.rule_row(&id).is_none() {
-                    return false;
-                }
-                // The rule's own roles are those of its first line with `role:`; a rule with none
-                // (written on kinds or patterns) is always built in.
-                let roles = text
-                    .lines()
-                    .find_map(|l| l.split_once("role:").map(|(_, r)| r));
-                let Some(roles) = roles else { return true };
-                let mut names = roles
-                    .split(|c: char| !(c.is_alphanumeric() || c == '-'))
-                    .filter(|n| !n.is_empty());
-                names.any(|n| !grammar.nodes_with_tag(n).is_empty())
-            })
-            .collect(),
-        false => Vec::new(),
-    };
+    let mut shared_files: Vec<PathBuf> = fs::read_dir(&shared)
+        .into_iter()
+        .flatten()
+        .map(|e| e.unwrap().path())
+        .filter(|p| p.extension().is_some_and(|e| e == "yaml"))
+        // A rule none of whose roles a node of the grammar has is not built in at all.
+        .filter(|p| {
+            let text = fs::read_to_string(p).unwrap();
+            // A `per-language` rule without a `rule` row of the grammar is never listed.
+            let id = p.file_stem().unwrap().to_string_lossy();
+            if text.contains("per-language: true") && grammar.rule_row(&id).is_none() {
+                return false;
+            }
+            // The rule's own roles are those of its first line with `role:`; a rule with none
+            // (written on kinds or patterns) is always built in.
+            let roles = text
+                .lines()
+                .find_map(|l| l.split_once("role:").map(|(_, r)| r));
+            let Some(roles) = roles else { return true };
+            let mut names = roles
+                .split(|c: char| !(c.is_alphanumeric() || c == '-'))
+                .filter(|n| !n.is_empty());
+            names.any(|n| !grammar.nodes_with_tag(n).is_empty())
+        })
+        // A grammar without `roles` gets the shared rules that its `rule` rows name.
+        .filter(|p| {
+            grammar.requires_roles
+                || grammar
+                    .rule_row(&p.file_stem().unwrap().to_string_lossy())
+                    .is_some()
+        })
+        .collect();
     shared_files.sort();
     let shared_items: String = shared_files
         .iter()

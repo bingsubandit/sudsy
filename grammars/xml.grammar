@@ -3,6 +3,7 @@
 
 language xml 5 "XML"
 comments block "<!--" "-->"
+rule no-floating-version floating "^Version\\s*=\\s*[\\x22\\x27][^\\x22\\x27]*\\*" owner "^<Package(Reference|Version)\\b"
 suppress disable-next-line "sudsy-disable-next-line"
 suppress disable-line "sudsy-disable-line"
 suppress disable "sudsy-disable"

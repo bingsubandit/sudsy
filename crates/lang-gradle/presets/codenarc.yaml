@@ -1,0 +1,9 @@
+# The CodeNarc rules that read a build script (docs/ai/formatting/gradle.md).
+gradle:
+  lint:
+    rules:
+      unused-import: warn
+      unused-variable: warn
+      unreachable-code: warn
+      no-empty-block: warn
+      no-gstring-map-key: warn

@@ -1,0 +1,11 @@
+// What Gradle says to the shared scope rules: names are bare tokens, so every name that is not a
+// declaration is a use, and the rows list the declarations: an import, and a `def`/`var` name with a value (the parser
+// splits a typed declaration, so only that form is sure). The reads inside a GString: `${...}` (`interpolated`), `$name`
+// (`expansions`). Format: core_semantics::scopes::rows.
+names Ident
+bare
+interpolated String "${"
+
+ImportDeclaration inert declares=value|type|import token=last/?has-token.".*":skip:declare
+LocalVariableDeclaration declares=value|let
+VariableDeclarator token=first/?has-token."=":declare:skip

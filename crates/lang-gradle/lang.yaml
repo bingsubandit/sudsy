@@ -3,6 +3,8 @@ grammar-crate: tree-sitter-groovy
 grammar-path: grammars/tree-sitter-groovy
 extensions: [gradle]
 formatter: FORMAT
+families: "&[scope::FAMILY]"
+presets: [modernize, codenarc]
 composite:
   text: Text
   continuation: true
@@ -17,13 +19,15 @@ options:
   - end_of_line
   - max_blank_lines: [1, "Largest number of blank lines kept between lines."]
 mapping:
-  same: 'closure closure_parameters block class_body enum_body switch_block argument_list list_literal map_literal map_entry named_argument command_chain parenthesized_expression formal_parameters binary_expression unary_expression ternary_expression elvis_expression range_expression spread_arguments switch_case'
+  same: 'closure closure_parameters block class_body enum_body switch_block argument_list list_literal map_literal map_entry named_argument command_chain parenthesized_expression formal_parameters binary_expression unary_expression ternary_expression elvis_expression range_expression spread_arguments switch_case import_declaration local_variable_declaration variable_declarator if_statement assert_statement return_statement throw_statement break_statement continue_statement expression_statement method_declaration method_invocation assignment_expression field_access try_statement catch_clause'
   Document: source_file
   Comment: 'line_comment block_comment groovydoc_comment shebang'
   Ident: 'identifier type_identifier'
   Number: number_literal
   String: 'string_literal quoted_identifier'
-  Keyword: 'boolean_literal null_literal abstract as assert break case catch class continue def default do else enum extends final finally for if implements import in instanceof interface native new non-sealed package permits pipeline private protected public return sealed static strictfp super switch synchronized throw throws trait transient try var volatile while yield !instanceof !in'
+  Boolean: boolean_literal
+  'Null': null_literal
+  Keyword: 'abstract as assert break case catch class continue def default do else enum extends final finally for if implements import in instanceof interface native new non-sealed package permits pipeline private protected public return sealed static strictfp super switch synchronized throw throws trait transient try var volatile while yield !instanceof !in'
   Op: '! != !== % %= & && &= * ** **= *= + ++ += - -- -= /= < <= <=> << <<= == === ==> ==~ =~ > >= >> >>= >>> >>>= ?: ?= ^ ^= | |= || ~ .. ..< <.. <..< ... @ *: $/ /$ #!'
   Assign: '= += -= *= /= %= **= <<= >>= >>>= &= ^= |= ?= ||= &&='
   Dot: '. ?. ??. *. .& .@ ::'

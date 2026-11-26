@@ -4592,6 +4592,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports an operation without a name (`{ a }`, `query { a }`)."
             },
+            "no-apply-plugin": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `apply plugin: 'name'`, the legacy way to apply a plugin."
+            },
             "no-apt": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `RUN` that calls `apt`; use `apt-get` or `apt-cache` instead."
@@ -4684,6 +4688,14 @@
                 }
               ]
             },
+            "no-build-dir": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `buildDir` (also `project.buildDir` and `$buildDir` in a double-quoted string)."
+            },
+            "no-build-tools-version": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `buildToolsVersion '34.0.0'` in the `android` block."
+            },
             "no-case-declarations": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `let`, `const`, `using`, function or class declared directly in a `case` or `default` clause."
@@ -4707,6 +4719,10 @@
             "no-compare-neg-zero": {
               "$ref": "#/definitions/rule",
               "description": "Reports a comparison with `-0` on either side of `==`, `!=`, `===`, `!==`, `<`, `<=`, `>` or `>=`."
+            },
+            "no-compile-sdk-version": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `compileSdkVersion 34` in the `android` block."
             },
             "no-conditional-comment": {
               "$ref": "#/definitions/rule",
@@ -5228,9 +5244,41 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a `case` whose statements can reach the next `case` or `default`, and an empty one that is followed by a blank line, without a comment that says `falls through` before the next one (or at the end of its block)."
             },
-            "no-floating-package-version": {
-              "$ref": "#/definitions/rule",
-              "description": "Reports a `PackageReference` or `PackageVersion` whose `Version` contains `*` (`1.*`), on the attribute."
+            "no-floating-version": {
+              "description": "Reports a dependency whose version is a range or wildcard that resolves to the newest match on the day of the build (`1.*` in a NuGet `PackageReference`, `1.+` or `latest.release` in a Gradle dependency notation).",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "floating": {
+                          "default": "^\\w+\\s*\\(?\\s*[\\x22\\x27][^\\x22\\x27\\s:]+:[^\\x22\\x27\\s:]+:([^\\x22\\x27\\s:]*\\+|latest\\.(release|integration))(:[^\\x22\\x27\\s:]+)?[\\x22\\x27]",
+                          "description": "A regular expression for a declaration whose version floats",
+                          "type": "string"
+                        },
+                        "owner": {
+                          "default": "^",
+                          "description": "A regular expression for what a declaration must sit in",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "no-flow-mappings": {
               "description": "Reports a flow mapping (`{a: 1}`), on its opening brace.",
@@ -5413,6 +5461,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a variable in the `global:` scope, other than the special variables that PowerShell and its tools use (`$global:LASTEXITCODE`, `$global:ErrorActionPreference`, `$global:PSDefaultParameterValues` and so on)."
             },
+            "no-gstring-map-key": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a map entry or a named argument whose key is a double-quoted string with `$` (`[\"${a}\": 1]`)."
+            },
             "no-hard-tabs": {
               "description": "Reports a tab character in a line; a run of tabs is one report.",
               "oneOf": [
@@ -5508,6 +5560,14 @@
               "$ref": "#/definitions/rule",
               "description": "Reports unusual whitespace characters: vertical tab, form feed, no-break space (U+00A0), the spaces and zero-width characters U+2000 to U+200B, line and paragraph separators, narrow no-break space, medium mathematical space, ideographic space, and a byte order mark that is not at the start of the file."
             },
+            "no-java-convention-compatibility": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `sourceCompatibility = ...` or `targetCompatibility = ...` at the top of a script or directly in `allprojects { }` / `subprojects { }`."
+            },
+            "no-jcenter": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports the `jcenter()` repository, written `jcenter()` or `jcenter { ... }`."
+            },
             "no-late-at-sign": {
               "$ref": "#/definitions/rule",
               "description": "Reports an `@` in front of a command on any line but the first."
@@ -5515,6 +5575,14 @@
             "no-latest-tag": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `FROM` whose image has the tag `latest` (`alpine:latest`)."
+            },
+            "no-legacy-archive-property": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports an assignment of `baseName`, `classifier`, `appendix` or `extension` (`baseName = 'a'`, `jar.baseName = 'a'`) inside the block of an archive task (`jar`, `war`, `zip`, `tar`, a task of type `Jar`) or on one, the properties of archive tasks that Gradle 8 removed."
+            },
+            "no-lint-options": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `lintOptions { }` block of the Android Gradle Plugin."
             },
             "no-lone-template": {
               "$ref": "#/definitions/rule",
@@ -5539,6 +5607,10 @@
             "no-magic-numbers": {
               "$ref": "#/definitions/rule",
               "description": "Reports a number of three or more digits written in a command, which is not one of the common values (powers of two, ports, a thousand, a day in seconds) the rule lists."
+            },
+            "no-main-class-name": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports an assignment to `mainClassName`, the property of the `application` plugin, at the top of a script or in `application { }`."
             },
             "no-maintainer": {
               "$ref": "#/definitions/rule",
@@ -5750,6 +5822,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports every `#region` outside a block (a region inside a block is `no-region-in-body`'s), also in disabled `#if` branches."
             },
+            "no-removed-configuration": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a dependency declared in a `dependencies` block with a configuration that Gradle 7 removed: `compile`, `testCompile`, `runtime`, `testRuntime`, and the Android `debugCompile`, `releaseCompile` and `androidTestCompile`."
+            },
             "no-require-imports": {
               "$ref": "#/definitions/rule",
               "description": "Reports a call of the global `require(...)` and an `import x = require(...)`."
@@ -5856,6 +5932,10 @@
             "no-target-blank": {
               "$ref": "#/definitions/rule",
               "description": "Reports a link to another site with `target=\"_blank\"` that does not have both `noopener` and `noreferrer` in its `rel`."
+            },
+            "no-tasks-create": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `tasks.create(...)` and `project.tasks.create(...)`."
             },
             "no-textarea-mustache": {
               "$ref": "#/definitions/rule",
@@ -6003,6 +6083,10 @@
             "no-unused-anchors": {
               "$ref": "#/definitions/rule",
               "description": "Reports an anchor that no alias refers to."
+            },
+            "no-upload-archives": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports an `uploadArchives { }` block and `apply plugin: 'maven'`."
             },
             "no-use-v-else-with-v-for": {
               "$ref": "#/definitions/rule",
@@ -8841,7 +8925,7 @@
             },
             "unused-import": {
               "$ref": "#/definitions/rule",
-              "description": "Reports an import whose name the file does not use."
+              "description": "Reports an `import` whose name nothing in the script reads, also not inside a double-quoted string (`\"${Name}\"`)."
             },
             "unused-local-variable": {
               "$ref": "#/definitions/rule",
@@ -11769,6 +11853,8 @@
           "preset:dockerfile/hadolint",
           "preset:github-actions/actionlint",
           "preset:go/revive",
+          "preset:gradle/codenarc",
+          "preset:gradle/modernize",
           "preset:graphql/graphql-eslint-recommended",
           "preset:hcl/tflint-recommended",
           "preset:html/angular-eslint-recommended",

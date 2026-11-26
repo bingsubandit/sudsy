@@ -99,7 +99,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
 | C / C++ | ███████░░░ 77% clang-format | not measured clang-tidy | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 36% PHPStan | In progress |
-| Gradle | █████████░ 99% stable · ████████░░ 87% agreement · no reference tool | 30 rules · no reference tool | In progress |
+| Gradle | █████████░ 99% stable · ████████░░ 87% agreement · no reference tool | 48 rules · ████████░░ 85% checklist · █████████░ 97% precision · no reference tool | In progress |
 
 Notes: clang-format (C / C++): line wrapping is not compared. PHP-CS-Fixer (PHP): measured with the `@PER-CS` rule set (the default of PHP-CS-Fixer 3 is `@PSR12`, which `@PER-CS` contains).
 
