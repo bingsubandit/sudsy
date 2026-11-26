@@ -488,9 +488,10 @@
   lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no maintained tool found"}
 - language: Mako
   gh: 156907
-  parser: ~1.5 # hand-written: only grammar found has 1 star
-  format: {tool: "none found", gain: ~1.0, cost: {layout: width, parts: 1, est: true}, why: "no maintained tool found"}
-  lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no maintained tool found"}
+  note: "*.mako; evidence in docs/ai/design/mako.md"
+  parser: ~1.2 # tree-sitter: sbaldasty/tree-sitter-mako (1 star, MIT, pushed 2025-08-13); not measured
+  format: {tool: "none found", gain: ~1.0, cost: {layout: whitespace, parts: 1, est: true}, why: "no Mako formatter; djlint --profile mako is partial (HTML layout; it would change 864 of 907 files it checks); decision table on 1,036 files in 830 projects, pooled held-out agreement 96.0% (74,621 of 77,769); blanks, indent and line endings decided (docs/ai/design/mako.md)"}
+  lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no Mako linter found; Mako's own compiler rejects 5 of 1,035 files; checklist of 14 entries, 4 with findings on the corpus (2 to 595 occurrences)"}
 - language: Marko
   gh: 118
   parser: ~1.5 # hand-written: only grammars found have 2 stars
