@@ -12,6 +12,8 @@ pub const INDENT_CASE_LABELS: core_config::OptId = core_config::opt::INDENT_CASE
 #[allow(dead_code)]
 pub const INDENT_GOTO_LABELS: core_config::OptId = core_config::opt::INDENT_GOTO_LABELS;
 #[allow(dead_code)]
+pub const ATTACH_CASE_BLOCK: core_config::OptId = core_config::opt::ATTACH_CASE_BLOCK;
+#[allow(dead_code)]
 pub const KEEP_LEADING_BLANK_LINES: core_config::OptId = core_config::opt::KEEP_LEADING_BLANK_LINES;
 #[allow(dead_code)]
 pub const INDENT_PP_DIRECTIVES: core_config::OptId = core_config::opt::INDENT_PP_DIRECTIVES;
@@ -93,24 +95,31 @@ pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
     ("access_modifier_outdent", "outdent", "", &["AccessSpecifier"]),
     ("indent_case_labels", "outdent_unless", "", &["CaseClause"]),
     ("indent_goto_labels", "flush_unless", "", &["LabelStatement"]),
+    ("attach_case_block", "attach_block", "", &["CaseClause"]),
+    ("attach_case_block", "join_after_block", "", &["BreakStatement"]),
     ("indent_pp_directives", "tight", "", &["Directive"]),
     ("namespace_indentation", "flat", "", &["NamespaceDeclaration"]),
+    ("pointer_alignment", "binary_after", "", &["Number"]),
     ("pointer_alignment", "binary_cast", "", &["Rpar"]),
     ("pointer_alignment", "binary_clear", "", &["Assignment", "ReturnStatement", "Binary", "Ternary", "Index", "Unary", "Arguments", "Parenthesized", "Condition"]),
+    ("pointer_alignment", "binary_line", "", &["Directive"]),
+    ("pointer_alignment", "binary_line_name", "", &["Ident"]),
     ("pointer_alignment", "binary_node", "", &["Binary"]),
     ("pointer_alignment", "binary_operand", "", &["MemberAccess"]),
     ("pointer_alignment", "binary_spaced", "", &["Amp"]),
     ("pointer_alignment", "pointer", "", &["Star", "Amp", "AmpAmp"]),
     ("pointer_alignment", "pointer_bare", "", &["TemplateArguments"]),
+    ("pointer_alignment", "pointer_bare_end", "", &["Lpar"]),
     ("pointer_alignment", "pointer_end", "", &["Greater", "GreaterGreater", "Comma", "Rpar", "Ellipsis", "Lsqb"]),
-    ("pointer_alignment", "pointer_in", "", &["Parameter", "FunctionDeclaration", "SimpleDeclaration", "TemplateArguments", "Line", "Directive", "DeclaratorGroup", "Condition"]),
+    ("pointer_alignment", "pointer_in", "", &["Parameter", "FunctionDeclaration", "SimpleDeclaration", "TemplateArguments", "Line", "Directive", "DeclaratorGroup", "Condition", "Lambda", "QualifiedName"]),
     ("pointer_alignment", "pointer_in_loose", "", &["ForStatement", "CatchClause", "Parameter"]),
     ("pointer_alignment", "pointer_in_under", "", &["Cast"]),
+    ("pointer_alignment", "pointer_member", "", &["ColonColon"]),
     ("pointer_alignment", "pointer_name", "", &["Ident", "Keyword", "Lsqb"]),
     ("pointer_alignment", "pointer_not_name", "", &["Captures"]),
     ("pointer_alignment", "pointer_ref", "", &["Amp", "AmpAmp"]),
     ("pointer_alignment", "pointer_shaped", "", &["ParenGroup"]),
-    ("pointer_alignment", "pointer_type", "", &["Ident", "Keyword", "Greater", "GreaterGreater"]),
+    ("pointer_alignment", "pointer_type", "", &["Ident", "Keyword", "Greater", "GreaterGreater", "ColonColon"]),
     ("pointer_alignment", "tight_after", "", &["Ellipsis"]),
     ("pointer_alignment", "tight_behind", "", &["Star", "Amp", "AmpAmp"]),
     ("space_after_cast", "cast_close", "", &["Rpar"]),
@@ -181,6 +190,10 @@ pub fn indent_case_labels(o: &core_config::ResolvedOptions) -> bool {
 #[allow(dead_code)]
 pub fn indent_goto_labels(o: &core_config::ResolvedOptions) -> bool {
     o.flag(INDENT_GOTO_LABELS, true)
+}
+#[allow(dead_code)]
+pub fn attach_case_block(o: &core_config::ResolvedOptions) -> bool {
+    o.flag(ATTACH_CASE_BLOCK, true)
 }
 #[allow(dead_code)]
 pub fn keep_leading_blank_lines(o: &core_config::ResolvedOptions) -> bool {
@@ -440,6 +453,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::int(core_config::opt::ACCESS_MODIFIER_OUTDENT, 2, (0, 16), "Columns `public:`, `private:` and `protected:` are outdented from the members of their class."),
         core_config::OptionDef::boolean(core_config::opt::INDENT_CASE_LABELS, false, "Indent `case` labels one level inside their `switch`."),
         core_config::OptionDef::boolean(core_config::opt::INDENT_GOTO_LABELS, true, "A goto label stands one indent left of the statements of its block; when false it starts at column 0."),
+        core_config::OptionDef::boolean(core_config::opt::ATTACH_CASE_BLOCK, true, "The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`)."),
         core_config::OptionDef::boolean(core_config::opt::KEEP_LEADING_BLANK_LINES, true, "Blank lines at the start of the file stay."),
         core_config::OptionDef::choice(core_config::opt::INDENT_PP_DIRECTIVES, &["none", "keep"], "none", "A preprocessor directive starts with `#` directly followed by its keyword (`none`) or keeps the blanks written after the `#` (`keep`)."),
         core_config::OptionDef::choice(core_config::opt::NAMESPACE_INDENTATION, &["none", "inner", "all"], "none", "Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`."),

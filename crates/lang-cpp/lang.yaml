@@ -30,6 +30,12 @@ options:
       doc: "A goto label stands one indent left of the statements of its block; when false it starts at column 0."
       kinds:
         flush_unless: [LabelStatement]
+  - attach_case_block:
+      default: true
+      doc: "The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`)."
+      kinds:
+        attach_block: [CaseClause]
+        join_after_block: [BreakStatement]
   - keep_leading_blank_lines:
       default: true
       doc: "Blank lines at the start of the file stay."
@@ -53,14 +59,16 @@ options:
         tight_after: [Ellipsis]
         tight_behind: [Star, Amp, AmpAmp]
         pointer: [Star, Amp, AmpAmp]
-        pointer_in: [Parameter, FunctionDeclaration, SimpleDeclaration, TemplateArguments, Line, Directive, DeclaratorGroup, Condition]
+        pointer_in: [Parameter, FunctionDeclaration, SimpleDeclaration, TemplateArguments, Line, Directive, DeclaratorGroup, Condition, Lambda, QualifiedName]
         pointer_in_under: [Cast]
         pointer_in_loose: [ForStatement, CatchClause, Parameter]
         pointer_ref: [Amp, AmpAmp]
-        pointer_type: [Ident, Keyword, Greater, GreaterGreater]
+        pointer_type: [Ident, Keyword, Greater, GreaterGreater, ColonColon]
         pointer_name: [Ident, Keyword, Lsqb]
         pointer_not_name: [Captures]
         pointer_bare: [TemplateArguments]
+        pointer_bare_end: [Lpar]
+        pointer_member: [ColonColon]
         pointer_end: [Greater, GreaterGreater, Comma, Rpar, Ellipsis, Lsqb]
         pointer_shaped: [ParenGroup]
         binary_node: [Binary]
@@ -68,6 +76,9 @@ options:
         binary_cast: [Rpar]
         binary_spaced: [Amp]
         binary_operand: [MemberAccess]
+        binary_after: [Number]
+        binary_line: [Directive]
+        binary_line_name: [Ident]
   - pointer_qualifier_words:
       kind: "words"
       default: [noexcept, override, final, requires]

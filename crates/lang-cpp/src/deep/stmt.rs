@@ -320,6 +320,18 @@ impl Cx<'_> {
         let end = self.simple_end(a, b);
         let semi = end > a && self.c[end - 1].kind == k::SEMI;
         let stop = if semi { end - 1 } else { end };
+        // (`for_each_bit(i, m) f(i);`: a macro call that heads a loop, and the expression of its
+        // body: a name behind the call, or a `*` on the next line)
+        if scope == BODY && self.is(a, b, k::IDENT) && self.open(a + 1, b, k::LPAR) {
+            let g = self.skip(a + 1);
+            let broken = g < stop
+                && self.src[self.c[g - 1].end as usize..self.c[g].start as usize].contains('\n');
+            if g < stop && (self.is(g, b, k::IDENT) || (self.is(g, b, k::STAR) && broken)) {
+                self.expression(a, g);
+                self.expression(g, stop);
+                return (end, None);
+            }
+        }
         let mut p = a;
         loop {
             let e = self.expression(p, stop);

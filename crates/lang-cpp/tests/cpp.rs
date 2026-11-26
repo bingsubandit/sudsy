@@ -1400,3 +1400,80 @@ fn an_attribute_macro_behind_the_parameters_belongs_to_the_declaration() {
         "void g(int a) __attr_x__(1);\nvoid g2(int a) MY_MACRO {}\nvoid m(int a);\n"
     );
 }
+
+/// A block that starts a `case` body opens on the label's line and a `break` after it joins its `}`.
+#[test]
+fn a_case_block_opens_on_the_label_and_the_break_joins_its_brace() {
+    let src = "void f(int x) {\n  switch (x) {\n  case 1:\n  {\n    g();\n  }\n  break;\n  case 2:\n    break;\n  }\n}\n";
+    assert_eq!(
+        fmt(src),
+        "void f(int x) {\n  switch (x) {\n  case 1: {\n    g();\n  } break;\n  case 2:\n    break;\n  }\n}\n"
+    );
+}
+
+/// A comment before the `(` of a cast, inside the same group, does not make the cast an operand.
+#[test]
+fn a_comment_before_a_cast_leaves_the_cast_tight() {
+    let src = "int t[] = {\n  /* c */\n  (unsigned int) -1,\n};\n";
+    assert_eq!(
+        fmt(src),
+        "int t[] = {\n    /* c */\n    (unsigned int)-1,\n};\n"
+    );
+}
+
+/// A cast to a qualified type touches its operand; a name with an attribute macro behind it is one declarator.
+#[test]
+fn qualified_casts_and_attribute_macros_behind_a_declarator_name() {
+    let src = "int k = (std::size_t) -1;\nvoid *q = (const ns::T **) &p;\nstatic u64 size __initdata = (256ULL<<20);\n";
+    assert_eq!(
+        fmt(src),
+        "int k = (std::size_t)-1;\nvoid *q = (const ns::T **)&p;\nstatic u64 size __initdata = (256ULL << 20);\n"
+    );
+}
+
+/// A `*` or `&` behind a number is an operator, also in an argument the parse leaves opaque.
+#[test]
+fn a_mark_behind_a_number_is_an_operator() {
+    let src = "static DEFINE_STATE(r, 60*HZ, 2);\nCHECK(_kill, 2*sizeof(int));\n";
+    assert_eq!(
+        fmt(src),
+        "static DEFINE_STATE(r, 60 * HZ, 2);\nCHECK(_kill, 2 * sizeof(int));\n"
+    );
+}
+
+/// The `*` of a member pointer touches the `::` before it; `Operator` is a name, not the keyword; the
+/// mark of a conversion operator and a mark before `const *` in template arguments are declarators.
+#[test]
+fn a_member_pointer_star_touches_its_colons() {
+    let src = "void visit(void (C::*f)(int));\nbool b = Operator == tok::a;\nstruct A {\n  operator T &();\n};\nit<Value *const *> g;\nauto r = static_cast<decltype(ex) &&>(ex);\n";
+    assert_eq!(fmt(src), src);
+}
+
+/// In a macro body a group of one name before a `*` or `&` and a name is an operand; a keyword type stays a cast.
+#[test]
+fn a_parenthesized_name_in_a_macro_body_is_an_operand() {
+    let src =
+        "#define LVL_SHIFT(n) ((n)*LVL_CLK_SHIFT)\n#define A(x) ((int)*x)\n#define B(x) &a_##x.b\n";
+    assert_eq!(
+        fmt(src),
+        "#define LVL_SHIFT(n) ((n) * LVL_CLK_SHIFT)\n#define A(x) ((int)*x)\n#define B(x) &a_##x.b\n"
+    );
+}
+
+/// `void name(...)` in a body or a macro body declares a function: its marks are declarators.
+#[test]
+fn a_void_function_declared_in_a_body_has_parameters() {
+    let src = "void f() {\n  void visit(T &N);\n  extern int get(T *, sqlite3 **);\n  for_each(cpu)\n    *ptr(c, cpu) = 0;\n}\n#define H(C) void visit##C(const C &N);\nstd::function<T *(void)> create;\n";
+    assert_eq!(fmt(src), src);
+}
+
+/// The statement after a macro call that heads a loop is read (`e-s` becomes `e - s`); a string
+/// behind a macro call stands apart from it.
+#[test]
+fn the_body_of_a_macro_loop_is_read_and_a_string_behind_a_call_stands_apart() {
+    let src = "void f() {\n  for_each(x) set(c, e-s);\n  g(STR(A)\"b\", (char *)\"c\");\n}\nstd::vector<W *> &order();\n";
+    assert_eq!(
+        fmt(src),
+        "void f() {\n  for_each(x) set(c, e - s);\n  g(STR(A) \"b\", (char *)\"c\");\n}\nstd::vector<W *> &order();\n"
+    );
+}

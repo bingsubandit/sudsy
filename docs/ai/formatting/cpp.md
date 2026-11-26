@@ -52,6 +52,7 @@ Trailing comments follow `spaces_before_trailing_comments` and, with `align_trai
 | `access_modifier_outdent` | int 0-16 | `2` | Columns `public:`, `private:` and `protected:` are outdented from the members of their class. |
 | `indent_case_labels` | bool | `false` | Indent `case` labels one level inside their `switch`. |
 | `indent_goto_labels` | bool | `true` | A goto label stands one indent left of the statements of its block; when false it starts at column 0. |
+| `attach_case_block` | bool | `true` | The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`). |
 | `keep_leading_blank_lines` | bool | `true` | Blank lines at the start of the file stay. |
 | `indent_pp_directives` | `none`, `keep` | `none` | A preprocessor directive starts with `#` directly followed by its keyword (`none`) or keeps the blanks written after the `#` (`keep`). |
 | `namespace_indentation` | `none`, `inner`, `all` | `none` | Indent the contents of namespaces: `none`, only namespaces nested in another (`inner`), or `all`. |

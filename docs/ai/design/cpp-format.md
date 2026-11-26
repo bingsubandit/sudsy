@@ -1,7 +1,7 @@
 # C/C++ format: plan to 85%
 
-Reference: clang-format 20.1.8, 6,639 files. Equal now: 5,241 (78.9%) under the comparison with short bodies as wraps
-(4,668 under the old one: +159 comes from the comparison, none from the formatter). 85% is 5,644 (403 more).
+Reference: clang-format 20.1.8, 6,639 files. Equal now: 5,306 (79.9%) under the comparison with short bodies as wraps
+(4,668 under the old one: +159 comes from the comparison, none from the formatter). 85% is 5,644 (338 more).
 
 The plan has two contents: differences the comparison should not count (A), and the class-a work that takes the rest to
 85% (B). The classification covers every gap record of the 1,812 differing files (73,252 records: 53,916 a, 7,462 b,
@@ -94,3 +94,11 @@ Order of the build: R items and kind sets first (they convert almost fully), the
   directives and function-pointer groups hold declarator marks, `a[i-1]` gets blanks. 4,607 to 4,668.
 - List hug (comments in lists): 4,607 to 4,641 (50 won, 16 lost). Not landed, branch `cpp-hug-list`.
 - Comparison: short bodies as wraps where the style's option permits the join. 4,668 to 4,827 (+159).
+- Declarator marks and casts: a `case` block opens on its label and `} break;` joins (`attach_case_block`), a comment
+  before a cast's `(`, qualified casts, a member pointer `(C::*f)`, a conversion operator's mark, `Value *const *` and
+  `decltype(x) &&` and `T *(int)` in template arguments, `(n) * X` in a macro body, a mark behind a number, a `T **)`
+  with no operand, `void f(T &x);` in a body, the expression behind a loop-macro head, `STR(x) "s"`, `Operator ==`
+  (a name, not `operator`). 5,241 to 5,306. Files with the gap, before and after: brace-own-line-in-source 113 to 93,
+  pointer-align 158 to 107, reference-align 161 to 119, binary-op-space 165 to 157, cast-space 153 to 144. Open: the
+  rest of these five are spread thin (124 files hold only them, no signature over 6 files); comment-line-indent-or-join
+  (578 files, 201 of them its own) is the next lever.

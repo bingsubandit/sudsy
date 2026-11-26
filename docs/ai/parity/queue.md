@@ -8,7 +8,7 @@ Weight: the primary tool of a leg 4, a popular secondary 1, any other 0.25. Orde
 
 | Language | Leg | Weight | Now | Points | Needs | Causes | Difficulty | Score | Measured on |
 |---|---|---|---|---|---|---|---|---|---|
-| C / C++ | format clang-format | 4 | 78.9% | 6.1 | 403 files | `brace-own-line-in-source` 361, `pointer-align` 328 | 6 | 4.04 | - |
+| C / C++ | format clang-format | 4 | 79.9% | 5.1 | 338 files | `comment-line-indent-or-join` 578 | 3 | 6.77 | - |
 | (not in support.yaml) | lint sqlfluff-fixtures | 0.25 | 59.6% | 25.4 | 11453 findings | `CP01` 4211, `LT01` 2805, `LT02` 2639, `PRS` 967 +1 more | 15 | 0.42 | 3cdf2fac |
 | C# | lint Roslynator | 0.25 | 0.4% | 84.6 | 9405 findings | `RCS1157` 1714, `RCS1118` 1422, `RCS1123` 827, `RCS1085` 760 +23 more | 75 | 0.28 | 66718389 |
 | Kubernetes manifests | lint kube-linter | 1 | 84.3% | 0.7 | 25 findings | `no-anti-affinity` 73 | 3 | 0.23 | 81899480 |
@@ -167,52 +167,52 @@ Lint: target 88.6% (53144 of 59979, 6835 missed, measured on f29ba2f0); rules by
 
 ## clang-format
 
-Format: unclassified 0 of 1398 differing files (0%).
-1. `brace-own-line-in-source` (361 files): a `{` on its own line in the source that clang-format attaches (a member function body, `extern "C"`, a lambda): the construct is not one of the `brace_wrapping` words Fix: check the `attach` kind sets for the member function in a class, the linkage specification and lines the deep parse leaves opaque
-2. `pointer-align` (328 files): `*` of a pointer declarator the tree does not show as one (a class head, a function type `void (*f)(int *)`, the arguments of `sizeof(void *)`, a declarator after a comma): clang-format puts it next to the name or the type (PointerAlignment), Sudsy keeps the source spacing Fix: pointer_alignment as [space] rows by parent kind (Declarator, Parameter, Cast); `a * b` stays an operator
-3. `reference-align` (300 files): `&` and `&&` of a reference declarator, the same as pointer-align Fix: the same rows as pointer-align for `&` and `&&`
-4. `comment-line-indent-or-join` (299 files): a comment on its own line (or right after `{`) whose indent or place differs: clang-format aligns it with the code it belongs to, Sudsy keeps the source indent Fix: comment_gap rows: a comment takes the indent of the next line of code in the shared comment engine
-5. `continuation-indent-of-non-wrap-line` (177 files): indent of a line that is not a wrap point: a label (`put:`) clang-format indents with its block, the body after a loop macro, the items of a macro argument list Fix: ForEachMacros and StatementMacros as lang.yaml word lists read by the shared role pass; labels by the indent_goto_labels rows
-6. `binary-op-space` (172 files): blanks around a binary operator (`a*b`, `x+1`, `0 ... N-1`, in a `#if` condition too): clang-format writes one blank on each side, Sudsy keeps the source Fix: [space] rows for the operators of Binary nodes; directive conditions need the expression parse of `#if` lines
-7. `angle-space` (152 files): blanks next to `<` and `>`: template brackets (`F<int>`, `template <typename...>`) and comparisons in `#if` conditions Fix: [space] rows by node (TemplateArguments, TemplateParameters, Binary); directive conditions as in binary-op-space
-8. `escaped-newline-align` (144 files): the `\` of a multi-line macro: the column it is padded to and the lines of the body clang-format re-wraps (AlignEscapedNewlines, ReflowComments off); Sudsy lays a body out as code but keeps the line breaks the author wrote inside a statement Fix: a payload mode of the shared directive layout that drops the source breaks inside a statement (a statement of the body is one flow, then wrapped)
-9. `comma-space` (132 files): blanks around `,` in macro parameter lists and in lists inside directives Fix: [space] Comma rows inside Directive nodes
-10. `statement-joined-by-reference` (106 files): the body after a loop-macro head (`for_each_vma(vmi, vma) stmt;`): clang-format keeps it on the line, Sudsy breaks it Fix: treat a MacroStatement from the ForEachMacros list as a loop head
-11. `statement-split-by-reference` (106 files): a statement or declarator part that clang-format puts on its own line (`) ;` after a macro call, attribute macros after `)`), Sudsy joins it Fix: StatementMacros and attribute macros as word lists; no rule needed for the others
-12. `cast-space` (96 files): blank after a C cast (`(T) x`): clang-format writes `(T)x` (SpaceAfterCStyleCast false) Fix: [space] row after the `)` of a Cast; Cast is opaque in the deep parse, so give it its parts
-13. `space-before-paren` (91 files): blank before `(`: `if(` and `for(`, `sizeof (`, `decltype (`, `foreach (`, macro names (SpaceBeforeParens) Fix: space_before_parens exists; add the keyword and macro word lists as rows (sizeof, alignof, decltype, co_await, ForEachMacros)
-14. `brace-own-line-in-reference` (89 files): a `{` clang-format puts on its own line (BraceWrapping of the style, also after a statement macro such as `for_each_cpu(i)`), Sudsy keeps it on the line Fix: a `name(args) {` is a function brace unless the name is in for_each_macros (done); what is left: the empty-body and init-list cases of the reference (`= {` after a wrap), `case X: {` and class heads wrapped by width
-15. `spacing-rare` (87 files): blanks next to `[` `]`, `.`, `->`, `::`, padding inside `( )`, unary operators, `;` and `...` Fix: one [space] row each
-16. `trailing-comment-spacing` (87 files): blanks before a trailing comment (SpacesBeforeTrailingComments) and the alignment of consecutive trailing comments Fix: align_trailing_comments run rules: where a run ends and how wide the pad is
-17. `braced-list-padding` (66 files): blanks inside braces of an initializer list (`{ 1, 2 }` against `{1, 2}`, `{ }` against `{}`; Cpp11BracedListStyle) Fix: [space] rows after `{` and before `}` of InitList nodes, one padding option
-18. `angle-brackets-merged-by-reference` (62 files): `> >` that clang-format writes `>>` (Standard: Latest; a token change) Fix: decide: join `> >` of closing template brackets (C++11 and later) in the printer, or let the comparison read both as equal
-19. `blank-before-close-brace` (58 files): a blank line before a `}`: clang-format removes it (KeepEmptyLinesAtTheEndOfBlocks off), Sudsy keeps up to max_blank_lines Fix: [blank] row: none before a `}` of a Block
-20. `ternary-colon-space` (39 files): GNU `a ?: b`: clang-format writes `?:`, Sudsy `? :` Fix: [space] row Question-Colon: no blank when adjacent
-21. `preprocessor-token-space` (26 files): blanks around `#` and `##` in a macro body Fix: [space] rows for Hash and HashHash inside Directive nodes
-22. `assignment-space` (25 files): blanks around `=` and compound assignments the parse does not see as an Assignment (designated initializers `.f=1`, default arguments) Fix: [space] rows for the initializer parts of Declarator and Parameter
-23. `format-off` (22 files): text under `clang-format off`: clang-format keeps it as written, Sudsy formats it Fix: read `clang-format off` and `on` as the ranges of the shared ignore mechanism (core-format ignore.rs foreign markers)
-24. `empty-body-braces` (17 files): an empty function body: clang-format keeps `{` and `}` on two lines when the `{` is on its own line (SplitEmptyFunction), Sudsy joins them to `{}` Fix: split_empty_braces (done for wrapped function, class, namespace); what is left: styles whose empty body is `{ }` or `{}` by their own rule
-25. `blank-lines-other` (16 files): other blank-line cases: after `{` of a block, before an access specifier (EmptyLineBeforeAccessModifier) Fix: [blank] rows, one option each
-26. `call-after-paren-space` (15 files): `(*fp) (args)` and `) (` of a call through a parenthesised name: clang-format writes `)(` Fix: [space] row Rpar-Lpar of a Call
-27. `sort-using-declarations` (14 files): `using` declarations that clang-format sorts (SortUsingDeclarations; a reorder of tokens) Fix: an option in shared Rust next to import ordering, or turn it off in the styles like SortIncludes
-28. `string-macro-space` (7 files): blank between a string literal and a macro name after it in C (`"a"B`, `"%"PRIx64`): clang-format writes one blank, Sudsy keeps the source Fix: [space] row String-Ident
-29. `token-change` (4 files): a token that differs between the outputs: a string literal clang-format splits where the comparison cannot join it, or a comment with trailing blanks (the tool's own artifacts; no token of Sudsy is changed or lost) Fix: none: the pairs are listed (62 `> >` as `>>` are their own gap, 14 are the using sort, the rest are two split strings and two comments); no meaning bug
+Format: unclassified 0 of 1333 differing files (0%).
+1. `comment-line-indent-or-join` (578 files): a comment on its own line (or right after `{`) whose indent or place differs: clang-format aligns it with the code it belongs to, Sudsy keeps the source indent Fix: comment_gap rows: a comment takes the indent of the next line of code in the shared comment engine
+2. `trailing-comment-spacing` (279 files): blanks before a trailing comment (SpacesBeforeTrailingComments) and the alignment of consecutive trailing comments Fix: align_trailing_comments run rules: where a run ends and how wide the pad is
+3. `continuation-indent-of-non-wrap-line` (223 files): indent of a line that is not a wrap point: a label (`put:`) clang-format indents with its block, the body after a loop macro, the items of a macro argument list Fix: ForEachMacros and StatementMacros as lang.yaml word lists read by the shared role pass; labels by the indent_goto_labels rows
+4. `binary-op-space` (157 files): blanks around a binary operator (`a*b`, `x+1`, `0 ... N-1`, in a `#if` condition too): clang-format writes one blank on each side, Sudsy keeps the source Fix: [space] rows for the operators of Binary nodes; directive conditions need the expression parse of `#if` lines
+5. `cast-space` (144 files): blank after a C cast (`(T) x`): clang-format writes `(T)x` (SpaceAfterCStyleCast false) Fix: [space] row after the `)` of a Cast; Cast is opaque in the deep parse, so give it its parts
+6. `spacing-rare` (124 files): blanks next to `[` `]`, `.`, `->`, `::`, padding inside `( )`, unary operators, `;` and `...` Fix: one [space] row each
+7. `reference-align` (119 files): `&` and `&&` of a reference declarator, the same as pointer-align Fix: the same rows as pointer-align for `&` and `&&`
+8. `braced-list-padding` (117 files): blanks inside braces of an initializer list (`{ 1, 2 }` against `{1, 2}`, `{ }` against `{}`; Cpp11BracedListStyle) Fix: [space] rows after `{` and before `}` of InitList nodes, one padding option
+9. `pointer-align` (107 files): `*` of a pointer declarator the tree does not show as one (a class head, a function type `void (*f)(int *)`, the arguments of `sizeof(void *)`, a declarator after a comma): clang-format puts it next to the name or the type (PointerAlignment), Sudsy keeps the source spacing Fix: pointer_alignment as [space] rows by parent kind (Declarator, Parameter, Cast); `a * b` stays an operator
+10. `angle-space` (103 files): blanks next to `<` and `>`: template brackets (`F<int>`, `template <typename...>`) and comparisons in `#if` conditions Fix: [space] rows by node (TemplateArguments, TemplateParameters, Binary); directive conditions as in binary-op-space
+11. `brace-own-line-in-source` (93 files): a `{` on its own line in the source that clang-format attaches (a member function body, `extern "C"`, a lambda): the construct is not one of the `brace_wrapping` words Fix: check the `attach` kind sets for the member function in a class, the linkage specification and lines the deep parse leaves opaque
+12. `space-before-paren` (84 files): blank before `(`: `if(` and `for(`, `sizeof (`, `decltype (`, `foreach (`, macro names (SpaceBeforeParens) Fix: space_before_parens exists; add the keyword and macro word lists as rows (sizeof, alignof, decltype, co_await, ForEachMacros)
+13. `comma-space` (83 files): blanks around `,` in macro parameter lists and in lists inside directives Fix: [space] Comma rows inside Directive nodes
+14. `statement-split-by-reference` (78 files): a statement or declarator part that clang-format puts on its own line (`) ;` after a macro call, attribute macros after `)`), Sudsy joins it Fix: StatementMacros and attribute macros as word lists; no rule needed for the others
+15. `brace-own-line-in-reference` (73 files): a `{` clang-format puts on its own line (BraceWrapping of the style, also after a statement macro such as `for_each_cpu(i)`), Sudsy keeps it on the line Fix: a `name(args) {` is a function brace unless the name is in for_each_macros (done); what is left: the empty-body and init-list cases of the reference (`= {` after a wrap), `case X: {` and class heads wrapped by width
+16. `empty-body-braces` (70 files): an empty function body: clang-format keeps `{` and `}` on two lines when the `{` is on its own line (SplitEmptyFunction), Sudsy joins them to `{}` Fix: split_empty_braces (done for wrapped function, class, namespace); what is left: styles whose empty body is `{ }` or `{}` by their own rule
+17. `ternary-colon-space` (66 files): GNU `a ?: b`: clang-format writes `?:`, Sudsy `? :` Fix: [space] row Question-Colon: no blank when adjacent
+18. `escaped-newline-align` (60 files): the `\` of a multi-line macro: the column it is padded to and the lines of the body clang-format re-wraps (AlignEscapedNewlines, ReflowComments off); Sudsy lays a body out as code but keeps the line breaks the author wrote inside a statement Fix: a payload mode of the shared directive layout that drops the source breaks inside a statement (a statement of the body is one flow, then wrapped)
+19. `statement-joined-by-reference` (52 files): the body after a loop-macro head (`for_each_vma(vmi, vma) stmt;`): clang-format keeps it on the line, Sudsy breaks it Fix: treat a MacroStatement from the ForEachMacros list as a loop head
+20. `blank-lines-other` (28 files): other blank-line cases: after `{` of a block, before an access specifier (EmptyLineBeforeAccessModifier) Fix: [blank] rows, one option each
+21. `preprocessor-token-space` (22 files): blanks around `#` and `##` in a macro body Fix: [space] rows for Hash and HashHash inside Directive nodes
+22. `assignment-space` (21 files): blanks around `=` and compound assignments the parse does not see as an Assignment (designated initializers `.f=1`, default arguments) Fix: [space] rows for the initializer parts of Declarator and Parameter
+23. `string-macro-space` (19 files): blank between a string literal and a macro name after it in C (`"a"B`, `"%"PRIx64`): clang-format writes one blank, Sudsy keeps the source Fix: [space] row String-Ident
+24. `blank-before-close-brace` (13 files): a blank line before a `}`: clang-format removes it (KeepEmptyLinesAtTheEndOfBlocks off), Sudsy keeps up to max_blank_lines Fix: [blank] row: none before a `}` of a Block
+25. `call-after-paren-space` (9 files): `(*fp) (args)` and `) (` of a call through a parenthesised name: clang-format writes `)(` Fix: [space] row Rpar-Lpar of a Call
+26. `angle-brackets-merged-by-reference` (7 files): `> >` that clang-format writes `>>` (Standard: Latest; a token change) Fix: decide: join `> >` of closing template brackets (C++11 and later) in the printer, or let the comparison read both as equal
+27. `token-change` (5 files): a token that differs between the outputs: a string literal clang-format splits where the comparison cannot join it, or a comment with trailing blanks (the tool's own artifacts; no token of Sudsy is changed or lost) Fix: none: the pairs are listed (62 `> >` as `>>` are their own gap, 14 are the using sort, the rest are two split strings and two comments); no meaning bug
+28. `format-off` (4 files): text under `clang-format off`: clang-format keeps it as written, Sudsy formats it Fix: read `clang-format off` and `on` as the ranges of the shared ignore mechanism (core-format ignore.rs foreign markers)
+29. `sort-using-declarations` (2 files): `using` declarations that clang-format sorts (SortUsingDeclarations; a reorder of tokens) Fix: an option in shared Rust next to import ordering, or turn it off in the styles like SortIncludes
 Ranked sets (greedy, `scripts/parity_gaps.py`: fix the causes from the top together; files equal after each):
-1. tokens GreaterGreater|Greater in TemplateArguments (e.g. `bool`): +58 files, 58 equal after it
-2. blank-lines Semi|Rbrace in Block (e.g. `; }`): +33 files, 91 equal after it
-3. spacing Rpar|Amp in Unary (e.g. `) &`): +30 files, 121 equal after it
-4. statement-join Rpar|Semi in EmptyStatement (e.g. `) ;`): +25 files, 146 equal after it
-5. spacing Ident|Star in ParenGroup (e.g. `S *`): +25 files, 171 equal after it
-6. brace-placement Rpar|Lbrace in Block (e.g. `) {`): +23 files, 194 equal after it
-7. indent Rpar|Ident in Call (e.g. `) makeProgress`): +21 files, 215 equal after it
-8. statement-join Rpar|Ident in Call (e.g. `) seq_printf`): +21 files, 236 equal after it
-9. brace-placement Lbrace|Rbrace in Block (e.g. `{ }`): +22 files, 258 equal after it
-10. spacing Star|Ident in Line (e.g. `* __folly_memcpy`): +21 files, 279 equal after it
-11. spacing Keyword|Star in ParenGroup (e.g. `int *`): +20 files, 299 equal after it
-12. spacing Star|Ident in ParenGroup (e.g. `* buf`): +22 files, 321 equal after it
-13. spacing Rpar|Lbrace in Block (e.g. `) {`): +20 files, 341 equal after it
-14. spacing Ident|Amp in ParenGroup (e.g. `A &`): +16 files, 357 equal after it
-15. spacing Ident|Lpar in DeclaratorGroup (e.g. `ReturnT (`): +15 files, 372 equal after it
+1. brace-placement Lbrace|Rbrace in Block: +13 files, 13 equal after it
+2. indent HeaderName|Tilde in Unary: +12 files, 25 equal after it
+3. brace-placement Rpar|Lbrace in Block: +11 files, 36 equal after it
+4. comment-gap Comment|Keyword in QualifiedName: +10 files, 46 equal after it
+5. comment-gap Keyword|Comment in Directive: +9 files, 55 equal after it
+6. comment-gap Semi|Comment in CaseClause: +8 files, 63 equal after it
+7. statement-join Lbrace|Dot in Directive: +8 files, 71 equal after it
+8. comment-gap Semi|Comment in Directive: +7 files, 78 equal after it
+9. spacing Comma|Lbrace in InitList: +7 files, 85 equal after it
+10. blank-lines Rpar|Lbrace in Block: +7 files, 92 equal after it
+11. comment-gap Comma|Comment in InitList: +6 files, 98 equal after it
+12. spacing Comma|Number in InitList: +8 files, 106 equal after it
+13. spacing Comma|Ident in InitList: +7 files, 113 equal after it
+14. brace-placement Rbrace|Keyword in IfStatement: +7 files, 120 equal after it
+15. spacing Ident|Question in Ternary: +6 files, 126 equal after it
 
 ## cmake-lint
 

@@ -564,8 +564,11 @@ pub struct SpaceRules {
     /// the nodes whose last name is an operand, never a type): the nodes of binary
     /// operations, the parents that prove a name `*` name (`T *x`, `a * b`) is a product, the tokens that may close
     /// a cast type (`(T)*p`, `(T)&x`: a mark between it and a name stays as written) and the marks that are an
-    /// operator, not a cast's, when the source has a blank behind them (`(a) & b`).
-    binary: [Vec<SyntaxKind>; 5],
+    /// operator, not a cast's, when the source has a blank behind them (`(a) & b`); `binary_after`: the tokens
+    /// after which a mark is an operator in any parent (`2*n` in an opaque macro argument); `binary_line`
+    /// and `binary_line_name`: the nodes (a preprocessor line) in which a group of one such name before a
+    /// mark and a name is an operand, not a cast (`#define S(n) ((n) * SIZE)`).
+    binary: [Vec<SyntaxKind>; 8],
     /// The `hug_brace_after` (what a `{` follows when its list hugs: a type name, not `=`).
     hug: [Vec<SyntaxKind>; 8],
 }
@@ -599,6 +602,10 @@ struct Pointer {
     /// Parents of a `names` or `end` token that make it neither (the `[` of a lambda's captures).
     not_named: Vec<SyntaxKind>,
     bare: Vec<SyntaxKind>,
+    /// Tokens that also end a type in a `bare` parent (the `(` of a function type, `function<T *(int)>`).
+    bare_end: Vec<SyntaxKind>,
+    /// Tokens a mark touches whatever the alignment (the `::` of a member pointer, `C::*f`).
+    member: Vec<SyntaxKind>,
     end: Vec<SyntaxKind>,
     shaped: Vec<SyntaxKind>,
 }
@@ -729,6 +736,8 @@ impl SpaceRules {
                 names: set("pointer_name"),
                 not_named: set("pointer_not_name"),
                 bare: set("pointer_bare"),
+                bare_end: set("pointer_bare_end"),
+                member: set("pointer_member"),
                 end: set("pointer_end"),
                 shaped: set("pointer_shaped"),
             },
@@ -738,6 +747,9 @@ impl SpaceRules {
                 "binary_cast",
                 "binary_spaced",
                 "binary_operand",
+                "binary_after",
+                "binary_line",
+                "binary_line_name",
             ]
             .map(set),
             cast: [
@@ -842,10 +854,23 @@ impl SpaceRules {
             || (p.shaped.contains(&parent.kind()) && self.declares(&parent));
         let ends_type = || {
             let mut next = next_code(t);
-            while let Some(x) = next.as_ref().filter(|x| p.marks.contains(&x.kind())) {
+            // (marks and, in a `bare` parent, the type words between them, `Value *const *>`,
+            // lead on to the end)
+            let more = |x: &SyntaxToken| {
+                p.marks.contains(&x.kind())
+                    || (p.bare.contains(&parent.kind())
+                        && p.types.contains(&x.kind())
+                        && p.names.contains(&x.kind())
+                        && next_code(x).is_some_and(|y| p.marks.contains(&y.kind())))
+            };
+            while let Some(x) = next.as_ref().filter(|x| more(x)) {
                 next = next_code(x);
             }
-            next.is_some_and(|x| p.end.contains(&x.kind()) && !self.not_named(&x))
+            next.is_some_and(|x| {
+                (p.end.contains(&x.kind())
+                    || (p.bare.contains(&parent.kind()) && p.bare_end.contains(&x.kind())))
+                    && !self.not_named(&x)
+            })
         };
         if !known && !ends_type() {
             return false;
@@ -854,7 +879,10 @@ impl SpaceRules {
         while let Some(x) = prev.as_ref().filter(|x| p.marks.contains(&x.kind())) {
             prev = prev_code(x);
         }
-        if !prev.is_some_and(|x| p.types.contains(&x.kind()) && x.text() != "operator") {
+        // (in a parent of `bare` a mark that ends the type is a declarator behind any token,
+        // `decltype(x) &&>`)
+        let bare = p.bare.contains(&parent.kind()) && ends_type();
+        if !bare && !prev.is_some_and(|x| p.types.contains(&x.kind()) && x.text() != "operator") {
             return false;
         }
         if p.refs.contains(&t.kind()) && next_code(t).is_some_and(|x| p.marks.contains(&x.kind())) {
@@ -915,7 +943,8 @@ impl SpaceRules {
             return None;
         }
         if self.is_mark(b) {
-            return Some(if self.is_mark(a) { false } else { before });
+            let tight = self.is_mark(a) || self.pointer.member.contains(&a.kind());
+            return Some(!tight && before);
         }
         // (`T &...args` against `T&... args`: the pack's `...` after a mark takes the mark's side)
         (self.is_name(b) && (self.is_mark(a) || self.tight_gap(a))).then_some(after)
@@ -931,6 +960,14 @@ impl SpaceRules {
                 && t.parent()
                     .is_some_and(|n| self.binary[0].contains(&n.kind()))
         };
+        // (a mark behind a `binary_after` token, `2*n`, is an operator wherever it stands)
+        let after = |t: &SyntaxToken| {
+            p.marks.contains(&t.kind())
+                && prev_code(t).is_some_and(|x| self.binary[5].contains(&x.kind()))
+        };
+        if after(a) || after(b) || self.line_operand(a) || self.line_operand(b) {
+            return Some(true);
+        }
         let mark = match (binary(a), binary(b)) {
             (true, false) => a,
             (false, true) => b,
@@ -942,6 +979,10 @@ impl SpaceRules {
             .and_then(|n| n.parent())
             .is_some_and(|n| self.binary[1].contains(&n.kind()));
         let (l, r) = (left.kind(), right.kind());
+        // (a mark between a mark and the end of a type, `T **)`, has no operand behind it)
+        if p.marks.contains(&l) && p.end.contains(&r) {
+            return None;
+        }
         // (the `)` of a group of only a type's tokens before a name ends a cast and the operator
         // touches it; the `)` of any other group, a call or `sizeof(T)`, ends an operand)
         if self.binary[2].contains(&l) && self.is_name(&right) {
@@ -962,6 +1003,40 @@ impl SpaceRules {
         (clear || !declaration).then_some(true)
     }
 
+    /// Is the token a mark behind a group of one `binary_line_name` token and before a name, inside a
+    /// node of `binary_line` (`(n)*SIZE` in a macro body)?
+    fn line_operand(&self, t: &SyntaxToken) -> bool {
+        let p = &self.pointer;
+        if !p.marks.contains(&t.kind())
+            || !t
+                .parent_ancestors()
+                .any(|n| self.binary[6].contains(&n.kind()))
+        {
+            return false;
+        }
+        let Some(group) = prev_code(t)
+            .filter(|x| self.binary[2].contains(&x.kind()))
+            .and_then(|x| x.parent())
+            .filter(|g| self.cast[1].contains(&g.kind()))
+        else {
+            return false;
+        };
+        let inner: Vec<_> = (group.children_with_tokens())
+            .filter(|e| e.as_token().is_none_or(|t| !t.text().trim().is_empty()))
+            .collect();
+        // (a group behind a name is a call's or a macro's parameters, `#define F(x) &x`)
+        let called = group
+            .first_token()
+            .and_then(|f| prev_code(&f))
+            .is_some_and(|x| self.is_name(&x));
+        !called
+            && inner.len() == 3
+            && inner[1]
+                .as_token()
+                .is_some_and(|x| self.binary[7].contains(&x.kind()))
+            && next_code(t).is_some_and(|x| self.is_name(&x))
+    }
+
     /// Is the group a cast's type: of a kind of `cast_group`, only the tokens of a type (a mark only at
     /// its end) and no name or call in front of it (`sizeof(T)`, `f(T)`)?
     fn cast_like(&self, group: &SyntaxNode) -> bool {
@@ -971,6 +1046,8 @@ impl SpaceRules {
         }
         let inner: Vec<_> = (group.children_with_tokens())
             .filter(|e| e.as_token().is_none_or(|t| !t.text().trim().is_empty()))
+            // (comments before the open paren belong to the group: skip up to it)
+            .skip_while(|e| e.as_token().is_none_or(|t| t.text() != "("))
             .skip(1)
             .collect();
         let typed = inner.iter().enumerate().all(|(i, e)| match e.as_token() {

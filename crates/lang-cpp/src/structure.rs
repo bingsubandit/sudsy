@@ -153,13 +153,7 @@ impl Builder<'_> {
             Open::Line => k::LINE,
             Open::Brace if block => k::BLOCK,
             Open::Brace => k::INIT_LIST,
-            Open::Paren
-                if (self.next_code(first)).is_some_and(|j| {
-                    matches!(self.toks[j].kind, k::STAR | k::AMP | k::AMP_AMP)
-                }) =>
-            {
-                k::DECLARATOR_GROUP
-            }
+            Open::Paren if self.declarator_group(first) => k::DECLARATOR_GROUP,
             Open::Paren => k::PAREN_GROUP,
             Open::Bracket => k::BRACKET_GROUP,
         };
@@ -174,6 +168,24 @@ impl Builder<'_> {
             ternary: 0,
             block,
         });
+    }
+
+    /// Does the `(` at `first` open a declarator: a mark first, or a member pointer (`(C::*f)`)?
+    fn declarator_group(&self, first: usize) -> bool {
+        let mut j = self.next_code(first);
+        while let Some(i) = j.filter(|&i| self.toks[i].kind == k::IDENT) {
+            let colons = self
+                .next_code(i)
+                .filter(|&c| self.toks[c].kind == k::COLON_COLON);
+            match colons {
+                Some(c) => j = self.next_code(c),
+                None => return false,
+            }
+            if j.is_some_and(|i| self.toks[i].kind == k::STAR) {
+                return true;
+            }
+        }
+        j.is_some_and(|j| matches!(self.toks[j].kind, k::STAR | k::AMP | k::AMP_AMP))
     }
 
     fn pop(&mut self, end: u32) -> Frame {

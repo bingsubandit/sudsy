@@ -84,7 +84,10 @@ impl Cx<'_> {
         if let Some((q, id)) = self.declarators_of(s, b) {
             // `type name (` in a declaration scope is a function.
             // (a macro body is a body, and `type name(params) {` in it is a function, never a variable)
-            let defines = scope == BODY && self.is(self.skip(id), b, k::LBRACE);
+            // (`void f(T &x);` in a body declares a function: no variable has the type `void`)
+            let defines = scope == BODY
+                && (self.is(self.skip(id), b, k::LBRACE)
+                    || (self.word(s, b, "void") && q == s + 1));
             if (scope != BODY || defines) && self.open(id, b, k::LPAR) && self.params_like(id) {
                 // (`RANGES_FUNC(count)(params)`: a macro call names the function)
                 let (next, (lo, hi)) = (self.skip(id), self.inner(id));
@@ -246,6 +249,16 @@ impl Cx<'_> {
                     || (self.open(q + 1, b, k::LPAR) && self.is(self.inner(q + 1).0, b, k::STAR)))
             {
                 // (`void __init name(`, `void __iomem *name(`, `void *__init name(`: an attribute macro behind the type)
+                q += 1;
+            } else if self.is(q, b, k::IDENT)
+                && self.is(q + 1, b, k::IDENT)
+                && self.text(q + 1).starts_with("__")
+                && matches!(
+                    self.c.get(q + 2).map(|t| t.kind),
+                    Some(k::EQUAL | k::SEMI | k::COMMA | k::LSQB)
+                )
+            {
+                // (`u64 size __initdata = 1;`: the name, then an attribute macro that declares nothing)
                 q += 1;
             } else if self.is(q, b, k::IDENT)
                 && self.is(q + 1, b, k::IDENT)

@@ -324,7 +324,8 @@ impl Cx<'_> {
         while p < hi {
             match self.c[p].kind {
                 k::STAR | k::AMP | k::AMP_AMP => decorated = true,
-                k::COLON_COLON => {}
+                // (`(std::size_t)-1`: a qualified name is a type)
+                k::COLON_COLON => decorated |= prefix && p > lo,
                 k::IDENT => name = true,
                 k::KEYWORD => {
                     let w = self.text(p);

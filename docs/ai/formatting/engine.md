@@ -42,6 +42,7 @@ Options declared by more than one language, generated from the option schemas; p
 | `assignment_conditional` | `always`, `binary_test` | java `always`, js `binary_test`, kotlin `always`, csharp `always` |
 | `assignment_indent` | int 1-4 | java `2`, js `1`, kotlin `1`, csharp `1` |
 | `assignment_layout` | `compact`, `fluid`, `break`, `multiline` | java `break`, js `fluid`, kotlin `multiline`, csharp `compact` |
+| `attach_case_block` | bool | cpp `true`, c `true` |
 | `bin_pack_arguments` | bool | cpp `true`, c `true` |
 | `bin_pack_parameters` | bool | cpp `true`, c `true` |
 | `binary_hug` | `never`, `assignment`, `statement` | java `never`, js `statement`, csharp `assignment` |

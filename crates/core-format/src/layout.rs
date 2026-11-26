@@ -612,7 +612,7 @@ impl Layout {
                 shapes::block(cx, node, &style).or_else(|_| generic())
             }
             "compound" => compound(cx, node, self, flow).unwrap_or_else(generic),
-            "case" => case(cx, node, row, flow).unwrap_or_else(generic),
+            "case" => case(cx, node, row, flow, self).unwrap_or_else(generic),
             "colon_body" => colon_body(cx, node, row, flow).unwrap_or_else(generic),
             "list" => list(cx, node, row).unwrap_or_else(generic),
             "array" => array(cx, node, row, level),
@@ -913,7 +913,13 @@ fn with_body(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) 
 }
 
 /// `case x:` and the statements below it.
-fn case(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -> Option<R> {
+fn case(
+    cx: &FormatCtx<'_>,
+    node: &SyntaxNode,
+    row: &Row,
+    flow: &Flow<'_>,
+    layout: &Layout,
+) -> Option<R> {
     let els = kids(cx, node);
     let colon = els
         .iter()
@@ -939,6 +945,27 @@ fn case(cx: &FormatCtx<'_>, node: &SyntaxNode, row: &Row, flow: &Flow<'_>) -> Op
                 doc::lit(" "),
                 statements(cx, &items)?,
             ]));
+        }
+        // A block first opens on the line of the label (`attach_block`); a statement of the
+        // `join_after_block` kinds stays on the line of its `}` (`} break;`).
+        let g = cx.grammar;
+        let attach = layout.on_kinds(cx.options, "attach_block");
+        let join = layout.on_kinds(cx.options, "join_after_block");
+        if attach.contains(&node.kind()) && g.has_tag(items[0].kind(), "block") {
+            let mut parts = vec![head, doc::lit(" "), statements(cx, &items[..1])?];
+            let mut rest = &items[1..];
+            if let Some(first) = rest.first().filter(|n| join.contains(&n.kind())) {
+                parts.push(doc::lit(" "));
+                parts.push(statements(cx, std::slice::from_ref(first))?);
+                rest = &rest[1..];
+            }
+            if !rest.is_empty() {
+                parts.push(doc::indent(doc::concat(vec![
+                    doc::hardline(),
+                    statements(cx, rest)?,
+                ])));
+            }
+            return Ok(doc::concat(parts));
         }
         Ok(doc::concat(vec![
             head,

@@ -9882,6 +9882,11 @@
               "description": "With `indent_style: tab`, the alignment of continuation lines uses tabs for each whole indent width and spaces for the rest.",
               "type": "boolean"
             },
+            "attach_case_block": {
+              "default": true,
+              "description": "The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`).",
+              "type": "boolean"
+            },
             "bin_pack_arguments": {
               "default": true,
               "description": "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line).",
@@ -10383,6 +10388,11 @@
             "align_with_tabs": {
               "default": false,
               "description": "With `indent_style: tab`, the alignment of continuation lines uses tabs for each whole indent width and spaces for the rest.",
+              "type": "boolean"
+            },
+            "attach_case_block": {
+              "default": true,
+              "description": "The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`).",
               "type": "boolean"
             },
             "bin_pack_arguments": {
@@ -14516,6 +14526,11 @@
                     "description": "With `indent_style: tab`, the alignment of continuation lines uses tabs for each whole indent width and spaces for the rest.",
                     "type": "boolean"
                   },
+                  "attach_case_block": {
+                    "default": true,
+                    "description": "The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`).",
+                    "type": "boolean"
+                  },
                   "bin_pack_arguments": {
                     "default": true,
                     "description": "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line).",
@@ -15017,6 +15032,11 @@
                   "align_with_tabs": {
                     "default": false,
                     "description": "With `indent_style: tab`, the alignment of continuation lines uses tabs for each whole indent width and spaces for the rest.",
+                    "type": "boolean"
+                  },
+                  "attach_case_block": {
+                    "default": true,
+                    "description": "The block that starts the body of a `case` opens on the line of the label (`case 1: {`), and a `break` after its `}` stays on that line (`} break;`).",
                     "type": "boolean"
                   },
                   "bin_pack_arguments": {

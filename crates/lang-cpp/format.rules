@@ -4,8 +4,8 @@
 kind=Lpar / kind=Lbrace&parent=Block : no
 * / kind=Lbrace&parent=Block : yes
 # `operator==(`, `operator new`.
-text=operator / kind=Ident|Keyword : yes
-text=operator / * : no
+exact=operator / kind=Ident|Keyword : yes
+exact=operator / * : no
 exact=new|delete|co_await&parent=QualifiedName / kind=Lpar : no
 kind!=Keyword&parent=QualifiedName / kind=Lpar : no
 kind=Rpar|Rsqb&parent=ParenGroup|BracketGroup&grand=QualifiedName / kind=Lpar : no
@@ -33,6 +33,8 @@ kind=Ellipsis / * : no
 * / kind=Ellipsis&parent!=TemplateParameters : no
 # Keywords and their parentheses.
 kind=String / kind=Lpar : no
+# A string behind a macro call that makes a piece of a concatenation (`STR(x) " 1b"`).
+kind=Rpar&parent=Arguments / kind=String : yes
 kind=Rbrace&parent=Block / exact=while&parent=DoStatement : yes
 kind=Rbrace / exact=else|catch : yes
 exact=constexpr / kind=Lpar : yes
@@ -50,7 +52,7 @@ kind=Ident|Greater / kind=Lbrace&parent=Arguments : no
 kind=Ident|Rsqb|Rpar / kind=Lsqb&parent=Arguments : no
 * / kind=Lpar&parent=Arguments : no
 # Templates.
-text=template / kind=Less : yes
+exact=template / kind=Less : yes
 kind=Greater / kind=Greater&parent=TemplateArguments|TemplateParameters : keep
 * / kind=Less|Greater&parent=TemplateArguments|TemplateParameters : no
 kind=Less&parent=TemplateArguments|TemplateParameters / * : no
