@@ -32390,6 +32390,587 @@
       "why": "The same file means two things: Python's PyYAML reads `no` as `false`, while a YAML 1.2 parser reads it as the string `\"no\"`. The classic failure is the country code `NO` (Norway) turning into `false`, and a key `on` turning into `true`.\n\nTo fix, quote the value to make it a string, or write `true` or `false` where a boolean is meant."
     },
     {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a task that runs `command`, `shell` or `raw` (short, `ansible.builtin.` or `ansible.legacy.` name; the `commands` option) with none of `changed_when`, `creates`, `removes` and not both `async` and `poll: 0`. The rule runs on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "- hosts: all\n  tasks:\n    - name: Plain\n      ansible.builtin.command: ls\n    - name: Guarded\n      ansible.builtin.command: ls\n      changed_when: false\n    - name: Creates\n      ansible.builtin.shell: touch x\n      args:\n        creates: x\n    - name: Inline creates\n      ansible.builtin.command: touch x creates=x\n",
+        "language": "yaml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 7,
+            "length": 4,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ansible-command-changed-when",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [
+        {
+          "default": [
+            "command",
+            "shell",
+            "raw",
+            "ansible.builtin.command",
+            "ansible.builtin.shell",
+            "ansible.builtin.raw",
+            "ansible.legacy.command",
+            "ansible.legacy.shell",
+            "ansible.legacy.raw"
+          ],
+          "description": "Modules that run a command.",
+          "name": "commands",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": [],
+      "why": "A command module cannot tell whether it changed anything, so it always reports `changed`. Handlers fire and the play summary counts a change on every run, which hides real changes and breaks idempotence checks.\n\nTo fix, add `changed_when` with the condition under which the command changes something, or `creates` or `removes` with the file it makes or deletes."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a task of an Ansible tasks file, handlers file or playbook that calls a module of ansible-core by its short name (`copy:`, `set_fact:`): the key of the task is in the `modules` option. Plays and tasks inside `block`, `rescue` and `always` are read too. Names of modules from other collections are not checked. The rule runs on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "- hosts: all\n  gather_facts: false\n  tasks:\n    - name: Copy\n      copy:\n        src: a\n        dest: b\n    - name: Qualified\n      ansible.builtin.copy:\n        src: a\n        dest: b\n    - name: Block\n      block:\n        - name: Install\n          yum: name=nginx\n",
+        "language": "yaml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 7,
+            "length": 4,
+            "line": 5
+          },
+          {
+            "column": 11,
+            "length": 3,
+            "line": 15
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ansible-module-fqcn",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [
+        {
+          "default": [
+            "add_host",
+            "apt",
+            "apt_key",
+            "apt_repository",
+            "assemble",
+            "assert",
+            "async_status",
+            "blockinfile",
+            "command",
+            "copy",
+            "cron",
+            "deb822_repository",
+            "debconf",
+            "debug",
+            "dnf",
+            "dnf5",
+            "dpkg_selections",
+            "expect",
+            "fail",
+            "fetch",
+            "file",
+            "find",
+            "gather_facts",
+            "get_url",
+            "getent",
+            "git",
+            "group",
+            "group_by",
+            "hostname",
+            "import_playbook",
+            "import_role",
+            "import_tasks",
+            "include_role",
+            "include_tasks",
+            "include_vars",
+            "iptables",
+            "known_hosts",
+            "lineinfile",
+            "meta",
+            "mount_facts",
+            "package",
+            "package_facts",
+            "pause",
+            "ping",
+            "pip",
+            "raw",
+            "reboot",
+            "replace",
+            "rpm_key",
+            "script",
+            "service",
+            "service_facts",
+            "set_fact",
+            "set_stats",
+            "setup",
+            "shell",
+            "slurp",
+            "stat",
+            "subversion",
+            "systemd",
+            "systemd_service",
+            "sysvinit",
+            "tempfile",
+            "template",
+            "unarchive",
+            "uri",
+            "user",
+            "validate_argument_spec",
+            "wait_for",
+            "wait_for_connection",
+            "yum",
+            "yum_repository",
+            "ansible.builtin.yum"
+          ],
+          "description": "Modules reported when called by this name (ansible-core modules and the redirects that resolve to them).",
+          "name": "modules",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": [],
+      "why": "A short name resolves through the collections a play lists and the ones installed, so another collection can take over a name like `copy` or `file`, and the task then runs a different module without any error. The full name `ansible.builtin.copy` names one module.\n\nTo fix, write the full name."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a task, in a tasks file, handlers file or playbook, whose module gets a string with an `=` in it (`service: name=ntpd state=started`). The key of the task is the module: a key that is not in the `keywords` option (task and play keywords, `with_*` loops) and not one of the `exempt` modules (the include and import modules, `raw`). For `command`, `shell` and their Windows twins (`commands`) only an option of the module in the text (`chdir=`, `creates=`, ...) is reported. The rule runs on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "- hosts: all\n  tasks:\n    - name: Free form\n      ansible.builtin.service: name=ntpd state=started\n    - name: Mapping\n      ansible.builtin.service:\n        name: ntpd\n    - name: Command option\n      ansible.builtin.command: ls chdir=/tmp\n    - name: Command plain\n      ansible.builtin.command: ls a=b\n",
+        "language": "yaml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 7,
+            "length": 4,
+            "line": 3
+          },
+          {
+            "column": 7,
+            "length": 4,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ansible-no-free-form",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [
+        {
+          "default": [
+            "action",
+            "always",
+            "any_errors_fatal",
+            "args",
+            "async",
+            "become",
+            "become_exe",
+            "become_flags",
+            "become_method",
+            "become_user",
+            "block",
+            "changed_when",
+            "check_mode",
+            "collections",
+            "connection",
+            "debugger",
+            "delay",
+            "delegate_facts",
+            "delegate_to",
+            "diff",
+            "environment",
+            "fact_path",
+            "failed_when",
+            "force_handlers",
+            "gather_facts",
+            "gather_subset",
+            "gather_timeout",
+            "handlers",
+            "hosts",
+            "ignore_errors",
+            "ignore_unreachable",
+            "listen",
+            "local_action",
+            "loop",
+            "loop_control",
+            "max_fail_percentage",
+            "module_defaults",
+            "name",
+            "no_log",
+            "notify",
+            "order",
+            "poll",
+            "port",
+            "post_tasks",
+            "pre_tasks",
+            "register",
+            "remote_user",
+            "rescue",
+            "retries",
+            "roles",
+            "run_once",
+            "serial",
+            "strategy",
+            "tags",
+            "tasks",
+            "throttle",
+            "timeout",
+            "until",
+            "validate_argspec",
+            "vars",
+            "vars_files",
+            "vars_prompt",
+            "when"
+          ],
+          "description": "Keys of a task or play that are not a module.",
+          "name": "keywords",
+          "type": "list"
+        },
+        {
+          "default": [
+            "include",
+            "include_tasks",
+            "import_tasks",
+            "import_playbook",
+            "ansible.builtin.include",
+            "ansible.builtin.include_tasks",
+            "ansible.builtin.import_tasks",
+            "ansible.builtin.import_playbook",
+            "raw",
+            "ansible.builtin.raw",
+            "ansible.legacy.raw"
+          ],
+          "description": "Modules whose text is not checked.",
+          "name": "exempt",
+          "type": "list"
+        },
+        {
+          "default": [
+            "command",
+            "shell",
+            "win_command",
+            "win_shell",
+            "ansible.builtin.command",
+            "ansible.builtin.shell",
+            "ansible.windows.win_command",
+            "ansible.windows.win_shell"
+          ],
+          "description": "Modules that take a command line.",
+          "name": "commands",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": [],
+      "why": "Free-form text is split by the module's own parser, so a value with a space, a quote or an `=` of its own is cut in the wrong place, and an unknown option is not caught until the run. A mapping keeps each argument apart, validated and diffable.\n\nTo fix, write the arguments as a mapping under the module (or under `args`)."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports a variable of a role that does not start with the name of the role and `_` (leading underscores are ignored; names that start with `ansible_` are accepted). The role is the folder below the innermost `roles/` of the path. Four places are read: the top-level keys of the files in `defaults/` and `vars/` of the role, the name a `register` of a task of the role gives, and the keys of the `set_fact` of a task of the role, and the variables of a `vars` of a task that includes a role by plain name (`include_role` or `import_role`) which get that role's name (names that start with `__` are private and left out). Names that are not lowercase with underscores, reserved names (the `exempt` option: keywords of plays and tasks, special variables, words of Python) and roles whose name is not a plain word are not reported. The rule runs on files below a `roles/` folder.",
+      "fix": null,
+      "id": "ansible-role-var-prefix",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [
+        {
+          "default": [
+            "action",
+            "always",
+            "and",
+            "any_errors_fatal",
+            "args",
+            "as",
+            "assert",
+            "async",
+            "async_val",
+            "await",
+            "become",
+            "become_exe",
+            "become_flags",
+            "become_method",
+            "become_user",
+            "block",
+            "break",
+            "changed_when",
+            "check_mode",
+            "class",
+            "collections",
+            "connection",
+            "continue",
+            "cycler",
+            "debugger",
+            "def",
+            "del",
+            "delay",
+            "delegate_facts",
+            "delegate_to",
+            "dict",
+            "diff",
+            "elif",
+            "else",
+            "environment",
+            "except",
+            "fact_path",
+            "failed_when",
+            "finally",
+            "for",
+            "force_handlers",
+            "from",
+            "gather_facts",
+            "gather_timeout",
+            "global",
+            "group_names",
+            "groups",
+            "handlers",
+            "hosts",
+            "hostvars",
+            "if",
+            "ignore_errors",
+            "ignore_unreachable",
+            "import",
+            "in",
+            "inventory_dir",
+            "inventory_file",
+            "inventory_hostname",
+            "inventory_hostname_short",
+            "is",
+            "joiner",
+            "lambda",
+            "lipsum",
+            "local_action",
+            "lookup",
+            "loop",
+            "loop_control",
+            "loop_with",
+            "max_fail_percentage",
+            "module_defaults",
+            "name",
+            "namespace",
+            "no_log",
+            "nonlocal",
+            "not",
+            "notify",
+            "now",
+            "omit",
+            "or",
+            "order",
+            "pass",
+            "play_hosts",
+            "playbook_dir",
+            "poll",
+            "port",
+            "post_tasks",
+            "pre_tasks",
+            "q",
+            "query",
+            "raise",
+            "range",
+            "register",
+            "remote_user",
+            "rescue",
+            "retries",
+            "return",
+            "role_name",
+            "role_names",
+            "role_path",
+            "roles",
+            "run_once",
+            "serial",
+            "strategy",
+            "tags",
+            "tasks",
+            "throttle",
+            "timeout",
+            "try",
+            "undef",
+            "until",
+            "validate_argspec",
+            "vars",
+            "vars_files",
+            "vars_prompt",
+            "when",
+            "while",
+            "with",
+            "with_",
+            "yield"
+          ],
+          "description": "Names that are not checked: keywords of plays and tasks, special variables and words of Python.",
+          "name": "exempt",
+          "type": "list"
+        },
+        {
+          "default": [
+            "set_fact",
+            "ansible.builtin.set_fact",
+            "ansible.legacy.set_fact"
+          ],
+          "description": "Modules whose arguments are variables.",
+          "name": "set_fact",
+          "type": "list"
+        }
+      ],
+      "presets": [],
+      "upstream": [],
+      "why": "Variables of all roles and plays share one namespace per host. A role that calls a variable `port` or `result` can overwrite the same name from another role or from the inventory, and the bug shows only in the combination. The role name as prefix keeps the names apart and shows where a variable comes from."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports a `name` of a task or a play, in a tasks file, handlers file or playbook, whose first character is a lowercase letter (after an opening quote, if any). Names that start with an uppercase letter, a digit, a symbol or a template are not reported. The rule runs on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "- name: configure hosts\n  hosts: all\n  tasks:\n    - name: install nginx\n      ansible.builtin.package: {name: nginx}\n    - name: \"quoted lower\"\n      ansible.builtin.ping:\n    - name: Fine\n      ansible.builtin.ping:\n    - name: \"{{ item }}\"\n      ansible.builtin.ping:\n",
+        "language": "yaml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 3,
+            "length": 4,
+            "line": 1
+          },
+          {
+            "column": 7,
+            "length": 4,
+            "line": 4
+          },
+          {
+            "column": 7,
+            "length": 4,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ansible-task-name-casing",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "Task names are what a run prints and what `--start-at-task` takes, so a uniform style makes the output easy to scan: each name is a sentence that starts with a capital."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports a task, in a tasks file, handlers file or playbook, that has no `name` key. A task is an entry of `tasks`, `pre_tasks`, `post_tasks`, `handlers`, `block`, `rescue` or `always`, or of the top level of a tasks file; blocks count as tasks, plays (an entry with `hosts` or `import_playbook`) do not. The rule runs on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "- hosts: all\n  tasks:\n    - ansible.builtin.ping:\n    - name: Named\n      ansible.builtin.ping:\n    - block:\n        - ansible.builtin.ping:\n",
+        "language": "yaml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 7,
+            "length": 20,
+            "line": 3
+          },
+          {
+            "column": 7,
+            "length": 5,
+            "line": 6
+          },
+          {
+            "column": 11,
+            "length": 20,
+            "line": 7
+          }
+        ]
+      },
+      "fix": null,
+      "id": "ansible-task-name-missing",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The name is what a run prints for the task, and `--start-at-task` and handler `listen` need it. A run of unnamed tasks shows only the module name, so a failure is hard to place."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
+      "description": "Reports a block collection or scalar that starts on the line after its key (or its dash) and is not indented by `spaces` columns more than the key. With `spaces` 0 the width is the one of the first such indentation in the file. With `indent_sequences` a block sequence under a key must be indented too: dashes at the column of the key are reported. Flow collections and keys with a value on the same line are not checked.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "a:\n  b:\n      c: 1\nlist:\n- x\n- y\nd:\n    e: 1\n",
+        "language": "yaml",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 7,
+            "length": 1,
+            "line": 3
+          },
+          {
+            "column": 1,
+            "length": 1,
+            "line": 5
+          },
+          {
+            "column": 5,
+            "length": 1,
+            "line": 8
+          }
+        ]
+      },
+      "fix": null,
+      "id": "block-indentation",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [
+        {
+          "default": 0,
+          "description": "Columns of one indentation level; 0 takes the first one found in the file.",
+          "name": "spaces",
+          "type": "int"
+        },
+        {
+          "default": true,
+          "description": "A block sequence under a key must be indented, not at the key's column.",
+          "name": "indent_sequences",
+          "type": "bool"
+        }
+      ],
+      "presets": [],
+      "upstream": [],
+      "why": "A file that indents one block by two columns and the next by four is harder to read, and dashes at the column of their key make a list look like a sibling of the key. A single width keeps the shape of the data visible and the diffs small.\n\nTo fix, indent the block by the width the file uses; the formatter does it."
+    },
+    {
       "category": "correctness",
       "default_level": "error",
       "description": "Reports jobs whose `needs` form a cycle, such as `a` needing `b` and `b` needing `a`.",
