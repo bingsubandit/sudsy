@@ -103,7 +103,6 @@
   parser: ~0.2 # reuse: YAML parser, a dialect chosen by path kind; docs/ai/design/ansible.md
   note: "YAML dialect (playbooks, roles, tasks, collections); evidence in docs/ai/design/ansible.md"
   format: {tool: "Prettier (YAML)", gain: ~0.1, cost: {parts: 1, est: true}, why: "Prettier 89.9% equal on the corpus with yaml/prettier-compat (held out 94.4%); ansible-lint --fix is the second reference (73% with options); needs an ansible-lint preset and the dialect"}
-  lint: {tool: "ansible-lint", gain: ~0.7, cost: {parts: 4, est: true}, why: "default rule set; yamllint-family rules 17% of the target (9.7% covered today); the rest is pattern rules over module tables and path kinds; fqcn of collections, args and syntax-check need installed collections and stay out"}
 - language: ANTLR
   gh: 24939
   parser: ~1.5 # hand-written: only grammars found have 1 star
@@ -463,7 +462,6 @@
   parser: ~0.2 # reuse: YAML parser, a dialect chosen by content (apiVersion and kind); docs/ai/design/kubernetes.md
   note: "YAML dialect (manifests, kustomize, CRD instances); evidence in docs/ai/design/kubernetes.md"
   format: {tool: "Prettier (YAML)", gain: ~0.1, cost: {parts: 1, est: true}, why: "Prettier 86.4% equal on the corpus with yaml/prettier-compat (Sudsy default 50.6%); needs a preset and the dialect"}
-  lint: {tool: "kubeconform", gain: ~0.4, cost: {parts: 3, est: true}, why: "Homebrew 32k installs against kube-linter 1.9k, kube-score 52; its default set is schema validation: 96.6% of 2,816 findings are schema-missing (a kind table), real schema errors about 10; kube-linter is the policy reference (5 rules for 85.7% of its target, pooled 6 rules 90.4%); needs a kind table, a pod-spec context, a content dialect"}
 - language: LaTeX
   gh: 264355
   parser: ~1.2 # tree-sitter: latex-lsp/tree-sitter-latex (174 stars, pushed 2026-08)
