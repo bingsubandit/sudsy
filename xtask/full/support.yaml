@@ -201,6 +201,16 @@
   ids: [gradle]
   speed: [Gradle]
   stability: [gradle]
+- language: Ansible
+  popularity: [{name: Ansible, so: 9.4}]
+  ids: [ansible]
+  format: [{tool: prettier, name: Prettier, groups: [ansible]}]
+  lint: [{tool: ansible-lint, name: ansible-lint}]
+- language: Kubernetes manifests
+  popularity: [{name: Kubernetes, so: 20.4}]
+  ids: [kubernetes]
+  format: [{tool: prettier, name: Prettier, groups: [kubernetes]}]
+  lint: [{tool: kubeconform, name: kubeconform, primary: true}, {tool: kube-linter, name: kube-linter, popular: true}]
 - language: GitHub Actions
   popularity: [{name: GitHub Actions, estimate: {value: 0.5, basis: "lead's estimate 2026-11-25, how common the file is in repositories; no survey lists data formats"}}]
   exempt: true

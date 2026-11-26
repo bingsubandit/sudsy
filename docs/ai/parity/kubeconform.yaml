@@ -1,0 +1,18 @@
+tool: "kubeconform"
+version: "0.8.0"
+languages: ["yaml"]
+rule-url: none
+sources:
+  - "https://github.com/yannh/kubeconform/releases/tag/v0.8.0"
+  - "https://github.com/yannh/kubeconform#usage"
+entries:
+  schema-missing: "rule kubernetes-schema-missing"
+  required: "planned | 76 of 86 schema findings are strategic-merge patches and partial stubs (a patch is a partial manifest; kustomization.yaml says which), the rest are real type and required errors"
+  other: "planned | same family as required"
+  parse-error: "rule syntax-error"
+  invalid-type: "planned | key-shape check of the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md)"
+  additional-property: "planned | key-shape check of the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md)"
+  enum: "planned | key-shape check of the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md)"
+  pattern: "planned | key-shape check of the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md)"
+  one-of: "planned | key-shape check of the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md)"
+  bound: "planned | key-shape check of the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md)"

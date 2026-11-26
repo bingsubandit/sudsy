@@ -1,32 +1,40 @@
 ratchet:
+  ansible: 2365
   graphql: 123
   json: 4
-  markdown: 106
+  markdown: 115
   real-world-json: 3184
   real-world-yaml: 803
   yaml: 5
+  kubernetes: 3299
 unclassified: 9
 second-format:
+  ansible: 0
   graphql: 0
   json: 0
   markdown: 0
   real-world-json: 0
   real-world-yaml: 0
   yaml: 0
+  kubernetes: 0
 refused:
+  ansible: 0
   graphql: 0
   json: 0
   markdown: 0
   real-world-json: 0
   real-world-yaml: 0
   yaml: 0
+  kubernetes: 0
 target-files:
+  ansible: 2631
   graphql: 124
   json: 4
-  markdown: 114
+  markdown: 125
   real-world-json: 3212
   real-world-yaml: 849
   yaml: 5
+  kubernetes: 3826
 differences:
   code-span-backticks: gap  a code span with three backticks (tree-sitter-md does not read it as code) is kept; Prettier writes one backtick
   list-looseness: gap  a list item holding a paragraph, a nested list and an indented continuation keeps the blank lines of the source; Prettier's looseness differs
@@ -45,6 +53,9 @@ differences:
   yaml-comment-position: gap  a comment on the line of an anchor or a `-` moves to the next line in Sudsy; Prettier keeps it
   yaml-blank-line: gap  Sudsy adds a blank line that Prettier does not write, or drops the blank line at the end of the file that Prettier keeps
   yaml-multiline-plain: gap  a plain scalar over several lines after a key; Prettier keeps the first line on the key, Sudsy moves it below or joins the lines
+  yaml-multiline-fold: gap  a plain or quoted scalar after a key that does not fit the line; Prettier writes it below the key, Sudsy keeps its first line on the key (and keeps the quote style of the source)
+  yaml-multiline-quote: gap  a multi-line double-quoted scalar; Sudsy writes single quotes, Prettier keeps the double quotes
+  yaml-multiline-indent: gap  the continuation lines of a multi-line scalar are indented two columns deeper in Sudsy than in Prettier
   yaml-block-indicator: gap  a block scalar header with an indent and a chomp indicator (`>2-`) is written in the other order (`>-2`)
 files:
   runtime-docs/coding-guidelines/adding-api-guidelines.md: code-span-backticks
@@ -57,6 +68,8 @@ files:
   graphql/prettier/tests/format/graphql/interface/separator-detection.graphql: graphql-comment-position
   docs/ai/rules/builtin.md: emphasis-in-table
   real-world-json: json-number-fill:10, json-nested-arrays:14, json-comment-before-comma:3, json-trailing-comma:1
+  ansible: yaml-blank-line:160, yaml-multiline-fold:48, yaml-flow-trailing-comma:24, yaml-multiline-plain:11, yaml-multiline-quote:8, yaml-comment-indent:8, yaml-multiline-indent:3, yaml-comment-position:2, yaml-flow-layout:2
+  kubernetes: yaml-multiline-fold:327, yaml-flow-trailing-comma:67, yaml-comment-indent:64, yaml-blank-line:24, yaml-multiline-indent:27, yaml-multiline-plain:14, yaml-flow-layout:3, yaml-comment-position:1
   real-world-yaml: yaml-flow-trailing-comma:13, yaml-comment-indent:15, yaml-flow-layout:5, yaml-comment-position:5, yaml-blank-line:5, yaml-multiline-plain:2, yaml-block-indicator:1
 flags:
   no-config: the tool runs with `--no-config` (and no editorconfig), so a project's own Prettier options are not applied; Sudsy's JS, CSS and HTML options for them are not mapped yet

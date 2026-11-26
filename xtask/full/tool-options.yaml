@@ -84,6 +84,16 @@
   options: 7
   source: "https://prettier.io/docs/options"
   note: "printWidth, tabWidth, singleQuote, bracketSpacing, proseWrap, endOfLine, trailingComma (wrapped flow sequences); useTabs has no effect (3.9.10)"
+- language: ansible
+  tool: Prettier
+  options: 7
+  source: "https://prettier.io/docs/options"
+  note: "Prettier's YAML options, as for YAML: printWidth, tabWidth, singleQuote, bracketSpacing, proseWrap, endOfLine, trailingComma (3.9.10)"
+- language: kubernetes
+  tool: Prettier
+  options: 7
+  source: "https://prettier.io/docs/options"
+  note: "Prettier's YAML options, as for YAML: printWidth, tabWidth, singleQuote, bracketSpacing, proseWrap, endOfLine, trailingComma (3.9.10)"
 - language: json
   tool: Prettier
   options: 7

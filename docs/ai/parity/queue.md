@@ -11,6 +11,7 @@ Weight: the primary tool of a leg 4, a popular secondary 1, any other 0.25. Orde
 | C / C++ | format clang-format | 4 | 77.7% | 7.3 | 486 files | `brace-own-line-in-source` 361, `pointer-align` 328 | 6 | 4.87 | - |
 | (not in support.yaml) | lint sqlfluff-fixtures | 0.25 | 59.6% | 25.4 | 11453 findings | `CP01` 4211, `LT01` 2805, `LT02` 2639, `PRS` 967 +1 more | 15 | 0.42 | 3cdf2fac |
 | C# | lint Roslynator | 0.25 | 0.4% | 84.6 | 9405 findings | `RCS1157` 1714, `RCS1118` 1422, `RCS1123` 827, `RCS1085` 760 +23 more | 75 | 0.28 | 66718389 |
+| Kubernetes manifests | lint kube-linter | 1 | 84.3% | 0.7 | 25 findings | `no-anti-affinity` 73 | 3 | 0.23 | 81899480 |
 
 Blocked on a decision:
 
@@ -50,7 +51,7 @@ New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x
 | package.json | 0.10~ | ~0.2 | 0.99~ | 1.32~ | 1.25~ | format: format sort-package-json | estimate: pick only to measure it |
 | EJS | 0.16~ | ~1.2 | 0.86~ | 1.08~ | 1.31~ | both: lint ejs-lint + format none found | estimate: pick only to measure it |
 
-The other 147 entries of the file, each with the score of its best plan: Yacc / Lex 1.30~; Perl 1.30~; Vim Script 1.26~; Roff 1.24~; Cython 1.21~; Lua 1.21~; GraphQL 1.19~; MATLAB 1.16~; Handlebars 1.15~; VBA / VB6 1.15~; M4 1.13~; EDN 1.13~; GDScript 1.13~; Groovy 1.09~; OpenAPI 1.08~; NSIS 1.02~; ARM templates 0.99~; CloudFormation 0.99~; Docker Compose 0.99~; Tekton pipelines 0.99~; Rich Text Format 0.99~; Inno Setup 0.97~; Emacs Lisp 0.97~; RON 0.94~; Common Lisp / Scheme 0.91~; AsciiDoc 0.89~; ASP.NET (Razor, Web Forms) 0.89~; Cap'n Proto 0.89~; COBOL 0.89~; Java properties 0.89~; Prolog 0.89~; Thrift 0.89~; VBScript 0.89~; Visual Basic .NET 0.89~; Snakemake 0.88~; Gherkin 0.88~; Mermaid 0.88~; Elixir 0.87~; Awk 0.86~; Scala 0.86~; Avro IDL 0.83~; FlatBuffers 0.83~; GDB script 0.83~; Pawn 0.83~; QMake 0.83~; Raku 0.83~; RenderScript 0.83~; sed 0.83~; SWIG 0.83~; Tcl 0.83~; BitBake 0.83~; Grain 0.83~; Nix 0.81~; Smithy 0.78~; KDL 0.77~; BibTeX 0.76~; CoffeeScript 0.76~; Fennel / Janet 0.76~; Mojo 0.76~; PureScript 0.76~; Puppet 0.74~; Twig 0.74~; CSV / TSV 0.74~; Typst 0.74~; WebAssembly text 0.74~; Beancount / hledger 0.72~; JSON5 0.72~; MDX 0.72~; ANTLR 0.70~; Liquidsoap 0.70~; Marko 0.70~; Nextflow 0.70~; Prisma 0.70~; Meson 0.70~; Julia 0.69~; TOML 0.68~; CodeQL 0.68~; D2 0.68~; Gleam 0.68~; GN 0.68~; HTTP files / Hurl 0.68~; jq 0.68~; Just 0.68~; Metal 0.68~; Nickel 0.68~; Nim 0.68~; Nushell 0.68~; OCaml 0.68~; Odin 0.68~; Pkl 0.68~; ReScript / Reason 0.68~; Roc 0.68~; Standard ML 0.68~; templ 0.68~; Apex 0.68~; BrightScript / BrighterScript 0.68~; ERB 0.68~; Erlang 0.68~; F# 0.68~; Liquid 0.68~; Racket 0.68~; reStructuredText 0.68~; Robot Framework 0.68~; VHDL 0.68~; Fortran 0.66~; TypeSpec 0.64~; Stylus 0.63~; Elm 0.62~; Inko 0.61~; Protocol Buffer text format 0.61~; Soong (Android.bp) 0.61~; Ziggy 0.61~; Nginx config 0.59~; Clojure 0.58~; Sass (indented) 0.58~; Pascal / Delphi 0.58~; Go 0.58~; Solidity 0.54~; Kubernetes manifests 0.54~; Haskell 0.52~; dotenv 0.45~; Quarto / R Markdown 0.41~; Zig 0.39~; D 0.39~; Ada 0.37~; Ansible 0.36~; WGSL 0.36~; Verilog / SystemVerilog 0.35~; Crystal 0.31~; Rego (Open Policy Agent) 0.31~; Dart 0.23~; Objective-C 0.18~; XML 0.17~; HLSL 0.16~; GLSL 0.15~; Starlark / Bazel 0.15~; CUDA 0.13~; Dhall 0.11~; Fish 0.11~; V 0.11~; Caddyfile 0.10~; Bicep 0.10~; KCL 0.10~; CUE 0.10~; Cedar 0.09~; Jsonnet 0.09~; QML 0.09~.
+The other 145 entries of the file, each with the score of its best plan: Yacc / Lex 1.30~; Perl 1.30~; Vim Script 1.26~; Roff 1.24~; Cython 1.21~; Lua 1.21~; GraphQL 1.19~; MATLAB 1.16~; Handlebars 1.15~; VBA / VB6 1.15~; M4 1.13~; EDN 1.13~; GDScript 1.13~; Groovy 1.09~; OpenAPI 1.08~; NSIS 1.02~; ARM templates 0.99~; CloudFormation 0.99~; Docker Compose 0.99~; Tekton pipelines 0.99~; Rich Text Format 0.99~; Inno Setup 0.97~; Emacs Lisp 0.97~; RON 0.94~; Common Lisp / Scheme 0.91~; AsciiDoc 0.89~; ASP.NET (Razor, Web Forms) 0.89~; Cap'n Proto 0.89~; COBOL 0.89~; Java properties 0.89~; Prolog 0.89~; Thrift 0.89~; VBScript 0.89~; Visual Basic .NET 0.89~; Snakemake 0.88~; Gherkin 0.88~; Mermaid 0.88~; Elixir 0.87~; Awk 0.86~; Scala 0.86~; Avro IDL 0.83~; FlatBuffers 0.83~; GDB script 0.83~; Pawn 0.83~; QMake 0.83~; Raku 0.83~; RenderScript 0.83~; sed 0.83~; SWIG 0.83~; Tcl 0.83~; BitBake 0.83~; Grain 0.83~; Nix 0.81~; Smithy 0.78~; KDL 0.77~; BibTeX 0.76~; CoffeeScript 0.76~; Fennel / Janet 0.76~; Mojo 0.76~; PureScript 0.76~; Puppet 0.74~; Twig 0.74~; CSV / TSV 0.74~; Typst 0.74~; WebAssembly text 0.74~; Beancount / hledger 0.72~; JSON5 0.72~; MDX 0.72~; ANTLR 0.70~; Liquidsoap 0.70~; Marko 0.70~; Nextflow 0.70~; Prisma 0.70~; Meson 0.70~; Julia 0.69~; TOML 0.68~; CodeQL 0.68~; D2 0.68~; Gleam 0.68~; GN 0.68~; HTTP files / Hurl 0.68~; jq 0.68~; Just 0.68~; Metal 0.68~; Nickel 0.68~; Nim 0.68~; Nushell 0.68~; OCaml 0.68~; Odin 0.68~; Pkl 0.68~; ReScript / Reason 0.68~; Roc 0.68~; Standard ML 0.68~; templ 0.68~; Apex 0.68~; BrightScript / BrighterScript 0.68~; ERB 0.68~; Erlang 0.68~; F# 0.68~; Liquid 0.68~; Racket 0.68~; reStructuredText 0.68~; Robot Framework 0.68~; VHDL 0.68~; Fortran 0.66~; TypeSpec 0.64~; Stylus 0.63~; Elm 0.62~; Inko 0.61~; Protocol Buffer text format 0.61~; Soong (Android.bp) 0.61~; Ziggy 0.61~; Nginx config 0.59~; Clojure 0.58~; Sass (indented) 0.58~; Pascal / Delphi 0.58~; Go 0.58~; Solidity 0.54~; Haskell 0.52~; dotenv 0.45~; Quarto / R Markdown 0.41~; Zig 0.39~; D 0.39~; Ada 0.37~; WGSL 0.36~; Verilog / SystemVerilog 0.35~; Crystal 0.31~; Rego (Open Policy Agent) 0.31~; Dart 0.23~; Objective-C 0.18~; XML 0.17~; HLSL 0.16~; GLSL 0.15~; Starlark / Bazel 0.15~; CUDA 0.13~; Dhall 0.11~; Fish 0.11~; V 0.11~; Caddyfile 0.10~; Bicep 0.10~; KCL 0.10~; CUE 0.10~; Cedar 0.09~; Jsonnet 0.09~; QML 0.09~.
 
 ## actionlint
 
@@ -77,6 +78,27 @@ Lint: target 87% (627 of 721, 94 missed, measured on cbdd3e85); rules by missed 
 
 Lint: target 99.8% (487 of 488, 1 missed, measured on b314ffb4); rules by missed findings:
 1. `valid-aria` (1 missed)
+
+## ansible-lint
+
+Lint: target 86.5% (11681 of 13500, 1819 missed, measured on 81899480); rules by missed findings:
+1. `jinja[spacing]` (290 missed) Fix: jinja-templates
+2. `risky-file-permissions` (243 missed) Fix: crates/lang-yaml/rules, a module table (shared pattern atoms of ansible-no-free-form)
+3. `yaml[brackets]` (243 missed) Fix: yamllint-mirrors
+4. `name[template]` (239 missed) Fix: jinja-templates
+5. `ignore-errors` (118 missed) Fix: crates/lang-yaml/rules, taste rule of the tool's advice
+6. `key-order[task]` (80 missed) Fix: crates/lang-yaml/rules, name first and block last
+7. `yaml[colons]` (72 missed)
+8. `role-name[path]` (65 missed)
+9. `risky-shell-pipe` (62 missed)
+10. `load-failure[filenotfounderror]` (50 missed)
+11. `var-naming[pattern]` (33 missed)
+12. `schema[meta]` (30 missed)
+13. `yaml[new-line-at-end-of-file]` (30 missed)
+14. `fqcn[action-core]` (29 missed)
+15. `var-naming[no-role-prefix]` (27 missed)
+
+25 more rules: 208 missed.
 
 ## biome
 
@@ -398,6 +420,35 @@ Lint: target 92.3% (109638 of 118837, 9199 missed, measured on bede0bee); rules 
 
 50 more rules: 1804 missed.
 
+## kube-linter
+
+Lint: target 84.3% (3127 of 3708, 581 missed, measured on 81899480); rules by missed findings:
+1. `no-anti-affinity` (73 missed) Fix: not-built
+2. `mismatching-selector` (68 missed) Fix: not-built
+3. `liveness-port` (55 missed)
+4. `no-extensions-v1beta` (55 missed)
+5. `readiness-port` (43 missed)
+6. `job-ttl-seconds-after-finished` (42 missed)
+7. `latest-tag` (41 missed)
+8. `drop-net-raw-capability` (39 missed)
+9. `privilege-escalation-container` (32 missed)
+10. `host-network` (30 missed)
+11. `env-var-secret` (28 missed)
+12. `privileged-container` (27 missed)
+13. `deprecated-service-account-field` (9 missed)
+14. `pdb-unhealthy-pod-eviction-policy` (8 missed)
+15. `startup-port` (8 missed)
+
+9 more rules: 23 missed.
+
+## kubeconform
+
+Lint: target 96.1% (2707 of 2816, 109 missed, measured on 81899480); rules by missed findings:
+1. `required` (80 missed) Fix: key-shape
+2. `schema-missing` (12 missed) Fix: crd-schemas
+3. `parse-error` (11 missed) Fix: parse-error-line
+4. `other` (6 missed) Fix: key-shape
+
 ## markdownlint
 
 Lint: target 99% (1965 of 1985, 20 missed, measured on 7514c1f3); rules by missed findings:
@@ -443,25 +494,28 @@ Lint: target 36.3% (342 of 942, 600 missed, measured on 062a8f18); rules by miss
 
 ## prettier
 
-Format: unclassified 9 of 83 differing files (11%).
-1. `yaml-comment-indent` (15 files): a comment line before an item of a lower indentation keeps its own column in Prettier; Sudsy aligns it with the next line
-2. `json-nested-arrays` (14 files): an array whose items are all arrays of two or more items; Prettier breaks the outer array and keeps each inner one on a line; Sudsy writes the outer one on a line when it fits
-3. `yaml-flow-trailing-comma` (13 files): a flow sequence broken over lines ends its last item with a comma in Prettier; Sudsy writes none
-4. `json-number-fill` (10 files): an array of numbers that does not fit; Prettier fills the lines, Sudsy writes one number per line
-5. `yaml-blank-line` (5 files): Sudsy adds a blank line that Prettier does not write, or drops the blank line at the end of the file that Prettier keeps
-6. `yaml-comment-position` (5 files): a comment on the line of an anchor or a `-` moves to the next line in Sudsy; Prettier keeps it
-7. `yaml-flow-layout` (5 files): a flow collection after a key with a trailing comment, or one that starts on the key's line; Sudsy moves it to its own line
-8. `json-comment-before-comma` (3 files): a block comment between a value and its comma; Prettier keeps the comma after the comment, Sudsy writes it before
-9. `code-span-backticks` (2 files): a code span with three backticks (tree-sitter-md does not read it as code) is kept; Prettier writes one backtick
-10. `tab-blocks` (2 files): a block with a tab is kept as written (the width of a tab depends on its column); Prettier re-indents the nested list
-11. `yaml-multiline-plain` (2 files): a plain scalar over several lines after a key; Prettier keeps the first line on the key, Sudsy moves it below or joins the lines
-12. `code-span-lines` (1 files): a code span over two lines in a list item keeps the text of the span; Prettier removes the indentation of the second line
-13. `code-trailing-blanks` (1 files): trailing blanks inside a code block are code and stay; Prettier removes them
-14. `emphasis-in-table` (1 files): a table cell with a regular expression that holds `*` and `|` in code spans; Prettier turns the `*` into `_`, Sudsy keeps it
-15. `graphql-comment-position` (1 files): comments between the interfaces and the `{` stay in front of the `{` where Prettier moves them into the body
-16. `json-trailing-comma` (1 files): a `.json` file with a trailing comma is refused (the dialect is json, `jsonc` allows it); Prettier's parser accepts it
-17. `list-looseness` (1 files): a list item holding a paragraph, a nested list and an indented continuation keeps the blank lines of the source; Prettier's looseness differs
-18. `yaml-block-indicator` (1 files): a block scalar header with an indent and a chomp indicator (`>2-`) is written in the other order (`>-2`)
+Format: unclassified 9 of 878 differing files (1%).
+1. `yaml-multiline-fold` (375 files): a plain or quoted scalar after a key that does not fit the line; Prettier writes it below the key, Sudsy keeps its first line on the key (and keeps the quote style of the source)
+2. `yaml-blank-line` (189 files): Sudsy adds a blank line that Prettier does not write, or drops the blank line at the end of the file that Prettier keeps
+3. `yaml-flow-trailing-comma` (104 files): a flow sequence broken over lines ends its last item with a comma in Prettier; Sudsy writes none
+4. `yaml-comment-indent` (87 files): a comment line before an item of a lower indentation keeps its own column in Prettier; Sudsy aligns it with the next line
+5. `yaml-multiline-indent` (30 files): the continuation lines of a multi-line scalar are indented two columns deeper in Sudsy than in Prettier
+6. `yaml-multiline-plain` (27 files): a plain scalar over several lines after a key; Prettier keeps the first line on the key, Sudsy moves it below or joins the lines
+7. `json-nested-arrays` (14 files): an array whose items are all arrays of two or more items; Prettier breaks the outer array and keeps each inner one on a line; Sudsy writes the outer one on a line when it fits
+8. `json-number-fill` (10 files): an array of numbers that does not fit; Prettier fills the lines, Sudsy writes one number per line
+9. `yaml-flow-layout` (10 files): a flow collection after a key with a trailing comment, or one that starts on the key's line; Sudsy moves it to its own line
+10. `yaml-comment-position` (8 files): a comment on the line of an anchor or a `-` moves to the next line in Sudsy; Prettier keeps it
+11. `yaml-multiline-quote` (8 files): a multi-line double-quoted scalar; Sudsy writes single quotes, Prettier keeps the double quotes
+12. `json-comment-before-comma` (3 files): a block comment between a value and its comma; Prettier keeps the comma after the comment, Sudsy writes it before
+13. `code-span-backticks` (2 files): a code span with three backticks (tree-sitter-md does not read it as code) is kept; Prettier writes one backtick
+14. `tab-blocks` (2 files): a block with a tab is kept as written (the width of a tab depends on its column); Prettier re-indents the nested list
+15. `code-span-lines` (1 files): a code span over two lines in a list item keeps the text of the span; Prettier removes the indentation of the second line
+16. `code-trailing-blanks` (1 files): trailing blanks inside a code block are code and stay; Prettier removes them
+17. `emphasis-in-table` (1 files): a table cell with a regular expression that holds `*` and `|` in code spans; Prettier turns the `*` into `_`, Sudsy keeps it
+18. `graphql-comment-position` (1 files): comments between the interfaces and the `{` stay in front of the `{` where Prettier moves them into the body
+19. `json-trailing-comma` (1 files): a `.json` file with a trailing comma is refused (the dialect is json, `jsonc` allows it); Prettier's parser accepts it
+20. `list-looseness` (1 files): a list item holding a paragraph, a nested list and an indented continuation keeps the blank lines of the source; Prettier's looseness differs
+21. `yaml-block-indicator` (1 files): a block scalar header with an indent and a chomp indicator (`>2-`) is written in the other order (`>-2`)
 
 ## prettier-angular
 

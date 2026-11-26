@@ -80,7 +80,7 @@ Rejected: calling `jinja2` or ansible-lint (Python runtime, the very cost the na
 Sudsy YAML lint 0.42 s and `format --check` 0.42 s over the 2,631 files (22 MB), one process. ansible-lint 168 s wall for the same files and 465 s CPU. A pattern-rule family with tables adds work per task node only (the module key lookup); not measured, no code exists. Memory not measured.
 
 ## Cost
-`languages.yaml`: parser 0.2 (YAML exists, a dialect on it), format 1 missing part (preset and dialect), lint 4 missing parts (A1+A5, A2, A3, A4); no `index` (nothing needs a semantic index). Estimates kept (`est: true`).
+Parser, format and lint are built (`languages.yaml` no longer lists the language). Measured by `scripts/parity.sh`: format Prettier 89.9% (2,365 of 2,631 files, second format 0), lint ansible-lint 86.5% (the harness drops the 60 files of one project on which ansible-lint crashes). The corpus, the verdict classes and the plan above are the evidence; the numbers of the parity runs are in the README table.
 
 ## Not verified
 Rule behaviour beyond the findings read; whether each rule can equal ansible-lint on its lines (the tool's fixes, `# noqa` and `skip_list` comments, per-file skips); an ansible-lint run with `--profile` levels (the default set only); the licence of module-data tables and ansible-lint's schemas; the corpus effect of excluding test trees (shares given, target not recomputed); `ansible-lint` formatter use inside the VS Code extension; Windows paths; the speed of the real rules.

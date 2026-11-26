@@ -122,6 +122,18 @@ class Runner(unittest.TestCase):
         self.assertIn("tool-wrong 1", line)
         self.assertIn("formatter findings counted as missing 2", pl.target_line("checkmake", per, 2, 4, 2, "", 0))
 
+    def test_a_report_that_names_the_object_is_placed_on_its_kind_line_and_an_empty_report_has_no_findings(self):
+        spec = {"format": "json", "levels": ["Reports"], "file": "0.f", "rule": "0.c", "message": "0.m", "place": {"kind": "0.k", "name": "0.n"}}
+        found = pc.parse('{"Reports": [{"f": "a.yaml", "c": "x", "m": "msg", "k": "Pod", "n": "p"}]}', spec, {})
+        self.assertEqual(found, [("a.yaml", "x", "msg", ("Pod", "p"))])
+        with tempfile.TemporaryDirectory() as tmp:
+            file = Path(tmp) / "a.yaml"
+            file.write_text("# c\napiVersion: v1\nkind: Pod\nmetadata:\n  name: p\n", encoding="utf-8")
+            self.assertEqual(pc.placed(("Pod", "p"), file), 3)
+            self.assertEqual(pc.placed(7, file), 7)
+        self.assertEqual(pc.parse("", spec, {}), [])
+        self.assertEqual(pc.parse(' {"resources": []}', {"format": "json", "levels": ["resources"], "file": "0.f", "rule_fn": "kubeconform", "message": "0.msg"}, pc.RULE_FNS), [])
+
     def test_a_file_the_tool_rejects_is_invalid_input_without_an_entry_and_a_refuted_one_is_reviewed(self):
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)

@@ -12,6 +12,7 @@ differ, and the `ratchet` minimums of the groups (a corpus too large for entries
 """
 import difflib
 import hashlib
+import importlib
 import io
 import json
 import os
@@ -218,7 +219,10 @@ def fixtures(config, folder, filters):
     for source in config["fixtures"]:
         base = ROOT / source["dir"] if "dir" in source else folder
         suffixes = tuple(source["suffixes"])
-        if "list" in source:
+        if "select" in source:  # the files of an evidence module of the language (`KEEP`, `CAP`), named below the folder `dir`
+            import evidence
+            paths = [(name.split("/", 1)[1], path) for _, name, path in evidence.files(importlib.import_module(source["select"]))]
+        elif "list" in source:
             listing = base / source["list"]
             if not listing.exists():
                 print(f"{source['dir']} not fetched: its files are skipped")

@@ -1,0 +1,16 @@
+differences:
+  key-shape: "gap  no key-shape check against the Kubernetes OpenAPI table (K4 of docs/ai/design/kubernetes.md): required and type errors of 86 findings, most of them strategic-merge patches"
+  parse-error-line: "gap  kubeconform has no line for a YAML syntax error and the harness places it on the `kind:` line; Sudsy's syntax-error is at the error line (11 findings)"
+  crd-schemas: "gap  12 of 2,719 schema-missing findings (0.4%) are not reported on the same line or fall outside the table of 180 pairs; not classified further"
+target: 96.1  # the same share on the target number (docs/ai/design/parity-target.md); scripts/parity.sh coverage kubeconform
+fixes:
+  "required": "key-shape"
+  "other": "key-shape"
+  "schema-missing": "crd-schemas"
+  "parse-error": "parse-error-line"
+measured: {covered: 2707, total: 2816, main: '81899480'}  # of the target; `main`: the origin/main commit the measured tree is based on
+missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
+  required: 80
+  schema-missing: 12
+  parse-error: 11
+  other: 6

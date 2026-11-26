@@ -158,6 +158,11 @@
       ],
       "upstream": [
         {
+          "id": "yaml[comments]",
+          "partial": false,
+          "tool": "ansible-lint"
+        },
+        {
           "id": "comment-spacing",
           "note": "Line comments only.",
           "partial": true,
@@ -820,6 +825,11 @@
       ],
       "upstream": [
         {
+          "id": "yaml[line-length]",
+          "partial": false,
+          "tool": "ansible-lint"
+        },
+        {
           "id": "S011",
           "partial": false,
           "tool": "blinter"
@@ -1448,6 +1458,11 @@
         "yaml/ansible-lint"
       ],
       "upstream": [
+        {
+          "id": "yaml[trailing-spaces]",
+          "partial": false,
+          "tool": "ansible-lint"
+        },
         {
           "id": "S004",
           "partial": false,
@@ -34400,6 +34415,11 @@
       ],
       "upstream": [
         {
+          "id": "yaml[truthy]",
+          "partial": false,
+          "tool": "ansible-lint"
+        },
+        {
           "id": "truthy",
           "partial": false,
           "tool": "yamllint",
@@ -34465,7 +34485,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "no-changed-when",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "A command module cannot tell whether it changed anything, so it always reports `changed`. Handlers fire and the play summary counts a change on every run, which hides real changes and breaks idempotence checks.\n\nTo fix, add `changed_when` with the condition under which the command changes something, or `creates` or `removes` with the file it makes or deletes."
     },
     {
@@ -34582,7 +34608,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "fqcn[action-core]",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "A short name resolves through the collections a play lists and the ones installed, so another collection can take over a name like `copy` or `file`, and the task then runs a different module without any error. The full name `ansible.builtin.copy` names one module.\n\nTo fix, write the full name."
     },
     {
@@ -34722,7 +34754,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "no-free-form",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "Free-form text is split by the module's own parser, so a value with a space, a quote or an `=` of its own is cut in the wrong place, and an unknown option is not caught until the run. A mapping keeps each argument apart, validated and diffable.\n\nTo fix, write the arguments as a mapping under the module (or under `args`)."
     },
     {
@@ -34876,7 +34914,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "var-naming[no-role-prefix]",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "Variables of all roles and plays share one namespace per host. A role that calls a variable `port` or `result` can overwrite the same name from another role or from the inventory, and the bug shows only in the combination. The role name as prefix keeps the names apart and shows where a variable comes from."
     },
     {
@@ -34917,7 +34961,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "name[casing]",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "Task names are what a run prints and what `--start-at-task` takes, so a uniform style makes the output easy to scan: each name is a sentence that starts with a capital."
     },
     {
@@ -34958,7 +35008,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "name[missing]",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "The name is what a run prints for the task, and `--start-at-task` and handler `listen` need it. A run of unnamed tasks shows only the module name, so a failure is hard to place."
     },
     {
@@ -35012,7 +35068,13 @@
       "presets": [
         "yaml/ansible-lint"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "yaml[indentation]",
+          "partial": false,
+          "tool": "ansible-lint"
+        }
+      ],
       "why": "A file that indents one block by two columns and the next by four is harder to read, and dashes at the column of their key make a list look like a sibling of the key. A single width keeps the shape of the data visible and the diffs small.\n\nTo fix, indent the block by the width the file uses; the formatter does it."
     },
     {
@@ -35918,7 +35980,13 @@
       "presets": [
         "yaml/kubernetes"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "latest-tag",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
       "why": "`latest` is the image the registry has today. Two pods of one deployment can run different code, and a rollback goes to the same tag.\n\nTo fix, name a version tag or a digest."
     },
     {
@@ -35964,7 +36032,13 @@
       "presets": [
         "yaml/kubernetes"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "no-read-only-root-fs",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
       "why": "A writable root file system lets a process that is compromised in the container change the image's binaries and configuration.\n\nTo fix, set `readOnlyRootFilesystem: true` and mount an `emptyDir` volume on the paths the program writes to."
     },
     {
@@ -36007,7 +36081,13 @@
       "presets": [
         "yaml/kubernetes"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "run-as-non-root",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
       "why": "A process that runs as root in a container has the rights to change the container's file system and, with a kernel or runtime flaw, to reach the node.\n\nTo fix, set `runAsNonRoot: true` (and a `runAsUser` that the image supports) in the `securityContext` of the pod or of the container."
     },
     {
@@ -36226,7 +36306,13 @@
       "presets": [
         "yaml/kubernetes"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "schema-missing",
+          "partial": false,
+          "tool": "kubeconform"
+        }
+      ],
       "why": "A tool that validates manifests against the schemas of Kubernetes cannot check a kind it has no schema for, and an `apiVersion` or `kind` with a typo or a version that the cluster no longer serves (`extensions/v1beta1`) fails at `kubectl apply`.\n\nTo fix, correct the `apiVersion` or `kind`, or add the pair of a custom resource to `known`."
     },
     {
@@ -36272,7 +36358,13 @@
       "presets": [
         "yaml/kubernetes"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "unset-cpu-requirements",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
       "why": "The scheduler places a pod by the cpu it requests. Without a request the container counts as using none and can land on a node that has no cpu left for it.\n\nTo fix, set `resources.requests.cpu` to the cpu the container needs in normal use."
     },
     {
@@ -36318,7 +36410,13 @@
       "presets": [
         "yaml/kubernetes"
       ],
-      "upstream": [],
+      "upstream": [
+        {
+          "id": "unset-memory-requirements",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
       "why": "A container without a memory limit can use all the memory of the node, and the kernel then stops other pods to get it back.\n\nTo fix, set `resources.limits.memory` to the most the container needs."
     },
     {
@@ -36621,6 +36719,11 @@
         "yaml/ansible-lint"
       ],
       "upstream": [
+        {
+          "id": "yaml[octal-values]",
+          "partial": false,
+          "tool": "ansible-lint"
+        },
         {
           "id": "octal-values",
           "partial": false,

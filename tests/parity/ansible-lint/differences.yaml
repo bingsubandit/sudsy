@@ -1,0 +1,56 @@
+differences:
+  jinja-templates: "gap  Jinja2 expressions are not parsed, so `jinja[spacing]`, `name[template]` and `jinja[invalid]` are not reported (533 findings)"
+  yamllint-mirrors: "gap  the yamllint mirrors of the tool's own yamllint run `yaml[brackets]`, `yaml[colons]`, `yaml[empty-lines]` and `yaml[new-line-at-end-of-file]` are not in the preset (357 findings)"
+  module-tables: "gap  the rules that read a module table (`risky-file-permissions`, `command-instead-of-shell`, `command-instead-of-module`, `package-latest`, `latest[git]`, `no-handler`) are not built (335 findings)"
+  tool-crash: "gap  ansible-lint stops with a DuplicateKeyError on repeated merge keys in community.postgresql: its 60 files have no report and leave the corpus"
+  extra-silent-files: "gap  Sudsy reports more lines than ansible-lint in the same rules: the tool is silent in files with a project config (`.yamllint`, `skip_list`) or a syntax-check failure, and in flush sequences when the project relaxes `indent-sequences` (block-indentation 58.6% of its lines are extra)"
+target: 86.5  # the same share on the target number (docs/ai/design/parity-target.md); scripts/parity.sh coverage ansible-lint
+fixes:
+  "jinja[spacing]": "jinja-templates"
+  "name[template]": "jinja-templates"
+  "yaml[brackets]": "yamllint-mirrors"
+  "risky-file-permissions": "crates/lang-yaml/rules, a module table (shared pattern atoms of ansible-no-free-form)"
+  "ignore-errors": "crates/lang-yaml/rules, taste rule of the tool's advice"
+  "key-order[task]": "crates/lang-yaml/rules, name first and block last"
+measured: {covered: 11681, total: 13500, main: '81899480'}  # of the target; `main`: the origin/main commit the measured tree is based on
+missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
+  jinja[spacing]: 290
+  risky-file-permissions: 243
+  yaml[brackets]: 243
+  name[template]: 239
+  ignore-errors: 118
+  key-order[task]: 80
+  yaml[colons]: 72
+  role-name[path]: 65
+  risky-shell-pipe: 62
+  load-failure[filenotfounderror]: 50
+  var-naming[pattern]: 33
+  schema[meta]: 30
+  yaml[new-line-at-end-of-file]: 30
+  fqcn[action-core]: 29
+  var-naming[no-role-prefix]: 27
+  command-instead-of-shell: 25
+  no-handler: 25
+  command-instead-of-module: 22
+  meta-incorrect: 18
+  schema[tasks]: 18
+  package-latest: 16
+  name[play]: 14
+  yaml[empty-lines]: 12
+  complexity[tasks]: 8
+  meta-no-tags: 6
+  run-once[task]: 5
+  var-naming[read-only]: 5
+  jinja[invalid]: 4
+  latest[git]: 4
+  no-changed-when: 4
+  var-naming[no-reserved]: 4
+  literal-compare: 3
+  name[casing]: 3
+  deprecated-local-action: 2
+  name[missing]: 2
+  no-jinja-when: 2
+  partial-become[task]: 2
+  yaml[indentation]: 2
+  schema[meta-runtime]: 1
+  schema[role-arg-spec]: 1

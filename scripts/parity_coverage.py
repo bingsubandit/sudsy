@@ -1,11 +1,12 @@
 """Findings of an upstream tool on its corpus for the generic coverage mode (scripts/parity_lint.py `coverage`).
 
 A tool entry of parity_tools.json has a `coverage` object (docs/ai/development/parity.md#coverage-mode):
-`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `reference_parser` (a command with `{file}` that exits non-zero on a syntax error: a file Sudsy rejects and it rejects too is invalid, as a marked one), `parse_error` (the rule id the tool reports for a file it cannot parse, with the same effect), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
+`corpus` (sources: `dir` below the repo root, `glob` patterns (or `select`: an evidence module whose `KEEP` and `CAP` choose the files, scripts/evidence.py), `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `reference_parser` (a command with `{file}` that exits non-zero on a syntax error: a file Sudsy rejects and it rejects too is invalid, as a marked one), `parse_error` (the rule id the tool reports for a file it cannot parse, with the same effect), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
 (`{exe}`, `{prefix}`, `{group}` and `{files}`), `group` (a regex over the file's path: files of one group run in one
-command; `cwd: group` runs it in the folder `group` names), `chunk` (files per command), `ok_codes` (exit codes with an empty report meaning no findings), `timeout` (seconds) and `memory_gb` (address space) per command, `env`, `stream` (`stdout` or `stderr`: where the report is), `files` (config files
+command; `cwd: group` runs it in the folder `group` names), `chunk` (files per command), `ok_codes` (exit codes with an empty report meaning no findings), `timeout` (seconds) and `memory_gb` (address space) per command, `env`, `jobs` (commands at once), `dirs` (folders created below `{prefix}`), `stream` (`stdout` or `stderr`: where the report is), `files` (config files
 written next to the corpus), `group_files` (config files written into the folder of each group, `{group}` and `{prefix}` replaced: a project's own config; a file whose value is a dict maps a group to its text and is written for those groups only), `parse` (how the report turns into findings) and `sudsy` (the Sudsy side's config).
 """
+import importlib
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from collections import Counter
 from pathlib import Path
 
@@ -24,6 +26,10 @@ def corpus_files(spec, filters):
     """`[(path inside the work folder, source)]`: the sources of the corpus, named from the folder of the corpus; `filters` counts the `skip` ones."""
     out = []
     for source in spec["corpus"]:
+        if "select" in source:  # the files of an evidence module of the language (`KEEP`, `CAP`: scripts/evidence.py `files`), named `<corpus folder>/<path>`
+            import evidence
+            out += [(name, p) for _, name, p in evidence.files(importlib.import_module(source["select"]))]
+            continue
         base = ROOT / source["dir"]
         for pattern in source["glob"]:
             for p in sorted(base.rglob(pattern)):
@@ -77,10 +83,13 @@ def parse(output, spec, rules):
             output = next((line for line in reversed(output.splitlines()) if line.startswith("{")), "")
             if not output:
                 raise ValueError("no JSON object in the report")
-        data = [json.loads(line) for line in output.splitlines() if line.startswith("{")] if spec["format"] == "jsonl" else json.loads(output) if output.strip() else []
+        if not output.strip():  # no report: no findings (kube-linter prints nothing for a file with no valid object)
+            return []
+        data = [json.loads(line) for line in output.splitlines() if line.startswith("{")] if spec["format"] == "jsonl" else json.loads(output)
         for chain in walk(data, spec["levels"], []):
             rule = rules[spec["rule_fn"]](chain[-1]) if "rule_fn" in spec else str(ref(chain, spec["rule"]))
-            found.append((str(ref(chain, spec["file"])), rule, str(ref(chain, spec["message"]) or ""), ref(chain, spec["line"]) if "line" in spec else None))
+            line = (ref(chain, spec["place"]["kind"]), ref(chain, spec["place"]["name"])) if "place" in spec else ref(chain, spec["line"]) if "line" in spec else None
+            found.append((str(ref(chain, spec["file"])), rule, str(ref(chain, spec["message"]) or ""), line))
     out = []
     for file, rule, message, line in found:
         for pattern, sub in spec.get("rule_message", {}).items():  # one upstream rule reports as the sub-rule whose message it is
@@ -89,8 +98,28 @@ def parse(output, spec, rules):
         if "rule_sub" in spec:
             rule = re.sub(spec["rule_sub"][0], spec["rule_sub"][1], rule)
         if rule != "None":
-            out.append((file, spec.get("rule_prefix", "") + rule, message, int(line) if line is not None else None))
+            out.append((file, spec.get("rule_prefix", "") + rule, message, line if isinstance(line, tuple) or line is None else int(line)))
     return out
+
+
+def placed(line, path):
+    """A finding of a tool that names the object, not the line (`parse` `place`: `(kind, name)`): the line of the object's `kind:` in its file (scripts/evidence_kubernetes.py)."""
+    if not isinstance(line, tuple):
+        return line
+    import evidence_kubernetes as k8s
+    try:
+        return k8s.place(k8s.docs(path.read_text(encoding="utf-8", errors="replace")), *line)
+    except OSError:
+        return 1
+
+
+def kubeconform_rule(record):
+    """The class of a kubeconform message (`schema-missing`, `required`, ...: scripts/evidence_kubernetes.py `kc_code`); no finding for a valid object."""
+    import evidence_kubernetes as k8s
+    return k8s.kc_code(record.get("msg", ""))[len("kubeconform:"):] if record.get("status") != "statusValid" else "None"
+
+
+RULE_FNS = {"kubeconform": kubeconform_rule}
 
 
 def proof(tool, spec, prefix, work, exe, rules, sudsy, preset, layout, left_out, before, pinned=lambda f: False, named=None):
@@ -167,38 +196,48 @@ def findings(tool, spec, prefix, work, exe, rules, copy=True):
                 continue
             (work / group / name).write_text(text.replace("{prefix}", str(prefix)).replace("{group}", group), encoding="utf-8")
     limit = (lambda: resource.setrlimit(resource.RLIMIT_AS, (spec["memory_gb"] << 30,) * 2)) if "memory_gb" in spec else None
+    for name in spec.get("dirs", []) if copy else []:  # folders the tool needs (a schema cache)
+        Path(name.format(prefix=prefix)).mkdir(parents=True, exist_ok=True)
+    rules = {**RULE_FNS, **rules}
     found, skipped = [], []
     size = spec.get("chunk", 200)
-    for group, names in groups.items():
-        # a command without `{files}` runs once over the folder
-        for i in range(0, len(names), size) if "{files}" in spec["command"] else [0]:
-            folder = group if spec.get("cwd") == "group" else ""  # a group that is a project of its own (buf: one module)
-            command = []
-            for arg in spec["command"]:
-                if arg == "{files}":
-                    command += [n[len(folder) + 1:] if folder else n for n in names[i:i + size]]
-                else:
-                    command.append(arg.format(exe=exe, prefix=prefix, group=group, python=sys.executable, work=work, root=ROOT))
-            env = {**os.environ, **{k: v.format(prefix=prefix) for k, v in spec.get("env", {}).items()}}
-            with tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as out, tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as err:
-                try:  # files, not pipes: a Node tool that exits after a write to a pipe cuts its report at 64 KiB
-                    run = subprocess.run(command, cwd=work / folder, env=env, stdout=out, stderr=err, check=False, timeout=spec.get("timeout", 900), preexec_fn=limit)
-                except subprocess.TimeoutExpired:  # a tool that does not finish (shellcheck on nvm.sh) leaves its files out, and they are listed
-                    skipped += names[i:i + size] if "{files}" in spec["command"] else names
-                    continue
-                out.seek(0)
-                err.seek(0)
-                stdout, stderr = out.read(), err.read()
-            report = stderr if spec.get("stream") == "stderr" else stdout
-            if not report.strip() and run.returncode:
-                print(f"{tool}: no report from {group or 'the corpus'} (exit {run.returncode}): {stderr.strip()[:300]}", file=sys.stderr)
-            if not report.strip() and run.returncode not in spec.get("ok_codes", [0, 1]):  # killed (out of memory) or failed: no report
-                skipped += names[i:i + size] if "{files}" in spec["command"] else names
-                continue
-            try:
-                found += [(norm(f if os.path.isabs(f) or not folder else f"{folder}/{f}", work), r, m, n) for f, r, m, n in parse(report, spec["parse"], rules)]
-            except (json.JSONDecodeError, KeyError, ValueError) as error:
-                raise SystemExit(f"{tool}: no usable report ({error}):\n{report[:500]}\n{stderr[:500]}")
+    jobs = [(group, names, i) for group, names in groups.items() for i in (range(0, len(names), size) if "{files}" in spec["command"] else [0])]  # a command without `{files}` runs once over the folder
+
+    def one(job):
+        """`(findings, skipped files)` of one command."""
+        group, names, i = job
+        folder = group if spec.get("cwd") == "group" else ""  # a group that is a project of its own (buf: one module)
+        mine = names[i:i + size] if "{files}" in spec["command"] else names
+        command = []
+        for arg in spec["command"]:
+            if arg == "{files}":
+                command += [n[len(folder) + 1:] if folder else n for n in mine]
+            else:
+                command.append(arg.format(exe=exe, prefix=prefix, group=group, python=sys.executable, work=work, root=ROOT))
+        env = {**os.environ, **{k: v.format(prefix=prefix) for k, v in spec.get("env", {}).items()}}
+        with tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as out, tempfile.TemporaryFile("w+", encoding="utf-8", errors="replace") as err:
+            try:  # files, not pipes: a Node tool that exits after a write to a pipe cuts its report at 64 KiB
+                run = subprocess.run(command, cwd=work / folder, env=env, stdout=out, stderr=err, check=False, timeout=spec.get("timeout", 900), preexec_fn=limit)
+            except subprocess.TimeoutExpired:  # a tool that does not finish (shellcheck on nvm.sh) leaves its files out, and they are listed
+                return [], mine
+            out.seek(0)
+            err.seek(0)
+            stdout, stderr = out.read(), err.read()
+        report = stderr if spec.get("stream") == "stderr" else stdout
+        if not report.strip() and run.returncode:
+            print(f"{tool}: no report from {group or 'the corpus'} (exit {run.returncode}): {stderr.strip()[:300]}", file=sys.stderr)
+        if not report.strip() and run.returncode not in spec.get("ok_codes", [0, 1]):  # killed (out of memory) or failed: no report
+            return [], mine
+        try:
+            paths = [(norm(f if os.path.isabs(f) or not folder else f"{folder}/{f}", work), r, m, n) for f, r, m, n in parse(report, spec["parse"], rules)]
+        except (json.JSONDecodeError, KeyError, ValueError) as error:
+            raise SystemExit(f"{tool}: no usable report ({error}):\n{report[:500]}\n{stderr[:500]}")
+        return [(f, r, m, placed(n, work / f)) for f, r, m, n in paths], []
+
+    with ThreadPoolExecutor(spec.get("jobs", 1)) as pool:  # `jobs`: commands at once (a tool that runs one process per project or file)
+        for part, left in pool.map(one, jobs):
+            found += part
+            skipped += left
     print(f"input filters: skip {filters['skip']}, the tool did not finish (time or memory limit, or a crash) {len(skipped)}")
     if skipped:
         print(f"the tool did not finish (time or memory limit, or a crash) on {len(skipped)} file(s), which are left out: {', '.join(skipped)}")

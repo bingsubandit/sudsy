@@ -79,7 +79,7 @@ Pattern rules in `crates/lang-yaml/rules/kubernetes-*.yaml` (off by default, on 
 `sudsy lint` 0.48 s and format 0.75 s (prettier-compat 0.89 s) over the 3,839 files (about 36 MB of manifests). The three Go tools take about a minute per tool and run per file here (not timed). Kind-table and container-context rules add a lookup per document; not measured, no code exists.
 
 ## Cost
-`languages.yaml`: parser 0.2 (YAML; dialect), format preset only, lint 3 parts (K1, K2, K3). Estimates kept (`est: true`).
+Parser, format and lint are built (`languages.yaml` no longer lists the language). Measured by `scripts/parity.sh`: format Prettier 86.2% (3,299 of 3,826 files, second format 0), lint kubeconform 96.1% and kube-linter 84.3% (each tool's own run, one process per file). The corpus, the verdict classes and the plan above are the evidence; the numbers of the parity runs are in the README table.
 
 ## Not verified
 Rule behaviour beyond the findings read; whether kubeconform's default Kubernetes version (`master`) is the same schema set the table was built from over time; a run of kube-linter and kube-score per directory (cross-object checks, 13.7% of findings, were per file); Kustomize patch recognition (a `kustomization.yaml` run); the licence of the generated table beyond Apache-2.0 for the OpenAPI source; CRD schemas for the 134 corpus kinds not in any catalog; tool wall times; Windows paths.

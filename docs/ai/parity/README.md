@@ -29,6 +29,7 @@ The clang-format run does not compare line wrapping (the `wrap_compare` `note` o
 |---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | actionlint | 87.0% | `cbdd3e85` | 43 | 5 | 30 | 0 | 0 | 0 | 8 | 0 |
 | angular-eslint | 99.8% | `b314ffb4` | 44 | 10 | 4 | 20 | 0 | 0 | 10 | 20 |
+| ansible-lint | 86.5% | `81899480` | 54 | 12 | 0 | 33 | 0 | 9 | 0 | 33 |
 | biome | - | - | 34 | 13 | 6 | 2 | 0 | 13 | 0 | 2 |
 | blinter | 85.1% | `032e2f36` | 144 | 34 | 5 | 72 | 0 | 33 | 0 | 72 |
 | buf | 89.7% | `2a570ae8` | 47 | 22 | 3 | 0 | 0 | 0 | 22 | 0 |
@@ -51,6 +52,8 @@ The clang-format run does not compare line wrapping (the `wrap_compare` `note` o
 | html-validate | 92.5% | `2607e39a` | 97 | 34 | 40 | 20 | 0 | 1 | 2 | 20 |
 | htmlhint | 91.6% | `0c8a3dcc` | 44 | 10 | 7 | 27 | 0 | 0 | 0 | 27 |
 | ktlint | 92.3% | `bede0bee` | 100 | 53 | 11 | 36 | 0 | 0 | 0 | 36 |
+| kube-linter | 84.3% | `81899480` | 26 | 5 | 0 | 19 | 0 | 2 | 0 | 19 |
+| kubeconform | 96.1% | `81899480` | 10 | 2 | 0 | 8 | 0 | 0 | 0 | 8 |
 | markdownlint | 99.0% | `7514c1f3` | 53 | 23 | 19 | 0 | 0 | 0 | 11 | 0 |
 | mbake | - | - | 17 | 9 | 1 | 0 | 0 | 0 | 7 | 0 |
 | php-cs-fixer | - | - | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |

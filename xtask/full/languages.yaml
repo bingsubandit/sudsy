@@ -98,11 +98,6 @@
   parser: ~1.2 # tree-sitter: briot/tree-sitter-ada (28 stars, pushed 2026-10)
   format: {tool: "gnatformat", gain: ~0.4, cost: {layout: width, parts: 1, est: true}, why: "only tool found; Ada, native; young; width-based"}
   lint: {tool: "gnatcheck", gain: ~0.4, cost: {index: true, est: true}, why: "only tool found; native; semantic rules; some rules need semantics"}
-- language: Ansible
-  so: 9.4
-  parser: ~0.2 # reuse: YAML parser, a dialect chosen by path kind; docs/ai/design/ansible.md
-  note: "YAML dialect (playbooks, roles, tasks, collections); evidence in docs/ai/design/ansible.md"
-  format: {tool: "Prettier (YAML)", gain: ~0.1, cost: {parts: 1, est: true}, why: "Prettier 89.9% equal on the corpus with yaml/prettier-compat (held out 94.4%); ansible-lint --fix is the second reference (73% with options); needs an ansible-lint preset and the dialect"}
 - language: ANTLR
   gh: 24939
   parser: ~1.5 # hand-written: only grammars found have 1 star
@@ -457,11 +452,6 @@
   parser: ~1.0 # crate kdl (6.7.1, updated 2026-05)
   format: {tool: "kdlfmt", gain: ~0.4, cost: {layout: whitespace, parts: 1, est: true}, why: "only tool found; Rust, fast; whitespace only"}
   lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no maintained tool found"}
-- language: Kubernetes manifests
-  so: 20.4
-  parser: ~0.2 # reuse: YAML parser, a dialect chosen by content (apiVersion and kind); docs/ai/design/kubernetes.md
-  note: "YAML dialect (manifests, kustomize, CRD instances); evidence in docs/ai/design/kubernetes.md"
-  format: {tool: "Prettier (YAML)", gain: ~0.1, cost: {parts: 1, est: true}, why: "Prettier 86.4% equal on the corpus with yaml/prettier-compat (Sudsy default 50.6%); needs a preset and the dialect"}
 - language: LaTeX
   gh: 264355
   parser: ~1.2 # tree-sitter: latex-lsp/tree-sitter-latex (174 stars, pushed 2026-08)

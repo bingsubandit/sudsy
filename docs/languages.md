@@ -115,7 +115,7 @@ The status and the numbers of every language are in the generated table "Languag
 
 <!-- generated:measured-markdown -->
 - **Measured:** Ready.
-  - Format, Prettier: 92% of the files identical (106 of 114 files).
+  - Format, Prettier: 92% of the files identical (115 of 125 files).
   - Lint, markdownlint: 99% of its findings also reported (1,965 of 1,985 findings).
 <!-- /generated -->
 
@@ -168,19 +168,6 @@ The status and the numbers of every language are in the generated table "Languag
   - A broken flow sequence has no trailing comma; Prettier writes one.
   - A comment before a dedented item takes the next line's column; Prettier keeps its own.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh coverage yamllint`.
-
-### Kubernetes (YAML)
-
-- Kubernetes manifests are YAML files, recognised by content (`apiVersion` and `kind` at the top). The preset `yaml/kubernetes` formats like Prettier and turns on `kubernetes-schema-missing` (a kind that has no schema in the Kubernetes API, as kubeconform reports; add your custom resources to its `known` option), `kubernetes-no-read-only-root-fs`, `kubernetes-run-as-non-root`, `kubernetes-unset-memory-requirements`, `kubernetes-unset-cpu-requirements` and `kubernetes-latest-tag` (kube-linter's checks).
-- **Linters:** kubeconform and kube-linter with default flags; the preset covers 89% of their pooled findings on real projects. Schema validation of fields and checks that read other objects of the project are not covered.
-- **Reproduce (needs a source checkout):** `scripts/evidence_kubernetes_baseline.py` (see [ai/design/kubernetes.md](ai/design/kubernetes.md)).
-
-### Ansible (YAML)
-
-- Ansible playbooks, roles, tasks and handlers are YAML files: the YAML formatter and the `yaml` config section apply. The preset `yaml/ansible-lint` turns on the Ansible rules (`ansible-module-fqcn`, `ansible-task-name-casing`, `ansible-task-name-missing`, `ansible-command-changed-when`, `ansible-no-free-form`, `ansible-role-var-prefix`) and the yamllint rules that ansible-lint runs (`block-indentation`, line length 160, truthy values, octal values, trailing spaces, comment spacing). They run on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.
-- **Linter:** ansible-lint with its default rule set; the preset covers most of its findings on real projects. Rules that need the installed collections or the Ansible runtime (`fqcn[action]`, `args[module]`, `syntax-check`) are not covered.
-- **Jinja2 is not supported:** templates in values are not parsed, so template checks such as `jinja[spacing]` are not covered.
-- **Reproduce (needs a source checkout):** `scripts/evidence_ansible_baseline.py` (see [ai/design/ansible.md](ai/design/ansible.md)).
 
 ## Shell
 
@@ -346,6 +333,20 @@ The status and the numbers of every language are in the generated table "Languag
 - **Differences:** `A+=b`, `A?=b` and `A!=b` without a blank before the operator are left as written.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh coverage checkmake` (lint), `scripts/parity.sh stability makefile` (stable).
 
+## Kubernetes manifests
+
+<!-- generated:measured-kubernetes-manifests -->
+- **Measured:** Ready.
+  - Format, Prettier: 86% of the files identical (3,299 of 3,826 files).
+  - Lint, kubeconform: 96% of its findings also reported (2,707 of 2,816 findings).
+  - Lint, kube-linter: 84% of its findings also reported (3,127 of 3,708 findings).
+<!-- /generated -->
+
+- Kubernetes manifests are YAML files, recognised by content (`apiVersion` and `kind` at the top). The preset `yaml/kubernetes` formats like Prettier and turns on `kubernetes-schema-missing` (a kind that has no schema in the Kubernetes API, as kubeconform reports; add your custom resources to its `known` option), `kubernetes-no-read-only-root-fs`, `kubernetes-run-as-non-root`, `kubernetes-unset-memory-requirements`, `kubernetes-unset-cpu-requirements` and `kubernetes-latest-tag` (kube-linter's checks).
+- **Linters:** kubeconform and kube-linter with default flags; the preset reports what they report on real projects at the shares of the support table (kubeconform, kube-linter). Schema validation of fields and checks that read other objects of the project are not covered.
+- **Formatter:** Prettier, as for YAML; the manifests of the corpus are the ones with an `apiVersion` and a `kind`, at most 60 per project.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh coverage kubeconform`, `scripts/parity.sh coverage kube-linter` (evidence: [ai/design/kubernetes.md](ai/design/kubernetes.md)).
+
 ## TOML
 
 <!-- generated:measured-toml -->
@@ -459,6 +460,20 @@ The status and the numbers of every language are in the generated table "Languag
 - Small formatters and a few rules. No reference tool, so no comparison: the format column is the stable share.
 - **Options:** `max_blank_lines`. INI adds `space_around_equals`.
 - **Rules:** invalid or duplicate entries, for example unknown EditorConfig properties and ignored `.gitignore` patterns.
+
+## Ansible
+
+<!-- generated:measured-ansible -->
+- **Measured:** Ready.
+  - Format, Prettier: 89% of the files identical (2,365 of 2,631 files).
+  - Lint, ansible-lint: 86% of its findings also reported (11,681 of 13,500 findings).
+<!-- /generated -->
+
+- Ansible playbooks, roles, tasks and handlers are YAML files: the YAML formatter and the `yaml` config section apply. The preset `yaml/ansible-lint` turns on the Ansible rules (`ansible-module-fqcn`, `ansible-task-name-casing`, `ansible-task-name-missing`, `ansible-command-changed-when`, `ansible-no-free-form`, `ansible-role-var-prefix`) and the yamllint rules that ansible-lint runs (`block-indentation`, line length 160, truthy values, octal values, trailing spaces, comment spacing). They run on files named like Ansible's: `tasks/`, `handlers/`, `playbooks/`, `*playbook*.yml` and `molecule/<scenario>/`.
+- **Formatter:** Prettier, as for YAML, on the files of Ansible's kinds (tasks, handlers, vars, playbooks, meta), at most 60 per project.
+- **Linter:** ansible-lint with its default rule set; the preset reports its findings in the shares of the support table. Rules that need the installed collections or the Ansible runtime (`fqcn[action]`, `args[module]`, `syntax-check`) are not covered.
+- **Jinja2 is not supported:** templates in values are not parsed, so template checks such as `jinja[spacing]` are not covered.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh coverage ansible-lint` (evidence: [ai/design/ansible.md](ai/design/ansible.md)).
 
 ## Ruby
 
