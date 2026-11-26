@@ -1,0 +1,24 @@
+id: kubernetes-job-ttl-seconds-after-finished
+message: "the Job has no `spec.ttlSecondsAfterFinished`"
+description: >-
+  Reports a Kubernetes `Job` manifest without `spec.ttlSecondsAfterFinished`. The report is on the
+  `kind:` line of the manifest.
+why: >-
+  A finished Job and its pods stay in the cluster until someone deletes them, and a cluster with
+  many Jobs slows down.
+
+  To fix, set `ttlSecondsAfterFinished` to the seconds the result should stay readable.
+example: "kind: Job   # no spec.ttlSecondsAfterFinished"
+severity: off
+category: suspicious
+rule:
+  kind: BlockMapping
+  top-level:
+    apiVersion: '^(?:[a-z0-9][a-z0-9.-]*/)?v\d+(?:alpha|beta)?\d*$'
+    kind: '^(?<KIND>Job)$'
+  not:
+    has:
+      role: key-value
+      key-path: '^spec$'
+      fields: { key: { regex: '^ttlSecondsAfterFinished$' } }
+report-on: $KIND

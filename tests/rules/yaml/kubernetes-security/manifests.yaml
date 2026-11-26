@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Pod
+#     ^^^ kubernetes-privilege-escalation
+#     ^^^ kubernetes-privileged-container
+#     ^^^ kubernetes-drop-net-raw-capability
+spec:
+  containers:
+    - {name: a, image: "x:1", securityContext: {privileged: true}}
+    - {name: b, image: "x:1", securityContext: {capabilities: {add: [NET_ADMIN]}}}
+    - {name: c, image: "x:1", securityContext: {capabilities: {drop: [all]}}}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+#     ^^^^^^^^^ kubernetes-host-namespace
+#     ^^^^^^^^^ kubernetes-privilege-escalation
+#     ^^^^^^^^^ kubernetes-drop-net-raw-capability
+spec:
+  template:
+    spec:
+      hostPID: true
+      initContainers:
+        - name: i
+          image: "x:1"
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - net_raw
+      containers:
+        - name: ok
+          image: "x:1"
+          securityContext:
+            capabilities:
+              drop:
+                - "NET_RAW"
+---
+apiVersion: batch/v1
+kind: CronJob
+#     ^^^^^^^ kubernetes-host-namespace
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec: {hostNetwork: true, containers: []}
+---
+apiVersion: batch/v1
+kind: Job
+#     ^^^ kubernetes-job-ttl-seconds-after-finished
+spec: {template: {spec: {hostNetwork: false, containers: []}}}
+---
+apiVersion: batch/v1
+kind: Job
+spec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+#     ^^^^^^^ kubernetes-no-extensions-v1beta
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+#     ^^^^^^^^^^^^^^^^^^^^^^^^ kubernetes-no-extensions-v1beta

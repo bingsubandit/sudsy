@@ -1,0 +1,26 @@
+id: kubernetes-privileged-container
+message: "a container of the pod runs privileged (`securityContext.privileged: true`)"
+description: >-
+  Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or
+  init container whose `securityContext` sets `privileged: true`. The report is on the `kind:` line
+  of the manifest.
+why: >-
+  A privileged container has all capabilities and access to the devices of the node, so a process
+  that escapes it owns the node.
+
+  To fix, remove `privileged` and add only the capabilities the program needs.
+example: "kind: Pod   # securityContext: {privileged: true}"
+severity: off
+category: suspicious
+rule:
+  kind: BlockMapping
+  top-level:
+    apiVersion: '^(?:[a-z0-9][a-z0-9.-]*/)?v\d+(?:alpha|beta)?\d*$'
+    kind: '^(?<KIND>Pod|Deployment|DaemonSet|StatefulSet|ReplicaSet|ReplicationController|Job|CronJob)$'
+  has:
+    role: key-value
+    key-path: '^spec(\.template\.spec|\.jobTemplate\.spec\.template\.spec)?\.(containers|initContainers)\[\d+\]\.securityContext$'
+    fields:
+      key: { regex: '^privileged$' }
+      value: { regex: '^true$' }
+report-on: $KIND

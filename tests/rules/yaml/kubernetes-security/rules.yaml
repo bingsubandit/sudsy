@@ -1,0 +1,6 @@
+kubernetes-host-namespace: warn
+kubernetes-privileged-container: warn
+kubernetes-privilege-escalation: warn
+kubernetes-drop-net-raw-capability: warn
+kubernetes-job-ttl-seconds-after-finished: warn
+kubernetes-no-extensions-v1beta: warn

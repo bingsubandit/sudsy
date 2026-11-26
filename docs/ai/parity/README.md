@@ -52,7 +52,7 @@ The clang-format run does not compare line wrapping (the `wrap_compare` `note` o
 | html-validate | 92.5% | `2607e39a` | 97 | 34 | 40 | 20 | 0 | 1 | 2 | 20 |
 | htmlhint | 91.6% | `0c8a3dcc` | 44 | 10 | 7 | 27 | 0 | 0 | 0 | 27 |
 | ktlint | 92.3% | `bede0bee` | 100 | 53 | 11 | 36 | 0 | 0 | 0 | 36 |
-| kube-linter | 84.3% | `81899480` | 26 | 5 | 0 | 19 | 0 | 2 | 0 | 19 |
+| kube-linter | 89.9% | `eb5d4d90` | 26 | 13 | 0 | 11 | 0 | 2 | 0 | 11 |
 | kubeconform | 96.1% | `81899480` | 10 | 2 | 0 | 8 | 0 | 0 | 0 | 8 |
 | markdownlint | 99.0% | `7514c1f3` | 53 | 23 | 19 | 0 | 0 | 0 | 11 | 0 |
 | mbake | - | - | 17 | 9 | 1 | 0 | 0 | 0 | 7 | 0 |

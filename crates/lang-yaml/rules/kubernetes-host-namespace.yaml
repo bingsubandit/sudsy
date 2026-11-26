@@ -1,0 +1,25 @@
+id: kubernetes-host-namespace
+message: "the pod shares the network, process or IPC namespace of the node (`hostNetwork`, `hostPID` or `hostIPC` is `true`)"
+description: >-
+  Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) whose pod spec sets
+  `hostNetwork`, `hostPID` or `hostIPC` to `true`. The report is on the `kind:` line of the manifest.
+why: >-
+  A pod in a host namespace sees the node's network interfaces, processes or shared memory, so a
+  compromised container reaches the node and the pods next to it.
+
+  To fix, remove the field, or keep it only for a pod that needs it (a network plugin, a node agent).
+example: "kind: DaemonSet   # spec.template.spec.hostNetwork: true"
+severity: off
+category: suspicious
+rule:
+  kind: BlockMapping
+  top-level:
+    apiVersion: '^(?:[a-z0-9][a-z0-9.-]*/)?v\d+(?:alpha|beta)?\d*$'
+    kind: '^(?<KIND>Pod|Deployment|DaemonSet|StatefulSet|ReplicaSet|ReplicationController|Job|CronJob)$'
+  has:
+    role: key-value
+    key-path: '^spec(\.template\.spec|\.jobTemplate\.spec\.template\.spec)?$'
+    fields:
+      key: { regex: '^host(Network|PID|IPC)$' }
+      value: { regex: '^true$' }
+report-on: $KIND

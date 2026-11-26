@@ -1,6 +1,6 @@
 # Kubernetes manifests: formats like Prettier (the usual formatter of manifests, as in
 # `prettier-compat`) and turns on the checks of kubeconform's default run (a kind with no schema) and
-# of kube-linter's security and resource checks that read one manifest. Checks that read other
+# of kube-linter's security, resource and deprecated-API checks that read one manifest. Checks that read other
 # objects of the project (a Service with no Deployment, a missing ServiceAccount) are not covered.
 yaml:
   format:
@@ -21,3 +21,9 @@ yaml:
       kubernetes-unset-memory-requirements: warn
       kubernetes-unset-cpu-requirements: warn
       kubernetes-latest-tag: warn
+      kubernetes-host-namespace: warn
+      kubernetes-privileged-container: warn
+      kubernetes-privilege-escalation: warn
+      kubernetes-drop-net-raw-capability: warn
+      kubernetes-job-ttl-seconds-after-finished: warn
+      kubernetes-no-extensions-v1beta: warn

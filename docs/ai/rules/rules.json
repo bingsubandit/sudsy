@@ -36260,6 +36260,153 @@
     {
       "category": "suspicious",
       "default_level": "off",
+      "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `securityContext.capabilities` exists and whose `drop` list has neither `NET_RAW` nor `ALL`. The report is on the `kind:` line of the manifest.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - {name: a, image: \"x:1\", securityContext: {privileged: true}}\n    - {name: b, image: \"x:1\", securityContext: {capabilities: {add: [NET_ADMIN]}}}\n    - {name: c, image: \"x:1\", securityContext: {capabilities: {drop: [all]}}}\n---\napiVersion: apps/v1\nkind: DaemonSet\nspec:\n  template:\n    spec:\n      hostPID: true\n      initContainers:\n        - name: i\n          image: \"x:1\"\n          securityContext:\n            allowPrivilegeEscalation: true\n            capabilities:\n              drop:\n                - net_raw\n      containers:\n        - name: ok\n          image: \"x:1\"\n          securityContext:\n            capabilities:\n              drop:\n                - \"NET_RAW\"\n---\napiVersion: batch/v1\nkind: CronJob\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec: {hostNetwork: true, containers: []}\n---\napiVersion: batch/v1\nkind: Job\nspec: {template: {spec: {hostNetwork: false, containers: []}}}\n---\napiVersion: batch/v1\nkind: Job\nspec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}\n---\napiVersion: extensions/v1beta1\nkind: Ingress\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n",
+        "language": "yaml",
+        "other_lines": [
+          32,
+          40,
+          48,
+          51
+        ],
+        "spans": [
+          {
+            "column": 7,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 7,
+            "length": 9,
+            "line": 10
+          }
+        ]
+      },
+      "fix": null,
+      "id": "kubernetes-drop-net-raw-capability",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [
+        "yaml/kubernetes"
+      ],
+      "upstream": [
+        {
+          "id": "drop-net-raw-capability",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
+      "why": "`NET_RAW` lets a process craft packets and spoof addresses, which helps an attacker inside the cluster network.\n\nTo fix, add `NET_RAW` (or `ALL`) to `capabilities.drop`."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) whose pod spec sets `hostNetwork`, `hostPID` or `hostIPC` to `true`. The report is on the `kind:` line of the manifest.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - {name: a, image: \"x:1\", securityContext: {privileged: true}}\n    - {name: b, image: \"x:1\", securityContext: {capabilities: {add: [NET_ADMIN]}}}\n    - {name: c, image: \"x:1\", securityContext: {capabilities: {drop: [all]}}}\n---\napiVersion: apps/v1\nkind: DaemonSet\nspec:\n  template:\n    spec:\n      hostPID: true\n      initContainers:\n        - name: i\n          image: \"x:1\"\n          securityContext:\n            allowPrivilegeEscalation: true\n            capabilities:\n              drop:\n                - net_raw\n      containers:\n        - name: ok\n          image: \"x:1\"\n          securityContext:\n            capabilities:\n              drop:\n                - \"NET_RAW\"\n---\napiVersion: batch/v1\nkind: CronJob\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec: {hostNetwork: true, containers: []}\n---\napiVersion: batch/v1\nkind: Job\nspec: {template: {spec: {hostNetwork: false, containers: []}}}\n---\napiVersion: batch/v1\nkind: Job\nspec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}\n---\napiVersion: extensions/v1beta1\nkind: Ingress\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n",
+        "language": "yaml",
+        "other_lines": [
+          2,
+          40,
+          48,
+          51
+        ],
+        "spans": [
+          {
+            "column": 7,
+            "length": 9,
+            "line": 10
+          },
+          {
+            "column": 7,
+            "length": 7,
+            "line": 32
+          }
+        ]
+      },
+      "fix": null,
+      "id": "kubernetes-host-namespace",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [
+        "yaml/kubernetes"
+      ],
+      "upstream": [
+        {
+          "id": "host-network",
+          "partial": false,
+          "tool": "kube-linter"
+        },
+        {
+          "id": "host-pid",
+          "partial": false,
+          "tool": "kube-linter"
+        },
+        {
+          "id": "host-ipc",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
+      "why": "A pod in a host namespace sees the node's network interfaces, processes or shared memory, so a compromised container reaches the node and the pods next to it.\n\nTo fix, remove the field, or keep it only for a pod that needs it (a network plugin, a node agent)."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a Kubernetes `Job` manifest without `spec.ttlSecondsAfterFinished`. The report is on the `kind:` line of the manifest.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - {name: a, image: \"x:1\", securityContext: {privileged: true}}\n    - {name: b, image: \"x:1\", securityContext: {capabilities: {add: [NET_ADMIN]}}}\n    - {name: c, image: \"x:1\", securityContext: {capabilities: {drop: [all]}}}\n---\napiVersion: apps/v1\nkind: DaemonSet\nspec:\n  template:\n    spec:\n      hostPID: true\n      initContainers:\n        - name: i\n          image: \"x:1\"\n          securityContext:\n            allowPrivilegeEscalation: true\n            capabilities:\n              drop:\n                - net_raw\n      containers:\n        - name: ok\n          image: \"x:1\"\n          securityContext:\n            capabilities:\n              drop:\n                - \"NET_RAW\"\n---\napiVersion: batch/v1\nkind: CronJob\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec: {hostNetwork: true, containers: []}\n---\napiVersion: batch/v1\nkind: Job\nspec: {template: {spec: {hostNetwork: false, containers: []}}}\n---\napiVersion: batch/v1\nkind: Job\nspec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}\n---\napiVersion: extensions/v1beta1\nkind: Ingress\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n",
+        "language": "yaml",
+        "other_lines": [
+          2,
+          10,
+          32,
+          48,
+          51
+        ],
+        "spans": [
+          {
+            "column": 7,
+            "length": 3,
+            "line": 40
+          }
+        ]
+      },
+      "fix": null,
+      "id": "kubernetes-job-ttl-seconds-after-finished",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [
+        "yaml/kubernetes"
+      ],
+      "upstream": [
+        {
+          "id": "job-ttl-seconds-after-finished",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
+      "why": "A finished Job and its pods stay in the cluster until someone deletes them, and a cluster with many Jobs slows down.\n\nTo fix, set `ttlSecondsAfterFinished` to the seconds the result should stay readable."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
       "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `image` is `name:latest` or has no tag (an image with a digest, `name@sha256:...`, is not reported). The report is on the `kind:` line of the manifest.",
       "example": {
         "config": null,
@@ -36305,6 +36452,53 @@
         }
       ],
       "why": "`latest` is the image the registry has today. Two pods of one deployment can run different code, and a rollback goes to the same tag.\n\nTo fix, name a version tag or a digest."
+    },
+    {
+      "category": "correctness",
+      "default_level": "off",
+      "description": "Reports a Kubernetes manifest with `apiVersion: extensions/v1beta1` or `apiextensions.k8s.io/v1beta1`. The report is on the `kind:` line of the manifest.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - {name: a, image: \"x:1\", securityContext: {privileged: true}}\n    - {name: b, image: \"x:1\", securityContext: {capabilities: {add: [NET_ADMIN]}}}\n    - {name: c, image: \"x:1\", securityContext: {capabilities: {drop: [all]}}}\n---\napiVersion: apps/v1\nkind: DaemonSet\nspec:\n  template:\n    spec:\n      hostPID: true\n      initContainers:\n        - name: i\n          image: \"x:1\"\n          securityContext:\n            allowPrivilegeEscalation: true\n            capabilities:\n              drop:\n                - net_raw\n      containers:\n        - name: ok\n          image: \"x:1\"\n          securityContext:\n            capabilities:\n              drop:\n                - \"NET_RAW\"\n---\napiVersion: batch/v1\nkind: CronJob\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec: {hostNetwork: true, containers: []}\n---\napiVersion: batch/v1\nkind: Job\nspec: {template: {spec: {hostNetwork: false, containers: []}}}\n---\napiVersion: batch/v1\nkind: Job\nspec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}\n---\napiVersion: extensions/v1beta1\nkind: Ingress\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n",
+        "language": "yaml",
+        "other_lines": [
+          2,
+          10,
+          32,
+          40
+        ],
+        "spans": [
+          {
+            "column": 7,
+            "length": 7,
+            "line": 48
+          },
+          {
+            "column": 7,
+            "length": 24,
+            "line": 51
+          }
+        ]
+      },
+      "fix": null,
+      "id": "kubernetes-no-extensions-v1beta",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [
+        "yaml/kubernetes"
+      ],
+      "upstream": [
+        {
+          "id": "no-extensions-v1beta",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
+      "why": "A current Kubernetes version no longer serves these API versions, so it rejects the manifest.\n\nTo fix, use `apps/v1`, `networking.k8s.io/v1` or `apiextensions.k8s.io/v1`."
     },
     {
       "category": "suspicious",
@@ -36357,6 +36551,96 @@
         }
       ],
       "why": "A writable root file system lets a process that is compromised in the container change the image's binaries and configuration.\n\nTo fix, set `readOnlyRootFilesystem: true` and mount an `emptyDir` volume on the paths the program writes to."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `securityContext` sets `allowPrivilegeEscalation: true` or `privileged: true`. The report is on the `kind:` line of the manifest.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - {name: a, image: \"x:1\", securityContext: {privileged: true}}\n    - {name: b, image: \"x:1\", securityContext: {capabilities: {add: [NET_ADMIN]}}}\n    - {name: c, image: \"x:1\", securityContext: {capabilities: {drop: [all]}}}\n---\napiVersion: apps/v1\nkind: DaemonSet\nspec:\n  template:\n    spec:\n      hostPID: true\n      initContainers:\n        - name: i\n          image: \"x:1\"\n          securityContext:\n            allowPrivilegeEscalation: true\n            capabilities:\n              drop:\n                - net_raw\n      containers:\n        - name: ok\n          image: \"x:1\"\n          securityContext:\n            capabilities:\n              drop:\n                - \"NET_RAW\"\n---\napiVersion: batch/v1\nkind: CronJob\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec: {hostNetwork: true, containers: []}\n---\napiVersion: batch/v1\nkind: Job\nspec: {template: {spec: {hostNetwork: false, containers: []}}}\n---\napiVersion: batch/v1\nkind: Job\nspec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}\n---\napiVersion: extensions/v1beta1\nkind: Ingress\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n",
+        "language": "yaml",
+        "other_lines": [
+          32,
+          40,
+          48,
+          51
+        ],
+        "spans": [
+          {
+            "column": 7,
+            "length": 3,
+            "line": 2
+          },
+          {
+            "column": 7,
+            "length": 9,
+            "line": 10
+          }
+        ]
+      },
+      "fix": null,
+      "id": "kubernetes-privilege-escalation",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [
+        "yaml/kubernetes"
+      ],
+      "upstream": [
+        {
+          "id": "privilege-escalation-container",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
+      "why": "A process that may gain more privileges than its parent can turn a flaw in the program into root rights in the container.\n\nTo fix, set `allowPrivilegeEscalation: false` and do not set `privileged`."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `securityContext` sets `privileged: true`. The report is on the `kind:` line of the manifest.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "apiVersion: v1\nkind: Pod\nspec:\n  containers:\n    - {name: a, image: \"x:1\", securityContext: {privileged: true}}\n    - {name: b, image: \"x:1\", securityContext: {capabilities: {add: [NET_ADMIN]}}}\n    - {name: c, image: \"x:1\", securityContext: {capabilities: {drop: [all]}}}\n---\napiVersion: apps/v1\nkind: DaemonSet\nspec:\n  template:\n    spec:\n      hostPID: true\n      initContainers:\n        - name: i\n          image: \"x:1\"\n          securityContext:\n            allowPrivilegeEscalation: true\n            capabilities:\n              drop:\n                - net_raw\n      containers:\n        - name: ok\n          image: \"x:1\"\n          securityContext:\n            capabilities:\n              drop:\n                - \"NET_RAW\"\n---\napiVersion: batch/v1\nkind: CronJob\nspec:\n  jobTemplate:\n    spec:\n      template:\n        spec: {hostNetwork: true, containers: []}\n---\napiVersion: batch/v1\nkind: Job\nspec: {template: {spec: {hostNetwork: false, containers: []}}}\n---\napiVersion: batch/v1\nkind: Job\nspec: {ttlSecondsAfterFinished: 60, template: {spec: {containers: []}}}\n---\napiVersion: extensions/v1beta1\nkind: Ingress\n---\napiVersion: apiextensions.k8s.io/v1beta1\nkind: CustomResourceDefinition\n",
+        "language": "yaml",
+        "other_lines": [
+          10,
+          32,
+          40,
+          48,
+          51
+        ],
+        "spans": [
+          {
+            "column": 7,
+            "length": 3,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "kubernetes-privileged-container",
+      "languages": [
+        "github-actions",
+        "yaml"
+      ],
+      "options": [],
+      "presets": [
+        "yaml/kubernetes"
+      ],
+      "upstream": [
+        {
+          "id": "privileged-container",
+          "partial": false,
+          "tool": "kube-linter"
+        }
+      ],
+      "why": "A privileged container has all capabilities and access to the devices of the node, so a process that escapes it owns the node.\n\nTo fix, remove `privileged` and add only the capabilities the program needs."
     },
     {
       "category": "suspicious",

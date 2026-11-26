@@ -1,0 +1,26 @@
+id: kubernetes-privilege-escalation
+message: "a container of the pod allows privilege escalation (`allowPrivilegeEscalation: true`, or `privileged: true`)"
+description: >-
+  Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or
+  init container whose `securityContext` sets `allowPrivilegeEscalation: true` or `privileged: true`.
+  The report is on the `kind:` line of the manifest.
+why: >-
+  A process that may gain more privileges than its parent can turn a flaw in the program into
+  root rights in the container.
+
+  To fix, set `allowPrivilegeEscalation: false` and do not set `privileged`.
+example: "kind: Pod   # securityContext: {allowPrivilegeEscalation: true}"
+severity: off
+category: suspicious
+rule:
+  kind: BlockMapping
+  top-level:
+    apiVersion: '^(?:[a-z0-9][a-z0-9.-]*/)?v\d+(?:alpha|beta)?\d*$'
+    kind: '^(?<KIND>Pod|Deployment|DaemonSet|StatefulSet|ReplicaSet|ReplicationController|Job|CronJob)$'
+  has:
+    role: key-value
+    key-path: '^spec(\.template\.spec|\.jobTemplate\.spec\.template\.spec)?\.(containers|initContainers)\[\d+\]\.securityContext$'
+    fields:
+      key: { regex: '^(allowPrivilegeEscalation|privileged)$' }
+      value: { regex: '^true$' }
+report-on: $KIND

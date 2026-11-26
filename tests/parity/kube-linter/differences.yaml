@@ -1,33 +1,29 @@
 differences:
-  not-built: "gap  default checks with no Sudsy rule: no-anti-affinity, mismatching-selector, probe ports, no-extensions-v1beta, host and privilege checks, env-var-secret, job-ttl-seconds-after-finished (each at most 2% of the findings)"
+  not-built: "gap  default checks with no Sudsy rule: no-anti-affinity, mismatching-selector, probe ports, env-var-secret, the volume and service account checks (each at most 2% of the findings)"
   cross-object: "gap  checks that read other objects of the project (dangling-service, non-existent-service-account) are out of scope of a per-file run"
-target: 84.3  # the same share on the target number (docs/ai/design/parity-target.md); scripts/parity.sh coverage kube-linter
+target: 89.9  # the same share on the target number (docs/ai/design/parity-target.md); scripts/parity.sh coverage kube-linter
 fixes:
   "no-anti-affinity": "not-built"
   "mismatching-selector": "not-built"
-measured: {covered: 3127, total: 3708, main: '81899480'}  # of the target; `main`: the origin/main commit the measured tree is based on
+measured: {covered: 3335, total: 3708, main: 'eb5d4d90'}  # of the target; `main`: the origin/main commit the measured tree is based on
 missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
   no-anti-affinity: 73
   mismatching-selector: 68
   liveness-port: 55
-  no-extensions-v1beta: 55
   readiness-port: 43
-  job-ttl-seconds-after-finished: 42
   latest-tag: 41
-  drop-net-raw-capability: 39
-  privilege-escalation-container: 32
-  host-network: 30
   env-var-secret: 28
-  privileged-container: 27
   deprecated-service-account-field: 9
+  no-extensions-v1beta: 8
   pdb-unhealthy-pod-eviction-policy: 8
   startup-port: 8
+  drop-net-raw-capability: 6
   sensitive-host-mounts: 6
-  host-pid: 4
+  privilege-escalation-container: 5
+  job-ttl-seconds-after-finished: 3
   run-as-non-root: 3
   duplicate-env-var: 2
   no-read-only-root-fs: 2
   unset-cpu-requirements: 2
   unset-memory-requirements: 2
   docker-sock: 1
-  host-ipc: 1

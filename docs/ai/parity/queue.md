@@ -11,7 +11,6 @@ Weight: the primary tool of a leg 4, a popular secondary 1, any other 0.25. Orde
 | C / C++ | format clang-format | 4 | 79.9% | 5.1 | 338 files | `comment-line-indent-or-join` 578 | 3 | 6.77 | - |
 | (not in support.yaml) | lint sqlfluff-fixtures | 0.25 | 59.6% | 25.4 | 11453 findings | `CP01` 4211, `LT01` 2805, `LT02` 2639, `PRS` 967 +1 more | 15 | 0.42 | 3cdf2fac |
 | C# | lint Roslynator | 0.25 | 0.4% | 84.6 | 9405 findings | `RCS1157` 1714, `RCS1118` 1422, `RCS1123` 827, `RCS1085` 760 +23 more | 75 | 0.28 | 66718389 |
-| Kubernetes manifests | lint kube-linter | 1 | 84.3% | 0.7 | 25 findings | `no-anti-affinity` 73 | 3 | 0.23 | 81899480 |
 
 Blocked on a decision:
 
@@ -422,24 +421,24 @@ Lint: target 92.3% (109638 of 118837, 9199 missed, measured on bede0bee); rules 
 
 ## kube-linter
 
-Lint: target 84.3% (3127 of 3708, 581 missed, measured on 81899480); rules by missed findings:
+Lint: target 89.9% (3335 of 3708, 373 missed, measured on eb5d4d90); rules by missed findings:
 1. `no-anti-affinity` (73 missed) Fix: not-built
 2. `mismatching-selector` (68 missed) Fix: not-built
 3. `liveness-port` (55 missed)
-4. `no-extensions-v1beta` (55 missed)
-5. `readiness-port` (43 missed)
-6. `job-ttl-seconds-after-finished` (42 missed)
-7. `latest-tag` (41 missed)
-8. `drop-net-raw-capability` (39 missed)
-9. `privilege-escalation-container` (32 missed)
-10. `host-network` (30 missed)
-11. `env-var-secret` (28 missed)
-12. `privileged-container` (27 missed)
-13. `deprecated-service-account-field` (9 missed)
-14. `pdb-unhealthy-pod-eviction-policy` (8 missed)
-15. `startup-port` (8 missed)
+4. `readiness-port` (43 missed)
+5. `latest-tag` (41 missed)
+6. `env-var-secret` (28 missed)
+7. `deprecated-service-account-field` (9 missed)
+8. `no-extensions-v1beta` (8 missed)
+9. `pdb-unhealthy-pod-eviction-policy` (8 missed)
+10. `startup-port` (8 missed)
+11. `drop-net-raw-capability` (6 missed)
+12. `sensitive-host-mounts` (6 missed)
+13. `privilege-escalation-container` (5 missed)
+14. `job-ttl-seconds-after-finished` (3 missed)
+15. `run-as-non-root` (3 missed)
 
-9 more rules: 23 missed.
+5 more rules: 9 missed.
 
 ## kubeconform
 

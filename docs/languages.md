@@ -339,10 +339,10 @@ The status and the numbers of every language are in the generated table "Languag
 - **Measured:** Ready.
   - Format, Prettier: 86% of the files identical (3,299 of 3,826 files).
   - Lint, kubeconform: 96% of its findings also reported (2,707 of 2,816 findings).
-  - Lint, kube-linter: 84% of its findings also reported (3,127 of 3,708 findings).
+  - Lint, kube-linter: 89% of its findings also reported (3,335 of 3,708 findings).
 <!-- /generated -->
 
-- Kubernetes manifests are YAML files, recognised by content (`apiVersion` and `kind` at the top). The preset `yaml/kubernetes` formats like Prettier and turns on `kubernetes-schema-missing` (a kind that has no schema in the Kubernetes API, as kubeconform reports; add your custom resources to its `known` option), `kubernetes-no-read-only-root-fs`, `kubernetes-run-as-non-root`, `kubernetes-unset-memory-requirements`, `kubernetes-unset-cpu-requirements` and `kubernetes-latest-tag` (kube-linter's checks).
+- Kubernetes manifests are YAML files, recognised by content (`apiVersion` and `kind` at the top). The preset `yaml/kubernetes` formats like Prettier and turns on `kubernetes-schema-missing` (a kind that has no schema in the Kubernetes API, as kubeconform reports; add your custom resources to its `known` option), `kubernetes-no-read-only-root-fs`, `kubernetes-run-as-non-root`, `kubernetes-unset-memory-requirements`, `kubernetes-unset-cpu-requirements`, `kubernetes-latest-tag`, `kubernetes-host-namespace`, `kubernetes-privileged-container`, `kubernetes-privilege-escalation`, `kubernetes-drop-net-raw-capability`, `kubernetes-job-ttl-seconds-after-finished` and `kubernetes-no-extensions-v1beta` (kube-linter's checks).
 - **Linters:** kubeconform and kube-linter with default flags; the preset reports what they report on real projects at the shares of the support table (kubeconform, kube-linter). Schema validation of fields and checks that read other objects of the project are not covered.
 - **Formatter:** Prettier, as for YAML; the manifests of the corpus are the ones with an `apiVersion` and a `kind`, at most 60 per project.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format prettier`, `scripts/parity.sh coverage kubeconform`, `scripts/parity.sh coverage kube-linter` (evidence: [ai/design/kubernetes.md](ai/design/kubernetes.md)).

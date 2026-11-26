@@ -3520,13 +3520,37 @@
               "$ref": "#/definitions/rule",
               "description": "Reports an unquoted name written like a keyword of the dialect, such as a column called `year` or `name`."
             },
+            "kubernetes-drop-net-raw-capability": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `securityContext.capabilities` exists and whose `drop` list has neither `NET_RAW` nor `ALL`."
+            },
+            "kubernetes-host-namespace": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) whose pod spec sets `hostNetwork`, `hostPID` or `hostIPC` to `true`."
+            },
+            "kubernetes-job-ttl-seconds-after-finished": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Kubernetes `Job` manifest without `spec.ttlSecondsAfterFinished`."
+            },
             "kubernetes-latest-tag": {
               "$ref": "#/definitions/rule",
               "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `image` is `name:latest` or has no tag (an image with a digest, `name@sha256:...`, is not reported)."
             },
+            "kubernetes-no-extensions-v1beta": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Kubernetes manifest with `apiVersion: extensions/v1beta1` or `apiextensions.k8s.io/v1beta1`."
+            },
             "kubernetes-no-read-only-root-fs": {
               "$ref": "#/definitions/rule",
               "description": "Reports a Kubernetes manifest (Pod, Deployment, DaemonSet, StatefulSet, ReplicaSet, ReplicationController, Job, CronJob) with a container or init container whose `securityContext` does not have `readOnlyRootFilesystem: true`."
+            },
+            "kubernetes-privilege-escalation": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `securityContext` sets `allowPrivilegeEscalation: true` or `privileged: true`."
+            },
+            "kubernetes-privileged-container": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Kubernetes manifest (kinds as in `kubernetes-no-read-only-root-fs`) with a container or init container whose `securityContext` sets `privileged: true`."
             },
             "kubernetes-run-as-non-root": {
               "$ref": "#/definitions/rule",

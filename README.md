@@ -85,7 +85,7 @@ Each number is measured on real-world code against the default rule set of the r
 | C# | ████████░░ 85% CSharpier | ████████░░ 87% StyleCop<br>░░░░░░░░░░ 0% Roslynator | Ready |
 | PowerShell | █████████░ 92% Invoke-Formatter | ████████░░ 87% PSScriptAnalyzer | Ready |
 | Makefile | ████████░░ 88% mbake | ██████████ 100% checkmake | Ready |
-| Kubernetes manifests | ████████░░ 86% Prettier | █████████░ 96% kubeconform<br>████████░░ 84% kube-linter | Ready |
+| Kubernetes manifests | ████████░░ 86% Prettier | █████████░ 96% kubeconform<br>████████░░ 89% kube-linter | Ready |
 | TOML | █████████░ 98% taplo | 30 rules · no reference tool | Ready |
 | XML | ██████████ 100% CSharpier XML | 32 rules · no reference tool | Ready |
 | Go | none | █████████░ 97% revive | Lint only: Ready |
