@@ -8,6 +8,7 @@ ratchet:
   ini: 8
   editorconfig: 3
   gitignore: 118
+  mako: 1034
 target-files:
   procfile: 839
   batchfile: 719
@@ -18,3 +19,4 @@ target-files:
   ini: 8
   editorconfig: 3
   gitignore: 118
+  mako: 1036

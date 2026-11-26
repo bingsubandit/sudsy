@@ -1,0 +1,30 @@
+vscode-languages: [mako]
+extensions: [mako]
+formatter: FORMAT
+format-hosts: [html, htm, xhtml, xml, svg]
+embedded-rules:
+  python: {no-wildcard-imports: error}
+parse: parser::parse_file
+rules: "&[]"
+families: "&[core_rules::blank_lines::FAMILY, core_rules::unique::FAMILY]"
+format-rows:
+  source-indent: true
+  option-blanks: [[Percent, ControlOpen, space_after_percent], [Percent, ControlArm, space_after_percent], [Percent, ControlClose, space_after_percent], [Percent, ControlWord, space_after_percent], [HashHash, CommentText, space_after_hashes]]
+options:
+  - indent_size: 4
+  - final_newline: true
+  - end_of_line
+  - max_blank_lines: [1, "Largest number of blank lines kept between lines."]
+  - indent_conversion:
+      values: [as_written, spaces, tabs]
+      default: spaces
+      doc: "Indentation of a line: as written, or tabs turned into spaces, or spaces into tabs (a tab is `indent_size` columns)."
+  - space_after_percent:
+      default: true
+      doc: "At least one blank after the `%` of a control line (`% for x in y:`); more blanks stay as written."
+  - space_after_hashes:
+      default: true
+      doc: "At least one blank after `##` before a comment that starts with a letter or digit (more blanks stay as written)."
+  - keep_leading_blank_lines:
+      default: false
+      doc: "Blank lines at the start of the file stay."

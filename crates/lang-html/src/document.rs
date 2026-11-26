@@ -72,7 +72,7 @@ rule! {
                 let (Some(id), Some(range)) = (a.value, a.value_range) else {
                     continue;
                 };
-                seen.check(ctx, id, range, || format!("duplicate id `{id}`"), "first used here");
+                seen.check_name(ctx, id, range, || format!("duplicate id `{id}`"), "first used here");
             }
         }
     }

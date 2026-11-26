@@ -246,7 +246,7 @@ fn lint_body(db: &dyn Db, file: File) -> Result<Linted, Failure> {
     let text = file.text(db);
     let root = parsed.root();
     let lines = LineIndex::new(text);
-    let embedded_rules = EmbeddedRules::default();
+    let embedded_rules = EmbeddedRules::new(provider);
     let host_reads = active.iter().any(|a| a.rule.reads_embedded());
     let embedded = parse_embedded(db, file, provider, host_reads, &embedded_rules, &root, text);
     let trees = provider_api::embedded::trees(&embedded);

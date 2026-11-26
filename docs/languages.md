@@ -579,6 +579,16 @@ The status and the numbers of every language are in the generated table "Languag
 - **Options:** `indent_size`, `indent_style`, `max_blank_lines`.
 - **Differences:** quotes, dependency parentheses and operator spacing stay as written.
 
+## Mako
+
+<!-- generated:measured-mako -->
+- **Measured:** In progress.
+  - Format, stable: 99% of the files format stably, by the rules of the formatter (1,034 of 1,036 files).
+  - Lint: 33 rules, no reference tool to compare with.
+<!-- /generated -->
+
+- Files: `*.mako` (`*.mak` is not claimed).
+
 ## Reproduce (needs a source checkout)
 
 Each comparison runs from a clone of the repository. `scripts/parity.sh format <tool>` compares formatting. `scripts/parity.sh coverage <tool>` measures lint findings. Each run downloads the tool and the corpus. The complete list of differences per tool is in `tests/parity/<tool>/differences.yaml` and in the generated sections of the language pages under [ai/formatting/](ai/formatting/js.md). Method: [ai/development/parity.md](ai/development/parity.md).

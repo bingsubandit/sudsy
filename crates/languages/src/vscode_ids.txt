@@ -16,6 +16,7 @@ lang-java java
 lang-js javascript typescript javascriptreact typescriptreact
 lang-kotlin kotlin
 lang-makefile makefile
+lang-mako mako
 lang-markdown markdown
 lang-php php
 lang-powershell powershell

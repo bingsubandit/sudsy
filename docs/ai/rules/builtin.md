@@ -401,6 +401,9 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `phony-declared` | makefile | suspicious | off | none | Reports a target with no recipe that is not declared `.PHONY`. Equivalent: checkmake phonydeclared. |
 | `timestamp-expanded` | makefile | suspicious | warn | none | Reports a variable whose value runs `date` and that is not simply expanded (`:=`, `::=`): every use runs `date` again and the values differ within one build. Equivalent: checkmake timestampexpanded. |
 | `unique-targets` | makefile | suspicious | off | none | Reports a target defined by more than one rule, which merges prerequisites and overrides recipes. Options: `ignore` (default `[]`): Targets that may be defined more than once. Equivalent: checkmake uniquetargets. |
+| `namespace-needs-name` | mako | correctness | error | none | Reports a `<%namespace>` tag that has neither a `name` nor an `import` attribute. |
+| `no-default-escape-bypass` | mako | suspicious | off | none | Reports a `${}` expression whose filters include `n`. |
+| `no-duplicate-def` | mako | correctness | error | none | Reports a `<%def>` or `<%block>` whose `name` an earlier one in the file already has. |
 | `commands-show-output` | markdown | style | off | none | Reports a fenced code block in which every non-blank line starts with `$ `, so it shows commands without their output. Equivalent: markdownlint MD014 (partial). |
 | `descriptive-link-text` | markdown | style | off | none | Reports a link whose text is `click here`, `here`, `link` or `more` (in any case) and nothing else. Equivalent: markdownlint MD059 (partial). |
 | `fenced-code-language` | markdown | style | off | none | Reports a fenced code block that has no info string after the opening fence. Equivalent: markdownlint MD040 (partial). |

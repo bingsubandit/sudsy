@@ -1,0 +1,14 @@
+id: no-duplicate-def
+family: unique-names
+params: { container: scope, item: def-name, deep: "true", name: name, strip: "\"'", report: item, related: first defined here }
+message: "the def or block `{name}` is already defined in this template; Mako cannot compile it"
+description: >-
+  Reports a `<%def>` or `<%block>` whose `name` an earlier one in the file already has.
+why: >-
+  Defs and blocks are the functions of a template and share one namespace, so a second one with
+  the same name makes Mako stop with an error when it compiles the template.
+
+  To fix, rename one of them.
+example: "<%def name=\"f()\">a</%def>\n<%def name=\"f()\">b</%def>   # reported"
+severity: error
+category: correctness

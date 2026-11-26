@@ -46,6 +46,7 @@ const NESTED: &[(&str, &str, &str, &str, &str)] = &[
     ("csharp", "A.cs", "class A { int x = ", "(", ")"),
     ("cmake", "CMakeLists.txt", "f", "(", ")"),
     ("batch", "a.bat", "", "(", ")"),
+    ("mako", "a.mako", "", "<%def name=\"(\">", ")</%def>"),
     ("gradle", "build.gradle", "", "(", ")"),
 ];
 

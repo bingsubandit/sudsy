@@ -437,7 +437,13 @@ pub fn emit(
             }
         } else {
             // The first token: its comments stand on lines of their own.
-            if rules.source_indent {
+            // The blank lines at the start of the file stay, unless the language has the option
+            // `keep_leading_blank_lines` and it is off.
+            if rules.source_indent
+                && cx
+                    .options
+                    .flag(core_config::opt::KEEP_LEADING_BLANK_LINES, true)
+            {
                 cur.extend((0..file_start_breaks(g, &tks[i].tok)).map(|_| doc::hardline()));
             }
             let leading = std::mem::take(&mut tks[i].leading);

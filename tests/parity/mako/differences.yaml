@@ -1,0 +1,9 @@
+agreement: 96.0
+checklist: 85.7
+precision: 100.0
+differences:
+  indent-rows: "gap  the indent of a line nested in a `%` block (76.9% of held-out occurrences already in the chosen form) and of a text line in a block (77.2%) are kept as written; 116 of 523 held-out files have a line off the chosen form"
+  python-block-edges: "gap  `<%` and `%>` of a Python block keep their blanks (74.4% already have the newline form)"
+  python-syntax-error: "gap  Python syntax errors in `${}`, `<% %>` and control lines are not reported: the engine leaves an embedded region with errors out (3 corpus occurrences)"
+  self-call: "gap  `self.NAME()` with no def `NAME` is not reported (14 corpus occurrences)"
+  carved-holes: "gap  the HTML rules read a `${}` inside an attribute value as blanks (`id=\"${x}\"` is a value of blanks: allowed-values findings)"

@@ -66,6 +66,43 @@ pub fn is_blank(c: u8) -> bool {
     matches!(c, b' ' | b'\t')
 }
 
+/// A blank byte of a lexer that counts the vertical tab and the form feed as blanks too.
+#[inline]
+pub fn is_blank_form(c: u8) -> bool {
+    matches!(c, b' ' | b'\t' | 0x0b | 0x0c)
+}
+
+/// [`is_blank_form`] for a char (an ASCII one).
+#[inline]
+pub fn is_blank_form_char(c: char) -> bool {
+    c.is_ascii() && is_blank_form(c as u8)
+}
+
+/// Whitespace as a lexer makes trivia of it: a blank or a line break.
+#[inline]
+pub fn is_space(c: char) -> bool {
+    matches!(c, ' ' | '\t' | '\n' | '\r')
+}
+
+/// [`is_space`] with the vertical tab and the form feed.
+#[inline]
+pub fn is_space_form(c: char) -> bool {
+    is_space(c) || matches!(c, '\x0b' | '\x0c')
+}
+
+/// Bytes of the `escape` byte at `at` and the line break after it (`\n`, `\r\n`, `\r`) in `b`; 0
+/// when the escape is not at a line break.
+pub fn escaped_break_at(b: &[u8], at: usize, escape: u8) -> usize {
+    if b.get(at) != Some(&escape) {
+        return 0;
+    }
+    match (b.get(at + 1), b.get(at + 2)) {
+        (Some(b'\r'), Some(b'\n')) => 3,
+        (Some(b'\n' | b'\r'), _) => 2,
+        _ => 0,
+    }
+}
+
 /// A line break byte: `\n` or `\r`.
 #[inline]
 pub fn is_eol(c: u8) -> bool {
@@ -174,16 +211,9 @@ impl<'a> Lexer<'a> {
         true
     }
 
-    /// Bytes of the `escape` byte at the position and the line break after it (`\n`, `\r\n`, `\r`); 0 when the escape is not at a line break.
+    /// Bytes of the `escape` byte at the position and the line break after it (see [`escaped_break_at`]).
     pub fn escaped_break(&self, escape: u8) -> usize {
-        if self.at(0) != escape {
-            return 0;
-        }
-        match (self.at(1), self.at(2)) {
-            (b'\r', b'\n') => 3,
-            (b'\n' | b'\r', _) => 2,
-            _ => 0,
-        }
+        escaped_break_at(self.src.as_bytes(), self.pos, escape)
     }
 
     /// Moves the position to the end of the line, over the line breaks that follow `escape` (when
@@ -660,6 +690,20 @@ pub fn only_block_comment_before(src: &str, offset: usize, open: &str, close: &s
 #[cfg(test)]
 mod helper_tests {
     use super::*;
+
+    #[test]
+    fn an_escape_before_a_line_break_takes_the_break() {
+        assert_eq!(escaped_break_at(b"a\\\r\nb", 1, b'\\'), 3);
+        assert_eq!(escaped_break_at(b"\\\n", 0, b'\\'), 2);
+        assert_eq!(escaped_break_at(b"\\\r", 0, b'\\'), 2);
+        assert_eq!(escaped_break_at(b"\\x", 0, b'\\'), 0);
+        assert_eq!(escaped_break_at(b"\\", 0, b'\\'), 0);
+        assert!(is_blank_form(0x0c) && !is_blank(0x0c));
+        assert!(
+            is_blank_form_char('\u{b}') && !is_blank_form_char('\n') && !is_blank_form_char('é')
+        );
+        assert!(is_space('\r') && is_space('\t') && !is_space('\u{c}') && is_space_form('\u{c}'));
+    }
 
     #[test]
     fn a_sign_touches_its_number_after_a_blank_or_an_opener() {

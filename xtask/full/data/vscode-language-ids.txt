@@ -33,6 +33,7 @@ latex
 less
 lua
 makefile
+mako
 markdown
 objective-c
 objective-cpp

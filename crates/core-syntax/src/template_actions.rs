@@ -2,14 +2,17 @@
 //! as written, with no markup of its own. A block of actions (an opener word up to a closer
 //! word) must open and close inside one element, so the tree of the page without the actions is
 //! the tree of every page they produce. The language gives its delimiters and words as an
-//! [`Actions`] value; the shared code finds where an action ends, skips actions inside a quoted
-//! value, classifies an action by its first word and counts the open blocks of each owner.
+//! [`Actions`] value; the shared code finds where an action ends (a code action, such as Mako's
+//! `${}`, past the string literals of its language's `string` row, its comments and brackets),
+//! skips actions inside a quoted value, classifies an action by its first word and counts the
+//! open blocks of each owner.
 //!
 //! concept: template-actions
 //! what: Delimited template actions in markup, their blocks counted per owning element.
 //! tools: html-eslint indent
-//! reads: option:dialect
+//! reads: option:dialect, grammar:string
 
+use crate::strings::StringSyntax;
 use std::collections::HashMap;
 
 /// What an action does to the blocks of its owner.
@@ -31,7 +34,64 @@ pub struct Actions {
     pub closers: &'static [&'static str],
 }
 
+/// How the code inside an action is read when its end is searched: its string literals and
+/// comments hide a delimiter, and with `nest` so do brackets.
+pub struct Code<'a> {
+    pub strings: &'a StringSyntax,
+    /// The byte that starts a comment up to the end of the line.
+    pub comment: Option<u8>,
+    pub nest: bool,
+}
+
 impl Actions {
+    /// The end of the code of an action that starts at `from` (after the opening delimiter): the
+    /// first of the `extra` terminators or the closing delimiter that is outside comments and
+    /// string literals (and, with `code.nest`, outside brackets), and which one it is. A
+    /// string that never closes is no string.
+    pub fn code_end<'t>(
+        &self,
+        src: &str,
+        from: usize,
+        extra: &[&'t str],
+        code: &Code,
+    ) -> Option<(usize, &'t str)>
+    where
+        'static: 't,
+    {
+        let b = src.as_bytes();
+        let mut i = from;
+        let mut level: i32 = 0;
+        while i < b.len() {
+            if Some(b[i]) == code.comment {
+                if let Some(n) = src[i..].find('\n') {
+                    i += n + 1;
+                    continue;
+                }
+            } else if code.strings.quotes.contains(&(b[i] as char)) {
+                let (end, closed) = code.strings.scan(src, i, false);
+                if closed {
+                    i = end;
+                    continue;
+                }
+            }
+            let term = (extra.iter().copied())
+                .chain([self.close])
+                .find(|t| b[i..].starts_with(t.as_bytes()));
+            if let Some(t) = term
+                && !(code.nest && level > 0)
+            {
+                return Some((i, t));
+            }
+            match b[i] {
+                b'{' | b'(' | b'[' => level += 1,
+                b'}' | b')' | b']' => level -= 1,
+                _ => {}
+            }
+            i += 1;
+        }
+        None
+    }
+
     /// Does `src` have an action (its opening delimiter)?
     pub fn occurs_in(&self, src: &str) -> bool {
         src.contains(self.open)
@@ -165,6 +225,49 @@ mod tests {
             GO.pieces("a{{ b }}c"),
             vec![(false, "a"), (true, "{{ b }}"), (false, "c")]
         );
+    }
+
+    #[test]
+    fn code_ends_outside_strings_comments_and_brackets() {
+        let row = r#"string S quote "\"" "'" triple escape "\\" continuation"#;
+        let g = crate::Grammar::parse(&format!("language t 1\ntoken S\n{row}")).unwrap();
+        let strings = g.string_rows(g.kind_by_name("S").unwrap()).next().unwrap();
+        let code = Code {
+            strings,
+            comment: Some(b'#'),
+            nest: true,
+        };
+        let expr = Actions {
+            open: "${",
+            close: "}",
+            ..GO
+        };
+        let s = r#"${ {"}": '|'} | h }"#;
+        assert_eq!(expr.code_end(s, 2, &["|"], &code), Some((14, "|")));
+        assert_eq!(
+            expr.code_end("${ 'a\\'}' }", 2, &[], &code),
+            Some((10, "}"))
+        );
+        assert_eq!(
+            expr.code_end("${ x # }\n }", 2, &[], &code),
+            Some((10, "}"))
+        );
+        assert_eq!(
+            expr.code_end("${ \"\"\"}\"\"\" }", 2, &[], &code),
+            Some((11, "}"))
+        );
+        // An unclosed quote is no string.
+        assert_eq!(expr.code_end("${ don't }", 2, &[], &code), Some((9, "}")));
+        let flat = Code {
+            nest: false,
+            ..code
+        };
+        let block = Actions {
+            open: "<%",
+            close: "%>",
+            ..GO
+        };
+        assert_eq!(block.code_end("<% f(%>", 2, &[], &flat), Some((5, "%>")));
     }
 
     #[test]

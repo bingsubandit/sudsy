@@ -1,0 +1,9 @@
+# A `\` and its line break continue the line, as in the text.
+[lines]
+continuation = \
+
+# `${expression}` and `${expression | filters}` have no blank inside the braces; every other blank is the source's.
+[space]
+kind=ExprOpen / * : no
+* / kind=ExprClose : no
+* / * : keep

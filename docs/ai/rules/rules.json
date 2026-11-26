@@ -21101,6 +21101,100 @@
       "why": "Several rules for one target add their prerequisites and only one of them may have a recipe; `make` uses the last and warns about the override. The recipe that runs depends on the order of the rules.\n\nTo fix, merge the rules, or rename a target."
     },
     {
+      "category": "correctness",
+      "default_level": "error",
+      "description": "Reports a `<%namespace>` tag that has neither a `name` nor an `import` attribute.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<%namespace file=\"a.mako\"/>\n<%namespace name=\"a\" file=\"a.mako\"/>\n<%namespace file=\"b.mako\" import=\"*\"/>\n",
+        "language": "mako",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 27,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "namespace-needs-name",
+      "languages": [
+        "mako"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "A namespace is reached by its name, or its functions are imported into the template, so a tag with neither adds nothing and Mako stops with an error when it compiles the template.\n\nTo fix, add `name=\"...\"` or `import=\"...\"`."
+    },
+    {
+      "category": "suspicious",
+      "default_level": "off",
+      "description": "Reports a `${}` expression whose filters include `n`.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<p>${body | n}</p>\n<p>${body | h, n}</p>\n<p>${body | h}</p>\n<p>${name}</p>\n",
+        "language": "mako",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 4,
+            "length": 11,
+            "line": 1
+          },
+          {
+            "column": 4,
+            "length": 14,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-default-escape-bypass",
+      "languages": [
+        "mako"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "Mako escapes every expression with the default filters of the template (`h` for HTML). The `n` filter disables them, so a value that holds user input is written unescaped and opens the page to script injection.\n\nTo fix, drop the `n` and let the default filters run, or escape the value yourself."
+    },
+    {
+      "category": "correctness",
+      "default_level": "error",
+      "description": "Reports a `<%def>` or `<%block>` whose `name` an earlier one in the file already has.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "<%def name=\"f()\">a</%def>\n<%def name=\"g(x)\">b</%def>\n<%block name=\"g(y)\"/>\n<%def name=\"f()\">c</%def>\n<%namespace name=\"f\" file=\"a.mako\"/>\n<%ns:photo>\n    <%def name=\"title()\">one</%def>\n</%ns:photo>\n<%ns:photo>\n    <%def name=\"title()\">two</%def>\n    <%def name=\"title()\">three</%def>\n</%ns:photo>\n",
+        "language": "mako",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 7,
+            "length": 10,
+            "line": 4
+          },
+          {
+            "column": 11,
+            "length": 14,
+            "line": 11
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-duplicate-def",
+      "languages": [
+        "mako"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "Defs and blocks are the functions of a template and share one namespace, so a second one with the same name makes Mako stop with an error when it compiles the template.\n\nTo fix, rename one of them."
+    },
+    {
       "category": "style",
       "default_level": "off",
       "description": "Reports a fenced code block in which every non-blank line starts with `$ `, so it shows commands without their output. A block that has any line without the prompt, such as an output line, is not reported.",
@@ -41481,14 +41575,16 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<p id=\"  \"></p>\n<p id=\"  \"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "other_lines": [
           3,
           7,
           10,
           11,
-          14
+          13,
+          14,
+          16
         ],
         "spans": [
           {
@@ -41901,7 +41997,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<p id=\"  \"></p>\n<p id=\"  \"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "other_lines": [
           3,
@@ -41909,7 +42005,9 @@
           10,
           11,
           12,
-          14
+          13,
+          14,
+          16
         ],
         "spans": [
           {
@@ -43258,7 +43356,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<p id=\"  \"></p>\n<p id=\"  \"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "other_lines": [
           7,
@@ -43266,7 +43364,9 @@
           10,
           11,
           12,
-          14
+          13,
+          14,
+          16
         ],
         "spans": [
           {
@@ -43540,7 +43640,7 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
+        "input": "<!DOCTYPE html>\n<title>x</title>\n<table><tr><td>a</td></tr></table>\n<table><tbody><tr><td>a</td></tr></tbody></table>\n<main></main>\n<main hidden></main>\n<main></main>\n<p id=\"a\"></p>\n<p id=\"a\"></p>\n<p id=\"b\" class=\"x y x\"></p>\n<p id=\"\"></p>\n<p id=\"\"></p>\n<p id=\"  \"></p>\n<p id=\"  \"></p>\n<ul><li>a</li></ul>\n<div><li>b</li></div>\n",
         "language": "html",
         "other_lines": [
           3,
@@ -43548,13 +43648,15 @@
           9,
           10,
           11,
-          12
+          12,
+          13,
+          14
         ],
         "spans": [
           {
             "column": 6,
             "length": 1,
-            "line": 14
+            "line": 16
           }
         ]
       },

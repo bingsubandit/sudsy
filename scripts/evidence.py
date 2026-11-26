@@ -129,7 +129,7 @@ def run_sudsy(sudsy, work, corpus):
         d.mkdir(parents=True, exist_ok=True)
         (d / f.name).write_bytes(f.read_bytes())
         r = subprocess.run([sudsy, "format", f.name], cwd=d, capture_output=True, text=True, encoding="utf-8", check=False)
-        return None if r.returncode else (d / f.name).read_text(encoding="utf-8")
+        return None if r.returncode else read(d / f.name, True)
     with ThreadPoolExecutor(8) as ex:
         return list(ex.map(one, enumerate(corpus)))
 

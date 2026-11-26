@@ -177,10 +177,24 @@ impl Pairing {
                 return self.close(i, at, plain);
             }
             if b.arms.iter().any(|a| is(word, a)) {
-                return self.arm(i, word, at, plain);
+                // A word that is an arm of several blocks (`else`) belongs to the open one.
+                let open = (self.stack.last())
+                    .map(|o| o.block as usize)
+                    .filter(|&o| blocks[o].arms.iter().any(|a| is(word, a)));
+                return self.arm(open.unwrap_or(i), word, at, plain);
             }
         }
         plain
+    }
+
+    /// The next command, which the language reads as a closer (`endfoo`): a word that closes no
+    /// block of the table is a closer with no opener ([`Fault::UnpairedCloser`]).
+    pub fn closer(&mut self, word: &str, at: u32) -> Step {
+        let step = self.word(word, at);
+        if !self.blocks.iter().any(|b| is(word, b.close)) {
+            self.fault(at, Fault::UnpairedCloser);
+        }
+        step
     }
 
     fn arm(&mut self, block: usize, word: &str, at: u32, plain: Step) -> Step {
@@ -238,7 +252,7 @@ impl Pairing {
 mod tests {
     use super::*;
 
-    static BLOCKS: [Block; 3] = [
+    static BLOCKS: [Block; 4] = [
         Block {
             open: "if",
             arms: &["elseif", "else"],
@@ -247,7 +261,23 @@ mod tests {
         },
         Block::plain("foreach", "endforeach"),
         Block::plain("function", "endfunction"),
+        Block {
+            open: "while",
+            arms: &["else"],
+            last_arm: "else",
+            close: "endwhile",
+        },
     ];
+
+    #[test]
+    fn a_closer_word_of_no_block_is_unpaired() {
+        let mut p = Pairing::new(&BLOCKS);
+        assert_eq!(p.closer("endfoo", 4).role, Role::Plain);
+        assert_eq!(p.word("if", 5).role, Role::Open);
+        assert_eq!(p.closer("endif", 6).role, Role::Close);
+        let f: Vec<_> = (p.finish().into_iter()).map(|f| (f.fault, f.at)).collect();
+        assert_eq!(f, [(Fault::UnpairedCloser, 4)]);
+    }
 
     #[test]
     fn enclosing_lists_open_blocks_innermost_first() {
@@ -325,6 +355,13 @@ mod tests {
         let (s, f) = run("foreach if set endforeach set");
         assert_eq!(s, "o0 o1 .2 c0 .0");
         assert_eq!(f, ["unclosed-block@1"]);
+    }
+
+    #[test]
+    fn an_arm_word_of_two_blocks_belongs_to_the_open_one() {
+        let (s, f) = run("if while else set endwhile else set endif");
+        assert_eq!(s, "o0 o1 a1 .2 c1 a0 .1 c0");
+        assert!(f.is_empty());
     }
 
     #[test]

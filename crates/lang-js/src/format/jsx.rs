@@ -18,6 +18,7 @@ use core_format::doc::{
 };
 use core_format::shapes;
 use core_format::{FormatCtx, FormatError};
+use core_syntax::parse::is_space;
 use core_syntax::roles::has;
 use core_syntax::{SyntaxNode, SyntaxToken};
 
@@ -293,10 +294,6 @@ enum Child {
 }
 
 use shapes::fill::Part as P;
-
-fn is_space(c: char) -> bool {
-    matches!(c, ' ' | '\n' | '\r' | '\t')
-}
 
 /// Text with a word or a newline-free space in it: whitespace between lines is not.
 fn meaningful(t: &str) -> bool {

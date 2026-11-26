@@ -1,0 +1,16 @@
+id: no-default-escape-bypass
+message: "the `n` filter turns the default escaping off for this expression; make sure the value is safe HTML"
+description: >-
+  Reports a `${}` expression whose filters include `n`.
+why: >-
+  Mako escapes every expression with the default filters of the template (`h` for HTML). The `n`
+  filter disables them, so a value that holds user input is written unescaped and opens the page to
+  script injection.
+
+  To fix, drop the `n` and let the default filters run, or escape the value yourself.
+example: "${body | n}"
+severity: off
+category: suspicious
+rule:
+  kind: Expression
+  regex: '[|,]\s*n\s*(?:,[^}]*)?\}$'

@@ -4438,6 +4438,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a `grid-template-areas` whose rows differ in length, are empty, or hold an area that is not a rectangle."
             },
+            "namespace-needs-name": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `<%namespace>` tag that has neither a `name` nor an `import` attribute."
+            },
             "naming-convention": {
               "description": "Reports a name that does not follow the style set for what it names: operations, fragments, variables, fields, arguments, types, enum values and directives.",
               "oneOf": [
@@ -4803,6 +4807,10 @@
                 }
               ]
             },
+            "no-default-escape-bypass": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `${}` expression whose filters include `n`."
+            },
             "no-default-summary": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `<summary>` that starts with the text Visual Studio generates, \"Summary description for ...\"."
@@ -4918,6 +4926,10 @@
             "no-duplicate-class": {
               "$ref": "#/definitions/rule",
               "description": "Reports a class name written twice in one `class` attribute."
+            },
+            "no-duplicate-def": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `<%def>` or `<%block>` whose `name` an earlier one in the file already has."
             },
             "no-duplicate-doc-text": {
               "$ref": "#/definitions/rule",
@@ -13936,6 +13948,7 @@
           "js",
           "kotlin",
           "makefile",
+          "mako",
           "markdown",
           "php",
           "powershell",
@@ -14154,6 +14167,96 @@
                 "plain"
               ],
               "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "lint": {
+          "$ref": "#/definitions/lint"
+        },
+        "semantics": {
+          "additionalProperties": false,
+          "description": "Facts about methods that the flow analyses use.",
+          "properties": {
+            "does_not_return": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "pure": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "mako": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "additionalProperties": false,
+          "properties": {
+            "end_of_line": {
+              "default": "auto",
+              "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+              "enum": [
+                "auto",
+                "lf",
+                "crlf"
+              ],
+              "type": "string"
+            },
+            "final_newline": {
+              "default": true,
+              "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "indent_conversion": {
+              "default": "spaces",
+              "description": "Indentation of a line: as written, or tabs turned into spaces, or spaces into tabs (a tab is `indent_size` columns).",
+              "enum": [
+                "as_written",
+                "spaces",
+                "tabs"
+              ],
+              "type": "string"
+            },
+            "indent_size": {
+              "default": 4,
+              "description": "Columns per indentation level (also the width of a tab).",
+              "maximum": 16,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "keep_leading_blank_lines": {
+              "default": false,
+              "description": "Blank lines at the start of the file stay.",
+              "type": "boolean"
+            },
+            "max_blank_lines": {
+              "default": 1,
+              "description": "Largest number of blank lines kept between lines.",
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "space_after_hashes": {
+              "default": true,
+              "description": "At least one blank after `##` before a comment that starts with a letter or digit (more blanks stay as written).",
+              "type": "boolean"
+            },
+            "space_after_percent": {
+              "default": true,
+              "description": "At least one blank after the `%` of a control line (`% for x in y:`); more blanks stay as written.",
+              "type": "boolean"
             }
           },
           "type": "object"
@@ -18671,6 +18774,96 @@
                       "plain"
                     ],
                     "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "lint": {
+                "$ref": "#/definitions/lint"
+              },
+              "semantics": {
+                "additionalProperties": false,
+                "description": "Facts about methods that the flow analyses use.",
+                "properties": {
+                  "does_not_return": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "pure": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "mako": {
+            "additionalProperties": false,
+            "properties": {
+              "format": {
+                "additionalProperties": false,
+                "properties": {
+                  "end_of_line": {
+                    "default": "auto",
+                    "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+                    "enum": [
+                      "auto",
+                      "lf",
+                      "crlf"
+                    ],
+                    "type": "string"
+                  },
+                  "final_newline": {
+                    "default": true,
+                    "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "indent_conversion": {
+                    "default": "spaces",
+                    "description": "Indentation of a line: as written, or tabs turned into spaces, or spaces into tabs (a tab is `indent_size` columns).",
+                    "enum": [
+                      "as_written",
+                      "spaces",
+                      "tabs"
+                    ],
+                    "type": "string"
+                  },
+                  "indent_size": {
+                    "default": 4,
+                    "description": "Columns per indentation level (also the width of a tab).",
+                    "maximum": 16,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "keep_leading_blank_lines": {
+                    "default": false,
+                    "description": "Blank lines at the start of the file stay.",
+                    "type": "boolean"
+                  },
+                  "max_blank_lines": {
+                    "default": 1,
+                    "description": "Largest number of blank lines kept between lines.",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "space_after_hashes": {
+                    "default": true,
+                    "description": "At least one blank after `##` before a comment that starts with a letter or digit (more blanks stay as written).",
+                    "type": "boolean"
+                  },
+                  "space_after_percent": {
+                    "default": true,
+                    "description": "At least one blank after the `%` of a control line (`% for x in y:`); more blanks stay as written.",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"

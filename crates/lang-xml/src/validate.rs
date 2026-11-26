@@ -4,8 +4,14 @@
 //! concept: parse-validation
 
 use crate::generated::kind as k;
+use core_syntax::end_tags::Syntax;
 use core_syntax::{SyntaxNode, SyntaxNodeExt, SyntaxToken};
 use provider_api::ParseError;
+
+const XML_TAGS: Syntax = Syntax {
+    start: "<",
+    end: "</",
+};
 
 fn err(range: core_syntax::TextRange, code: &str, message: String) -> ParseError {
     ParseError::new(range.start().into(), u32::from(range.len()), code, message)
@@ -96,7 +102,7 @@ pub fn validate(root: &SyntaxNode, text: &str) -> Vec<ParseError> {
                     out.push(err(
                         e.text_range(),
                         "mismatched-end-tag",
-                        format!("`</{}>` closes `<{}>`", e.text(), s.text()),
+                        XML_TAGS.mismatch(s.text(), e.text()),
                     ));
                 }
             }

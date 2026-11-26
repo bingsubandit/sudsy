@@ -25,6 +25,7 @@ lang-hcl = { workspace = true, features = ["static-grammars"] }
 lang-html.workspace = true
 lang-js.workspace = true
 lang-json.workspace = true
+lang-mako.workspace = true
 lang-markdown = { workspace = true, features = ["static-grammars"] }
 lang-php.workspace = true
 lang-protobuf = { workspace = true, features = ["static-grammars"] }

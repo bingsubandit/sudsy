@@ -597,7 +597,8 @@
     "github-actions": {"fetch": ["tests/conformance/fetch-github-actions-corpus.sh"], "place": ".github/workflows", "corpus": [{"dir": "tests/conformance/corpus/github-actions", "glob": ["*.yml", "*.yaml"]}]},
     "ini": {"fetch": ["tests/conformance/fetch-ini-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/ini", "glob": ["*.ini", "*.cfg"]}]},
     "editorconfig": {"fetch": ["tests/conformance/fetch-editorconfig-corpus.sh"], "as": ".editorconfig", "corpus": [{"dir": "tests/conformance/corpus/editorconfig", "glob": ["*.editorconfig"]}]},
-    "gitignore": {"fetch": ["tests/conformance/fetch-gitignore-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/gitignore", "glob": [".gitignore", ".dockerignore"]}]}
+    "gitignore": {"fetch": ["tests/conformance/fetch-gitignore-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/gitignore", "glob": [".gitignore", ".dockerignore"]}]},
+    "mako": {"fetch": ["tests/conformance/fetch-mako-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/mako", "glob": ["*.mako"]}]}
   },
   "speed": {
     "biome-js": {

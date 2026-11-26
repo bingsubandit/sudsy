@@ -41,6 +41,24 @@ impl<K: Hash + Eq> Repeats<K> {
     }
 }
 
+impl<K: Hash + Eq + AsRef<str>> Repeats<K> {
+    /// [`Repeats::check`] for a name: a name of blanks only (a template expression blanked out of
+    /// an embedded document) stands for an unknown name and never repeats; an empty name does.
+    pub fn check_name(
+        &mut self,
+        ctx: &mut RuleContext<'_>,
+        key: K,
+        range: TextRange,
+        message: impl FnOnce() -> String,
+        related: &str,
+    ) {
+        let name = key.as_ref();
+        if name.is_empty() || !name.trim().is_empty() {
+            self.check(ctx, key, range, message, related);
+        }
+    }
+}
+
 /// The key of the item before: [`Adjacent::repeats`] tells whether an item has the same key as the
 /// one just before it (a repeat right after, not anywhere earlier).
 pub struct Adjacent<K>(Option<K>);

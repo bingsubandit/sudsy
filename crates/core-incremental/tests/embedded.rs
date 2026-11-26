@@ -19,6 +19,7 @@ fn db(config: &str) -> Database {
         Box::new(lang_shell::provider()),
         Box::new(lang_sql::provider()),
         Box::new(lang_python::provider()),
+        Box::new(lang_mako::provider()),
     ];
     let mut db = Database::new(providers);
     db.set_config(ConfigChain::parse(config));
@@ -83,6 +84,19 @@ fn run_is_linted_as_shell_at_host_positions() {
         "{dockerfile}shell:\n  lint:\n    rules:\n      cd-without-exit: off\n"
     ));
     assert!(found(&db, "Dockerfile", "FROM a:1\nRUN cd /x; make\n").is_empty());
+}
+
+#[test]
+fn a_no_lint_region_runs_only_the_rules_its_host_names() {
+    // Mako's `<% %>` Python is `no-lint`; Mako names `no-wildcard-imports` (off in Python) at
+    // `error`, and only that rule runs there (not Python's `none-comparison`). The margin of the
+    // block's lines is stripped, so a block of several lines parses.
+    let text = "<%!\n    from os import *\n    x == None\n%>\n";
+    let linted = found(&db(""), "a.mako", text);
+    assert_eq!(linted, [("no-wildcard-imports".into(), "from".into())]);
+    // The Python config sets its level.
+    let off = "python:\n  lint:\n    rules:\n      no-wildcard-imports: off\n";
+    assert!(found(&db(off), "a.mako", text).is_empty());
 }
 
 #[test]

@@ -1,0 +1,16 @@
+id: namespace-needs-name
+message: "`<%namespace>` needs a `name` or an `import` attribute; Mako cannot compile it"
+description: >-
+  Reports a `<%namespace>` tag that has neither a `name` nor an `import` attribute.
+why: >-
+  A namespace is reached by its name, or its functions are imported into the template, so a tag
+  with neither adds nothing and Mako stops with an error when it compiles the template.
+
+  To fix, add `name="..."` or `import="..."`.
+example: "<%namespace file=\"a.mako\"/>"
+severity: error
+category: correctness
+rule:
+  all:
+    - { kind: Tag, regex: '^<%namespace\b' }
+    - not: { kind: Tag, regex: '(?s)\b(?:name|import)\s*=' }

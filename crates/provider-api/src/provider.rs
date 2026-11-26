@@ -35,6 +35,21 @@ pub trait LanguageProvider: Send + Sync {
     /// provider may be unavailable.
     fn parse(&self, file: &SourceFile) -> Result<ParseResult, ProviderError>;
 
+    /// The host formats whose templates the formatter changes: a file `a.<host>.<ext>` (a template
+    /// of a text format, `script.py.mako`) is formatted only when `<host>` is listed, its text stays
+    /// as written otherwise, because its blanks may carry meaning. A file with no host in its name
+    /// is always formatted; empty (the default): every file is.
+    fn format_hosts(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// The rules of the embedded language `language` that run in its `no-lint` regions of this
+    /// host, each at its level (the user's config of that language sets another); empty: none.
+    fn embedded_rules(&self, language: &str) -> &[(&'static str, core_config::Level)] {
+        let _ = language;
+        &[]
+    }
+
     /// Does the tree of a file with [`SourceFile::for_format`] differ from the plain one?
     fn parses_for_format(&self) -> bool {
         false

@@ -41,7 +41,6 @@ concept cyclic-needs # users: github-actions
 concept debug-assert-message # users: csharp
 concept debug-fail-message # users: csharp
 concept declaration-checks # users: python
-concept declared-name-pattern # users: cmake (shared)
 concept deprecated-commands # users: github-actions
 concept deprecated-index # users: hcl
 concept deprecated-interpolation # users: hcl
@@ -96,7 +95,6 @@ concept keep-together-neighbours # users: markdown (shared)
 concept key-shape # users: github-actions (shared)
 concept key-value-line-parser # users: procfile (shared)
 concept keyword-block-frames # users: sql (shared)
-concept keyword-block-pairing # users: cmake (shared)
 concept keyword-block-parse # users: sql (shared)
 concept known-names-table # users: css
 concept last-user-not-root # users: dockerfile
@@ -167,8 +165,6 @@ concept single-class-per-file # users: csharp
 concept single-namespace-per-file # users: csharp
 concept single-title # users: markdown
 concept source-indented-lines # users: makefile (shared)
-concept statement-blank-lines # users: cmake (shared)
-concept statement-indent # users: cmake (shared)
 concept stream-blank-lines # users: ruby (shared)
 concept stream-block-indent # users: ruby (shared)
 concept style-declaration-checks # users: css

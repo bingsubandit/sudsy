@@ -349,6 +349,7 @@ fn provider(name: &str, v: &Value) -> String {
         format!("{body}.with_snippet_contexts(&[{}])", contexts.join(", "))
     };
     let (statics, with) = symbols(v);
+    let with = with_embedded_rules(with, v);
     let statics = format!("{statics}{}", format_rows(name, v));
     format!(
         "// Generated from lang.yaml by `cargo xtask codegen`.\nuse core_syntax::grammars;\nuse core_treesitter::{{{imports}}};\nuse provider_api::ParserProvider;\n\ncore_syntax::include_generated!();\n\n{statics}#[rustfmt::skip]\npub fn provider() -> ParserProvider {{\n    {body}{with}\n}}\n"
@@ -385,6 +386,29 @@ fn limits(v: &Value) -> String {
     )
 }
 
+/// `with` and the `embedded-rules` map of lang.yaml: per embedded language, the rules run in its
+/// `no-lint` regions and their levels (`LanguageProvider::embedded_rules`).
+fn with_embedded_rules(with: &str, v: &Value) -> String {
+    let Some(map) = v.get("embedded-rules").and_then(Value::as_object) else {
+        return with.to_string();
+    };
+    let level = |l: &Value| match l.as_str() {
+        Some("error") => "Error",
+        Some("warn") => "Warn",
+        other => panic!("embedded-rules: level `{other:?}` is not warn or error"),
+    };
+    let languages = map.iter().map(|(language, rules)| {
+        let rules = rules.as_object().into_iter().flatten();
+        let rules = rules.map(|(id, l)| format!("({id:?}, core_config::Level::{})", level(l)));
+        format!(
+            "({language:?}, &[{}])",
+            rules.collect::<Vec<_>>().join(", ")
+        )
+    });
+    let languages = languages.collect::<Vec<_>>().join(", ");
+    format!("{with}.with_embedded_rules(&[{languages}])")
+}
+
 fn adapter_provider(name: &str, v: &Value) -> String {
     let hooks = text(v, "hooks", "core_rules::DEFAULT_HOOKS");
     // `exclude-names`: file names (patterns) that the extensions and names do not claim.
@@ -400,6 +424,14 @@ fn adapter_provider(name: &str, v: &Value) -> String {
             .replace(']', "")
     };
     let (statics, with) = symbols(v);
+    // `format-hosts`: the hosts of a template whose files are formatted (`LanguageProvider::format_hosts`).
+    let hosts = list(v, "format-hosts");
+    let with = if hosts.is_empty() {
+        with.to_string()
+    } else {
+        format!("{with}.with_format_hosts(&{hosts:?})")
+    };
+    let with = with_embedded_rules(&with, v);
     let statics = format!("{statics}{}", format_rows(name, v));
     format!(
         "// Generated from lang.yaml by `cargo xtask codegen`.\nuse core_syntax::grammars;\nuse provider_api::{{ParserProvider, ParserSpec}};\n\ncore_syntax::include_generated!();\n\n{statics}#[rustfmt::skip]\npub fn provider() -> ParserProvider {{\n    ParserProvider::new(ParserSpec {{ crate_name: env!(\"CARGO_PKG_NAME\"), grammar: grammars::{}, extensions: &[{}], file_names: &[{}], schema: option_schema(), formatter: &{}, hooks: &{hooks}, rules: {}, pattern_files: provider_api::pattern_files!(), families: {} }}, {}){without}{with}\n}}\n",

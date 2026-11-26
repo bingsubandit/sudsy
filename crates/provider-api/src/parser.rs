@@ -49,10 +49,18 @@ pub struct ParserProvider {
     /// The name and config base of a dialect that has a provider of its own.
     dialect: Option<(&'static str, &'static str)>,
     format_parse: bool,
+    /// The hosts of a template whose files are formatted ([`LanguageProvider::format_hosts`]).
+    format_hosts: &'static [&'static str],
+    /// The rules run in the `no-lint` regions of each embedded language
+    /// ([`LanguageProvider::embedded_rules`]).
+    embedded_rules: EmbeddedRules,
     /// The code at key paths of a data file.
     key_embeds: Option<&'static core_rules::embed_keys::KeyEmbeds>,
     symbols: Option<&'static core_semantics::symbols::SymbolLang>,
 }
+
+/// The rules of each embedded language run in its `no-lint` regions, with their levels.
+pub type EmbeddedRules = &'static [(&'static str, &'static [(&'static str, core_config::Level)])];
 
 impl ParserProvider {
     /// `parse` parses a file; `SourceFile::new("pattern", 1, text)` is a pattern snippet.
@@ -93,6 +101,8 @@ impl ParserProvider {
             },
             dialect: None,
             format_parse: false,
+            format_hosts: &[],
+            embedded_rules: &[],
             key_embeds: None,
             symbols: None,
         }
@@ -101,6 +111,19 @@ impl ParserProvider {
     /// The parse of a file for formatting ([`SourceFile::for_format`]) differs from the plain one.
     pub fn with_format_parse(mut self) -> Self {
         self.format_parse = true;
+        self
+    }
+
+    /// Only the templates of these hosts are formatted ([`LanguageProvider::format_hosts`]).
+    pub fn with_format_hosts(mut self, hosts: &'static [&'static str]) -> Self {
+        self.format_hosts = hosts;
+        self
+    }
+
+    /// The rules run in the `no-lint` regions of each embedded language
+    /// ([`LanguageProvider::embedded_rules`]).
+    pub fn with_embedded_rules(mut self, rules: EmbeddedRules) -> Self {
+        self.embedded_rules = rules;
         self
     }
 
@@ -195,6 +218,15 @@ impl LanguageProvider for ParserProvider {
 
     fn parses_for_format(&self) -> bool {
         self.format_parse
+    }
+
+    fn format_hosts(&self) -> &[&'static str] {
+        self.format_hosts
+    }
+
+    fn embedded_rules(&self, language: &str) -> &[(&'static str, core_config::Level)] {
+        let found = self.embedded_rules.iter().find(|(l, _)| *l == language);
+        found.map_or(&[], |(_, rules)| rules)
     }
 
     fn formatter(&self) -> &dyn NodeFormatter {

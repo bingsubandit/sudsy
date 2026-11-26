@@ -58,6 +58,7 @@ pub fn providers() -> Vec<Box<dyn LanguageProvider>> {
         Box::new(lang_js::provider()),
         Box::new(lang_kotlin::provider()),
         Box::new(lang_makefile::provider()),
+        Box::new(lang_mako::provider()),
         Box::new(lang_markdown::provider()),
         Box::new(lang_php::provider()),
         Box::new(lang_powershell::provider()),

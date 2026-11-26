@@ -60,7 +60,7 @@ pub fn format_file(
     options: &ResolvedOptions,
     directives: &DirectiveTable,
 ) -> Result<String, FileFormatError> {
-    if generated_skipped(provider, file, options) {
+    if generated_skipped(provider, file, options) || other_host(provider, &file.id) {
         return Ok(file.text.clone());
     }
     // (the tree for formatting carries what only the layout reads)
@@ -76,6 +76,26 @@ pub fn format_file(
     };
     let parsed = crate::guard::parse(provider, file)?;
     format_parsed(provider, file, &parsed, options, directives)
+}
+
+/// Is the file a template of a host the language does not format (`LanguageProvider::format_hosts`)?
+/// The host is the extension before the language's own: `script.py.mako` has the host `py`.
+fn other_host(provider: &dyn LanguageProvider, id: &str) -> bool {
+    let hosts = provider.format_hosts();
+    let name = id.rsplit(['/', '\\']).next().unwrap_or(id);
+    let Some((stem, own)) = name.rsplit_once('.') else {
+        return false;
+    };
+    if hosts.is_empty()
+        || !provider
+            .file_matchers()
+            .iter()
+            .any(|m| m.matches(std::path::Path::new(&format!("x.{own}"))))
+    {
+        return false;
+    }
+    stem.rsplit_once('.')
+        .is_some_and(|(_, host)| !hosts.iter().any(|h| h.eq_ignore_ascii_case(host)))
 }
 
 /// Whether `skip_generated` leaves the file as written (CLI, stdin and the editor all format through here).

@@ -1,0 +1,99 @@
+// Mako templates (`*.mako`), parsed by the hand-written lexer and parser of crates/lang-mako. A file is a flat list of
+// items: text words (the host text, HTML), `${ expression | filters }`, `<% python %>` blocks, `% control` lines (blocks
+// are paired by keyword, as in CMake), `<%tag attributes>` and `</%tag>`, `##` comments and `<%doc>` blocks. Python of an
+// expression, a block and the condition of a control line is a token that the `embed` rows hand to the Python provider; the
+// HTML of the host text is the whole file with every Mako part carved out.
+// Format: see crates/core-syntax/src/grammar/mod.rs.
+
+language mako 32 "Mako"
+comments line "##" block "<%doc>" "</%doc>"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+suppress ignore-start "sudsy-ignore-start"
+suppress ignore-end "sudsy-ignore-end"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+// `\` and the line break after it: the line goes on (the break is not part of the text).
+token Continuation #trivia #whitespace
+// `<%doc> ... </%doc>`.
+token DocComment #trivia #comment
+
+// A run of the host text with no blank.
+token Text #part #item
+// The text of `<%text> ... </%text>`, kept as written.
+token RawText #part #item
+
+token ExprOpen "${" #punctuation
+token ExprClose "}" #punctuation
+token Pipe "|"
+// The Python expression of `${ }` or of a control line condition.
+token PyExpr #control-code
+// The filter names after the `|` of an expression.
+token Filters
+// `<%` or `<%!`.
+token PyOpen
+token PyClose "%>" #punctuation
+// The blanks in front of the first line of a block's code when it starts a line: part of the code's margin, so no tab conversion touches them.
+token CodeIndent
+token PyCode
+// The Python string literals a terminator scan skips (no token of this kind is made).
+token PyString
+string PyString quote "\"" "'" triple escape "\\" continuation
+
+// `%` at the start of a line.
+token Percent "%"
+// The keyword that opens a block (`for`, `if`, `while`, `try`, `with`), continues it (`else`, `elif`, `except`, `finally`),
+// closes it (`endfor`) or any other word.
+token ControlOpen #control-word
+token ControlArm #control-word
+token ControlClose #control-word
+token ControlWord #control-word
+// The text of a control line that is no Python condition.
+token ControlRest #control-code
+token Colon ":"
+
+// `<%name` of a tag.
+token TagOpen
+token AttrName
+token Equals "=" #tag-part
+token AttrValue #tag-part
+// `name` and its quoted value on a `<%def>` or `<%block>`.
+token DefKey
+token DefValue
+token Comma "," #tag-part
+token TagEnd ">" #tag-end
+token TagSelfEnd "/>" #tag-end
+// `</%name>`.
+token CloseTag #item
+
+// `##` and the comment to the end of the line, on a line of its own.
+token HashHash "##"
+token CommentText #comment
+
+token Eof
+token Unknown #error
+
+node File #document #scope = items:#item* Eof
+node Expression #item = ExprOpen code:PyExpr? Pipe? filters:Filters? ExprClose
+node PyBlock #item = PyOpen CodeIndent? code:PyCode? PyClose
+node CommentLine #item = HashHash text:CommentText?
+node ControlLine #item = Percent keyword:#control-word code:#control-code? Colon?
+node Element #item = open:Tag body:Body? close:CloseTag?
+// What stands between a tag and its closing tag: the names of defs and blocks are local to it.
+node Body #scope = items:#item*
+node Tag #item = TagOpen parts:#tag-part* end:#tag-end
+node DefName #tag-part #def-name = DefKey Equals name:DefValue
+node Attribute #tag-part = AttrName Equals? AttrValue?
+
+// Python of the template: the expression of `${ }` and of a control line (`x in y` of `% for x in y:` reads as an
+// expression), and the code of a block, whose lines lose the four spaces or the tab of their margin.
+embed PyExpr language "python" in Expression no-lint
+embed PyExpr language "python" in ControlLine no-lint
+embed PyCode language "python" in PyBlock carve-line-start "    " "	" strip no-lint
+// The host text: the whole file with every Mako part blanked.
+embed File language "html" carve-kind Expression PyBlock ControlLine Tag CloseTag CommentLine DocComment RawText Continuation

@@ -7,7 +7,7 @@ use crate::db::Db;
 use crate::failure::{Failure, Stage};
 use crate::inputs::{ExtensionSet, File};
 use crate::queries::{config, source_file};
-use core_config::{FileInput, OptionValue, ResolvedOptions};
+use core_config::{FileInput, OptionValue, ResolvedOptions, ResolvedRule, Source};
 use core_format::{DirectiveTable, EmbedMode, Embedder, Forward};
 use core_rules::engine::ActiveRule;
 use core_rules::{Diagnostic, Edit, FileContext, LineIndex, activate, run_file};
@@ -25,28 +25,49 @@ fn lookup<'a>(db: &'a dyn Db, name: &str) -> Resolved<'a> {
     resolve(db.providers().iter().map(|p| p.as_ref()), name)
 }
 
+type Rules = Rc<Vec<ActiveRule<'static>>>;
+
 /// The rules that are on for each embedded language of a file, activated once per language and
-/// only when a region of that language is looked at.
-#[derive(Default)]
-pub(crate) struct EmbeddedRules {
-    by_language: RefCell<Vec<(String, Rc<Vec<ActiveRule<'static>>>)>>,
+/// only when a region of that language is looked at. A `no-lint` region runs only the rules its
+/// host names for the language ([`LanguageProvider::embedded_rules`]), at the host's level
+/// unless the language's config sets one.
+pub(crate) struct EmbeddedRules<'h> {
+    host: &'h dyn LanguageProvider,
+    /// `(language, lint flag of the region, its rules)`.
+    by_language: RefCell<Vec<(String, bool, Rules)>>,
 }
 
-impl EmbeddedRules {
+impl<'h> EmbeddedRules<'h> {
+    pub(crate) fn new(host: &'h dyn LanguageProvider) -> Self {
+        Self {
+            host,
+            by_language: RefCell::default(),
+        }
+    }
+
     fn get(
         &self,
         db: &dyn Db,
         file: File,
         provider: &dyn LanguageProvider,
+        lint: bool,
     ) -> Result<Rc<Vec<ActiveRule<'static>>>, Failure> {
         let language = provider.language();
-        if let Some((_, rules)) = self
-            .by_language
-            .borrow()
-            .iter()
-            .find(|(l, _)| l == language)
+        if let Some((.., rules)) =
+            (self.by_language.borrow().iter()).find(|(l, on, _)| l == language && *on == lint)
         {
             return Ok(rules.clone());
+        }
+        let named = if lint {
+            &[][..]
+        } else {
+            self.host.embedded_rules(language)
+        };
+        if !lint && named.is_empty() {
+            let none = Rc::new(Vec::new());
+            let entry = (language.to_string(), lint, none.clone());
+            self.by_language.borrow_mut().push(entry);
+            return Ok(none);
         }
         // Read only now: a file with no embedded code does not depend on the config here.
         let config = config(db).as_ref().map_err(Clone::clone)?;
@@ -54,8 +75,15 @@ impl EmbeddedRules {
         let input = FileInput::language(language)
             .with_base(provider.config_base())
             .with_path(file.path(db));
-        let rules = (config.rules(&input, provider.option_schema()))
+        let mut rules = (config.rules(&input, provider.option_schema()))
             .map_err(|e| Failure::new(Stage::Config, &e))?;
+        for &(id, level) in named {
+            rules.entry(id.to_string()).or_insert(ResolvedRule {
+                level,
+                options: Default::default(),
+                source: Source::Default,
+            });
+        }
         let mut rules = activate(
             extensions.with_own(provider.rules(), language),
             &rules,
@@ -63,15 +91,20 @@ impl EmbeddedRules {
         )
         .map_err(|e| Failure::new(Stage::Config, &e))?;
         rules.retain(|a| a.rule.layout_role().reports());
+        if !lint {
+            rules.retain(|a| named.iter().any(|(id, _)| *id == a.rule.meta().id));
+        }
         let rules = Rc::new(rules);
         self.by_language
             .borrow_mut()
-            .push((language.to_string(), rules.clone()));
+            .push((language.to_string(), lint, rules.clone()));
         Ok(rules)
     }
 
     fn any(&self, db: &dyn Db, file: File, provider: &dyn LanguageProvider) -> bool {
-        !matches!(self.get(db, file, provider), Ok(r) if r.is_empty())
+        [true, false]
+            .iter()
+            .any(|&lint| !matches!(self.get(db, file, provider, lint), Ok(r) if r.is_empty()))
     }
 }
 
@@ -83,7 +116,7 @@ pub(crate) fn parse_embedded<'a>(
     file: File,
     host: &dyn LanguageProvider,
     host_reads: bool,
-    rules: &EmbeddedRules,
+    rules: &EmbeddedRules<'_>,
     root: &SyntaxNode,
     text: &str,
 ) -> Vec<EmbeddedParse<'a>> {
@@ -97,12 +130,12 @@ pub(crate) fn parse_embedded<'a>(
 pub(crate) fn lint_embedded(
     db: &dyn Db,
     file: File,
-    rules: &EmbeddedRules,
+    rules: &EmbeddedRules<'_>,
     parses: &[EmbeddedParse<'_>],
 ) -> Result<Vec<Diagnostic>, Failure> {
     let mut out = Vec::new();
-    for e in parses.iter().filter(|e| e.region.lint) {
-        let rules = rules.get(db, file, e.provider)?;
+    for e in parses {
+        let rules = rules.get(db, file, e.provider, e.region.lint)?;
         if rules.is_empty() {
             continue;
         }
