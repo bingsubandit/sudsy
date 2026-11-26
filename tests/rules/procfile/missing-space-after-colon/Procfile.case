@@ -1,0 +1,6 @@
+web:bundle exec puma
+^^^ missing-space-after-colon
+worker: a
+clock:	b
+heroku ps:scale up
+^^^^^^^^^ invalid-process-name

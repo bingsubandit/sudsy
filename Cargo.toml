@@ -101,6 +101,7 @@ lang-php = { path = "crates/lang-php" }
 lang-ruby = { path = "crates/lang-ruby" }
 lang-batch = { path = "crates/lang-batch" }
 lang-cmake = { path = "crates/lang-cmake" }
+lang-procfile = { path = "crates/lang-procfile" }
 lang-sql = { path = "crates/lang-sql" }
 lang-kotlin = { path = "crates/lang-kotlin" }
 lang-css = { path = "crates/lang-css" }

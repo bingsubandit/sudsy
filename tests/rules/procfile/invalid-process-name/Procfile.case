@@ -1,0 +1,6 @@
+web: bundle exec puma
+web.1: sleep 1
+^^^^^ invalid-process-name
+my app: sleep 1
+^^^^^^ invalid-process-name
+ok_name-2: sleep 1

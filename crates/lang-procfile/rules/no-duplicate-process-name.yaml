@@ -1,0 +1,15 @@
+id: no-duplicate-process-name
+family: unique-names
+params: { container: document, item: item, name: "name", related: first listed here }
+message: "process `{name}` is already listed"
+description: >-
+  Reports a process name that appears twice, on the second line. overmind stops with "Process
+  names must be unique" and honcho asserts. No fix.
+why: >-
+  A runner either refuses to start or keeps one of the two commands, and which one differs between
+  tools, so the process does what only one of the lines says.
+
+  To fix, rename or delete one of the lines.
+example: "web: bundle exec puma\nweb: bundle exec rails s   # reported: already listed above"
+severity: warn
+category: correctness

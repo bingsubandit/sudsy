@@ -1,4 +1,5 @@
 ratchet:
+  procfile: 839
   batchfile: 719
   gradle: 6442
   dockerfile: 554
@@ -8,6 +9,7 @@ ratchet:
   editorconfig: 3
   gitignore: 118
 target-files:
+  procfile: 839
   batchfile: 719
   gradle: 6481
   dockerfile: 563

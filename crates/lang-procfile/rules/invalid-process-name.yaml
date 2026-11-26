@@ -1,0 +1,16 @@
+id: invalid-process-name
+message: "`$0` is not a process name: runners read only letters, digits, `_` and `-`, and skip this line"
+description: >-
+  Reports a process name with a character outside `A-Z`, `a-z`, `0-9`, `_` and `-` (`web.1:`,
+  `my app:`). foreman and honcho read a line as a process only when the name matches
+  `[A-Za-z0-9_-]+`; Heroku's article calls the name alphanumeric. No fix.
+why: >-
+  The runner skips the line without a message, so the process never starts, locally or on the
+  platform.
+
+  To fix, rename the process with letters, digits, `_` and `-`.
+example: "web.1: bundle exec puma   # reported: the name has a dot"
+severity: warn
+category: correctness
+rule: { kind: Process }
+token: { kind: [Name], not-regex: '^[A-Za-z0-9_-]+$' }

@@ -1,0 +1,17 @@
+id: missing-space-after-colon
+message: "no blank after the colon: overmind skips this line"
+description: >-
+  Reports `name:command` with no blank after the colon. overmind reads a line with `name:\s+command`
+  and ignores it otherwise; foreman and honcho accept it. The formatter adds the blank. No fix.
+why: >-
+  The same file works with foreman and the platform and does nothing with overmind, so a process
+  is missing for the developers who use it.
+
+  To fix, write `name: command`.
+example: "web:bundle exec puma   # reported: write `web: bundle exec puma`"
+severity: warn
+category: correctness
+rule:
+  kind: Process
+  regex: '^[A-Za-z0-9_-]+:[^ \t]'
+report-on: first-token

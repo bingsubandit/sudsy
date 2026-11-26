@@ -22920,6 +22920,229 @@
     {
       "category": "correctness",
       "default_level": "warn",
+      "description": "Reports a `name:` line with nothing after the colon. foreman and overmind need at least one character of command and skip the line. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "web: a\nworker:\nclock:   \n",
+        "language": "procfile",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 6,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 5,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "empty-command",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The process is declared and never starts; the author wrote the name and lost or forgot the command.\n\nTo fix, write the command, or delete the line."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a process line that starts with blanks. foreman, honcho and overmind anchor the line at its first character (`^name:`), so an indented line is ignored. The formatter keeps the indent, which keeps the line skipped. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "web: a\n  worker: b\n\tclock: c\n",
+        "language": "procfile",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 11,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 9,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "indented-process",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The process looks declared and never starts; the indent is easy to miss in a diff.\n\nTo fix, start the line at column 0."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a process name with a character outside `A-Z`, `a-z`, `0-9`, `_` and `-` (`web.1:`, `my app:`). foreman and honcho read a line as a process only when the name matches `[A-Za-z0-9_-]+`; Heroku's article calls the name alphanumeric. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "web: bundle exec puma\nweb.1: sleep 1\nmy app: sleep 1\nok_name-2: sleep 1\n",
+        "language": "procfile",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 5,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 6,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "invalid-process-name",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The runner skips the line without a message, so the process never starts, locally or on the platform.\n\nTo fix, rename the process with letters, digits, `_` and `-`."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports `name:command` with no blank after the colon. overmind reads a line with `name:\\s+command` and ignores it otherwise; foreman and honcho accept it. The formatter adds the blank. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "web:bundle exec puma\nworker: a\nclock:\tb\nheroku ps:scale up\n",
+        "language": "procfile",
+        "other_lines": [
+          4
+        ],
+        "spans": [
+          {
+            "column": 1,
+            "length": 3,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "missing-space-after-colon",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The same file works with foreman and the platform and does nothing with overmind, so a process is missing for the developers who use it.\n\nTo fix, write `name: command`."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a process name that appears twice, on the second line. overmind stops with \"Process names must be unique\" and honcho asserts. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "web: a\nworker: b\nweb: c\n",
+        "language": "procfile",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 3,
+            "line": 3
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-duplicate-process-name",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "A runner either refuses to start or keeps one of the two commands, and which one differs between tools, so the process does what only one of the lines says.\n\nTo fix, rename or delete one of the lines."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a Procfile with no `name: command` line (only comments, blank lines or text no runner reads). foreman stops with an empty-file error and overmind with \"No entries were found in Procfile\". No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "# web: a\n",
+        "language": "procfile",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 1,
+            "line": 1
+          }
+        ]
+      },
+      "fix": null,
+      "id": "no-process",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "`foreman start` and `overmind start` exit at once, and a platform that reads the file has no process to run.\n\nTo fix, add a process line, or delete the file."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
+      "description": "Reports a line that is not blank, not a comment and has no process name before a colon (`bundle exec puma`, `: cmd`). foreman, honcho and overmind read a Procfile line by line and ignore every line that does not start with `name:`. No fix.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "web: a\nbundle exec sidekiq\n: cmd\n# comment\nworker: sleep 1 \\\nand more\n",
+        "language": "procfile",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 19,
+            "line": 2
+          },
+          {
+            "column": 1,
+            "length": 5,
+            "line": 3
+          },
+          {
+            "column": 1,
+            "length": 8,
+            "line": 6
+          }
+        ]
+      },
+      "fix": null,
+      "id": "stray-line",
+      "languages": [
+        "procfile"
+      ],
+      "options": [],
+      "presets": [],
+      "upstream": [],
+      "why": "The line looks like part of the file, but no runner runs it: a command meant for a process, or the rest of a command that was wrapped over two lines, silently does nothing.\n\nTo fix, give the line a process name and a colon, or make it a comment with `#`."
+    },
+    {
+      "category": "correctness",
+      "default_level": "warn",
       "description": "Reports an enum whose first value is not 0. Proto3 and editions with open enums require it; proto2 files (also those with no `syntax`) are checked only with the `proto2` option.",
       "example": {
         "config": null,

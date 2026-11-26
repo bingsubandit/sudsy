@@ -141,10 +141,14 @@ pub(crate) fn named_provider(language: &str) -> Box<dyn LanguageProvider> {
 
 /// The provider that claims files with the extension `lang`.
 pub(crate) fn make_provider(lang: &str) -> Result<Box<dyn LanguageProvider>> {
-    // `.editorconfig` is claimed by file name, the others by extension.
+    // `.editorconfig` is claimed by file name, the others by extension, `Procfile` by its capitalised name.
     let samples = match lang {
-        WORKFLOWS => [".github/workflows/bench.yml".to_string(), String::new()],
-        _ => [format!("bench.{lang}"), format!(".{lang}")],
+        WORKFLOWS => vec![".github/workflows/bench.yml".to_string()],
+        _ => vec![
+            format!("bench.{lang}"),
+            format!(".{lang}"),
+            lang[..1].to_uppercase() + &lang[1..],
+        ],
     };
     let mut providers = languages::providers();
     // As production: the most specific matcher wins (`component.html` is Angular's, not HTML's).

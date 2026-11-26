@@ -1,0 +1,4 @@
+web: a
+worker: b
+web: c
+^^^ no-duplicate-process-name

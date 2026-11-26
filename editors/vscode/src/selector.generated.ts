@@ -31,6 +31,7 @@ export const documentSelector = [
   { scheme: "file", language: "markdown" },
   { scheme: "file", language: "php" },
   { scheme: "file", language: "powershell" },
+  { scheme: "file", language: "procfile" },
   { scheme: "file", language: "proto3" },
   { scheme: "file", language: "proto" },
   { scheme: "file", language: "python" },

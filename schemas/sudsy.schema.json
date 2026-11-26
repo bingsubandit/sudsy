@@ -2318,6 +2318,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a `CASE` branch `ELSE NULL`."
             },
+            "empty-command": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a `name:` line with nothing after the colon."
+            },
             "empty-content": {
               "$ref": "#/definitions/rule",
               "description": "Reports a link, button or heading with nothing in it and no `aria-label`, `title` or binding to `innerHTML`, `innerText`, `outerHTML` or `textContent`."
@@ -3233,6 +3237,10 @@
               "$ref": "#/definitions/rule",
               "description": "An `else` block after an `if` block that ends in `return`: the code of the `else` can follow the `if`."
             },
+            "indented-process": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a process line that starts with blanks."
+            },
             "ineffective-access-modifier": {
               "$ref": "#/definitions/rule",
               "description": "Reports `private` or `protected` before `def self.name`, which does not affect it."
@@ -3292,6 +3300,10 @@
             "invalid-print-syntax": {
               "$ref": "#/definitions/rule",
               "description": "Reports `print >> file, ...`, the Python 2 form that writes to a file."
+            },
+            "invalid-process-name": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a process name with a character outside `A-Z`, `a-z`, `0-9`, `_` and `-` (`web.1:`, `my app:`)."
             },
             "invalid-property-value": {
               "$ref": "#/definitions/rule",
@@ -4245,6 +4257,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a function or method whose native return type or `@return` tag is not `void` or `never` and whose end can be reached without a `return` or `throw`, on the last statement that reaches the end."
             },
+            "missing-space-after-colon": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `name:command` with no blank after the colon."
+            },
             "missing-super": {
               "$ref": "#/definitions/rule",
               "description": "Reports `initialize` of a class with a parent other than `Object`, and the callbacks `inherited` and `method_added`, that do not call `super`."
@@ -4965,6 +4981,10 @@
             "no-duplicate-pattern": {
               "$ref": "#/definitions/rule",
               "description": "Reports a pattern that appears twice with no opposite pattern (`!x` for `x`) between the two, on the second."
+            },
+            "no-duplicate-process-name": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a process name that appears twice, on the second line."
             },
             "no-duplicate-sections": {
               "$ref": "#/definitions/rule",
@@ -5773,6 +5793,10 @@
                   "type": "object"
                 }
               ]
+            },
+            "no-process": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a Procfile with no `name: command` line (only comments, blank lines or text no runner reads)."
             },
             "no-prototype-builtins": {
               "$ref": "#/definitions/rule",
@@ -8300,6 +8324,10 @@
             "stderr-redirect-last": {
               "$ref": "#/definitions/rule",
               "description": "Reports a command that has more words or redirections after `2>&1` or `>&2`."
+            },
+            "stray-line": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports a line that is not blank, not a comment and has no process name before a colon (`bundle exec puma`, `: cmd`)."
             },
             "string-dot-format-extra-named-arguments": {
               "$ref": "#/definitions/rule",
@@ -13911,6 +13939,7 @@
           "markdown",
           "php",
           "powershell",
+          "procfile",
           "protobuf",
           "python",
           "ruby",
@@ -18918,6 +18947,69 @@
             },
             "type": "object"
           },
+          "procfile": {
+            "additionalProperties": false,
+            "properties": {
+              "format": {
+                "additionalProperties": false,
+                "properties": {
+                  "end_of_line": {
+                    "default": "lf",
+                    "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first line break.",
+                    "enum": [
+                      "auto",
+                      "lf",
+                      "crlf"
+                    ],
+                    "type": "string"
+                  },
+                  "final_newline": {
+                    "default": true,
+                    "description": "End the file with a newline.",
+                    "type": "boolean"
+                  },
+                  "keep_final_newline": {
+                    "default": true,
+                    "description": "A file that does not end with a line break stays without one (the final newline is not added).",
+                    "type": "boolean"
+                  },
+                  "max_blank_lines": {
+                    "default": 1,
+                    "description": "Largest number of blank lines kept between processes and comments.",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "lint": {
+                "$ref": "#/definitions/lint"
+              },
+              "semantics": {
+                "additionalProperties": false,
+                "description": "Facts about methods that the flow analyses use.",
+                "properties": {
+                  "does_not_return": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "pure": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
           "protobuf": {
             "additionalProperties": false,
             "properties": {
@@ -20410,6 +20502,69 @@
             "max_blank_lines": {
               "default": 10,
               "description": "Largest number of blank lines kept between statements and comments.",
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "lint": {
+          "$ref": "#/definitions/lint"
+        },
+        "semantics": {
+          "additionalProperties": false,
+          "description": "Facts about methods that the flow analyses use.",
+          "properties": {
+            "does_not_return": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "pure": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "procfile": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "additionalProperties": false,
+          "properties": {
+            "end_of_line": {
+              "default": "lf",
+              "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first line break.",
+              "enum": [
+                "auto",
+                "lf",
+                "crlf"
+              ],
+              "type": "string"
+            },
+            "final_newline": {
+              "default": true,
+              "description": "End the file with a newline.",
+              "type": "boolean"
+            },
+            "keep_final_newline": {
+              "default": true,
+              "description": "A file that does not end with a line break stays without one (the final newline is not added).",
+              "type": "boolean"
+            },
+            "max_blank_lines": {
+              "default": 1,
+              "description": "Largest number of blank lines kept between processes and comments.",
               "maximum": 10,
               "minimum": 0,
               "type": "integer"

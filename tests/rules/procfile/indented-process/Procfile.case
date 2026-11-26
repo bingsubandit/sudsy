@@ -1,0 +1,5 @@
+web: a
+  worker: b
+^^^^^^^^^^^ indented-process
+	clock: c
+^^^^^^^^^ indented-process

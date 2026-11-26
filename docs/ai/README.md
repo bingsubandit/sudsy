@@ -39,6 +39,7 @@ Current state only; history is in git. Update the doc of the area you change in 
 | [formatting/xml.md](formatting/xml.md) | XML parser (tree-sitter), well-formedness checks, formatter, options, conformance |
 | [formatting/html.md](formatting/html.md) | HTML parser (tree-sitter, forked grammar), tree shape, conformance corpus, options |
 | [formatting/editorconfig.md](formatting/editorconfig.md) | `.editorconfig` parser (tree-sitter), formatter, options, conformance |
+| [formatting/procfile.md](formatting/procfile.md) | Procfile line parser (shared), formatter, options, rules, conformance |
 | [formatting/ini.md](formatting/ini.md) | `.ini` parser (tree-sitter), formatter, options, rules, conformance |
 | [formatting/gitignore.md](formatting/gitignore.md) | `.gitignore`-syntax files parser (tree-sitter), formatter, rules, conformance |
 | [formatting/dockerfile.md](formatting/dockerfile.md) | Dockerfile parser (tree-sitter), formatter, options, grammar gap, conformance |

@@ -489,6 +489,20 @@ The status and the numbers of every language are in the generated table "Languag
 - **Presets:** `ruby/rubocop`.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format rubocop`, `scripts/parity.sh coverage rubocop`.
 
+## Procfile
+
+<!-- generated:measured-procfile -->
+- **Measured:** Ready.
+  - Format, stable: 100% of the files format stably, by the rules of the formatter (839 of 839 files).
+  - Lint: 37 rules, no reference tool to compare with.
+<!-- /generated -->
+
+- Files: `Procfile` and `Procfile.*` (`Procfile.dev`).
+- The formatter writes `name: command` with one blank after the colon, an indented line as written, one blank line at most, no blank lines at the start or end and no trailing blanks. No reference formatter exists: the format column is the stable share and the agreement with the corpus decision table on held-out projects ([ai/design/procfile.md](ai/design/procfile.md)).
+- The rules report what foreman, honcho and overmind skip or reject: a name outside `[A-Za-z0-9_-]`, a duplicate name, a line with no `name:`, no process line, an indented line, `name:command` (overmind) and an empty command.
+- **Options:** `max_blank_lines`, `final_newline`, `keep_final_newline`, `end_of_line`.
+- **Differences:** the command, the comment text and the final newline stay as written.
+
 ## GraphQL
 
 <!-- generated:measured-graphql -->

@@ -439,6 +439,13 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `process-block-for-pipeline` | powershell | correctness | off | none | Reports a function or script block with a parameter that has `ValueFromPipeline` or `ValueFromPipelineByPropertyName` and no `process` block. Equivalent: psscriptanalyzer PSUseProcessBlockForPipelineCommand (partial). |
 | `singular-nouns` | powershell | style | off | none | Reports a function named `Verb-Nouns` whose noun ends in `s`. Equivalent: psscriptanalyzer PSUseSingularNouns (partial). |
 | `supports-should-process` | powershell | suspicious | off | none | Reports a function whose name has the verb `New`, `Set`, `Remove`, `Start`, `Stop`, `Restart`, `Reset` or `Update` and whose text has no `SupportsShouldProcess`, or has `SupportsShouldProcess = $false`. Equivalent: psscriptanalyzer PSUseShouldProcessForStateChangingFunctions (partial). |
+| `empty-command` | procfile | correctness | warn | none | Reports a `name:` line with nothing after the colon. |
+| `indented-process` | procfile | correctness | warn | none | Reports a process line that starts with blanks. |
+| `invalid-process-name` | procfile | correctness | warn | none | Reports a process name with a character outside `A-Z`, `a-z`, `0-9`, `_` and `-` (`web.1:`, `my app:`). |
+| `missing-space-after-colon` | procfile | correctness | warn | none | Reports `name:command` with no blank after the colon. |
+| `no-duplicate-process-name` | procfile | correctness | warn | none | Reports a process name that appears twice, on the second line. |
+| `no-process` | procfile | correctness | warn | none | Reports a Procfile with no `name: command` line (only comments, blank lines or text no runner reads). |
+| `stray-line` | procfile | correctness | warn | none | Reports a line that is not blank, not a comment and has no process name before a colon (`bundle exec puma`, `: cmd`). |
 | `enum-first-value-zero` | protobuf | correctness | warn | none | Reports an enum whose first value is not 0. Options: `proto2` (default `false`): Check proto2 files too, as buf does. Equivalent: buf ENUM_FIRST_VALUE_ZERO. |
 | `enum-no-allow-alias` | protobuf | suspicious | off | none | Reports `option allow_alias = true;` in an enum. Equivalent: buf ENUM_NO_ALLOW_ALIAS. |
 | `enum-pascal-case` | protobuf | style | off | none | Reports an enum name that is not PascalCase. Equivalent: buf ENUM_PASCAL_CASE. |

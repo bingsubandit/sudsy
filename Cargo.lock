@@ -2077,6 +2077,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lang-procfile"
+version = "0.0.3"
+dependencies = [
+ "core-config",
+ "core-format",
+ "core-rules",
+ "core-syntax",
+ "provider-api",
+]
+
+[[package]]
 name = "lang-protobuf"
 version = "0.0.3"
 dependencies = [
@@ -2232,6 +2243,7 @@ dependencies = [
  "lang-markdown",
  "lang-php",
  "lang-powershell",
+ "lang-procfile",
  "lang-protobuf",
  "lang-python",
  "lang-ruby",

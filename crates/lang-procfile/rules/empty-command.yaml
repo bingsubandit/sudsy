@@ -1,0 +1,17 @@
+id: empty-command
+message: "the process has no command"
+description: >-
+  Reports a `name:` line with nothing after the colon. foreman and overmind need at least one
+  character of command and skip the line. No fix.
+why: >-
+  The process is declared and never starts; the author wrote the name and lost or forgot the
+  command.
+
+  To fix, write the command, or delete the line.
+example: "web: bundle exec puma\nworker:   # reported: no command"
+severity: warn
+category: correctness
+rule:
+  kind: Process
+  regex: ':$'
+report-on: first-token

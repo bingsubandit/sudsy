@@ -27,6 +27,7 @@ pub mod embedded;
 pub mod escaped;
 pub mod grammar;
 pub mod grammars;
+pub mod key_value_lines;
 pub mod kind;
 pub mod parse;
 pub mod regex;

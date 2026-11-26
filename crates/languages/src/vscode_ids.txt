@@ -19,6 +19,7 @@ lang-makefile makefile
 lang-markdown markdown
 lang-php php
 lang-powershell powershell
+lang-procfile procfile
 lang-protobuf proto3 proto
 lang-python python
 lang-ruby ruby

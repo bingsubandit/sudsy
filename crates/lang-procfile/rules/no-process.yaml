@@ -1,0 +1,17 @@
+id: no-process
+message: "the file has no process line"
+description: >-
+  Reports a Procfile with no `name: command` line (only comments, blank lines or text no runner
+  reads). foreman stops with an empty-file error and overmind with "No entries were found in
+  Procfile". No fix.
+why: >-
+  `foreman start` and `overmind start` exit at once, and a platform that reads the file has no
+  process to run.
+
+  To fix, add a process line, or delete the file.
+example: "# web: bundle exec puma   # reported: the only line is a comment"
+severity: warn
+category: correctness
+rule:
+  kind: Document
+  not: { has: { kind: Process } }

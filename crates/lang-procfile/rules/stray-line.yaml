@@ -1,0 +1,17 @@
+id: stray-line
+message: "the line has no `name:` in front of a command; runners skip it"
+description: >-
+  Reports a line that is not blank, not a comment and has no process name before a colon (`bundle
+  exec puma`, `: cmd`). foreman, honcho and overmind read a Procfile line by line and ignore every
+  line that does not start with `name:`. No fix.
+why: >-
+  The line looks like part of the file, but no runner runs it: a command meant for a process, or
+  the rest of a command that was wrapped over two lines, silently does nothing.
+
+  To fix, give the line a process name and a colon, or make it a comment with `#`.
+example: "web: bundle exec puma\nbundle exec sidekiq   # reported: no process name"
+severity: warn
+category: correctness
+rule:
+  kind: Stray
+  not: { regex: '^[ \t]+[A-Za-z0-9_-]+:' }

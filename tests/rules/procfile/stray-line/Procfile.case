@@ -1,0 +1,9 @@
+web: a
+bundle exec sidekiq
+^^^^^^^^^^^^^^^^^^^ stray-line
+: cmd
+^^^^^ stray-line
+# comment
+worker: sleep 1 \
+and more
+^^^^^^^^ stray-line

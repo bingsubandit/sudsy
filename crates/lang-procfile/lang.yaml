@@ -1,0 +1,18 @@
+vscode-languages: [procfile]
+file-names: [Procfile, "Procfile.*"]
+formatter: FORMAT
+parse: parser::parse_file
+rules: "&[]"
+families: "&[core_rules::unique::FAMILY]"
+format-rows:
+  keep-comment-gap: false
+options:
+  - final_newline: true
+  - keep_final_newline:
+      default: true
+      doc: "A file that does not end with a line break stays without one (the final newline is not added)."
+  - end_of_line:
+      values: [auto, lf, crlf]
+      default: lf
+      doc: "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first line break."
+  - max_blank_lines: [1, "Largest number of blank lines kept between processes and comments."]

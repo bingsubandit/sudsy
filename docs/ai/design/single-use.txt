@@ -94,6 +94,7 @@ concept invalid-runs-on # users: github-actions
 concept jsx-layout # users: js
 concept keep-together-neighbours # users: markdown (shared)
 concept key-shape # users: github-actions (shared)
+concept key-value-line-parser # users: procfile (shared)
 concept keyword-block-frames # users: sql (shared)
 concept keyword-block-pairing # users: cmake (shared)
 concept keyword-block-parse # users: sql (shared)

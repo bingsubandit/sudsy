@@ -602,11 +602,6 @@
   parser: ~1.2 # tree-sitter: victorhqc/tree-sitter-prisma (24 stars, pushed 2025-10)
   format: {tool: "prisma format", gain: ~0.7, cost: {est: true}, why: "only tool found; official, Node; canonical, no width"}
   lint: {tool: "prisma validate", gain: ~0.7, cost: {index: true, est: true}, why: "only tool found; official, Node; relations need the whole schema; some rules need semantics"}
-- language: Procfile
-  gh: 212801
-  parser: ~1.5 # hand-written: line format, no crate needed
-  format: {tool: "none found", gain: ~1.0, cost: {layout: whitespace, parts: 1, est: true}, why: "no formatter found; decision table on 839 files in 732 projects, pooled held-out agreement 97.8%; only blanks, trailing blanks and line endings are decided (docs/ai/design/procfile.md)"}
-  lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no maintained linter found; dokku/procfile-util check (9 stars) is a partial validator; checklist of 11 entries from the runners' parsers and the Heroku article, 9 with findings on the corpus"}
 - language: Prolog
   gh: 14292
   so: 0.9

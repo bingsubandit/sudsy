@@ -54,6 +54,8 @@ fn nested_files_fail_alone_in_every_language() {
     let providers = languages::providers();
     let missing: Vec<_> = (providers.iter().map(|p| p.language()))
         .filter(|l| !NESTED.iter().any(|row| row.0 == *l))
+        // A Procfile has no construct that nests.
+        .filter(|l| *l != "procfile")
         .collect();
     assert!(missing.is_empty(), "NESTED has no row for {missing:?}");
     let t = tempfile::tempdir().unwrap();

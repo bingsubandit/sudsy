@@ -212,6 +212,12 @@
   ids: [kubernetes]
   format: [{tool: prettier, name: Prettier, groups: [kubernetes]}]
   lint: [{tool: kubeconform, name: kubeconform, primary: true}, {tool: kube-linter, name: kube-linter, popular: true}]
+- language: Procfile
+  popularity: [{name: Procfile, gh: 212801}]
+  evidence: procfile
+  ids: [procfile]
+  speed: [Procfile]
+  stability: [procfile]
 - language: GitHub Actions
   popularity: [{name: GitHub Actions, estimate: {value: 0.5, basis: "lead's estimate 2026-11-25, how common the file is in repositories; no survey lists data formats"}}]
   exempt: true

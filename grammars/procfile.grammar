@@ -1,0 +1,31 @@
+// Procfile (`Procfile`, `Procfile.dev`), parsed by the line parser of core_syntax::key_value_lines.
+// A file is lines: a process (`name: command`), a stray line (text with no name before a colon) or a comment.
+// Format: see crates/core-syntax/src/grammar/mod.rs.
+
+language procfile 31 "Procfile"
+comments line "#"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+token Comment #trivia #comment
+
+// The process name: the text before the first colon, as written.
+token Name
+token Colon ":" #punctuation
+// The command: the shell text after the colon, up to the blanks at the end of the line.
+token Command #literal
+// The text of a line with no name before a colon, or that starts with blanks (blanks included).
+token Text
+
+token Eof
+token Unknown #error
+
+node Document #document = items:#item* Eof
+node Process #item #key-value = name:Name Colon command:Command?
+node Stray #item = Text

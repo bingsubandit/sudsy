@@ -1,0 +1,14 @@
+id: indented-process
+message: "blank before the process name: runners skip this line"
+description: >-
+  Reports a process line that starts with blanks. foreman, honcho and overmind anchor the line at
+  its first character (`^name:`), so an indented line is ignored. The formatter keeps
+  the indent, which keeps the line skipped. No fix.
+why: >-
+  The process looks declared and never starts; the indent is easy to miss in a diff.
+
+  To fix, start the line at column 0.
+example: "  web: bundle exec puma   # reported: starts with blanks"
+severity: warn
+category: correctness
+rule: { kind: Stray, regex: '^[ \t]+[A-Za-z0-9_-]+:' }

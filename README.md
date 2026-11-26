@@ -5,7 +5,7 @@
 <p align="center"><b>A true polyglot formatter and linter for every repo.</b><br>
 One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest.<br>
 Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
-<b><!-- generated:support-headline -->Ready for 31 languages, early support for 3 more.<!-- /generated --></b></p>
+<b><!-- generated:support-headline -->Ready for 32 languages, early support for 3 more.<!-- /generated --></b></p>
 
 <p align="center">
 <a href="https://github.com/bingsubandit/sudsy/releases"><img alt="release" src="https://img.shields.io/github/v/release/bingsubandit/sudsy"></a>
@@ -18,7 +18,7 @@ Extensible: add your own rules as YAML patterns or Wasm plugins.<br>
 <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Jupyter Notebook, Java, Batchfile, GitHub Actions, C#, PowerShell, Makefile, Kubernetes manifests, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ansible, Ruby, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
+> **Early release (v0.0.x).** <!-- generated:support-ready -->Ready: HTML, JavaScript / TypeScript, CSS / SCSS / Less, JSON / JSONC, Markdown, Python, YAML, Shell, Dockerfile, SQL, Jupyter Notebook, Java, Batchfile, GitHub Actions, C#, PowerShell, Makefile, Kubernetes manifests, TOML, XML, Go, CMake, Kotlin, Vue / Svelte, Terraform (HCL), Angular templates, INI / EditorConfig / .gitignore, Ansible, Ruby, Procfile, GraphQL and Protobuf. The rest are in progress.<!-- /generated --> See the [status table](#language-support). Config may change in minor versions before 1.0.
 
 ## Install
 
@@ -97,6 +97,7 @@ Each number is measured on real-world code against the default rule set of the r
 | INI / EditorConfig / .gitignore | ██████████ 100% stable · no reference tool | 39 rules · no reference tool | Ready |
 | Ansible | ████████░░ 89% Prettier | ████████░░ 86% ansible-lint | Ready |
 | Ruby | ████████░░ 86% RuboCop | █████████░ 96% RuboCop | Ready |
+| Procfile | ██████████ 100% stable · █████████░ 97% agreement · no reference tool | 37 rules · ██████████ 100% checklist · ██████████ 100% precision · no reference tool | Ready |
 | GraphQL | █████████░ 99% Prettier | 37 rules · no reference tool | Ready |
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
 | C / C++ | ███████░░░ 79% clang-format | not measured clang-tidy | In progress |

@@ -39,6 +39,7 @@ objective-cpp
 perl
 php
 powershell
+procfile
 properties
 proto
 proto3
