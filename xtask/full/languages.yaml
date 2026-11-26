@@ -49,9 +49,9 @@
 - language: Rust
   gh: 401012
   so: 18.2
-  parser: ~1.0 # syn
-  format: {tool: "rustfmt", gain: ~0.1, cost: {layout: width, parts: 1, est: true}, why: "only tool found; official, ships with Rust; width-based, a few shared parts missing"}
-  lint: {tool: "clippy with types", gain: ~0.7, cost: {types: true, est: true}, why: "clippy is the standard Rust linter (ships with rustup); most lints read types; needs a type checker for the language"}
+  parser: ~1.2 # ra_ap_syntax =0.0.364 behind an adapter (33 crates, exact pin); measured, recommended; tree-sitter-rust 0.24 is the alternative (docs/ai/design/rust.md)
+  format: {tool: "rustfmt", gain: ~0.1, cost: {layout: width, parts: 1, est: true}, why: "official, ships with Rust; rustfmt 1.99.0 leaves 60.7% of 952 corpus files unchanged, 6.1% parse errors; decision table of 11 rows, held-out agreement 99.2%; width-based, per-project rustfmt.toml (docs/ai/design/rust.md)"}
+  lint: {tool: "clippy with types", gain: ~0.7, cost: {types: true, est: true}, why: "clippy is the standard Rust linter (ships with rustup); corpus: 250 allow and 6 warn attributes on clippy lints in .rs files, 100 allow and 75 warn in lint tables; checklist not run (needs cargo and types)"}
 - language: Scala
   gh: 28505
   so: 2.2

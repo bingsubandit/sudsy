@@ -1,0 +1,47 @@
+[package]
+name = "evidence-rust-parsers"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "Parse measurement of the Rust parser candidates (docs/ai/design/rust.md); not part of the Sudsy workspace"
+
+# its own workspace: the root Cargo.toml does not list it
+[workspace]
+
+# one binary per candidate, each linking only its own parser (binary size): `--features ts --bin ts` and so on
+[[bin]]
+name = "base"
+path = "src/bin/base.rs"
+
+[[bin]]
+name = "ts"
+path = "src/bin/ts.rs"
+required-features = ["ts"]
+
+[[bin]]
+name = "syn"
+path = "src/bin/syn.rs"
+required-features = ["syn"]
+
+[[bin]]
+name = "ra"
+path = "src/bin/ra.rs"
+required-features = ["ra"]
+
+[features]
+default = []
+ts = ["dep:tree-sitter", "dep:tree-sitter-rust"]
+syn = ["dep:syn"]
+ra = ["dep:ra_ap_syntax"]
+
+[dependencies]
+tree-sitter = { version = "0.27", optional = true }
+tree-sitter-rust = { version = "0.24", optional = true }
+syn = { version = "3", default-features = false, features = ["full", "parsing"], optional = true }
+ra_ap_syntax = { version = "=0.0.364", optional = true }
+
+# release with LTO, as the language step asks (docs/ai/architecture/adding-a-language.md)
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
