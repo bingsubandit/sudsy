@@ -508,7 +508,7 @@ The status and the numbers of every language are in the generated table "Languag
 
 <!-- generated:measured-c-c -->
 - **Measured:** In progress.
-  - Format, clang-format: 72% of the files identical (4,826 of 6,639 files).
+  - Format, clang-format: 77% of the files identical (5,158 of 6,639 files).
   - Lint, clang-tidy: not measured.
   - clang-format: line wrapping is not compared.
 <!-- /generated -->

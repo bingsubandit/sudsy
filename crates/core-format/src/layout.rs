@@ -526,12 +526,15 @@ impl Layout {
                     }
                 }
                 // (`keep_end`: a bool option that is off removes the blank line before the `}`,
-                // except of a block in a `keep_end_under` parent or before a `keep_end_before` sibling)
+                // except of a block in a `keep_end_under` parent, before a `keep_end_before` sibling or with a comment after it)
                 style.keep_trailing_blank = self.bound("keep_end", node.kind()).is_none_or(|b| {
                     cx.options.flag(b.option, true)
                         || node.parent().is_some_and(|p| {
                             self.bound_kinds(b.option, "keep_end_under").contains(&p.kind())
                         })
+                        || std::iter::successors(node.last_token(), |t| t.prev_token())
+                            .find(|t| !cx.grammar.is_trivia(t.kind()))
+                            .is_some_and(|t| comments::comment_on_line_after(cx.grammar, &t))
                         || node.next_sibling_or_token().is_some_and(|n| {
                             let kinds = self.bound_kinds(b.option, "keep_end_before");
                             let mut next = Some(n);

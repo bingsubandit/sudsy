@@ -13,6 +13,9 @@ use crate::doc::{self, Doc};
 use crate::error::FormatError;
 use crate::seq::{el, first, kids, last};
 use crate::spacing::SpaceRules;
+mod columns;
+mod hug;
+
 use core_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 /// The language's part of [`Flow::seq`].
@@ -215,7 +218,12 @@ impl Flow<'_> {
     }
 
     /// The blank inside the braces of a list (`braced_list_padding`), `None` for other pairs.
-    fn pad_blank(&self, cx: &FormatCtx<'_>, a: &SyntaxToken, b: &SyntaxToken) -> Option<bool> {
+    pub(super) fn pad_blank(
+        &self,
+        cx: &FormatCtx<'_>,
+        a: &SyntaxToken,
+        b: &SyntaxToken,
+    ) -> Option<bool> {
         let rules = self.rules.filter(|r| r.has_pad())?;
         rules.pad_gap(a, b, cx.options.bool(core_config::opt::BRACED_LIST_PADDING))
     }
@@ -229,6 +237,9 @@ impl Flow<'_> {
     /// What stands between two neighbouring tokens: a line break the source has, else a blank
     /// where the spacing rule or the source wants one.
     pub fn between(&self, cx: &FormatCtx<'_>, a: &SyntaxToken, b: &SyntaxToken) -> Option<Doc> {
+        if self.name_break(cx, b) {
+            return Some(doc::hardline());
+        }
         if let Some(attached) = self.attach(cx, a, b) {
             return Some(if attached {
                 doc::lit(" ")
@@ -247,6 +258,18 @@ impl Flow<'_> {
         if broken && !(self.joined(a, b) && !comment_between(cx, a, b) && !in_directive(cx, a)) {
             return Some(self.line_break(cx, b));
         }
+        self.spaced(cx, a, b, broken)
+    }
+
+    /// The blank between two tokens on one line (`broken`: the source breaks between them but no
+    /// line break stays, so a blank stands in for it where no row decides).
+    pub(super) fn spaced(
+        &self,
+        cx: &FormatCtx<'_>,
+        a: &SyntaxToken,
+        b: &SyntaxToken,
+        broken: bool,
+    ) -> Option<Doc> {
         let gap = a.text_range().end() != b.text_range().start();
         // `f(a, /*name=*/b)`: the blank between a block comment and `b` is as the source has it.
         if (self.exact || self.keep_comment_gap)
@@ -327,17 +350,87 @@ impl Flow<'_> {
         els: &[SyntaxElement],
         doc: impl Fn(&SyntaxElement) -> Result<Doc, FormatError>,
     ) -> Result<Doc, FormatError> {
+        if let Some(table) = self.table(cx, els, &doc) {
+            return table;
+        }
+        if let Some(moved) = self.moved_down(cx, els) {
+            let st = &cx.comment_style;
+            let open = last(cx, &els[0]).expect("checked");
+            let first = doc(&els[1])?;
+            let lead = doc::concat(vec![
+                doc::concat(
+                    moved
+                        .iter()
+                        .map(|c| crate::context::comment_doc_in(c, st))
+                        .collect(),
+                ),
+                doc::hardline(),
+                first,
+            ]);
+            let docs = [
+                doc::concat(vec![cx.leading_comments_doc(&open), cx.token_text(&open)]),
+                lead,
+            ];
+            // (as the list does with the comment on a line of its own: a `{` after `=` hangs)
+            let cont = (self.hugs(cx, els) == Some(false))
+                .then(|| cx.options.int(core_config::opt::CONTINUATION_INDENT) as usize);
+            return self.hung(cx, els, cont, &|i, e| match docs.get(i) {
+                Some(d) if i < 2 => Ok(d.clone()),
+                _ => doc(e),
+            });
+        }
+        let Some(hug) = self.hugs(cx, els) else {
+            return self.hung(cx, els, None, &|_, e| doc(e));
+        };
+        if !hug {
+            let cont = cx.options.int(core_config::opt::CONTINUATION_INDENT) as usize;
+            return self.hung(cx, els, Some(cont), &|_, e| doc(e));
+        }
+        let docs = els
+            .iter()
+            .map(|e| doc(e).map(doc::shared))
+            .collect::<Result<Vec<_>, _>>()?;
+        let cont = cx.options.int(core_config::opt::CONTINUATION_INDENT) as usize;
+        let hang = self.hung(cx, els, Some(cont), &|i, _| Ok(docs[i].clone()))?;
+        let width = self.hug_width(cx, els, &docs);
+        Ok(match (self.hugged(cx, els, &docs), width) {
+            (Some(hug), Some((w, true))) => doc::fits_at_cursor_line(w, hug, hang),
+            (Some(hug), Some((w, false))) => doc::fits_at_cursor(w, hug, hang),
+            _ => hang,
+        })
+    }
+
+    /// The elements with a part that hangs below what stands before it at every line break of the
+    /// source; `doc` lays out the element at an index.
+    fn hung(
+        &self,
+        cx: &FormatCtx<'_>,
+        els: &[SyntaxElement],
+        fixed: Option<usize>,
+        doc: &dyn Fn(usize, &SyntaxElement) -> Result<Doc, FormatError>,
+    ) -> Result<Doc, FormatError> {
         let tab = if self.source_hang {
             cx.options.int(core_config::opt::INDENT_SIZE) as usize
         } else {
             0
         };
+        let under = self.source_hang && fixed.is_none() && self.lines_aligned(cx, els);
+        let bracketed_first = els
+            .first()
+            .and_then(|e| e.as_token())
+            .is_some_and(|t| matches!(t.text(), "(" | "[" | "{"));
         let mut parts: Vec<Doc> = Vec::with_capacity(els.len() * 2);
         let mut hung: Vec<Hung> = Vec::new();
+        let mut shift: Option<isize> = None;
         let mut prev: Option<(&SyntaxElement, SyntaxToken)> = None;
         let base = |first_el: &SyntaxElement| first(cx, first_el).map(|t| line_indent(&t, tab));
-        for e in els {
-            let mut d = doc(e)?;
+        for (i, e) in els.iter().enumerate() {
+            let mut d = doc(i, e)?;
+            if under && !(bracketed_first && i == 0) {
+                // (what hangs inside an item counts from the line the item is on, not from the column
+                // the lines of the list are aligned to)
+                d = doc::align(doc::ALIGN_FROM_LINE, d);
+            }
             if let (Some((p, a)), Some(b)) = (prev.take(), first(cx, e)) {
                 // A declaration's annotation stands on a line of its own.
                 let mut sep = if super::annotation_line(cx, p) {
@@ -407,6 +500,31 @@ impl Flow<'_> {
                                 Some(at.saturating_sub(base(&els[0])?))
                             })
                             .flatten();
+                        // A line behind a comment that starts where the statement starts is a
+                        // continuation of it.
+                        let delta = match delta {
+                            Some(0)
+                                if fixed.is_none()
+                                    && self.rules.is_some_and(|r| {
+                                        els[0]
+                                            .parent()
+                                            .is_some_and(|n| r.comment_continue(n.kind()))
+                                    })
+                                    && !comments::trailing_comments(cx.grammar, &a).is_empty() =>
+                            {
+                                Some(cx.options.int(core_config::opt::CONTINUATION_INDENT) as usize)
+                            }
+                            d => d,
+                        };
+                        // The first line of the list goes to `fixed`, the others move with it.
+                        let delta = match (fixed, delta) {
+                            (Some(f), Some(d)) if !matches!(b.text(), ")" | "]" | "}") => {
+                                let shift = *shift.get_or_insert(f as isize - d as isize);
+                                Some((d as isize + shift).max(0) as usize)
+                            }
+                            _ => delta,
+                        };
+                        let delta = if under { Some(0) } else { delta };
                         hung.push(Hung {
                             delta,
                             docs: Vec::new(),
@@ -429,11 +547,25 @@ impl Flow<'_> {
         flush(&mut hung, &mut parts);
         // The hangs count from the line the flow starts on, which is not always the indentation
         // it is laid out in (the arguments of `.f(` on a continuation line).
-        let whole = doc::concat(parts);
         let bracketed = els
             .first()
             .and_then(|e| e.as_token())
             .is_some_and(|t| matches!(t.text(), "(" | "[" | "{"));
+        if under {
+            // (the lines stand under the column behind the bracket, or under the first token)
+            let mut rest = parts.split_off(usize::from(bracketed));
+            if let Some(open) = els[0].as_token().filter(|_| bracketed) {
+                // (the comments behind the bracket are part of what the lines line up with)
+                parts = vec![doc::concat(vec![
+                    cx.leading_comments_doc(open),
+                    cx.token_text(open),
+                ])];
+                rest.insert(0, cx.trailing_comments_doc(open));
+            }
+            let aligned = doc::align(doc::ALIGN_TO_COLUMN, doc::concat(rest));
+            return Ok(doc::concat(parts.into_iter().chain([aligned]).collect()));
+        }
+        let whole = doc::concat(parts);
         Ok(if self.source_hang && bracketed {
             doc::align(doc::ALIGN_FROM_LINE, whole)
         } else {

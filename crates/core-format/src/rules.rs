@@ -74,6 +74,8 @@ pub struct RuleFacts {
     pub keep_comment_gap: bool,
     /// Block comments that end with one of these (`=*/`) have no blank before the token after them.
     pub glued_comments: &'static [&'static str],
+    /// A block comment in front of one of these tokens (`;`) has no blank before it.
+    pub glued_before: &'static [&'static str],
 }
 
 impl RuleFacts {
@@ -89,6 +91,7 @@ impl RuleFacts {
         max_blank_after: None,
         keep_comment_gap: false,
         glued_comments: &[],
+        glued_before: &[],
     };
 }
 
@@ -116,6 +119,7 @@ pub struct RuleFormatter {
     max_blank_after: usize,
     keep_comment_gap: bool,
     glued_comments: &'static [&'static str],
+    glued_before: &'static [&'static str],
 }
 
 impl RuleFormatter {
@@ -177,6 +181,7 @@ impl RuleFormatter {
             max_blank_after: facts.max_blank_after.unwrap_or(1),
             keep_comment_gap: facts.keep_comment_gap,
             glued_comments: facts.glued_comments,
+            glued_before: facts.glued_before,
         }
     }
 
@@ -328,6 +333,7 @@ impl RuleFormatter {
             keep_gap: self.keep_comment_gap,
             keep_attached: self.keep_comment_gap,
             glued: self.glued_comments,
+            glued_before: self.glued_before,
             ..CommentStyle::default()
         }
     }

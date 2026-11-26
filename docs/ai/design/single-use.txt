@@ -18,6 +18,7 @@ concept attribute-content-lines # users: html (shared)
 concept attribute-requote # users: html (shared)
 concept behavior-summaries # users: csharp (shared)
 concept block-collection-layout # users: yaml
+concept bracket-hug-list # users: cpp (shared)
 concept build-stage-checks # users: dockerfile
 concept capability-layers # users:  (shared)
 concept cd-without-exit # users: shell
@@ -26,6 +27,7 @@ concept clause-checks # users: ruby
 concept clause-line-breaks # users: sql
 concept clause-style # users: sql (shared)
 concept closer-join # users: 
+concept column-list # users: cpp (shared)
 concept comment-syntax # users: hcl
 concept component-option-checks # users: html
 concept component-props-model # users: html

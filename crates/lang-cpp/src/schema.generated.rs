@@ -64,6 +64,8 @@ pub const BIN_PACK_PARAMETERS: core_config::OptId = core_config::opt::BIN_PACK_P
 #[allow(dead_code)]
 pub const ALIGN_AFTER_OPEN_BRACKET: core_config::OptId = core_config::opt::ALIGN_AFTER_OPEN_BRACKET;
 #[allow(dead_code)]
+pub const COLUMN_LIST_MIN_COMMAS: core_config::OptId = core_config::opt::COLUMN_LIST_MIN_COMMAS;
+#[allow(dead_code)]
 pub const BREAK_BEFORE_BINARY_OPERATORS: core_config::OptId = core_config::opt::BREAK_BEFORE_BINARY_OPERATORS;
 #[allow(dead_code)]
 pub const BREAK_CONSTRUCTOR_INITIALIZERS: core_config::OptId = core_config::opt::BREAK_CONSTRUCTOR_INITIALIZERS;
@@ -92,19 +94,20 @@ pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
     ("indent_pp_directives", "tight", "", &["Directive"]),
     ("namespace_indentation", "flat", "", &["NamespaceDeclaration"]),
     ("pointer_alignment", "binary_cast", "", &["Rpar"]),
-    ("pointer_alignment", "binary_clear", "", &["Assignment", "ReturnStatement", "Binary", "Ternary", "Index", "Unary", "Arguments"]),
+    ("pointer_alignment", "binary_clear", "", &["Assignment", "ReturnStatement", "Binary", "Ternary", "Index", "Unary", "Arguments", "Parenthesized", "Condition"]),
     ("pointer_alignment", "binary_node", "", &["Binary"]),
     ("pointer_alignment", "binary_operand", "", &["MemberAccess"]),
     ("pointer_alignment", "binary_spaced", "", &["Amp"]),
     ("pointer_alignment", "pointer", "", &["Star", "Amp", "AmpAmp"]),
     ("pointer_alignment", "pointer_bare", "", &["TemplateArguments"]),
     ("pointer_alignment", "pointer_end", "", &["Greater", "GreaterGreater", "Comma", "Rpar", "Ellipsis", "Lsqb"]),
-    ("pointer_alignment", "pointer_in", "", &["Parameter", "FunctionDeclaration", "SimpleDeclaration", "TemplateArguments", "Line", "Directive", "DeclaratorGroup"]),
+    ("pointer_alignment", "pointer_in", "", &["Parameter", "FunctionDeclaration", "SimpleDeclaration", "TemplateArguments", "Line", "Directive", "DeclaratorGroup", "Condition"]),
     ("pointer_alignment", "pointer_in_loose", "", &["ForStatement", "CatchClause", "Parameter"]),
     ("pointer_alignment", "pointer_in_under", "", &["Cast"]),
     ("pointer_alignment", "pointer_name", "", &["Ident", "Keyword", "Lsqb"]),
     ("pointer_alignment", "pointer_not_name", "", &["Captures"]),
     ("pointer_alignment", "pointer_ref", "", &["Amp", "AmpAmp"]),
+    ("pointer_alignment", "pointer_shaped", "", &["ParenGroup"]),
     ("pointer_alignment", "pointer_type", "", &["Ident", "Keyword", "Greater", "GreaterGreater"]),
     ("pointer_alignment", "tight_after", "", &["Ellipsis"]),
     ("pointer_alignment", "tight_behind", "", &["Star", "Amp", "AmpAmp"]),
@@ -143,6 +146,13 @@ pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
     ("short_loops", "head", "", &["Condition"]),
     ("short_loops", "join", "", &["ForStatement", "WhileStatement"]),
     ("short_lambdas", "fit", "", &["Lambda"]),
+    ("align_after_open_bracket", "comment_continue", "", &["FunctionDeclaration", "SimpleDeclaration"]),
+    ("align_after_open_bracket", "hug_brace_after", "", &["Ident", "Greater"]),
+    ("align_after_open_bracket", "hug_brace_hang", "", &["Equal"]),
+    ("align_after_open_bracket", "hug_comment_down", "", &["InitList"]),
+    ("align_after_open_bracket", "hug_unless", "", &["Lambda", "Block", "InitList"]),
+    ("align_after_open_bracket", "name_break", "", &["FunctionDeclaration"]),
+    ("align_after_open_bracket", "name_break_after", "", &["Keyword", "Star", "Greater"]),
     ("short_enums", "fit", "", &["EnumSpecifier"]),
     ("break_template_declarations", "break_after", "", &["TemplateDeclaration"]),
     ("break_template_declarations", "head", "", &["TemplateParameters"]),
@@ -316,6 +326,10 @@ pub fn align_after_open_bracket(o: &core_config::ResolvedOptions) -> AlignAfterO
     }
 }
 #[allow(dead_code)]
+pub fn column_list_min_commas(o: &core_config::ResolvedOptions) -> usize {
+    o.uint(COLUMN_LIST_MIN_COMMAS, 5)
+}
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BreakBeforeBinaryOperators { None, NonAssignment, All }
 #[allow(dead_code)]
@@ -444,7 +458,8 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::boolean(core_config::opt::SHORT_CASE_LABELS, false, "A `case` label and its simple statement are kept on one line when they fit."),
         core_config::OptionDef::boolean(core_config::opt::BIN_PACK_ARGUMENTS, true, "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line)."),
         core_config::OptionDef::boolean(core_config::opt::BIN_PACK_PARAMETERS, true, "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line)."),
-        core_config::OptionDef::choice(core_config::opt::ALIGN_AFTER_OPEN_BRACKET, &["align", "dont_align", "always_break"], "align", "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."),
+        core_config::OptionDef::choice(core_config::opt::ALIGN_AFTER_OPEN_BRACKET, &["align", "dont_align", "always_break"], "align", "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source."),
+        core_config::OptionDef::int(core_config::opt::COLUMN_LIST_MIN_COMMAS, 5, (0, 100), "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off."),
         core_config::OptionDef::choice(core_config::opt::BREAK_BEFORE_BINARY_OPERATORS, &["none", "non_assignment", "all"], "none", "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`)."),
         core_config::OptionDef::choice(core_config::opt::BREAK_CONSTRUCTOR_INITIALIZERS, &["before_colon", "before_comma"], "before_colon", "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`)."),
         core_config::OptionDef::int(core_config::opt::CONSTRUCTOR_INITIALIZER_INDENT, 4, (0, 16), "Columns a constructor initializer list is indented more than its constructor."),

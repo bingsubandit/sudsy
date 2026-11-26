@@ -26,6 +26,5 @@ pub static PhpFormatter: LazyRules =
         verbatim_if: &["InlineText", "CloseTag", "ShortOpeningTag", "EchoTag"],
         exact_end: &["InlineText"],
         max_blank_after: Some(usize::MAX),
-        keep_comment_gap: false,
-        glued_comments: &[],
+        ..RuleFacts::DEFAULT
     });

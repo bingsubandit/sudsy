@@ -53,7 +53,7 @@ options:
         tight_after: [Ellipsis]
         tight_behind: [Star, Amp, AmpAmp]
         pointer: [Star, Amp, AmpAmp]
-        pointer_in: [Parameter, FunctionDeclaration, SimpleDeclaration, TemplateArguments, Line, Directive, DeclaratorGroup]
+        pointer_in: [Parameter, FunctionDeclaration, SimpleDeclaration, TemplateArguments, Line, Directive, DeclaratorGroup, Condition]
         pointer_in_under: [Cast]
         pointer_in_loose: [ForStatement, CatchClause, Parameter]
         pointer_ref: [Amp, AmpAmp]
@@ -62,8 +62,9 @@ options:
         pointer_not_name: [Captures]
         pointer_bare: [TemplateArguments]
         pointer_end: [Greater, GreaterGreater, Comma, Rpar, Ellipsis, Lsqb]
+        pointer_shaped: [ParenGroup]
         binary_node: [Binary]
-        binary_clear: [Assignment, ReturnStatement, Binary, Ternary, Index, Unary, Arguments]
+        binary_clear: [Assignment, ReturnStatement, Binary, Ternary, Index, Unary, Arguments, Parenthesized, Condition]
         binary_cast: [Rpar]
         binary_spaced: [Amp]
         binary_operand: [MemberAccess]
@@ -191,7 +192,19 @@ options:
   - align_after_open_bracket:
       values: ["align", "dont_align", "always_break"]
       default: "align"
-      doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`)."
+      doc: "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source."
+      kinds:
+        hug_brace_after: [Ident, Greater]
+        hug_brace_hang: [Equal]
+        hug_comment_down: [InitList]
+        comment_continue: [FunctionDeclaration, SimpleDeclaration]
+        name_break: [FunctionDeclaration]
+        name_break_after: [Keyword, Star, Greater]
+        hug_unless: [Lambda, Block, InitList]
+  - column_list_min_commas:
+      range: [0, 100]
+      default: 5
+      doc: "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off."
   - break_before_binary_operators:
       values: ["none", "non_assignment", "all"]
       default: "none"

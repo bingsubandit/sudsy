@@ -52,6 +52,19 @@ const OPERAND_WORDS: &[&str] = &[
     "NULL",
 ];
 
+/// Operators whose parenthesized operand may be a type.
+const TYPE_OPERATORS: &[&str] = &[
+    "sizeof",
+    "alignof",
+    "_Alignof",
+    "__alignof__",
+    "typeof",
+    "__typeof__",
+    "decltype",
+    "typeid",
+    "offsetof",
+];
+
 /// Words in front of an operand: `sizeof x`, `co_await x`, `delete p`, `throw e`.
 const PREFIX_WORDS: &[&str] = &[
     "sizeof",
@@ -453,7 +466,11 @@ impl Cx<'_> {
             k::LPAR if self.groups.is_open(at) => {
                 let (lo, hi) = self.inner(at);
                 // `({ statements })` and what a directive splits are no plain parentheses.
-                if self.closed(at) && !self.has_block(lo, hi) && !self.crosses_in(at) {
+                // (the operand of `sizeof` and its kin may be a type: `sizeof(T **)`)
+                let of_type = at > 0
+                    && self.c[at - 1].kind == k::KEYWORD
+                    && TYPE_OPERATORS.contains(&self.text(at - 1));
+                if self.closed(at) && !of_type && !self.has_block(lo, hi) && !self.crosses_in(at) {
                     self.retag(at, k::PARENTHESIZED);
                 }
                 self.list(lo, hi);
@@ -531,6 +548,10 @@ impl Cx<'_> {
                 return p;
             }
             q += 1;
+            // (`check_##impl##_##base`: pasted pieces are one name)
+            while self.is(q, b, k::HASH_HASH) && self.name_like(q + 1, b) {
+                q += 2;
+            }
             if self.is(q, b, k::LESS)
                 && matches!(self.c[q - 1].kind, k::IDENT | k::KEYWORD)
                 && let Some(e) = self.template_end(q, b, false)

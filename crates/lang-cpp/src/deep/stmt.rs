@@ -144,26 +144,41 @@ impl Cx<'_> {
     }
 
     /// The `( )` group of a control statement: its node is a `Condition`, its parts are read.
-    fn condition(&mut self, p: usize) {
+    /// Of a `for` head only the first part declares (`for (T *p = a; i & j; )`: `i & j` is no declaration), of other
+    /// conditions the first two (`if (T x = a; T &y = b)`).
+    fn condition(&mut self, p: usize, for_head: bool) {
         self.retag(p, k::CONDITION);
         let (lo, hi) = self.inner(p);
-        let mut q = lo;
+        let (mut q, mut part) = (lo, 0);
         while q < hi {
             let mut e = q;
             while e < hi && self.c[e].kind != k::SEMI {
                 e = self.skip(e);
             }
-            self.condition_part(q, e);
+            let declares = part < if for_head { 1 } else { 2 };
+            self.condition_part(q, e, declares, for_head && part == 0);
             q = e + 1;
+            part += 1;
         }
     }
 
-    /// An expression, or the declaration of a variable (`T x = v`, `T x : range`).
-    fn condition_part(&mut self, a: usize, b: usize) {
+    /// An expression, or the declaration of a variable (`T x = v`, `T x : range`). A declaration in a condition has an
+    /// initializer (`T &x = v`, `T x{v}`, `T x : r`: `a && b` is none); the initialization of a `for` also has `T x(v)`.
+    fn condition_part(&mut self, a: usize, b: usize, declares: bool, init: bool) {
         if a >= b {
             return;
         }
-        match self.declarators_of(a, b) {
+        let decl = declares
+            .then(|| {
+                self.declarators_before(a, b, |cx, id| {
+                    cx.is(id, b, k::EQUAL)
+                        || cx.is(id, b, k::LBRACE)
+                        || cx.is(id, b, k::COLON)
+                        || (init && cx.is(id, b, k::LPAR))
+                })
+            })
+            .flatten();
+        match decl {
             Some((q, _)) => {
                 self.declarators(q, b);
             }
@@ -180,7 +195,7 @@ impl Cx<'_> {
             p += 2;
         }
         if self.open(p, b, k::LPAR) {
-            self.condition(p);
+            self.condition(p, false);
             p = self.skip(p);
         }
         if p >= b {
@@ -204,7 +219,7 @@ impl Cx<'_> {
     fn control(&mut self, a: usize, b: usize, scope: u8, kind: SyntaxKind) -> Read {
         let mut p = a + 1;
         if self.open(p, b, k::LPAR) {
-            self.condition(p);
+            self.condition(p, self.word(a, b, "for"));
             p = self.skip(p);
         }
         let kind = if self.word(a, b, "for") {
@@ -218,7 +233,7 @@ impl Cx<'_> {
     fn switch(&mut self, a: usize, b: usize) -> Read {
         let mut p = a + 1;
         if self.open(p, b, k::LPAR) {
-            self.condition(p);
+            self.condition(p, false);
             p = self.skip(p);
         }
         (self.body(p, b, BODY), Some(k::SWITCH_STATEMENT))
@@ -227,7 +242,7 @@ impl Cx<'_> {
     fn do_statement(&mut self, a: usize, b: usize, scope: u8) -> Read {
         let mut p = self.body(a + 1, b, scope);
         if self.word(p, b, "while") && self.open(p + 1, b, k::LPAR) {
-            self.condition(p + 1);
+            self.condition(p + 1, false);
             p = self.skip(p + 1);
             if self.is(p, b, k::SEMI) {
                 p += 1;

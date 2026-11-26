@@ -316,3 +316,30 @@ fn a_line_moves_out_by_columns() {
     // not past column 0
     assert_eq!(run(member(9), 80), "\npublic:\n  int a;");
 }
+
+/// An indent behind an alignment is tabs for the whole width when tabs align, as the alignment is.
+#[test]
+fn an_indent_behind_an_alignment_is_tabs_up_to_the_last_stop() {
+    let mut d = align(4, indent(concat(vec![t("a"), hardline(), t("b")])));
+    let o = PrintOptions {
+        line_width: 80,
+        indent_width: 8,
+        use_tabs: true,
+        align_with_tabs: true,
+        continuation: None,
+    };
+    assert_eq!(print(&mut d, &o), "a\n\t    b");
+}
+
+/// A probe measured from the cursor reads the column the text is at, not the indentation the source had.
+#[test]
+fn a_probe_at_the_cursor_decides_by_the_output_column() {
+    let probe = |lead: &str| {
+        run(
+            concat(vec![t(lead), fits_at_cursor(10, t("fits"), t("breaks"))]),
+            20,
+        )
+    };
+    assert_eq!(probe("abcde"), "abcdefits");
+    assert_eq!(probe("abcdefghijk"), "abcdefghijkbreaks");
+}

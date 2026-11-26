@@ -20,6 +20,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import urllib.request
 import zipfile
 from collections import Counter
@@ -399,6 +400,28 @@ def sudsy_format(sudsy, fixture, work, command="format"):
     return (fixture.read_bytes().decode("utf-8") if r.returncode == 0 else None), b"internal error" in r.stderr
 
 
+ORACLE_LOCK = threading.Lock()
+
+
+def oracle_format(sudsy, work, style, copy, theirs, config):
+    """Sudsy's output on the tool's own output with `wrap_lines: false` (the line breaks stay, indentation and spacing are
+    recomputed): `parity_wrap.oracle_differs` tells which gaps of the real output are the wrap choice alone. The folder
+    `oracle[-<style>]` holds the style's `sudsy.yaml` with the option added; None when Sudsy rejects the text."""
+    here = work / (f"oracle-{style}" if style else "oracle")
+    with ORACLE_LOCK:
+        if not (here / "sudsy.yaml").exists():
+            here.mkdir(exist_ok=True)
+            conf = yaml.safe_load(((work / f"style-{style}") if style else work).joinpath("sudsy.yaml").read_text(encoding="utf-8"))
+            conf.setdefault("cpp", {}).setdefault("format", {})["wrap_lines"] = False
+            (here / "sudsy.yaml").write_text(yaml.safe_dump(conf), encoding="utf-8", newline="\n")
+    path = here / copy.name
+    path.write_text(theirs, encoding="utf-8", newline="\n")
+    try:
+        return sudsy_format(sudsy, path, here, config.get("sudsy_command", "format"))[0]
+    finally:
+        path.unlink()
+
+
 INTENTIONAL = ("invalid-input", "tool-wrong")
 
 
@@ -704,7 +727,8 @@ def main():
         if config.get("compare") == "notebook-cells":
             theirs, ours = (notebook_cells(t) if t is not None else None for t in (theirs, ours))
         if checker and theirs is not None:
-            wrapped[name] = parity_wrap.file_result(checker, config["wrap_compare"], styles, style, theirs, ours, copy, controlled, lambda variant: upstream(config, prefix, version, copy, here, f"{style}~{variant}", work / "variants"))
+            oracle = oracle_format(sudsy, work, style, copy, theirs, config) if os.environ.get("PARITY_ORACLE", "1") != "0" and (controlled or theirs != ours) else None
+            wrapped[name] = parity_wrap.file_result(checker, config["wrap_compare"], styles, style, theirs, ours, copy, controlled, lambda variant: upstream(config, prefix, version, copy, here, f"{style}~{variant}", work / "variants"), oracle)
         return theirs, ours, unstable, refused
 
     with ThreadPoolExecutor(os.cpu_count() if config.get("parallel") else 1) as pool:

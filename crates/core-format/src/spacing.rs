@@ -566,6 +566,8 @@ pub struct SpaceRules {
     /// a cast type (`(T)*p`, `(T)&x`: a mark between it and a name stays as written) and the marks that are an
     /// operator, not a cast's, when the source has a blank behind them (`(a) & b`).
     binary: [Vec<SyntaxKind>; 5],
+    /// The `hug_brace_after` (what a `{` follows when its list hugs: a type name, not `=`).
+    hug: [Vec<SyntaxKind>; 7],
 }
 
 /// The kind sets of padded braces: `pad_list` (the nodes whose braces are padded), `pad_open` and
@@ -583,7 +585,8 @@ struct Pad {
 /// `pointer_in_under` (the grandparents of marks in a parenthesized type), `pointer_in_loose` (grandparents of marks that need no `pointer_end` behind them: the declaration of a range `for` or a `catch`), `pointer_ref` (marks no other mark follows), `pointer_type` (what
 /// stands before the first mark: a type), `pointer_name` (what a name behind the last mark is), `pointer_not_name` (parents of a `pointer_name` or `pointer_end` token that make it none),
 /// `pointer_bare` (parents that hold types only, and what `pointer_in_under` names, where a mark needs a `pointer_end` token behind it
-/// to be no multiplication).
+/// to be no multiplication), `pointer_shaped` (groups whose marks are declarators once an item of the group
+/// is a declaration: two names side by side, `O out`, `T const x`).
 #[derive(Default)]
 struct Pointer {
     marks: Vec<SyntaxKind>,
@@ -597,6 +600,7 @@ struct Pointer {
     not_named: Vec<SyntaxKind>,
     bare: Vec<SyntaxKind>,
     end: Vec<SyntaxKind>,
+    shaped: Vec<SyntaxKind>,
 }
 
 /// The previous token that is no blank.
@@ -726,6 +730,7 @@ impl SpaceRules {
                 not_named: set("pointer_not_name"),
                 bare: set("pointer_bare"),
                 end: set("pointer_end"),
+                shaped: set("pointer_shaped"),
             },
             binary: [
                 "binary_node",
@@ -749,6 +754,16 @@ impl SpaceRules {
                 open: set("pad_open"),
                 close: set("pad_close"),
             },
+            hug: [
+                "hug_brace_after",
+                "hug_unless",
+                "hug_brace_hang",
+                "hug_comment_down",
+                "comment_continue",
+                "name_break",
+                "name_break_after",
+            ]
+            .map(set),
             index: Index::build(&space),
             space,
             joined: rows("joined"),
@@ -822,7 +837,8 @@ impl SpaceRules {
         let known = p.within.contains(&parent.kind())
             || parent
                 .parent()
-                .is_some_and(|g| p.under.contains(&g.kind()) || p.loose.contains(&g.kind()));
+                .is_some_and(|g| p.under.contains(&g.kind()) || p.loose.contains(&g.kind()))
+            || (p.shaped.contains(&parent.kind()) && self.declares(&parent));
         let ends_type = || {
             let mut next = next_code(t);
             while let Some(x) = next.as_ref().filter(|x| p.marks.contains(&x.kind())) {
@@ -849,6 +865,29 @@ impl SpaceRules {
             return ends_type();
         }
         true
+    }
+
+    /// Does an item of the group hold two names side by side (`O out`, `T const x`): is it a list of
+    /// parameters? Its marks are then declarators.
+    fn declares(&self, group: &SyntaxNode) -> bool {
+        let p = &self.pointer;
+        let mut prev: Option<SyntaxKind> = None;
+        for t in group.children_with_tokens() {
+            let Some(t) = t.as_token() else {
+                prev = None;
+                continue;
+            };
+            if t.text().trim().is_empty() {
+                continue;
+            }
+            if prev.is_some_and(|a| p.names.contains(&a) && p.types.contains(&a))
+                && p.names.contains(&t.kind())
+            {
+                return true;
+            }
+            prev = Some(t.kind());
+        }
+        false
     }
 
     /// Is `t` a name behind a declarator mark (a `pointer_name` token, but for the parents of
@@ -981,6 +1020,80 @@ impl SpaceRules {
         node.text_range()
             .contains_range(b.text_range())
             .then_some(blank)
+    }
+
+    /// Does the language have `name_break` kinds?
+    pub fn has_name_break(&self) -> bool {
+        !self.hug[5].is_empty()
+    }
+
+    /// Does the language have `hug_comment_down` kinds?
+    pub fn has_hug_comment_down(&self) -> bool {
+        !self.hug[3].is_empty()
+    }
+
+    /// Is the list `open` starts of a `hug_comment_down` kind (a comment after its `{` goes below it)?
+    pub fn hug_comment_down(&self, open: &SyntaxToken) -> bool {
+        open.parent()
+            .is_some_and(|p| self.hug[3].contains(&p.kind()))
+    }
+
+    /// Is `node` a bracketed list (`(a, b)`, `[a, b]` or `{a, b}`), not a body of statements?
+    pub fn in_hug_node(&self, node: &SyntaxNode) -> bool {
+        let first = node
+            .children_with_tokens()
+            .filter_map(|e| e.into_token())
+            .find(|t| !t.text().trim().is_empty());
+        matches!(first.as_ref().map(|t| t.text()), Some("(" | "[" | "{"))
+            && !node
+                .descendants_with_tokens()
+                .any(|e| e.as_token().is_some_and(|t| t.text() == ";"))
+    }
+
+    /// Is `kind` one of the declarations whose line behind a trailing comment is a continuation
+    /// (`comment_continue`)?
+    pub fn comment_continue(&self, kind: SyntaxKind) -> bool {
+        self.hug[4].contains(&kind)
+    }
+
+    /// Is `kind` a declaration whose name goes on a line of its own where its lined-up parameters
+    /// would not fit behind the return type (`name_break`)?
+    pub fn name_break(&self, kind: SyntaxKind) -> bool {
+        self.hug[5].contains(&kind)
+    }
+
+    /// Can a name break stand behind a token of `kind` (the end of a return type, not a macro)?
+    pub fn name_break_after(&self, kind: SyntaxKind) -> bool {
+        self.hug[6].contains(&kind)
+    }
+
+    /// Is `node` of a `hug_unless` kind (a body that lays itself out over lines: the list does not line up)?
+    pub fn hug_unless(&self, node: &SyntaxNode) -> bool {
+        node.descendants().any(|d| self.hug[1].contains(&d.kind()))
+            || node
+                .descendants_with_tokens()
+                .any(|e| e.as_token().is_some_and(|t| t.text() == "{"))
+    }
+
+    /// How the list `open` starts lines up: `Some(true)` its first item may go on the line of the
+    /// bracket (a `(` or `[`, or a `{` behind a `hug_brace_after` token, a type name); `Some(false)`
+    /// it hangs (a `{` behind a `hug_brace_hang` token, `=`); `None` the source decides.
+    pub fn hug_after(&self, open: &SyntaxToken) -> Option<bool> {
+        if open.text() != "{" {
+            return Some(true);
+        }
+        let mut p = open.prev_token();
+        while let Some(t) = p.as_ref().filter(|t| {
+            t.text().trim().is_empty() || t.text().starts_with("//") || t.text().starts_with("/*")
+        }) {
+            p = t.prev_token();
+        }
+        let kind = p?.kind();
+        if self.hug[0].contains(&kind) {
+            Some(true)
+        } else {
+            self.hug[2].contains(&kind).then_some(false)
+        }
     }
 
     /// Does the language pad braces (`pad_list` kind set)?

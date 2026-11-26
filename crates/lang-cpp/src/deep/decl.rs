@@ -83,7 +83,9 @@ impl Cx<'_> {
         }
         if let Some((q, id)) = self.declarators_of(s, b) {
             // `type name (` in a declaration scope is a function.
-            if scope != BODY && self.open(id, b, k::LPAR) && self.params_like(id) {
+            // (a macro body is a body, and `type name(params) {` in it is a function, never a variable)
+            let defines = scope == BODY && self.is(self.skip(id), b, k::LBRACE);
+            if (scope != BODY || defines) && self.open(id, b, k::LPAR) && self.params_like(id) {
                 // (`RANGES_FUNC(count)(params)`: a macro call names the function)
                 let (next, (lo, hi)) = (self.skip(id), self.inner(id));
                 let named = hi == lo + 1 && self.open(next, b, k::LPAR) && self.params_like(next);
@@ -155,6 +157,21 @@ impl Cx<'_> {
         self.quiet = false;
         // Once it is one, the names of its type are read again, this time with their nodes.
         probe.and_then(|_| self.probe_declarators(a, b))
+    }
+
+    /// [`Self::declarators_of`] where the token after the declarator's name satisfies `after` (its nodes are made only then).
+    pub(super) fn declarators_before(
+        &mut self,
+        a: usize,
+        b: usize,
+        after: impl Fn(&Self, usize) -> bool,
+    ) -> Option<(usize, usize)> {
+        self.quiet = true;
+        let probe = self.probe_declarators(a, b);
+        self.quiet = false;
+        probe
+            .filter(|&(_, id)| after(self, id))
+            .and_then(|_| self.probe_declarators(a, b))
     }
 
     fn probe_declarators(&mut self, a: usize, b: usize) -> Option<(usize, usize)> {
@@ -229,6 +246,13 @@ impl Cx<'_> {
                     || (self.open(q + 1, b, k::LPAR) && self.is(self.inner(q + 1).0, b, k::STAR)))
             {
                 // (`void __init name(`, `void __iomem *name(`, `void *__init name(`: an attribute macro behind the type)
+                q += 1;
+            } else if self.is(q, b, k::IDENT)
+                && self.is(q + 1, b, k::IDENT)
+                && !self.word(q + 1, b, "operator")
+                && (builtin || crate::structure::macro_name(self.text(q)))
+            {
+                // (`int SQLITE_API name(`, `void noinline name(`: a macro between a type and the name it declares)
                 q += 1;
             } else {
                 return Some(q);
@@ -448,7 +472,11 @@ impl Cx<'_> {
         if !self.params_like(e) {
             return None;
         }
-        let body = self.is(q, b, k::COLON) || self.is(q, b, k::LBRACE) || self.is(q, b, k::EQUAL);
+        // (`A(T x) -> A<T>;`: a deduction guide)
+        let body = self.is(q, b, k::COLON)
+            || self.is(q, b, k::LBRACE)
+            || self.is(q, b, k::EQUAL)
+            || self.is(q, b, k::ARROW);
         let tilde = self.is(s, b, k::TILDE);
         if body || tilde || (scope == CLASS && self.is(q, b, k::SEMI)) {
             return Some(self.function(e, b));

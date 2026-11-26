@@ -9770,7 +9770,7 @@
             },
             "align_after_open_bracket": {
               "default": "align",
-              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
               "enum": [
                 "align",
                 "dont_align",
@@ -9866,6 +9866,13 @@
               "default": false,
               "description": "An empty body is `{}` when its line fits, except the block of `if`, `for`, `while`, `do`, `try` and `catch` and a block inside a block, which has two lines (`if (x) {\\n}`).",
               "type": "boolean"
+            },
+            "column_list_min_commas": {
+              "default": 5,
+              "description": "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off.",
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
             },
             "comment_keep_unicode_blanks": {
               "default": true,
@@ -10261,7 +10268,7 @@
             },
             "align_after_open_bracket": {
               "default": "align",
-              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+              "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
               "enum": [
                 "align",
                 "dont_align",
@@ -10357,6 +10364,13 @@
               "default": false,
               "description": "An empty body is `{}` when its line fits, except the block of `if`, `for`, `while`, `do`, `try` and `catch` and a block inside a block, which has two lines (`if (x) {\\n}`).",
               "type": "boolean"
+            },
+            "column_list_min_commas": {
+              "default": 5,
+              "description": "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off.",
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
             },
             "comment_keep_unicode_blanks": {
               "default": true,
@@ -14378,7 +14392,7 @@
                   },
                   "align_after_open_bracket": {
                     "default": "align",
-                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
                     "enum": [
                       "align",
                       "dont_align",
@@ -14474,6 +14488,13 @@
                     "default": false,
                     "description": "An empty body is `{}` when its line fits, except the block of `if`, `for`, `while`, `do`, `try` and `catch` and a block inside a block, which has two lines (`if (x) {\\n}`).",
                     "type": "boolean"
+                  },
+                  "column_list_min_commas": {
+                    "default": 5,
+                    "description": "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off.",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "integer"
                   },
                   "comment_keep_unicode_blanks": {
                     "default": true,
@@ -14869,7 +14890,7 @@
                   },
                   "align_after_open_bracket": {
                     "default": "align",
-                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`).",
+                    "description": "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source.",
                     "enum": [
                       "align",
                       "dont_align",
@@ -14965,6 +14986,13 @@
                     "default": false,
                     "description": "An empty body is `{}` when its line fits, except the block of `if`, `for`, `while`, `do`, `try` and `catch` and a block inside a block, which has two lines (`if (x) {\\n}`).",
                     "type": "boolean"
+                  },
+                  "column_list_min_commas": {
+                    "default": 5,
+                    "description": "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off.",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "integer"
                   },
                   "comment_keep_unicode_blanks": {
                     "default": true,

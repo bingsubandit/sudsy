@@ -190,9 +190,9 @@ impl Doc {
                 if s.contains('\n') {
                     return None;
                 }
-                s.chars().count()
+                cols(s)
             }
-            Doc::Verbatim(s) => s.chars().count(),
+            Doc::Verbatim(s) => cols(s),
             Doc::Reserve(n) => *n,
             Doc::Line => 1,
             Doc::Concat(ps) | Doc::Fill(ps) => {
@@ -213,6 +213,7 @@ impl Doc {
             }
             Doc::IfBreak { flat, .. } => flat.flat_width()?,
             Doc::Shared(s) => s.doc.flat_width()?,
+            Doc::FitsBelow(f) => f.fits.flat_width()?,
             _ => return None,
         })
     }
@@ -222,11 +223,11 @@ impl Doc {
         fn walk(d: &Doc, w: &mut usize) -> bool {
             match d {
                 Doc::Text(s) => {
-                    *w += s.chars().count();
+                    *w += cols(s);
                     false
                 }
                 Doc::Verbatim(s) => {
-                    *w += s.chars().count();
+                    *w += cols(s);
                     false
                 }
                 Doc::Line | Doc::SoftLine | Doc::HardLine => true,
@@ -250,8 +251,8 @@ impl Doc {
     pub fn width_to_hardline(&self) -> usize {
         fn walk(d: &Doc, w: &mut usize) -> bool {
             match d {
-                Doc::Text(s) => *w += s.chars().count(),
-                Doc::Verbatim(s) => *w += s.chars().count(),
+                Doc::Text(s) => *w += cols(s),
+                Doc::Verbatim(s) => *w += cols(s),
                 Doc::Reserve(n) => *w += n,
                 Doc::Line => *w += 1,
                 Doc::HardLine | Doc::LineStart(_) => return true,
@@ -324,13 +325,46 @@ impl Doc {
         walk(self, &mut false)
     }
 
+    /// The width of the widest line between the first and the last forced line break, each printed on
+    /// one line (0 when there are less than two breaks).
+    pub fn inner_line_width(&self) -> usize {
+        fn walk(d: &Doc, w: &mut usize, widest: &mut usize, lines: &mut usize) {
+            match d {
+                Doc::Text(s) => *w += cols(s),
+                Doc::Verbatim(s) => *w += cols(s),
+                Doc::Reserve(n) => *w += n,
+                Doc::Line => *w += 1,
+                Doc::HardLine | Doc::LineStart(_) => {
+                    if *lines > 0 {
+                        *widest = (*widest).max(*w);
+                    }
+                    *lines += 1;
+                    *w = 0;
+                }
+                Doc::Concat(ps) | Doc::Fill(ps) => {
+                    ps.iter().for_each(|p| walk(p, w, widest, lines));
+                }
+                Doc::Group(g) => walk(&g.contents, w, widest, lines),
+                Doc::Indent(d) | Doc::Align(_, d) | Doc::Label(_, d) | Doc::IndentIfBreak(_, d) => {
+                    walk(d, w, widest, lines);
+                }
+                Doc::IfBreak { flat, .. } => walk(flat, w, widest, lines),
+                Doc::Shared(s) => walk(&s.doc, w, widest, lines),
+                _ => {}
+            }
+        }
+        let (mut w, mut widest, mut lines) = (0, 0, 0);
+        walk(self, &mut w, &mut widest, &mut lines);
+        widest
+    }
+
     /// The width of the document's last line printed on one line: what follows its last forced
     /// line break (comments above a header).
     pub fn tail_width(&self) -> usize {
         fn walk(d: &Doc, w: &mut usize) {
             match d {
-                Doc::Text(s) => *w += s.chars().count(),
-                Doc::Verbatim(s) => *w += s.chars().count(),
+                Doc::Text(s) => *w += cols(s),
+                Doc::Verbatim(s) => *w += cols(s),
                 Doc::Reserve(n) => *w += n,
                 Doc::Line => *w += 1,
                 Doc::HardLine | Doc::LineStart(_) => *w = 0,
@@ -788,6 +822,15 @@ pub fn if_break_in(id: GroupId, broken: Doc, flat: Doc) -> Doc {
 /// [`Doc::width_to_hardline`] ends at its `{`.
 pub const SHORT_BODY: &str = "short-body";
 
+/// The label of blanks that line up a cell: with tabs for alignment they are tabs up to the last tab
+/// stop and spaces for the rest.
+pub const PAD: &str = "pad";
+
+/// `n` blank columns that line up a cell (see [`PAD`]).
+pub fn pad(n: usize) -> Doc {
+    label(PAD, text(" ".repeat(n)))
+}
+
 /// See [`Doc::Label`].
 pub fn label(tag: &'static str, d: Doc) -> Doc {
     Doc::Label(tag, Box::new(d))
@@ -799,6 +842,31 @@ pub fn fits_below(levels: usize, width: usize, fits: Doc, otherwise: Doc) -> Doc
     Doc::FitsBelow(Box::new(FitsBelow {
         levels,
         probe: Doc::Reserve(width),
+        fits,
+        otherwise,
+    }))
+}
+
+/// `FitsBelow::levels` of a probe measured from the column the printer is at, not from an indentation level.
+pub const AT_CURSOR: usize = usize::MAX;
+
+/// See [`Doc::FitsBelow`]: `fits` when `width` columns fit behind the text printed so far on the line (the
+/// decision reads the output column, whatever the source looked like), else `otherwise`.
+pub fn fits_at_cursor(width: usize, fits: Doc, otherwise: Doc) -> Doc {
+    fits_below(AT_CURSOR, width, fits, otherwise)
+}
+
+/// [`fits_at_cursor`] for a probe that is a whole line: what follows the document on its line does not count.
+pub fn fits_at_cursor_line(width: usize, fits: Doc, otherwise: Doc) -> Doc {
+    fits_below_line(AT_CURSOR, width, fits, otherwise)
+}
+
+/// [`fits_below`] for a probe that is a whole line: what follows the document on its line does not
+/// count (the line ends with the probe).
+pub fn fits_below_line(levels: usize, width: usize, fits: Doc, otherwise: Doc) -> Doc {
+    Doc::FitsBelow(Box::new(FitsBelow {
+        levels,
+        probe: Doc::Concat(vec![Doc::Reserve(width), Doc::HardLine]),
         fits,
         otherwise,
     }))
@@ -837,4 +905,13 @@ pub fn join(sep: &Doc, parts: impl IntoIterator<Item = Doc>) -> Doc {
         out.push(p);
     }
     Doc::Concat(out)
+}
+
+/// The columns of a text: the zero-width mark of an aligned comment's gap (`comments::GAP_MARK`) has none.
+fn cols(s: &str) -> usize {
+    if s.as_bytes().contains(&1) {
+        s.chars().filter(|&c| c != '\u{1}').count()
+    } else {
+        s.chars().count()
+    }
 }

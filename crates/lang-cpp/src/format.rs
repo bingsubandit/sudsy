@@ -26,4 +26,6 @@ pub static CppFormatter: LazyRules =
             keep_comment_gap: true,
             // `/*name=*/value`
             glued_comments: &["=*/"],
+            // `/* nothing */;`
+            glued_before: &[";"],
         });

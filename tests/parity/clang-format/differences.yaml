@@ -101,16 +101,16 @@ unclassified: 0
 # Comparison change (not a formatter gain): a one-line against a multi-line short body is a wrap where the style's
 # AllowShort...OnASingleLine value permits the join (scripts/parity_wrap.py, docs/ai/development/parity.md): 4,668 -> 4,827 equal (+159).
 ratchet:
-  llvm: 340
+  llvm: 345
   fmt: 46
-  range-v3: 361
-  folly: 1840
-  linux: 2183
-  sqlite: 52
+  range-v3: 394
+  folly: 1937
+  linux: 2319
+  sqlite: 111
   google: 2
   chromium: 2
-  mozilla: 0
-  webkit: 0
+  mozilla: 1
+  webkit: 1
   gnu: 0
   microsoft: 0
 target-files:

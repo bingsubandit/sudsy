@@ -135,12 +135,29 @@ pub struct CommentStyle {
     pub glued: &'static [&'static str],
     /// A comment on a line of its own starts in the column the source has (blanks as written).
     pub keep_indent: bool,
+    /// A block comment in front of a token with one of these texts has no blank before it.
+    pub glued_before: &'static [&'static str],
 }
 
 impl CommentStyle {
     /// Is the block comment `text` glued to the token after it?
     pub fn is_glued(&self, text: &str) -> bool {
         self.glued.iter().any(|g| text.ends_with(g))
+    }
+
+    /// Is the token after the comment one that a block comment touches?
+    pub fn glued_to_next(&self, c: &Comment) -> bool {
+        if self.glued_before.is_empty() {
+            return false;
+        }
+        let SyntaxElement::Token(t) = &c.element else {
+            return false;
+        };
+        let mut next = t.next_token();
+        while let Some(n) = next.as_ref().filter(|n| n.text().trim().is_empty()) {
+            next = n.next_token();
+        }
+        next.is_some_and(|n| self.glued_before.contains(&n.text()))
     }
 }
 
@@ -164,6 +181,7 @@ impl Default for CommentStyle {
             keep_tight: false,
             glued: &[],
             keep_indent: false,
+            glued_before: &[],
         }
     }
 }
@@ -1007,6 +1025,22 @@ fn comment_follows(g: &Grammar, tok: &SyntaxToken) -> bool {
             ControlFlow::Break(false)
         } else if is_comment_like(g, kind) {
             ControlFlow::Break(true)
+        } else {
+            ControlFlow::Continue(())
+        }
+    })
+    .unwrap_or(false)
+}
+
+/// A comment on the line of `tok`, after it.
+pub fn comment_on_line_after(g: &Grammar, tok: &SyntaxToken) -> bool {
+    walk_forward(g, tok, |kind, text| {
+        if !is_trivia(g, kind) {
+            ControlFlow::Break(false)
+        } else if is_comment_like(g, kind) {
+            ControlFlow::Break(true)
+        } else if text.chars().any(is_line_break) {
+            ControlFlow::Break(false)
         } else {
             ControlFlow::Continue(())
         }

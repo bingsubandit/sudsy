@@ -22,6 +22,8 @@ kind=Arrow&parent=Line / * : keep
 * / kind=Arrow&parent=Line : keep
 kind=Arrow&parent=FunctionDeclaration|Lambda / * : yes
 * / kind=Arrow&parent=FunctionDeclaration|Lambda : yes
+* / kind=Ellipsis&parent=CompoundExpression : yes
+kind=Ellipsis&parent=CompoundExpression / * : yes
 kind=Number / kind=Ellipsis : keep
 kind=Ellipsis / kind=Number : keep
 kind=Ellipsis / kind=Greater|GreaterGreater&parent=TemplateParameters|TemplateArguments : no
@@ -32,15 +34,20 @@ kind=Ellipsis / * : no
 # Keywords and their parentheses.
 kind=String / kind=Lpar : no
 kind=Rbrace&parent=Block / exact=while&parent=DoStatement : yes
+kind=Rbrace / exact=else|catch : yes
 exact=constexpr / kind=Lpar : yes
 exact=if|for|while|switch|catch / kind=Lpar : yes
 exact=return|co_return|co_yield|co_await|throw|case|else|do|new|delete / kind=Lpar : yes
 exact=delete / kind=Lsqb : no
 exact=return|co_return|throw|case|else|do|new|delete / kind=ColonColon : yes
 exact=decltype|sizeof|alignof|typeof|noexcept|static_assert / kind=Lpar : no
+kind=Star|Amp|AmpAmp / kind=Lpar&parent=DeclaratorGroup : no
 kind=Keyword / kind=Lpar&parent=DeclaratorGroup : yes
 kind=Ident / kind=Lpar&parent=DeclaratorGroup : keep
 kind=Keyword|Ident / kind=Lpar : no
+kind=Rpar / kind=Lpar&parent=ParenGroup : no
+kind=Ident|Greater / kind=Lbrace&parent=Arguments : no
+kind=Ident|Rsqb|Rpar / kind=Lsqb&parent=Arguments : no
 * / kind=Lpar&parent=Arguments : no
 # Templates.
 text=template / kind=Less : yes
@@ -70,7 +77,7 @@ kind=Plus|Minus&parent=BracketGroup / kind=Ident|Number&parent=BracketGroup : ye
 kind=HashHash / * : no
 * / kind=HashHash : no
 # Member access and scope.
-kind=Colon|Question|Keyword / kind=ColonColon : yes
+kind=Colon|Question|Keyword|Equal|String / kind=ColonColon : yes
 kind=ColonColon|Dot|Arrow|DotStar|ArrowStar / * : no
 * / kind=ColonColon|Dot|Arrow|DotStar|ArrowStar : no
 # Colons: labels, access specifiers and `case x:` stay close to their word.

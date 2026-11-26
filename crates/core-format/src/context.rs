@@ -1349,6 +1349,7 @@ pub fn leading_comments_doc_with(cs: &[Comment], st: &CommentStyle) -> Doc {
             }
         } else if (!st.keep_gap || gap_follows(c))
             && !st.is_glued(&c.text())
+            && !(c.kind == CommentKind::Block && st.glued_to_next(c))
             && !(st.keep_tight && !gap_follows(c))
         {
             parts.push(doc::lit(" "));

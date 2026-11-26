@@ -11,6 +11,7 @@ line that anchors its enclosing block (the line where the statement that owns th
 or the line of an initializer's `{`; so the indentation of a wrapped enclosing statement does not matter).
 Adjacent string literals that the reference tool split (BreakStringLiterals) are one literal: see `string_joins`.
 """
+import bisect
 import copy
 import os
 import random
@@ -43,6 +44,7 @@ class Tree:
         if src.startswith(BOM):  # the dump is of the text without its byte order mark
             src = src[len(BOM):]
         self.src, self.string = src, cfg["string_kind"]
+        self.nl = None
         self.kind, self.start, self.end = [], [], []
         self.sb, self.eb, self.br, self.dr, self.cm, self.frame = [], [], [], [], [], []
         self.par, self.gpar = [], []  # the kinds of the parent node and of its parent
@@ -165,6 +167,12 @@ class Tree:
     def gap(self, i):
         return self.src[(self.end[i - 1] if i else 0) : self.start[i]]
 
+    def line(self, i):
+        """The 1-based line of token i in the text."""
+        if self.nl is None:
+            self.nl = [m.start() for m in re.finditer(rb"\n", self.src)]
+        return bisect.bisect_left(self.nl, self.start[i]) + 1
+
 
 def width(ws):
     col = 0
@@ -264,7 +272,7 @@ def joinable(ex, allow, table):
     return not need or bool(ex[need])
 
 
-def compare(ref, out, shape=None, where=None, joins=None):
+def compare(ref, out, shape=None, where=None, joins=None, oracle=None):
     """(equal, causes in file order, wrap gaps that differ in newline) of two Trees; the tree facts (wrap points,
     anchors) are those of `shape`, by default the output's. `joins`: a function ex -> bool; the newlines inside a short body
     that it accepts are wrap points: the width alone decides them, and the lines after them are free as after any wrap."""
@@ -314,8 +322,33 @@ def compare(ref, out, shape=None, where=None, joins=None):
             relr = width(gr.rsplit(b"\n", 1)[1]) - ref.indent(shape.anchor(i))
             relo = width(go.rsplit(b"\n", 1)[1]) - out.indent(shape.anchor(i))
             if hr != ho or relr != relo:
+                if not cm and oracle is not None and i not in oracle and wrapped_before(ref, out, i):
+                    continue  # the same line breaks give the reference's indent: the wrap choice alone explains this gap
                 note("comment-gap" if cm else "indent")
     return not causes, causes, wraps
+
+
+def wrapped_before(ref, out, i):
+    """A wrap point between the start of the statement that holds the anchor of token i (else token i) and i has a newline in
+    one output only: the anchor line, and so the indent relative to it, depends on where the statement wrapped."""
+    s = out.anchor(i)
+    s = next((j for j in range(i if s < 0 else s, -1, -1) if out.sb[j]), 0)
+    for k in range(s + 1, i):
+        exact = out.sb[k] or out.eb[k - 1] or out.mb[k - 1] or out.br[k] or out.br[k - 1] or out.cm[k] or out.cm[k - 1]
+        if not exact and (b"\n" in ref.gap(k)) != (b"\n" in out.gap(k)):
+            return 1
+    return 0
+
+
+def oracle_differs(ref, oracle):
+    """The token indices whose gap differs between the reference and `oracle`, the formatter's output on the reference's
+    own text with the line breaks kept (`wrap_lines: false`); None when the tokens differ. With the same line breaks a
+    remaining difference of an indent is the formatter's own, an equal gap needs no wrap choice to explain it."""
+    if tokens_equal(ref, oracle):
+        return None
+    where = []
+    compare(ref, oracle, ref, where)
+    return set(where)
 
 
 def gap_text(g):
@@ -325,7 +358,7 @@ def gap_text(g):
     return g.decode("latin-1").replace("\t", "\\t") if len(g) <= 3 else f"{len(g)}sp"
 
 
-def gaps(ref, out, joins=None):
+def gaps(ref, out, joins=None, oracle=None):
     """Every difference of two Trees as records {c: cause, a, b: kinds of the tokens around the gap, p, g: parent and
     grandparent kinds of the second token, o, t: the gap of `out` and of the reference, x: the two token texts}; when the
     tokens differ, the first pair that does (`parity_gaps.py` ranks them)."""
@@ -339,22 +372,12 @@ def gaps(ref, out, joins=None):
             return [{"c": "tokens-reorder" if sorted(ta) == sorted(tb) else "tokens", "a": ref.kind[k], "b": out.kind[k], "p": out.par[k], "g": out.gpar[k], "o": text(out, k), "t": text(ref, k), "x": text(out, k - 1) if k else ""}]
         return [{"c": "tokens", "a": "", "b": "", "p": "", "g": "", "o": f"{out.n} tokens", "t": f"{ref.n} tokens", "x": ""}]
     where = []
-    _, causes, _ = compare(ref, out, None, where, joins)
-
-    def wrapped_before(i):
-        """A wrap point between the anchor of token i (else the start of its statement) and i has a newline in one output only."""
-        s = out.anchor(i)
-        if s < 0:
-            s = next((j for j in range(i, -1, -1) if out.sb[j]), 0)
-        for k in range(s + 1, i):
-            exact = out.sb[k] or out.eb[k - 1] or out.mb[k - 1] or out.br[k] or out.br[k - 1] or out.cm[k] or out.cm[k - 1]
-            if not exact and (b"\n" in ref.gap(k)) != (b"\n" in out.gap(k)):
-                return 1
-        return 0
+    _, causes, _ = compare(ref, out, None, where, joins, oracle)
 
     return [
         {"c": c, "a": out.kind[i - 1] if i else "", "b": out.kind[i], "p": out.par[i], "g": out.gpar[i], "o": gap_text(out.gap(i)), "t": gap_text(ref.gap(i)), "x": (text(out, i - 1) if i else "") + " " + text(out, i),
-         "w": wrapped_before(i) if c in ("indent", "comment-gap", "brace-placement") else 0}
+         "w": wrapped_before(ref, out, i) if c in ("indent", "comment-gap", "brace-placement") else 0,
+         "orc": None if oracle is None else int(i in oracle), "lr": ref.line(i), "lo": out.line(i)}
         for c, i in list(zip(causes, where))[:20000]
     ]
 
@@ -379,7 +402,7 @@ class Checker:
             return None
         return Tree(self.cfg, self.tags, r.stdout.decode("utf-8", "replace"), data)
 
-    def score(self, theirs, ours, suffix, ref_tree=None, source=None, listing=False, join_ok=None):
+    def score(self, theirs, ours, suffix, ref_tree=None, source=None, listing=False, join_ok=None, oracle=None):
         """The result of one file: ok, causes, wraps; the column-limit guard is added by the caller. `ours` is a text,
         or a Tree built from the reference's own tokens (a control), whose wrap points are the reference's. `source` is the
         text both tools read: a string literal the reference tool split is compared as the whole literal."""
@@ -387,16 +410,16 @@ class Checker:
         out = ours if isinstance(ours, Tree) else self.tree(ours, suffix)
         if ref is None or out is None:
             return {"ok": False, "causes": ["tree"], "wraps": 0}
-        ok, causes, wraps = compare(ref, out, ref if out is ours else None, None, join_ok)
+        ok, causes, wraps = compare(ref, out, ref if out is ours else None, None, join_ok, oracle)
         joins = string_joins(ref, out, self.tree(source, suffix)) if causes == ["tokens-string-split"] and source is not None else None
         if joins:
             ref, out = (self.tree(joined_text(t, j), suffix) if j else t for t, j in zip((ref, out), joins))
             if ref is None or out is None:
                 return {"ok": False, "causes": ["tree"], "wraps": 0}
-            ok, causes, wraps = compare(ref, out, None, None, join_ok)
+            ok, causes, wraps = compare(ref, out, None, None, join_ok, oracle)
         r = {"ok": ok, "causes": causes, "wraps": wraps}
         if listing and not ok:
-            r["gaps"] = gaps(ref, out, join_ok)
+            r["gaps"] = gaps(ref, out, join_ok, oracle)
         return r
 
 
@@ -548,7 +571,7 @@ def write_variants(cfg, folder, out, styles):
             (out / f"{style}~{name}.clang-format").write_text("\n".join(kept) + "\n", encoding="utf-8")
 
 
-def file_result(checker, cfg, folder, style, theirs, ours, copy, controlled, variant):
+def file_result(checker, cfg, folder, style, theirs, ours, copy, controlled, variant, oracle_text=None):
     """The result of one file: byte-identical, equal under the comparison, causes, guard, and with `controlled` the
     same for each control."""
     suffix = copy.suffix
@@ -559,11 +582,13 @@ def file_result(checker, cfg, folder, style, theirs, ours, copy, controlled, var
     allow = style_values(cfg, folder, style) if short else {}
     joins = (lambda ex: joinable(ex, allow, short["permits"])) if short else None
     source = copy.read_text(encoding="utf-8")
+    otree = checker.tree(oracle_text, suffix) if oracle_text is not None and ref is not None else None
+    oracle = oracle_differs(ref, otree) if otree is not None else None
 
     def one(text, listing=False):
         if text is None:
             return {"ok": False, "causes": ["rejected"], "wraps": 0, "byte": False, "guard": False}
-        r = checker.score(theirs, text, suffix, ref, source, listing, joins)
+        r = checker.score(theirs, text, suffix, ref, source, listing, joins, oracle)
         raw = text.src.decode("utf-8") if isinstance(text, Tree) else text
         r.update(byte=raw == theirs, guard=over_limit(raw, limit) > base)
         return r

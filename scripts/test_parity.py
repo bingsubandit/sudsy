@@ -399,6 +399,21 @@ class Wrap(unittest.TestCase):
 
     STMT = [("Stmt", "x", ";")]
 
+    def test_an_indent_after_a_wrap_is_free_only_where_the_oracle_gives_the_references_indent(self):
+        theirs, ours = "x =\n      a + {\n  b;\n};\n", "x = a + {\n  b;\n};\n"
+        ref, out = block_tree(theirs), block_tree(ours)
+        self.assertEqual(pw.compare(ref, out)[1], ["indent", "indent"])  # the anchor line moved: the relative indent differs
+        self.assertTrue(pw.compare(ref, out, None, None, None, set())[0])  # the oracle (same breaks) is equal there
+        self.assertEqual(pw.compare(ref, out, None, None, None, {5})[1], ["indent"])  # still different with the same breaks: ours
+        self.assertEqual(pw.oracle_differs(ref, block_tree(theirs)), set())
+        self.assertEqual(pw.oracle_differs(ref, block_tree("x =\n      a + {\n    b;\n};\n")), {5})
+        self.assertIsNone(pw.oracle_differs(ref, block_tree("x =\n      a + {\n  c;\n};\n")))
+
+    def test_a_gap_record_has_the_lines_of_both_outputs(self):
+        nodes = [("Stmt", "x", ";"), ("Stmt", "y", ";")]
+        rec = pw.gaps(wrap_tree("x = a;\ny = b;\n", nodes), wrap_tree("x = a;\n\ny =  b;\n", nodes))
+        self.assertEqual([(r["c"], r["lr"], r["lo"]) for r in rec], [("blank-lines", 2, 3), ("spacing", 2, 3)])
+
     def test_a_wrap_point_is_a_space_or_a_newline_at_any_indent(self):
         self.assertTrue(wrap_equal("x = a +\n    b;\n", "x = a + b;\n", self.STMT)[0])
         self.assertTrue(wrap_equal("x = a +\n    b;\n", "x = a +\n  b;\n", self.STMT)[0])

@@ -402,6 +402,7 @@ fn block_of(
         && single
         && !lead_blank
         && comments::leading_comments(g, &c.close).is_empty()
+        && !(style.keep_trailing_blank && comments::blank_lines_before(g, &c.close) > 0)
     {
         let Ends { opening, closing } = ends;
         let parts = |items| {
@@ -520,7 +521,10 @@ fn braces_of(
         first_hardline,
         body.unwrap_or(Doc::Nil),
         super::dangling_comments_in(&cx.comment_style, &dangling, blank_before_close),
-        if dangling.is_empty() && blank_before_close {
+        // (a blank line between the last comment and the `}` stays where a blank before the `}` does)
+        if (dangling.is_empty() && blank_before_close)
+            || (style.keep_trailing_blank && dangling.last().is_some_and(|c| c.breaks_after >= 2))
+        {
             doc::hardline()
         } else {
             Doc::Nil

@@ -449,7 +449,7 @@ impl Builder<'_> {
                 ) && !self
                     .prev_code(o)
                     .is_some_and(|q| self.text(q) == "operator"))
-                    || self.text(o) == "return"
+                    || matches!(self.text(o), "return" | "decltype")
             }),
             k::SEMI | k::RBRACE | k::LBRACE | k::COLON | k::AMP | k::AMP_AMP => true,
             // `({ statements })`

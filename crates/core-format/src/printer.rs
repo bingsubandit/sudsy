@@ -116,7 +116,16 @@ impl Indents {
         }
         let Level { text, width, .. } = &self.levels[parent];
         let w = self.opts.indent_width;
-        let (text, width) = if self.opts.use_tabs {
+        let (text, width) = if self.opts.use_tabs && self.opts.align_with_tabs && text.contains(' ')
+        {
+            // (an indent behind an alignment: the whole width in tabs and the rest in spaces)
+            let width = width + w;
+            let unit = w.max(1);
+            (
+                format!("{}{}", "\t".repeat(width / unit), " ".repeat(width % unit)),
+                width,
+            )
+        } else if self.opts.use_tabs {
             (format!("{text}\t"), width + w)
         } else {
             (format!("{text}{}", " ".repeat(w)), width + w)
@@ -440,6 +449,19 @@ impl<'a> Printer<'a> {
         match doc {
             Doc::Nil | Doc::BreakParent => {}
             Doc::Shared(s) => push(cmds, indent, mode, &s.doc),
+            Doc::Label(doc::PAD, d) if self.opts.use_tabs && self.opts.align_with_tabs => {
+                let Doc::Text(blanks) = &**d else {
+                    return push(cmds, indent, mode, d);
+                };
+                let (w, target) = (self.opts.indent_width.max(1), self.pos + blanks.len());
+                // (a single blank is never a tab)
+                while blanks.len() > 1 && (self.pos / w + 1) * w <= target {
+                    self.out.push('\t');
+                    self.pos = (self.pos / w + 1) * w;
+                }
+                self.out.push_str(&" ".repeat(target - self.pos));
+                self.pos = target;
+            }
             Doc::Label(_, d) => push(cmds, indent, mode, d),
             Doc::LineSuffixBoundary => {
                 if !self.suffixes.is_empty() {
@@ -459,11 +481,16 @@ impl<'a> Printer<'a> {
             Doc::Reserve(_) => {}
             Doc::FitsBelow(f) => {
                 let mut below = indent;
-                for _ in 0..f.levels {
+                let at_cursor = f.levels == doc::AT_CURSOR;
+                for _ in 0..if at_cursor { 0 } else { f.levels } {
                     below = self.indents.indent(below);
                 }
-                let room =
-                    self.opts.line_width as isize - self.indents.levels[below].width as isize;
+                let room = self.opts.line_width as isize
+                    - if at_cursor {
+                        self.pos as isize
+                    } else {
+                        self.indents.levels[below].width as isize
+                    };
                 let probe = Cmd {
                     indent: below,
                     mode: Mode::Flat,

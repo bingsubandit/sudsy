@@ -64,3 +64,10 @@ fn comments_beside_operators_and_closers_are_stable() {
         "<?php\n\nif ($a // one\n    || $b\n// two\n) {\n    foo(\n        1, /* c */\n    );\n}\n"
     );
 }
+
+/// A language that has no `column_list_min_commas` option has no column lists, and a braced list formats.
+#[test]
+fn a_braced_list_formats_without_the_column_list_option() {
+    let src = "<?php\n\nclass A\n{\n    use T {\n        a as b;\n    }\n}\n";
+    assert_eq!(fmt(src), src);
+}

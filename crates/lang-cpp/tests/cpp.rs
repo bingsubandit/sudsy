@@ -177,6 +177,16 @@ fn declarators_initializers_and_templates() {
     );
 }
 
+/// A declaration in a condition has an initializer, and only the first part of a `for` head declares.
+#[test]
+fn a_condition_declares_only_with_an_initializer() {
+    let src = "void f() {\n  if (a && b) g();\n  for (T *p = q; i & j; k &= l) {}\n  if (const T &r = s) h();\n  for (auto &x : v) {}\n  for (V<A, A> I(a, b); I.ok(); ++I) {}\n}\n";
+    assert_eq!(
+        texts(src, Dialect::Cpp, kind::DECLARATOR),
+        ["p = q", "r = s", "x : v", "I(a, b)"]
+    );
+}
+
 /// Labels, macro calls and `try` are statements of their own; `.f = v` and `[x = x]` hold no assignment.
 #[test]
 fn deep_precision() {
@@ -391,6 +401,16 @@ fn spacing_follows_the_rows_and_the_source_layout_stays() {
 }
 
 #[test]
+fn a_blank_line_before_a_closing_brace_stays_where_the_brace_is_followed_or_a_namespace_closes() {
+    // after a comment too; a comment after the `}` makes it no last token of its line
+    let src = "namespace n {\nint x;\n\n// c\n\n} // end\nvoid f() {\n  g();\n\n  // c\n\n}\nvoid h() {\n  g();\n\n} // end\n";
+    assert_eq!(
+        fmt(src),
+        "namespace n {\nint x;\n\n// c\n\n} // end\nvoid f() {\n  g();\n\n  // c\n}\nvoid h() {\n  g();\n\n} // end\n"
+    );
+}
+
+#[test]
 fn short_bodies_join_the_line_when_they_fit() {
     let src = "struct S {\n  int f() { return 1; }\n  int g() {\n    return 2;\n  }\n  enum E { A, B };\n};\n";
     assert_eq!(
@@ -552,11 +572,11 @@ fn the_file_gives_the_pointer_alignment_when_asked() {
 fn binary_operators_get_a_blank_on_both_sides() {
     use provider_api::format_testing::Formatting;
     let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
-    let src = "void f() {\n  x = a*b+1;\n  y = a&&b || c&d;\n  T *p = q;\n  z = (a & MASK) * b;\n  n = sizeof(T **) + f((U)&v) + sizeof(char *[5]);\n  m = x + (uint32_t)*A + (T)&b[i];\n  k = (x)*1000;\n}\nvoid (*fp)(const Foo *Self, Node *N);\n";
+    let src = "void f() {\n  x = a*b+1;\n  y = a&&b || c&d;\n  T *p = q;\n  z = (a & MASK) * b;\n  n = sizeof(T **) + f((U)&v) + sizeof(char *[5]);\n  m = x + (uint32_t)*A + (T)&b[i];\n  k = (x)*1000;\n  w = (t&nz) | !(e &M);\n}\nvoid (*fp)(const Foo *Self, Node *N);\n";
     let out = core_format::testing::assert_formats(&formatting, src);
     assert_eq!(
         out,
-        "void f() {\n  x = a * b + 1;\n  y = a && b || c & d;\n  T *p = q;\n  z = (a & MASK) * b;\n  n = sizeof(T **) + f((U)&v) + sizeof(char *[5]);\n  m = x + (uint32_t)*A + (T)&b[i];\n  k = (x) * 1000;\n}\nvoid (*fp)(const Foo *Self, Node *N);\n"
+        "void f() {\n  x = a * b + 1;\n  y = a && b || c & d;\n  T *p = q;\n  z = (a & MASK) * b;\n  n = sizeof(T **) + f((U)&v) + sizeof(char *[5]);\n  m = x + (uint32_t)*A + (T)&b[i];\n  k = (x) * 1000;\n  w = (t & nz) | !(e & M);\n}\nvoid (*fp)(const Foo *Self, Node *N);\n"
     );
 }
 
@@ -1086,4 +1106,267 @@ fn a_declaration_line_and_a_directive_follow_the_pointer_alignment() {
         ),
         "SQLITE_API const char *sqlite3_f(void *p, const char *q);\n#define M static T *g\n"
     );
+}
+
+/// A list with a comment at a line break lines up with its bracket, unless its widest line (a trailing
+/// comment included) does not fit, a directive stands in it or an item is a braced body.
+#[test]
+fn a_list_with_a_comment_hugs_its_bracket_only_where_it_fits() {
+    use provider_api::format_testing::Formatting;
+    let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
+    let fit = "void f(int a, // one\n       int b) {}\n";
+    assert_eq!(core_format::testing::assert_formats(&formatting, fit), fit);
+    let wide = "class A {\n  explicit ReadLinesCallback(\n      Callback &&fdLineCb,\n      uint64_t maxLineLength = 0, // No line length limit by default\n      char delimiter = 'x')\n      : f_(1) {}\n};\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, wide),
+        wide
+    );
+    let body = "void h() {\n  CALL(stderr,\n       {\n         // c\n         x();\n       },\n       y);\n}\n";
+    let out = core_format::testing::assert_formats(&formatting, body);
+    assert!(out.contains("\n         // c\n"), "{out}");
+    // (the `{` behind the `)` stands a blank apart and takes a column)
+    let edge = "void test_api(const char *zPattern, /* Run test cases that match this pattern */\n              int *pRc              /* IN/OUT: Error code */\n) {}\n";
+    assert_eq!(
+        core_format::testing::assert_formats(
+            &formatting,
+            "void test_api(\n  const char *zPattern,   /* Run test cases that match this pattern */\n  int *pRc                /* IN/OUT: Error code */\n){}\n"
+        ),
+        edge
+    );
+    // (`decltype(x){}` constructs a value, its braces are no body)
+    let init = "void f() {\n  e = decltype(e){};\n  s = decltype(s){1, 2};\n}\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, init),
+        init
+    );
+    let list =
+        "const S s = {\n#ifdef A\n    .a = {1, 2},\n#else /* B */\n    .b = {3, 4},\n#endif\n};\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, list),
+        list
+    );
+    // (a comment after the `{` of a braced list goes on the line below it)
+    let down = "S s[] = {\n    { /* a */\n      .x = 1,\n    },\n};\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, down),
+        "S s[] = {\n    {\n      /* a */\n      .x = 1,\n    },\n};\n"
+    );
+    // (a long braced list is a table: the fewest columns with the fewest rows, cells padded)
+    let table = "T t = {\n    \"clock_t\",  \"int16_t\",   \"int32_t\", \"int64_t\",   \"int8_t\",\n    \"intptr_t\", \"ptrdiff_t\", \"size_t\",  \"time_t\",    \"uint16_t\",\n    \"uint32_t\", \"uint64_t\",  \"uint8_t\", \"uintptr_t\",\n};\n";
+    let loose = "T t = {\n  \"clock_t\", \"int16_t\", \"int32_t\", \"int64_t\", \"int8_t\", \"intptr_t\", \"ptrdiff_t\", \"size_t\", \"time_t\", \"uint16_t\", \"uint32_t\", \"uint64_t\", \"uint8_t\", \"uintptr_t\",\n};\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, loose),
+        table
+    );
+    let rows = "int d[] = {\n    I, I, I, I, // a\n    I, 62, I, 63, // b\n    52, 53, 54, I, // c\n    60, 61, 62, 0, // d\n    1, 2, 3, 4, // e\n    5, 6, 7, 8, // f\n};\n";
+    assert!(
+        core_format::testing::assert_formats(&formatting, rows).contains("I,  62, I,  63, // b")
+    );
+    // (the last item has a comment and no comma: the table stays)
+    let last = "int d[] = {\n    I, I, I, I, // a\n    I, 62, I, 63, // b\n    52, 53, 54, I, // c\n    60, 61, 62, 0, // d\n    1, 2, 3, 4, // e\n    5, 6, 7 // f\n};\n";
+    assert!(
+        core_format::testing::assert_formats(&formatting, last).contains("I,  62, I,  63, // b")
+    );
+    // (calls as cells, the last one ends the list in a comment)
+    let calls = "int d[] = {\n    F(1), F(1), F(1), F(1), // a\n    F(10), F(1), F(1), F(1), // b\n    F(1), F(1), F(1), F(1), // c\n    F(1), F(1) // d\n};\n";
+    let out = core_format::testing::assert_formats(&formatting, calls);
+    assert!(out.contains("F(1),  F(1), F(1), F(1), // a"), "{out}");
+    // (no trailing comma and no comment: the rows stand under the first, after the bracket)
+    let hugged = "void f() {\n  static constexpr S k[] = {\"aaaaaaaaaaa\",  \"bbbbbbbbbbb\", \"ccccccccccc\",\n                            \"dddddddddddd\", \"eeeeeeeeeee\", \"f\"};\n}\n";
+    let flat = "void f() {\n  static constexpr S k[] = {\"aaaaaaaaaaa\", \"bbbbbbbbbbb\", \"ccccccccccc\", \"dddddddddddd\", \"eeeeeeeeeee\", \"f\"};\n}\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, flat),
+        hugged
+    );
+    // (it breaks after the bracket where that saves more than the line it takes)
+    let broken = "void f() {\n  std::vector<size_t> expectedLocalityIndexByCpu = {\n      0,  2, 4, 6, 8, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28,\n      30, 1, 3, 5, 7, 9,  13, 15, 17, 19, 21, 23, 25, 27, 29, 31};\n}\n";
+    let loose = broken
+        .replace("\n      30", " 30")
+        .replace("\n      0,", " 0,");
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, &loose),
+        broken
+    );
+    // (a block comment in front of an empty statement stays against its `;`)
+    let empty = "void f() {\n  g();\n  /* wait */;\n  while (x)\n    /* spin */;\n}\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, empty),
+        empty
+    );
+}
+
+/// `Name(T x) -> Name<T>;` after a template header is a declaration: the `&` and `->` keep their
+/// declaration spacing.
+#[test]
+fn a_deduction_guide_is_a_declaration() {
+    use provider_api::format_testing::Formatting;
+    let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
+    let guide = "template <typename T> A(const T &x) -> A<T>;\n";
+    assert_eq!(
+        core_format::testing::assert_formats(&formatting, guide),
+        guide
+    );
+}
+
+/// The line behind a trailing comment in a declaration head is a continuation: it is indented.
+#[test]
+fn a_declaration_line_behind_a_comment_is_indented() {
+    use provider_api::format_testing::Formatting;
+    let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
+    let out = core_format::testing::assert_formats(
+        &formatting,
+        "struct S {\n  int //c\n  f(int a);\n};\n",
+    );
+    assert_eq!(out, "struct S {\n  int //c\n      f(int a);\n};\n");
+}
+
+/// A lined-up parameter list with comments that is too wide behind the return type puts the name on
+/// its own line, where it fits.
+#[test]
+fn the_name_moves_down_where_commented_parameters_do_not_fit_behind_the_type() {
+    use provider_api::format_testing::Formatting;
+    let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
+    let src = "SQLITE_API int sqlite3_carray_bind(sqlite3_stmt *pStmt, /* Statement to be bound */\n    int i /* Parameter index */\n);\n";
+    let want = "SQLITE_API int\nsqlite3_carray_bind(sqlite3_stmt *pStmt, /* Statement to be bound */\n                    int i                /* Parameter index */\n);\n";
+    assert_eq!(core_format::testing::assert_formats(&formatting, src), want);
+}
+
+/// A function defined in a macro body is a declaration: its pointer marks follow the alignment.
+#[test]
+fn a_function_in_a_macro_body_has_declarator_marks() {
+    use provider_api::format_testing::Formatting;
+    let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
+    let out =
+        core_format::testing::assert_formats(&formatting, "#define D(x) void f(T* x, int v) {}\n");
+    assert!(out.contains("f(T *x, int v)"), "{out}");
+    // (pasted pieces are one name)
+    let out = core_format::testing::assert_formats(
+        &formatting,
+        "#define D(x) void f_##x(T* x, int v) {}\n",
+    );
+    assert!(out.contains("f_##x(T *x, int v)"), "{out}");
+}
+
+/// The marks of a macro call's group are declarators where an item of the group is a declaration.
+#[test]
+fn the_marks_of_a_group_with_a_declaration_item_are_declarators() {
+    use provider_api::format_testing::Formatting;
+    let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
+    let src = "template(typename Rng)(requires C<Rng>)\nR<Rng> //\nconstexpr RANGES_FUNC(copy)(Rng && rng, O out) {}\n";
+    let out = core_format::testing::assert_formats(&formatting, src);
+    assert!(out.contains("(Rng &&rng, O out)"), "{out}");
+}
+
+/// With tabs for alignment the cells of a column list are lined up with tabs up to the last tab stop,
+/// but a single blank stays a blank.
+#[test]
+fn the_cells_of_a_column_list_are_padded_with_tabs() {
+    use core_config::OptionValue as V;
+    let src = "void f(void)\n{\n\tconst int tcm_sizes[16] = {0, -1, -1, 4, 8, 16, 32, 64, 128, 256, 512, 1024, -1, -1, -1, -1};\n}\n";
+    let out = fmt_opts(
+        vec![
+            ("indent_style", V::String("tab".into())),
+            ("align_with_tabs", V::Bool(true)),
+            ("indent_size", V::Int(8)),
+            ("continuation_indent", V::Int(8)),
+        ],
+        src,
+    );
+    assert_eq!(
+        out,
+        "void f(void) {\n\tconst int tcm_sizes[16] = {0,\t-1,  -1,  4,\t8,  16, 32, 64,\n\t\t\t\t   128, 256, 512, 1024, -1, -1, -1, -1};\n}\n"
+    );
+}
+
+/// A column list with a trailing comma may fill its line to the last column: the `;` behind its `}`
+/// is on a line of its own.
+#[test]
+fn a_column_list_fills_the_line() {
+    use core_config::OptionValue as V;
+    let opts = || {
+        vec![
+            ("indent_style", V::String("tab".into())),
+            ("align_with_tabs", V::Bool(true)),
+            ("indent_size", V::Int(8)),
+            ("continuation_indent", V::Int(8)),
+        ]
+    };
+    let src = "static const char *h[] = {\n\t\"prefetch abort\", \"data abort\", \"address exception\", \"interrupt\",\n\t\"undefined instruction\",\n};\n";
+    let want = "static const char *h[] = {\n\t\"prefetch abort\",\t \"data abort\", \"address exception\", \"interrupt\",\n\t\"undefined instruction\",\n};\n";
+    assert_eq!(fmt_opts(opts(), src), want);
+}
+
+/// The blanks in front of the closers behind a list are not output, so they do not count for its width.
+#[test]
+fn blanks_before_the_closers_behind_a_list_do_not_change_its_columns() {
+    use core_config::OptionValue as V;
+    let opts = || {
+        vec![
+            ("indent_style", V::String("tab".into())),
+            ("align_with_tabs", V::Bool(true)),
+            ("indent_size", V::Int(8)),
+            ("continuation_indent", V::Int(8)),
+        ]
+    };
+    let list = "{ 0, WDT8B, WDT7B, WDT4B, 0, DMINT20, 0, 0, DMINT19, DMINT18, LPC5, SERMUX3, WDT2B, GETHER2, 0, 0, 0, 0, PCIE_BRIDGE, 0, 0, 0, 0, LPC8, DDRECC, 0, WDT6B, WDT5B, 0, 0, 0, DMINT17";
+    let src = |end: &str| format!("static x y[] = {{\n\t{{ 1, 2,\n\t  {list}{end}\n}};\n");
+    assert_eq!(
+        fmt_opts(opts(), &src(" } },")),
+        fmt_opts(opts(), &src("}},"))
+    );
+}
+
+/// A line inside an item counts for the width a list needs to hug its bracket: a comment behind a string of a
+/// concatenation that would pass the line makes the list break after its bracket.
+#[test]
+fn a_comment_inside_a_hugged_item_counts_for_its_width() {
+    let src = "void f(void)\n{\n\t__asm__ __volatile__(\n\t\t\"a\\n\"\n\t\t\"bbbbbbbbbbbb\\n\" /* a comment that is long enough to pass */\n\t\t\"c\\n\"\n\t\t: \"=a\"(r));\n}\n";
+    let out = fmt(src);
+    assert!(out.contains("__volatile__(\n"), "{out}");
+}
+
+/// The mark of an aligned comment's gap has no width, and a closer on a line of its own is no part of the
+/// last line: a list whose widest line fills the line exactly is hugged.
+#[test]
+fn a_hugged_list_may_fill_the_line_with_its_last_comment() {
+    let src = "void sqlite3AuthRead(\n  Parse *pParse, /* The parser context */\n  SrcList *pTabList     /* All table that pExpr might refer to */\n){\n}\n";
+    let out = fmt(src);
+    assert!(
+        out.starts_with("void sqlite3AuthRead(Parse *pParse,"),
+        "{out}"
+    );
+}
+
+/// The lines of a list that lines up with its bracket stand under the column behind the bracket, not behind
+/// a comment that follows the bracket.
+#[test]
+fn a_comment_behind_the_bracket_does_not_move_the_lines_of_the_list() {
+    let src = "void f() {\n  g(h(/*T=*/n, F, F,\n      A,\n      N));\n}\n";
+    assert_eq!(fmt(src), src);
+}
+
+/// A comment in front of a list whose `{` has a comment behind it stays where it is.
+#[test]
+fn a_comment_before_a_list_with_a_comment_behind_its_brace_is_kept() {
+    let out = fmt("int t[] = {\n\t/* A */\n\t{ /* B */\n\t\t.b = 2,\n\t},\n};\n");
+    assert!(out.contains("/* A */") && out.contains("/* B */"), "{out}");
+}
+
+/// A comment in front of a list laid out in columns stays in front of it.
+#[test]
+fn a_comment_before_a_column_list_is_kept() {
+    let out = fmt(
+        "int t[][2] = {\n/* A */\n\t{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},\n};\n",
+    );
+    assert!(out.contains("/* A */"), "{out}");
+}
+
+/// A comment behind a `{` goes below it, and the items stand a continuation indent in, as on a second format.
+#[test]
+fn a_comment_moved_below_a_brace_leaves_a_stable_continuation_indent() {
+    use core_config::OptionValue as V;
+    let opts = || vec![("continuation_indent", V::Int(8))];
+    let src = "int a[3] = { /* c */\n    3, 4, 5};\n";
+    let once = fmt_opts(opts(), src);
+    assert_eq!(fmt_opts(opts(), &once), once, "{once}");
 }

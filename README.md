@@ -97,7 +97,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Ruby | ████████░░ 86% RuboCop | █████████░ 96% RuboCop | Ready |
 | GraphQL | █████████░ 99% Prettier | 37 rules · no reference tool | Ready |
 | Protobuf | █████████░ 99% buf format | ████████░░ 89% buf | Ready |
-| C / C++ | ███████░░░ 72% clang-format | not measured clang-tidy | In progress |
+| C / C++ | ███████░░░ 77% clang-format | not measured clang-tidy | In progress |
 | PHP | ████████░░ 88% PHP-CS-Fixer | ███░░░░░░░ 36% PHPStan | In progress |
 | Gradle | █████████░ 99% stable · ████████░░ 87% agreement · no reference tool | 30 rules · no reference tool | In progress |
 
@@ -141,7 +141,7 @@ Corpora, tool versions and the main differences per language: [docs/languages.md
 | Ruby | 6 | RuboCop | [224](https://docs.rubocop.org/rubocop/cops_layout.html) |
 | GraphQL | 6 | Prettier | [5](https://prettier.io/docs/options) |
 | Protobuf | 4 | buf format | [0](https://buf.build/docs/reference/cli/buf/format/) |
-| C / C++ | 49 | clang-format | [257](https://clang.llvm.org/docs/ClangFormatStyleOptions.html) |
+| C / C++ | 50 | clang-format | [257](https://clang.llvm.org/docs/ClangFormatStyleOptions.html) |
 | PHP | 7 | PHP-CS-Fixer | [390](https://cs.symfony.com/doc/rules/index.html) |
 <!-- /generated -->
 
