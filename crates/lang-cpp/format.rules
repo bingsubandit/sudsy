@@ -45,7 +45,7 @@ kind=Star|Amp|AmpAmp / kind=Lpar&parent=DeclaratorGroup : no
 kind=Keyword / kind=Lpar&parent=DeclaratorGroup : yes
 kind=Ident / kind=Lpar&parent=DeclaratorGroup : keep
 kind=Keyword|Ident / kind=Lpar : no
-kind=Rpar / kind=Lpar&parent=ParenGroup : no
+kind=Rpar / kind=Lpar&parent=ParenGroup|ParameterList : no
 kind=Ident|Greater / kind=Lbrace&parent=Arguments : no
 kind=Ident|Rsqb|Rpar / kind=Lsqb&parent=Arguments : no
 * / kind=Lpar&parent=Arguments : no
@@ -80,6 +80,9 @@ kind=HashHash / * : no
 kind=Colon|Question|Keyword|Equal|String / kind=ColonColon : yes
 kind=ColonColon|Dot|Arrow|DotStar|ArrowStar / * : no
 * / kind=ColonColon|Dot|Arrow|DotStar|ArrowStar : no
+# A bit-field has a blank on both sides of its colon.
+* / kind=Colon&parent=Declarator : yes
+kind=Colon&parent=Declarator / * : yes
 # Colons: labels, access specifiers and `case x:` stay close to their word.
 * / kind=Colon&parent=CaseClause|AccessSpecifier|LabelStatement : no
 kind=Colon&parent=CaseClause|AccessSpecifier|LabelStatement / * : yes

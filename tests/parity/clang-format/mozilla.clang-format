@@ -1,4 +1,5 @@
 BasedOnStyle: Mozilla
 SortIncludes: Never
+SortUsingDeclarations: Never
 FixNamespaceComments: false
 ReflowComments: false

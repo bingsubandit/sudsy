@@ -1,7 +1,7 @@
 # C/C++ format: plan to 85%
 
-Reference: clang-format 20.1.8, 6,639 files. Equal now: 5,158 (77.7%) under the comparison with short bodies as wraps
-(4,668 under the old one: +159 comes from the comparison, none from the formatter). 85% is 5,644 (817 more).
+Reference: clang-format 20.1.8, 6,639 files. Equal now: 5,241 (78.9%) under the comparison with short bodies as wraps
+(4,668 under the old one: +159 comes from the comparison, none from the formatter). 85% is 5,644 (403 more).
 
 The plan has two contents: differences the comparison should not count (A), and the class-a work that takes the rest to
 85% (B). The classification covers every gap record of the 1,812 differing files (73,252 records: 53,916 a, 7,462 b,

@@ -10080,6 +10080,11 @@
               "description": "Blank lines at the start of the file stay.",
               "type": "boolean"
             },
+            "keep_split_declarations": {
+              "default": true,
+              "description": "A declaration head that a preprocessor line splits behind a parenthesized group (`__declspec(dllexport)` `#endif` `int f(...)`) stays as written up to its `{`, as the reference tool leaves a line it cannot parse.",
+              "type": "boolean"
+            },
             "line_width": {
               "default": 80,
               "description": "Preferred maximum line width in columns.",
@@ -10576,6 +10581,11 @@
             "keep_leading_blank_lines": {
               "default": true,
               "description": "Blank lines at the start of the file stay.",
+              "type": "boolean"
+            },
+            "keep_split_declarations": {
+              "default": true,
+              "description": "A declaration head that a preprocessor line splits behind a parenthesized group (`__declspec(dllexport)` `#endif` `int f(...)`) stays as written up to its `{`, as the reference tool leaves a line it cannot parse.",
               "type": "boolean"
             },
             "line_width": {
@@ -14704,6 +14714,11 @@
                     "description": "Blank lines at the start of the file stay.",
                     "type": "boolean"
                   },
+                  "keep_split_declarations": {
+                    "default": true,
+                    "description": "A declaration head that a preprocessor line splits behind a parenthesized group (`__declspec(dllexport)` `#endif` `int f(...)`) stays as written up to its `{`, as the reference tool leaves a line it cannot parse.",
+                    "type": "boolean"
+                  },
                   "line_width": {
                     "default": 80,
                     "description": "Preferred maximum line width in columns.",
@@ -15200,6 +15215,11 @@
                   "keep_leading_blank_lines": {
                     "default": true,
                     "description": "Blank lines at the start of the file stay.",
+                    "type": "boolean"
+                  },
+                  "keep_split_declarations": {
+                    "default": true,
+                    "description": "A declaration head that a preprocessor line splits behind a parenthesized group (`__declspec(dllexport)` `#endif` `int f(...)`) stays as written up to its `{`, as the reference tool leaves a line it cannot parse.",
                     "type": "boolean"
                   },
                   "line_width": {

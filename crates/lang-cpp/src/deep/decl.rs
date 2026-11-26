@@ -216,8 +216,8 @@ impl Cx<'_> {
             q += 1;
         }
         if !builtin {
-            if self.word(q, b, "decltype") && self.open(q + 1, b, k::LPAR) {
-                q = self.skip(q + 1);
+            if self.type_operator(q, b) && self.open(q + 1, b, k::LPAR) {
+                q = self.operand_group(q + 1);
             } else {
                 if !(self.is(q, b, k::IDENT) || self.is(q, b, k::COLON_COLON)) {
                     return None;
@@ -356,6 +356,18 @@ impl Cx<'_> {
 
     /// A function whose parameter list is the group at `lp`: parameters, trailing specifiers,
     /// constructor initializers and the body or `;`.
+    /// `decltype`, `typeof` and `__typeof__` stand for a type.
+    fn type_operator(&self, q: usize, b: usize) -> bool {
+        self.word(q, b, "decltype") || self.word(q, b, "typeof") || self.word(q, b, "__typeof__")
+    }
+
+    /// The `( )` of a type operator at `lp` holds an expression (casts in it are read); the token after it.
+    fn operand_group(&mut self, lp: usize) -> usize {
+        let (lo, hi) = self.inner(lp);
+        self.list(lo, hi);
+        self.skip(lp)
+    }
+
     fn function(&mut self, lp: usize, b: usize) -> Read {
         if self.closed(lp) && !self.crosses_in(lp) {
             self.retag(lp, k::PARAMETER_LIST);
@@ -380,13 +392,26 @@ impl Cx<'_> {
                 q += 1;
             } else if self.is(q, b, k::LSQB) && self.groups.is_open(q) {
                 q = self.skip(q);
+            } else if self.is(q, b, k::IDENT)
+                && (self.text(q).starts_with("__") || crate::structure::macro_name(self.text(q)))
+                && (q + 1 >= b || self.open(q + 1, b, k::LPAR) || self.c[q + 1].kind != k::IDENT)
+            {
+                // (`void f(void) __acquires(lock)`: an attribute macro behind the parameters)
+                q += 1;
+                if self.open(q, b, k::LPAR) {
+                    q = self.skip(q);
+                }
             } else if self.is(q, b, k::ARROW) {
                 q += 1;
                 while q < b
                     && !matches!(self.c[q].kind, k::SEMI | k::EQUAL)
                     && !(self.c[q].kind == k::LBRACE && self.groups.is_open(q))
                 {
-                    q = self.skip(q);
+                    q = if self.type_operator(q, b) && self.open(q + 1, b, k::LPAR) {
+                        self.operand_group(q + 1)
+                    } else {
+                        self.skip(q)
+                    };
                 }
             } else if self.word(q, b, "requires") {
                 q += 1;

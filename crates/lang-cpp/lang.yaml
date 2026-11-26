@@ -201,6 +201,11 @@ options:
         name_break: [FunctionDeclaration]
         name_break_after: [Keyword, Star, Greater]
         hug_unless: [Lambda, Block, InitList]
+  - keep_split_declarations:
+      default: true
+      doc: "A declaration head that a preprocessor line splits behind a parenthesized group (`__declspec(dllexport)` `#endif` `int f(...)`) stays as written up to its `{`, as the reference tool leaves a line it cannot parse."
+      kinds:
+        verbatim_split: [ParenGroup]
   - column_list_min_commas:
       range: [0, 100]
       default: 5

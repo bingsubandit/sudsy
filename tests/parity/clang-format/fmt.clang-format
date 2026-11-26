@@ -1,5 +1,6 @@
 BasedOnStyle: Google
 ColumnLimit: 80
 SortIncludes: Never
+SortUsingDeclarations: Never
 FixNamespaceComments: false
 ReflowComments: false

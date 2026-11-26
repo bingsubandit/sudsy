@@ -64,6 +64,8 @@ pub const BIN_PACK_PARAMETERS: core_config::OptId = core_config::opt::BIN_PACK_P
 #[allow(dead_code)]
 pub const ALIGN_AFTER_OPEN_BRACKET: core_config::OptId = core_config::opt::ALIGN_AFTER_OPEN_BRACKET;
 #[allow(dead_code)]
+pub const KEEP_SPLIT_DECLARATIONS: core_config::OptId = core_config::opt::KEEP_SPLIT_DECLARATIONS;
+#[allow(dead_code)]
 pub const COLUMN_LIST_MIN_COMMAS: core_config::OptId = core_config::opt::COLUMN_LIST_MIN_COMMAS;
 #[allow(dead_code)]
 pub const BREAK_BEFORE_BINARY_OPERATORS: core_config::OptId = core_config::opt::BREAK_BEFORE_BINARY_OPERATORS;
@@ -153,6 +155,7 @@ pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
     ("align_after_open_bracket", "hug_unless", "", &["Lambda", "Block", "InitList"]),
     ("align_after_open_bracket", "name_break", "", &["FunctionDeclaration"]),
     ("align_after_open_bracket", "name_break_after", "", &["Keyword", "Star", "Greater"]),
+    ("keep_split_declarations", "verbatim_split", "", &["ParenGroup"]),
     ("short_enums", "fit", "", &["EnumSpecifier"]),
     ("break_template_declarations", "break_after", "", &["TemplateDeclaration"]),
     ("break_template_declarations", "head", "", &["TemplateParameters"]),
@@ -326,6 +329,10 @@ pub fn align_after_open_bracket(o: &core_config::ResolvedOptions) -> AlignAfterO
     }
 }
 #[allow(dead_code)]
+pub fn keep_split_declarations(o: &core_config::ResolvedOptions) -> bool {
+    o.flag(KEEP_SPLIT_DECLARATIONS, true)
+}
+#[allow(dead_code)]
 pub fn column_list_min_commas(o: &core_config::ResolvedOptions) -> usize {
     o.uint(COLUMN_LIST_MIN_COMMAS, 5)
 }
@@ -459,6 +466,7 @@ pub fn option_schema() -> core_config::OptionSchema {
         core_config::OptionDef::boolean(core_config::opt::BIN_PACK_ARGUMENTS, true, "Call arguments that do not fit on a line are filled; when false they go one per line (or all on one line)."),
         core_config::OptionDef::boolean(core_config::opt::BIN_PACK_PARAMETERS, true, "Function parameters that do not fit on a line are filled; when false they go one per line (or all on one line)."),
         core_config::OptionDef::choice(core_config::opt::ALIGN_AFTER_OPEN_BRACKET, &["align", "dont_align", "always_break"], "align", "Wrapped lines inside brackets line up with the first token after the bracket (`align`), continue with `continuation_indent` (`dont_align`), or always start on a new line after the bracket (`always_break`). Only a list with a comment at a line break is laid out by this option today: its first item goes on the line of the bracket when that line fits; any other list keeps the indentation of the source."),
+        core_config::OptionDef::boolean(core_config::opt::KEEP_SPLIT_DECLARATIONS, true, "A declaration head that a preprocessor line splits behind a parenthesized group (`__declspec(dllexport)` `#endif` `int f(...)`) stays as written up to its `{`, as the reference tool leaves a line it cannot parse."),
         core_config::OptionDef::int(core_config::opt::COLUMN_LIST_MIN_COMMAS, 5, (0, 100), "A braced list with at least this many commas is laid out in columns, every cell padded to the widest of its column; 0 turns the layout off."),
         core_config::OptionDef::choice(core_config::opt::BREAK_BEFORE_BINARY_OPERATORS, &["none", "non_assignment", "all"], "none", "A wrapped binary expression breaks after the operator (`none`), before it except for assignments (`non_assignment`) or before every operator (`all`)."),
         core_config::OptionDef::choice(core_config::opt::BREAK_CONSTRUCTOR_INITIALIZERS, &["before_colon", "before_comma"], "before_colon", "Constructor initializer lists that do not fit start on a new line before the colon (`before_colon`, one initializer per line when needed), or put a comma before each initializer, one per line (`before_comma`)."),

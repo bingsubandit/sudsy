@@ -14,5 +14,6 @@ IndentCaseLabels: false
 BreakStringLiterals: false
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 SortIncludes: Never
+SortUsingDeclarations: Never
 FixNamespaceComments: false
 ReflowComments: false

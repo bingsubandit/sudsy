@@ -1,4 +1,5 @@
 BasedOnStyle: LLVM
 SortIncludes: Never
+SortUsingDeclarations: Never
 FixNamespaceComments: false
 ReflowComments: false

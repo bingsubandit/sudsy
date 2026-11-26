@@ -1370,3 +1370,33 @@ fn a_comment_moved_below_a_brace_leaves_a_stable_continuation_indent() {
     let once = fmt_opts(opts(), src);
     assert_eq!(fmt_opts(opts(), &once), once, "{once}");
 }
+
+/// A bit-field colon, a function type behind a cast and a `decltype` cast are spaced like the reference.
+#[test]
+fn bit_fields_function_type_casts_and_type_operator_casts() {
+    let src = "struct S {\n  unsigned a:3;\n  unsigned b :4;\n};\nint k = (int(*)(int))p;\nauto x = (decltype(a)) b;\n";
+    assert_eq!(
+        fmt(src),
+        "struct S {\n  unsigned a : 3;\n  unsigned b : 4;\n};\nint k = (int (*)(int))p;\nauto x = (decltype(a))b;\n"
+    );
+}
+
+/// A head that a directive splits behind a parenthesized group stays as written up to its `{`.
+#[test]
+fn a_declaration_head_split_by_a_directive_stays_as_written() {
+    let src = "#ifdef W\n__declspec(dllexport)\n#endif\nint  f(\n  int *db, \n  char **p\n){\n  int  rc=1;\n}\n";
+    assert_eq!(
+        fmt(src),
+        "#ifdef W\n__declspec(dllexport)\n#endif\nint  f(\n  int *db, \n  char **p\n){\n  int rc = 1;\n}\n"
+    );
+}
+
+/// An attribute macro behind the parameters belongs to the declaration.
+#[test]
+fn an_attribute_macro_behind_the_parameters_belongs_to_the_declaration() {
+    let src = "void g(int a) __attr_x__(1);\nvoid g2(int a) MY_MACRO {}\nvoid m(int a)  ;\n";
+    assert_eq!(
+        fmt(src),
+        "void g(int a) __attr_x__(1);\nvoid g2(int a) MY_MACRO {}\nvoid m(int a);\n"
+    );
+}

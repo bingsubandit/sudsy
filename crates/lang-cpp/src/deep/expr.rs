@@ -405,6 +405,15 @@ impl Cx<'_> {
                 return;
             }
             match self.c[p].kind {
+                // `int (*)(int)`: a builtin type before a `(*` group is a function type, no call.
+                k::LPAR
+                    if p == at + 1
+                        && self.c[at].kind == k::KEYWORD
+                        && is_builtin(self.text(at))
+                        && self.group_kind(p) == Some(k::DECLARATOR_GROUP) =>
+                {
+                    return;
+                }
                 k::LPAR if self.groups.is_open(p) => {
                     self.args(p, k::ARGUMENTS);
                     self.pos = self.skip(p);

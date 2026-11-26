@@ -567,7 +567,7 @@ pub struct SpaceRules {
     /// operator, not a cast's, when the source has a blank behind them (`(a) & b`).
     binary: [Vec<SyntaxKind>; 5],
     /// The `hug_brace_after` (what a `{` follows when its list hugs: a type name, not `=`).
-    hug: [Vec<SyntaxKind>; 7],
+    hug: [Vec<SyntaxKind>; 8],
 }
 
 /// The kind sets of padded braces: `pad_list` (the nodes whose braces are padded), `pad_open` and
@@ -762,6 +762,7 @@ impl SpaceRules {
                 "comment_continue",
                 "name_break",
                 "name_break_after",
+                "verbatim_split",
             ]
             .map(set),
             index: Index::build(&space),
@@ -1020,6 +1021,12 @@ impl SpaceRules {
         node.text_range()
             .contains_range(b.text_range())
             .then_some(blank)
+    }
+
+    /// Is `kind` a node that, standing before a directive inside a declaration, makes the rest of the
+    /// declaration's head stay as written (`verbatim_split`)?
+    pub fn verbatim_split(&self, kind: SyntaxKind) -> bool {
+        self.hug[7].contains(&kind)
     }
 
     /// Does the language have `name_break` kinds?

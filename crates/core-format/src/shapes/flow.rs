@@ -353,6 +353,9 @@ impl Flow<'_> {
         if let Some(table) = self.table(cx, els, &doc) {
             return table;
         }
+        if let Some(end) = self.split_head(cx, els) {
+            return self.split_doc(cx, els, end, doc);
+        }
         if let Some(moved) = self.moved_down(cx, els) {
             let st = &cx.comment_style;
             let open = last(cx, &els[0]).expect("checked");
@@ -398,6 +401,56 @@ impl Flow<'_> {
             (Some(hug), Some((w, false))) => doc::fits_at_cursor(w, hug, hang),
             _ => hang,
         })
+    }
+
+    /// The end of a declaration head that a directive splits behind a `verbatim_split` node: the
+    /// index of the element that starts the body (a `{`), or `None`.
+    fn split_head(&self, cx: &FormatCtx<'_>, els: &[SyntaxElement]) -> Option<usize> {
+        let rules = self.rules?;
+        let d = els.iter().position(|e| {
+            e.as_node()
+                .is_some_and(|n| cx.grammar.has_tag(n.kind(), "directive"))
+        })?;
+        let before = els.get(d.checked_sub(1)?)?.as_node()?;
+        if !rules.verbatim_split(before.kind()) {
+            return None;
+        }
+        let brace = |e: &SyntaxElement| first(cx, e).is_some_and(|t| t.text() == "{");
+        els.iter().skip(d + 1).position(brace).map(|i| i + d + 1)
+    }
+
+    /// The head `els[..end]` as written, then the body as laid out (the blank before it as written).
+    fn split_doc(
+        &self,
+        cx: &FormatCtx<'_>,
+        els: &[SyntaxElement],
+        end: usize,
+        doc: impl Fn(&SyntaxElement) -> Result<Doc, FormatError>,
+    ) -> Result<Doc, FormatError> {
+        let (Some(from), Some(to), Some(body)) = (
+            first(cx, &els[0]),
+            last(cx, &els[end - 1]),
+            first(cx, &els[end]),
+        ) else {
+            return Err(FormatError::Shape(
+                "a declaration head without tokens".into(),
+            ));
+        };
+        let mut gap = String::new();
+        let mut cur = to.next_token();
+        while let Some(t) = cur.filter(|t| t != &body) {
+            gap.push_str(t.text());
+            cur = t.next_token();
+        }
+        let sep = if gap.contains('\n') {
+            doc::hardline()
+        } else if gap.is_empty() {
+            Doc::Nil
+        } else {
+            doc::text(" ")
+        };
+        let rest = self.seq_with(cx, &els[end..], doc)?;
+        Ok(doc::concat(vec![cx.verbatim_range(&from, &to), sep, rest]))
     }
 
     /// The elements with a part that hangs below what stands before it at every line break of the
