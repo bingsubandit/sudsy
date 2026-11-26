@@ -17,6 +17,7 @@ import parity_lint as pl
 import parity_stability as ps
 import parity_wrap as pw
 import speed
+from test_haiku import ClassifyTests, HaikuTests, ScriptTests, TokenCheckTests  # noqa: F401  the API-credit jobs
 
 YAML = """differences:
   wrong: choice  the tool is wrong

@@ -6,5 +6,4 @@ For each added or grown function, rule file or data table of substance, answer M
 - it repeats code that already exists in a core-* crate or another language (name the file:line or the index row id).
 Answer OK for everything else: grammar productions of a parser (indent markers included), kind sets, option values, glue that only calls shared code, small private helpers without an existing copy.
 Skip generated files, tests and snapshots. A `Lead-approved:` line covers the item it names: OK. A `Language-only:` line covers it only when the fact it states is a property of the language or its tool (a keyword, a kind set, a tool quirk as a value); when it states a decision or an analysis, judge the item as usual.
-Output one line per item and nothing else: `<file>:<name> | MECHANISM or OK | <reason; for MECHANISM the file:line or index row id>`
-Last line: `VERDICT: PASS` or `VERDICT: FAIL (<n> mechanisms)`.
+Output: the structured result only: `findings`, one entry per item with `file`, `function` (the function, rule file, data table or other item), `class` (`MECHANISM` or `OK`) and `reason` (for MECHANISM the file:line or index row id). List every item you judged, OK ones included; one pass, no second look. The verdict is computed from the list: any MECHANISM refuses the change.

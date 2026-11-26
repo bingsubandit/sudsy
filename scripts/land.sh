@@ -64,15 +64,15 @@ rebase() {
   done
 }
 
-# HARD RULE review: when the change adds lines to a language crate, a fresh headless Claude session
-# (scripts/review-hard-rule.md, read-only tools) sorts each added item into OK or
+# HARD RULE review: when the change adds lines to a language crate, a fresh headless Claude call
+# (scripts/review-hard-rule.md, read-only tools, structured output) sorts each added item into OK or
 # MECHANISM; a mechanism refuses the landing. Its output goes to .cargo/tmp/review.txt and, for the
 # lead, to hard-rule-reviews.log in the common git dir. The verdict is kept per content (the commit
 # message and the diff without line numbers): the model is not deterministic on borderline items, so
 # the same change is never reviewed twice and a FAIL cannot be rerun into a PASS; a changed diff or
 # message (a fix, a Language-only or Lead-approved line) gets a new review.
 review() {
-  local d out key log verdicts prev
+  local d out json key log verdicts prev
   d=$(git diff origin/main HEAD -- 'crates/lang-*')
   grep -q '^+[^+]' <<<"$d" || return 0
   key=$({ git log -1 --format=%B HEAD; grep -v -e '^@@' -e '^index ' <<<"$d"; } | sha256sum | cut -c1-16)
@@ -81,9 +81,13 @@ review() {
   prev=$(grep "^$key " "$verdicts" 2>/dev/null | tail -1 | cut -d' ' -f2)
   [ "$prev" = PASS ] && return 0
   [ "$prev" = FAIL ] && { echo "LAND FAILED: HARD RULE review already failed this exact change (.cargo/tmp/review.txt); change the code, or escalate to the lead"; return 1; }
-  out=$({ git log -1 --format=%B HEAD; echo; echo '--- diff'; echo "$d"; } |
-    timeout 600 claude -p --model haiku --allowedTools Read Grep Glob \
-      --append-system-prompt "$(cat scripts/review-hard-rule.md)" "Review the change on stdin." 2>&1)
+  mkdir -p .cargo/tmp
+  # One call on the API credit (scripts/haiku.py: SUDSY_API_KEY, no fallback), structured output; the verdict comes from the list.
+  json=$({ git log -1 --format=%B HEAD; echo; echo '--- diff'; echo "$d"; } |
+    python3 scripts/haiku.py --schema scripts/review-hard-rule.schema.json --system scripts/review-hard-rule.md \
+      --tools "Read Grep Glob" --budget 1 "Review the change on stdin." 2>.cargo/tmp/review.err)
+  [ -n "$json" ] || { echo "LAND FAILED: HARD RULE review call failed: $(cat .cargo/tmp/review.err)"; return 1; }
+  out=$(jq -r '(.findings[] | "\(.file):\(.function) | \(.class) | \(.reason)"), (if ([.findings[] | select(.class == "MECHANISM")] | length) == 0 then "VERDICT: PASS" else "VERDICT: FAIL (\([.findings[] | select(.class == "MECHANISM")] | length) mechanisms)" end)' <<<"$json" 2>&1)
   mkdir -p .cargo/tmp; echo "$out" >.cargo/tmp/review.txt
   { echo "== $(date -u +%FT%TZ) $(git rev-parse --abbrev-ref HEAD) $(git log -1 --format=%s HEAD)"; echo "$out"; } >>"$log"
   if grep -q '^VERDICT: PASS' <<<"$out"; then echo "$key PASS" >>"$verdicts"; return 0; fi

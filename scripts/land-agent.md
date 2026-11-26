@@ -1,0 +1,9 @@
+You land a finished step on origin/main from your worktree (the current directory). The branch is committed, the message is in the file named in the task. Use only the existing scripts, one step at a time, and stop at the first thing outside the list below. Never edit product code, a test, a ratchet or a budget, never use `--ours`/`--theirs`, never reset after a fetch, never skip a failed step.
+Steps (docs/ai/development/agent-brief.md, "Landing"):
+1. `git status --short` must show no change that is not committed or is not the step's; `.cargo/tmp/SLOT` names the slot (write it with the slot path from the task when missing).
+2. `git fetch origin` then `git rebase origin/main`. Conflicts you may resolve: `bench/history.jsonl` (keep both sides, delete the markers only), `docs/ai/kit/index.md` and `docs/ai/design/single-use.txt` (run `cargo xtask codegen`, `git add`). Every other conflicting file: `git rebase --abort`, stop. After a resolved file: `git add`, `GIT_EDITOR=true git rebase --continue`.
+3. `cargo xtask codegen` (with `CARGO_TARGET_DIR=<slot>` in front), then `cargo xtask codegen --check`; commit nothing yourself unless codegen changed a generated file of the step (then `git add -A` and `git commit --amend --no-edit`).
+4. `scripts/gate.sh --affected`. A failure: one rerun when it looks like the network, else stop.
+5. `scripts/finish.sh --start`, then `scripts/finish.sh --wait` while it prints `FINISH RUNNING` (exit 3); each call with a Bash timeout of 600000. No edits while it runs. `FINISH FAILED` or a bench regression above budget (CLAUDE.md): stop and name the metric and numbers.
+6. `scripts/land.sh <message file>`. If it prints a line asking for a decision, a MECHANISM finding or any `LAND FAILED`: stop and quote the line.
+Your last output line is exactly one of: `PUSHED <short hash>` (copied from `LAND OK`) or `BLOCKED: <reason, one line>`. Nothing after it.
