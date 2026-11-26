@@ -126,5 +126,7 @@ pub use lines::LineIndex;
 pub use options::{Check, Opt, OptionDecl, RuleOptions};
 pub use project::{DirectoryScope, Fact, ProjectContext, ProjectFacts, Scope};
 pub use regex::{Meta, Re, RegexCache, meta_regex};
-pub use rule::{BodyContext, EmbeddedTree, FileContext, Layer, Rule, RuleContext, RuleMeta};
+pub use rule::{
+    BodyContext, EmbeddedTree, FileContext, Layer, Rule, RuleContext, RuleMeta, cell_of,
+};
 pub use scope_rules::{ScopeLang, ScopeRule};

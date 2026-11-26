@@ -108,6 +108,7 @@ pub(crate) fn lint_embedded(
         }
         let rules = &rules[..];
         let lines = LineIndex::new(&e.code);
+        let cells = e.cell_ranges();
         let context = FileContext {
             path: file.path(db),
             text: &e.code,
@@ -117,15 +118,15 @@ pub(crate) fn lint_embedded(
             body_kinds: e.provider.body_kinds(),
             hooks: e.provider.rule_hooks(),
             embedded: &[],
+            cells: &cells,
             semantics: None,
         };
-        let host = |r: TextRange| {
-            TextRange::new(
-                e.region.to_host(r.start(), false),
-                e.region.to_host(r.end(), true),
-            )
-        };
+        let host =
+            |r: TextRange| TextRange::new(e.to_host(r.start(), false), e.to_host(r.end(), true));
         for mut d in run_file(&context, rules, false).diagnostics {
+            // A fix that spans cells of a joined program cannot be written back.
+            d.fixes
+                .retain(|f| f.edits.iter().all(|x| e.in_one_cell(x.range)));
             d.range = host(d.range);
             d.related.iter_mut().for_each(|r| r.range = host(r.range));
             for fix in &mut d.fixes {
@@ -600,6 +601,7 @@ mod tests {
             lint: true,
             escaped: None,
             settings: Vec::new(),
+            joined: false,
         };
         let edit = |a: u32, b: u32, t: &str| {
             Edit::replace(core_syntax::TextRange::new(a.into(), b.into()), t)

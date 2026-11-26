@@ -45,6 +45,7 @@ static CELLS: KeyEmbeds = KeyEmbeds {
     escaped: true,
     format: true,
     foreign: Some((CELL_MAGIC, PYTHON_CELL_MAGIC)),
+    joined: true,
 };
 
 pub fn option_schema() -> OptionSchema {

@@ -107,3 +107,13 @@ python:
       useless-object-inheritance: warn
       verbose-raise: warn
       yield-outside-function: warn
+overrides:
+  # ruff's notebook builtins: IPython defines them in every kernel.
+  - files: ["**/*.ipynb"]
+    python:
+      lint:
+        rules:
+          undefined-variable:
+            level: warn
+            options:
+              globals: [__IPYTHON__, display, get_ipython]

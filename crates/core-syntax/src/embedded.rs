@@ -38,6 +38,9 @@ pub struct Embedded {
     /// Option values the host sets for the code's language (`dialect` `ipython`), as the config
     /// would write them.
     pub settings: Vec<(String, String)>,
+    /// The regions of the file that have it are one program run piece by piece (the cells of a
+    /// notebook): their code is parsed and linted as one module, in order.
+    pub joined: bool,
 }
 
 impl Embedded {
@@ -68,6 +71,7 @@ impl Embedded {
             lint: true,
             escaped: None,
             settings: Vec::new(),
+            joined: false,
         }
     }
 

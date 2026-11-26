@@ -89,6 +89,8 @@ def parse(output, spec, rules):
         for chain in walk(data, spec["levels"], []):
             rule = rules[spec["rule_fn"]](chain[-1]) if "rule_fn" in spec else str(ref(chain, spec["rule"]))
             line = (ref(chain, spec["place"]["kind"]), ref(chain, spec["place"]["name"])) if "place" in spec else ref(chain, spec["line"]) if "line" in spec else None
+            if "cell" in spec:  # a notebook finding: the cell number and the row inside the cell (`placed` puts it on the notebook's line)
+                line = ("cell", ref(chain, spec["cell"]), line) if ref(chain, spec["cell"]) else None
             found.append((str(ref(chain, spec["file"])), rule, str(ref(chain, spec["message"]) or ""), line))
     out = []
     for file, rule, message, line in found:
@@ -106,11 +108,39 @@ def placed(line, path):
     """A finding of a tool that names the object, not the line (`parse` `place`: `(kind, name)`): the line of the object's `kind:` in its file (scripts/evidence_kubernetes.py)."""
     if not isinstance(line, tuple):
         return line
+    if line[0] == "cell":
+        return notebook_line(path, line[1], line[2])
     import evidence_kubernetes as k8s
     try:
         return k8s.place(k8s.docs(path.read_text(encoding="utf-8", errors="replace")), *line)
     except OSError:
         return 1
+
+
+_NOTEBOOKS = {}
+
+
+def notebook_line(path, cell, row):
+    """The line of the notebook file that holds row `row` of cell number `cell` (1-based, as ruff counts): the line of the `source` string that starts that row."""
+    import evidence_jupyter_json as nb
+    try:
+        if path not in _NOTEBOOKS:  # one scan per notebook, not per finding
+            text = path.read_text(encoding="utf-8", errors="replace")
+            _NOTEBOOKS[path] = (text, nb.source_spans(text))
+        text, spans = _NOTEBOOKS[path]
+        span = spans[cell - 1]
+    except (OSError, IndexError, ValueError, TypeError):
+        return 1
+    start, end = span[1], span[2]
+    if text[start] != "[":  # one string: every row is on its line
+        return text.count("\n", 0, start) + 1
+    seen = 1  # the row the next string starts
+    for a, b in nb.elements(text, start):
+        breaks = json.loads(text[a:b]).count("\n")
+        if row - seen <= max(breaks - 1, 0):
+            return text.count("\n", 0, a) + 1
+        seen += breaks
+    return text.count("\n", 0, start) + 1
 
 
 def kubeconform_rule(record):

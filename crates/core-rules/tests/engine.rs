@@ -94,6 +94,7 @@ fn run(text: &str, rule: &Probe, collect: bool, bodies: &[SyntaxKind]) -> FileRe
         body_kinds: bodies,
         hooks: provider.rule_hooks(),
         embedded: &[],
+        cells: &[],
         semantics: None,
     };
     let active = [ActiveRule {
@@ -313,6 +314,7 @@ fn a_cluster_runs_its_first_active_rule_and_reports_for_each_member() {
         body_kinds: &[],
         hooks: provider.rule_hooks(),
         embedded: &[],
+        cells: &[],
         semantics: None,
     };
     let member = |meta| Member {

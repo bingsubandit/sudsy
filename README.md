@@ -78,7 +78,7 @@ Each number is measured on real-world code against the default rule set of the r
 | Shell | ████████░░ 86% shfmt | ████████░░ 86% ShellCheck | Ready |
 | Dockerfile | ████████░░ 86% dockerfmt | █████████░ 91% hadolint | Ready |
 | SQL | ████████░░ 85% sqlfluff | █████████░ 90% sqlfluff | Ready |
-| Jupyter Notebook | ████████░░ 88% ruff format | 30 rules · no reference tool | Ready |
+| Jupyter Notebook | ████████░░ 88% ruff format | ████████░░ 86% ruff | Ready |
 | Java | █████████░ 91% google-java-format | ████████░░ 88% Checkstyle | Ready |
 | Batchfile | ██████████ 100% stable · █████████░ 96% agreement · no reference tool | ████████░░ 85% Blinter | Ready |
 | GitHub Actions | █████████░ 99% stable · no reference tool | ████████░░ 87% actionlint | Ready |

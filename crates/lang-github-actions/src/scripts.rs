@@ -72,6 +72,7 @@ static SCRIPTS: KeyEmbeds = KeyEmbeds {
     block_header: "BlockHeader",
     literal: "|",
     escaped: false,
+    joined: false,
     format: false,
     foreign: None,
 };

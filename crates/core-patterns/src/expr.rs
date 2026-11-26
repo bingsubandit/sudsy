@@ -14,7 +14,7 @@ use core_rules::doc_comments::{holder, leading_doc_text};
 use core_rules::paths::key_path;
 use core_rules::tree::TraversalCache;
 use core_rules::{Check, Opt, OptionDecl, Re, RegexCache, RuleHooks, RuleOptions};
-use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode};
+use core_syntax::{Grammar, SyntaxElement, SyntaxKind, SyntaxNode, TextRange};
 use serde::Deserialize;
 use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
@@ -114,6 +114,10 @@ pub struct Spec {
     /// node starts on, on that line or indented deeper than the node's line (the body of a clause
     /// with no brace: `pass  # why`).
     pub commented: Option<bool>,
+    /// The node is the last top-level statement of a cell of a program run piece by piece (a
+    /// notebook): its value is the cell's output. Never true outside cells.
+    #[serde(rename = "cell-output")]
+    pub cell_output: Option<bool>,
     /// The node, looked through parentheses and single-child wrappers, holds this rule.
     pub inner: Option<Box<Spec>>,
 }
@@ -142,6 +146,8 @@ pub struct Ctx<'a> {
     /// reads, also inside `inside`, `has` and `child`.
     /// Only for a rule with a `regex` that has `${NAME}`.
     pub env: Option<RefCell<Captures>>,
+    /// The cells of the file ([`core_rules::FileContext::cells`]).
+    pub cells: &'a [TextRange],
 }
 
 impl Ctx<'_> {
@@ -193,6 +199,7 @@ pub enum Expr {
     Empty,
     Bare,
     Commented,
+    CellOutput,
     Inner(Box<Expr>),
 }
 
@@ -261,6 +268,15 @@ fn is_empty(node: &SyntaxNode, g: &Grammar) -> bool {
         .any(|t| {
             g.has_tag(t.kind(), "comment") && end.is_none_or(|end| t.text_range().start() < end)
         })
+}
+
+/// Is `node` a top-level statement with no statement after it in its cell?
+fn is_cell_output(node: &SyntaxNode, cx: &Ctx<'_>) -> bool {
+    let cells = cx.cells;
+    let cell = |n: &SyntaxNode| core_rules::cell_of(cells, n, cx.grammar);
+    !cells.is_empty()
+        && node.parent().is_some_and(|p| p.parent().is_none())
+        && node.next_sibling().is_none_or(|n| cell(&n) != cell(node))
 }
 
 /// A comment on a later line than the node starts on (one that trails `rescue` is no comment of
@@ -533,6 +549,9 @@ impl Expr {
         if spec.commented == Some(true) {
             all.push(Expr::Commented);
         }
+        if spec.cell_output == Some(true) {
+            all.push(Expr::CellOutput);
+        }
         if let Some(s) = &spec.inner {
             all.push(Expr::Inner(Box::new(sub(s)?)));
         }
@@ -540,7 +559,7 @@ impl Expr {
             0 => Err(
                 "a rule needs at least one of pattern, kind, regex, path, nth, inside, not-inside, \
                       has, not-has, parent, child, key-path, top-level, top-level-in-option, option, in-option, all, any, not, role, operator, fields, \
-                      items, single, same, empty, bare, commented, inner, regex-option, rethrows"
+                      items, single, same, empty, bare, commented, cell-output, inner, regex-option, rethrows"
                     .into(),
             ),
             1 => Ok(all.remove(0)),
@@ -724,6 +743,7 @@ impl Expr {
             Expr::Empty => is_empty(node, cx.grammar).then(Captures::new),
             Expr::Bare => is_bare(node, cx.grammar).then(Captures::new),
             Expr::Commented => is_commented(node, cx).then(Captures::new),
+            Expr::CellOutput => is_cell_output(node, cx).then(Captures::new),
             Expr::Inner(e) => e.matches(&unwrap(node, cx.grammar), cx),
         }
     }
@@ -799,7 +819,8 @@ impl Expr {
             | Expr::Single(_)
             | Expr::Empty
             | Expr::Bare
-            | Expr::Commented => false,
+            | Expr::Commented
+            | Expr::CellOutput => false,
         }
     }
 
@@ -868,6 +889,7 @@ impl Expr {
             | Expr::Empty
             | Expr::Bare
             | Expr::Commented
+            | Expr::CellOutput
             | Expr::Inner(_) => {}
         }
     }

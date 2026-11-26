@@ -101,6 +101,8 @@ pub(crate) fn context<'a>(provider: &'a dyn LanguageProvider, p: &'a Parsed) -> 
         hooks: provider.rule_hooks(),
         embedded: &p.embedded,
         semantics: None,
+        #[cfg(file_cells)]
+        cells: &[],
     }
 }
 

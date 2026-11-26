@@ -321,6 +321,7 @@ fn rule_rewrite(
         body_kinds: provider.body_kinds(),
         hooks: provider.rule_hooks(),
         embedded: &[],
+        cells: &[],
         semantics: None,
     };
     let diagnostics =

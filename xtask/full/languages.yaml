@@ -350,9 +350,6 @@
   parser: ~1.2 # tree-sitter: tree-sitter-grammars/tree-sitter-gn (7 stars, pushed 2026-09)
   format: {tool: "gn format", gain: ~0.1, cost: {est: true}, why: "only tool found; official, native; ships with GN; canonical, no width"}
   lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no maintained tool found"}
-- language: Gradle
-  note: "build.gradle (Groovy DSL); build.gradle.kts is Kotlin; evidence in docs/ai/design/gradle.md"
-  lint: {tool: "none found", gain: ~1.0, cost: {parts: 3, est: true}, why: "no linter reads Gradle semantics offline: npm-groovy-lint (CodeNarc) gives 353 generic Groovy findings in 1,538 files, 59% of them JavaIoPackageAccess; Android lint and Nebula gradle-lint run inside a build; checklist from the Gradle upgrade guides yields 2,000+ hits"}
 - language: Grain
   parser: ~1.2 # tree-sitter: marceline-cramer/tree-sitter-grain (9 stars, pushed 2023-03)
   format: {tool: "grain format", gain: ~0.7, cost: {est: true}, why: "only tool found; official, needs the Grain toolchain; canonical, no width"}
@@ -438,9 +435,6 @@
   parser: ~1.2 # tree-sitter: tree-sitter/tree-sitter-julia (130 stars, pushed 2025-11)
   format: {tool: "JuliaFormatter.jl", gain: ~0.7, cost: {layout: width, parts: 1, est: true}, why: "the formatter of the Julia VS Code extension, 649 stars; Runic.jl 261 stars; Julia runtime, slow start; width-based"}
   lint: {tool: "StaticLint.jl", gain: ~0.7, cost: {index: true, est: true}, why: "only tool found; Julia runtime; scope analysis; some rules need semantics; archived"}
-- language: Jupyter Notebook
-  note: "JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md"
-  lint: {tool: "ruff check on cells", gain: ~0.4, cost: {parts: 4, est: true}, why: "ruff default set: 87.9% covered with cells as one module; needs last-expression, per-cell import, await and builtins rules"}
 - language: Just
   parser: ~1.2 # tree-sitter: casey/tree-sitter-just (198 stars, pushed 2026-03)
   format: {tool: "just --fmt", gain: ~0.1, cost: {est: true}, why: "only tool found; official, Rust; marked unstable; canonical, no width"}

@@ -161,6 +161,7 @@ fn analyze(
         body_kinds: provider.body_kinds(),
         hooks: provider.rule_hooks(),
         embedded: &embedded,
+        cells: &[],
         semantics: data.as_ref().map(|data| SemanticView {
             data,
             summaries: &summaries,

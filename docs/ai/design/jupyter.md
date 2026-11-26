@@ -82,8 +82,8 @@ Exist: `lang-json` parser and formatter; embedded regions (`embed` grammar rows,
 
 Missing:
 - M1: an escape-decoded region (a JSON string array as virtual text with a piecewise offset map; write-back in the file's indent, escape style and list form).
-- M2: a region group (all cells as one Python module with cell boundaries; findings mapped to cells; a fix across cells dropped).
-- M3: cell-aware rules (boundaries visible to rules; Python data: builtins, last expression, final `;`, no docstring, `await` allowed).
+- M2 (built: `Embedded.joined`, [../formatting/jupyter.md](../formatting/jupyter.md#lint)): a region group (all cells as one Python module with cell boundaries; findings mapped to cells; a fix across cells dropped).
+- M3 (built: `FileContext.cells`): cell-aware rules (boundaries visible to rules; Python data: builtins, last expression, final `;`, no docstring, `await` allowed).
 - M4: IPython syntax in the Python parse (`Mode::Ipython`, an escape-command node kind, magic cells as non-Python regions).
 - M5: a regions-only host with a safety check (bytes outside `source` identical, per-cell Python check, cell count and types unchanged).
 - M6: LSP `notebookDocument` sync (cells arrive as text documents; no JSON mapping there).

@@ -30,5 +30,14 @@ Each region is formatted with its own language, then checked with `same_code` (t
 ## Parity
 `scripts/parity.sh format ruff-notebook` against `ruff format` (`tests/parity/ruff-notebook/`, corpus of `tests/conformance/fetch-jupyter-corpus.sh`): cells are compared after normalizing ruff's JSON re-layout (`notebook-cells` in `scripts/parity_format.py`). 861 of 974 files identical (the generated table of [../../languages.md](../../languages.md) has the share); 32 more are rejected by ruff (a cell with a syntax error: ruff refuses the whole file); second-format 0. The 113 differences are Python formatter gaps, listed in `differences.yaml`: f-string replacement fields (35), trailing-comment width (33), a lone multi-line string argument (13), single layouts (26), blank lines (4), comment placement (2).
 
+## Lint
+The code cells are one program (`joined: true` of the `KeyEmbeds` row, `core_syntax::Embedded.joined`): they are parsed as one IPython-dialect Python module and the Python rules run on it; `to_host` maps each finding back into its cell. A cell that does not parse alone is left out of the program (`provider-api/src/embedded.rs` `join`). Rules see the cells through `FileContext.cells` (`core_rules::cell_index`):
+- import blocks (`unsorted-imports`, `misplaced-import` and the blank lines after a block) end with their cell;
+- `cell-output: true` (pattern key) is the last top-level statement of a cell: `no-useless-expression` leaves it (it is the cell's output);
+- top-level `await` is allowed (`yield-outside-function`, `invalid-syntax`);
+- the preset `python/ruff` sets `undefined-variable` `globals: [__IPYTHON__, display, get_ipython]` for `**/*.ipynb` (ruff's notebook builtins).
+
+`scripts/parity.sh coverage ruff-notebook`: 2,920 of 3,390 ruff findings covered (the share is in the generated table of [../../languages.md](../../languages.md)). Misses (`missed:` of `tests/parity/ruff-notebook/differences.yaml`): rules without a Sudsy rule (PLR0402 76, RUF100 46, UP039 16, LOG015 14, PLR1736 12, RUF015 12), ruff's `invalid-syntax` in a broken cell (68: Sudsy leaves the cell out silently), I001 on a one-line `try: import x` (28), F811 across cells (15). Extra findings: about 105 (`unsorted-imports` 36, `syntax-error` 8, `assert-false` 8, `redeclared-variable` 7).
+
 ## Performance
 `bench/inputs/ipynb` (3 notebooks, 115 KB). Numbers: [../performance/numbers.md](../performance/numbers.md).

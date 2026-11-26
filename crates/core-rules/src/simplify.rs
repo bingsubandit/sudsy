@@ -252,7 +252,9 @@ impl Rule for Simplify {
                 return;
             }
             Check::RedundantCast(calls) => redundant_cast(g, node, calls),
-            Check::Jump { jump, inside } => jump_outside(g, node, jump, inside).then(String::new),
+            Check::Jump { jump, inside } => {
+                jump_outside(g, node, jump, inside, !ctx.file.cells.is_empty()).then(String::new)
+            }
             Check::IdenticalOperands(operators) => identical_operands(g, node, ctx, operators),
             Check::RepeatOnce { method, max, with } => {
                 repeat_once(g, node, method, *max, with).then(String::new)
@@ -815,7 +817,9 @@ fn redundant_cast(g: &Grammar, n: &SyntaxNode, calls: &[String]) -> Option<Strin
 
 /// Is a `yield` or `await` outside a function: its nearest scope is a type, a comprehension
 /// (not for `await`) or the file?
-fn suspend_outside(g: &Grammar, n: &SyntaxNode) -> bool {
+/// Is the `yield` or `await` outside a function? `top_await`: the program runs in an event loop
+/// (the cells of a notebook), so an `await` at module level is fine.
+fn suspend_outside(g: &Grammar, n: &SyntaxNode, top_await: bool) -> bool {
     let is_await = g.has_tag(n.kind(), "await");
     for a in n.ancestors().skip(1) {
         let k = a.kind();
@@ -828,12 +832,18 @@ fn suspend_outside(g: &Grammar, n: &SyntaxNode) -> bool {
             return true;
         }
     }
-    true
+    !(is_await && top_await)
 }
 
-fn jump_outside(g: &Grammar, n: &SyntaxNode, jump: &[&str], inside: &[String]) -> bool {
+fn jump_outside(
+    g: &Grammar,
+    n: &SyntaxNode,
+    jump: &[&str],
+    inside: &[String],
+    top_await: bool,
+) -> bool {
     if jump.iter().any(|j| matches!(*j, "yield" | "await")) {
-        return suspend_outside(g, n);
+        return suspend_outside(g, n, top_await);
     }
     let jump = jump.first().copied().unwrap_or_default();
     if g.slot(n, "label").is_some() {

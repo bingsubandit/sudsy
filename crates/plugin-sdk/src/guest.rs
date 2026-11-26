@@ -167,6 +167,7 @@ fn with_file<T>(
         body_kinds: &decoded.body_kinds,
         hooks: &core_rules::DEFAULT_HOOKS,
         embedded: &[],
+        cells: &[],
         semantics: decoded
             .semantics
             .as_ref()

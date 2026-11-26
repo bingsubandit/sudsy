@@ -40,6 +40,7 @@
   popularity: [{name: Jupyter Notebook, gh: 1018851}]
   ids: [jupyter]
   format: [{tool: ruff-notebook, name: ruff format, groups: [real-world]}]
+  lint: [{tool: ruff-notebook, name: ruff}]
 - language: Protobuf
   popularity: [{name: Protobuf, estimate: {value: 0.2, basis: "lead's estimate 2026-11-25, how common the file is in repositories; no survey lists data formats"}}]
   ids: [protobuf]

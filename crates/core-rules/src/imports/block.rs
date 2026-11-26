@@ -14,6 +14,7 @@
 use super::ImportLang;
 use super::entry;
 use super::order::{Compare, compare};
+use crate::FileContext;
 use crate::tree::significant_range;
 use core_syntax::{Grammar, SyntaxNode, TextRange, TextSize};
 use std::cmp::Ordering;
@@ -316,11 +317,10 @@ fn blanks_wrong(next: &SyntaxNode, text: &str, line_end: usize, g: &Grammar) -> 
 /// The range of the block when it is not written the way isort writes it.
 pub fn misplaced<L: ImportLang>(
     run: &[SyntaxNode],
-    text: &str,
-    path: &Path,
-    g: &Grammar,
+    file: &FileContext<'_>,
     style: &Style<'_>,
 ) -> Option<TextRange> {
+    let (text, path, g) = (file.text, file.path, file.grammar);
     let (first, last) = (run.first()?, run.last()?);
     let start = usize::from(significant_range(first, g).start());
     let line_start = text[..start].rfind('\n').map_or(0, |i| i + 1);
@@ -340,7 +340,9 @@ pub fn misplaced<L: ImportLang>(
             let same = actual.eq(lines.iter().map(|l| l.trim_end()));
             let parent = first.parent()?;
             let at_top = parent.parent().is_none();
-            let next = last.next_sibling();
+            // A cell's block ends with the cell, as a file's does.
+            let cell = |n: &SyntaxNode| crate::cell_of(file.cells, n, g);
+            let next = last.next_sibling().filter(|n| cell(n) == cell(last));
             !same || (at_top && next.is_some_and(|nx| blanks_wrong(&nx, text, line_end, g)))
         }
     };

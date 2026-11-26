@@ -7,7 +7,8 @@
 
 use crate::provider::{FilePattern, LanguageProvider, SourceFile};
 use core_rules::EmbeddedTree;
-use core_syntax::{Embedded, SyntaxNode};
+use core_syntax::embedded::size;
+use core_syntax::{Embedded, SyntaxNode, TextRange, TextSize};
 use std::path::Path;
 
 /// A region of the host file and its parse (offsets from the start of the region).
@@ -17,6 +18,39 @@ pub struct EmbeddedParse<'a> {
     pub root: SyntaxNode,
     /// The text that was parsed: the region with the host's parts blanked.
     pub code: String,
+    /// The regions of a joined program (`Embedded::joined`: a notebook's cells), each with its
+    /// range in `code`; `region` is then the first with the range of all. Empty for one region.
+    pub cells: Vec<(TextRange, Embedded)>,
+}
+
+impl EmbeddedParse<'_> {
+    /// The host offset of `at`, an offset in `code`; `end` for the end of a range.
+    pub fn to_host(&self, at: TextSize, end: bool) -> TextSize {
+        match self.cell_at(at, end) {
+            Some((range, region)) => region.to_host(at.min(range.end()) - range.start(), end),
+            None => self.region.to_host(at, end),
+        }
+    }
+
+    /// The cell that holds `at` (an end offset belongs to the cell it ends).
+    fn cell_at(&self, at: TextSize, end: bool) -> Option<&(TextRange, Embedded)> {
+        let i =
+            (self.cells).partition_point(|(r, _)| if end { r.end() < at } else { r.end() <= at });
+        self.cells.get(i.min(self.cells.len().saturating_sub(1)))
+    }
+
+    /// Whether a code range lies in one cell (an edit across cells cannot be written back).
+    pub fn in_one_cell(&self, range: TextRange) -> bool {
+        self.cells.is_empty()
+            || self
+                .cell_at(range.start(), false)
+                .is_some_and(|(r, _)| range.end() <= r.end())
+    }
+
+    /// The ranges of the cells in `code` (empty for one region).
+    pub fn cell_ranges(&self) -> Vec<TextRange> {
+        self.cells.iter().map(|(r, _)| *r).collect()
+    }
 }
 
 /// A provider and the dialect its matcher selects.
@@ -71,7 +105,8 @@ pub fn trees(parses: &[EmbeddedParse<'_>]) -> Vec<EmbeddedTree> {
 }
 
 /// Parses what `host` finds in `root`. A region whose language nobody handles or whose code has
-/// syntax errors is left out: it stays as written.
+/// syntax errors is left out: it stays as written. Joined regions of one language are parsed as
+/// one program (`join`).
 pub fn parse_regions<'a>(
     host: &dyn LanguageProvider,
     root: &SyntaxNode,
@@ -79,6 +114,7 @@ pub fn parse_regions<'a>(
     resolve: &dyn Fn(&str) -> Resolved<'a>,
 ) -> Vec<EmbeddedParse<'a>> {
     let mut out = Vec::new();
+    let mut joined: Vec<(&'a dyn LanguageProvider, Option<String>, Vec<Embedded>)> = Vec::new();
     for region in host.embedded(root, text) {
         // No language: the host reports the text for its own rules.
         let Some((provider, dialect)) = Some(&region.language)
@@ -87,19 +123,121 @@ pub fn parse_regions<'a>(
         else {
             continue;
         };
+        let dialect = set_dialect(&region).or(dialect);
+        if region.joined {
+            match joined
+                .iter_mut()
+                .find(|(p, ..)| p.language() == provider.language())
+            {
+                Some((.., cells)) => cells.push(region),
+                None => joined.push((provider, dialect, vec![region])),
+            }
+            continue;
+        }
         let code = region.code(text);
-        let mut file = SourceFile::new(format!("embedded.{}", region.language), 1, code.clone());
-        file.language_version = dialect;
-        if let Ok(parsed) = crate::guard::parse(provider, &file)
-            && parsed.errors.is_empty()
-        {
+        if let Some(root) = parse_clean(provider, &region.language, dialect, &code) {
             out.push(EmbeddedParse {
+                region,
+                provider,
+                root,
+                code,
+                cells: Vec::new(),
+            });
+        }
+    }
+    for (provider, dialect, cells) in joined {
+        out.extend(join(provider, dialect, cells, text));
+    }
+    out
+}
+
+/// The dialect a host sets for its code (`dialect: ipython` of a notebook's cells).
+fn set_dialect(region: &Embedded) -> Option<String> {
+    (region.settings.iter())
+        .find(|(k, _)| k == "dialect")
+        .map(|(_, v)| v.clone())
+}
+
+/// The tree of `code` when it parses without errors.
+fn parse_clean(
+    provider: &dyn LanguageProvider,
+    language: &str,
+    dialect: Option<String>,
+    code: &str,
+) -> Option<SyntaxNode> {
+    let mut file = SourceFile::new(format!("embedded.{language}"), 1, code.to_string());
+    file.language_version = dialect;
+    crate::guard::parse(provider, &file)
+        .ok()
+        .filter(|p| p.errors.is_empty())
+        .map(|p| p.tree)
+}
+
+/// The cells of one program as one parse: their code in order, each ending with a line break
+/// (as a notebook kernel runs them). A cell with a syntax error is left out, the others are
+/// parsed again without it, so one broken cell does not hide the rest.
+fn join<'a>(
+    provider: &'a dyn LanguageProvider,
+    dialect: Option<String>,
+    mut cells: Vec<Embedded>,
+    text: &str,
+) -> Option<EmbeddedParse<'a>> {
+    let mut codes: Vec<String> = cells.iter().map(|c| c.code(text)).collect();
+    loop {
+        if cells.is_empty() {
+            return None;
+        }
+        let (mut code, mut ranges) = (String::new(), Vec::with_capacity(cells.len()));
+        for c in &codes {
+            let start = size(code.len());
+            code.push_str(c);
+            if !code.ends_with('\n') {
+                code.push('\n');
+            }
+            ranges.push(TextRange::new(start, size(code.len())));
+        }
+        let mut file = SourceFile::new(format!("embedded.{}", cells[0].language), 1, code.clone());
+        file.language_version = dialect.clone();
+        let parsed = crate::guard::parse(provider, &file).ok()?;
+        if parsed.errors.is_empty() {
+            let mut region = cells[0].clone();
+            region.range = region.range.cover(cells[cells.len() - 1].range);
+            return Some(EmbeddedParse {
                 region,
                 provider,
                 root: parsed.tree,
                 code,
+                cells: ranges.into_iter().zip(cells).collect(),
             });
         }
+        // The cells that do not parse on their own (an unclosed bracket would take the next
+        // cells with it); else the cells where an error starts (one at the end belongs to the
+        // last cell).
+        let parses = |c: &String| {
+            let mut file = SourceFile::new(file.id.clone(), 1, c.clone());
+            file.language_version = dialect.clone();
+            crate::guard::parse(provider, &file).is_ok_and(|p| p.errors.is_empty())
+        };
+        let mut broken: Vec<usize> = (0..codes.len()).filter(|&i| !parses(&codes[i])).collect();
+        if broken.is_empty() {
+            broken = (parsed.errors.iter())
+                .map(|e| {
+                    let at = TextSize::from(e.start);
+                    ranges
+                        .partition_point(|r| r.end() <= at)
+                        .min(ranges.len() - 1)
+                })
+                .collect();
+        }
+        let mut i = 0;
+        cells.retain(|_| {
+            i += 1;
+            !broken.contains(&(i - 1))
+        });
+        let mut i = 0;
+        codes.retain(|_| {
+            i += 1;
+            !broken.contains(&(i - 1))
+        });
     }
-    out
 }

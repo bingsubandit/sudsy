@@ -708,8 +708,12 @@ impl Rule for ScopeRule {
         {
             let cx = Cx::new(&m, file, lang);
             let template = self.template("'{name}' is not defined");
+            // `globals`: names the environment defines (undefined-variable's option).
+            let extra = ctx.options.list("globals");
             for (range, name) in ordered::findings(&cx, file).get(which) {
-                ctx.report(*range, template.replace("{name}", name));
+                if !extra.contains(&name.as_ref()) {
+                    ctx.report(*range, template.replace("{name}", name));
+                }
             }
             return;
         }

@@ -134,6 +134,20 @@ pub struct FileContext<'a> {
     /// The parsed code of other languages in the file, for rules that read it (a Dockerfile's
     /// `RUN` as shell).
     pub embedded: &'a [EmbeddedTree],
+    /// The cells of a program run piece by piece (a notebook's code cells), in order; empty for a
+    /// plain file. Rules with per-cell semantics read them: an import block ends at a cell's end,
+    /// a cell's last expression is its output, top-level `await` runs in the kernel's loop.
+    pub cells: &'a [TextRange],
+}
+
+/// The number of the cell of [`FileContext::cells`] that holds the code of `node` (its leading
+/// comments may belong to the cell before); 0 for a plain file.
+pub fn cell_of(cells: &[TextRange], node: &SyntaxNode, g: &Grammar) -> usize {
+    if cells.is_empty() {
+        return 0;
+    }
+    let at = crate::tree::code_start(node, g);
+    cells.partition_point(|c| c.end() <= at)
 }
 
 /// The formatter's side of a file for [`Rule::formats`] rules: its options.

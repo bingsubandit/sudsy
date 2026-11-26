@@ -39,6 +39,7 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 Not ranked: INI, EditorConfig and `.gitignore` have no reference tool. Measured by a re-run on this host: JS, CSS, HTML, Vue, Svelte, Java, Python, Shell, Protobuf, Terraform, TOML, SQL, Kotlin, PHP, JSON, YAML, XML, PowerShell, Markdown and the lint shares of JSON, YAML, GraphQL, StyleCop, PSScriptAnalyzer, SCSS and Less; recorded and not re-run: the C# format share (the corpus differential needs the CSharpier baseline) and the other lint shares.
 
 ## Small tasks
+- Delete `tools/perf-bench/build.rs` and the `file_cells` cfg once the bench baseline has `FileContext.cells`.
 - Gradle: the 39 corpus files that do not parse (templates, a string-named method call over several lines, `,` after a command); binary-operator, quote and dependency-parenthesis rows once a second Groovy-like language needs them; lint gaps (named in [formatting/gradle.md](formatting/gradle.md#lint)); the `frame-indent` and `trim-bracket-edges` format-rows flags have one user (PowerShell's frames could move onto them).
 - Kubernetes lint leftovers: key-shape check from the OpenAPI table (K4), kube-linter `no-anti-affinity` and `mismatching-selector`, `latest-tag` deciding half 79.1%; the parity runs are `scripts/parity.sh coverage kubeconform|kube-linter`.
 - Makefile parser cost: the grammar fork has 1,570 states (upstream 1,383); mk.parse +9.5% and through it mk.format +12.3% instructions after the mbake step; reduce the states (hidden rules, shared prefixes) and measure.

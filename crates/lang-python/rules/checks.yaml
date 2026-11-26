@@ -25,8 +25,8 @@ family: scope
 params: { check: undefined-variable }
 message: "undefined name `{name}`"
 description: >-
-  Reports a name that no scope around the read binds and that is not a builtin. A read in a `try`
-  that handles `NameError` is not reported.
+  Reports a name that no scope around the read binds, that is not a builtin and that is not in
+  the option `globals`. A read in a `try` that handles `NameError` is not reported.
 why: >-
   An undefined name fails with a NameError when the line runs, so the error shows only on the path
   that reaches it. A typo in a name is the usual cause.
@@ -35,6 +35,8 @@ why: >-
 example: "print(x)"
 severity: warn
 category: correctness
+options:
+  - { name: globals, type: list, default: [], description: "Names the environment defines (ruff's `builtins`), such as IPython's `display` in a notebook." }
 ---
 id: unused-variable
 family: scope

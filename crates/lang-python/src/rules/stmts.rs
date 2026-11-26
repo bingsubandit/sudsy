@@ -465,7 +465,7 @@ pub(super) fn future_feature_not_defined(c: &Check, n: &SyntaxNode, ctx: &mut Ru
 
 /// The syntax errors CPython finds when it compiles a file the grammar accepts: a duplicate
 /// parameter, `nonlocal` at module level, a repeated keyword argument, `await` in a function that
-/// is not async. The message is the error's.
+/// is not async (at module level only outside a notebook's cells). The message is the error's.
 pub(super) fn invalid_syntax(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_>) {
     match n.kind() {
         k::PARAMETERS => {
@@ -523,7 +523,7 @@ pub(super) fn invalid_syntax(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
                 .ancestors()
                 .skip(1)
                 .find(|a| matches!(a.kind(), k::STMT_FUNCTION_DEF | k::EXPR_LAMBDA))
-                .is_none_or(|f| {
+                .map_or(ctx.file.cells.is_empty(), |f| {
                     f.kind() == k::EXPR_LAMBDA
                         || !super::tree::tokens(&f).any(|t| t.kind() == k::ASYNC)
                 });

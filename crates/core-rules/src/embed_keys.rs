@@ -54,6 +54,8 @@ pub struct KeyEmbeds {
     /// Text that is not code of the row's language: a line that matches the first regex and not
     /// the second (a notebook's `%%bash` cell magic).
     pub foreign: Option<(&'static str, &'static str)>,
+    /// The regions are one program run piece by piece (a notebook's cells): linted as one module.
+    pub joined: bool,
 }
 
 struct Reader<'a> {
@@ -267,6 +269,7 @@ fn search(
                 region(spec, &r, value, language, &carve)
             };
             out.extend(found.map(|mut e| {
+                e.joined = spec.joined;
                 e.settings = (row.settings.iter())
                     .map(|(k, v)| (k.to_string(), v.to_string()))
                     .collect();

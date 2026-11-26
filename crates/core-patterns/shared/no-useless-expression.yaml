@@ -7,7 +7,8 @@ description: >-
   z;`). Calls, assignments, `delete` and `void` are not reported; a directive such as `"use strict"`
   is, as it is a string. What counts as pure is the `#pure` tag of the language's grammar: Python's
   table has names, literals, member accesses and list, set and dict displays, so `x + 1`, `x == 2`
-  and `-x` are not reported there. Off by default.
+  and `-x` are not reported there. The last top-level statement of a notebook cell is not
+  reported: its value is the cell's output. Off by default.
 why: >-
   The statement is evaluated and dropped, so it does nothing. It is typically a line that was meant
   to be a call (a missing `()`), a comparison written where an assignment was meant, or what is left
@@ -19,6 +20,7 @@ severity: off
 category: suspicious
 rule:
   role: expression-statement
+  not: { cell-output: true }
   fields:
     expression:
       any:

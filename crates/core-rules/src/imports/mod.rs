@@ -191,8 +191,18 @@ impl<L: ImportLang> Rule for Imports<L> {
             return;
         }
         let run = entry::run(&first, g);
+        // Each cell of a program run piece by piece holds its own blocks.
+        let cell = |n: &SyntaxNode| crate::cell_of(ctx.file.cells, n, g);
+        for run in run.chunk_by(|a, b| cell(a) == cell(b)) {
+            self.report_run(run, ctx);
+        }
+    }
+}
+
+impl<L: ImportLang> Imports<L> {
+    fn report_run(&self, run: &[SyntaxNode], ctx: &mut RuleContext<'_>) {
         match self.report {
-            Report::Misplaced => self.misplaced(&run, ctx),
+            Report::Misplaced => self.misplaced(run, ctx),
             Report::OutsideScope => {}
             Report::Block => {
                 let sections: Vec<String> = match ctx.options.list("sections") {
@@ -204,7 +214,7 @@ impl<L: ImportLang> Rule for Imports<L> {
                     force_sort_within_sections: ctx.options.bool("force_sort_within_sections"),
                     width: usize::try_from(ctx.options.int("line_width")).unwrap_or(88),
                 };
-                let range = block::misplaced::<L>(&run, ctx.file.text, ctx.file.path, g, &style);
+                let range = block::misplaced::<L>(run, ctx.file, &style);
                 if let Some(range) = range {
                     ctx.report(range, self.message.clone());
                 }

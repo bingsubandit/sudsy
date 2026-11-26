@@ -16,3 +16,72 @@ second-format:
 unclassified: 0
 refused:
   real-world: 0
+target: 86.1
+measured: {covered: 2920, total: 3390, main: '466e75c4'}  # of the target; `main`: the origin/main commit the measured tree is based on
+missed:  # rule -> findings that count as missing, layout left after `sudsy format` included; covered + these = total (COVERAGE_WRITE=1 scripts/parity.sh coverage <tool> writes both)
+  PLR0402: 76
+  invalid-syntax: 68
+  RUF100: 46
+  I001: 28
+  UP039: 16
+  F811: 15
+  LOG015: 14
+  PLR1736: 12
+  RUF015: 12
+  RUF010: 10
+  RUF046: 10
+  UP008: 10
+  RUF007: 9
+  C414: 8
+  EXE001: 7
+  SIM905: 7
+  PLC0206: 6
+  PLW0127: 6
+  UP030: 6
+  ASYNC230: 5
+  EXE005: 5
+  F821: 5
+  PERF102: 5
+  PLR1711: 5
+  RUF013: 5
+  UP020: 5
+  C402: 4
+  B005: 3
+  C401: 3
+  DTZ003: 3
+  F401: 3
+  PIE808: 3
+  PLW0128: 3
+  UP034: 3
+  ASYNC221: 2
+  C403: 2
+  C404: 2
+  C417: 2
+  FURB122: 2
+  FURB188: 2
+  PLC0208: 2
+  RUF017: 2
+  SIM113: 2
+  SIM401: 2
+  UP033: 2
+  UP041: 2
+  B018: 1
+  B020: 1
+  C400: 1
+  C405: 1
+  C413: 1
+  C419: 1
+  F404: 1
+  FURB105: 1
+  FURB157: 1
+  PLW0211: 1
+  S112: 1
+  SIM114: 1
+  SIM118: 1
+  SIM222: 1
+  SIM223: 1
+  UP003: 1
+  UP006: 1
+  UP010: 1
+  UP031: 1
+  UP032: 1

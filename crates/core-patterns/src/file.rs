@@ -1532,6 +1532,7 @@ impl Rule for PatternRule {
             budget: Cell::new(STEP_BUDGET),
             ranges,
             env: body.templated.then(Default::default),
+            cells: file.cells,
         };
         let found = body.expr.matches(node, &cx);
         if body.metered && cx.budget.get() == 0 {
