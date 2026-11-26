@@ -31,6 +31,7 @@ Corpus of each row ([docs/languages.md](languages.md) has the sources):
 - C#: dotnet/runtime CoreLib, without 14 files Sudsy cannot parse
 - C# (.editorconfig): dotnet/runtime CoreLib, without 14 files Sudsy cannot parse
 - PowerShell: 211 files, without 1 files Sudsy cannot parse and 210 files
+- Makefile: the Makefile corpus
 - TOML: the toml-test valid files and the TOML fixtures of the repository
 - XML: the XML fixtures and the project files of dotnet/aspnetcore, without 1 files Sudsy cannot parse
 - Go: the Go corpus (Go, Kubernetes, Hugo, Prometheus)
@@ -42,7 +43,6 @@ Corpus of each row ([docs/languages.md](languages.md) has the sources):
 - Angular: 453 files, without 7 files Sudsy cannot parse
 - Ruby: the Ruby corpus
 - Protobuf: the Protobuf corpus and the Protobuf corpus, one module per project
-- Makefile: the Makefile corpus
 - PHP: the PHP corpus and 10390 files, without 1 files Sudsy cannot parse
 <!-- /generated -->
 

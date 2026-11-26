@@ -289,6 +289,21 @@ The status and the numbers of every language are in the generated table "Languag
   - The module knows types of scalar variables. Sudsy has no types, so some null-comparison findings differ.
 - **Reproduce (needs a source checkout):** `scripts/parity.sh format invoke-formatter`, `scripts/parity.sh coverage psscriptanalyzer`. Needs PowerShell.
 
+## Makefile
+
+<!-- generated:measured-makefile -->
+- **Measured:** Ready.
+  - Format, mbake: 88% of the files identical (888 of 1,007 files).
+  - Lint, checkmake: 100% of its findings also reported (349 of 349 findings).
+<!-- /generated -->
+
+- The formatter normalizes assignment spacing and blank lines. No reference formatter exists: the format column is the stable share.
+- **Linter:** checkmake.
+- **Presets:** `makefile/checkmake`.
+- **Options:** `space_around_assignment`, `space_before_colon`, `max_blank_lines` (default 2).
+- **Differences:** `A+=b`, `A?=b` and `A!=b` without a blank before the operator are left as written.
+- **Reproduce (needs a source checkout):** `scripts/parity.sh coverage checkmake` (lint), `scripts/parity.sh stability makefile` (stable).
+
 ## TOML
 
 <!-- generated:measured-toml -->
@@ -459,21 +474,6 @@ The status and the numbers of every language are in the generated table "Languag
 - Layout by `format.rules` (indent, blanks, braces, keyword and operator spacing, comments); source line breaks and `*`/`&` spacing stay as written. There are no lint rules.
 - **Parser:** a lexer with a token-level structure. There is no full grammar.
 - **Not done:** a clang-format compatible layout. The format number ignores line wrapping (where a statement, a list or an enum breaks, and the indent of the continuation lines); the rest is compared exactly, and the byte-identical share is printed next to it.
-
-## Makefile
-
-<!-- generated:measured-makefile -->
-- **Measured:** In progress.
-  - Format, stable: 77% of the files format stably, by the rules of the formatter (796 of 1,021 files).
-  - Lint, checkmake: 100% of its findings also reported (349 of 349 findings).
-<!-- /generated -->
-
-- The formatter normalizes assignment spacing and blank lines. No reference formatter exists: the format column is the stable share.
-- **Linter:** checkmake.
-- **Presets:** `makefile/checkmake`.
-- **Options:** `space_around_assignment`, `space_before_colon`, `max_blank_lines` (default 2).
-- **Differences:** `A+=b`, `A?=b` and `A!=b` without a blank before the operator are left as written.
-- **Reproduce (needs a source checkout):** `scripts/parity.sh coverage checkmake` (lint), `scripts/parity.sh stability makefile` (stable).
 
 ## PHP
 

@@ -25,32 +25,18 @@ Verdict: mbake is the only maintained, used formatter (two orders of magnitude o
 Split: the 26 projects are shuffled with seed 20261127 (`random.Random`); the first 13 decide, the other 13 are held out. Deciding: FFmpeg, cockroach, containerd, etcd, helm, kubernetes, micropython, node, numpy, postgres, prometheus, redis, u-boot. Held out: buildroot, cpython, docker-cli, git, golangci-lint, grafana, lua, neovim, ocaml, openwrt, sphinx, terraform, vim.
 
 ## Against mbake
-mbake 1.5.0, no config, run on stdin with its own home folder. 795 files are accepted by both tools (Sudsy refuses 225, mbake 2). Files with equal output:
+mbake 1.5.0, no config, run on stdin (`scripts/parity.sh format mbake`: the `makefile/mbake` preset is the Sudsy side). Of the 1,021 files Sudsy reads 1,008 (the 12 NMake files of vim and `Make_ami.mak`, which is not make syntax, stay out) and mbake 1,019; 1,007 are in both. Files with equal output: 888 (88.2%); `second-format` 0, refused 0. The 119 differing files by cause (each file under its first cause of this order; names in `tests/parity/mbake/differences.yaml`):
 
-| Files | Held out (278) | All (795) |
-|---|---|---|
-| equal | 167 (60.1%) | 512 (64.4%) |
-| equal when indentation is left out | 208 (74.8%) | 639 (80.4%) |
-| and blanks inside lines and blank lines left out | 278 (100%) | 793 (99.7%) |
-| left unchanged by Sudsy / by mbake | 84 / 96 | 354 / 420 |
+| Cause | Files |
+|---|---|
+| `shell-indent`: mbake re-indents the lines of a shell block in a recipe (two spaces to a tab, nesting by depth) | 59 |
+| `blank-lines`: a leading blank line of a file, a run of blank lines after the empty last line of a continuation, an empty `define` body line | 19 |
+| `inner-blanks`: blanks inside a line that mbake keeps or adds in ways of its own | 18 |
+| `conditional-indent`: mbake moves an indented conditional keyword to column 1 | 10 |
+| `subst-ref-colon`: mbake writes a blank after the colon of `$(F:$(SRC)/%=%)` | 8 |
+| `continued-indent`: continued lines that mbake leaves where Sudsy sets them by the second line | 5 |
 
-Causes of difference (all 795 files; `[indent]` and `[blank]` are the two classes above):
-
-| Cause | Occurrences | Files |
-|---|---|---|
-| `[indent]` conditional body or comment: Sudsy indents, mbake keeps | 3,461 | 184 |
-| `[indent]` continued line | 1,428 | 67 |
-| `[indent]` other | 665 | 31 |
-| `[blank]` blanks around an assignment operator | 579 | 81 |
-| `[blank]` blank lines added or removed | 305 | 92 |
-| `[blank]` blank before the backslash | 219 | 22 |
-| `[indent]` recipe line (tab) | 74 | 12 |
-| `[blank]` blanks inside a line | 35 | 15 |
-| `[indent]` mbake indents, Sudsy does not | 10 | 7 |
-| `[blank]` trailing blanks | 5 | 3 |
-| lines added, removed or rewritten | 4 | 2 |
-
-(11 causes occur; the 15 largest are all of them.) 99.7% of the files differ only by indentation or by blanks. Indentation is the difference: Sudsy indents the body of a conditional by 2 spaces per level, mbake keeps what is written, and so does most of the corpus (below).
+`subst-ref-colon` is a candidate for `tool-wrong`, with an executed proof: for `SRC_PATH = /a` and `INSTALL_FILES = @$(foreach F,$(2),printf '%s' "$(F:$(SRC_PATH)/%=%)" "$(3)"; )`, `make` prints `xy` for `$(call INSTALL_FILES,x,/a/x,y)` before mbake and `/a/xy` after it, which writes `$(F: $(SRC_PATH)/%=%)`. mbake leaves a recipe line that starts inside a quote as written, so a change of meaning inside a quoted string has no proof. The lead decides the `intentional` entry.
 
 ## Decision table
 Variants are counted per project on the deciding half (one vote per project; a project votes its most frequent variant). Agreement is the share of held-out occurrences that already have the form Sudsy writes. "Rule" is the result of section 3 of the no-reference-tool page: default at 80% of the projects, default and option at 60 to 80%, as written below 60%.
@@ -63,10 +49,10 @@ Variants are counted per project on the deciding half (one vote per project; a p
 | blank after the colon of a rule | 13 one | 100%: default | one | yes | 2,726 of 2,820 (96.7%) |
 | blanks between the words of a rule line | 13 one | 100%: default | one | yes | 2,865 of 2,868 (99.9%) |
 | recipe line indent | 13 one tab | 100%: default | one tab | yes | 4,180 of 4,190 (99.8%) |
-| conditional body indent (outside a recipe) | 8 none, 3 tab per level (11 projects) | 73%: default none and option | 2 spaces per level | no | 550 of 3,594 (15.3%) |
+| conditional body indent (outside a recipe) | 8 none, 3 tab per level (11 projects) | 73%: default none and option | as written; `conditional_body_indent: indent` indents a level | yes | 3,044 of 3,594 (84.7%) as written |
 | conditional in a recipe | 12 column 0 | 100%: default | column 0 | yes | 515 of 547 (94.1%) |
 | rule or directive continuation: blank before the backslash | 7 one | 100%: default | one | yes | 1,133 of 1,142 (99.2%) |
-| rule or directive continuation: indent | 3 tab, 1 four, 1 two, 1 eight | below 60%: as written | 2 spaces | no | 46 of 1,142 (4.0%) |
+| rule or directive continuation: indent | 3 tab, 1 four, 1 two, 1 eight | below 60%: as written | as written; `continued_line_indent: indent` writes a tab | yes | as written |
 | assignment continuation: blank before the backslash | 7 one, 1 several | 88%: default | as written | not decided | 4,404 of 4,474 are one blank |
 | assignment continuation: indent | 3 tab, 2 four, 2 tabs and spaces, 1 eighteen | below 60%: as written | as written | not decided | |
 | comment: blank after `#` | 13 one | 100%: default | as written | not decided | 4,882 of 5,208 (93.7%) |
@@ -76,30 +62,13 @@ Variants are counted per project on the deciding half (one vote per project; a p
 
 `agreement` on the held-out half: 28,114 of 34,827 occurrences (80.7%) pooled over the decided rows; the mean of the rows' project means is 82.4%. Three rows are below 80% on their own and one of them is above the pooled number only because of the others: conditional body indent (15.3%), continuation indent of a rule or directive (4.0%) and the blanks around an assignment operator (66.0%; the other form is `A=b`, 28% of the held-out assignments, redis, node and containerd style, which the option `space_around_assignment` already covers). The rows of the corpus say: do not indent the body of a conditional by default (8 of 11 projects write none, and 3 more use a tab per level), and keep the indent of a continued line as written. A row left "as written" is not counted in the agreement.
 
-Stable (`scripts/parity.sh stability makefile`, debug build with the safety check): 796 of 1,021 files (78.0%). Every file that parses is stable; the 225 that are not fail before the second format:
-
-| Cause | Files |
-|---|---|
-| the name of a variable holds a reference: `OBJS-$(CONFIG_X) += a.o` (the grammar reads a name as one word without a reference) | 188 |
-| NMake directives (`!INCLUDE`, `!IF`), not GNU make | 10 |
-| other parse errors: target-specific `export` and `override`, `$(recurse)` in a name, a stray `)`, `\|` in a value | 25 |
-| refused by the safety check (the tree swallowed the file after a reference: neovim `Makefile` with `$(subst $() $(),:,...)`, vim `Make_cyg_ming.mak` at `$(CFLAGS:-fno-asynchronous-unwind-tables=)`) | 2 |
-
-Harm: 30 of the 442 changed files, chosen with seed 20261128 and read. No change of meaning in the sample (the trailing blanks bug below is not in it). Visible harm: the body of a conditional is indented where the project writes it at column 0 (17 files: micropython, postgres, git, buildroot, redis, kubernetes), assignments that a project aligns with tabs or blanks lose their alignment (8: postgres `nls.mk`, `NAME\t\t= x`, FFmpeg `tests/fate`), a `.PHONY` list continued with tabs loses them (grpc, 1); the rest is wanted (`A:=b` to `A := b` in openwrt, double blanks).
+Stable (`scripts/parity.sh stability makefile`, debug build with the safety check): 1,008 of 1,021 files (98.7%); the 13 that are not (12 NMake files of vim and `Make_ami.mak`, which is not make syntax) fail to parse, none changes on a second format or is refused.
 
 ## Meaning oracle
 The only reference for what a Makefile means is GNU make, and it cannot be run on downloaded files: `make -pn` (print the database without running recipes) still expands `$(shell ...)`, evaluates `include` and `$(eval ...)`, and the host has no sandbox (no user namespaces, no container). It is not used. What is checked safely: `evidence_makefile.py` compares the text of every statement before and after the format with blanks removed (a change of any non-blank character fails; this is the safety check of the formatter again, independent of its parse) and flags the strip of a trailing blank on an assignment value. A check with the real make would need a sandbox host first.
 
 ## Left out
-Bugs found, with inputs, are in [../bugs.md](../bugs.md): the trailing blank of a value, the parse gaps above. Choices of taste for the user: conditional body indent (default none, option for a tab or spaces per level); blanks around an assignment (default one each side, the option exists); keep the alignment of assignments and the indent of continued lines as written (what the corpus does). mbake's `.PHONY` regrouping and its recipe formatting are rewrites, not layout, and are not part of the plan. Lint is a separate leg (checkmake).
+Choices of taste (the defaults follow the votes above): conditional body indent as written (option `conditional_body_indent`); blanks around an assignment (default one each side, the option exists); the alignment of assignments and the indent of continued lines as written (option `continued_line_indent`); the trailing blank of a value is kept (it is part of the value; mbake drops it from some lines). mbake's `.PHONY` regrouping and its recipe formatting are rewrites, not layout, and are not part of the plan. Lint is a separate leg (checkmake).
 
-## Plan to the bar
-The bar is `stable` 100% of the files the measure counts and `agreement` 80% on the held-out half (mbake is a partial tool, so its 85% does not apply). Two landings.
-
-What the measure should not count: the 10 NMake files (`!INCLUDE`, `!IF`: not GNU make). They are left out of the stability group; the corpus is then 1,011 files and 796 of them are stable (78.7%).
-
-Landing 1, parse (grammar fork and the safety check): a variable name with a reference (188 files), the 25 odd parse errors (target-specific `export` and `override`, `$(recurse)` in a name, a stray `)`, `|` in a value), the 2 files the safety check refuses. The causes are disjoint (one per file), so the joint count is the sum: 215 of the 215 files that fail are fixed only when every one of the three groups is, giving 1,011 of 1,011 parsed. Whether the newly parsed files are all stable is not measured until the grammar parses them; the 796 that parse today are all stable, so the expected `stable` is 100% with a few files that need a follow-up fix inside the same landing. Also here: keep the trailing blank of an assignment value (meaning bug) and the glued `A+=b`, `A?=b`.
-
-Landing 2, layout defaults (shared layout code with `lang.yaml` option values): conditional body indent as written by default with an option for a level of indent, and continued lines of rules and directives as written. Agreement is a pooled share of occurrences, so the rows add: 28,114 plus 1,349 (conditional bodies: 1,899 held-out lines with no indent against the 550 now written) plus 1,096 (continuations: 1,142 as written against 46) is 30,559 of 34,827 (87.7%), with the blanks-around-assignment row (66.0%) unchanged and already an option.
-
-Both landings together reach the bar: `stable` 100% of 1,011 and `agreement` 87.7% (80.7% today). Landing 2 alone gets agreement over the bar; landing 1 alone gets `stable` over the bar. Size: landing 1 is the larger (grammar change and its tests on 215 files), landing 2 is two option values and a kind set.
+## Status
+The format leg is registered with mbake as its tool (`xtask/full/support.yaml`, `scripts/parity_tools.json`, `docs/ai/parity/mbake.yaml`): target = the 1,007 files both tools read, agreement 88.2% (goal 85%), `second-format` 0. The `makefile/mbake` preset sets `spaced_assignments`, `continued_line_indent`, `keep_comment_gap`, `indent_style` and `max_blank_lines`; the remaining causes are above.

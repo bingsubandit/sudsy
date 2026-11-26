@@ -21,7 +21,22 @@ options:
       default: false
       doc: "Write `target : prerequisite` rather than `target: prerequisite`."
   - max_blank_lines: [2, "Largest number of blank lines kept between statements and comments."]
-presets: [checkmake]
+  - keep_comment_gap:
+      default: false
+      doc: "A comment after code keeps the blanks the source has before it when they are more than one."
+  - spaced_assignments:
+      values: ["all", "plain"]
+      default: "all"
+      doc: "The assignments `space_around_assignment` applies to: `all`; `plain`: those at the start of a line whose name is letters, digits and underscores, with no substitution reference `$(v:a=b)` on the line and no colon in the first word of a value that follows `=` at once (`A=b:c`, unless a URL, a time or a path). Any other (an indented one, one after `export` or `override`, a target-specific one, a name with `-`, `.`, `/` or a reference) keeps its blanks as written."
+  - conditional_body_indent:
+      values: ["keep", "indent"]
+      default: "keep"
+      doc: "The lines inside a conditional (`ifeq` ... `endif`) outside a recipe: `keep` leaves their indentation as written; `indent` indents the body one level (`indent_size`, `indent_style`) per nesting."
+  - continued_line_indent:
+      values: ["keep", "indent", "first"]
+      default: "keep"
+      doc: "The lines after the first of a rule, directive, variable value or recipe command written over several lines: `keep` leaves their indentation as written; `indent` indents the lines of a rule or directive one level; `first` gives every line the indentation of the second (a recipe command that has a shell block keyword, and a line that starts inside quotes, keep theirs)."
+presets: [checkmake, mbake]
 mapping:
   same: 'comment rule targets recipe recipe_line shell_text conditional word'
   Document: makefile

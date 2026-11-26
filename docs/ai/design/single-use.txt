@@ -12,6 +12,7 @@ concept angular-expression-pipes # users: html
 concept angular-microsyntax # users: html
 concept angular-template-layout # users: html
 concept arrow-function-layout # users: js
+concept assignment-scope # users: makefile (shared)
 concept async-suffix # users: csharp
 concept attribute-content-lines # users: html (shared)
 concept attribute-requote # users: html (shared)
@@ -162,6 +163,7 @@ concept separate-field-declarations # users: csharp
 concept single-class-per-file # users: csharp
 concept single-namespace-per-file # users: csharp
 concept single-title # users: markdown
+concept source-indented-lines # users: makefile (shared)
 concept statement-blank-lines # users: cmake (shared)
 concept statement-indent # users: cmake (shared)
 concept stream-blank-lines # users: ruby (shared)

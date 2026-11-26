@@ -21,7 +21,7 @@
 # `exempt: true` and `evidence: <folder>`: a leg with no reference tool. A new language's leg needs `evidence` (a folder of
 #     tests/parity with `agreement` for the format leg beside `stability`, `checklist` and `precision` for the lint leg) and is
 #     Ready at stable 100% and agreement 80%, checklist 85% and precision 90% (docs/ai/development/no-reference-tool.md);
-#     the six legs that predate it (INI, EditorConfig, .gitignore, Dockerfile, Makefile, GitHub Actions format) are `exempt`.
+#     the five legs that predate it (INI, EditorConfig, .gitignore, Dockerfile, GitHub Actions format) are `exempt`.
 # `section` is the heading of the section of docs/languages.md of rows that share one (default: the row's `language`).
 # `popular: true` (a widely used secondary tool, weight 1) and `blocked: <reason>` (the leg waits on a user decision) feed the priority table of docs/ai/parity/queue.md.
 - language: JavaScript / TypeScript
@@ -181,10 +181,9 @@
   lint: [{tool: hadolint, name: hadolint}]
 - language: Makefile
   popularity: [{name: Makefile, gh: 966194, so: 17.8}]
-  exempt: true
   ids: [makefile]
   speed: [Makefile]
-  stability: [makefile]
+  format: [{tool: mbake, name: mbake, groups: [real-world]}]
   lint: [{tool: checkmake, name: checkmake}]
 - language: GitHub Actions
   popularity: [{name: GitHub Actions, estimate: {value: 0.5, basis: "lead's estimate 2026-11-25, how common the file is in repositories; no survey lists data formats"}}]

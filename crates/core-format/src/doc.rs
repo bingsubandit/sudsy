@@ -665,6 +665,17 @@ pub fn concat(parts: Vec<Doc>) -> Doc {
     Doc::Concat(parts)
 }
 
+/// The parts that are not empty in a row: nothing for none, the part itself for one (no list is
+/// allocated for the usual case of an empty comment slot around a text).
+pub fn concat_present<const N: usize>(parts: [Doc; N]) -> Doc {
+    let mut present = parts.into_iter().filter(|d| !d.is_nil());
+    match (present.next(), present.next()) {
+        (None, _) => Doc::Nil,
+        (Some(only), None) => only,
+        (Some(a), Some(b)) => Doc::Concat([a, b].into_iter().chain(present).collect()),
+    }
+}
+
 pub fn group(contents: Doc) -> Doc {
     Doc::Group(Box::new(Group {
         contents,

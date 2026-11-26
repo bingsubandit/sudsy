@@ -1,6 +1,6 @@
 # Sudsy for VS Code
 
-[Sudsy](https://github.com/bingsubandit/sudsy) is one formatter and linter for your whole repo. This extension formats and lints <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSON, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, C#, PowerShell, TOML, XML, Go, CMake, Kotlin, HCL, EditorConfig, Gitignore, INI, Ruby, GraphQL, Protobuf, C/C++, Makefile and PHP<!-- /generated -->: diagnostics, quick fixes, fix all
+[Sudsy](https://github.com/bingsubandit/sudsy) is one formatter and linter for your whole repo. This extension formats and lints <!-- generated:languages -->HTML, JavaScript/TypeScript, CSS, JSON, Markdown, Python, YAML, Shell, Dockerfile, SQL, Java, C#, PowerShell, Makefile, TOML, XML, Go, CMake, Kotlin, HCL, EditorConfig, Gitignore, INI, Ruby, GraphQL, Protobuf, C/C++ and PHP<!-- /generated -->: diagnostics, quick fixes, fix all
 and format on save, from the `sudsy.yaml` of your repository. How close each language is to its usual tool: [status table](https://github.com/bingsubandit/sudsy#languages).
 
 ## Install

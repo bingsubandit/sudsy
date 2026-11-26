@@ -1,0 +1,27 @@
+tool: "mbake"
+version: "1.5.0"
+languages: ["makefile"]
+rule-url: none
+sources:
+  - "https://pypi.org/project/mbake/1.5.0/"
+  - "https://github.com/EbodShojaei/bake"
+  - "tests/parity/mbake (differential numbers, docs/ai/development/parity.md)"
+scope: "The formatter of mbake at its defaults (MIT; only its output is compared). A partial tool: blanks around assignments, recipe tabs, backslash continuations, blank lines; it does not parse make. Measured by `scripts/parity.sh format mbake` on the Makefile corpus (tests/conformance/fetch-makefile-corpus.sh, fetch-makefile-evidence-corpus.sh); the preset `makefile/mbake` writes its defaults."
+entries:
+  space_around_assignment: option makefile.format.space_around_assignment
+  space_before_colon: option makefile.format.space_before_colon
+  space_after_colon: formatter
+  max_consecutive_empty_lines: option makefile.format.max_blank_lines
+  tab_width: option makefile.format.indent_size
+  ensure_final_newline: option makefile.format.final_newline
+  indent_nested_conditionals: option makefile.format.conditional_body_indent
+  normalize_line_continuations: option makefile.format.continued_line_indent
+  remove_trailing_whitespace: formatter | Sudsy keeps the trailing blanks of an assignment value, which are part of the value.
+  normalize_empty_lines: formatter
+  fix_missing_recipe_tabs: deferred | A recipe line with spaces is a different statement in make; Sudsy keeps it as written.
+  max_line_length: deferred | A line is never wrapped.
+  auto_insert_phony_declarations: deferred | Adds `.PHONY`, a fix and not a layout (off by default).
+  group_phony_declarations: deferred | Off by default.
+  phony_at_top: deferred | Off by default.
+  align_variable_assignments: deferred | Off by default.
+  align_across_comments: deferred | Off by default.
