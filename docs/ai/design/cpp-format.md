@@ -1,7 +1,7 @@
 # C/C++ format: plan to 85%
 
-Reference: clang-format 20.1.8, 6,639 files. Equal now: 5,306 (79.9%) under the comparison with short bodies as wraps
-(4,668 under the old one: +159 comes from the comparison, none from the formatter). 85% is 5,644 (338 more).
+Reference: clang-format 20.1.8, 6,639 files. Equal now: 5,311 (80.0%) under the comparison with short bodies as wraps
+(4,668 under the old one: +159 comes from the comparison, none from the formatter). 85% is 5,644 (333 more).
 
 The plan has two contents: differences the comparison should not count (A), and the class-a work that takes the rest to
 85% (B). The classification covers every gap record of the 1,812 differing files (73,252 records: 53,916 a, 7,462 b,
@@ -102,3 +102,9 @@ Order of the build: R items and kind sets first (they convert almost fully), the
   pointer-align 158 to 107, reference-align 161 to 119, binary-op-space 165 to 157, cast-space 153 to 144. Open: the
   rest of these five are spread thin (124 files hold only them, no signature over 6 files); comment-line-indent-or-join
   (578 files, 201 of them its own) is the next lever.
+- A function name behind a comment that ends its return type stands at the indent of the line the comment ends
+  (`comment_flush`), a variable name continues. 5,306 to 5,311. What is left of comment-line-indent-or-join is mostly
+  wrap: the comment gap and indent records of 98 files hold only gaps that the reference's own line breaks explain, so
+  they need wrapping to `line_width`, not a comment rule (the oracle keeps comment and brace gaps as written, so it
+  cannot excuse them). Real ones, by files: a comment before a `case` written at the body's indent stays there (7), a
+  comment after `#else` or `#endif` keeps its source blanks (23), a deduction guide's `->` is tight (8).

@@ -31,8 +31,8 @@ differences:
 files:
   llvm: comment-line-indent-or-join:22, continuation-indent-of-non-wrap-line:17, trailing-comment-spacing:14, ternary-colon-space:8, empty-body-braces:7, brace-own-line-in-reference:5, comma-space:5, statement-joined-by-reference:5, braced-list-padding:4, cast-space:4, spacing-rare:4, angle-space:3, binary-op-space:3, space-before-paren:3, brace-own-line-in-source:2, statement-split-by-reference:2, angle-brackets-merged-by-reference:1, assignment-space:1, escaped-newline-align:1, pointer-align:1, reference-align:1
   fmt: angle-space:8, reference-align:4, statement-split-by-reference:4, binary-op-space:3, continuation-indent-of-non-wrap-line:3, statement-joined-by-reference:3, angle-brackets-merged-by-reference:2, braced-list-padding:2, cast-space:2, comment-line-indent-or-join:2, pointer-align:2, space-before-paren:2, trailing-comment-spacing:2, comma-space:1, escaped-newline-align:1, spacing-rare:1, ternary-colon-space:1, token-change:1
-  range-v3: comment-line-indent-or-join:89, trailing-comment-spacing:71, reference-align:38, brace-own-line-in-source:35, empty-body-braces:23, spacing-rare:23, cast-space:20, braced-list-padding:19, continuation-indent-of-non-wrap-line:19, space-before-paren:17, angle-space:15, binary-op-space:8, pointer-align:6, ternary-colon-space:5, angle-brackets-merged-by-reference:4, format-off:2, brace-own-line-in-reference:1, comma-space:1, statement-joined-by-reference:1, statement-split-by-reference:1, token-change:1
-  folly: comment-line-indent-or-join:118, angle-space:55, reference-align:46, continuation-indent-of-non-wrap-line:42, trailing-comment-spacing:39, pointer-align:37, binary-op-space:35, braced-list-padding:25, spacing-rare:24, brace-own-line-in-source:22, space-before-paren:22, brace-own-line-in-reference:17, cast-space:16, escaped-newline-align:13, empty-body-braces:12, statement-split-by-reference:11, blank-before-close-brace:8, column-align:7, comma-space:3, ternary-colon-space:3, format-off:2, sort-using-declarations:2, unclassified:2, blank-lines-other:1
+  range-v3: comment-line-indent-or-join:83, trailing-comment-spacing:70, reference-align:38, brace-own-line-in-source:35, empty-body-braces:23, spacing-rare:23, cast-space:20, braced-list-padding:19, continuation-indent-of-non-wrap-line:19, space-before-paren:17, angle-space:15, binary-op-space:8, pointer-align:6, ternary-colon-space:5, angle-brackets-merged-by-reference:4, format-off:2, brace-own-line-in-reference:1, comma-space:1, statement-joined-by-reference:1, statement-split-by-reference:1, token-change:1
+  folly: comment-line-indent-or-join:114, angle-space:55, reference-align:46, continuation-indent-of-non-wrap-line:42, pointer-align:37, trailing-comment-spacing:37, binary-op-space:35, braced-list-padding:25, spacing-rare:24, brace-own-line-in-source:22, space-before-paren:22, brace-own-line-in-reference:17, cast-space:16, escaped-newline-align:13, empty-body-braces:12, statement-split-by-reference:11, blank-before-close-brace:8, column-align:7, comma-space:3, ternary-colon-space:3, format-off:2, sort-using-declarations:2, unclassified:2, blank-lines-other:1
   linux: comment-line-indent-or-join:199, continuation-indent-of-non-wrap-line:81, cast-space:74, binary-op-space:70, comma-space:52, spacing-rare:45, statement-split-by-reference:39, trailing-comment-spacing:39, pointer-align:37, ternary-colon-space:35, escaped-newline-align:33, statement-joined-by-reference:27, blank-lines-other:25, brace-own-line-in-source:24, braced-list-padding:24, string-macro-space:17, reference-align:16, empty-body-braces:14, preprocessor-token-space:14, assignment-space:13, space-before-paren:9, unclassified:6, angle-space:4, brace-own-line-in-reference:4, blank-before-close-brace:3, token-change:2, call-after-paren-space:1, column-align:1
   sqlite: comment-line-indent-or-join:120, trailing-comment-spacing:93, continuation-indent-of-non-wrap-line:37, binary-op-space:35, braced-list-padding:31, comma-space:21, statement-split-by-reference:21, brace-own-line-in-reference:20, pointer-align:20, cast-space:19, spacing-rare:19, space-before-paren:16, statement-joined-by-reference:13, ternary-colon-space:13, escaped-newline-align:9, reference-align:8, angle-space:7, assignment-space:6, preprocessor-token-space:6, brace-own-line-in-source:3, blank-before-close-brace:2, blank-lines-other:2, empty-body-braces:2, string-macro-space:2, token-change:1, unclassified:1
   google: trailing-comment-spacing:6, comment-line-indent-or-join:3, statement-joined-by-reference:3, continuation-indent-of-non-wrap-line:2, brace-own-line-in-source:1, empty-body-braces:1, escaped-newline-align:1, reference-align:1, space-before-paren:1, spacing-rare:1
@@ -72,39 +72,39 @@ fixes:
   token-change: "none: the pairs are listed (62 `> >` as `>>` are their own gap, 14 are the using sort, the rest are two split strings and two comments); no meaning bug"
   escaped-newline-align: "a payload mode of the shared directive layout that drops the source breaks inside a statement (a statement of the body is one flow, then wrapped)"
 sets:
-  - "brace-placement Lbrace|Rbrace in Block: +13 files, 13 equal after it"
-  - "indent HeaderName|Tilde in Unary: +12 files, 25 equal after it"
-  - "brace-placement Rpar|Lbrace in Block: +11 files, 36 equal after it"
-  - "comment-gap Comment|Keyword in QualifiedName: +10 files, 46 equal after it"
-  - "comment-gap Keyword|Comment in Directive: +9 files, 55 equal after it"
-  - "comment-gap Semi|Comment in CaseClause: +8 files, 63 equal after it"
-  - "statement-join Lbrace|Dot in Directive: +8 files, 71 equal after it"
-  - "comment-gap Semi|Comment in Directive: +7 files, 78 equal after it"
-  - "spacing Comma|Lbrace in InitList: +7 files, 85 equal after it"
-  - "blank-lines Rpar|Lbrace in Block: +7 files, 92 equal after it"
-  - "comment-gap Comma|Comment in InitList: +6 files, 98 equal after it"
-  - "spacing Comma|Number in InitList: +8 files, 106 equal after it"
-  - "spacing Comma|Ident in InitList: +7 files, 113 equal after it"
-  - "brace-placement Rbrace|Keyword in IfStatement: +7 files, 120 equal after it"
-  - "spacing Ident|Question in Ternary: +6 files, 126 equal after it"
-  - "spacing Rpar|Question in Ternary: +7 files, 133 equal after it"
-  - "statement-join Lbrace|Ident in Directive: +6 files, 139 equal after it"
-  - "comment-gap Comma|Comment in Arguments: +6 files, 145 equal after it"
-  - "spacing Comma|Ident in Call: +6 files, 151 equal after it"
-  - "comment-gap Lbrace|Comment in InitList: +7 files, 158 equal after it"
-  - "spacing Star|Ident in Binary: +6 files, 164 equal after it"
-  - "comment-gap Semi|Comment in ExpressionStatement: +6 files, 170 equal after it"
-  - "brace-placement Rbrace|Rpar in Arguments: +6 files, 176 equal after it"
-  - "statement-join Colon|Semi in EmptyStatement: +6 files, 182 equal after it"
-  - "comment-gap Greater|Comment in TemplateArguments: +5 files, 187 equal after it"
+  - "brace-placement Lbrace|Rbrace in Block: +12 files, 12 equal after it"
+  - "indent HeaderName|Tilde in Unary: +12 files, 24 equal after it"
+  - "brace-placement Rpar|Lbrace in Block: +11 files, 35 equal after it"
+  - "comment-gap Keyword|Comment in Directive: +9 files, 44 equal after it"
+  - "comment-gap Semi|Comment in CaseClause: +8 files, 52 equal after it"
+  - "statement-join Lbrace|Dot in Directive: +8 files, 60 equal after it"
+  - "comment-gap Semi|Comment in Directive: +7 files, 67 equal after it"
+  - "comment-gap Comment|Keyword in QualifiedName: +7 files, 74 equal after it"
+  - "spacing Comma|Lbrace in InitList: +7 files, 81 equal after it"
+  - "blank-lines Rpar|Lbrace in Block: +7 files, 88 equal after it"
+  - "comment-gap Comma|Comment in InitList: +6 files, 94 equal after it"
+  - "spacing Comma|Number in InitList: +8 files, 102 equal after it"
+  - "spacing Comma|Ident in InitList: +7 files, 109 equal after it"
+  - "brace-placement Rbrace|Keyword in IfStatement: +7 files, 116 equal after it"
+  - "spacing Ident|Question in Ternary: +6 files, 122 equal after it"
+  - "spacing Rpar|Question in Ternary: +7 files, 129 equal after it"
+  - "statement-join Lbrace|Ident in Directive: +6 files, 135 equal after it"
+  - "comment-gap Comma|Comment in Arguments: +6 files, 141 equal after it"
+  - "spacing Comma|Ident in Call: +6 files, 147 equal after it"
+  - "comment-gap Lbrace|Comment in InitList: +7 files, 154 equal after it"
+  - "spacing Star|Ident in Binary: +6 files, 160 equal after it"
+  - "comment-gap Semi|Comment in ExpressionStatement: +6 files, 166 equal after it"
+  - "brace-placement Rbrace|Rpar in Arguments: +6 files, 172 equal after it"
+  - "statement-join Colon|Semi in EmptyStatement: +6 files, 178 equal after it"
+  - "comment-gap Greater|Comment in TemplateArguments: +5 files, 183 equal after it"
 unclassified: 0
 # Comparison change (not a formatter gain): a one-line against a multi-line short body is a wrap where the style's
 # AllowShort...OnASingleLine value permits the join (scripts/parity_wrap.py, docs/ai/development/parity.md): 4,668 -> 4,827 equal (+159).
 ratchet:
   llvm: 352
   fmt: 46
-  range-v3: 401
-  folly: 1973
+  range-v3: 403
+  folly: 1976
   linux: 2376
   sqlite: 151
   google: 2

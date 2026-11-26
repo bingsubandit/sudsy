@@ -158,6 +158,7 @@ pub const OPTION_KINDS: core_format::rules::OptionKinds = &[
     ("short_loops", "join", "", &["ForStatement", "WhileStatement"]),
     ("short_lambdas", "fit", "", &["Lambda"]),
     ("align_after_open_bracket", "comment_continue", "", &["FunctionDeclaration", "SimpleDeclaration"]),
+    ("align_after_open_bracket", "comment_flush", "", &["ParameterList"]),
     ("align_after_open_bracket", "hug_brace_after", "", &["Ident", "Greater"]),
     ("align_after_open_bracket", "hug_brace_hang", "", &["Equal"]),
     ("align_after_open_bracket", "hug_comment_down", "", &["InitList"]),

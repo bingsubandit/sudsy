@@ -1208,16 +1208,15 @@ fn a_deduction_guide_is_a_declaration() {
     );
 }
 
-/// The line behind a trailing comment in a declaration head is a continuation: it is indented.
+/// The line behind a trailing comment in a declaration head is a continuation: it is indented (a
+/// variable name; a function name stands where the line of the comment does).
 #[test]
 fn a_declaration_line_behind_a_comment_is_indented() {
     use provider_api::format_testing::Formatting;
     let formatting = Formatting::new(provider(Dialect::Cpp), "a.cc");
-    let out = core_format::testing::assert_formats(
-        &formatting,
-        "struct S {\n  int //c\n  f(int a);\n};\n",
-    );
-    assert_eq!(out, "struct S {\n  int //c\n      f(int a);\n};\n");
+    let out =
+        core_format::testing::assert_formats(&formatting, "struct S {\n  int //c\n  v;\n};\n");
+    assert_eq!(out, "struct S {\n  int //c\n      v;\n};\n");
 }
 
 /// A lined-up parameter list with comments that is too wide behind the return type puts the name on
@@ -1475,5 +1474,16 @@ fn the_body_of_a_macro_loop_is_read_and_a_string_behind_a_call_stands_apart() {
     assert_eq!(
         fmt(src),
         "void f() {\n  for_each(x) set(c, e - s);\n  g(STR(A) \"b\", (char *)\"c\");\n}\nstd::vector<W *> &order();\n"
+    );
+}
+
+/// A function name on the line behind a comment that ends its return type stands at the indent of the
+/// declaration, as written or not; a variable name behind such a comment continues.
+#[test]
+fn a_function_name_behind_a_comment_stands_at_the_declaration_indent() {
+    let src = "struct S {\n  int // c\n      f(int a) {\n    return 1;\n  }\n  int // c\n  g(int a);\n  int // c\n      v;\n};\ntemplate <class T>\nvoid // c\n    h(T a);\n";
+    assert_eq!(
+        fmt(src),
+        "struct S {\n  int // c\n  f(int a) {\n    return 1;\n  }\n  int // c\n  g(int a);\n  int // c\n      v;\n};\ntemplate <class T>\nvoid // c\nh(T a);\n"
     );
 }

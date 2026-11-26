@@ -570,7 +570,7 @@ pub struct SpaceRules {
     /// mark and a name is an operand, not a cast (`#define S(n) ((n) * SIZE)`).
     binary: [Vec<SyntaxKind>; 8],
     /// The `hug_brace_after` (what a `{` follows when its list hugs: a type name, not `=`).
-    hug: [Vec<SyntaxKind>; 8],
+    hug: [Vec<SyntaxKind>; 9],
 }
 
 /// The kind sets of padded braces: `pad_list` (the nodes whose braces are padded), `pad_open` and
@@ -775,6 +775,7 @@ impl SpaceRules {
                 "name_break",
                 "name_break_after",
                 "verbatim_split",
+                "comment_flush",
             ]
             .map(set),
             index: Index::build(&space),
@@ -1138,6 +1139,12 @@ impl SpaceRules {
     /// (`comment_continue`)?
     pub fn comment_continue(&self, kind: SyntaxKind) -> bool {
         self.hug[4].contains(&kind)
+    }
+
+    /// Is `kind` the node that follows a name which starts the line behind a trailing comment at the
+    /// indent of its declaration, whatever the source's (`comment_flush`: `int // c` `f(int a)`)?
+    pub fn comment_flush(&self, kind: SyntaxKind) -> bool {
+        self.hug[8].contains(&kind)
     }
 
     /// Is `kind` a declaration whose name goes on a line of its own where its lined-up parameters

@@ -209,6 +209,7 @@ options:
         hug_brace_hang: [Equal]
         hug_comment_down: [InitList]
         comment_continue: [FunctionDeclaration, SimpleDeclaration]
+        comment_flush: [ParameterList]
         name_break: [FunctionDeclaration]
         name_break_after: [Keyword, Star, Greater]
         hug_unless: [Lambda, Block, InitList]

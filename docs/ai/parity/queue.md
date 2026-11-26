@@ -8,7 +8,7 @@ Weight: the primary tool of a leg 4, a popular secondary 1, any other 0.25. Orde
 
 | Language | Leg | Weight | Now | Points | Needs | Causes | Difficulty | Score | Measured on |
 |---|---|---|---|---|---|---|---|---|---|
-| C / C++ | format clang-format | 4 | 79.9% | 5.1 | 338 files | `comment-line-indent-or-join` 578 | 3 | 6.77 | - |
+| C / C++ | format clang-format | 4 | 80.0% | 5.0 | 333 files | `comment-line-indent-or-join` 568 | 3 | 6.67 | - |
 | (not in support.yaml) | lint sqlfluff-fixtures | 0.25 | 59.6% | 25.4 | 11453 findings | `CP01` 4211, `LT01` 2805, `LT02` 2639, `PRS` 967 +1 more | 15 | 0.42 | 3cdf2fac |
 | C# | lint Roslynator | 0.25 | 0.4% | 84.6 | 9405 findings | `RCS1157` 1714, `RCS1118` 1422, `RCS1123` 827, `RCS1085` 760 +23 more | 75 | 0.28 | 66718389 |
 | Kubernetes manifests | lint kube-linter | 1 | 84.3% | 0.7 | 25 findings | `no-anti-affinity` 73 | 3 | 0.23 | 81899480 |
@@ -167,9 +167,9 @@ Lint: target 88.6% (53144 of 59979, 6835 missed, measured on f29ba2f0); rules by
 
 ## clang-format
 
-Format: unclassified 0 of 1333 differing files (0%).
-1. `comment-line-indent-or-join` (578 files): a comment on its own line (or right after `{`) whose indent or place differs: clang-format aligns it with the code it belongs to, Sudsy keeps the source indent Fix: comment_gap rows: a comment takes the indent of the next line of code in the shared comment engine
-2. `trailing-comment-spacing` (279 files): blanks before a trailing comment (SpacesBeforeTrailingComments) and the alignment of consecutive trailing comments Fix: align_trailing_comments run rules: where a run ends and how wide the pad is
+Format: unclassified 0 of 1328 differing files (0%).
+1. `comment-line-indent-or-join` (568 files): a comment on its own line (or right after `{`) whose indent or place differs: clang-format aligns it with the code it belongs to, Sudsy keeps the source indent Fix: comment_gap rows: a comment takes the indent of the next line of code in the shared comment engine
+2. `trailing-comment-spacing` (276 files): blanks before a trailing comment (SpacesBeforeTrailingComments) and the alignment of consecutive trailing comments Fix: align_trailing_comments run rules: where a run ends and how wide the pad is
 3. `continuation-indent-of-non-wrap-line` (223 files): indent of a line that is not a wrap point: a label (`put:`) clang-format indents with its block, the body after a loop macro, the items of a macro argument list Fix: ForEachMacros and StatementMacros as lang.yaml word lists read by the shared role pass; labels by the indent_goto_labels rows
 4. `binary-op-space` (157 files): blanks around a binary operator (`a*b`, `x+1`, `0 ... N-1`, in a `#if` condition too): clang-format writes one blank on each side, Sudsy keeps the source Fix: [space] rows for the operators of Binary nodes; directive conditions need the expression parse of `#if` lines
 5. `cast-space` (144 files): blank after a C cast (`(T) x`): clang-format writes `(T)x` (SpaceAfterCStyleCast false) Fix: [space] row after the `)` of a Cast; Cast is opaque in the deep parse, so give it its parts
@@ -198,21 +198,21 @@ Format: unclassified 0 of 1333 differing files (0%).
 28. `format-off` (4 files): text under `clang-format off`: clang-format keeps it as written, Sudsy formats it Fix: read `clang-format off` and `on` as the ranges of the shared ignore mechanism (core-format ignore.rs foreign markers)
 29. `sort-using-declarations` (2 files): `using` declarations that clang-format sorts (SortUsingDeclarations; a reorder of tokens) Fix: an option in shared Rust next to import ordering, or turn it off in the styles like SortIncludes
 Ranked sets (greedy, `scripts/parity_gaps.py`: fix the causes from the top together; files equal after each):
-1. brace-placement Lbrace|Rbrace in Block: +13 files, 13 equal after it
-2. indent HeaderName|Tilde in Unary: +12 files, 25 equal after it
-3. brace-placement Rpar|Lbrace in Block: +11 files, 36 equal after it
-4. comment-gap Comment|Keyword in QualifiedName: +10 files, 46 equal after it
-5. comment-gap Keyword|Comment in Directive: +9 files, 55 equal after it
-6. comment-gap Semi|Comment in CaseClause: +8 files, 63 equal after it
-7. statement-join Lbrace|Dot in Directive: +8 files, 71 equal after it
-8. comment-gap Semi|Comment in Directive: +7 files, 78 equal after it
-9. spacing Comma|Lbrace in InitList: +7 files, 85 equal after it
-10. blank-lines Rpar|Lbrace in Block: +7 files, 92 equal after it
-11. comment-gap Comma|Comment in InitList: +6 files, 98 equal after it
-12. spacing Comma|Number in InitList: +8 files, 106 equal after it
-13. spacing Comma|Ident in InitList: +7 files, 113 equal after it
-14. brace-placement Rbrace|Keyword in IfStatement: +7 files, 120 equal after it
-15. spacing Ident|Question in Ternary: +6 files, 126 equal after it
+1. brace-placement Lbrace|Rbrace in Block: +12 files, 12 equal after it
+2. indent HeaderName|Tilde in Unary: +12 files, 24 equal after it
+3. brace-placement Rpar|Lbrace in Block: +11 files, 35 equal after it
+4. comment-gap Keyword|Comment in Directive: +9 files, 44 equal after it
+5. comment-gap Semi|Comment in CaseClause: +8 files, 52 equal after it
+6. statement-join Lbrace|Dot in Directive: +8 files, 60 equal after it
+7. comment-gap Semi|Comment in Directive: +7 files, 67 equal after it
+8. comment-gap Comment|Keyword in QualifiedName: +7 files, 74 equal after it
+9. spacing Comma|Lbrace in InitList: +7 files, 81 equal after it
+10. blank-lines Rpar|Lbrace in Block: +7 files, 88 equal after it
+11. comment-gap Comma|Comment in InitList: +6 files, 94 equal after it
+12. spacing Comma|Number in InitList: +8 files, 102 equal after it
+13. spacing Comma|Ident in InitList: +7 files, 109 equal after it
+14. brace-placement Rbrace|Keyword in IfStatement: +7 files, 116 equal after it
+15. spacing Ident|Question in Ternary: +6 files, 122 equal after it
 
 ## cmake-lint
 

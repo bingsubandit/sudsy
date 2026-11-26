@@ -569,6 +569,19 @@ impl Flow<'_> {
                             }
                             d => d,
                         };
+                        // A name that starts the line behind a comment stands at the indent of the
+                        // line the comment ends, whatever the source's.
+                        let delta = if fixed.is_none()
+                            && self.source_hang
+                            && self.rules.is_some_and(|r| {
+                                els.get(i + 1).is_some_and(|n| r.comment_flush(n.kind()))
+                            })
+                            && !comments::trailing_comments(cx.grammar, &a).is_empty()
+                        {
+                            Some(line_indent(&a, tab).saturating_sub(base(&els[0]).unwrap_or(0)))
+                        } else {
+                            delta
+                        };
                         // The first line of the list goes to `fixed`, the others move with it.
                         let delta = match (fixed, delta) {
                             (Some(f), Some(d)) if !matches!(b.text(), ")" | "]" | "}") => {
