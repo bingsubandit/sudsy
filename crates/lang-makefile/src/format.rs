@@ -7,7 +7,7 @@
 
 use crate::generated::kind as k;
 use core_config::shared;
-use core_format::plain_assignment::AssignmentForm;
+use core_format::plain_assignment::{AssignmentForm, Scope};
 use core_format::shapes::continuation::{self, Continued, Reindent};
 use core_format::shapes::{source_blank_lines, statement_sequence, statements_after_break};
 use core_format::source_indent::SourceIndent;
@@ -39,6 +39,7 @@ const SOURCE_INDENT: SourceIndent = SourceIndent {
 
 /// The tokens of `name op value`.
 const ASSIGNMENT: AssignmentForm = AssignmentForm {
+    statement: k::ASSIGN,
     names: &[k::WORD],
     operators: &[k::OP],
 };
@@ -49,7 +50,10 @@ impl NodeFormatter for MakefileFormatter {
     fn value<'a>(&self, item: &'a SyntaxElement) -> Cow<'a, str> {
         match item {
             SyntaxElement::Token(t) if t.kind() == k::VALUE || is_multiline_word(t) => {
-                continuation::unindented(&continuation::condensed(t.text().trim_start())).into()
+                match continuation::condensed(t.text().trim_start()) {
+                    Cow::Borrowed(b) => continuation::unindented(b),
+                    Cow::Owned(o) => continuation::unindented(&o).into_owned().into(),
+                }
             }
             SyntaxElement::Token(t) => continuation::without_continuation(t.text().trim()).into(),
             SyntaxElement::Node(n) => n.text().to_string().into(),
@@ -88,24 +92,10 @@ impl NodeFormatter for MakefileFormatter {
         ) {
             return Ok(None);
         }
-        if keeps_source_indent(cx) && SOURCE_INDENT.applies(node)
-            || keeps_source_indent(cx) && node.kind() == k::ASSIGN && !spaced(cx, node)
-        {
-            // (an assignment that stays as written keeps its indentation too)
-            match cx.first_token(node) {
-                Some(first) => cx.at_source_indent(&first, statement),
-                None => statement(),
-            }
-        } else {
-            statement()
-        }
-        .map(Some)
+        ASSIGNMENT
+            .line_at_source(cx, node, &SOURCE_INDENT, keeps_source_indent(cx), statement)
+            .map(Some)
     }
-}
-
-/// Do the spacing options apply to the assignment `node`?
-fn spaced(cx: &FormatCtx<'_>, node: &SyntaxNode) -> bool {
-    ASSIGNMENT.spaced(cx, node, keeps_source_indent(cx))
 }
 
 fn keeps_source_indent(cx: &FormatCtx<'_>) -> bool {
@@ -160,9 +150,8 @@ struct Line {
     out: Continued,
     prev: Option<SyntaxKind>,
     blank: bool,
-    /// An assignment that `spaced_assignments` leaves as written: the blanks around its operator
-    /// and in its value stay.
-    exact: bool,
+    /// Whether the part written is an assignment that `spaced_assignments` leaves as written.
+    scope: Scope,
     /// The blanks that the lines of the block share under `continued_line_indent: first`.
     block_indent: Option<String>,
     /// Not an assignment whose operator is on the first physical line: make may read the line as a
@@ -176,7 +165,7 @@ impl Line {
             out: Continued::default(),
             prev: None,
             blank: false,
-            exact: node.kind() == k::ASSIGN && !spaced(cx, node),
+            scope: ASSIGNMENT.scope(cx, node, keeps_source_indent(cx)),
             block_indent: None,
             rule: !operator_on_first_line(node),
         }
@@ -211,10 +200,11 @@ fn relay(
                             line.out.space();
                             line.blank = false;
                         }
-                        let outer = line.exact;
-                        line.exact = !spaced(cx, &n);
+                        let outer = line
+                            .scope
+                            .enter(&ASSIGNMENT, cx, &n, keeps_source_indent(cx));
                         relay(cx, n.children_with_tokens(), line)?;
-                        line.exact = outer;
+                        line.scope.leave(outer);
                     }
                     _ => relay(cx, n.children_with_tokens(), line)?,
                 }
@@ -242,34 +232,31 @@ fn relay(
                 line.blank = false;
             }
             k::WHITESPACE
-                if line.exact
-                    && line.prev.is_some()
-                    && !after_continuation(&t)
-                    && !t.next_token().is_some_and(|n| is_continuation(&n)) =>
+                if line
+                    .scope
+                    .keeps_blank(&t, line.prev.is_some(), is_continuation) =>
             {
                 line.push(doc::verbatim(t.text()))
             }
             k::WHITESPACE | k::NEWLINE => line.blank = true,
             k::TAB | k::COMMENT => {}
             kind => {
-                let space = !line.exact
+                let space = !line.scope.exact()
                     && match (line.prev, kind) {
                         (None, _) => false,
                         (_, k::COLON) => {
                             t.text().starts_with('&') || cx.options.bool(SPACE_BEFORE_COLON)
                         }
                         (Some(k::COLON | k::PIPE | k::SEMI), _) | (_, k::PIPE | k::SEMI) => true,
-                        (_, k::OP) | (Some(k::OP), _) => {
-                            !line.exact && cx.options.bool(SPACE_AROUND_ASSIGNMENT)
-                        }
+                        (_, k::OP) | (Some(k::OP), _) => cx.options.bool(SPACE_AROUND_ASSIGNMENT),
                         _ => line.blank,
                     };
                 if space {
                     line.out.space();
                 }
                 let d = match kind {
-                    k::VALUE => value(cx, &t, line.prev == Some(k::OP), line.exact),
-                    k::WORD if is_multiline_word(&t) => value(cx, &t, false, line.exact),
+                    k::VALUE => value(cx, &t, line.prev == Some(k::OP), line.scope.exact()),
+                    k::WORD if is_multiline_word(&t) => value(cx, &t, false, line.scope.exact()),
                     k::KEYWORD => keyword(cx, &t),
                     _ => cx.token(&t),
                 };
@@ -295,11 +282,6 @@ fn operator_on_first_line(node: &SyntaxNode) -> bool {
 /// Is `t` a backslash and line break?
 fn is_continuation(t: &SyntaxToken) -> bool {
     t.kind() == k::WHITESPACE && t.text().starts_with('\\')
-}
-
-/// Does the blank token `t` start a continued line (it follows a backslash and line break)?
-fn after_continuation(t: &SyntaxToken) -> bool {
-    t.prev_token().is_some_and(|p| is_continuation(&p))
 }
 
 /// Shell words that open or close a block: a command that has one keeps the indentation of its
@@ -330,7 +312,7 @@ fn is_multiline_word(t: &SyntaxToken) -> bool {
 
 /// A keyword without the blanks before it, which its token holds.
 fn keyword(cx: &FormatCtx<'_>, t: &SyntaxToken) -> Doc {
-    doc::concat(vec![
+    doc::concat_present([
         cx.leading_comments_doc(t),
         doc::text(t.text().trim()),
         cx.trailing_comments_doc(t),
@@ -346,7 +328,7 @@ fn value(cx: &FormatCtx<'_>, t: &SyntaxToken, assignment: bool, exact: bool) -> 
     } else {
         t.text()
     };
-    doc::concat(vec![
+    doc::concat_present([
         cx.leading_comments_doc(t),
         continuation::as_written_value(text, true, reindent(cx, &[], false, false)),
         cx.trailing_comments_doc(t),
@@ -399,21 +381,24 @@ fn recipe_line(cx: &FormatCtx<'_>, node: &SyntaxNode, inline: bool) -> Doc {
     let words = reindent(cx, SHELL_BLOCK_WORDS, true, !in_conditional);
     // (the line that keeps the blanks of the source has them in front already)
     let tab = !inline && !(keeps_source_indent(cx) && SOURCE_INDENT.applies(node));
-    doc::concat(vec![leading, continuation::as_written(text, tab, words)])
+    doc::concat_present([leading, continuation::as_written(text, tab, words)])
 }
 
 /// The source text of a node from its first to its last token that is not trivia, and its range.
 pub(crate) fn code(node: &SyntaxNode) -> Option<(TextRange, String)> {
-    let tokens: Vec<SyntaxToken> = node
-        .descendants_with_tokens()
-        .filter_map(|e| e.into_token())
-        .collect();
+    let tokens = || {
+        node.descendants_with_tokens()
+            .filter_map(|e| e.into_token())
+    };
     let significant =
         |t: &SyntaxToken| !matches!(t.kind(), k::WHITESPACE | k::NEWLINE | k::COMMENT);
-    let first = tokens.iter().position(significant)?;
-    let last = tokens.iter().rposition(significant)?;
-    let text = tokens[first..=last].iter().map(|t| t.text()).collect();
-    let range = tokens[first].text_range().cover(tokens[last].text_range());
+    let first = tokens().find(significant)?;
+    let last = tokens().filter(significant).last()?;
+    let range = first.text_range().cover(last.text_range());
+    let mut text = String::with_capacity(range.len().into());
+    for t in tokens().filter(|t| range.contains_range(t.text_range())) {
+        text.push_str(t.text());
+    }
     Some((range, text))
 }
 

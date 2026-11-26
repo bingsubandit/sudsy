@@ -7,11 +7,14 @@
 //! tools: mbake assignment_spacing
 //! reads: option:spaced_assignments, path:plain_assignment::AssignmentForm
 
-use crate::{FormatCtx, comments};
+use crate::source_indent::SourceIndent;
+use crate::{Doc, FormatCtx, comments};
 use core_syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 
 /// The token kinds of an assignment statement.
 pub struct AssignmentForm {
+    /// The kind of an assignment statement node.
+    pub statement: SyntaxKind,
     /// The kinds of a name token.
     pub names: &'static [SyntaxKind],
     /// The kinds of an assignment operator.
@@ -25,6 +28,37 @@ impl AssignmentForm {
     pub fn spaced(&self, cx: &FormatCtx<'_>, node: &SyntaxNode, indent_kept: bool) -> bool {
         cx.options.is(core_config::opt::SPACED_ASSIGNMENTS, "all")
             || self.is_plain(cx, node, indent_kept)
+    }
+
+    /// Is `node` an assignment that the spacing options leave as written?
+    pub fn as_written(&self, cx: &FormatCtx<'_>, node: &SyntaxNode, indent_kept: bool) -> bool {
+        node.kind() == self.statement && !self.spaced(cx, node, indent_kept)
+    }
+
+    /// `build()` (the line of `node`) at the blanks of the source when the layout keeps them
+    /// (`indent_kept`) for the lines of `kinds` and for an assignment that stays as written.
+    pub fn line_at_source<E>(
+        &self,
+        cx: &FormatCtx<'_>,
+        node: &SyntaxNode,
+        kinds: &SourceIndent,
+        indent_kept: bool,
+        build: impl FnOnce() -> Result<Doc, E>,
+    ) -> Result<Doc, E> {
+        if indent_kept
+            && (kinds.applies(node) || self.as_written(cx, node, indent_kept))
+            && let Some(first) = cx.first_token(node)
+        {
+            return cx.at_source_indent(&first, build);
+        }
+        build()
+    }
+
+    /// The scope of the line that `node` starts.
+    pub fn scope(&self, cx: &FormatCtx<'_>, node: &SyntaxNode, indent_kept: bool) -> Scope {
+        Scope {
+            exact: self.as_written(cx, node, indent_kept),
+        }
     }
 
     /// Is the first token of `node` a name of letters, digits and underscores (not starting with
@@ -48,19 +82,68 @@ impl AssignmentForm {
     }
 }
 
-/// The text of `node` up to its first line break.
+/// Whether the part of a line being written is an assignment left as written: its blanks stay and
+/// no spacing option applies.
+pub struct Scope {
+    exact: bool,
+}
+
+impl Scope {
+    /// Is the part written an assignment left as written?
+    pub fn exact(&self) -> bool {
+        self.exact
+    }
+
+    /// Enters the assignment `node` nested in the line (`export A=b`); `leave` with the result.
+    pub fn enter(
+        &mut self,
+        form: &AssignmentForm,
+        cx: &FormatCtx<'_>,
+        node: &SyntaxNode,
+        indent_kept: bool,
+    ) -> bool {
+        std::mem::replace(&mut self.exact, form.as_written(cx, node, indent_kept))
+    }
+
+    pub fn leave(&mut self, outer: bool) {
+        self.exact = outer;
+    }
+
+    /// Does the blank token `blank` stay as written? It does inside an exact assignment, after
+    /// something on the line, and not at a line continuation (`continuation` says which tokens
+    /// are one) or next to one.
+    pub fn keeps_blank(
+        &self,
+        blank: &SyntaxToken,
+        after_something: bool,
+        continuation: impl Fn(&SyntaxToken) -> bool,
+    ) -> bool {
+        self.exact
+            && after_something
+            && !blank.prev_token().is_some_and(|p| continuation(&p))
+            && !blank.next_token().is_some_and(|n| continuation(&n))
+    }
+}
+
 /// The first line of the statement (the tokens may start with the line breaks before it).
 fn first_line(node: &SyntaxNode) -> String {
-    let text: String = node
+    let mut line = String::new();
+    for t in node
         .descendants_with_tokens()
         .filter_map(|e| e.into_token())
-        .map(|t| t.text().to_string())
-        .collect();
-    text.trim_start()
-        .lines()
-        .next()
-        .unwrap_or_default()
-        .to_string()
+    {
+        let text = if line.is_empty() {
+            t.text().trim_start()
+        } else {
+            t.text()
+        };
+        if let Some(end) = text.find('\n') {
+            line.push_str(&text[..end]);
+            break;
+        }
+        line.push_str(text);
+    }
+    line
 }
 
 /// Does the line hold `$(name:pattern=replacement)`?

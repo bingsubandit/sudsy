@@ -313,11 +313,15 @@ fn condense_line(line: &str) -> Cow<'_, str> {
 }
 
 /// `text` with the blanks before the backslash of each continued line collapsed to one.
-pub fn condensed(text: &str) -> String {
+pub fn condensed(text: &str) -> Cow<'_, str> {
+    if !text.contains('\n') {
+        return condense_line(text);
+    }
     text.split('\n')
         .map(condense_line)
         .collect::<Vec<_>>()
         .join("\n")
+        .into()
 }
 
 /// Does the line end in a backslash right after a closing bracket?
@@ -344,13 +348,17 @@ pub fn without_continuation(text: &str) -> &str {
 
 /// `text` with the lines after the first stripped of their leading blanks: what [`as_written_value`]
 /// with `reindent` changes of a variable's value.
-pub fn unindented(text: &str) -> String {
+pub fn unindented(text: &str) -> Cow<'_, str> {
+    if !text.contains('\n') {
+        return Cow::Borrowed(text);
+    }
     let mut lines = text.split('\n');
     let first = lines.next().unwrap_or_default();
     std::iter::once(first)
         .chain(lines.map(|l| l.trim_start_matches([' ', '\t'])))
         .collect::<Vec<_>>()
         .join("\n")
+        .into()
 }
 
 /// The backslashes at the end of `line`.
@@ -389,16 +397,16 @@ fn as_written_with(
         let raw = raw.trim_end_matches('\r');
         let inside = quoted && quote.is_some();
         quote = quote_after(raw, quote, '\\');
-        let raw = match &indent {
+        let raw: Cow<'_, str> = match &indent {
             Some(indent) if i > 0 && !inside && !raw.trim().is_empty() => {
                 let content = raw.trim_start_matches([' ', '\t']);
                 // (a line of only the backslash gets the blank before it too)
                 let gap = if content == "\\" { " " } else { "" };
-                format!("{indent}{gap}{content}")
+                Cow::Owned(format!("{indent}{gap}{content}"))
             }
-            _ => raw.to_string(),
+            _ => Cow::Borrowed(raw),
         };
-        let raw = raw.as_str();
+        let raw = raw.as_ref();
         let trimmed = raw.trim_end_matches([' ', '\t']);
         let condense_recipe = quoted && i > 0 && !inside && quote.is_none();
         let line = match value {
@@ -432,6 +440,9 @@ fn as_written_with(
     // next statement would be swallowed.
     if continues(text) {
         parts.push(doc::line_start(""));
+    }
+    if parts.len() == 1 {
+        return parts.remove(0);
     }
     doc::concat(parts)
 }
