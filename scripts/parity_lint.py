@@ -5,8 +5,10 @@ Usage: parity_lint.py <tool> <sudsy-binary> <target-dir> [--coverage]
 The tool's version, install and corpora come from its entry in parity_tools.json (parity_format.prepare).
 """
 import collections
+import functools
 import json
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -763,6 +765,7 @@ def coverage(tool, sudsy, version, prefix, exe):
 
     examples = {}
     raw, uncovered = [], set()  # the diagnostics of the last run; the files with a finding of the tool that counts and is not covered
+    halves = {"deciding": [0, 0], "held out": [0, 0]}  # `split` of the entry: findings and covered ones of each half of the projects
     zero = [0, 0, 0]  # findings the tool reports at line 0 (no line): all, those a file-level report covers, those any report in the file has
     filehits = [0]  # the audit: findings with a report of the mapped rule anywhere in the file
     offsets = {}  # upstream rule -> Counter(Sudsy line minus tool line) of the findings reported on another line
@@ -791,6 +794,10 @@ def coverage(tool, sudsy, version, prefix, exe):
             last = instruction_end(work / file, line, instruction["continuation"]) if instruction and rule.startswith(instruction["rule_prefix"]) and line else line
             on_line = any(line <= l <= last for _, l in reports) if line is not None else False  # a finding at line 0 is a file-level one: only a file-level report of the mapped rule covers it
             row[1] += on_line
+            half = split_half(spec, file)
+            if half:
+                halves[half][0] += 1
+                halves[half][1] += on_line
             zero[0] += line == 0
             zero[1] += line == 0 and on_line
             zero[2] += line == 0 and any(l for _, l in reports)
@@ -866,9 +873,31 @@ def coverage(tool, sudsy, version, prefix, exe):
         why = "left after `sudsy format` (formatter or a preset option)" if rule in leftover else f"rule {mapping[rule]} covers {per[rule][1]} of {per[rule][0]}" if rule in mapping else "no Sudsy rule"
         print(f"  {n} {rule}: {why}; e.g. {', '.join(places[rule][:3])}")
     print(target_line(tool, per, hit, total, owned, prefixed, sum(wrong.values())))
+    for name, (n, covered) in halves.items():
+        if n:
+            print(f"  {name} projects: {covered} of {n} ({round(1000 * covered / n) / 10}%)")
     print(f"{tool} {version}: {len(per)} rules in {len(names) - len(fatal)} files, preset:{preset}")
     target = target_numbers(tool, per, hit, total, owned, prefixed, sum(wrong.values()))
     return ratchet(tool, folder, target[0]) | missed_check(tool, folder, per, hit, target[1], leftover, wrong, prefixed)
+
+
+@functools.lru_cache(maxsize=None)
+def deciding_projects(key):
+    """The deciding half of the projects of a corpus (`key`: JSON of the entry's `corpus`, `seed` and `project`): a shuffle of the sorted project
+    names with the seed, as scripts/evidence.py; `project` is the index of the project in a file's path."""
+    spec = json.loads(key)
+    names = sorted({name.split("/")[spec["project"]] for name, _ in parity_coverage.corpus_files(spec, collections.Counter())})
+    random.Random(spec["seed"]).shuffle(names)
+    return frozenset(names[:len(names) // 2 + len(names) % 2])
+
+
+def split_half(spec, file):
+    """`deciding` or `held out`: the half of the corpus's projects that `file` belongs to under the entry's `split`, else None."""
+    split = (spec or {}).get("split")
+    if not split:
+        return None
+    key = json.dumps({"corpus": spec["corpus"], **split})
+    return "deciding" if file.split("/")[split["project"]] in deciding_projects(key) else "held out"
 
 
 def leave_out_not_comparable(found, reviewed):

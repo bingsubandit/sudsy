@@ -1,10 +1,10 @@
 """Findings of an upstream tool on its corpus for the generic coverage mode (scripts/parity_lint.py `coverage`).
 
 A tool entry of parity_tools.json has a `coverage` object (docs/ai/development/parity.md#coverage-mode):
-`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `reference_parser` (a command with `{file}` that exits non-zero on a syntax error: a file Sudsy rejects and it rejects too is invalid, as a marked one), `parse_error` (the rule id the tool reports for a file it cannot parse, with the same effect), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
+`corpus` (sources: `dir` below the repo root, `glob` patterns, `skip` substrings of the path inside `dir`, `per_dir` (the first N files by path of each top folder of `dir`), `esm` `[module, script]` suffixes by content (ESLint), `invalid_marker` (the file name next to an input that marks it invalid: the proof run leaves those out when Sudsy rejects them), `reference_parser` (a command with `{file}` that exits non-zero on a syntax error: a file Sudsy rejects and it rejects too is invalid, as a marked one), `parse_error` (the rule id the tool reports for a file it cannot parse, with the same effect), `as` the folder `dir` is copied to (default: its own name), `into` a folder the files are copied into flat: the one a language is found by), `command`
 (`{exe}`, `{prefix}`, `{group}` and `{files}`), `group` (a regex over the file's path: files of one group run in one
 command; `cwd: group` runs it in the folder `group` names), `chunk` (files per command), `ok_codes` (exit codes with an empty report meaning no findings), `timeout` (seconds) and `memory_gb` (address space) per command, `env`, `stream` (`stdout` or `stderr`: where the report is), `files` (config files
-written next to the corpus), `group_files` (config files written into the folder of each group, `{group}` and `{prefix}` replaced: a project's own config; a file whose value is a dict maps a group to its text and is written for those groups only), `parse` (how the report turns into findings) and `sudsy` (the Sudsy side's config).
+written next to the corpus), `group_files` (config files written into the folder of each group, `{group}` and `{prefix}` replaced: a project's own config; a file whose value is a dict maps a group to its text and is written for those groups only), `parse` (how the report turns into findings; `cell`: the finding's cell of a notebook, its line is a row of that cell and is read as the line of the notebook file, scripts/parity_notebook.py) and `sudsy` (the Sudsy side's config).
 """
 import json
 import os
@@ -17,6 +17,8 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
+import parity_notebook
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -25,11 +27,14 @@ def corpus_files(spec, filters):
     out = []
     for source in spec["corpus"]:
         base = ROOT / source["dir"]
+        seen = Counter()
         for pattern in source["glob"]:
             for p in sorted(base.rglob(pattern)):
                 inside = p.relative_to(base).as_posix()
                 if p.is_file() and any(s in inside for s in source.get("skip", [])):
                     filters["skip"] += 1
+                elif p.is_file() and "per_dir" in source and seen.update([inside.split("/")[0]]) is None and seen[inside.split("/")[0]] > source["per_dir"]:  # the first N files by path of each top folder (a project)
+                    filters["per_dir"] += 1
                 elif p.is_file():
                     name = f"{source['as']}/{inside}" if "as" in source else p.relative_to(base.parent).as_posix()
                     if "suffix" in source and not name.endswith(source["suffix"]):  # the tool and Sudsy read the file by its name (`*.component.html` is Angular)
@@ -63,7 +68,7 @@ def walk(node, levels, chain):
         yield from walk(item, levels[1:], chain + [item])
 
 
-def parse(output, spec, rules):
+def parse(output, spec, rules, base=None):
     """`[(file, rule, message, line)]` of a report (`line` is None when the entry gives none). `regex`: one finding per matching line (groups `file`, `rule`,
     `message`, and `line`). `json` and `jsonl`: `levels` name the lists to walk (`""` the report itself; `files*` an object
     whose members are the elements), `file`, `rule` and `message` are `<level>.<keys>` and `rule_fn` names a
@@ -80,7 +85,11 @@ def parse(output, spec, rules):
         data = [json.loads(line) for line in output.splitlines() if line.startswith("{")] if spec["format"] == "jsonl" else json.loads(output) if output.strip() else []
         for chain in walk(data, spec["levels"], []):
             rule = rules[spec["rule_fn"]](chain[-1]) if "rule_fn" in spec else str(ref(chain, spec["rule"]))
-            found.append((str(ref(chain, spec["file"])), rule, str(ref(chain, spec["message"]) or ""), ref(chain, spec["line"]) if "line" in spec else None))
+            line = ref(chain, spec["line"]) if "line" in spec else None
+            file = str(ref(chain, spec["file"]))
+            if "cell" in spec and line is not None and ref(chain, spec["cell"]) is not None:  # a notebook: the row is of a cell, the line is of the file
+                line = parity_notebook.host_line(Path(base, file).read_text(encoding="utf-8"), ref(chain, spec["cell"]), int(line))
+            found.append((file, rule, str(ref(chain, spec["message"]) or ""), line))
     out = []
     for file, rule, message, line in found:
         for pattern, sub in spec.get("rule_message", {}).items():  # one upstream rule reports as the sub-rule whose message it is
@@ -196,7 +205,7 @@ def findings(tool, spec, prefix, work, exe, rules, copy=True):
                 skipped += names[i:i + size] if "{files}" in spec["command"] else names
                 continue
             try:
-                found += [(norm(f if os.path.isabs(f) or not folder else f"{folder}/{f}", work), r, m, n) for f, r, m, n in parse(report, spec["parse"], rules)]
+                found += [(norm(f if os.path.isabs(f) or not folder else f"{folder}/{f}", work), r, m, n) for f, r, m, n in parse(report, spec["parse"], rules, work / folder)]
             except (json.JSONDecodeError, KeyError, ValueError) as error:
                 raise SystemExit(f"{tool}: no usable report ({error}):\n{report[:500]}\n{stderr[:500]}")
     print(f"input filters: skip {filters['skip']}, the tool did not finish (time or memory limit, or a crash) {len(skipped)}")

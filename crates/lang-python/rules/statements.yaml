@@ -66,3 +66,17 @@ rule:
   any:
     - { pattern: 'raise NotImplemented' }
     - { pattern: 'raise NotImplemented($$$ARGS)' }
+---
+id: manual-from-import
+message: use a from-import in lieu of the alias that repeats the last part of the module name
+description: >-
+  Reports `import a.b as b`, an alias that repeats the last part of the module's name.
+why: >-
+  `from a import b` binds the same name and says so in the usual form.
+
+  To fix, write the `from` import.
+example: 'import os.path as path'
+severity: off
+category: style
+rule:
+  pattern: 'import $$$P.$M as $M'

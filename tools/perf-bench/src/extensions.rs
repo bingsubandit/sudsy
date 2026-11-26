@@ -100,6 +100,7 @@ pub(crate) fn context<'a>(provider: &'a dyn LanguageProvider, p: &'a Parsed) -> 
         body_kinds: provider.body_kinds(),
         hooks: provider.rule_hooks(),
         embedded: &p.embedded,
+        cells: &[], // base-lacks: a field the baseline tree does not have yet
         semantics: None,
     }
 }

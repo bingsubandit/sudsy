@@ -14,6 +14,7 @@
 pub mod allowed_values;
 pub mod blank_lines;
 pub mod cases;
+pub mod cells;
 pub mod checks;
 pub mod clause_style;
 pub mod commands;

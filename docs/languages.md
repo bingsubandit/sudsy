@@ -224,7 +224,7 @@ The status and the numbers of every language are in the generated table "Languag
 <!-- generated:measured-jupyter-notebook -->
 - **Measured:** Ready.
   - Format, ruff format: 88% of the files identical (861 of 974 files).
-  - Lint: 22 rules, no reference tool to compare with.
+  - Lint, ruff: 88% of its findings also reported (2,999 of 3,390 findings).
 <!-- /generated -->
 
 - Config section: `jupyter`, on top of `json`.

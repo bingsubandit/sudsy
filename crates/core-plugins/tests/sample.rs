@@ -145,6 +145,7 @@ fn the_project_phase_runs_in_the_plugin() {
             body_kinds: &[],
             hooks: provider.rule_hooks(),
             embedded: &[],
+            cells: &[],
             semantics: None,
         };
         facts.extend(&run_file(&file, &active, true).facts);

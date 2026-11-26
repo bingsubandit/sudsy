@@ -63,6 +63,7 @@ fn with_context<R>(
         body_kinds: provider.body_kinds(),
         hooks: provider.rule_hooks(),
         embedded: &[],
+        cells: &[],
         semantics: None,
     };
     Ok(Some(f(&context)))

@@ -16575,7 +16575,14 @@
         "js",
         "python"
       ],
-      "options": [],
+      "options": [
+        {
+          "default": true,
+          "description": "In a notebook cell, leave the last statement of the cell alone: the notebook shows its value.",
+          "name": "except_cell_tail",
+          "type": "bool"
+        }
+      ],
       "presets": [
         "js/eslint-recommended",
         "js/typescript-eslint-recommended",
@@ -23952,6 +23959,48 @@
     {
       "category": "style",
       "default_level": "off",
+      "description": "Reports `import a.b as b`, an alias that repeats the last part of the module's name.",
+      "example": {
+        "config": null,
+        "fixed": null,
+        "input": "import os.path as path\nimport a.b.c as c\nimport os.path as p\nimport os as os\nfrom a import b as b\nimport a.b\n",
+        "language": "python",
+        "other_lines": [],
+        "spans": [
+          {
+            "column": 1,
+            "length": 22,
+            "line": 1
+          },
+          {
+            "column": 1,
+            "length": 17,
+            "line": 2
+          }
+        ]
+      },
+      "fix": null,
+      "id": "manual-from-import",
+      "languages": [
+        "python"
+      ],
+      "options": [],
+      "presets": [
+        "python/ruff"
+      ],
+      "upstream": [
+        {
+          "id": "PLR0402",
+          "partial": false,
+          "tool": "ruff",
+          "url": "https://docs.astral.sh/ruff/rules/PLR0402/"
+        }
+      ],
+      "why": "`from a import b` binds the same name and says so in the usual form.\n\nTo fix, write the `from` import."
+    },
+    {
+      "category": "style",
+      "default_level": "off",
       "description": "Reports an import at module level after code. Docstrings, `__all__`, blocks (`if`, `try`) and `sys.path` or `os.environ` setup do not count as code.",
       "example": {
         "config": null,
@@ -27004,47 +27053,14 @@
       "example": {
         "config": null,
         "fixed": null,
-        "input": "def f():\n    a, b = g()\n    return a\n\nclass A:\n    x = []\n\nimport os as os\n\ndef f(a):\n    with g() as a:\n        pass\n\nx = [\"a\" \"b\", \"c\"]\n\n__all__ = [\"b\", \"a\"]\n\nclass A:\n    __slots__ = (\"b\", \"a\")\n\nimport sys\nimport os\n\nimport functools\nclass A:\n    @functools.cache\n    def f(self):\n        pass\n\ndef f(x=list()):\n    pass\n\nimport subprocess\nsubprocess.run([\"ls\"])\n\na = b = \"x\"\nx = \", \".join([a, b])\n\nx = \"%s\" % y\n\nx = \"{}\".format(y)\n\nimport re\nx = re.compile(\"a\", re.I)\n",
+        "input": "import os \n",
         "language": "python",
-        "other_lines": [
-          2,
-          6,
-          10,
-          11,
-          14,
-          16,
-          18,
-          19,
-          22,
-          25,
-          26,
-          30,
-          34,
-          37,
-          39,
-          41,
-          44
-        ],
+        "other_lines": [],
         "spans": [
           {
             "column": 1,
-            "length": 15,
-            "line": 8
-          },
-          {
-            "column": 1,
-            "length": 1,
-            "line": 21
-          },
-          {
-            "column": 1,
-            "length": 17,
-            "line": 33
-          },
-          {
-            "column": 1,
             "length": 9,
-            "line": 43
+            "line": 1
           }
         ]
       },
@@ -27343,7 +27359,14 @@
       "languages": [
         "python"
       ],
-      "options": [],
+      "options": [
+        {
+          "default": true,
+          "description": "In a notebook cell, leave the last statement of the cell alone: the notebook shows its value.",
+          "name": "except_cell_tail",
+          "type": "bool"
+        }
+      ],
       "presets": [],
       "upstream": [
         {

@@ -187,10 +187,10 @@ impl<L: ImportLang> Rule for Imports<L> {
             return;
         }
         let first = entry::item(node);
-        if !entry::starts_run(&first, g) {
+        if !entry::starts_run(&first, g, ctx.file.cells) {
             return;
         }
-        let run = entry::run(&first, g);
+        let run = entry::run(&first, g, ctx.file.cells);
         match self.report {
             Report::Misplaced => self.misplaced(&run, ctx),
             Report::OutsideScope => {}

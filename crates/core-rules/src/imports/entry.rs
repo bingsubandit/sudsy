@@ -6,8 +6,9 @@
 //! tools: isort, google-java-format, ktlint import-ordering, StyleCop SA1210, PHP-CS-Fixer ordered_imports, buf format
 //! reads: family:imports, grammar:imports
 
+use crate::cells::same_cell;
 use crate::tree::{code_start, is_code};
-use core_syntax::{Grammar, SyntaxElement, SyntaxNode};
+use core_syntax::{Grammar, SyntaxElement, SyntaxNode, TextRange};
 
 /// One imported path (a statement with several, `import a, b`, is several entries).
 #[derive(Debug)]
@@ -61,13 +62,16 @@ fn skipped(kind: core_syntax::SyntaxKind, g: &Grammar) -> bool {
 }
 
 /// Is `item` the first of a run of import statements (the node before it, with only trivia
-/// between, is not one)?
-pub fn starts_run(item: &SyntaxNode, g: &Grammar) -> bool {
+/// between, is not one in the same cell of `cells`)?
+pub fn starts_run(item: &SyntaxNode, g: &Grammar, cells: &[TextRange]) -> bool {
     let mut prev = item.prev_sibling_or_token();
     while let Some(p) = prev {
         match &p {
             SyntaxElement::Token(t) if skipped(t.kind(), g) => prev = p.prev_sibling_or_token(),
-            SyntaxElement::Node(n) => return !is_import(n, g),
+            SyntaxElement::Node(n) => {
+                return !is_import(n, g)
+                    || !same_cell(cells, code_start(n, g), code_start(item, g));
+            }
             _ => return true,
         }
     }
@@ -83,13 +87,18 @@ pub fn is_import(node: &SyntaxNode, g: &Grammar) -> bool {
 }
 
 /// The run of import statements that starts at `first`.
-pub fn run(first: &SyntaxNode, g: &Grammar) -> Vec<SyntaxNode> {
+pub fn run(first: &SyntaxNode, g: &Grammar, cells: &[TextRange]) -> Vec<SyntaxNode> {
     let mut out = vec![first.clone()];
     let mut next = first.next_sibling_or_token();
     while let Some(n) = next {
         match &n {
             SyntaxElement::Token(t) if skipped(t.kind(), g) => {}
-            SyntaxElement::Node(node) if is_import(node, g) => out.push(node.clone()),
+            SyntaxElement::Node(node)
+                if is_import(node, g)
+                    && same_cell(cells, code_start(first, g), code_start(node, g)) =>
+            {
+                out.push(node.clone())
+            }
             _ => break,
         }
         next = n.next_sibling_or_token();

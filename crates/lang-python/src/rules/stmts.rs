@@ -523,7 +523,7 @@ pub(super) fn invalid_syntax(c: &Check, n: &SyntaxNode, ctx: &mut RuleContext<'_
                 .ancestors()
                 .skip(1)
                 .find(|a| matches!(a.kind(), k::STMT_FUNCTION_DEF | k::EXPR_LAMBDA))
-                .is_none_or(|f| {
+                .map_or(ctx.file.cells.is_empty(), |f| {
                     f.kind() == k::EXPR_LAMBDA
                         || !super::tree::tokens(&f).any(|t| t.kind() == k::ASYNC)
                 });

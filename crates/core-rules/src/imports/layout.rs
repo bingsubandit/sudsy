@@ -213,10 +213,10 @@ pub fn sort_edits(
             continue;
         }
         let first = item(&node);
-        if !starts_run(&first, g) {
+        if !starts_run(&first, g, &[]) {
             continue;
         }
-        let nodes = entry::run(&first, g);
+        let nodes = entry::run(&first, g, &[]);
         let entries = entry::entries(&nodes, source, g);
         if entries.len() != nodes.len() || (!order.keep_comments && has_comment(&nodes, source, g))
         {

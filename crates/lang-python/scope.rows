@@ -4,6 +4,8 @@ names Name Star
 dynamic locals
 globals-if init __path__
 flavor init __init__.py
+flavor notebook .ipynb
+globals-if notebook display get_ipython
 scope-name StmtClassDef __module__ __qualname__ __class__
 ordered exports=__all__ pragma=__future__ guard=NameError overload=typing.overload overload=typing_extensions.overload ignored=__tracebackhide__ ignored=__traceback_info__ ignored=__traceback_supplement__ value-form=Literal note-form=Annotated quoted
 // Typing generics and builtin collections: a string in their subscript is a type.

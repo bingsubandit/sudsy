@@ -92,6 +92,8 @@ base_src() {
   [ -e "$src_base/.git" ] && git -C "$src_base" checkout -q -f --detach "$base" 2>/dev/null \
     || { rm -rf "$src_base"; git worktree prune; git worktree add -q --detach "$src_base" "$base"; }
   rm -rf "$src_base/tools/perf-bench"; cp -r tools/perf-bench "$src_base/tools/perf-bench"
+  # Lines marked `base-lacks` use an API the baseline does not have yet: the baseline build drops them.
+  grep -rl "// base-lacks" "$src_base/tools/perf-bench" | xargs -r sed -i "/\/\/ base-lacks/d"
   base_ready=1
 }
 

@@ -134,6 +134,9 @@ pub struct FileContext<'a> {
     /// The parsed code of other languages in the file, for rules that read it (a Dockerfile's
     /// `RUN` as shell).
     pub embedded: &'a [EmbeddedTree],
+    /// The cells of a notebook whose code this is, in order, each with the line break after it:
+    /// a notebook's cells are one program, and its rules start afresh at a cell. Empty for a file.
+    pub cells: &'a [TextRange],
 }
 
 /// The formatter's side of a file for [`Rule::formats`] rules: its options.

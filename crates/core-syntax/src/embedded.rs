@@ -38,6 +38,9 @@ pub struct Embedded {
     /// Option values the host sets for the code's language (`dialect` `ipython`), as the config
     /// would write them.
     pub settings: Vec<(String, String)>,
+    /// The code is a cell of a notebook: the cells of one language in a file are one program for
+    /// the language's rules (names and imports cross cells), with the cells as its parts.
+    pub cell: bool,
 }
 
 impl Embedded {
@@ -68,6 +71,7 @@ impl Embedded {
             lint: true,
             escaped: None,
             settings: Vec::new(),
+            cell: false,
         }
     }
 

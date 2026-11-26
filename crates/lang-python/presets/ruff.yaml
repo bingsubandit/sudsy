@@ -103,6 +103,7 @@ python:
       unused-unpacked-variable: warn
       unused-variable: warn
       no-useless-expression: warn
+      manual-from-import: warn
       useless-import-alias: warn
       useless-object-inheritance: warn
       verbose-raise: warn

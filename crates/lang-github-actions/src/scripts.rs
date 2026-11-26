@@ -31,18 +31,14 @@ static SCRIPTS: KeyEmbeds = KeyEmbeds {
             ],
             guess: Some(("jobs.$1.runs-on", "windows", "powershell")),
             language: "shell",
-            when: None,
-            settings: &[],
-            unless: None,
+            ..KeyEmbed::NONE
         },
         KeyEmbed {
             path: "runs.steps.*.run",
             words: &["runs.steps.$1.shell", "defaults.run.shell"],
             guess: None,
             language: "shell",
-            when: None,
-            settings: &[],
-            unless: None,
+            ..KeyEmbed::NONE
         },
         KeyEmbed {
             path: "jobs.*.steps.*.with.script",
@@ -50,8 +46,7 @@ static SCRIPTS: KeyEmbeds = KeyEmbeds {
             guess: None,
             language: "",
             when: Some(("jobs.$1.steps.$2.uses", "actions/github-script")),
-            settings: &[],
-            unless: None,
+            ..KeyEmbed::NONE
         },
         KeyEmbed {
             path: "runs.steps.*.with.script",
@@ -59,8 +54,7 @@ static SCRIPTS: KeyEmbeds = KeyEmbeds {
             guess: None,
             language: "",
             when: Some(("runs.steps.$1.uses", "actions/github-script")),
-            settings: &[],
-            unless: None,
+            ..KeyEmbed::NONE
         },
     ],
     languages: &[
@@ -71,9 +65,7 @@ static SCRIPTS: KeyEmbeds = KeyEmbeds {
     plain: "Plain",
     block_header: "BlockHeader",
     literal: "|",
-    escaped: false,
-    format: false,
-    foreign: None,
+    ..KeyEmbeds::NONE
 };
 
 /// Every `run` script of the steps of the workflow's jobs and of a composite action, as regions;

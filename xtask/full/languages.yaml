@@ -448,9 +448,6 @@
   parser: ~1.2 # tree-sitter: tree-sitter/tree-sitter-julia (130 stars, pushed 2025-11)
   format: {tool: "JuliaFormatter.jl", gain: ~0.7, cost: {layout: width, parts: 1, est: true}, why: "the formatter of the Julia VS Code extension, 649 stars; Runic.jl 261 stars; Julia runtime, slow start; width-based"}
   lint: {tool: "StaticLint.jl", gain: ~0.7, cost: {index: true, est: true}, why: "only tool found; Julia runtime; scope analysis; some rules need semantics; archived"}
-- language: Jupyter Notebook
-  note: "JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md"
-  lint: {tool: "ruff check on cells", gain: ~0.4, cost: {parts: 4, est: true}, why: "ruff default set: 87.9% covered with cells as one module; needs last-expression, per-cell import, await and builtins rules"}
 - language: Just
   parser: ~1.2 # tree-sitter: casey/tree-sitter-just (198 stars, pushed 2026-03)
   format: {tool: "just --fmt", gain: ~0.1, cost: {est: true}, why: "only tool found; official, Rust; marked unstable; canonical, no width"}

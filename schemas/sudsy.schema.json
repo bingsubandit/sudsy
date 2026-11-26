@@ -2845,6 +2845,10 @@
               "$ref": "#/definitions/rule",
               "description": "Reports a `<title>` longer than 70 characters."
             },
+            "manual-from-import": {
+              "$ref": "#/definitions/rule",
+              "description": "Reports `import a.b as b`, an alias that repeats the last part of the module's name."
+            },
             "map-dup-name": {
               "$ref": "#/definitions/rule",
               "description": "Reports a `<map>` whose `name` an earlier `<map>` already has."
@@ -4928,8 +4932,35 @@
               "description": "Reports a backslash before a character that needs no escape, in a string (`'\\d'`), a template literal or a regex literal (`/\\-/`, `/\\_/`)."
             },
             "no-useless-expression": {
-              "$ref": "#/definitions/rule",
-              "description": "Reports an expression statement whose value is thrown away and that has no effect of its own: a name, a literal, a member access or an operator expression (`x + y;`, `x.y;`, `-x;`, `x ? y : z;`)."
+              "description": "Reports an expression statement whose value is thrown away and that has no effect of its own: a name, a literal, a member access or an operator expression (`x + y;`, `x.y;`, `-x;`, `x ? y : z;`).",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "except_cell_tail": {
+                          "default": true,
+                          "description": "In a notebook cell, leave the last statement of the cell alone: the notebook shows its value.",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "no-useless-mustaches": {
               "$ref": "#/definitions/rule",
@@ -7843,8 +7874,35 @@
               "description": "Reports a class that has the builtin `object` as a base."
             },
             "useless-semicolon": {
-              "$ref": "#/definitions/rule",
-              "description": "Reports a `;` at the end of a line."
+              "description": "Reports a `;` at the end of a line.",
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/level"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "$ref": "#/definitions/level"
+                    },
+                    "options": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "except_cell_tail": {
+                          "default": true,
+                          "description": "In a notebook cell, leave the last statement of the cell alone: the notebook shows its value.",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "useless-times": {
               "$ref": "#/definitions/rule",

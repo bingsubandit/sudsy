@@ -336,8 +336,8 @@ pub fn misplaced<L: ImportLang>(
     let wrong = match written::<L>(run, text, path, g, style, indent) {
         Err(flag) => flag,
         Ok(lines) => {
-            let actual = text[line_start..line_end].lines().map(str::trim_end);
-            let same = actual.eq(lines.iter().map(|l| l.trim_end()));
+            let actual = text[line_start..line_end].lines();
+            let same = actual.eq(lines.iter().map(String::as_str));
             let parent = first.parent()?;
             let at_top = parent.parent().is_none();
             let next = last.next_sibling();

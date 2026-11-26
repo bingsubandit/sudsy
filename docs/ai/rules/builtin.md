@@ -310,7 +310,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `no-unsafe-negation` | js | suspicious | error | none | Reports `!a in b` and `!a instanceof B`, where the `!` is written without parentheses on the left operand. Equivalent: eslint no-unsafe-negation (partial). |
 | `no-useless-catch` | js | suspicious | off | none | Reports a `catch` clause whose only statement is `throw` of the caught error, as in `catch (e) { throw e; }`. Equivalent: eslint no-useless-catch. |
 | `no-useless-escape` | js, json | suspicious | off | none | Reports a backslash before a character that needs no escape, in a string (`'\d'`), a template literal or a regex literal (`/\-/`, `/\_/`). Equivalent: eslint no-useless-escape (partial), eslint-plugin-jsonc jsonc/no-useless-escape (partial). |
-| `no-useless-expression` | js, python | suspicious | off | none | Reports an expression statement whose value is thrown away and that has no effect of its own: a name, a literal, a member access or an operator expression (`x + y;`, `x.y;`, `-x;`, `x ? y : z;`). Equivalent: eslint no-unused-expressions (partial), ruff B018, typescript-eslint no-unused-expressions (partial). |
+| `no-useless-expression` | js, python | suspicious | off | none | Reports an expression statement whose value is thrown away and that has no effect of its own: a name, a literal, a member access or an operator expression (`x + y;`, `x.y;`, `-x;`, `x ? y : z;`). Options: `except_cell_tail` (default `true`): In a notebook cell, leave the last statement of the cell alone: the notebook shows its value. Equivalent: eslint no-unused-expressions (partial), ruff B018, typescript-eslint no-unused-expressions (partial). |
 | `no-var` | js | style | off | none | Reports a `var` declaration (also `declare var` in TypeScript). Equivalent: eslint no-var. |
 | `no-with` | js | suspicious | error | none | Reports a `with` statement. Equivalent: eslint no-with. |
 | `no-wrapper-object-types` | js | suspicious | off | none | Reports the global types `BigInt`, `Boolean`, `Number`, `Object`, `String` and `Symbol` used as type names. Equivalent: typescript-eslint no-wrapper-object-types. |
@@ -458,6 +458,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `is-literal` | python | correctness | warn | none | Reports an identity test (`is` or `is not`) with a string, bytes or number literal, a list, set, dict or comprehension, or a tuple of constants. Equivalent: ruff F632. |
 | `lambda-assignment` | python | style | off | none | Reports a lambda assigned to a single name. Equivalent: ruff E731. |
 | `late-future-import` | python | correctness | warn | none | Reports a `from __future__` import that comes after other statements. Equivalent: ruff F404. |
+| `manual-from-import` | python | style | off | none | Reports `import a.b as b`, an alias that repeats the last part of the module's name. Equivalent: ruff PLR0402. |
 | `module-import-not-at-top-of-file` | python | style | off | none | Reports an import at module level after code. Equivalent: ruff E402. |
 | `multiple-imports-on-one-line` | python | style | off | none | Reports an `import` that names several modules, as in `import os, sys`. Equivalent: ruff E401. |
 | `multiple-starred-expressions` | python | correctness | warn | none | Reports an assignment target with two starred names, such as `a, *b, *c = x`. Equivalent: ruff F622. |
@@ -521,7 +522,7 @@ Twenty-four rules read the `///` and `/** */` comment of a declaration (StyleCop
 | `unused-unpacked-variable` | python | suspicious | off | none | Reports a name of a tuple target in a function that the function never reads. Equivalent: ruff RUF059. |
 | `useless-import-alias` | python | style | off | none | Reports `import a as a` and `from m import a as a`. Equivalent: ruff PLC0414. |
 | `useless-object-inheritance` | python | style | off | none | Reports a class that has the builtin `object` as a base. Equivalent: ruff UP004. |
-| `useless-semicolon` | python | style | off | none | Reports a `;` at the end of a line. Equivalent: ruff E703. |
+| `useless-semicolon` | python | style | off | none | Reports a `;` at the end of a line. Options: `except_cell_tail` (default `true`): In a notebook cell, leave the last statement of the cell alone: the notebook shows its value. Equivalent: ruff E703. |
 | `verbose-raise` | python | style | off | none | Reports `raise e` in an `except ... as e` clause. Equivalent: ruff TRY201. |
 | `yield-outside-function` | python | correctness | warn | none | Reports a `yield`, `yield from` or `await` outside a function. Equivalent: ruff F704. |
 | `zip-without-explicit-strict` | python | suspicious | off | none | Reports a call of `zip` with several arguments (or a starred one) and no `strict` keyword, for a `target_version` of 3.10 and later. Equivalent: ruff B905. |

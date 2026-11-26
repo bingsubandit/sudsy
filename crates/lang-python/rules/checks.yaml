@@ -229,7 +229,7 @@ category: correctness
 ---
 id: yield-outside-function
 family: simplify
-params: { check: jump-outside, jump: "yield await" }
+params: { check: jump-outside, jump: "yield await", in-cells: await }
 message: "`yield` or `await` outside of a function"
 description: >-
   Reports a `yield`, `yield from` or `await` outside a function.
@@ -382,6 +382,8 @@ why: >-
 example: "a = 1;"
 severity: off
 category: style
+options:
+  - { name: except_cell_tail, type: bool, default: true, description: "In a notebook cell, leave the last statement of the cell alone: the notebook shows its value." }
 ---
 id: ambiguous-variable-name
 family: scope

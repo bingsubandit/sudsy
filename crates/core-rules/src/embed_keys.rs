@@ -36,6 +36,19 @@ pub struct KeyEmbed {
     pub unless: Option<&'static str>,
 }
 
+impl KeyEmbed {
+    /// A row with nothing set: the base of a row that sets only its path, words and language.
+    pub const NONE: KeyEmbed = KeyEmbed {
+        path: "",
+        words: &[],
+        guess: None,
+        language: "",
+        when: None,
+        settings: &[],
+        unless: None,
+    };
+}
+
 pub struct KeyEmbeds {
     pub rows: &'static [KeyEmbed],
     /// The language for the first word of a language word; any other word is no known language.
@@ -54,6 +67,24 @@ pub struct KeyEmbeds {
     /// Text that is not code of the row's language: a line that matches the first regex and not
     /// the second (a notebook's `%%bash` cell magic).
     pub foreign: Option<(&'static str, &'static str)>,
+    /// The regions are the cells of a notebook (`Embedded::cell`).
+    pub cells: bool,
+}
+
+impl KeyEmbeds {
+    /// A spec of scalars with nothing set: the base of a spec that sets its rows and what it takes out.
+    pub const NONE: KeyEmbeds = KeyEmbeds {
+        rows: &[],
+        languages: &[],
+        carve: "",
+        plain: "",
+        block_header: "",
+        literal: "",
+        escaped: false,
+        format: false,
+        foreign: None,
+        cells: false,
+    };
 }
 
 struct Reader<'a> {
@@ -389,5 +420,6 @@ fn escaped_region(
     )
     .with_escaped(escaped);
     region.format = spec.format;
+    region.cell = spec.cells;
     Some(region)
 }

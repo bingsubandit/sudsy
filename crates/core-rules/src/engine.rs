@@ -241,6 +241,7 @@ pub(crate) fn traverse(
     diagnostics.sort_by(|a, b| {
         (a.range.start(), a.range.end(), &a.rule).cmp(&(b.range.start(), b.range.end(), &b.rule))
     });
+    crate::cells::except_cell_tail(file, active, &mut diagnostics);
 
     let mut facts = ProjectFacts::default();
     if collect {

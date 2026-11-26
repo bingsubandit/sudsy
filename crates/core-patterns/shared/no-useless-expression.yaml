@@ -17,6 +17,8 @@ why: >-
 example: 'a + b;'
 severity: off
 category: suspicious
+options:
+  - { name: except_cell_tail, type: bool, default: true, description: "In a notebook cell, leave the last statement of the cell alone: the notebook shows its value." }
 rule:
   role: expression-statement
   fields:

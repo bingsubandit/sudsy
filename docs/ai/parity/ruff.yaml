@@ -527,7 +527,7 @@ entries:
   PLR0202: deferred | preview rule
   PLR0203: deferred | preview rule
   PLR0206: planned
-  PLR0402: planned
+  PLR0402: rule manual-from-import
   PLR0904: deferred | preview rule
   PLR0911: planned
   PLR0912: planned

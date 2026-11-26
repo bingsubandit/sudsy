@@ -146,6 +146,7 @@ pub fn layout(db: &dyn Db, file: File) -> Result<DirectiveTable, Failure> {
         body_kinds: provider.body_kinds(),
         hooks: provider.rule_hooks(),
         embedded: &[],
+        cells: &[],
         semantics: None,
     };
     run_layout(&context, &active).map_err(|e| Failure::message(Stage::Format, e))
@@ -272,6 +273,7 @@ fn lint_body(db: &dyn Db, file: File) -> Result<Linted, Failure> {
         body_kinds: provider.body_kinds(),
         hooks: &hooks,
         embedded: &trees,
+        cells: &[],
         semantics: data.map(|data| SemanticView {
             data,
             summaries: &summaries,

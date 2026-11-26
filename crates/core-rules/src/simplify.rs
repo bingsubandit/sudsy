@@ -11,8 +11,9 @@
 //!   `except-guard: true` leaves a test whose `if` only throws), `double-negation`,
 //!   `redundant-cast` (`!!x` or a call of one of the names in `calls` where a boolean is expected
 //!   anyway), `jump-outside` (param `jump`: `break`, `continue`, `return`, `yield` or `await`, or
-//!   several words of them; `inside` lists the tags a `break` may be in besides `loop`; a `yield`
-//!   is also outside in a comprehension), `identical-operands` (`a == a`: a `#binary`, or a
+//!   several words of them; `inside` lists the tags a `break` may be in besides `loop`; `in-cells`
+//!   the jumps a notebook cell may have outside a function (`await`); a `yield` is also outside in
+//!   a comprehension), `identical-operands` (`a == a`: a `#binary`, or a
 //!   `#call` of an operator method on an `object` with one argument; `operators` lists the
 //!   operators checked), `repeat-once` (a call of `method` on an integer of at most `max` with a
 //!   block, in the fields named by `with`: Ruby `0.times { }`), `constant-first` (a comparison
@@ -58,6 +59,7 @@ enum Check {
     Jump {
         jump: Vec<&'static str>,
         inside: Vec<String>,
+        in_cells: Vec<String>,
     },
     IdenticalOperands(Vec<String>),
     RepeatOnce {
@@ -142,6 +144,7 @@ fn build(meta: &'static RuleMeta, mut p: Params) -> Result<Box<dyn Rule>, String
                 Check::Jump {
                     jump: jump.clone(),
                     inside: words(&mut p, "inside"),
+                    in_cells: words(&mut p, "in-cells"),
                 },
                 jump,
             )
@@ -252,7 +255,13 @@ impl Rule for Simplify {
                 return;
             }
             Check::RedundantCast(calls) => redundant_cast(g, node, calls),
-            Check::Jump { jump, inside } => jump_outside(g, node, jump, inside).then(String::new),
+            Check::Jump {
+                jump,
+                inside,
+                in_cells,
+            } => (jump_outside(g, node, jump, inside)
+                && !(!ctx.file.cells.is_empty() && jump_in(g, node, in_cells)))
+            .then(String::new),
             Check::IdenticalOperands(operators) => identical_operands(g, node, ctx, operators),
             Check::RepeatOnce { method, max, with } => {
                 repeat_once(g, node, method, *max, with).then(String::new)
@@ -829,6 +838,11 @@ fn suspend_outside(g: &Grammar, n: &SyntaxNode) -> bool {
         }
     }
     true
+}
+
+/// Is the node one of the jumps `words` names?
+fn jump_in(g: &Grammar, n: &SyntaxNode, words: &[String]) -> bool {
+    words.iter().any(|w| g.has_tag(n.kind(), w))
 }
 
 fn jump_outside(g: &Grammar, n: &SyntaxNode, jump: &[&str], inside: &[String]) -> bool {
