@@ -27,6 +27,14 @@ fn measured(f: &mut dyn FnMut() -> usize) -> (usize, u64) {
 /// extension the folder would be named for.
 const WORKFLOWS: &str = "github-actions";
 
+/// Folders whose files a provider claims by the directory they stand in (the folder's name is not
+/// an extension): the directory.
+const DIRECTORIES: &[(&str, &str)] = &[(WORKFLOWS, ".github/workflows"), ("helm", "templates")];
+
+fn directory(lang: &str) -> Option<&'static str> {
+    DIRECTORIES.iter().find(|d| d.0 == lang).map(|d| d.1)
+}
+
 pub(crate) fn texts(lang: &str, dir: &Path) -> Result<Vec<(String, String)>> {
     let mut out = Vec::new();
     let mut names: Vec<_> = std::fs::read_dir(dir.join(lang))?
@@ -42,8 +50,8 @@ pub(crate) fn texts(lang: &str, dir: &Path) -> Result<Vec<(String, String)>> {
             // The provider claims only the file name `.editorconfig`: one folder per input.
             if lang == "editorconfig" {
                 format!("{}/.editorconfig", p.file_stem().unwrap().to_string_lossy())
-            } else if lang == WORKFLOWS {
-                format!(".github/workflows/{name}")
+            } else if let Some(dir) = directory(lang) {
+                format!("{dir}/{name}")
             } else {
                 name
             },
@@ -142,9 +150,9 @@ pub(crate) fn named_provider(language: &str) -> Box<dyn LanguageProvider> {
 /// The provider that claims files with the extension `lang`.
 pub(crate) fn make_provider(lang: &str) -> Result<Box<dyn LanguageProvider>> {
     // `.editorconfig` is claimed by file name, the others by extension, `Procfile` by its capitalised name.
-    let samples = match lang {
-        WORKFLOWS => vec![".github/workflows/bench.yml".to_string()],
-        _ => vec![
+    let samples = match directory(lang) {
+        Some(dir) => vec![format!("{dir}/bench.yml")],
+        None => vec![
             format!("bench.{lang}"),
             format!(".{lang}"),
             lang[..1].to_uppercase() + &lang[1..],

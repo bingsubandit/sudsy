@@ -71,6 +71,7 @@ tree-sitter-go = { path = "grammars/tree-sitter-go" }
 tree-sitter-groovy = { path = "grammars/tree-sitter-groovy" }
 tree-sitter-graphql = { path = "grammars/tree-sitter-graphql" }
 tree-sitter-hcl = "1.1"
+tree-sitter-gotmpl = { path = "grammars/tree-sitter-gotmpl" }
 tree-sitter-ini = { path = "grammars/tree-sitter-ini" }
 tree-sitter-make = { path = "grammars/tree-sitter-make" }
 tree-sitter-md = { version = "0.5", default-features = false }
@@ -119,6 +120,7 @@ lang-go = { path = "crates/lang-go", default-features = false }
 lang-gradle = { path = "crates/lang-gradle", default-features = false }
 lang-graphql = { path = "crates/lang-graphql", default-features = false }
 lang-hcl = { path = "crates/lang-hcl", default-features = false }
+lang-helm = { path = "crates/lang-helm", default-features = false }
 lang-ini = { path = "crates/lang-ini", default-features = false }
 lang-makefile = { path = "crates/lang-makefile", default-features = false }
 lang-markdown = { path = "crates/lang-markdown", default-features = false }

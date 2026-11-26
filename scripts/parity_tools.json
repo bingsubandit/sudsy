@@ -594,6 +594,7 @@
     "batchfile": {"fetch": ["tests/conformance/fetch-batchfile-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/batchfile", "glob": ["*.bat", "*.cmd"]}]},
     "gradle": {"fetch": ["tests/conformance/fetch-gradle-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/gradle", "glob": ["*.gradle"]}]},
     "procfile": {"fetch": ["tests/conformance/fetch-procfile-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/procfile", "glob": ["Procfile", "Procfile.*"]}]},
+    "helm": {"fetch": ["tests/conformance/fetch-helm-corpus.sh"], "place": "templates", "corpus": [{"dir": "tests/conformance/corpus/helm", "glob": ["templates/**/*.yaml", "templates/**/*.yml", "templates/**/*.tpl"]}]},
     "github-actions": {"fetch": ["tests/conformance/fetch-github-actions-corpus.sh"], "place": ".github/workflows", "corpus": [{"dir": "tests/conformance/corpus/github-actions", "glob": ["*.yml", "*.yaml"]}]},
     "ini": {"fetch": ["tests/conformance/fetch-ini-corpus.sh"], "corpus": [{"dir": "tests/conformance/corpus/ini", "glob": ["*.ini", "*.cfg"]}]},
     "editorconfig": {"fetch": ["tests/conformance/fetch-editorconfig-corpus.sh"], "as": ".editorconfig", "corpus": [{"dir": "tests/conformance/corpus/editorconfig", "glob": ["*.editorconfig"]}]},

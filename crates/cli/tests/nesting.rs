@@ -48,6 +48,7 @@ const NESTED: &[(&str, &str, &str, &str, &str)] = &[
     ("batch", "a.bat", "", "(", ")"),
     ("mako", "a.mako", "", "<%def name=\"(\">", ")</%def>"),
     ("gradle", "build.gradle", "", "(", ")"),
+    ("helm", "templates/a.yaml", "a: {{ f ", "(", ")"),
 ];
 
 #[test]

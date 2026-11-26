@@ -39,6 +39,7 @@ lang-go.workspace = true
 lang-gradle.workspace = true
 lang-graphql.workspace = true
 lang-hcl.workspace = true
+lang-helm.workspace = true
 lang-ini.workspace = true
 lang-makefile.workspace = true
 lang-markdown.workspace = true
@@ -61,7 +62,7 @@ default = ["static-grammars"]
 # Pack mode (one CI job): the installed set, `languages` command and install prompts.
 pack-mode = ["dep:core-packs"]
 # generated:static-grammars
-static-grammars = ["lang-dockerfile/static-grammars", "lang-editorconfig/static-grammars", "lang-gitignore/static-grammars", "lang-go/static-grammars", "lang-gradle/static-grammars", "lang-graphql/static-grammars", "lang-hcl/static-grammars", "lang-ini/static-grammars", "lang-makefile/static-grammars", "lang-markdown/static-grammars", "lang-powershell/static-grammars", "lang-protobuf/static-grammars", "lang-shell/static-grammars", "lang-toml/static-grammars", "lang-xml/static-grammars"]
+static-grammars = ["lang-dockerfile/static-grammars", "lang-editorconfig/static-grammars", "lang-gitignore/static-grammars", "lang-go/static-grammars", "lang-gradle/static-grammars", "lang-graphql/static-grammars", "lang-hcl/static-grammars", "lang-helm/static-grammars", "lang-ini/static-grammars", "lang-makefile/static-grammars", "lang-markdown/static-grammars", "lang-powershell/static-grammars", "lang-protobuf/static-grammars", "lang-shell/static-grammars", "lang-toml/static-grammars", "lang-xml/static-grammars"]
 # /generated
 
 [lints]

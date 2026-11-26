@@ -18,6 +18,7 @@ tree-sitter-go = { workspace = true, optional = true }
 tree-sitter-groovy = { workspace = true, optional = true }
 tree-sitter-graphql = { workspace = true, optional = true }
 tree-sitter-hcl = { workspace = true, optional = true }
+tree-sitter-gotmpl = { workspace = true, optional = true }
 tree-sitter-ini = { workspace = true, optional = true }
 tree-sitter-make = { workspace = true, optional = true }
 tree-sitter-md = { workspace = true, optional = true }
@@ -37,6 +38,7 @@ go = ["dep:tree-sitter-go"]
 gradle = ["dep:tree-sitter-groovy"]
 graphql = ["dep:tree-sitter-graphql"]
 hcl = ["dep:tree-sitter-hcl"]
+helm = ["dep:tree-sitter-gotmpl"]
 ini = ["dep:tree-sitter-ini"]
 makefile = ["dep:tree-sitter-make"]
 markdown = ["dep:tree-sitter-md"]

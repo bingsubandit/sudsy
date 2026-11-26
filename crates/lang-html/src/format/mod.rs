@@ -133,7 +133,7 @@ impl NodeFormatter for MarkupFormatter {
         options: &core_config::ResolvedOptions,
     ) -> Result<(), String> {
         if !options.is(core_config::opt::DIALECT, "template-open")
-            || !crate::go_template::ACTIONS.occurs_in(&before.text().to_string())
+            || !core_syntax::template_actions::GO.occurs_in(&before.text().to_string())
         {
             return Ok(());
         }
@@ -351,7 +351,7 @@ impl NodeFormatter for MarkupFormatter {
                     .starts_with("template"),
                 keep_ends: match (
                     cx.options.is(core_config::opt::DIALECT, "template-open"),
-                    crate::go_template::ACTIONS.occurs_in(&src),
+                    core_syntax::template_actions::GO.occurs_in(&src),
                 ) {
                     (false, _) => print::KeepEnds::No,
                     (true, false) => print::KeepEnds::AtEof,

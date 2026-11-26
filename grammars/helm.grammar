@@ -1,0 +1,63 @@
+// Helm chart templates (Go `text/template` actions in YAML), parsed by tree-sitter (tree-sitter-gotmpl) and mapped by the mapping of crates/lang-helm/lang.yaml.
+// Format: see crates/core-syntax/src/grammar/mod.rs.
+// The text between actions is one `Text` token per run (its host YAML is left as written); an action is its delimiters and the tokens between them.
+
+language helm 33 "Helm template"
+comments block "/*" "*/"
+suppress disable-next-line "sudsy-disable-next-line"
+suppress disable-line "sudsy-disable-line"
+suppress disable "sudsy-disable"
+suppress enable "sudsy-enable"
+suppress disable-file "sudsy-disable-file"
+suppress ignore "sudsy-ignore"
+
+token Whitespace #trivia #whitespace
+token Newline #trivia #newline
+// `{{/* text */}}`: the comment between the delimiters.
+token Comment #trivia #comment
+
+// The text outside actions (the host YAML), whitespace and line breaks included. The layout may change its first and last blank lines and the blanks in front of an action (`HelmFormatter::value`).
+token Text #restyle
+// `{{` and `{{-` (the trim marker is followed by a blank, which belongs to the token).
+token Open
+// `}}` and `-}}`.
+token Close
+// `if else end range with define block template break continue`.
+token Keyword
+token Ident #operand
+token Boolean #literal #operand
+token Nil #literal #operand
+token Number #literal #operand
+token String #literal #string #operand
+token Dollar "$"
+token Dot "."
+token Pipe "|"
+token Assign "="
+token Declare ":="
+token LParen "(" #punctuation
+token RParen ")" #punctuation
+token Comma "," #punctuation
+
+token Eof
+token Unknown #error
+
+node Document #opaque
+node IfAction #opaque
+node WithAction #opaque
+node RangeAction #opaque
+node DefineAction #opaque
+node BlockAction #opaque
+node TemplateAction #opaque
+node BreakAction #opaque
+node ContinueAction #opaque
+node RangeVariableDefinition #opaque
+node VariableDefinition #opaque
+node Assignment #opaque
+node ChainedPipeline #opaque
+node ParenthesizedPipeline #opaque
+node MethodCall #opaque
+node FunctionCall #opaque
+node ArgumentList #opaque
+node SelectorExpression #opaque
+node Field #opaque
+node Variable #opaque

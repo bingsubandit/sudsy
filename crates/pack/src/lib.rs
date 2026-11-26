@@ -26,6 +26,7 @@ exports! {
     "gradle", sudsy_language, tree_sitter_groovy::LANGUAGE;
     "graphql", sudsy_language, tree_sitter_graphql::LANGUAGE;
     "hcl", sudsy_language, tree_sitter_hcl::LANGUAGE;
+    "helm", sudsy_language, tree_sitter_gotmpl::LANGUAGE;
     "ini", sudsy_language, tree_sitter_ini::LANGUAGE;
     "makefile", sudsy_language, tree_sitter_make::LANGUAGE;
     "markdown", sudsy_language, tree_sitter_md::LANGUAGE;

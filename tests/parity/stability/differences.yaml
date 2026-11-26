@@ -9,6 +9,7 @@ ratchet:
   editorconfig: 3
   gitignore: 118
   mako: 1034
+  helm: 3015
 target-files:
   procfile: 839
   batchfile: 719
@@ -20,3 +21,4 @@ target-files:
   editorconfig: 3
   gitignore: 118
   mako: 1036
+  helm: 3018

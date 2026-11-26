@@ -18,6 +18,7 @@ go
 graphql
 groovy
 handlebars
+helm
 hcl
 html
 ignore

@@ -119,6 +119,18 @@ pub fn check_corpus(
     corpus: &str,
     extensions: &[&str],
 ) -> (usize, Vec<String>) {
+    check_corpus_where(provider, file, corpus, extensions, |_| true)
+}
+
+/// [`check_corpus`] on the files whose path `keep` accepts (a corpus that holds files of the
+/// language's folders and others).
+pub fn check_corpus_where(
+    provider: impl LanguageProvider + 'static,
+    file: &'static str,
+    corpus: &str,
+    extensions: &[&str],
+    keep: impl Fn(&Path) -> bool,
+) -> (usize, Vec<String>) {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/conformance/corpus");
     let subject = Formatting::new(provider, file);
     let mut dirs = vec![root.join(corpus)];
@@ -139,7 +151,7 @@ pub fn check_corpus(
             let Ok(text) = std::fs::read_to_string(&path) else {
                 continue;
             };
-            if !wanted {
+            if !wanted || !keep(&path) {
                 continue;
             }
             count += 1;

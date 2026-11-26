@@ -10,7 +10,6 @@ mod dialect;
 mod document;
 mod dom;
 mod format;
-mod go_template;
 mod hooks;
 mod meta;
 mod ng_checks;

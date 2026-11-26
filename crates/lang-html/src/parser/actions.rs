@@ -5,7 +5,7 @@
 //! concept: none (glue: template actions in the parser)
 
 use super::P;
-use crate::go_template::ACTIONS;
+use core_syntax::template_actions::GO as ACTIONS;
 
 impl P<'_> {
     /// Counts the action at `start..end` (the `}}` at `end`) in the element it stands in.

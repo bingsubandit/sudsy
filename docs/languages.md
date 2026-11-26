@@ -579,6 +579,19 @@ The status and the numbers of every language are in the generated table "Languag
 - **Options:** `indent_size`, `indent_style`, `max_blank_lines`.
 - **Differences:** quotes, dependency parentheses and operator spacing stay as written.
 
+## Helm templates
+
+<!-- generated:measured-helm-templates -->
+- **Measured:** In progress.
+  - Format, stable: 99% of the files format stably, by the rules of the formatter (3,015 of 3,018 files).
+  - Lint: 30 rules, no reference tool to compare with.
+<!-- /generated -->
+
+- Files: `*.yaml`, `*.yml` and `*.tpl` below a `templates` folder (Go template actions in YAML).
+- The formatter lays out the actions: one blank inside `{{ }}`, and an own-line `{{- if }}` / `{{- else }}` / `{{- end }}` at the indent of the content it opens. The YAML text around the actions, trims and `indent`/`nindent` stay as written. No reference formatter exists: the format column is the stable share and the agreement on held-out projects ([ai/design/helm.md](ai/design/helm.md)).
+- **Options:** `align_control_actions`.
+- **Differences:** the YAML indent step, blank lines inside the text and trailing blanks stay as written (they can be content of a block scalar).
+
 ## Mako
 
 <!-- generated:measured-mako -->

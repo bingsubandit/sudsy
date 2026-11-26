@@ -172,6 +172,7 @@ concept suppression-justification # users: csharp
 concept tab-keep # users: markdown (shared)
 concept table-alignment # users: markdown
 concept tag-layout # users: html (shared)
+concept template-action-layout # users: helm (shared)
 concept template-expression-checks # users: html
 concept template-literal-layout # users: js
 concept template-syntax-checks # users: html

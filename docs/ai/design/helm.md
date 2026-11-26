@@ -85,7 +85,19 @@ Reading for the choice (the user decides):
 - hand-written over `template_actions`: no dependency, the smallest binary and the fastest, and the block rules are the shared ones. It accepts invalid expressions and detects 39.5% of the damaged files, so it would need its own expression check before the formatter may refuse a file.
 - `dialects/helm` of the same repository (scope `source.helm`, a Helm dialect of the grammar) was not measured: its `parser.c` is not a crate (open item).
 
-Recommendation: tree-sitter-go-template (`gotmpl`) for the action layer, with the shared `template_actions` block count for the structure, and the existing YAML grammar for the host as embedded regions. Nothing is built; the choice is the user's.
+Recommendation: tree-sitter-go-template (`gotmpl`) for the action layer, with the shared `template_actions` block count for the structure, and the existing YAML grammar for the host as embedded regions.
+
+Decision (user, 2026-11-26): tree-sitter-go-template (`gotmpl`) for the actions; the existing YAML grammar reads the host text as embedded regions (lint leg). Built as `lang-helm` ([../formatting/helm.md](../formatting/helm.md)).
+
+## Mapping table (format rows)
+| Decision row | Entry |
+|---|---|
+| space inside `{{ }}` | `core_format::template_layout` (`spaced`), shared with the block count of `template_actions` |
+| control line and `end` indent | `template_layout` (`targets`, `content_indent`), option `align_control_actions` |
+| no blank lines at the file edges, final newline | `template_layout`, engine option `final_newline` |
+| line endings | engine option `end_of_line` |
+| trims, `indent`/`nindent`, YAML indent step, blank lines inside text, trailing blanks | as written (output-changing or block scalar content): no rule |
+| Go words | `template_actions::GO` (shared with `lang-html`'s Hugo dialect) |
 
 ## Not verified
 - Parser: `dialects/helm` (not measured); the core runtime version of this repository against the grammar's ABI 15 (not checked); the speed of the YAML host (the existing YAML leg; not measured here); the trivia (comments and whitespace) of the tree; the grammar's behaviour on the Helm-specific functions beyond the probes.

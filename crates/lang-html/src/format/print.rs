@@ -6,13 +6,13 @@
 //! tools: markup-layout: Prettier printer-html
 
 use super::model::{Dialect, N, T, Tree, is_ws, pre_like};
-use crate::go_template::ACTIONS;
 use core_format::EmbedMode;
 use core_format::context::{comment_text, verbatim_text};
 use core_format::doc::{self, Doc, GroupId};
 use core_format::embed as embed_text;
 use core_format::requote::{Entities, requote};
 use core_format::shapes;
+use core_syntax::template_actions::GO as ACTIONS;
 
 mod angular;
 mod embed;

@@ -9,7 +9,7 @@
 //!
 //! concept: template-actions
 //! what: Delimited template actions in markup, their blocks counted per owning element.
-//! tools: html-eslint indent
+//! tools: html-eslint indent, helm lint
 //! reads: option:dialect, grammar:string
 
 use crate::strings::StringSyntax;
@@ -42,6 +42,16 @@ pub struct Code<'a> {
     pub comment: Option<u8>,
     pub nest: bool,
 }
+
+/// Go templates (`text/template`: Hugo, Helm).
+pub const GO: Actions = Actions {
+    open: "{{",
+    close: "}}",
+    trim: '-',
+    openers: &["if", "range", "with", "define", "block"],
+    continuers: &["else"],
+    closers: &["end"],
+};
 
 impl Actions {
     /// The end of the code of an action that starts at `from` (after the opening delimiter): the
@@ -104,11 +114,19 @@ impl Actions {
             .map(|i| at + self.open.len() + i + self.close.len())
     }
 
+    /// The first word of the action `inner`, after the trim marker.
+    pub fn first_word<'a>(&self, inner: &'a str) -> &'a str {
+        let inner = inner.trim_start_matches(self.trim).trim_start();
+        inner
+            .split(|c: char| !c.is_ascii_alphabetic())
+            .next()
+            .unwrap_or("")
+    }
+
     /// What the action `inner` (the text between the delimiters) does: its first word, after the
     /// trim marker, names it.
     pub fn step(&self, inner: &str) -> Option<Step> {
-        let inner = inner.trim_start_matches(self.trim).trim_start();
-        let word = inner.split(|c: char| !c.is_ascii_alphabetic()).next()?;
+        let word = self.first_word(inner);
         let has = |words: &[&str]| words.contains(&word);
         if has(self.openers) {
             Some(Step::Open)
@@ -194,15 +212,6 @@ impl Blocks {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    const GO: Actions = Actions {
-        open: "{{",
-        close: "}}",
-        trim: '-',
-        openers: &["if", "range"],
-        continuers: &["else"],
-        closers: &["end"],
-    };
 
     #[test]
     fn ends_and_steps() {

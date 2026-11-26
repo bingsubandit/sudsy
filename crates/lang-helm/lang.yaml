@@ -1,0 +1,24 @@
+vscode-languages: [helm]
+grammar-crate: tree-sitter-gotmpl
+grammar-path: grammars/tree-sitter-gotmpl
+file-names: ['templates/**/*.yaml', 'templates/**/*.yml', 'templates/**/*.tpl']
+formatter: HelmFormatter
+options:
+  - final_newline: true
+  - end_of_line
+  - align_control_actions:
+      default: true
+      doc: "Own-line control actions with a left trim (`{{- if }}`, `{{- else }}`, `{{- end }}`) stand at the indent of the content they open; `else` and `end` stand where their opener stands. The trim removes the blanks in front of the action, so the output text does not change."
+mapping:
+  same: 'if_action with_action range_action define_action block_action template_action break_action continue_action range_variable_definition variable_definition assignment chained_pipeline parenthesized_pipeline method_call function_call argument_list selector_expression field variable'
+  Document: template
+  Text: 'text yaml_no_injection_text'
+  Open: '{{ {{-'
+  Close: '}} -}}'
+  Keyword: 'if else end range with define block "template" break continue'
+  Ident: 'identifier field_identifier'
+  Boolean: 'true false'
+  Nil: nil
+  Number: 'int_literal float_literal imaginary_literal rune_literal'
+  String: 'raw_string_literal interpreted_string_literal'
+  Comment: comment

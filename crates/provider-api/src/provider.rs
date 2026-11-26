@@ -167,7 +167,7 @@ pub trait LanguageProvider: Send + Sync {
 pub enum FilePattern {
     /// Extension without the dot, e.g. `cs`.
     Extension(String),
-    /// Exact file name, e.g. `tsconfig.json`; a trailing `*` makes it a prefix (`Dockerfile.*`), a leading one a suffix (`*.component.html`); with a `/` it is a path suffix (`.git/info/exclude`).
+    /// Exact file name, e.g. `tsconfig.json`; a trailing `*` makes it a prefix (`Dockerfile.*`), a leading one a suffix (`*.component.html`); with a `/` it is a path suffix (`.git/info/exclude`); `dir/**/*.ext` is a file with that extension anywhere below a directory named `dir` (`templates/**/*.yaml`).
     FileName(String),
     /// Files with this extension directly inside a directory of this name, e.g. `.vscode/*.json`.
     InDirectory { dir: String, extension: String },
@@ -210,6 +210,15 @@ impl FilePattern {
 
 /// A file name pattern (`Name`, `prefix*`, `*suffix`, or a path tail with `/`) against a path.
 fn name_matches(n: &str, path: &Path) -> bool {
+    if let Some((dir, extension)) = n.split_once("/**/*.") {
+        return path
+            .extension()
+            .is_some_and(|x| x.eq_ignore_ascii_case(extension))
+            && path
+                .ancestors()
+                .skip(1)
+                .any(|a| a.file_name().is_some_and(|d| d == dir));
+    }
     if n.contains('/') {
         return path.ends_with(n);
     }
@@ -384,6 +393,19 @@ mod tests {
         assert!(m.matches(Path::new("repo/.vscode/settings.json")));
         assert!(!m.matches(Path::new("repo/settings.json")));
         assert!(!m.matches(Path::new("repo/.vscode/a/settings.json")));
+    }
+
+    #[test]
+    fn below_directory_matcher() {
+        let m = FileMatcher {
+            pattern: FilePattern::FileName("templates/**/*.yaml".into()),
+            dialect: None,
+        };
+        assert!(m.matches(Path::new("chart/templates/a.yaml")));
+        assert!(m.matches(Path::new("chart/templates/tests/a.YAML")));
+        assert!(!m.matches(Path::new("chart/templates/a.yml")));
+        assert!(!m.matches(Path::new("chart/values.yaml")));
+        assert!(!m.matches(Path::new("templates.yaml")));
     }
 
     #[test]

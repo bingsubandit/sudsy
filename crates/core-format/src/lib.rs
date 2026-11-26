@@ -52,6 +52,7 @@ pub mod stream_blank;
 pub mod stream_indent;
 pub mod tabs;
 pub mod tag_layout;
+pub mod template_layout;
 pub mod testing;
 pub mod verbatim;
 

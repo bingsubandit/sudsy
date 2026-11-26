@@ -12504,6 +12504,62 @@
       },
       "type": "object"
     },
+    "helm": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "additionalProperties": false,
+          "properties": {
+            "align_control_actions": {
+              "default": true,
+              "description": "Own-line control actions with a left trim (`{{- if }}`, `{{- else }}`, `{{- end }}`) stand at the indent of the content they open; `else` and `end` stand where their opener stands. The trim removes the blanks in front of the action, so the output text does not change.",
+              "type": "boolean"
+            },
+            "end_of_line": {
+              "default": "auto",
+              "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+              "enum": [
+                "auto",
+                "lf",
+                "crlf"
+              ],
+              "type": "string"
+            },
+            "final_newline": {
+              "default": true,
+              "description": "End the file with a newline.",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "lint": {
+          "$ref": "#/definitions/lint"
+        },
+        "semantics": {
+          "additionalProperties": false,
+          "description": "Facts about methods that the flow analyses use.",
+          "properties": {
+            "does_not_return": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "pure": {
+              "description": "Qualified method names without parameter lists; every overload is covered.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "html": {
       "additionalProperties": false,
       "properties": {
@@ -13943,6 +13999,7 @@
           "gradle",
           "graphql",
           "hcl",
+          "helm",
           "ini",
           "java",
           "js",
@@ -17141,6 +17198,62 @@
                     "maximum": 16,
                     "minimum": 1,
                     "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "lint": {
+                "$ref": "#/definitions/lint"
+              },
+              "semantics": {
+                "additionalProperties": false,
+                "description": "Facts about methods that the flow analyses use.",
+                "properties": {
+                  "does_not_return": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "pure": {
+                    "description": "Qualified method names without parameter lists; every overload is covered.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "helm": {
+            "additionalProperties": false,
+            "properties": {
+              "format": {
+                "additionalProperties": false,
+                "properties": {
+                  "align_control_actions": {
+                    "default": true,
+                    "description": "Own-line control actions with a left trim (`{{- if }}`, `{{- else }}`, `{{- end }}`) stand at the indent of the content they open; `else` and `end` stand where their opener stands. The trim removes the blanks in front of the action, so the output text does not change.",
+                    "type": "boolean"
+                  },
+                  "end_of_line": {
+                    "default": "auto",
+                    "description": "Line break style of the output: `lf`, `crlf`, or `auto` to keep the file's first              line break.",
+                    "enum": [
+                      "auto",
+                      "lf",
+                      "crlf"
+                    ],
+                    "type": "string"
+                  },
+                  "final_newline": {
+                    "default": true,
+                    "description": "End the file with a newline.",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"

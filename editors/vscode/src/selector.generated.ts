@@ -20,6 +20,7 @@ export const documentSelector = [
   { scheme: "file", language: "graphql" },
   { scheme: "file", language: "terraform" },
   { scheme: "file", language: "hcl" },
+  { scheme: "file", language: "helm" },
   { scheme: "file", language: "ini" },
   { scheme: "file", language: "java" },
   { scheme: "file", language: "javascript" },

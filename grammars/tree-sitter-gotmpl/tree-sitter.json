@@ -1,0 +1,21 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "gotmpl",
+      "camelcase": "Gotmpl",
+      "title": "Go template",
+      "scope": "source.gotmpl",
+      "file-types": ["tpl"],
+      "class-name": "TreeSitterGotmpl"
+    }
+  ],
+  "metadata": {
+    "version": "0.19.5",
+    "license": "MIT",
+    "description": "Go template grammar for tree-sitter",
+    "authors": [{ "name": "Nikita Galaiko" }],
+    "links": { "repository": "https://github.com/ngalaiko/tree-sitter-go-template" }
+  },
+  "bindings": { "c": false, "go": false, "node": false, "python": false, "rust": true, "swift": false }
+}

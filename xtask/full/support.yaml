@@ -202,6 +202,12 @@
   ids: [gradle]
   speed: [Gradle]
   stability: [gradle]
+- language: Helm templates
+  popularity: [{name: Helm, so: 9.7}]
+  evidence: helm
+  ids: [helm]
+  speed: [Helm]
+  stability: [helm]
 - language: Ansible
   popularity: [{name: Ansible, so: 9.4}]
   ids: [ansible]
