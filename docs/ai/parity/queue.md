@@ -28,8 +28,8 @@ New languages (`xtask/full/languages.yaml`). Score of a plan = 4 x 85 x Demand x
 | Gradle | 0.31~ | 0 (paid) | 4.05~ | - | - | lint: lint none found | build.gradle (Groovy DSL); build.gradle.kts is Kotlin; evidence in docs/ai/design/gradle.md; estimate: pick only to measure it |
 | Jupyter Notebook | 0.57~ | 0 (paid) | 2.78~ | - | - | lint: lint ruff check on cells | JSON file with Python cells: the Python leg does the work; evidence in docs/ai/design/jupyter.md; estimate: pick only to measure it |
 | Procfile | 0.26~ | ~1.5 | 1.59~ | 1.93~ | 2.47~ | both: lint none found + format none found | estimate: pick only to measure it |
+| Helm templates | 0.28~ | ~1.2 | 0.20~ | 2.41~ | 1.65~ | format: format none found | *.yaml, *.yml and *.tpl under templates/; evidence in docs/ai/design/helm.md; estimate: pick only to measure it |
 | Mako | 0.22~ | ~1.2 | 1.53~ | 1.91~ | 2.31~ | both: lint none found + format none found | *.mako; evidence in docs/ai/design/mako.md; estimate: pick only to measure it |
-| Helm templates | 0.28~ | ~1.2 | 0.20~ | 1.92~ | 1.43~ | format: format none found | estimate: pick only to measure it |
 | Rust | 0.38 | ~1.2 | 1.80~ | 0.26~ | 1.36~ | lint: lint clippy with types | estimate: pick only to measure it |
 | XSLT | 0.16~ | ~0.2 | 1.80~ | - | - | lint: lint none found | the XML row formats it; no XSLT linter found; estimate: pick only to measure it |
 | Assembly | 0.24 | ~1.2 | 1.66~ | 0.83~ | 1.76~ | both: lint none found + format asmfmt | estimate: pick only to measure it |

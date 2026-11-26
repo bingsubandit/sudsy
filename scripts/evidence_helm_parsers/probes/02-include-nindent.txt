@@ -1,0 +1,3 @@
+metadata:
+  labels:
+    {{- include "x.labels" . | nindent 4 }}

@@ -1,0 +1,3 @@
+{{- range $k, $v := .Values.env }}
+- {{ $k }}={{ $v | quote }}
+{{- end }}

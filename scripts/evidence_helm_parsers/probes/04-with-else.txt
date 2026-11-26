@@ -1,0 +1,5 @@
+{{- with .Values.x }}
+a: {{ . }}
+{{- else }}
+a: none
+{{- end }}

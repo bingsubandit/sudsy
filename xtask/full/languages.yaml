@@ -384,9 +384,10 @@
   lint: {tool: "hlint", gain: ~0.4, cost: {est: true}, why: "only tool found; native; syntax-tree hints; syntactic rules"}
 - language: Helm templates
   so: 9.7
-  parser: ~1.2 # tree-sitter: ngalaiko/tree-sitter-go-template (143 stars, pushed 2026-10)
-  format: {tool: "none found", gain: ~1.0, cost: {layout: width, parts: 1, est: true}, why: "no maintained tool found"}
-  lint: {tool: "helm lint", gain: ~0.1, cost: {index: true, est: true}, why: "only tool found; official, Go; renders the chart; some rules need semantics"}
+  note: "*.yaml, *.yml and *.tpl under templates/; evidence in docs/ai/design/helm.md"
+  parser: ~1.2 # tree-sitter: tree-sitter-go-template 06b2fd2 (grammar 0.19.5, not on crates.io; built from the repository); measured, recommended with the YAML host as embedded regions; hand-written over template_actions is the alternative (docs/ai/design/helm.md)
+  format: {tool: "none found", gain: ~1.0, cost: {layout: whitespace, parts: 1, est: true}, why: "no Helm formatter found; prettier 3.4.2 fails to parse 2,903 of 3,018 template files; decision table on 1,389 files in 603 projects, pooled held-out agreement 99.0% (307,070 of 310,191); indent, spacing and blank lines decided, trims and filters as written (docs/ai/design/helm.md)"}
+  lint: {tool: "helm lint", gain: ~0.1, cost: {index: true, est: true}, why: "only tool found; official, Go; renders the chart; helm lint exit 0 on 107 of 118 chart folders; 93 render with default values; kubeconform: 0 invalid of 558 resources; checklist not run"}
 - language: HLSL
   gh: 111071
   parser: ~1.2 # tree-sitter: tree-sitter-grammars/tree-sitter-hlsl (14 stars, pushed 2026-09)
