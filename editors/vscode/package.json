@@ -1,7 +1,7 @@
 {
   "name": "sudsy",
   "displayName": "Sudsy",
-  "description": "Formatter and linter for C#, JavaScript/TypeScript, Python, Java, Kotlin, C/C++ and more.",
+  "description": "A true polyglot formatter and linter for every repo: one tool and one config file in place of Prettier, ESLint, ruff and more. Extensible with YAML rules and Wasm plugins.",
   "version": "0.0.3",
   "publisher": "sudsy",
   "icon": "icon.png",
@@ -44,11 +44,11 @@
     "Ruby",
     "Shell",
     "SQL",
-    "XML",
     "YAML",
     "C#",
     "formatter",
-    "linter"
+    "linter",
+    "prettier"
   ],
   "activationEvents": [
     "onLanguage:json",

@@ -13,7 +13,7 @@ code --install-extension sudsy.sudsy
 
 The fallback is the `.vsix` for your platform from the [latest release](https://github.com/bingsubandit/sudsy/releases): `code --install-extension sudsy-<platform>-<version>.vsix`.
 
-It bundles the `sudsy` server. C# needs the [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0); every other language works without it.
+It bundles the `sudsy` server.
 
 ## Format on save
 

@@ -32,10 +32,6 @@ class Sudsy < Formula
                                    SUDSY_CSHARP_WORKER: libexec/"csharp-worker/Sudsy.Worker.dll"
   end
 
-  def caveats
-    "Formatting C# needs the .NET 10 runtime (brew install dotnet)."
-  end
-
   test do
     assert_match version.to_s, shell_output("#{bin}/sudsy --version")
   end

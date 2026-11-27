@@ -30,8 +30,6 @@ With no config, lint reports likely bugs only, never style. `sudsy format` rewri
 | Scoop | `scoop bucket add sudsy https://github.com/bingsubandit/scoop-sudsy; scoop install sudsy` |
 | Binary | [GitHub releases](https://github.com/bingsubandit/sudsy/releases): Linux, macOS, Windows; x64 and arm64 |
 
-Only C# needs more: the [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
-
 ## Configure
 
 ```sh

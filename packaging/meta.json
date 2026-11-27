@@ -1,5 +1,5 @@
 {
-  "description": "Formatter and linter for 36 languages in one binary and one config file",
+  "description": "A true polyglot formatter and linter for 36 languages: one binary and one config file in place of Prettier, ESLint, ruff and more",
   "headline": "Ready for 32 languages, early support for 4 more.",
   "keywords": [
     "formatter",

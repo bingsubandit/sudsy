@@ -22,16 +22,9 @@ const CONFIG_FORMATS: [&str; 9] = [
     "JSON",
 ];
 /// Always among the keywords: what people search for.
-const GENERIC_KEYWORDS: [&str; 2] = ["formatter", "linter"];
-/// The languages the description names, in order; the rest follow as "and more".
-const MAIN_LANGUAGES: [&str; 6] = [
-    "C#",
-    "JavaScript/TypeScript",
-    "Python",
-    "Java",
-    "Kotlin",
-    "C/C++",
-];
+const GENERIC_KEYWORDS: [&str; 3] = ["formatter", "linter", "prettier"];
+/// The description: the intro of the README.
+const DESCRIPTION: &str = "A true polyglot formatter and linter for every repo: one tool and one config file in place of Prettier, ESLint, ruff and more. Extensible with YAML rules and Wasm plugins.";
 
 /// The providers of languages with an id of their own: one that shares another's grammar (GitHub Actions on YAML) has none.
 fn own_language(
@@ -106,18 +99,6 @@ fn keywords(providers: &[Box<dyn LanguageProvider>]) -> Result<Vec<String>> {
     Ok(words)
 }
 
-fn description(providers: &[Box<dyn LanguageProvider>]) -> Result<String> {
-    for main in MAIN_LANGUAGES {
-        if !own_language(providers).any(|p| p.grammar().title == main) {
-            bail!("vscode description names `{main}`, which is no language");
-        }
-    }
-    Ok(format!(
-        "Formatter and linter for {} and more.",
-        MAIN_LANGUAGES.join(", ")
-    ))
-}
-
 /// Replaces the `"key": [ ... ],` array of the package manifest with `items`.
 fn replace_array(package: &mut String, key: &str, items: &[String]) -> Result<()> {
     let head = format!("\"{key}\": [");
@@ -173,7 +154,7 @@ pub fn generate(providers: &[Box<dyn LanguageProvider>]) -> Result<Vec<(PathBuf,
         + 2;
     package.replace_range(
         from..end,
-        &format!("\"description\": \"{}\",", description(providers)?),
+        &format!("\"description\": \"{DESCRIPTION}\","),
     );
     // `sudsy init` writes per-language editor settings from this: one line per crate, its ids.
     let table: String = ids_by_crate(providers)?

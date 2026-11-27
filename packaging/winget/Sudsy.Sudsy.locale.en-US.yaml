@@ -11,7 +11,6 @@ ShortDescription: @DESCRIPTION@
 Description: |-
   One binary and one config file in place of Prettier, ESLint, ruff, buf, terraform fmt and the rest.
   @HEADLINE@ @READY@
-  Formatting C# needs the .NET 10 runtime.
 Moniker: sudsy
 Tags:
 @TAGS@

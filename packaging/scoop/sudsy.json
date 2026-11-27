@@ -3,7 +3,6 @@
     "description": "@DESCRIPTION@",
     "homepage": "https://github.com/bingsubandit/sudsy",
     "license": "MIT",
-    "notes": "Formatting C# needs the .NET 10 runtime.",
     "architecture": {
         "64bit": {
             "url": "@URL win32-x64@",

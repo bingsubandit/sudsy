@@ -117,7 +117,7 @@ pub(crate) fn generate(
     keywords.retain(|k| !k.is_empty() && seen.insert(k.clone()));
     keywords.truncate(MAX_KEYWORDS);
     let meta = json!({
-        "description": format!("Formatter and linter for {} languages in one binary and one config file", rows.len()),
+        "description": format!("A true polyglot formatter and linter for {} languages: one binary and one config file in place of Prettier, ESLint, ruff and more", rows.len()),
         "headline": support.headline,
         "ready": support.ready,
         "keywords": keywords,
