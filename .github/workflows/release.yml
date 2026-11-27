@@ -143,9 +143,19 @@ jobs:
           merge-multiple: true
       - name: Publish every platform package
         run: |
+          # Every package is tried; one failure never hides the rest. A version already on the
+          # Marketplace counts as done, so a re-run publishes only what is missing.
+          failed=""
           for vsix in dist/*.vsix; do
-            "$GITHUB_WORKSPACE/editors/vscode/node_modules/.bin/vsce" publish --oidc --packagePath "$vsix"
+            if out=$("$GITHUB_WORKSPACE/editors/vscode/node_modules/.bin/vsce" publish --oidc --packagePath "$vsix" 2>&1); then
+              echo "$out"
+            elif grep -qi 'already exists' <<<"$out"; then
+              echo "$out"; echo "Already published: $vsix"
+            else
+              echo "$out"; echo "::error::Marketplace publish failed: $vsix"; failed="$failed $vsix"
+            fi
           done
+          [ -z "$failed" ] || { echo "Failed:$failed"; exit 1; }
 
   openvsx:
     if: github.event_name == 'workflow_dispatch' && inputs.publish_openvsx && github.ref_type == 'tag'
@@ -167,6 +177,14 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           [ -n "$OVSX_PAT" ] || unset OVSX_PAT
+          failed=""
           for vsix in dist/*.vsix; do
-            npx --yes ovsx@1.4.0 publish --packagePath "$vsix"
+            if out=$(npx --yes ovsx@1.4.0 publish --packagePath "$vsix" 2>&1); then
+              echo "$out"
+            elif grep -qi 'already exists\|already published' <<<"$out"; then
+              echo "$out"; echo "Already published: $vsix"
+            else
+              echo "$out"; echo "::error::Open VSX publish failed: $vsix"; failed="$failed $vsix"
+            fi
           done
+          [ -z "$failed" ] || { echo "Failed:$failed"; exit 1; }
