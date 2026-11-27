@@ -27,9 +27,17 @@ pub trait Db: salsa::Database {
     fn dependency_file(&self, path: &Path) -> Option<File>;
 }
 
-/// Files read on demand, by path, with the stamp they were read at.
+/// Files read on demand, by canonical path (one file under several spellings, such as names that
+/// differ only by case on a case-insensitive file system or a symlink, is one input), with the
+/// stamp they were read at, and the canonical path of each spelling asked for.
 #[derive(Default)]
-struct Dependencies(Mutex<HashMap<std::path::PathBuf, Read>>);
+struct Dependencies(Mutex<Spellings>);
+
+#[derive(Default)]
+struct Spellings {
+    canonical: HashMap<std::path::PathBuf, std::path::PathBuf>,
+    files: HashMap<std::path::PathBuf, Read>,
+}
 
 /// A file read from disk: its modification time and size then, and its input (`None`: not source text).
 type Read = (Option<SystemTime>, u64, Option<File>);
@@ -62,12 +70,17 @@ impl Db for Database {
     fn dependency_file(&self, path: &Path) -> Option<File> {
         let meta = std::fs::metadata(path).ok()?;
         let stamp = (meta.modified().ok(), meta.len());
-        let mut cache = self
+        let mut guard = self
             .dependencies
             .0
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        if let Some((time, len, file)) = cache.get(path)
+        let Spellings { canonical, files } = &mut *guard;
+        let key = canonical
+            .entry(path.to_path_buf())
+            .or_insert_with(|| std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf()))
+            .clone();
+        if let Some((time, len, file)) = files.get(&key)
             && (*time, *len) == stamp
         {
             return *file;
@@ -75,7 +88,7 @@ impl Db for Database {
         let file = std::fs::read(path).ok().and_then(|bytes| {
             File::from_bytes(self, path.to_path_buf(), path.to_string_lossy(), 1, bytes).ok()
         });
-        cache.insert(path.to_path_buf(), (stamp.0, stamp.1, file));
+        files.insert(key, (stamp.0, stamp.1, file));
         file
     }
 }

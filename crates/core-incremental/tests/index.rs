@@ -347,3 +347,18 @@ fn a_protobuf_import_that_cannot_be_found_declares_nothing_when_the_roots_are_al
     let index = Index::new(&w.db, open);
     assert_eq!(index.type_(a, &name(&["p.Nope"])), Answer::Unknown);
 }
+
+/// One file under two spellings (names that differ only by case on Windows and macOS, here a
+/// symlink) is one input, so a name looked up with another case finds the same file.
+#[cfg(unix)]
+#[test]
+fn a_dependency_under_two_spellings_is_one_file() {
+    use core_incremental::Db;
+    let (w, _) = php_world();
+    let real = w.dir.path().join("vendor/acme/lib/src/Tool.php");
+    let alias = w.dir.path().join("vendor/acme/lib/src/TOOL.php");
+    std::os::unix::fs::symlink(&real, &alias).unwrap();
+    let a = w.db.dependency_file(&real).unwrap();
+    let b = w.db.dependency_file(&alias).unwrap();
+    assert_eq!(a, b);
+}
