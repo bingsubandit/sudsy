@@ -2,7 +2,7 @@
   "name": "sudsy",
   "displayName": "Sudsy",
   "description": "A true polyglot formatter and linter for every repo: one tool and one config file in place of Prettier, ESLint, ruff and more. Extensible with YAML rules and Wasm plugins.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "sudsy",
   "icon": "icon.png",
   "license": "MIT",

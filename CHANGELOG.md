@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-11-27
+
 ### Packaging
 * Every archive and package has all languages built in. The `sudsy-full-<version>-<platform>` archives and
   the downloadable language packs are gone, and so are `sudsy languages`, the exit status 3 for a missing
   language and the editor's install prompt and "Install Missing Languages" command. `languages:` entries in
   `sudsy.yaml` are still accepted and change nothing.
+* The VS Code Marketplace and Open VSX publish steps try every platform package, count one already published as done and fail at the end naming each package that failed.
+* Package and extension descriptions follow the README; the .NET runtime note is gone from the store descriptions and install notes (C# still reports a missing runtime when used).
 
 ## [0.0.3] - 2026-11-20
 

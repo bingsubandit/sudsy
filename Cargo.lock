@@ -400,7 +400,7 @@ checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
 
 [[package]]
 name = "cli"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "clap",
@@ -480,7 +480,7 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 
 [[package]]
 name = "core-config"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "globset",
  "serde",
@@ -492,7 +492,7 @@ dependencies = [
 
 [[package]]
 name = "core-flow"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-syntax",
  "rowan",
@@ -501,7 +501,7 @@ dependencies = [
 
 [[package]]
 name = "core-format"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-syntax",
@@ -513,7 +513,7 @@ dependencies = [
 
 [[package]]
 name = "core-incremental"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -543,7 +543,7 @@ dependencies = [
 
 [[package]]
 name = "core-packages"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "serde_json",
  "tempfile",
@@ -551,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "core-packs"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "dirs",
  "libloading",
@@ -566,7 +566,7 @@ dependencies = [
 
 [[package]]
 name = "core-patterns"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -581,7 +581,7 @@ dependencies = [
 
 [[package]]
 name = "core-plugins"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -599,7 +599,7 @@ dependencies = [
 
 [[package]]
 name = "core-rules"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-flow",
@@ -619,7 +619,7 @@ dependencies = [
 
 [[package]]
 name = "core-semantics"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-flow",
  "core-syntax",
@@ -630,7 +630,7 @@ dependencies = [
 
 [[package]]
 name = "core-syntax"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "proptest",
  "rmp-serde",
@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "core-treesitter"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -655,7 +655,7 @@ dependencies = [
 
 [[package]]
 name = "core-workspace"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "globset",
  "ignore",
@@ -1724,7 +1724,7 @@ dependencies = [
 
 [[package]]
 name = "lang-batch"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1735,7 +1735,7 @@ dependencies = [
 
 [[package]]
 name = "lang-cmake"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1746,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "lang-cpp"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1757,7 +1757,7 @@ dependencies = [
 
 [[package]]
 name = "lang-csharp"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-flow",
@@ -1772,7 +1772,7 @@ dependencies = [
 
 [[package]]
 name = "lang-css"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1783,7 +1783,7 @@ dependencies = [
 
 [[package]]
 name = "lang-dockerfile"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1799,7 +1799,7 @@ dependencies = [
 
 [[package]]
 name = "lang-editorconfig"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1814,7 +1814,7 @@ dependencies = [
 
 [[package]]
 name = "lang-github-actions"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1829,7 +1829,7 @@ dependencies = [
 
 [[package]]
 name = "lang-gitignore"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1844,7 +1844,7 @@ dependencies = [
 
 [[package]]
 name = "lang-go"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1859,7 +1859,7 @@ dependencies = [
 
 [[package]]
 name = "lang-gradle"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1873,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "lang-graphql"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1888,7 +1888,7 @@ dependencies = [
 
 [[package]]
 name = "lang-hcl"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1904,7 +1904,7 @@ dependencies = [
 
 [[package]]
 name = "lang-html"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1919,7 +1919,7 @@ dependencies = [
 
 [[package]]
 name = "lang-ini"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1934,7 +1934,7 @@ dependencies = [
 
 [[package]]
 name = "lang-java"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1947,7 +1947,7 @@ dependencies = [
 
 [[package]]
 name = "lang-js"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-flow",
@@ -1967,7 +1967,7 @@ dependencies = [
 
 [[package]]
 name = "lang-json"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1980,7 +1980,7 @@ dependencies = [
 
 [[package]]
 name = "lang-jupyter"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -1994,7 +1994,7 @@ dependencies = [
 
 [[package]]
 name = "lang-kotlin"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2010,7 +2010,7 @@ dependencies = [
 
 [[package]]
 name = "lang-makefile"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2026,7 +2026,7 @@ dependencies = [
 
 [[package]]
 name = "lang-mako"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2037,7 +2037,7 @@ dependencies = [
 
 [[package]]
 name = "lang-markdown"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2057,7 +2057,7 @@ dependencies = [
 
 [[package]]
 name = "lang-php"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2075,7 +2075,7 @@ dependencies = [
 
 [[package]]
 name = "lang-powershell"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2090,7 +2090,7 @@ dependencies = [
 
 [[package]]
 name = "lang-procfile"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2101,7 +2101,7 @@ dependencies = [
 
 [[package]]
 name = "lang-protobuf"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2116,7 +2116,7 @@ dependencies = [
 
 [[package]]
 name = "lang-python"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2134,7 +2134,7 @@ dependencies = [
 
 [[package]]
 name = "lang-ruby"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2148,7 +2148,7 @@ dependencies = [
 
 [[package]]
 name = "lang-shell"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2162,7 +2162,7 @@ dependencies = [
 
 [[package]]
 name = "lang-sql"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2174,7 +2174,7 @@ dependencies = [
 
 [[package]]
 name = "lang-toml"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2192,7 +2192,7 @@ dependencies = [
 
 [[package]]
 name = "lang-xml"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2208,7 +2208,7 @@ dependencies = [
 
 [[package]]
 name = "lang-yaml"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-format",
@@ -2223,7 +2223,7 @@ dependencies = [
 
 [[package]]
 name = "languages"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-packs",
@@ -2347,7 +2347,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "lsp"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "core-config",
@@ -2931,7 +2931,7 @@ dependencies = [
 
 [[package]]
 name = "pack"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "konomanoasa-tree-sitter-editorconfig",
  "konomanoasa-tree-sitter-gitignore",
@@ -2987,7 +2987,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
 name = "perf-bench"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "core-config",
@@ -3105,7 +3105,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "plugin-sdk"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-flow",
@@ -3221,7 +3221,7 @@ dependencies = [
 
 [[package]]
 name = "provider-api"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "core-config",
  "core-flow",
@@ -3987,7 +3987,7 @@ dependencies = [
 
 [[package]]
 name = "symbol-bench"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "core-config",
@@ -4899,7 +4899,7 @@ dependencies = [
 
 [[package]]
 name = "wire-bench"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "core-syntax",
@@ -5053,7 +5053,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "core-format",
@@ -5065,7 +5065,7 @@ dependencies = [
 
 [[package]]
 name = "xtask-full"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "anyhow",
  "core-config",
