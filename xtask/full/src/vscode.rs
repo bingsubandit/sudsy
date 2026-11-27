@@ -152,10 +152,7 @@ pub fn generate(providers: &[Box<dyn LanguageProvider>]) -> Result<Vec<(PathBuf,
             .find("\",")
             .context("unterminated description")?
         + 2;
-    package.replace_range(
-        from..end,
-        &format!("\"description\": \"{DESCRIPTION}\","),
-    );
+    package.replace_range(from..end, &format!("\"description\": \"{DESCRIPTION}\","));
     // `sudsy init` writes per-language editor settings from this: one line per crate, its ids.
     let table: String = ids_by_crate(providers)?
         .iter()
