@@ -71,10 +71,10 @@ a.badge:hover { border-color: var(--sl-color-accent); color: var(--sl-color-acce
 .rs-panel li { margin: 0; }
 .rs-panel label { display: flex; gap: 0.4rem; align-items: center; padding: 0.15rem 0.25rem; font-size: var(--sl-text-sm); cursor: pointer; }
 .rs-panel label:hover { background: var(--sl-color-gray-6); }
-.rs-panel .rs-count { margin-left: auto; color: var(--sl-color-gray-3); }
+.rs-panel .rs-count { margin-left: auto; padding-left: 0.4rem; color: var(--sl-color-gray-3); white-space: nowrap; }
 .rs-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; } /* above the menus: an open panel never covers them */
 .rs-chips:empty { display: none; }
-.rs-chip, .rs-clear { padding: 0.1rem 0.6rem; border: 1px solid var(--sl-color-accent); border-radius: 999px; background: var(--sl-color-accent-low); color: var(--sl-color-accent-high); font: inherit; font-size: var(--sl-text-sm); cursor: pointer; }
+.rs-chip, .rs-clear { margin: 0; padding: 0.1rem 0.6rem; border: 1px solid var(--sl-color-accent); border-radius: 999px; background: var(--sl-color-accent-low); color: var(--sl-color-accent-high); font: inherit; font-size: var(--sl-text-sm); cursor: pointer; }
 .rs-clear { border-color: var(--sl-color-gray-4); background: transparent; color: var(--sl-color-text); }
 .rs .count { margin: 0.75rem 0 0.25rem; color: var(--sl-color-gray-2); font-size: var(--sl-text-sm); }
 

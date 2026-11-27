@@ -175,7 +175,11 @@ for (const s of stubs.values()) {
 // The rule list of /rules/: one file, fetched once and filtered in the browser (no request per rule).
 const languageNames = {};
 for (const l of new Set(rules().flatMap((r) => r.languages))) {
-  if (l !== 'all') languageNames[l] = [langName.get(l)?.name ?? l, langName.get(l)?.slug ?? l];
+  if (l === 'all') continue;
+  // A page of several languages ("INI / EditorConfig / .gitignore") names each id by its own part, so filters stay distinct.
+  const key = (t) => t.toLowerCase().replaceAll('+', 'p').replace(/[^a-z0-9]/g, '');
+  const page = langName.get(l)?.name ?? l;
+  languageNames[l] = [page.split(' / ').find((part) => key(part) === key(l)) ?? page, langName.get(l)?.slug ?? l];
 }
 writeFileSync(pub + 'rules-index.json', JSON.stringify({ languages: languageNames, rules: index }));
 

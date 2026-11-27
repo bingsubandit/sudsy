@@ -404,7 +404,7 @@ test('landing page: every section, one h1, the numbers come from the data', asyn
   assert.equal(await sub.locator('a').getAttribute('href'), '/sudsy/speed/');
   assert.equal(await page.locator('.speed ~ .more a', { hasText: 'Every language' }).getAttribute('href'), '/sudsy/speed/');
   assert.ok(text.includes(`${c.ready} languages ready, ${c.progress} in progress`));
-  assert.ok(text.includes(`${c.rules} rules with their own pages`) && text.includes(`${c.presets} presets`) && text.includes(`${c.safe} rules carry a fix marked safe`));
+  assert.ok(text.includes(`${c.rules} configurable rules`) && text.includes(`${c.presets} presets`) && text.includes(`${c.safe} rules carry a fix marked safe`));
   assert.ok(text.includes('Early release (v0.0.x): config may change in minor versions before 1.0.'));
   // the language grid: one tile per language of the support table, each linked, with its status
   const tiles = page.locator('.tile');
