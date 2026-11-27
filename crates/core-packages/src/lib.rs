@@ -58,29 +58,32 @@ pub fn open(system: &str, root: &Path) -> Option<Arc<dyn Locator>> {
     }
 }
 
-/// `path` or, when only the case differs on a case-sensitive disk, the file the same name
-/// spelled otherwise: a name that PHP compares without case must not become absent on Linux.
-pub(crate) fn existing(path: &Path) -> Option<PathBuf> {
-    if path.is_file() {
-        return Some(path.to_path_buf());
+/// The file `rel` below `dir`, spelled as on disk: a name that PHP compares without case finds
+/// its file on a case-sensitive disk (Linux), and on a case-insensitive one (Windows, macOS) the
+/// answer is the on-disk spelling, not the one asked for, so one file is one path.
+pub(crate) fn existing(dir: &Path, rel: &str) -> Option<PathBuf> {
+    let path = dir.join(rel);
+    // A case-sensitive disk only finds the exact spelling, so a hit is already the on-disk one.
+    if cfg!(target_os = "linux") && path.is_file() {
+        return Some(path);
     }
-    let mut at = PathBuf::new();
-    for part in path.components() {
-        let next = at.join(part);
-        if next.exists() {
-            at = next;
-            continue;
-        }
+    let mut at = dir.to_path_buf();
+    for part in Path::new(rel).components() {
         let want = part.as_os_str().to_string_lossy();
-        let found = std::fs::read_dir(if at.as_os_str().is_empty() {
-            Path::new(".")
-        } else {
-            &at
-        })
-        .ok()?
-        .flatten()
-        .find(|e| e.file_name().to_string_lossy().eq_ignore_ascii_case(&want))?;
-        at = at.join(found.file_name());
+        let names: Vec<_> = std::fs::read_dir(&at)
+            .ok()?
+            .flatten()
+            .map(|e| e.file_name())
+            .collect();
+        let found = names
+            .iter()
+            .find(|n| n.to_string_lossy() == want)
+            .or_else(|| {
+                names
+                    .iter()
+                    .find(|n| n.to_string_lossy().eq_ignore_ascii_case(&want))
+            })?;
+        at.push(found);
     }
     at.is_file().then_some(at)
 }

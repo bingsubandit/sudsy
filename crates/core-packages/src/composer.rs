@@ -150,7 +150,7 @@ impl Locator for Composer {
             matched = true;
             shared |= !p.own;
             let rel = format!("{}.php", name[p.prefix.len()..].replace('\\', "/"));
-            found.extend(p.dirs.iter().filter_map(|d| existing(&d.join(&rel))));
+            found.extend(p.dirs.iter().filter_map(|d| existing(d, &rel)));
         }
         for p in self.psr0.iter().filter(|p| has_prefix(name, &p.prefix)) {
             matched = true;
@@ -165,7 +165,7 @@ impl Locator for Composer {
                     class.replace('_', "/")
                 )
             };
-            found.extend(p.dirs.iter().filter_map(|d| existing(&d.join(&rel))));
+            found.extend(p.dirs.iter().filter_map(|d| existing(d, &rel)));
         }
         found.dedup();
         if !found.is_empty() {
