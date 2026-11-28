@@ -121,6 +121,7 @@ Committed work too small for a step of its own: what to do and where, one line e
 - Migration aid mapping StyleCop / .NET analyzer ids and `.editorconfig` severities to our rules. Hosting Roslyn analyzers is a non-goal.
 
 ## Formatting
+- Default options for every language, queued after the agent integration steps (user, 2026-11-28): measure what is popular per language and setting on real-world code (corpora, style guides, reference-tool defaults; Haiku agents collect the counts), a first pass of defaults (Sonnet), and the lead decides the non-obvious cases, above all where one cross-language Sudsy default (indentation, quotes, line width) is kept or a language deviates because its own convention differs. Example: shell defaults to tabs (shfmt), while this repo's 47 indented scripts all use spaces and the repo has no `sudsy.yaml` or `.editorconfig`.
 - Range (selection) formatting; the formatter can already format a subtree in context.
 - Other CSharpier differences listed in [formatting/csharp.md](formatting/csharp.md).
 - Rule-produced layout directives for `#if` branches formatted from other parses (the layout rules run on the file's own parse only); solving `#if` conditions to find symbol sets (`derive_symbol_sets` tries subsets of the condition symbols, at most 16 sets).
