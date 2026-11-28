@@ -167,7 +167,8 @@ against the current Claude Code hook documentation when building.
 
 The tools an agent decides to call; the automatic part stays in hooks.
 - `sudsy mcp`: an MCP server on stdio over one long-lived database, like the LSP, so repeated calls
-  are incremental. Its own crate `crates/mcp` beside `lsp`. SDK: measure the `rmcp` crate against a
+  are incremental. A subcommand of the one `sudsy` binary, its code in a crate `crates/mcp` linked
+  into the CLI the way `lsp` is (no second binary or release). SDK: measure the `rmcp` crate against a
   small own JSON-RPC loop (binary size, dependencies, startup of the other commands unchanged),
   pick the smaller that covers tools and their input schemas.
 - Tools, each returning the step 2 text (compact text costs fewer tokens than JSON):
@@ -178,8 +179,17 @@ The tools an agent decides to call; the automatic part stays in hooks.
     `core-patterns` (also as `sudsy search` on the CLI), matches as `path:line: source line`;
   - `test_rule(rule_yaml, paths)`: compiles a pattern rule and returns its matches without
     writing it, for the "make that an enforced rule" flow (E9).
-- `init` offers the MCP server config for the agents it detects (`.mcp.json` for Claude Code),
-  the same merge rules as the hooks.
+- **Distribution.** An MCP client launches a command and talks over its stdin and stdout, so every
+  existing package serves:
+  - installed (npm, PyPI, Homebrew, Scoop, winget, release binary): `{"command": "sudsy", "args":
+    ["mcp"]}`, the same version and config as the CLI, hooks and editor;
+  - not installed: `npx -y @sudsylint/sudsy@<version> mcp` or `uvx sudsy@<version> mcp` (the npm
+    shim passes stdio through to the platform binary), a download on first launch;
+  - `init` offers the config for the agents it detects (`.mcp.json` for Claude Code), the same merge
+    rules as the hooks: `sudsy mcp` when `sudsy` is on the PATH, else the `npx` form pinned to the
+    exact version, never `@latest`, so a release never changes a project's checks unasked;
+  - to check before building: an extension API for VS Code to offer the bundled binary as an MCP
+    server, and a listing in the public MCP registry.
 - Name-aware search (`references` through the symbol index of [symbol-index.md](symbol-index.md),
   the case grep and patterns cannot decide) follows when the index covers the language.
 
