@@ -6,14 +6,22 @@ within each task, reps. A ratio is publishable when its interval lies within +-5
 (BAR). Success rates with Wilson 95% intervals; the verifier's mistake counters per condition.
 --compare: the repeatability check of two batches of the same versions: every ratio of A must lie in
 B's interval and the other way round."""
+
 import argparse
 import collections
 import json
 import math
 import random
 
-METRICS = ["num_turns", "output_tokens", "input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens",
-           "total_cost_usd", "duration_ms"]
+METRICS = [
+    "num_turns",
+    "output_tokens",
+    "input_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+    "total_cost_usd",
+    "duration_ms",
+]
 BAR = 0.05
 BOOT = 2000
 
@@ -33,7 +41,13 @@ def by_task(rows, cond, metric):
 
 def gm_ratio(a, b, tasks):
     """exp(mean log mean(b_t) - mean log mean(a_t)): condition b against a."""
-    return math.exp(sum(math.log(sum(b[t]) / len(b[t])) - math.log(sum(a[t]) / len(a[t])) for t in tasks) / len(tasks))
+    return math.exp(
+        sum(
+            math.log(sum(b[t]) / len(b[t])) - math.log(sum(a[t]) / len(a[t]))
+            for t in tasks
+        )
+        / len(tasks)
+    )
 
 
 def ratio_ci(rows, base, cond, metric, seed=0):
@@ -51,7 +65,13 @@ def ratio_ci(rows, base, cond, metric, seed=0):
         boots.append(gm_ratio(ra, rb, range(len(ts))))
     boots.sort()
     lo, hi = boots[int(0.025 * BOOT)], boots[int(0.975 * BOOT) - 1]
-    return {"ratio": point, "lo": lo, "hi": hi, "tasks": len(tasks), "publishable": lo >= point * (1 - BAR) and hi <= point * (1 + BAR)}
+    return {
+        "ratio": point,
+        "lo": lo,
+        "hi": hi,
+        "tasks": len(tasks),
+        "publishable": lo >= point * (1 - BAR) and hi <= point * (1 + BAR),
+    }
 
 
 def wilson(k, n, z=1.96):
@@ -72,27 +92,39 @@ def report(rows, base):
     out = []
     conds = conds_of(rows)
     b0 = rows[0]
-    out.append(f"batch {b0['batch']}: {len(rows)} runs, {len({r['task'] for r in rows})} tasks, Claude Code {b0['claude_code']}, "
-               f"models {sorted({m for r in rows for m in r.get('model_ids') or []})}, sudsy {b0['sudsy_commit'][:10]}, "
-               f"cost ${sum(r.get('total_cost_usd') or 0 for r in rows):.2f}")
-    out.append("\n| Condition | Runs | Success (95% CI) | Unformatted | New findings | Out of scope | Runs with denials |")
+    out.append(
+        f"batch {b0['batch']}: {len(rows)} runs, {len({r['task'] for r in rows})} tasks, Claude Code {b0['claude_code']}, "
+        f"models {sorted({m for r in rows for m in r.get('model_ids') or []})}, sudsy {b0['sudsy_commit'][:10]}, "
+        f"cost ${sum(r.get('total_cost_usd') or 0 for r in rows):.2f}"
+    )
+    out.append(
+        "\n| Condition | Runs | Success (95% CI) | Unformatted | New findings | Out of scope | Runs with denials |"
+    )
     out.append("|---|---|---|---|---|---|---|")
     for c in conds:
         rs = [r for r in rows if r["cond"] == c]
         p, lo, hi = wilson(sum(bool(r.get("success")) for r in rs), len(rs))
-        out.append(f"| {c} | {len(rs)} | {p:.0%} ({lo:.0%}-{hi:.0%}) | {sum(not r.get('formatted', True) for r in rs)} | "
-                   f"{sum(not r.get('lint_clean', True) for r in rs)} | {sum(bool(r.get('out_of_scope')) for r in rs)} | "
-                   f"{sum((r.get('permission_denials') or 0) > 0 for r in rs)} |")
+        out.append(
+            f"| {c} | {len(rs)} | {p:.0%} ({lo:.0%}-{hi:.0%}) | {sum(not r.get('formatted', True) for r in rs)} | "
+            f"{sum(not r.get('lint_clean', True) for r in rs)} | {sum(bool(r.get('out_of_scope')) for r in rs)} | "
+            f"{sum((r.get('permission_denials') or 0) > 0 for r in rs)} |"
+        )
     others = [c for c in conds if c != base]
     if base in conds and others:
-        out.append(f"\nRatio of geometric means against `{base}` (95% bootstrap interval; * = within the +-{BAR:.0%} bar)\n")
+        out.append(
+            f"\nRatio of geometric means against `{base}` (95% bootstrap interval; * = within the +-{BAR:.0%} bar)\n"
+        )
         out.append("| Metric | " + " | ".join(others) + " |")
         out.append("|---|" + "---|" * len(others))
         for m in METRICS:
             cells = []
             for c in others:
                 ci = ratio_ci(rows, base, c, m)
-                cells.append("-" if ci is None else f"{ci['ratio'] - 1:+.0%} ({ci['lo'] - 1:+.0%} to {ci['hi'] - 1:+.0%}){' *' if ci['publishable'] else ''}")
+                cells.append(
+                    "-"
+                    if ci is None
+                    else f"{ci['ratio'] - 1:+.0%} ({ci['lo'] - 1:+.0%} to {ci['hi'] - 1:+.0%}){' *' if ci['publishable'] else ''}"
+                )
             out.append(f"| {m} | " + " | ".join(cells) + " |")
     return "\n".join(out)
 
@@ -107,8 +139,10 @@ def compare(rows_a, rows_b, base):
                 continue
             ok = b["lo"] <= a["ratio"] <= b["hi"] and a["lo"] <= b["ratio"] <= a["hi"]
             agree &= ok
-            out.append(f"{c:>26} {m:<28} A {a['ratio'] - 1:+.1%} [{a['lo'] - 1:+.1%}, {a['hi'] - 1:+.1%}]  "
-                       f"B {b['ratio'] - 1:+.1%} [{b['lo'] - 1:+.1%}, {b['hi'] - 1:+.1%}]  {'agree' if ok else 'DIFFER'}")
+            out.append(
+                f"{c:>26} {m:<28} A {a['ratio'] - 1:+.1%} [{a['lo'] - 1:+.1%}, {a['hi'] - 1:+.1%}]  "
+                f"B {b['ratio'] - 1:+.1%} [{b['lo'] - 1:+.1%}, {b['hi'] - 1:+.1%}]  {'agree' if ok else 'DIFFER'}"
+            )
     out.append("repeatable: " + ("yes" if agree else "no"))
     return "\n".join(out), agree
 

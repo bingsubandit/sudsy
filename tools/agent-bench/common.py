@@ -1,4 +1,5 @@
 """Shared helpers of the agent bench: paths, config files, shell calls."""
+
 import fnmatch
 import json
 import os
@@ -48,16 +49,28 @@ def load_task(version, task_id):
 
 
 def task_ids(version):
-    return sorted(p.name for p in (TASKS / version).iterdir() if (p / "task.toml").exists())
+    return sorted(
+        p.name for p in (TASKS / version).iterdir() if (p / "task.toml").exists()
+    )
 
 
 def sh(cmd, cwd, env=None, timeout=600, stdin=None):
     """Run a shell command line; never raises on a non-zero exit or a timeout."""
     try:
-        return subprocess.run(cmd, shell=isinstance(cmd, str), cwd=cwd, env=env, capture_output=True,
-                              text=True, timeout=timeout, input=stdin)
+        return subprocess.run(
+            cmd,
+            shell=isinstance(cmd, str),
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            input=stdin,
+        )
     except subprocess.TimeoutExpired as e:
-        return subprocess.CompletedProcess(cmd, 124, e.stdout or "", (e.stderr or "") + "\ntimeout")
+        return subprocess.CompletedProcess(
+            cmd, 124, e.stdout or "", (e.stderr or "") + "\ntimeout"
+        )
 
 
 def git(cwd, *args, check=True):
@@ -96,19 +109,31 @@ def run_env(repo_cfg, extra_path=()):
 
 def changed_files(run):
     """Files changed since the start commit, tracked and untracked."""
-    out = git(run, "diff", "--name-only", "--no-renames", "bench-base") + git(run, "ls-files", "--others", "--exclude-standard")
-    return sorted({p for p in out.splitlines() if p and not p.startswith("node_modules/")})
+    out = git(run, "diff", "--name-only", "--no-renames", "bench-base") + git(
+        run, "ls-files", "--others", "--exclude-standard"
+    )
+    return sorted(
+        {p for p in out.splitlines() if p and not p.startswith("node_modules/")}
+    )
 
 
 def fix_changed(fix_cmds, exts, run, env=None):
     """The family's fix commands on the changed files only (the stop hook; the reference check): a
     trailing ` .` becomes the file list, `npm run` scripts run as they are, others get the files appended."""
-    files = [f for f in changed_files(run) if pathlib.Path(f).suffix in exts and (pathlib.Path(run) / f).exists()]
+    files = [
+        f
+        for f in changed_files(run)
+        if pathlib.Path(f).suffix in exts and (pathlib.Path(run) / f).exists()
+    ]
     if not files:
         return
     args = " ".join(shlex.quote(f) for f in files)
     for c in fix_cmds:
-        cmd = c if c.startswith("npm run") else (c[:-2] if c.endswith(" .") else c) + " " + args
+        cmd = (
+            c
+            if c.startswith("npm run")
+            else (c[:-2] if c.endswith(" .") else c) + " " + args
+        )
         sh(cmd, cwd=run, env=env, timeout=300)
 
 

@@ -1,6 +1,7 @@
 """setup_run.py VERSION TASK COND REP DIR: a fresh run directory DIR/TASK-COND-REP (the repository at the
 task's start, one git commit tagged bench-base, nothing of the task's solution or hidden tests) and its
 META directory next to it (prompt, condition, hooks, hidden files, a copy of the start tree)."""
+
 import pathlib
 import shutil
 import subprocess
@@ -21,12 +22,26 @@ def start_rev(task):
 
 def commit_files(repo, commit):
     """Files of a commit: [(status, path)]."""
-    out = git(bare(repo), "diff-tree", "--no-commit-id", "-r", "--name-status", "--no-renames", f"{commit}^", commit)
+    out = git(
+        bare(repo),
+        "diff-tree",
+        "--no-commit-id",
+        "-r",
+        "--name-status",
+        "--no-renames",
+        f"{commit}^",
+        commit,
+    )
     return [tuple(l.split("\t", 1)) for l in out.splitlines() if l]
 
 
 def show(repo, rev, path):
-    return subprocess.run(["git", "show", f"{rev}:{path}"], cwd=bare(repo), capture_output=True, check=True).stdout
+    return subprocess.run(
+        ["git", "show", f"{rev}:{path}"],
+        cwd=bare(repo),
+        capture_output=True,
+        check=True,
+    ).stdout
 
 
 def materialize(task, meta):
@@ -70,9 +85,13 @@ def prepare_tree(task, cond, run, sudsy):
         if r.returncode != 0:
             raise RuntimeError(f"setup {c!r} failed: {r.stderr}")
     if "node" in repo:
-        (run / "node_modules").symlink_to(CACHE / "node" / task["repo"] / "node_modules")
+        (run / "node_modules").symlink_to(
+            CACHE / "node" / task["repo"] / "node_modules"
+        )
     if conditions.family_name(cond) == "sudsy" and not (run / "sudsy.yaml").exists():
-        r = sh([sudsy, "init", "-y", *repo.get("sudsy_init", "").split()], cwd=run, env=env)
+        r = sh(
+            [sudsy, "init", "-y", *repo.get("sudsy_init", "").split()], cwd=run, env=env
+        )
         if r.returncode != 0:
             raise RuntimeError(f"sudsy init failed: {r.stderr}")
         # a project that uses Sudsy is formatted by it, as the native start trees are by their tools
@@ -100,8 +119,20 @@ def setup(version, task_id, cond, rep, root, sudsy):
     shutil.copytree(run, base, symlinks=True, ignore=shutil.ignore_patterns(".git"))
     materialize(task, meta)
     fam = conditions.family(task["repo"], cond)
-    write_json(meta / "condition.json", {"run": str(run), "cond": cond, "task": task_id, "rep": rep, "version": version, "sudsy": sudsy,
-                                         "hook_lint": fam["hook_lint"], "exts": fam["exts"], "fix": fam["fix"]})
+    write_json(
+        meta / "condition.json",
+        {
+            "run": str(run),
+            "cond": cond,
+            "task": task_id,
+            "rep": rep,
+            "version": version,
+            "sudsy": sudsy,
+            "hook_lint": fam["hook_lint"],
+            "exts": fam["exts"],
+            "fix": fam["fix"],
+        },
+    )
     write_json(meta / "settings.json", conditions.settings(cond, meta))
     prompt = task["text"].strip() + "\n\n" + conditions.instructions(task["repo"], cond)
     (meta / "TASK.md").write_text(prompt)

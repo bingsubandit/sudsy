@@ -4,6 +4,7 @@ post (PostToolUse on Edit|Write|MultiEdit): lints the edited file with the famil
 formats; clean: no output, exit 0; findings: the tool's output on stderr, exit 2 (the agent reads it in
 the same turn). stop (Stop): runs the family's fix commands on the changed files, exit 0. Every call is logged to META/calls.log.
 For `sudsy-hooks` this is the provisional stand-in for `sudsy hook` (plan step 5)."""
+
 import json
 import pathlib
 import re
@@ -26,7 +27,9 @@ def log(what):
 
 
 def sh(cmd):
-    return subprocess.run(cmd, shell=True, cwd=run, capture_output=True, text=True, timeout=300)
+    return subprocess.run(
+        cmd, shell=True, cwd=run, capture_output=True, text=True, timeout=300
+    )
 
 
 if mode == "post":

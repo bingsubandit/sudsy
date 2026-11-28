@@ -2,6 +2,7 @@
 (native, sudsy): the setup works; on the untouched start tree the task's own signal fails (its tests
 with the hidden files in place, its checks, probes or clean files); the reference solution (the task's
 commit, or solution[.<family>].patch) passes the whole verifier. One line per task; exit 1 when one fails."""
+
 import argparse
 import json
 import pathlib
@@ -34,7 +35,9 @@ def apply_reference(run, meta, fam):
 
 
 def fails_untouched(v):
-    return not v["tests_pass"] or bool(v["checks_failed"] or v["probes_failed"] or v["not_clean"])
+    return not v["tests_pass"] or bool(
+        v["checks_failed"] or v["probes_failed"] or v["not_clean"]
+    )
 
 
 def validate(version, task, sudsy, root):
@@ -47,11 +50,20 @@ def validate(version, task, sudsy, root):
         # the reference is in the upstream style; format it as a subject's fix command would
         repo = load_task(version, task)["repo"]
         tools = conditions.family(repo, fam)
-        env = run_env({**repos()["repo"][repo], "name": repo}, [pathlib.Path(sudsy).parent])
+        env = run_env(
+            {**repos()["repo"][repo], "name": repo}, [pathlib.Path(sudsy).parent]
+        )
         fix_changed(tools["fix"], tools["exts"], run, env)
         after = verify(run, meta, sudsy)
         ok = fails_untouched(before) and after["success"]
-        note = "" if ok else " " + json.dumps({"untouched_fails": fails_untouched(before), "reference": after})
+        note = (
+            ""
+            if ok
+            else " "
+            + json.dumps(
+                {"untouched_fails": fails_untouched(before), "reference": after}
+            )
+        )
         out.append(f"{fam}={'ok' if ok else 'FAIL'}{note}")
     return out
 

@@ -5,6 +5,7 @@ checks and probes, nothing changed outside the task's scope, and, with the condi
 lint finding on the changed files and every changed file formatted. The other family's counts are
 recorded too (mistake counters), never part of success. A finding is new unless the same (path, rule,
 line text) exists in the start tree as often."""
+
 import collections
 import json
 import pathlib
@@ -26,20 +27,34 @@ def line_text(root, path, line):
 
 def parse(kind, r, root):
     """[(path, line, rule)] from a lint tool's output, or None when the tool failed."""
-    rel = lambda p: pathlib.Path(p).resolve().relative_to(root.resolve()).as_posix() if pathlib.Path(p).is_absolute() else p.removeprefix("./")
+    rel = lambda p: pathlib.Path(p).resolve().relative_to(
+        root.resolve()
+    ).as_posix() if pathlib.Path(p).is_absolute() else p.removeprefix("./")
     try:
         if kind == "ruff":
-            return [(rel(d["filename"]), d["location"]["row"], d.get("code") or "syntax") for d in json.loads(r.stdout or "[]")]
+            return [
+                (rel(d["filename"]), d["location"]["row"], d.get("code") or "syntax")
+                for d in json.loads(r.stdout or "[]")
+            ]
         if kind == "eslint":
-            return [(rel(f["filePath"]), m.get("line", 0), m.get("ruleId") or "syntax") for f in json.loads(r.stdout or "[]") for m in f["messages"]]
+            return [
+                (rel(f["filePath"]), m.get("line", 0), m.get("ruleId") or "syntax")
+                for f in json.loads(r.stdout or "[]")
+                for m in f["messages"]
+            ]
         if kind == "sudsy":
-            return [(d["path"], d["range"]["start"]["line"], d["rule"]) for d in json.loads(r.stdout)["diagnostics"]]
+            return [
+                (d["path"], d["range"]["start"]["line"], d["rule"])
+                for d in json.loads(r.stdout)["diagnostics"]
+            ]
         if kind == "govet":
             out = []
             for l in r.stderr.splitlines():
                 parts = l.split(":", 3)
                 if len(parts) == 4 and parts[1].isdigit():
-                    out.append((rel(parts[0]), int(parts[1]), "vet:" + parts[3].strip()))
+                    out.append(
+                        (rel(parts[0]), int(parts[1]), "vet:" + parts[3].strip())
+                    )
             if r.returncode not in (0, 1) and not out:
                 return None
             return out
@@ -49,15 +64,23 @@ def parse(kind, r, root):
 
 
 def lint(fam, root, files, env):
-    files = [f for f in files if pathlib.Path(f).suffix in fam["exts"] and (root / f).exists()]
+    files = [
+        f
+        for f in files
+        if pathlib.Path(f).suffix in fam["exts"] and (root / f).exists()
+    ]
     if not files:
         return []
     pkgs = sorted({"./" + str(pathlib.PurePosixPath(f).parent) for f in files})
-    cmd = fam["lint"]["cmd"].format(files=" ".join(shlex.quote(f) for f in files), packages=" ".join(pkgs))
+    cmd = fam["lint"]["cmd"].format(
+        files=" ".join(shlex.quote(f) for f in files), packages=" ".join(pkgs)
+    )
     found = parse(fam["lint"]["parse"], sh(cmd, cwd=root, env=env), root)
     if found is None:
         return None
-    return [(p, ln, rule, line_text(root, p, ln)) for p, ln, rule in found if p in files]
+    return [
+        (p, ln, rule, line_text(root, p, ln)) for p, ln, rule in found if p in files
+    ]
 
 
 def new_findings(fam, run, base, files, env):
@@ -86,8 +109,13 @@ def unformatted(fam, run, base, files, env):
     for f in files:
         if not (run / f).exists():
             continue
-        rule = next((c for c in fam["format_check"] if pathlib.Path(f).suffix in c["exts"]), None)
-        if rule is None or ((base / f).exists() and not is_formatted(rule, base, f, env)):
+        rule = next(
+            (c for c in fam["format_check"] if pathlib.Path(f).suffix in c["exts"]),
+            None,
+        )
+        if rule is None or (
+            (base / f).exists() and not is_formatted(rule, base, f, env)
+        ):
             continue
         if not is_formatted(rule, run, f, env):
             bad.append(f)
@@ -135,25 +163,44 @@ def verify(run, meta, sudsy):
     repo = {**repos()["repo"][task["repo"]], "name": task["repo"]}
     env = run_env(repo, extra_path=[pathlib.Path(sudsy).parent])
     files = changed_files(run)
-    res = {"changed_files": files, "out_of_scope": [f for f in files if not matches(f, task["scope"])]}
+    res = {
+        "changed_files": files,
+        "out_of_scope": [f for f in files if not matches(f, task["scope"])],
+    }
     for famname in ("native", "sudsy"):
         fam = conditions.family(task["repo"], famname)
-        res[f"{famname}_new_findings"] = new_findings(fam, run, meta / "base", files, env)
+        res[f"{famname}_new_findings"] = new_findings(
+            fam, run, meta / "base", files, env
+        )
         res[f"{famname}_unformatted"] = unformatted(fam, run, meta / "base", files, env)
     res["probes_failed"] = probes(task, c["cond"], run, meta / "base", env)
     # lint-debt tasks: these files must end with no finding at all of the condition's tools
     own = conditions.family(task["repo"], c["cond"])
-    res["not_clean"] = [f for f in task.get("clean", []) if lint(own, run, [f], env) != []]
+    res["not_clean"] = [
+        f for f in task.get("clean", []) if lint(own, run, [f], env) != []
+    ]
     put_hidden(run, meta)
     t = sh(task["tests"], cwd=run, env=env, timeout=900)
     res["tests_pass"] = t.returncode == 0
     res["tests_tail"] = (t.stdout + t.stderr)[-600:] if t.returncode else ""
-    res["checks_failed"] = [cmd for cmd in task.get("checks", []) if sh(cmd, cwd=run, env=env).returncode != 0]
+    res["checks_failed"] = [
+        cmd
+        for cmd in task.get("checks", [])
+        if sh(cmd, cwd=run, env=env).returncode != 0
+    ]
     fam = conditions.family_name(c["cond"])
     res["lint_clean"] = res[f"{fam}_new_findings"] == []
     res["formatted"] = res[f"{fam}_unformatted"] == []
-    res["success"] = (res["tests_pass"] and not res["checks_failed"] and not res["probes_failed"] and not res["not_clean"]
-                      and not res["out_of_scope"] and res["lint_clean"] and res["formatted"] and bool(files))
+    res["success"] = (
+        res["tests_pass"]
+        and not res["checks_failed"]
+        and not res["probes_failed"]
+        and not res["not_clean"]
+        and not res["out_of_scope"]
+        and res["lint_clean"]
+        and res["formatted"]
+        and bool(files)
+    )
     return res
 
 

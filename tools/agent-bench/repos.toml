@@ -19,13 +19,24 @@ format_check = { cmd = "sudsy format --check {file}" }
 hook_lint = "sudsy lint {file}"
 # the sudsy conditions start from `sudsy init -y` plus the repo's `sudsy_init`: the presets closest to its
 # native rule set (Sudsy does not import ruff or flat ESLint configs yet)
-exts = [".py", ".ts", ".js", ".mjs", ".json", ".yaml", ".yml", ".md", ".toml", ".go"]
+exts = [
+  ".py",
+  ".ts",
+  ".js",
+  ".mjs",
+  ".json",
+  ".yaml",
+  ".yml",
+  ".md",
+  ".toml",
+  ".go",
+]
 
 [repo.click]
 url = "https://github.com/pallets/click"
 pin = "08b803cf32ceb2ae6a772c62d5da42757a897d44"
 language = "python"
-python = ["ruff==0.15.9", "pytest==9.0.2"]  # click's uv.lock
+python = ["ruff==0.15.9", "pytest==9.0.2"] # click's uv.lock
 env = { PYTHONPATH = "src" }
 test = "python -m pytest"
 sudsy_init = "--preset python/ruff"

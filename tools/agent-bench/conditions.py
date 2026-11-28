@@ -6,14 +6,28 @@ sudsy         `sudsy check` / `sudsy fix`
 sudsy-hooks   Sudsy behind the hooks; PROVISIONAL until `sudsy hook` exists (plan step 5): hook.py runs
               `sudsy lint FILE` after an edit and `sudsy fix` at stop, the protocol of the pilot's hooks
 """
+
 import json
+import re
 
 from common import HERE, repos
 
 CONDITIONS = ["native", "native-hooks", "sudsy", "sudsy-hooks"]
 # the name a condition's results carry; a provisional implementation is marked in it
 RESULT_NAME = {"sudsy-hooks": "sudsy-hooks-provisional"}
-READ_ONLY = ["git diff", "git status", "ls", "cat", "head", "tail", "wc", "grep", "sed", "mkdir"]
+RUNNERS = {"python", "npm", "npx", "go"}
+READ_ONLY = [
+    "git diff",
+    "git status",
+    "ls",
+    "cat",
+    "head",
+    "tail",
+    "wc",
+    "grep",
+    "sed",
+    "mkdir",
+]
 
 
 def family_name(cond):
@@ -33,19 +47,25 @@ def family(repo_name, cond):
     extra = r.get("sudsy_extra", {})
     f["check"] = f["check"] + extra.get("check", [])
     f["fix"] = f["fix"] + extra.get("fix", [])
-    f["format_check"] = ([extra["format_check"]] if "format_check" in extra else []) + [{**f["format_check"], "exts": f["exts"]}]
+    f["format_check"] = ([extra["format_check"]] if "format_check" in extra else []) + [
+        {**f["format_check"], "exts": f["exts"]}
+    ]
     return f
 
 
 def prefix(cmd):
-    """The allowlist prefix of a command: the program and its subcommands, without options and paths
-    (`black --check .` -> `black`, `python -m pytest` -> `python -m pytest`)."""
-    out, toks = [], cmd.split()
+    """The allowlist prefix of a command: a checker's program name, so its help and rule docs are
+    allowed too (`ruff check` -> `ruff`, `sudsy fix` -> `sudsy`); for a runner (python, npm, npx, go)
+    the runner and its subcommands without options and paths (`python -m pytest`, `go vet`)."""
+    toks = cmd.split()
+    if toks[0] not in RUNNERS:
+        return toks[0]
+    out = []
     i = 0
     while i < len(toks):
         t = toks[i]
         if t == "-m" and i + 1 < len(toks):
-            out += toks[i:i + 2]
+            out += toks[i : i + 2]
             i += 2
             continue
         if t.startswith("-") or t == "." or t.startswith("./"):
@@ -68,7 +88,9 @@ def allowed_commands(repo_name, cond):
 
 def allowed_tools(repo_name, cond):
     cmds = allowed_commands(repo_name, cond) + READ_ONLY
-    return ",".join(["Read", "Edit", "Write", "Glob", "Grep"] + [f"Bash({c}*)" for c in cmds])
+    return ",".join(
+        ["Read", "Edit", "Write", "Glob", "Grep"] + [f"Bash({c}*)" for c in cmds]
+    )
 
 
 def code_list(cmds):
@@ -86,10 +108,12 @@ def instructions(repo_name, cond):
         "fix": code_list(f["fix"]),
         "test": code_list([repos()["repo"][repo_name]["test"]]),
         "allowed": code_list(allowed_commands(repo_name, cond) + READ_ONLY),
-        "hook_lint": f["hook_lint"].replace(" {file}", " FILE").replace(" {package}", " PACKAGE"),
+        "hook_lint": f["hook_lint"]
+        .replace(" {file}", " FILE")
+        .replace(" {package}", " PACKAGE"),
     }
-    vals["hooks"] = ("\n" + hook_line.format(**vals) + "\n") if cond.endswith("-hooks") else ""
-    return body.format(**vals).rstrip() + "\n"
+    vals["hooks"] = ("\n" + hook_line.format(**vals)) if cond.endswith("-hooks") else ""
+    return re.sub(r"\n{3,}", "\n\n", body.format(**vals)).rstrip() + "\n"
 
 
 def settings(cond, meta):
@@ -97,14 +121,24 @@ def settings(cond, meta):
     if not cond.endswith("-hooks"):
         return {}
     hook = f"python3 -I {HERE / 'hook.py'}"
-    return {"hooks": {
-        "PostToolUse": [{"matcher": "Edit|Write|MultiEdit", "hooks": [{"type": "command", "command": f"{hook} post {meta}"}]}],
-        "Stop": [{"hooks": [{"type": "command", "command": f"{hook} stop {meta}"}]}],
-    }}
+    return {
+        "hooks": {
+            "PostToolUse": [
+                {
+                    "matcher": "Edit|Write|MultiEdit",
+                    "hooks": [{"type": "command", "command": f"{hook} post {meta}"}],
+                }
+            ],
+            "Stop": [
+                {"hooks": [{"type": "command", "command": f"{hook} stop {meta}"}]}
+            ],
+        }
+    }
 
 
 if __name__ == "__main__":
     import sys
+
     repo, cond = sys.argv[1], sys.argv[2]
     print(instructions(repo, cond))
     print(allowed_tools(repo, cond))
