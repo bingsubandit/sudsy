@@ -1,7 +1,8 @@
 //! `sudsy fix [--unsafe | --apply ID,...] [paths...]`: applies fixes until none is left, or
 //! exactly the fixes named by id, then formats, and reports what remains.
 
-use crate::lint::{self, Collected, ReportArgs, exit_code};
+use crate::lint::{self, Collected, Report, ReportArgs, exit_code};
+use crate::new::{Entry, keep_new};
 use crate::report::FileDiagnostics;
 use crate::session::{Session, load, par_map};
 use anyhow::{Context, Result, anyhow};
@@ -38,6 +39,8 @@ enum Mode<'a> {
 
 /// What happened to one file.
 struct Fixed {
+    /// The file as read, for `--new`.
+    file: File,
     path: String,
     text: String,
     changed: bool,
@@ -172,6 +175,7 @@ fn fix_file(db: &Database, project: &Project, path: &Path, mode: &Mode) -> Resul
         .diagnostics
         .clone();
     Ok(Fixed {
+        file,
         path: shown,
         text,
         changed,
@@ -182,6 +186,7 @@ fn fix_file(db: &Database, project: &Project, path: &Path, mode: &Mode) -> Resul
 }
 
 pub fn run(args: FixArgs) -> Result<ExitCode> {
+    let base = args.report.base()?;
     let session: Session = args.report.open()?;
     let (db, project) = (&session.db, &session.project);
     let wanted: Vec<String> = args
@@ -211,6 +216,7 @@ pub fn run(args: FixArgs) -> Result<ExitCode> {
     };
     let (mut changed, mut applied) = (0, 0);
     let mut found = HashSet::new();
+    let mut handles = Vec::new();
     for (path, result) in session.paths.iter().zip(results) {
         match result {
             Ok(fixed) => {
@@ -231,6 +237,7 @@ pub fn run(args: FixArgs) -> Result<ExitCode> {
                 }
                 applied += fixed.named.applied;
                 found.extend(fixed.named.found);
+                handles.push((path, fixed.file));
                 collected.files.push(FileDiagnostics {
                     path: fixed.path,
                     text: fixed.text,
@@ -248,7 +255,20 @@ pub fn run(args: FixArgs) -> Result<ExitCode> {
         eprintln!("{applied} fix(es) applied");
     }
     eprintln!("{changed} file(s) changed");
-    lint::print(&session, args.report.format, &collected.files, true);
+    if let Some(base) = &base {
+        let entries = handles
+            .iter()
+            .zip(collected.files.iter_mut())
+            .map(|(&(path, file), report)| Entry { path, file, report })
+            .collect();
+        keep_new(db, base, entries)?;
+    }
+    let report = Report {
+        format: args.report.format,
+        collapse: true,
+        new: base.is_some(),
+    };
+    lint::print(&session, &report, &collected.files);
     let unknown: Vec<&String> = wanted.iter().filter(|id| !found.contains(*id)).collect();
     if unknown.is_empty() {
         return Ok(exit_code(&collected));

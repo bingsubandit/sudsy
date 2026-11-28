@@ -10,6 +10,7 @@ use core_syntax::{TextRange, TextSize};
 use std::process::ExitCode;
 
 pub fn run(args: LintArgs) -> Result<ExitCode> {
+    let base = args.report.base()?;
     let mut session = args.report.open()?;
     let loaded = session.load_linted(|db, file| {
         lint_query(db, file);
@@ -48,6 +49,6 @@ pub fn run(args: LintArgs) -> Result<ExitCode> {
             }
         }
     }
-    args.print(&session, &mut collected.files);
+    args.print(&session, base.as_ref(), &loaded, &mut collected.files)?;
     Ok(exit_code(&collected))
 }

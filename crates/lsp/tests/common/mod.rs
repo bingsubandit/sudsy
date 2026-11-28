@@ -55,6 +55,15 @@ impl Client {
     /// Starts a server for `root` with the given providers and completes the handshake. The
     /// client announces that it can register file watchers and refresh diagnostics.
     pub fn start(root: &Path, providers: Vec<Box<dyn LanguageProvider>>) -> Client {
+        Client::start_with(root, providers, None)
+    }
+
+    /// [`Client::start`] with the editor's `initializationOptions`.
+    pub fn start_with(
+        root: &Path,
+        providers: Vec<Box<dyn LanguageProvider>>,
+        options: Option<serde_json::Value>,
+    ) -> Client {
         let (server_end, conn) = Connection::memory();
         let server = std::thread::spawn(move || lsp::serve(server_end, providers));
         let mut client = Client {
@@ -85,6 +94,7 @@ impl Client {
                 }),
                 ..Default::default()
             },
+            initialization_options: options,
             ..Default::default()
         };
         client.request::<Initialize>(params);

@@ -49,6 +49,7 @@ pub mod feature_state;
 pub mod feature_support;
 pub mod file_name;
 pub mod final_terminator;
+pub mod fingerprint;
 pub mod fix_ids;
 pub mod fixes;
 pub mod flow_rules;

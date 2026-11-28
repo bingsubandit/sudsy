@@ -12,6 +12,7 @@ mod diagnostics;
 mod formatting;
 mod notifier;
 mod position;
+mod scope;
 mod server;
 pub mod workspace;
 

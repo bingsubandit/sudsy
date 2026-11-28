@@ -134,6 +134,8 @@ The E3 fix-by-id condition paid one call per fix; applying several in one call r
 
 ## Step 4: only new findings
 
+Built; how it works: [../config/cli.md](../config/cli.md#only-new-findings) and [../editor/lsp.md](../editor/lsp.md). Open: project and directory findings of a changed file always count as new (only the file's own findings are linted at REV).
+
 ### How other tools do it
 From documentation known to us at writing time; recheck each before citing it publicly.
 - **Baseline files in the repository:** PHPStan (`phpstan-baseline.neon`: message, path and count),
@@ -152,7 +154,7 @@ From documentation known to us at writing time; recheck each before citing it pu
   finding's line text without leading whitespace, its occurrence number among equal ones). Line
   shifts do not matter, an edited line's findings count as new. Unchanged files are skipped, so the
   cost is one extra lint per changed file.
-- A file not in git, or no repository, makes every finding new (and says so once).
+- A file not in REV makes every finding new; no repository or an unknown REV is an error.
 - `--new` prints nothing and exits 0 when no new finding is left, which is what makes the hooks
   silent.
 - A committed baseline file (the PHPStan model) is deferred: git covers agents and pull requests;
