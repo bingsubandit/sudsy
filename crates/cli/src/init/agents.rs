@@ -1,5 +1,6 @@
 //! The Sudsy block of the repo's agent instructions (`AGENTS.md`, or `CLAUDE.md` when only that
-//! exists): how to run Sudsy. Written on request (`--agents`, or the question of `sudsy init`), once.
+//! exists): how to run Sudsy, and that the hooks (`hooks.rs`) format. Written on request
+//! (`--agents`, or the question of `sudsy init`), once.
 
 use anyhow::Result;
 use std::path::Path;
@@ -11,6 +12,8 @@ const END: &str = "<!-- sudsy:end -->";
 const BLOCK: &str = "## Sudsy
 
 This repo is formatted and linted with Sudsy (`sudsy.yaml`).
+
+Claude Code runs Sudsy through hooks (`.claude/settings.json`): each edited file is linted, and when you stop the changed files are fixed and formatted. Formatting is automatic: never spend effort on whitespace, quotes or line length.
 
 Check: `sudsy check` (exit 1 on an error or an unformatted file). Each finding shows its line and its fixes; a fix that needs a decision has an id (`fix ab12cd (unsafe)`). A report of more than 100 findings is one line per rule; `sudsy check --rule <id>` lists one rule.
 

@@ -164,11 +164,14 @@ From documentation known to us at writing time; recheck each before citing it pu
   text at `HEAD` cached per file until `HEAD` moves.
 - **CI:** `check --new=origin/main` checks a pull request against its base.
 
-## Step 5: hooks
+## Step 5: hooks (built)
 
 `sudsy hook <event>` reads the hook input JSON of the agent on stdin and answers in its protocol;
-Claude Code first (the protocol the experiments used). Recheck the event and exit-code semantics
-against the current Claude Code hook documentation when building.
+Claude Code first (the protocol the experiments used). Built as described below; the protocol was
+checked against code.claude.com/docs/en/hooks on 2026-11-28 (fields, exit codes, the
+`stop_hook_active` loop guard, `systemMessage` for the note; MultiEdit is no longer listed among the
+tools there and stays in the matcher for older versions). Behaviour and latency:
+[config/cli.md](../config/cli.md#agent-hooks).
 - `sudsy hook post-edit` (PostToolUse, matcher `Edit|Write|MultiEdit`): lints the edited file with
   `--new`, never formats (formatting under the agent makes its next edit miss the text it holds).
   Clean: no output, exit 0. Findings: the step 2 output on stderr, exit 2, so the agent reads them in
