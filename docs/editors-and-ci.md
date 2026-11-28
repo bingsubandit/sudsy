@@ -30,6 +30,7 @@ The extension sets no defaults.
 | `sudsy.serverPath` | Path to a `sudsy` binary. User settings only. |
 | `sudsy.csharpWorkerPath` | Path to the C# worker. Default: beside the executable. User settings only. |
 | `sudsy.trace.server` | Protocol trace in the Sudsy output channel. |
+| `sudsy.diagnostics.scope` | `all` (default): every finding. `new`: only findings the file at git `HEAD` does not have. |
 
 - A project can provide its own binary with `npm i -D @sudsylint/sudsy`. For a `sudsy` in a terminal, install the CLI separately.
 - The two path settings cannot be set in a workspace `.vscode/settings.json`. This stops a repository from choosing which program runs.
@@ -108,6 +109,8 @@ SARIF is version 2.1.0. It lists results and the rule table. It does not carry f
 ## Other output
 
 The default output prints each finding with its source line and each fix with the line it produces (or a short `-`/`+` pair). A fix that `sudsy fix` does not apply by itself has an id: `fix k3m9qa (unsafe): ...`. `sudsy fix --apply k3m9qa,7tq2xw` applies exactly those fixes, suggestions included, then formats; `sudsy fix --unsafe` applies every safe and unsafe fix. Ids are hashes of the path, rule and line text, so they hold while the line is unchanged. A report of more than 100 findings is one line per rule; `--rule <id>` lists one rule in full and `--format concise` prints one line per finding.
+
+`--new` on `lint`, `check` and `fix` reports only findings the file did not have at the last commit (`--new=origin/main`: at that revision). Moved lines keep their findings old; exit code and summary count only the new ones. It needs a git repository.
 
 `--format json` gives `{version, summary, diagnostics}` with byte offsets, line and column ranges and fix edits. Use it in scripts. The [site](https://bingsubandit.github.io/sudsy/cli/) documents the shape, and publishes `llms.txt` and a Markdown copy of every page for coding agents.
 

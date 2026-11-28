@@ -12,6 +12,11 @@ Machine unless noted: AMD Ryzen 5 3600 (6 cores / 12 threads), 32 GB, Windows 11
 |---|---|
 | `sudsy lint .` over 20 YAML files of 1,000 lines, 20,000 findings with an unsafe fix each; release, x86-64 Linux agent host (4 cores), best of 5, process start, discovery and lint included; `--format github` (one line per finding) is the floor | github 92 ms (2.9 MB), concise 95 ms (2.0 MB), human collapsed 77 ms (257 bytes), human in full (`--rule`: source line, fix id, edited line per finding) 95 ms (3.8 MB), json 280 ms (15 MB); noise about 10%, so the full human report costs no measurable time over the floor |
 
+## Only new findings (`scripts/new-bench.sh`)
+| Path | Number |
+|---|---|
+| `sudsy lint --format concise .` against the same with `--new` in a git repository of 2,000 YAML files of 100 lines (200,000 findings), 0, 20 or all files edited since `HEAD` (a line inserted at the top, one new finding each); release, x86-64 Linux agent host (4 cores), git 2.43, best of 5, process start included | 0 changed: 376 / 344 ms; 20: 363 / 348 ms; 2,000: 372 / 861 ms (the old text of every file linted again, 400,000 fingerprints). Below a few hundred changed files `--new` costs nothing measurable (it prints less); noise about 10% |
+
 ## `sudsy init --yes`
 | Path | Number |
 |---|---|

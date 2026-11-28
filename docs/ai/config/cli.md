@@ -3,7 +3,7 @@
 | Command | What it does | Exit |
 |---|---|---|
 | `format [--check] [paths]` | Format files; `--check` reports without writing | 1 if `--check` finds changes |
-| `lint [--rule ID,...] [paths]` | Report diagnostics; `--rule` keeps only those rules' findings | 1 on any error-level diagnostic |
+| `lint [--rule ID,...] [--new[=REV]] [paths]` | Report diagnostics; `--rule` keeps only those rules' findings, `--new` only those the files at git `REV` lack ([below](#only-new-findings)) | 1 on any error-level diagnostic |
 | `fix [--unsafe \| --apply ID,...] [paths]` | Apply fixes (loop), then format; `--apply`: [below](#fix-ids) | 1 if errors remain; 2 on an unknown id |
 | `check [--rule ID,...] [paths]` | `format --check` + `lint`, for CI; an unformatted file is an error diagnostic `format` at 1:1 | 1 on any error or unformatted file |
 | `rules [term] [--language <lang>]` | List rules; an exact rule id explains it (options, presets that enable it, equivalent ids of other tools from the parity catalog); an exact id of another tool (`SA1005`, `truthy`) explains the rule that covers it; other text lists the rules whose id, description or equivalent ids contain it (case-insensitive). `--language` keeps the rules that apply to that language, shared ones included | 0; 2 when nothing matches |
@@ -15,7 +15,7 @@
 | `debug parse <file>` | Developer: parse a `.cs` file with the worker, check round trip, print the tree | |
 
 - Exit 2 on any command: a file could not be processed (syntax error, unreadable, bad option, worker unavailable, nested deeper than 1,000 brackets, a panic in a parser, formatter or rule) or the config is invalid. Failed files are left alone and the rest are processed. Results are reported in path order.
-- `lint`, `fix`, `check`: `--format human|concise|json|sarif|github` and `--analysis fast|standard|deep`.
+- `lint`, `fix`, `check`: `--format human|concise|json|sarif|github`, `--analysis fast|standard|deep` and `--new[=REV]` ([below](#only-new-findings)).
   - Human (`crates/cli/src/human.rs`, the form agents read): `path:line:col: severity[rule]: message`, then the source line (`    12 | text`; none for a blank line or the `format` finding), `note:` lines, and per fix `fix (safe): title` or `fix ID (unsafe|suggestion): title` followed by its change: the edited line (`    12 | new text`) when it changes one line, else up to 3 old (`-`) and 3 new (`+`) lines and `... (N more lines)`; lines the edits leave alone are not shown. A line over 160 characters is cut around the finding (40 before it). No colours.
   - Collapse: a human report of more than 100 findings is one line per rule (`severity[rule]: N findings (M with a fix): the first 3 locations, ...`; errors first, then by count) and a last line naming `--rule` and `--format concise`. 100 findings in full are about 300 lines; the collapsed form saved agents 21-38% of input tokens at 127 findings (design/agent-workflows.md, E8). `--rule` never collapses; the other formats never do.
   - Concise: the first line of each finding only.
@@ -33,6 +33,14 @@
 - `fix --apply ID[,ID...]` (case-insensitive; not with `--unsafe`) lints the files of the run, applies exactly the fixes with those ids (suggestions included, no other fix) in one round, then formats only the files that got a fix, and reports what remains. A named fix that overlaps another named one is not applied (a warning; its id after the edit is in the report); a round that would leave the file unparseable is not applied.
 - An id no fix has (its line changed, the fix is gone) is an error after the report, with up to 20 current ids as `ID (rule, path:line)`; the other ids are still applied; exit 2.
 - `fix --unsafe` stays the accept-all (safe and unsafe); suggestions are applied only by id. Project and directory findings are not part of `fix` (it lints each file alone), so their ids are unknown to `--apply`.
+
+## Only new findings
+`--new[=REV]` (`REV` defaults to `HEAD`, so the working tree against the last commit; `--new=origin/main` checks a branch against its base) keeps the findings that the file at `REV` does not have (`crates/cli/src/new.rs`). Nothing is stored: git (`core_workspace::git`: `rev-parse`, `ls-tree`, `diff --name-only`, one `cat-file --batch` for all changed files) gives the files of `REV` and the changed ones; each changed file's old text is linted in memory with the current config, and findings are matched by fingerprint (`core_rules::fingerprint`, also the base of fix ids): the rule, the trimmed text of the finding's first line, its occurrence among that rule's findings on equal lines. A moved or reindented line keeps its findings old; an edited line's findings, and a second equal line's, are new.
+- A file unchanged since `REV` has no new finding; a file `REV` does not have (untracked, added, outside the repository) has only new ones. Project and directory findings of a changed file are compared with the file's own findings at `REV`, so they count as new.
+- `check`: a changed file's `format` finding is new when the file was formatted at `REV`.
+- `fix --new` applies fixes as without it and reports only the new findings that remain.
+- Exit code and summary count only new findings; the summary says `new error(s)` and is left out when there is none, so a clean run prints nothing (human and concise) and exits 0.
+- Outside a git repository, or with an unknown `REV`: an error before any file is read (exit 2).
 
 ## `init` questions
 `crates/cli/src/init/`: `world.rs` (the scan and what exists), `ask.rs` (the questions, skipped when a flag answers them), `plan.rs` (`Answers` to files: the one model), `prompt.rs` (`Terminal` with `dialoguer`, `Lines` for `TERM=dumb`, `Defaults` for `--yes`), `editor.rs` and `json_edit.rs` (VS Code and CI files). The agent block is paragraphs, not a list, so the formatter leaves it alone under any indent width.

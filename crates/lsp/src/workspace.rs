@@ -46,6 +46,8 @@ pub struct Workspace {
     index_dirty: bool,
     /// Source files that changed on disk while not open, applied by the next `refresh_index`.
     changed_sources: Vec<PathBuf>,
+    /// Set by the `new` diagnostics scope: the files at `HEAD` the findings are compared with.
+    pub(crate) head: Option<Arc<crate::scope::HeadFiles>>,
 }
 
 impl Workspace {
@@ -65,6 +67,7 @@ impl Workspace {
             index_open: false,
             index_dirty: false,
             changed_sources: Vec::new(),
+            head: None,
         };
         workspace.db.prestart();
         let error = workspace.reload_config();
@@ -77,6 +80,11 @@ impl Workspace {
         let roots = [self.root.clone()];
         let found = core_workspace::discover_files(&roots, &project.filter()).unwrap_or_default();
         self.db.open_project(&roots, &found);
+    }
+
+    /// `new`: documents show only the findings their text at `HEAD` does not have.
+    pub fn set_new_scope(&mut self, new: bool) {
+        self.head = new.then(|| Arc::new(crate::scope::HeadFiles::new(&self.root)));
     }
 
     /// Reads the config and the `.editorconfig` values again, for every open document. Returns

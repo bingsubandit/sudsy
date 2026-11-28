@@ -126,7 +126,15 @@ pub fn serve(conn: Connection, providers: Vec<Box<dyn LanguageProvider>>) -> Res
         "serverInfo": ServerInfo { name: "sudsy".into(), version: Some(env!("CARGO_PKG_VERSION").into()) },
     });
     conn.initialize_finish(id, result)?;
-    let (workspace, config_error) = Workspace::new(root_of(&params), providers);
+    let (mut workspace, config_error) = Workspace::new(root_of(&params), providers);
+    // `sudsy.diagnostics.scope` of the editor: `all` (the default) or `new`.
+    let scope = params.initialization_options.as_ref();
+    workspace.set_new_scope(
+        scope
+            .and_then(|o| o.get("diagnosticsScope"))
+            .and_then(|s| s.as_str())
+            == Some("new"),
+    );
     let notifier = Notifier::new(conn.sender.clone());
     let analysis = Analysis::start(conn.sender.clone());
     let mut server = Server {

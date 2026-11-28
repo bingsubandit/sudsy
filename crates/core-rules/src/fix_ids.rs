@@ -1,13 +1,13 @@
 //! Short ids for the fixes of a report, so a caller can name the fixes to apply (`sudsy fix
-//! --apply ID`). An id hashes the file's path as shown, the rule, the trimmed text of the finding's
-//! first line, the finding's occurrence among the findings of that rule on equal lines, and the
-//! fix's index: it stays the same while that line is unchanged, and nothing is stored.
+//! --apply ID`). An id hashes the file's path as shown, the finding's fingerprint
+//! ([`crate::fingerprint`]) and the fix's index: it stays the same while that line is unchanged,
+//! and nothing is stored.
 //!
 //! concept: none (infrastructure: fix ids)
 
 use crate::diagnostic::{Diagnostic, FixKind};
+use crate::fingerprint::fingerprints;
 use crate::lines::LineIndex;
-use std::collections::HashMap;
 
 /// Characters of an id: 6 of base 32 (30 bits), so 1,000 ids in one report collide with a chance
 /// of about 1 in 2,000.
@@ -29,23 +29,32 @@ pub fn fix_ids(
     lines: &LineIndex,
     diagnostics: &[Diagnostic],
 ) -> Vec<Vec<Option<String>>> {
-    let mut seen: HashMap<(&str, &str), u32> = HashMap::new();
+    // Only the findings with an id-bearing fix count for the occurrence, so a fix-less finding
+    // on an equal line does not move the ids.
+    let with_ids = diagnostics
+        .iter()
+        .filter(|d| d.fixes.iter().any(|f| has_id(f.kind)));
+    let mut prints = fingerprints(text, lines, with_ids).into_iter();
     diagnostics
         .iter()
         .map(|d| {
             if !d.fixes.iter().any(|f| has_id(f.kind)) {
                 return vec![None; d.fixes.len()];
             }
-            let (start, end) = lines.line_range(text, lines.line(d.range.start()));
-            let line = text[start..end].trim();
-            let occurrence = seen.entry((d.rule.as_str(), line)).or_default();
-            let n = *occurrence;
-            *occurrence += 1;
+            let print = prints
+                .next()
+                .expect("one fingerprint per finding with an id");
             d.fixes
                 .iter()
                 .enumerate()
                 .map(|(index, f)| {
-                    has_id(f.kind).then(|| id(&[path, &d.rule, line], n, index as u32))
+                    has_id(f.kind).then(|| {
+                        id(
+                            &[path, print.rule, print.line],
+                            print.occurrence,
+                            index as u32,
+                        )
+                    })
                 })
                 .collect()
         })
