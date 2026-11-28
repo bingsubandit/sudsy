@@ -8,6 +8,7 @@ use crate::workspace::Workspace;
 use core_incremental::{
     Failure, Stage, directory_scope, lint, module_diagnostics, project_diagnostics,
 };
+use core_rules::fingerprint::new_findings;
 use core_rules::{Diagnostic, Severity};
 use lsp_types::{
     DiagnosticRelatedInformation, DiagnosticSeverity, DocumentDiagnosticParams,
@@ -73,41 +74,47 @@ impl Workspace {
         };
         let linted = lint(&self.db, file).as_ref().map_err(Clone::clone)?;
         let text = file.text(&self.db);
-        let positions = Positions::new(text);
-        let mut items: Vec<_> = linted
-            .diagnostics
-            .iter()
-            .map(|d| to_lsp(d, &positions, uri))
-            .collect();
+        let mut found: Vec<&Diagnostic> = linted.diagnostics.iter().collect();
         // The directory rules judge the unit of the file's folder: its other files are the open
         // documents and what the disk holds.
+        let module;
         if let Some(scope) = directory_scope(&self.db, file)
             && let Some(dir) = path.parent()
         {
             let open: Vec<_> = self.project_open_in(dir);
             let unit = self.siblings.unit(&self.db, dir, &scope, &open);
-            let found = module_diagnostics(&self.db, unit)
+            module = module_diagnostics(&self.db, unit)
                 .as_ref()
                 .map_err(Clone::clone)?;
-            items.extend(
-                found
-                    .iter()
-                    .filter(|(p, _)| p == path)
-                    .map(|(_, d)| to_lsp(d, &positions, uri)),
-            );
+            found.extend(module.iter().filter(|(p, _)| p == path).map(|(_, d)| d));
         }
         // `analysis: deep`: what the project-scope rules found in this file.
+        let project_wide;
         if self.is_deep() {
             let files = self.project_files();
-            let project_wide = project_diagnostics(&self.db, &files)?;
-            items.extend(
+            project_wide = project_diagnostics(&self.db, &files)?;
+            found.extend(
                 project_wide
                     .iter()
                     .filter(|(p, _)| p == path)
-                    .map(|(_, d)| to_lsp(d, &positions, uri)),
+                    .map(|(_, d)| d),
             );
         }
-        Ok(items)
+        if let Some(head) = &self.head {
+            let base = head.at_head(&self.db, path, file);
+            let base = match base {
+                Some(at) => Some((
+                    at.text(&self.db),
+                    lint(&self.db, at).as_ref().map_err(Clone::clone)?,
+                )),
+                None => None,
+            };
+            let base = base.map(|(t, l)| (t.as_str(), l.diagnostics.as_slice()));
+            let mut new = new_findings(text, found.iter().copied(), base).into_iter();
+            found.retain(|_| new.next().unwrap_or(true));
+        }
+        let positions = Positions::new(text);
+        Ok(found.iter().map(|d| to_lsp(d, &positions, uri)).collect())
     }
 }
 

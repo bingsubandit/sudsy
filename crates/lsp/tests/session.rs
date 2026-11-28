@@ -355,3 +355,51 @@ fn formatting_honors_layout_rules_and_follows_the_config() {
     assert!(client.format(&uri).is_empty());
     client.shutdown();
 }
+
+fn git(dir: &std::path::Path, args: &[&str]) {
+    let o = std::process::Command::new("git")
+        .args([
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+        ])
+        .args(args)
+        .current_dir(dir)
+        .output()
+        .unwrap();
+    assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
+}
+
+#[test]
+fn the_new_scope_shows_only_findings_head_lacks_until_head_moves() {
+    let t = tempfile::tempdir().unwrap();
+    write(
+        t.path(),
+        "sudsy.yaml",
+        "lint:\n  rules:\n    ambiguous-booleans: warn\n",
+    );
+    write(t.path(), "a.yaml", "- yes\n");
+    git(t.path(), &["init", "-q"]);
+    git(t.path(), &["add", "-A"]);
+    git(t.path(), &["commit", "-qm", "base"]);
+    let options = serde_json::json!({ "diagnosticsScope": "new" });
+    let mut client = Client::start_with(t.path(), providers(), Some(options));
+    let text = "- 1\n- yes\n- no\n";
+    let uri = client.open("a.yaml", "yaml", text);
+    let found = client.diagnostics(&uri);
+    assert_eq!(
+        found.iter().map(|d| d.range.start.line).collect::<Vec<_>>(),
+        [2]
+    );
+    // Not in HEAD: all of them.
+    let other = client.open("b.yaml", "yaml", "- yes\n");
+    assert_eq!(client.diagnostics(&other).len(), 1);
+    // HEAD moves to the text: nothing is new.
+    write(t.path(), "a.yaml", text);
+    git(t.path(), &["commit", "-qam", "next"]);
+    assert!(client.diagnostics(&uri).is_empty());
+    client.shutdown();
+}

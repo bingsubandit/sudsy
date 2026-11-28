@@ -1,6 +1,7 @@
 //! `sudsy lint [paths...]`, and what `check` and `fix` share with it: gathering the diagnostics of
 //! the files and printing them.
 
+use crate::new::{Base, Entry, keep_new};
 use crate::report::{self, Catalog, FileDiagnostics, OutputFormat};
 use crate::session::Session;
 use anyhow::{Result, anyhow};
@@ -10,6 +11,7 @@ use core_incremental::{
     File, Siblings, Stage, directory_scope, lint, module_diagnostics, project_diagnostics,
 };
 use core_rules::{SYNTAX_ERROR, Severity};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -41,6 +43,17 @@ pub struct ReportArgs {
     /// Analysis depth; overrides `analysis` in sudsy.yaml.
     #[arg(long, value_enum)]
     pub analysis: Option<Analysis>,
+    /// Report only the findings that are new against the git revision REV (`HEAD` when no value
+    /// is given): the file's text there, linted with the current config. Exit code and summary
+    /// count only those.
+    #[arg(
+        long,
+        value_name = "REV",
+        num_args = 0..=1,
+        require_equals = true,
+        default_missing_value = "HEAD"
+    )]
+    pub new: Option<String>,
 }
 
 /// The options of `lint` and `check`.
@@ -55,14 +68,45 @@ pub struct LintArgs {
 }
 
 impl LintArgs {
-    /// Keeps the findings of the rules `--rule` names; prints the report.
-    pub fn print(&self, session: &Session, files: &mut [FileDiagnostics]) {
+    /// Keeps the findings of the rules `--rule` names, and with `--new` the new ones; prints the
+    /// report.
+    pub fn print(
+        &self,
+        session: &Session,
+        base: Option<&Base>,
+        loaded: &[Result<File>],
+        files: &mut [FileDiagnostics],
+    ) -> Result<()> {
         if !self.rule.is_empty() {
             for file in files.iter_mut() {
                 file.diagnostics.retain(|d| self.rule.contains(&d.rule));
             }
         }
-        print(session, self.report.format, files, self.rule.is_empty());
+        if let Some(base) = base {
+            let handles: HashMap<String, (&PathBuf, File)> = session
+                .paths
+                .iter()
+                .zip(loaded)
+                .filter_map(|(path, file)| {
+                    Some((session.project.show(path), (path, *file.as_ref().ok()?)))
+                })
+                .collect();
+            let entries = files
+                .iter_mut()
+                .filter_map(|report| {
+                    let (path, file) = *handles.get(&report.path)?;
+                    Some(Entry { path, file, report })
+                })
+                .collect();
+            keep_new(&session.db, base, entries)?;
+        }
+        let report = Report {
+            format: self.report.format,
+            collapse: self.rule.is_empty(),
+            new: base.is_some(),
+        };
+        print(session, &report, files);
+        Ok(())
     }
 }
 
@@ -70,6 +114,21 @@ impl ReportArgs {
     pub fn open(&self) -> Result<Session> {
         Session::open(&self.paths, self.analysis.map(Depth::from))
     }
+
+    /// The revision of `--new`, checked before any file is read or written.
+    pub fn base(&self) -> Result<Option<Base>> {
+        self.new.as_deref().map(Base::open).transpose()
+    }
+}
+
+/// How a report is printed.
+pub struct Report {
+    pub format: OutputFormat,
+    /// As in [`report::render`].
+    pub collapse: bool,
+    /// Only new findings are left (`--new`): the summary says so, and is left out when there are
+    /// none.
+    pub new: bool,
 }
 
 /// The diagnostics of all files, and how many files could not be linted.
@@ -189,18 +248,24 @@ pub fn catalog(session: &Session) -> Catalog {
     rules
 }
 
-/// Prints the report on stdout and a one-line summary on stderr; `collapse` as in
-/// [`report::render`].
-pub fn print(session: &Session, format: OutputFormat, files: &[FileDiagnostics], collapse: bool) {
+/// Prints the report on stdout and a one-line summary on stderr.
+pub fn print(session: &Session, report: &Report, files: &[FileDiagnostics]) {
     print!(
         "{}",
-        report::render(format, files, &catalog(session), collapse)
+        report::render(report.format, files, &catalog(session), report.collapse)
     );
     let (errors, warnings) = report::count(files);
-    eprintln!(
-        "{} file(s) checked, {errors} error(s), {warnings} warning(s)",
-        files.len()
-    );
+    if !report.new {
+        eprintln!(
+            "{} file(s) checked, {errors} error(s), {warnings} warning(s)",
+            files.len()
+        );
+    } else if errors + warnings > 0 {
+        eprintln!(
+            "{} file(s) checked, {errors} new error(s), {warnings} new warning(s)",
+            files.len()
+        );
+    }
 }
 
 pub fn has_errors(files: &[FileDiagnostics]) -> bool {
@@ -222,11 +287,12 @@ pub fn exit_code(collected: &Collected) -> ExitCode {
 }
 
 pub fn run(args: LintArgs) -> Result<ExitCode> {
+    let base = args.report.base()?;
     let mut session = args.report.open()?;
     let loaded = session.load_linted(|db, file| {
         lint(db, file);
     });
     let mut collected = collect(&session, &loaded)?;
-    args.print(&session, &mut collected.files);
+    args.print(&session, base.as_ref(), &loaded, &mut collected.files)?;
     Ok(exit_code(&collected))
 }

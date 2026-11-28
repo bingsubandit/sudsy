@@ -11,6 +11,7 @@ mod languages_cmd;
 mod lint;
 #[cfg(feature = "pack-mode")]
 mod missing;
+mod new;
 mod report;
 mod rules_cmd;
 mod session;

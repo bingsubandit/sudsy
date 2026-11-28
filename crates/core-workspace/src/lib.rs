@@ -5,6 +5,8 @@
 //!
 //! concept: none (infrastructure: file discovery)
 
+pub mod git;
+
 use ignore::WalkBuilder;
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;

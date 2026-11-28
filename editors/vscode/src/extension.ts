@@ -9,7 +9,12 @@ import { resolveServer } from "./server";
 
 let client: LanguageClient | undefined;
 
-const SETTINGS_THAT_RESTART = ["sudsy.serverPath", "sudsy.csharpWorkerPath", "sudsy.importStrategy"];
+const SETTINGS_THAT_RESTART = [
+  "sudsy.serverPath",
+  "sudsy.csharpWorkerPath",
+  "sudsy.importStrategy",
+  "sudsy.diagnostics.scope",
+];
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   context.subscriptions.push(
@@ -48,6 +53,7 @@ async function start(context: vscode.ExtensionContext): Promise<void> {
     // Pull diagnostics for every open tab, not just the visible editor.
     diagnosticPullOptions: { onChange: true, onSave: true, onTabs: true },
     outputChannelName: "Sudsy",
+    initializationOptions: { diagnosticsScope: settings.get<"all" | "new">("diagnostics.scope", "all") },
   };
   client = new LanguageClient(
     "sudsy",

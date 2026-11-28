@@ -12,6 +12,7 @@ mod layout;
 mod lint;
 mod lsp;
 mod nesting;
+mod new;
 mod patterns;
 mod presets;
 mod report;

@@ -149,6 +149,19 @@
           "default": "fromEnvironment",
           "description": "Which `sudsy` executable the extension runs."
         },
+        "sudsy.diagnostics.scope": {
+          "type": "string",
+          "enum": [
+            "all",
+            "new"
+          ],
+          "enumDescriptions": [
+            "Show every finding of the file.",
+            "Show only the findings the file's text at git `HEAD` does not have (like `sudsy lint --new`)."
+          ],
+          "default": "all",
+          "description": "Which findings a file shows."
+        },
         "sudsy.trace.server": {
           "type": "string",
           "enum": [
