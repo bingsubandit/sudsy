@@ -1,14 +1,29 @@
-"""setup_run.py VERSION TASK COND REP DIR: a fresh run directory DIR/TASK-COND-REP (the repository at the
-task's start, one git commit tagged bench-base, nothing of the task's solution or hidden tests) and its
-META directory next to it (prompt, condition, hooks, hidden files, a copy of the start tree)."""
+"""setup_run.py VERSION TASK ARM REP DIR [SUDSY]: a fresh run directory DIR/TASK-ARM-REP (the repository at
+the task's start, one git commit tagged bench-base, nothing of the task's solution or hidden tests) and
+its META directory next to it (prompt, arm, hooks, the `sudsy` on PATH, hidden files, a copy of the start
+tree)."""
 
 import pathlib
 import shutil
 import subprocess
 import sys
 
-import conditions
-from common import CACHE, bare, git, load_task, repos, run_env, sh, task_dir, write_json
+import yaml
+
+import arms
+from common import (
+    CACHE,
+    HERE,
+    apply_edits,
+    bare,
+    git,
+    load_task,
+    repos,
+    run_env,
+    sh,
+    task_dir,
+    write_json,
+)
 from fetch import export
 
 GIT_ID = ["-c", "user.name=bench", "-c", "user.email=bench@example.com"]
@@ -70,9 +85,39 @@ def materialize(task, meta):
             shutil.copy(p, meta / p.name)
 
 
-def prepare_tree(task, cond, run, sudsy):
+def merge(a, b):
+    """b merged into a: dicts recursively, lists extended by the items they lack, other values replaced."""
+    for k, v in b.items():
+        if isinstance(v, dict) and isinstance(a.get(k), dict):
+            merge(a[k], v)
+        elif isinstance(v, list) and isinstance(a.get(k), list):
+            a[k] = a[k] + [x for x in v if x not in a[k]]
+        else:
+            a[k] = v
+    return a
+
+
+def add_sudsy_parts(root, parts):
+    """Write each part's `files` ({path: text}) and merge its `config` (a sudsy.yaml fragment: YAML text or a table)
+    into root/sudsy.yaml."""
+    cfg_path = pathlib.Path(root) / "sudsy.yaml"
+    cfg = (yaml.safe_load(cfg_path.read_text()) or {}) if cfg_path.exists() else {}
+    for part in parts:
+        for path, text in (part.get("files") or {}).items():
+            p = pathlib.Path(root) / path
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(text)
+        frag = part.get("config") or {}
+        merge(cfg, yaml.safe_load(frag) if isinstance(frag, str) else frag)
+    with open(cfg_path, "w", newline="\n") as f:
+        yaml.safe_dump(cfg, f, sort_keys=False)
+
+
+def prepare_tree(task, arm, run, sudsy):
     """Everything the start tree needs before its commit: the seed, the repo's setup, node_modules, the
-    sudsy config of the sudsy conditions."""
+    policy text, for the sudsy arms their sudsy.yaml (presets or the matched config, the task's
+    project rules, its policy rule unless the arm leaves it out) and the tree formatted by Sudsy, then
+    the task's `seed_edits`."""
     repo = {**repos()["repo"][task["repo"]], "name": task["repo"]}
     env = run_env(repo)
     seed = task_dir(task["version"], task["id"]) / "seed.patch"
@@ -88,59 +133,99 @@ def prepare_tree(task, cond, run, sudsy):
         (run / "node_modules").symlink_to(
             CACHE / "node" / task["repo"] / "node_modules"
         )
-    if conditions.family_name(cond) == "sudsy" and not (run / "sudsy.yaml").exists():
+    policy = task.get("policy")
+    if policy:
+        # stated in both arms of E10, in the file Claude Code reads as project instructions
+        with open(run / "CLAUDE.md", "a", newline="\n") as f:
+            f.write(policy["text"].strip() + "\n")
+    a = arms.arm(arm)
+    if a["family"] == "sudsy":
+        sudsy_tree(task, a, repo, run, sudsy, env, policy)
+    # seeded edits go in last, on the tree as each arm's tools left it, so they stay unformatted
+    apply_edits(run, task.get("seed_edits", []))
+
+
+def sudsy_tree(task, a, repo, run, sudsy, env, policy):
+    if a.get("config") == "matched":
+        shutil.copy(HERE / "configs" / f"{task['repo']}.sudsy.yaml", run / "sudsy.yaml")
+    elif not (run / "sudsy.yaml").exists():
         r = sh(
             [sudsy, "init", "-y", *repo.get("sudsy_init", "").split()], cwd=run, env=env
         )
         if r.returncode != 0:
             raise RuntimeError(f"sudsy init failed: {r.stderr}")
-        # a project that uses Sudsy is formatted by it, as the native start trees are by their tools
-        sh([sudsy, "format"], cwd=run, env=env)
+    parts = [{"config": repo["sudsy_config"]}] if repo.get("sudsy_config") else []
+    if task.get("project"):
+        parts.append(task["project"])
+    if policy and a.get("policy", True):
+        parts.append(policy)
+    if parts:
+        add_sudsy_parts(run, parts)
+    # a project that uses Sudsy is formatted by it, as the native start trees are by their tools
+    sh([sudsy, "format"], cwd=run, env=env)
 
 
-def setup(version, task_id, cond, rep, root, sudsy):
+def write_shim(meta, arm, sudsy):
+    """META/bin/sudsy: the binary, or for a shim arm wrap.py in front of it."""
+    b = meta / "bin"
+    b.mkdir()
+    a = arms.arm(arm)
+    if a["family"] != "sudsy":
+        return
+    if a.get("shim"):
+        with open(b / "sudsy", "w", newline="\n") as f:
+            f.write(f'#!/bin/sh\nexec python3 -I {HERE / "wrap.py"} {meta} "$@"\n')
+        (b / "sudsy").chmod(0o755)
+    else:
+        (b / "sudsy").symlink_to(sudsy)
+
+
+def setup(version, task_id, arm, rep, root, sudsy):
     task = load_task(version, task_id)
     root = pathlib.Path(root)
-    run = root / f"{task_id}-{cond}-{rep}"
-    meta = root / f"{task_id}-{cond}-{rep}.meta"
+    run = root / f"{task_id}-{arm}-{rep}"
+    meta = root / f"{task_id}-{arm}-{rep}.meta"
     for d in (run, meta):
         shutil.rmtree(d, ignore_errors=True)
     meta.mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(run)], check=True)
     export(task["repo"], start_rev(task), run)
-    prepare_tree(task, cond, run, sudsy)
+    prepare_tree(task, arm, run, sudsy)
     git(run, *GIT_ID, "add", "-A")
     git(run, *GIT_ID, "commit", "-q", "--no-verify", "-m", f"start of {task_id}")
     git(run, "tag", "bench-base")
     git(run, "config", "user.name", "bench")
     git(run, "config", "user.email", "bench@example.com")
     # the verifier's copy of the start tree (base findings)
-    base = meta / "base"
-    shutil.copytree(run, base, symlinks=True, ignore=shutil.ignore_patterns(".git"))
+    shutil.copytree(
+        run, meta / "base", symlinks=True, ignore=shutil.ignore_patterns(".git")
+    )
     materialize(task, meta)
-    fam = conditions.family(task["repo"], cond)
+    fam = arms.family(task["repo"], arm)
+    write_shim(meta, arm, sudsy)
     write_json(
         meta / "condition.json",
         {
             "run": str(run),
-            "cond": cond,
+            "cond": arm,
+            "shim": arms.arm(arm).get("shim"),
             "task": task_id,
             "rep": rep,
             "version": version,
             "sudsy": sudsy,
             "hook_lint": fam["hook_lint"],
             "exts": fam["exts"],
-            "fix": fam["fix"],
+            "fix": fam["hook_fix"],
         },
     )
-    write_json(meta / "settings.json", conditions.settings(cond, meta))
-    prompt = task["text"].strip() + "\n\n" + conditions.instructions(task["repo"], cond)
-    (meta / "TASK.md").write_text(prompt)
+    write_json(meta / "settings.json", arms.settings(arm, meta))
+    (meta / "TASK.md").write_text(
+        task["text"].strip() + "\n\n" + arms.instructions(task["repo"], arm)
+    )
     (meta / "calls.log").write_text("")
     return run, meta
 
 
 if __name__ == "__main__":
-    v, t, c, rep, d = sys.argv[1:6]
-    sudsy = sys.argv[6] if len(sys.argv) > 6 else "sudsy"
-    print(*setup(v, t, c, int(rep), d, sudsy))
+    v, t, a, rep, d = sys.argv[1:6]
+    print(*setup(v, t, a, int(rep), d, sys.argv[6] if len(sys.argv) > 6 else "sudsy"))

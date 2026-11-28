@@ -3,9 +3,9 @@
 claude_code = "2.1.332"
 # --model value per mode; the exact model ids a run used are read back from its result and recorded
 model = { smoke = "haiku", full = "sonnet" }
-task_set = "v1"
-# reps and task count per mode (the smoke set is the first `smoke_tasks` tasks of a seeded shuffle)
-smoke = { reps = 2, tasks = 10 }
+task_set = "v2"
+# reps per mode; a smoke batch takes `tasks_per_pair` tasks of each pair (a seeded sample)
+smoke = { reps = 2, tasks_per_pair = 4 }
 full = { reps = 5 }
 # per-run limits: a run that hits one counts as a failure, with its metrics kept
 timeout_s = 900

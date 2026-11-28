@@ -1,0 +1,125 @@
+diff --git a/tests/test_arguments.py b/tests/test_arguments.py
+index f22a525..557326b 100644
+--- a/tests/test_arguments.py
++++ b/tests/test_arguments.py
+@@ -41,10 +41,10 @@ def test_nargs_tup(runner):
+ @pytest.mark.parametrize(
+     "opts",
+     [
+-        dict(type=(str, int)),
+-        dict(type=click.Tuple([str, int])),
+-        dict(nargs=2, type=click.Tuple([str, int])),
+-        dict(nargs=2, type=(str, int)),
++        {"type": (str, int)},
++        {"type": click.Tuple([str, int])},
++        {"nargs": 2, "type": click.Tuple([str, int])},
++        {"nargs": 2, "type": (str, int)},
+     ],
+ )
+ def test_nargs_tup_composite(runner, opts):
+@@ -617,11 +617,11 @@ def test_missing_arg(runner):
+         ("12", False, "12"),
+         (12, False, "12"),
+         (12.1, False, "12.1"),
+-        (list(), False, "[]"),
+-        (tuple(), False, "()"),
++        ([], False, "[]"),
++        ((), False, "()"),
+         (set(), False, "set()"),
+         (frozenset(), False, "frozenset()"),
+-        (dict(), False, "{}"),
++        ({}, False, "{}"),
+         # None is a value that is allowed to be processed by a required argument
+         # because at this stage, the process_value method happens after the default is
+         # applied.
+@@ -1032,7 +1032,7 @@ def test_good_defaults_for_nargs(runner, argument_params, args, expected):
+         [UNSET, "Error: Missing argument 'A...'."],
+         # Tuples defaults with wrong length.
+         [
+-            tuple(),
++            (),
+             "Error: Invalid value for '[A]...': Takes 2 values but 0 were given.",
+         ],
+         [(1,), "Error: Invalid value for '[A]...': Takes 2 values but 1 was given."],
+@@ -1041,7 +1041,7 @@ def test_good_defaults_for_nargs(runner, argument_params, args, expected):
+             "Error: Invalid value for '[A]...': Takes 2 values but 3 were given.",
+         ],
+         # Lists defaults with wrong length.
+-        [list(), "Error: Invalid value for '[A]...': Takes 2 values but 0 were given."],
++        [[], "Error: Invalid value for '[A]...': Takes 2 values but 0 were given."],
+         [[1], "Error: Invalid value for '[A]...': Takes 2 values but 1 was given."],
+         [
+             [1, 2, 3],
+@@ -1071,7 +1071,7 @@ def test_good_defaults_for_nargs(runner, argument_params, args, expected):
+             "Error: Invalid value for '[A]...': Takes 2 values but 3 were given.",
+         ],
+         # Dictionaries defaults with wrong length.
+-        [dict(), "Error: Invalid value for '[A]...': Takes 2 values but 0 were given."],
++        [{}, "Error: Invalid value for '[A]...': Takes 2 values but 0 were given."],
+         [
+             {1: "a"},
+             "Error: Invalid value for '[A]...': Takes 2 values but 1 was given.",
+@@ -1115,7 +1115,7 @@ def test_subcommand_help(runner):
+     @click.option("--opt")
+     @click.pass_context
+     def cli(ctx, name, val, opt):
+-        ctx.obj = dict(name=name, val=val)
++        ctx.obj = {"name": name, "val": val}
+ 
+     @cli.command()
+     @click.pass_obj
+diff --git a/tests/test_options.py b/tests/test_options.py
+index 2c454b3..7b43503 100644
+--- a/tests/test_options.py
++++ b/tests/test_options.py
+@@ -247,7 +247,7 @@ def test_multiple_required(runner):
+         # If multiple values are allowed, defaults should be iterable.
+         (True, 1, [], ()),
+         (True, 1, (), ()),
+-        (True, 1, tuple(), ()),
++        (True, 1, (), ()),
+         (True, 1, set(), ()),
+         (True, 1, frozenset(), ()),
+         (True, 1, {}, ()),
+@@ -269,7 +269,7 @@ def test_multiple_required(runner):
+         # Multiple values with nargs > 1.
+         (True, 2, [], ()),
+         (True, 2, (), ()),
+-        (True, 2, tuple(), ()),
++        (True, 2, (), ()),
+         (True, 2, set(), ()),
+         (True, 2, frozenset(), ()),
+         (True, 2, {}, ()),
+@@ -387,7 +387,7 @@ def test_good_defaults_for_multiple(runner, multiple, nargs, default, expected):
+         (
+             True,
+             2,
+-            [tuple()],
++            [()],
+             ValueError,
+             r"'nargs' must be 0 \(or None\) for type <click\.types\.Tuple object at "
+             r"0x[0-9A-Fa-f]+>, but it was 2\.",
+@@ -1112,11 +1112,11 @@ def test_legacy_options(runner):
+         ("12", False, "12"),
+         (12, False, "12"),
+         (12.1, False, "12.1"),
+-        (list(), False, "[]"),
+-        (tuple(), False, "()"),
++        ([], False, "[]"),
++        ((), False, "()"),
+         (set(), False, "set()"),
+         (frozenset(), False, "frozenset()"),
+-        (dict(), False, "{}"),
++        ({}, False, "{}"),
+     ],
+ )
+ def test_required_option(value, expect_missing, processed_value):
+@@ -2918,7 +2918,7 @@ def test_flag_value_not_stringified_for_custom_types(runner):
+             "frozenset({'git'})",
+             "frozenset()",
+         ),
+-        (dict, dict(), {"git": True}, "{'git': True}", "{}"),
++        (dict, {}, {"git": True}, "{'git': True}", "{}"),
+     ],
+ )
+ def test_custom_type_container_flag_value(

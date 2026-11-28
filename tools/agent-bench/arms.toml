@@ -1,0 +1,63 @@
+# The arms of the bench: what a run gets. Every sudsy arm is the base `sudsy` arm with one thing changed;
+# a pair of pairs.toml compares two arms that differ in one feature. Keys:
+#   family    native | sudsy (the tools of repos.toml)
+#   check, fix  replace the family's commands in the instructions
+#   hooks     the hooks: for the sudsy family `sudsy hook post-edit` (PostToolUse on Edit|Write|MultiEdit)
+#             and `sudsy hook stop` (Stop), as `sudsy init --agents` registers them; for the native family
+#             hook.py with the repo's lint after an edit and its fix commands at stop (the pilot's protocol)
+#   shim      the `sudsy` the subject calls is wrap.py in this mode instead of the binary:
+#             concise (adds the real `--format concise`), full (adds the real `--rule` with every rule
+#             present, so the report never collapses), noids (removes fix ids and `--apply`; provisional:
+#             Sudsy has no flag for it)
+#   policy    false: the task's pre-written policy rule is left out of the start tree (E10)
+#   config    preset (the repo's `sudsy_init` presets, default) | matched (configs/<repo>.sudsy.yaml: the
+#             rules the native config selects; the stack comparison)
+# An arm whose name ends in -provisional is a shim with no Sudsy flag behind it.
+
+[arm.native]
+family = "native"
+
+[arm.native-hooks]
+family = "native"
+hooks = true
+
+[arm.sudsy]
+family = "sudsy"
+
+[arm.sudsy-hooks]
+family = "sudsy"
+hooks = true
+
+[arm.sudsy-separate]
+family = "sudsy"
+check = ["sudsy format --check", "sudsy lint"]
+
+[arm.sudsy-concise]
+family = "sudsy"
+shim = "concise"
+
+[arm.sudsy-full]
+family = "sudsy"
+shim = "full"
+
+[arm.sudsy-noids-provisional]
+family = "sudsy"
+shim = "noids"
+fix = ["sudsy fix", "sudsy fix --unsafe"]
+
+[arm.sudsy-new]
+family = "sudsy"
+check = ["sudsy check --new"]
+
+[arm.sudsy-norule]
+family = "sudsy"
+policy = false
+
+[arm.sudsy-matched]
+family = "sudsy"
+config = "matched"
+
+[arm.sudsy-matched-hooks]
+family = "sudsy"
+config = "matched"
+hooks = true

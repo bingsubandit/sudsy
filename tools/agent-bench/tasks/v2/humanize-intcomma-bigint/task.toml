@@ -1,0 +1,10 @@
+repo = "humanize"
+pairs = ["E1", "E7", "B"]
+kind = "bugfix"
+commit = "984526c02448110a8392dde3f5e26096dfd7c729"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_number.py"
+hidden = ["tests/test_number.py"]
+scope = ["src/humanize/number.py", "tests/*"]
+text = """
+`humanize.intcomma(10**400 + 123)` raises OverflowError, because the integer is converted to a float. Python integers of any size must be formatted exactly, also negative ones: `intcomma(-(10**400 + 123))` starts with `-10,000,` and ends with `,000,123`.
+"""

@@ -1,8 +1,8 @@
 """verify.py RUN META SUDSY: the verifier of one run, one JSON line.
 
 A run succeeds when all pass: the task's tests (after its hidden files are put in place), the task's own
-checks and probes, nothing changed outside the task's scope, and, with the condition's own tools, no new
-lint finding on the changed files and every changed file formatted. The other family's counts are
+checks, its clean files (lint debt) and policy rule (E10), nothing changed outside the task's scope, and,
+with the arm's own tools, no new lint finding on the changed files and every changed file formatted. The other family's counts are
 recorded too (mistake counters), never part of success. A finding is new unless the same (path, rule,
 line text) exists in the start tree as often."""
 
@@ -12,9 +12,10 @@ import pathlib
 import shlex
 import shutil
 import sys
+import tempfile
 
-import conditions
-from common import changed_files, load_task, matches, repos, run_env, sh
+import arms
+from common import changed_files, handles, load_task, matches, repos, run_env, sh
 
 
 def line_text(root, path, line):
@@ -47,6 +48,20 @@ def parse(kind, r, root):
                 (d["path"], d["range"]["start"]["line"], d["rule"])
                 for d in json.loads(r.stdout)["diagnostics"]
             ]
+        if kind == "oxlint":
+            return [
+                (
+                    rel(d["filename"]),
+                    (d.get("labels") or [{"span": {"line": 0}}])[0]["span"]["line"],
+                    d.get("code") or "syntax",
+                )
+                for d in json.loads(r.stdout)["diagnostics"]
+            ]
+        if kind == "pylint":
+            return [
+                (rel(d["path"]), d["line"], d["symbol"])
+                for d in json.loads(r.stdout or "[]")
+            ]
         if kind == "govet":
             out = []
             for l in r.stderr.splitlines():
@@ -64,11 +79,7 @@ def parse(kind, r, root):
 
 
 def lint(fam, root, files, env):
-    files = [
-        f
-        for f in files
-        if pathlib.Path(f).suffix in fam["exts"] and (root / f).exists()
-    ]
+    files = [f for f in files if handles(fam["exts"], f) and (root / f).exists()]
     if not files:
         return []
     pkgs = sorted({"./" + str(pathlib.PurePosixPath(f).parent) for f in files})
@@ -110,7 +121,7 @@ def unformatted(fam, run, base, files, env):
         if not (run / f).exists():
             continue
         rule = next(
-            (c for c in fam["format_check"] if pathlib.Path(f).suffix in c["exts"]),
+            (c for c in fam["format_check"] if handles(c["exts"], f)),
             None,
         )
         if rule is None or (
@@ -131,29 +142,58 @@ def put_hidden(run, meta):
             shutil.copy(p, dest)
 
 
-def probes(task, cond, run, base, env):
-    """Policy tasks: each probe file is written into the run and the start copy, linted with the condition's
-    tools and removed; `expect` is `finding` (more findings than with the start config: the new rule reports
-    it) or `clean` (no more). A probe without `content` lints an existing file."""
-    fam = conditions.family(task["repo"], cond)
-    failed = []
-    for pr in task.get("probes", []):
-        counts = []
-        for root in (run, base):
-            p = root / pr["path"]
-            if "content" in pr:
-                p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_text(pr["content"])
-            found = lint(fam, root, [pr["path"]], env)
-            if "content" in pr:
-                p.unlink()
-            counts.append(None if found is None else len(found))
-        end, start = counts
-        # the probe's findings at the end against the same file with the start config: the new rule adds some
-        hit = end is not None and start is not None and end > start
-        if hit != (pr["expect"] == "finding") or end is None:
-            failed.append(pr["path"])
-    return failed
+def policy_violations(task, run, base, env):
+    """E10 tasks: the policy rule's findings on the changed files that the start tree does not have,
+    linted in scratch copies of the run and the start tree with the policy rule added, so both arms are
+    scored by the same rule."""
+    policy = task.get("policy")
+    files = [f for f in changed_files(run) if (run / f).exists()]
+    if not policy or not files:
+        return []
+    from setup_run import add_sudsy_parts
+
+    found = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, src in (("end", run), ("start", base)):
+            root = pathlib.Path(tmp) / name
+            shutil.copytree(
+                src, root, symlinks=True, ignore=shutil.ignore_patterns(".git")
+            )
+            add_sudsy_parts(root, [policy])
+            hits = lint(arms.family(task["repo"], "sudsy"), root, files, env) or []
+            found[name] = [
+                (p, ln, text) for p, ln, rule, text in hits if rule == policy["rule"]
+            ]
+    left = collections.Counter((p, text) for p, _, text in found["start"])
+    out = []
+    for p, ln, text in found["end"]:
+        if left[(p, text)] > 0:
+            left[(p, text)] -= 1
+        else:
+            out.append(f"{p}:{ln}")
+    return out
+
+
+def clean_left(task, arm, run, base, env):
+    """Lint-debt tasks: findings left in the `clean` files (only `clean_rules` when set), and for
+    `clean_rules` the findings of other rules that the run removed (scope creep)."""
+    fam = arms.family(task["repo"], arm)
+    rules = set(task.get("clean_rules", []))
+    left, removed = [], 0
+    for f in task.get("clean", []):
+        end = lint(fam, run, [f], env)
+        if end is None:
+            left.append(f"{f}: lint failed")
+            continue
+        left += [f"{p}:{ln}: {r}" for p, ln, r, _ in end if not rules or r in rules]
+        if rules:
+            start = lint(fam, base, [f], env) or []
+            removed += max(
+                0,
+                sum(r not in rules for *_, r, _ in start)
+                - sum(r not in rules for *_, r, _ in end),
+            )
+    return left, removed
 
 
 def verify(run, meta, sudsy):
@@ -168,16 +208,21 @@ def verify(run, meta, sudsy):
         "out_of_scope": [f for f in files if not matches(f, task["scope"])],
     }
     for famname in ("native", "sudsy"):
-        fam = conditions.family(task["repo"], famname)
+        fam = arms.family(task["repo"], famname)
         res[f"{famname}_new_findings"] = new_findings(
             fam, run, meta / "base", files, env
         )
         res[f"{famname}_unformatted"] = unformatted(fam, run, meta / "base", files, env)
-    res["probes_failed"] = probes(task, c["cond"], run, meta / "base", env)
-    # lint-debt tasks: these files must end with no finding at all of the condition's tools
-    own = conditions.family(task["repo"], c["cond"])
-    res["not_clean"] = [
-        f for f in task.get("clean", []) if lint(own, run, [f], env) != []
+    res["not_clean"], res["other_findings_removed"] = clean_left(
+        task, c["cond"], run, meta / "base", env
+    )
+    res["policy_violations"] = policy_violations(task, run, meta / "base", env)
+    # lint-debt tasks with seeded formatting damage: these files must end formatted by the arm's tools
+    own = arms.family(task["repo"], c["cond"])
+    res["unformatted_required"] = [
+        f
+        for f in task.get("formatted", [])
+        if unformatted(own, run, run / ".missing", [f], env)
     ]
     put_hidden(run, meta)
     t = sh(task["tests"], cwd=run, env=env, timeout=900)
@@ -188,14 +233,15 @@ def verify(run, meta, sudsy):
         for cmd in task.get("checks", [])
         if sh(cmd, cwd=run, env=env).returncode != 0
     ]
-    fam = conditions.family_name(c["cond"])
+    fam = arms.family_name(c["cond"])
     res["lint_clean"] = res[f"{fam}_new_findings"] == []
     res["formatted"] = res[f"{fam}_unformatted"] == []
     res["success"] = (
         res["tests_pass"]
         and not res["checks_failed"]
-        and not res["probes_failed"]
         and not res["not_clean"]
+        and not res["policy_violations"]
+        and not res["unformatted_required"]
         and not res["out_of_scope"]
         and res["lint_clean"]
         and res["formatted"]

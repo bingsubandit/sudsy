@@ -117,13 +117,19 @@ def changed_files(run):
     )
 
 
+def handles(exts, path):
+    """Whether a family's `exts` cover a file: its suffix, or its whole name (Dockerfile)."""
+    p = pathlib.Path(path)
+    return p.suffix in exts or p.name in exts
+
+
 def fix_changed(fix_cmds, exts, run, env=None):
     """The family's fix commands on the changed files only (the stop hook; the reference check): a
     trailing ` .` becomes the file list, `npm run` scripts run as they are, others get the files appended."""
     files = [
         f
         for f in changed_files(run)
-        if pathlib.Path(f).suffix in exts and (pathlib.Path(run) / f).exists()
+        if handles(exts, f) and (pathlib.Path(run) / f).exists()
     ]
     if not files:
         return
@@ -135,6 +141,25 @@ def fix_changed(fix_cmds, exts, run, env=None):
             else (c[:-2] if c.endswith(" .") else c) + " " + args
         )
         sh(cmd, cwd=run, env=env, timeout=300)
+
+
+def apply_edits(root, edits):
+    """Edits [path, old, new]: `old` must occur once in the file (an empty `old` appends, creating the
+    file when missing)."""
+    for path, old, new in edits:
+        p = pathlib.Path(root) / path
+        s = p.read_text() if p.exists() else ""
+        if old:
+            if s.count(old) != 1:
+                raise RuntimeError(
+                    f"edit of {path}: {old[:60]!r} occurs {s.count(old)} times"
+                )
+            s = s.replace(old, new)
+        else:
+            s += new
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "w", newline="\n") as f:
+            f.write(s)
 
 
 def write_json(path, obj):

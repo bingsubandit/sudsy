@@ -1,0 +1,41 @@
+repo = "ufo"
+pairs = ["E10"]
+kind = "policy"
+tests = "npx vitest run test/bench-segments.test.ts"
+scope = ["src/*", "test/*"]
+native_equivalent = "ESLint no-restricted-globals with an override for src/encoding.ts"
+solution_edits_sudsy = [
+  [
+    "src/utils.ts",
+    "",
+    "\nexport function getPathSegments(input: string): string[] {\n  return parseURL(input)\n    .pathname.split(\"/\")\n    .filter(Boolean)\n    .map((segment) => decode(segment));\n}\n",
+  ],
+]
+text = '''
+Add an exported `getPathSegments(input)` to `src/utils.ts`: the decoded, non-empty segments of the URL's path. `getPathSegments("/a%20b/c/")` is `["a b", "c"]`, `getPathSegments("https://x.dev/foo/%E2%9C%93?q=1#h")` is `["foo", "✓"]`, `getPathSegments("")` is `[]`, and a segment with a malformed escape is kept as it is.
+'''
+
+[policy]
+rule = "no-decode-uri-component"
+text = '''
+# Project rules
+
+Outside `src/encoding.ts`, never call `decodeURIComponent` directly: use the `decode` helper of `src/encoding.ts`, which returns malformed input unchanged instead of throwing.'''
+config = '''
+plugins:
+  patterns: ["rules/*.yaml"]
+overrides:
+  - files: ["src/encoding.ts", "test/**"]
+    js: { lint: { rules: { no-decode-uri-component: "off" } } }
+'''
+
+[policy.files]
+"rules/no-decode-uri-component.yaml" = '''
+id: no-decode-uri-component
+language: js
+message: decode with `decode()` from src/encoding.ts, which keeps malformed input instead of throwing
+severity: error
+category: correctness
+rule:
+  pattern: decodeURIComponent($$$ARGS)
+'''

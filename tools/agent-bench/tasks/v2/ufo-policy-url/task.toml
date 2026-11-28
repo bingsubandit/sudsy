@@ -1,0 +1,43 @@
+repo = "ufo"
+pairs = ["E10"]
+kind = "policy"
+tests = "npx vitest run test/bench-origin.test.ts"
+scope = ["src/*", "test/*"]
+native_equivalent = "ESLint no-restricted-globals (URL, URLSearchParams) for src/"
+solution_edits_sudsy = [
+  [
+    "src/utils.ts",
+    "",
+    "\nexport function getOrigin(input: string): string {\n  const { protocol, host } = parseURL(input);\n  return protocol && host ? `${protocol}//${host}` : \"\";\n}\n",
+  ],
+]
+text = '''
+Add an exported `getOrigin(input)` to `src/utils.ts`: the URL's origin, `protocol//host` with the port and without user info. `getOrigin("https://user@example.com:8080/path?x=1")` is `"https://example.com:8080"`, `getOrigin("http://localhost")` is `"http://localhost"`, and a relative input such as `"/relative"` gives `""`.
+'''
+
+[policy]
+rule = "no-url-global"
+text = '''
+# Project rules
+
+Code in `src/` must run where the global `URL` and `URLSearchParams` classes are missing: never construct them; parse with `parseURL` (src/parse.ts) and `parseQuery` (src/query.ts).'''
+config = '''
+plugins:
+  patterns: ["rules/*.yaml"]
+overrides:
+  - files: ["test/**"]
+    js: { lint: { rules: { no-url-global: "off" } } }
+'''
+
+[policy.files]
+"rules/no-url-global.yaml" = '''
+id: no-url-global
+language: js
+message: ufo runs where the URL class is missing; parse with `parseURL()` from src/parse.ts
+severity: error
+category: correctness
+rule:
+  any:
+    - pattern: new URL($$$ARGS)
+    - pattern: new URLSearchParams($$$ARGS)
+'''

@@ -1,9 +1,9 @@
-"""hook.py post|stop META: the hooks of the hook conditions (Claude Code hook protocol, as in the pilot).
+"""hook.py post|stop META: the hooks of the native hook arms (Claude Code hook protocol, as in the pilot).
 
 post (PostToolUse on Edit|Write|MultiEdit): lints the edited file with the family's `hook_lint`, never
 formats; clean: no output, exit 0; findings: the tool's output on stderr, exit 2 (the agent reads it in
 the same turn). stop (Stop): runs the family's fix commands on the changed files, exit 0. Every call is logged to META/calls.log.
-For `sudsy-hooks` this is the provisional stand-in for `sudsy hook` (plan step 5)."""
+Used by the native hook arms; the sudsy ones run `sudsy hook post-edit` and `sudsy hook stop`."""
 
 import json
 import pathlib
@@ -40,7 +40,10 @@ if mode == "post":
         rel = path.resolve().relative_to(run.resolve()).as_posix()
     except ValueError:
         sys.exit(0)
-    if path.suffix not in cfg["exts"] or not path.exists():
+    if (
+        not (path.suffix in cfg["exts"] or path.name in cfg["exts"])
+        or not path.exists()
+    ):
         sys.exit(0)
     log(rel)
     pkg = "./" + (str(pathlib.PurePosixPath(rel).parent) if "/" in rel else ".")

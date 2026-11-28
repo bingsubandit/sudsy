@@ -1,0 +1,50 @@
+repo = "flower"
+pairs = ["E7", "E3"]
+kind = "lint-debt"
+tests = "python -m flower --version"
+scope = ["Dockerfile", "docker-compose.yml"]
+clean = ["Dockerfile"]
+formatted = ["Dockerfile"]
+seed_edits = [
+  [
+    "Dockerfile",
+    "RUN apk add --no-cache ca-certificates tzdata \\\n",
+    "MAINTAINER flower\nRUN apk add --no-cache ca-certificates tzdata \\\n",
+  ],
+  ["Dockerfile", "COPY . /opt/flower\n", "ADD . /opt/flower\n"],
+  [
+    "Dockerfile",
+    "WORKDIR $FLOWER_DATA_DIR\n",
+    "WORKDIR data\nWORKDIR $FLOWER_DATA_DIR\n",
+  ],
+  ["Dockerfile", "CMD [\"celery\", \"flower\"]", "CMD celery flower"],
+  ["Dockerfile", "EXPOSE 5555", "expose   5555"],
+]
+solution_edits_sudsy = [
+  [
+    "Dockerfile",
+    "MAINTAINER flower\nRUN apk add --no-cache ca-certificates tzdata \\\n",
+    "RUN apk add --no-cache ca-certificates tzdata \\\n",
+  ],
+  ["Dockerfile", "ADD . /opt/flower\n", "COPY . /opt/flower\n"],
+  [
+    "Dockerfile",
+    "WORKDIR data\nWORKDIR $FLOWER_DATA_DIR\n",
+    "WORKDIR $FLOWER_DATA_DIR\n",
+  ],
+  ["Dockerfile", "CMD celery flower", "CMD [\"celery\", \"flower\"]"],
+  ["Dockerfile", "expose   5555", "EXPOSE 5555"],
+]
+text = '''
+`Dockerfile` has check findings and formatting left from older code. Make the project's checks pass on that file (no finding left in it, formatted) without changing its behaviour.
+'''
+
+[project]
+config = '''
+dockerfile:
+  lint:
+    rules:
+      apk-pin-versions: "off"
+      pip-pin-versions: "off"
+      numeric-user-id: "off"
+'''

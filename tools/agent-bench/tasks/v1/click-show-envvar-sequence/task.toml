@@ -1,9 +1,0 @@
-repo = "click"
-kind = "bugfix"
-commit = "c53d3732b98c764932e146c007146ad402acb229"
-tests = "python -m pytest -q -p no:cacheprovider tests/test_options.py"
-hidden = ["tests/test_options.py"]
-scope = ["src/click/*", "tests/*", "CHANGES.md"]
-text = """
-Two bugs of `Option` with `show_envvar=True`. (1) When `envvar` is a list or tuple, the "missing parameter" error prints the Python list: it must name each variable, quoted, separated by commas: `'--units' (env var: 'WEATHER_UNITS', 'UNITS')`. A single string stays `(env var: 'UNITS')`. (2) An empty `envvar` (`[]` or `""`) must behave like no `envvar` at all: no `(env var: ...)` hint in the error, and in `--help` the automatic `[env var: PREFIX_NAME]` from `auto_envvar_prefix` is shown as it is for `envvar=None`. Add a line to CHANGES.md.
-"""

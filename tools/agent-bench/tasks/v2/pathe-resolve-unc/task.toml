@@ -1,0 +1,10 @@
+repo = "pathe"
+pairs = ["E1", "E7", "E2", "B"]
+kind = "bugfix"
+commit = "b52fcac"
+tests = "npx vitest run test/index.spec.ts"
+hidden = ["test/index.spec.ts"]
+scope = ["src/*", "test/*"]
+text = '''
+`resolve()` drops the UNC prefix of a Windows UNC path: `resolve(String.raw`\\server\share\file`)` returns `/server/share/file`. Keep the prefix as `normalize` and node's `path.win32.resolve` do: it returns `//server/share/file`, `resolve(String.raw`\\server\share\file`, String.raw`..\path`)` returns `//server/share/path`, and `resolve("//server/share/file", "../path")` returns `//server/share/path`.
+'''

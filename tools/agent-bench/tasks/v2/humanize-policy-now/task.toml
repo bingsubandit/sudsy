@@ -1,0 +1,56 @@
+repo = "humanize"
+pairs = ["E10"]
+kind = "policy"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_bench_age.py"
+scope = ["src/humanize/*", "tests/*", "docs/*", "README.md"]
+native_equivalent = "none: ruff has no rule for a project's own clock helper (DTZ checks only time zones)"
+solution_edits_sudsy = [
+  [
+    "src/humanize/time.py",
+    "",
+    "\n\ndef naturalage(birthdate: dt.date) -> str:\n    \"\"\"Return the age in whole years of someone born on `birthdate`, e.g. \"26 years\".\n\n    Args:\n        birthdate (datetime.date): The date of birth.\n\n    Returns:\n        str: The age, \"1 year\" or \"N years\".\n    \"\"\"\n    today = _now().date()\n    years = today.year - birthdate.year\n    if (today.month, today.day) < (birthdate.month, birthdate.day):\n        years -= 1\n    return _ngettext(\"%d year\", \"%d years\", years) % years\n",
+  ],
+  [
+    "src/humanize/__init__.py",
+    "from humanize.time import (\n",
+    "from humanize.time import (\n    naturalage,\n",
+  ],
+  [
+    "src/humanize/__init__.py",
+    "    \"natural_list\",\n",
+    "    \"natural_list\",\n    \"naturalage\",\n",
+  ],
+]
+text = '''
+Add `naturalage(birthdate)` to `src/humanize/time.py` and export it from `humanize`: the age in whole years of someone born on `birthdate` (a `datetime.date`), as `"1 year"` or `"N years"` (translatable, like the other strings of the module). On 2026-06-15, `naturalage(dt.date(2000, 6, 15))` is `"26 years"` and `naturalage(dt.date(2000, 6, 16))` is `"25 years"`.
+'''
+
+[policy]
+rule = "no-direct-now"
+text = '''
+# Project rules
+
+Never read the clock directly in `src/humanize/` (`datetime.now()`, `date.today()`, `time.time()`): call `_now()` of `humanize.time`, the one place the tests freeze.'''
+config = '''
+plugins:
+  patterns: ["rules/*.yaml"]
+overrides:
+  - files: ["tests/**"]
+    python: { lint: { rules: { no-direct-now: "off" } } }
+'''
+
+[policy.files]
+"rules/no-direct-now.yaml" = '''
+id: no-direct-now
+language: python
+message: read the clock through `_now()` of humanize.time, which the tests can freeze
+severity: error
+category: correctness
+rule:
+  any:
+    - pattern: dt.datetime.now($$$ARGS)
+    - pattern: dt.date.today()
+    - pattern: datetime.datetime.now($$$ARGS)
+    - pattern: datetime.date.today()
+    - pattern: time.time()
+'''

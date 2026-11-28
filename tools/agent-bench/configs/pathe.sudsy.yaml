@@ -1,0 +1,94 @@
+# The stack comparison's Sudsy config for pathe (tools/agent-bench/matched.py; do not edit by hand).
+# Native rules mapped to a Sudsy rule (46): getter-return->getter-return, no-assignment-in-condition->no-assignment-in-condition, no-async-promise-executor->no-async-promise-executor, no-class-assign->no-class-assign, no-compare-neg-zero->no-compare-neg-zero, no-const-assign->no-const-assign, no-constant-comparison->no-constant-comparison, no-constant-condition->no-constant-condition, no-control-regex->no-control-regex, no-debugger->no-debugger, no-delete-var->no-delete-var, no-dupe-class-members->no-dupe-class-members, no-dupe-else-if->no-dupe-else-if, no-duplicate-case->no-duplicate-case, no-duplicate-enum-values->no-duplicate-enum-values, no-duplicate-keys->no-duplicate-keys, no-empty-character-class->no-empty-character-class, no-empty-pattern->no-empty-pattern, no-extra-boolean-cast->no-extra-boolean-cast, no-extra-non-null-assertion->no-extra-non-null-assertion, no-func-assign->no-func-assign, no-import-assign->no-import-assign, no-irregular-whitespace->no-irregular-whitespace, no-loss-of-precision->no-loss-of-precision, no-misleading-character-class->no-misleading-character-class, no-misused-new->no-misused-new, no-non-null-asserted-optional-chain->no-non-null-asserted-optional-chain, no-self-assign->no-self-assign, no-shadow-restricted-names->no-shadow-restricted-names, no-sparse-arrays->no-sparse-arrays, no-this-alias->no-this-alias, no-unsafe-finally->no-unsafe-finally, no-unsafe-negation->no-unsafe-negation, no-useless-catch->no-useless-catch, no-useless-escape->no-useless-escape, no-useless-expression->no-useless-expression, no-with->no-with, no-wrapper-object-types->no-wrapper-object-types, prefer-as-const->prefer-as-const, require-yield->require-yield, triple-slash-reference->triple-slash-reference, unreachable-code->unreachable-code, unused-parameter->unused-parameter, unused-variable->unused-variable, use-isnan->use-isnan, valid-typeof->valid-typeof
+# Native rules with no Sudsy rule, checked on the native side only (66): constructor-super, for-direction, no-caller, no-empty-static-block, no-eval, no-ex-assign, no-global-assign, no-invalid-regexp, no-iterator, no-new-native-nonconstructor, no-nonoctal-decimal-escape, no-obj-calls, no-setter-return, no-this-before-super, no-unassigned-vars, no-unsafe-optional-chaining, no-unused-labels, no-unused-private-class-members, no-useless-backreference, no-useless-rename, oxc/bad-array-method-on-arguments, oxc/bad-char-at-comparison, oxc/bad-comparison-sequence, oxc/bad-match-all-arg, oxc/bad-min-max-func, oxc/bad-object-literal-comparison, oxc/bad-replace-all-arg, oxc/const-comparisons, oxc/double-comparisons, oxc/erasing-op, oxc/missing-throw, oxc/number-arg-out-of-range, oxc/only-used-in-recursion, oxc/uninvoked-array-callback, typescript/await-thenable, typescript/no-array-delete, typescript/no-base-to-string, typescript/no-duplicate-type-constituents, typescript/no-floating-promises, typescript/no-for-in-array, typescript/no-implied-eval, typescript/no-meaningless-void-operator, typescript/no-misused-spread, typescript/no-redundant-type-constituents, typescript/no-unnecessary-parameter-property-assignment, typescript/no-unsafe-declaration-merging, typescript/no-unsafe-unary-minus, typescript/no-useless-default-assignment, typescript/no-useless-empty-export, typescript/prefer-namespace-keyword, typescript/require-array-sort-compare, typescript/restrict-template-expressions, typescript/unbound-method, unicorn/no-await-in-promise-methods, unicorn/no-empty-file, unicorn/no-invalid-fetch-options, unicorn/no-invalid-remove-event-listener, unicorn/no-new-array, unicorn/no-single-promise-in-promise-methods, unicorn/no-thenable, unicorn/no-unnecessary-await, unicorn/no-useless-fallback-in-spread, unicorn/no-useless-length-check, unicorn/no-useless-spread, unicorn/prefer-set-size, unicorn/prefer-string-starts-ends-with
+# Every other Sudsy rule of the language is off; only the files the native tools check are included.
+include:
+- '**/*.ts'
+- '**/*.mjs'
+- '**/*.js'
+exclude:
+- dist/**
+js:
+  lint:
+    rules:
+      adjacent-overload-signatures: 'off'
+      array-type: 'off'
+      ban-ts-comment: 'off'
+      boolean-literal-comparison: 'off'
+      consistent-type-definitions: 'off'
+      consistent-type-imports: 'off'
+      getter-return: warn
+      increment-decrement: 'off'
+      no-assignment-in-condition: warn
+      no-async-promise-executor: warn
+      no-case-declarations: 'off'
+      no-class-assign: warn
+      no-compare-neg-zero: warn
+      no-const-assign: warn
+      no-constant-comparison: warn
+      no-constant-condition: warn
+      no-control-regex: warn
+      no-debugger: warn
+      no-delete-var: warn
+      no-dupe-class-members: warn
+      no-dupe-else-if: warn
+      no-duplicate-case: warn
+      no-duplicate-enum-values: warn
+      no-else-return: 'off'
+      no-empty-block: 'off'
+      no-empty-catch: 'off'
+      no-empty-character-class: warn
+      no-empty-object-type: 'off'
+      no-empty-pattern: warn
+      no-explicit-any: 'off'
+      no-extra-boolean-cast: warn
+      no-extra-non-null-assertion: warn
+      no-fallthrough: 'off'
+      no-func-assign: warn
+      no-import-assign: warn
+      no-inferrable-types: 'off'
+      no-irregular-whitespace: warn
+      no-lonely-if: 'off'
+      no-loss-of-precision: warn
+      no-misleading-character-class: warn
+      no-misused-new: warn
+      no-namespace: 'off'
+      no-non-null-asserted-optional-chain: warn
+      no-non-null-assertion: 'off'
+      no-octal: 'off'
+      no-prototype-builtins: 'off'
+      no-regex-spaces: 'off'
+      no-require-imports: 'off'
+      no-self-assign: warn
+      no-self-compare: 'off'
+      no-shadow-restricted-names: warn
+      no-sparse-arrays: warn
+      no-this-alias: warn
+      no-unexpected-multiline: 'off'
+      no-unnecessary-type-constraint: 'off'
+      no-unneeded-ternary: 'off'
+      no-unsafe-finally: warn
+      no-unsafe-function-type: 'off'
+      no-unsafe-negation: warn
+      no-useless-catch: warn
+      no-useless-escape: warn
+      no-useless-expression: warn
+      no-var: 'off'
+      no-wildcard-imports: 'off'
+      no-with: warn
+      no-wrapper-object-types: warn
+      prefer-as-const: warn
+      prefer-const: 'off'
+      prefer-rest-params: 'off'
+      prefer-spread: 'off'
+      redeclared-variable: 'off'
+      require-yield: warn
+      shadowed-variable: 'off'
+      triple-slash-reference: warn
+      undefined-variable: 'off'
+      unreachable-code: warn
+      unused-parameter: warn
+      unused-variable: warn
+      use-before-define: 'off'
+      use-isnan: warn
+      valid-typeof: warn

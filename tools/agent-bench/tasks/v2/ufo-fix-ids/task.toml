@@ -1,0 +1,85 @@
+repo = "ufo"
+pairs = ["E7", "E3", "E3C"]
+kind = "lint-debt"
+tests = "npx vitest run test/base.test.ts test/utilities.test.ts test/parse.test.ts test/url.test.ts"
+scope = ["src/*", "test/*"]
+clean = ["src/parse.ts", "src/utils.ts"]
+clean_rules = ["prefer-starts-with", "prefer-not-starts-with"]
+seed_edits = [
+  [
+    "src/utils.ts",
+    "  return input.startsWith(\"/\");",
+    "  return input.indexOf(\"/\") === 0;",
+  ],
+  [
+    "src/utils.ts",
+    "  if (input.startsWith(_base)) {",
+    "  if (input.indexOf(_base) === 0) {",
+  ],
+  [
+    "src/utils.ts",
+    "  if (!input.startsWith(_base)) {",
+    "  if (input.indexOf(_base) !== 0) {",
+  ],
+  [
+    "src/parse.ts",
+    "(parsed.search.startsWith(\"?\") ? \"\" : \"?\")",
+    "(parsed.search.indexOf(\"?\") === 0 ? \"\" : \"?\")",
+  ],
+]
+solution_edits_sudsy = [
+  [
+    "src/utils.ts",
+    "  return input.indexOf(\"/\") === 0;",
+    "  return input.startsWith(\"/\");",
+  ],
+  [
+    "src/utils.ts",
+    "  if (input.indexOf(_base) === 0) {",
+    "  if (input.startsWith(_base)) {",
+  ],
+  [
+    "src/utils.ts",
+    "  if (input.indexOf(_base) !== 0) {",
+    "  if (!input.startsWith(_base)) {",
+  ],
+  [
+    "src/parse.ts",
+    "(parsed.search.indexOf(\"?\") === 0 ? \"\" : \"?\")",
+    "(parsed.search.startsWith(\"?\") ? \"\" : \"?\")",
+  ],
+]
+text = '''
+The project's own rules `prefer-starts-with`, `prefer-not-starts-with` report findings in `src/`. Fix every finding of them there; leave other findings alone.
+'''
+
+[project]
+config = '''
+plugins:
+  patterns: ["rules/*.yaml"]
+'''
+
+[project.files]
+"rules/starts-with.yaml" = '''
+id: prefer-starts-with
+language: js
+message: use `$S.startsWith($X)` instead of comparing `indexOf` with 0
+description: Reports `s.indexOf(x) === 0`, which scans the whole string to answer a prefix question.
+severity: warn
+category: performance
+rule:
+  pattern: $S.indexOf($X) === 0
+fix: $S.startsWith($X)
+fix-kind: suggestion
+---
+id: prefer-not-starts-with
+language: js
+message: use `!$S.startsWith($X)` instead of comparing `indexOf` with 0
+description: Reports `s.indexOf(x) !== 0`, which scans the whole string to answer a prefix question.
+severity: warn
+category: performance
+rule:
+  pattern: $S.indexOf($X) !== 0
+fix: "!$S.startsWith($X)"
+fix-kind: suggestion
+'''

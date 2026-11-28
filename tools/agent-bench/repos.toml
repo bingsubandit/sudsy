@@ -1,23 +1,27 @@
 # The bench's repositories, each pinned at a commit (every task's commit is an ancestor of the pin),
-# with its own tools for the native conditions. `fetch.py` clones them (blobless) into cache/ and
+# with its own tools for the native arms. `fetch.py` clones them (blobless) into cache/ and
 # builds each tool environment from the versions here.
 #
 # Per family (`native`, `sudsy`):
 #   check, fix   the commands the instructions name (run from the repository root, no arguments added)
+#   hook_fix     what the stop hook runs on the changed files (default: fix)
 #   lint         machine-readable lint of a file list for the verifier: cmd + parser (ruff, eslint, govet, sudsy)
 #   format_check a command that exits non-zero (or, with `output_fails`, prints something) when {file} is not formatted
-#   hook_lint    what the post-edit hook runs on the edited file
+#   hook_lint    what the post-edit hook runs on the edited file (native: through hook.py)
+#   hook_stop    the stop hook's command, when the family has its own (sudsy); else hook.py runs hook_fix
 #   exts         the files the family's tools handle
 # [sudsy] below is the default of every repo; a repo's `sudsy_extra` adds the tools Sudsy does not
 # replace there (gofmt for Go, which Sudsy lints but does not format).
 
 [sudsy]
 check = ["sudsy check"]
-fix = ["sudsy fix"]
+fix = ["sudsy fix", "sudsy fix --unsafe", "sudsy fix --apply ID"]
+hook_fix = ["sudsy fix"]
 lint = { cmd = "sudsy lint --format json {files}", parse = "sudsy" }
 format_check = { cmd = "sudsy format --check {file}" }
-hook_lint = "sudsy lint {file}"
-# the sudsy conditions start from `sudsy init -y` plus the repo's `sudsy_init`: the presets closest to its
+hook_lint = "sudsy hook post-edit"
+hook_stop = ["sudsy hook stop"]
+# the sudsy arms start from `sudsy init -y` plus the repo's `sudsy_init`: the presets closest to its
 # native rule set (Sudsy does not import ruff or flat ESLint configs yet)
 exts = [
   ".py",
@@ -30,6 +34,8 @@ exts = [
   ".md",
   ".toml",
   ".go",
+  ".sh",
+  "Dockerfile",
 ]
 
 [repo.click]
@@ -87,6 +93,12 @@ url = "https://github.com/go-chi/chi"
 pin = "c64ed7d6635f33a8b2feaff7dcfa55677023ac7d"
 language = "go"
 test = "go test ./..."
+sudsy_init = "--preset go/revive"
+sudsy_config = { overrides = [
+  { files = [
+    "**/*_test.go",
+  ], go = { lint = { rules = { unused-parameter = "off" } } } },
+] }
 [repo.chi.native]
 check = ["go vet ./...", "gofmt -l ."]
 fix = ["gofmt -w ."]
@@ -98,3 +110,49 @@ exts = [".go"]
 check = ["gofmt -l ."]
 fix = ["gofmt -w ."]
 format_check = { cmd = "gofmt -l {file}", output_fails = true, exts = [".go"] }
+
+[repo.pathe]
+url = "https://github.com/unjs/pathe"
+pin = "bc7477a01f0bd60ada017add8142c9f9d69ccdc5"
+language = "typescript"
+# zeptomatch: the glob dependency of the start trees older than the built-in matcher (55a21be)
+node = "npx -y pnpm@11.10.0 install --frozen-lockfile --ignore-scripts && npx -y pnpm@11.10.0 add -D zeptomatch@2.1.0 --ignore-scripts"
+test = "npx vitest run"
+sudsy_init = "--preset js/oxlint --preset js/eslint-recommended"
+[repo.pathe.native]
+check = ["npm run lint"]
+fix = ["npm run lint:fix"]
+lint = { cmd = "node_modules/.bin/oxlint -f json {files}", parse = "oxlint" }
+format_check = { cmd = "node_modules/.bin/oxfmt --check {file}" }
+hook_lint = "node_modules/.bin/oxlint {file}"
+exts = [".ts", ".mjs", ".js"]
+
+# the mixed repository: Python, Dockerfile, docker-compose, Prometheus and Grafana YAML, GitHub workflows,
+# Markdown issue templates. Its own lint is pylint (tox's lint env); it has no formatter.
+[repo.flower]
+url = "https://github.com/mher/flower"
+pin = "15d22672a3a71415fffc868d0f1befb936baed6d"
+language = "python"
+python = [
+  "celery==5.7.0",
+  "tornado==6.6.1",
+  "prometheus-client==0.26.0",
+  "humanize==4.17.0",
+  "pytz==2026.6",
+  "redis==8.2.0",
+  "pylint==4.1.4",
+]
+test = "python -m unittest"
+sudsy_init = "--preset python/ruff --preset dockerfile/hadolint --preset github-actions/actionlint"
+# Tornado templates and the bundled static files are not HTML or JS for a formatter to touch
+sudsy_config = { exclude = [
+  "flower/templates/**",
+  "flower/static/**",
+  "docs/**",
+] }
+[repo.flower.native]
+check = ["pylint flower --rcfile .pylintrc"]
+fix = []
+lint = { cmd = "pylint --rcfile .pylintrc --output-format=json {files}", parse = "pylint" }
+hook_lint = "pylint --rcfile .pylintrc --score=n {file}"
+exts = [".py"]

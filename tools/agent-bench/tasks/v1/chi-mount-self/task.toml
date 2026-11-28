@@ -1,9 +1,0 @@
-repo = "chi"
-kind = "bugfix"
-commit = "aba86186a27484f3cadc55b8d6448d2049af71bf"
-tests = "go test ."
-hidden = ["mux_test.go"]
-scope = ["mux.go", "*_test.go"]
-text = """
-Mounting a router onto itself (`r.Mount("/", r)`), or onto an inline mux derived from it with `With()`/`Group()` (they share the same routing tree), makes every unmatched request loop forever. `Mount()` must panic at registration instead, with `chi: attempting to Mount() a router onto itself on '<pattern>'`, like its other runtime-safety checks.
-"""

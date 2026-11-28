@@ -1,0 +1,56 @@
+repo = "click"
+pairs = ["E7", "E3"]
+kind = "lint-debt"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_formatting.py"
+scope = ["src/click/formatting.py", "tests/*"]
+clean = ["src/click/formatting.py"]
+formatted = ["src/click/formatting.py"]
+seed_edits = [
+  [
+    "src/click/formatting.py",
+    "    widths: dict[int, int] = {}\n",
+    "    widths: dict[int, int] = dict()\n",
+  ],
+  [
+    "src/click/formatting.py",
+    "from contextlib import contextmanager\n",
+    "from contextlib import contextmanager\nimport os\n",
+  ],
+  [
+    "src/click/formatting.py",
+    "            if indent is None:",
+    "            if indent == None:",
+  ],
+  ["src/click/formatting.py", "def iter_rows(\n", "def iter_rows (\n"],
+  [
+    "src/click/formatting.py",
+    "    for row in rows:\n        yield row",
+    "    for row in rows :\n        yield row",
+  ],
+]
+solution_edits_sudsy = [
+  [
+    "src/click/formatting.py",
+    "    widths: dict[int, int] = dict()\n",
+    "    widths: dict[int, int] = {}\n",
+  ],
+  [
+    "src/click/formatting.py",
+    "from contextlib import contextmanager\nimport os\n",
+    "from contextlib import contextmanager\n",
+  ],
+  [
+    "src/click/formatting.py",
+    "            if indent == None:",
+    "            if indent is None:",
+  ],
+  ["src/click/formatting.py", "def iter_rows (\n", "def iter_rows(\n"],
+  [
+    "src/click/formatting.py",
+    "    for row in rows :\n        yield row",
+    "    for row in rows:\n        yield row",
+  ],
+]
+text = '''
+`src/click/formatting.py` has check findings and formatting left from older code. Make the project's checks pass on that file (no finding left in it, formatted) without changing its behaviour.
+'''

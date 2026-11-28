@@ -1,0 +1,48 @@
+diff --git a/tests/test_basic.py b/tests/test_basic.py
+index a9beb45..6d5279c 100644
+--- a/tests/test_basic.py
++++ b/tests/test_basic.py
+@@ -828,7 +828,6 @@ def test_summary_line(runner):
+ 
+         Here is a sentence. And here too.
+         """
+-        pass
+ 
+     result = runner.invoke(cli, ["--help"])
+     assert "Summary line without period" in result.output
+diff --git a/tests/test_chain.py b/tests/test_chain.py
+index 702eaaa..ec94f95 100644
+--- a/tests/test_chain.py
++++ b/tests/test_chain.py
+@@ -48,7 +48,6 @@ def test_chaining_help(runner, args, expect):
+     @click.group(chain=True)
+     def cli():
+         """ROOT HELP"""
+-        pass
+ 
+     @cli.command("sdist")
+     def sdist():
+diff --git a/tests/test_defaults.py b/tests/test_defaults.py
+index 39701b6..2ca5fd0 100644
+--- a/tests/test_defaults.py
++++ b/tests/test_defaults.py
+@@ -459,7 +459,6 @@ def test_lookup_default_override_respected(runner):
+ class _Marker:
+     """Dummy callable used as a flag_value in default tests."""
+ 
+-    pass
+ 
+ 
+ @pytest.mark.parametrize(
+diff --git a/tests/test_formatting.py b/tests/test_formatting.py
+index 4b0d5e2..5391e58 100644
+--- a/tests/test_formatting.py
++++ b/tests/test_formatting.py
+@@ -396,7 +396,6 @@ def test_removing_multiline_marker(runner):
+         The output of the short help text should
+         not contain the multiline marker.
+         """
+-        pass
+ 
+     result = runner.invoke(cli, ["--help"])
+     assert "\b" not in result.output

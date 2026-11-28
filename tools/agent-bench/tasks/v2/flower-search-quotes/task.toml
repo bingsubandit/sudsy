@@ -1,0 +1,10 @@
+repo = "flower"
+pairs = ["E1", "E7", "E2"]
+kind = "bugfix"
+commit = "5d1fe6f"
+tests = "python -m unittest tests.unit.api.test_tasks tests.unit.views.test_tasks"
+hidden = ["tests/unit/api/test_tasks.py", "tests/unit/views/test_tasks.py"]
+scope = ["flower/*", "tests/*"]
+text = '''
+Task search drops quotes and brackets: `BaseHandler.get_argument` HTML-escapes every string argument, so the query `args:"hello world"` (in `/api/tasks?search=...` and in the tasks page's `search[value]`) no longer matches. Keep escaping by default but let callers turn it off (`escape=False`), and use that for both search arguments.
+'''

@@ -1,9 +1,0 @@
-repo = "click"
-kind = "feature"
-commit = "05f6fd0df4ecbd104eb7a229f9f185c2484dee69"
-tests = "python -m pytest -q -p no:cacheprovider tests/test_arguments.py"
-hidden = ["tests/test_arguments.py"]
-scope = ["src/click/*", "tests/*", "CHANGES.md"]
-text = """
-`Argument.get_help_record(ctx)` returns `None` when the argument has no `help`, and `Command.format_help` works around it. Make it always return a tuple: `(metavar, help or "")`, document that in its docstring (with a `versionchanged:: 8.5.1` note), and drop the workaround in `Command`. Add a line to CHANGES.md.
-"""

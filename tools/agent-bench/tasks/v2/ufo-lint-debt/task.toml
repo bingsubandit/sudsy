@@ -1,0 +1,54 @@
+repo = "ufo"
+pairs = ["E7", "E3"]
+kind = "lint-debt"
+tests = "npx vitest run test/base.test.ts test/query.test.ts test/utilities.test.ts"
+scope = ["src/utils.ts", "test/*"]
+clean = ["src/utils.ts"]
+formatted = ["src/utils.ts"]
+seed_edits = [
+  [
+    "src/utils.ts",
+    "  const mergedQuery = { ...parseQuery(parsed.search), ...query };",
+    "  let mergedQuery = { ...parseQuery(parsed.search), ...query };",
+  ],
+  [
+    "src/utils.ts",
+    "  const trimmed = input.slice(_base.length).replace(/^\\/+/, \"\");",
+    "  var trimmed = input.slice(_base.length).replace(/^\\/+/, \"\");\n  const rest = input.slice(_base.length);",
+  ],
+  [
+    "src/utils.ts",
+    "  const filteredInputs = inputs.filter((input) => isNonEmptyURL(input));",
+    "  let filteredInputs = inputs.filter((input) => isNonEmptyURL(input));",
+  ],
+  [
+    "src/utils.ts",
+    "export function withoutHost(input: string) {",
+    "export function withoutHost(input: string)  {\n",
+  ],
+]
+solution_edits_sudsy = [
+  [
+    "src/utils.ts",
+    "  let mergedQuery = { ...parseQuery(parsed.search), ...query };",
+    "  const mergedQuery = { ...parseQuery(parsed.search), ...query };",
+  ],
+  [
+    "src/utils.ts",
+    "  var trimmed = input.slice(_base.length).replace(/^\\/+/, \"\");\n  const rest = input.slice(_base.length);",
+    "  const trimmed = input.slice(_base.length).replace(/^\\/+/, \"\");",
+  ],
+  [
+    "src/utils.ts",
+    "  let filteredInputs = inputs.filter((input) => isNonEmptyURL(input));",
+    "  const filteredInputs = inputs.filter((input) => isNonEmptyURL(input));",
+  ],
+  [
+    "src/utils.ts",
+    "export function withoutHost(input: string)  {\n",
+    "export function withoutHost(input: string) {",
+  ],
+]
+text = '''
+`src/utils.ts` has check findings and formatting left from older code. Make the project's checks pass on that file (no finding left in it, formatted) without changing its behaviour.
+'''

@@ -1,9 +1,0 @@
-repo = "click"
-kind = "bugfix"
-commit = "f316d5cb3aa89b57c14aee54da6ac9062ac5bec4"
-tests = "python -m pytest -q -p no:cacheprovider tests/test_termui.py"
-hidden = ["tests/test_termui.py"]
-scope = ["src/click/*", "tests/*", "CHANGES.md"]
-text = """
-`click.progressbar(range(20), show_pos=True, update_min_steps=7)` ends showing `14/20`: steps stay pending until they add up to `update_min_steps`, so a remainder below the threshold never reaches `pos`. When the bar finishes (both when iterating and when driven by `bar.update(1)`), apply the pending steps and render, so `bar.pos == 20`, `bar.finished` is true and the output contains `20/20`. Add a line to CHANGES.md.
-"""

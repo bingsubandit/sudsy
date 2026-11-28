@@ -1,0 +1,10 @@
+repo = "pathe"
+pairs = ["E1", "E7", "E2"]
+kind = "bugfix"
+commit = "4353c6a"
+tests = "npx vitest run test/index.spec.ts"
+hidden = ["test/index.spec.ts"]
+scope = ["src/*", "test/*"]
+text = '''
+`format()` fails on partial objects: `format({ name: "file" })` must be `"file"`, `format({ ext: "ext" })` and `format({ ext: ".ext" })` `".ext"`, `format({ dir: "/foo", name: "file" })` `"/foo/file"`. A missing name counts as empty and an extension without its dot gets one.
+'''
