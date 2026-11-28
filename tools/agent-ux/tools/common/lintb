@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+import signal as _sig; _sig.signal(_sig.SIGPIPE, _sig.SIG_DFL)
+"""Print only ruff findings that are not in .baseline.json (file+rule+line text)."""
+import collections, json, pathlib, subprocess, sys
+
+ARGS = ["ruff", "check", "--select", "ALL", "--ignore", "D", "--output-format", "json", "--no-cache", "."]
+LINE_CACHE = {}
+
+
+def text(fn, row):
+    if fn not in LINE_CACHE:
+        LINE_CACHE[fn] = pathlib.Path(fn).read_text().splitlines()
+    ls = LINE_CACHE[fn]
+    return ls[row - 1].strip() if 0 < row <= len(ls) else ""
+
+
+def current():
+    out = subprocess.run(ARGS, capture_output=True, text=True).stdout
+    res = []
+    for d in json.loads(out or "[]"):
+        fn = str(pathlib.Path(d["filename"]).resolve().relative_to(pathlib.Path.cwd()))
+        row = d["location"]["row"]
+        res.append((fn, d["code"], text(fn, row), row, d["location"]["column"], d["message"]))
+    return res
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--baseline":
+        json.dump([list(r[:3]) for r in current()], open(".baseline.json", "w"))
+        sys.exit(0)
+    base = collections.Counter(tuple(x) for x in json.load(open(".baseline.json")))
+    new = []
+    for r in current():
+        k = r[:3]
+        if base[k] > 0:
+            base[k] -= 1
+        else:
+            new.append(r)
+    for fn, code, _, row, col, msg in new:
+        print(f"{fn}:{row}:{col}: {code} {msg}")
+    sys.exit(1 if new else 0)

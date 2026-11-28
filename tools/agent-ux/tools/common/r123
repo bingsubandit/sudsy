@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+import signal as _sig; _sig.signal(_sig.SIGPIPE, _sig.SIG_DFL)
+"""Mock project-rule linter: R1 no print, R2 no float literals, R3 http timeout.
+
+usage: r123 lint [--rule R] [paths...] | fix ID | fixall FILE | explain RULE
+env:   STYLE = terse | verbose | id | long | summary      (default terse)
+       R2_SCOPE = pricing | all                            (default pricing)
+"""
+import ast
+import hashlib
+import os
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(os.getcwd())
+STYLE = os.environ.get("STYLE", "terse")
+R2_SCOPE = os.environ.get("R2_SCOPE", "pricing")
+
+SHORT = {"R1": "print call", "R2": "float literal", "R3": "http call without timeout"}
+LONG = {
+    "R1": "print() is not allowed in shop/: use log.info(...) from shop.log",
+    "R2": "float literal in shop/pricing.py: money values must use Decimal(\"...\")",
+    "R3": "http.get/http.post must pass timeout=",
+}
+EXPLAIN = {
+    "R1": "R1 (no print): Library code under shop/ must never write to stdout with print().\n"
+          "The project logger lives in shop/log.py and is used as `from shop.log import log`,\n"
+          "then `log.info(...)`. print() output is lost in production and cannot be tested,\n"
+          "while log.info records can be inspected in tests (log.records).",
+    "R2": "R2 (Decimal money): Money values must be Decimal, never float literals, because\n"
+          "binary floats cannot represent cents exactly. Replace 0.45 with Decimal(\"0.45\")\n"
+          "(import Decimal from decimal). Code that used the float must keep working with\n"
+          "a Decimal.",
+    "R3": "R3 (http timeout): Every http.get( / http.post( call must pass timeout=<seconds>.\n"
+          "Without it a stalled server blocks the process forever. Use timeout=10 unless\n"
+          "the caller needs something else.",
+}
+
+
+def files_for(paths):
+    out = []
+    for p in paths or ["shop"]:
+        pp = pathlib.Path(p)
+        if pp.is_dir():
+            out += sorted(str(x) for x in pp.rglob("*.py"))
+        else:
+            out.append(str(pp))
+    return out
+
+
+def abs_off(lines, lineno, col):
+    return sum(len(x) for x in lines[: lineno - 1]) + col
+
+
+def scan(path):
+    src = pathlib.Path(path).read_text()
+    tree = ast.parse(src)
+    lines = src.splitlines(keepends=True)
+    found = []
+    posix = pathlib.PurePath(path).as_posix()
+    in_shop = posix.startswith("shop/") or "/shop/" in posix
+    r2 = posix.endswith("shop/pricing.py") or (R2_SCOPE == "all" and in_shop)
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id == "print" and in_shop):
+            found.append(("R1", node))
+        elif isinstance(node, ast.Constant) and isinstance(node.value, float) and r2:
+            found.append(("R2", node))
+        elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+              and isinstance(node.func.value, ast.Name) and node.func.value.id == "http"
+              and node.func.attr in ("get", "post") and in_shop
+              and not any(k.arg == "timeout" for k in node.keywords)):
+            found.append(("R3", node))
+    found.sort(key=lambda f: (f[1].lineno, f[1].col_offset))
+    seen = {}
+    res = []
+    for rule, node in found:
+        text = lines[node.lineno - 1].strip()
+        key = (path, rule, text)
+        n = seen.get(key, 0)
+        seen[key] = n + 1
+        fid = hashlib.sha1(f"{path}|{rule}|{text}|{n}".encode()).hexdigest()[:4]
+        res.append({"path": path, "rule": rule, "node": node, "line": node.lineno,
+                    "col": node.col_offset + 1, "text": lines[node.lineno - 1].rstrip("\n"),
+                    "id": fid, "src": src, "lines": lines})
+    return res
+
+
+def new_text(f):
+    node, lines = f["node"], f["lines"]
+    a = abs_off(lines, node.lineno, node.col_offset)
+    b = abs_off(lines, node.end_lineno, node.end_col_offset)
+    seg = f["src"][a:b]
+    if f["rule"] == "R1":
+        new = "log.info(" + re.sub(r"^print\s*\(", "", seg)
+    elif f["rule"] == "R2":
+        new = f'Decimal("{seg}")'
+    else:
+        body = seg[:-1].rstrip()
+        if body.endswith("("):
+            new = body + "timeout=10)"
+        elif body.endswith(","):
+            new = body + " timeout=10)"
+        else:
+            new = body + ", timeout=10)"
+    return a, b, seg, new
+
+
+def ensure_import(src, stmt, name_check):
+    if re.search(name_check, src, re.M):
+        return src
+    tree = ast.parse(src)
+    last = 0
+    for n in tree.body:
+        if isinstance(n, (ast.Import, ast.ImportFrom)):
+            last = n.end_lineno
+        elif last:
+            break
+    ls = src.splitlines(keepends=True)
+    ls.insert(last, stmt + "\n")
+    return "".join(ls)
+
+
+def apply(f):
+    a, b, _, new = new_text(f)
+    src = f["src"][:a] + new + f["src"][b:]
+    if f["rule"] == "R1":
+        src = ensure_import(src, "from shop.log import log", r"^from shop\.log import .*\blog\b")
+    if f["rule"] == "R2":
+        src = ensure_import(src, "from decimal import Decimal", r"^from decimal import .*\bDecimal\b")
+    pathlib.Path(f["path"]).write_text(src)
+
+
+def all_findings(paths):
+    out = []
+    for p in files_for(paths):
+        out += scan(p)
+    return out
+
+
+def main(argv):
+    cmd = argv[0] if argv else "lint"
+    args = argv[1:]
+    if cmd == "explain":
+        print(EXPLAIN.get(args[0].upper(), "unknown rule"))
+        return 0
+    if cmd == "fix":
+        for f in all_findings([]):
+            if f["id"] == args[0]:
+                apply(f)
+                print(f"fixed {f['id']} {f['path']}:{f['line']} {f['rule']}")
+                return 0
+        print(f"no finding with id {args[0]}")
+        return 1
+    if cmd == "fixall":
+        while True:
+            fs = scan(args[0])
+            if not fs:
+                return 0
+            apply(fs[0])
+    rule = None
+    if "--rule" in args:
+        i = args.index("--rule")
+        rule = args[i + 1].upper()
+        args = args[:i] + args[i + 2:]
+    fs = all_findings(args)
+    if rule:
+        fs = [f for f in fs if f["rule"] == rule]
+    if not fs:
+        return 0
+    if STYLE == "summary" and not rule:
+        for r in ("R1", "R2", "R3"):
+            rs = [f for f in fs if f["rule"] == r]
+            if rs:
+                firsts = ", ".join(f"{f['path']}:{f['line']}" for f in rs[:3])
+                print(f"{r} {SHORT[r]}: {len(rs)} findings, first: {firsts}"
+                      f"  (./lint --rule {r} for all, ./explain {r} for details)")
+        return 1
+    for idx, f in enumerate(fs):
+        if STYLE == "summary" and idx >= 40:
+            print(f"... {len(fs) - 40} more (pass a path to narrow, e.g. ./lint --rule {rule} shop/x.py)")
+            break
+        loc = f"{f['path']}:{f['line']}:{f['col']}"
+        r = f["rule"]
+        if STYLE == "verbose":
+            a, b, seg, new = new_text(f)
+            print(f"{loc} {r} {LONG[r]}")
+            print("    " + f["text"].strip())
+            print("    fix: " + " ".join(new.split()))
+        elif STYLE == "id":
+            print(f"{loc} {r} {SHORT[r]} [id {f['id']}]")
+        elif STYLE == "long":
+            print(f"{loc} {r} {SHORT[r]}")
+            for ln in EXPLAIN[r].splitlines():
+                print("    " + ln)
+        else:
+            print(f"{loc} {r} {SHORT[r]}")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

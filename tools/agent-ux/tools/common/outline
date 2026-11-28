@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+import signal as _sig; _sig.signal(_sig.SIGPIPE, _sig.SIG_DFL)
+"""outline FILE: defs and classes with line numbers and docstring summary."""
+import ast, sys
+
+src = open(sys.argv[1]).read()
+
+
+def show(node, depth):
+    pad = "    " * depth
+    doc = (ast.get_docstring(node) or "").strip().splitlines()
+    tail = f"  # {doc[0]}" if doc else ""
+    if isinstance(node, ast.ClassDef):
+        print(f"{node.lineno}: {pad}class {node.name}{tail}")
+        for ch in node.body:
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                show(ch, depth + 1)
+    else:
+        ret = f" -> {ast.unparse(node.returns)}" if node.returns else ""
+        print(f"{node.lineno}: {pad}def {node.name}({ast.unparse(node.args)}){ret}{tail}")
+
+
+for n in ast.parse(src).body:
+    if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        show(n, 0)

@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+import signal as _sig; _sig.signal(_sig.SIGPIPE, _sig.SIG_DFL)
+"""lint: apply rules/*.yaml (id, message, pattern, optional not-pattern, paths) line by line."""
+import fnmatch, pathlib, re, sys
+
+import yaml
+
+rules = []
+for rf in sorted(pathlib.Path("rules").glob("*.yaml")):
+    try:
+        d = yaml.safe_load(rf.read_text())
+        for k in ("id", "message", "pattern"):
+            if k not in d:
+                raise ValueError(f"missing key '{k}'")
+        d["_re"] = re.compile(d["pattern"])
+        d["_not"] = re.compile(d["not-pattern"]) if d.get("not-pattern") else None
+        paths = d.get("paths", ["shop/**/*.py"])
+        d["_paths"] = [paths] if isinstance(paths, str) else paths
+        rules.append(d)
+    except Exception as e:  # noqa
+        print(f"{rf}: invalid rule file: {e}")
+        sys.exit(2)
+bad = 0
+for p in sorted(pathlib.Path(".").rglob("*.py")):
+    rel = p.as_posix()
+    if rel.startswith("."):
+        continue
+    for r in rules:
+        if not any(fnmatch.fnmatch(rel, g) or fnmatch.fnmatch(rel, g.replace("**/", "")) for g in r["_paths"]):
+            continue
+        for i, line in enumerate(p.read_text().splitlines(), 1):
+            m = r["_re"].search(line)
+            if m and not (r["_not"] and r["_not"].search(line)):
+                print(f"{rel}:{i}:{m.start() + 1} {r['id']} {r['message']}")
+                bad += 1
+sys.exit(1 if bad else 0)

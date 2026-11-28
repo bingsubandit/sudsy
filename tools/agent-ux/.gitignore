@@ -1,0 +1,8 @@
+runs/
+results/
+results.jsonl
+tools/variants/
+tasks/
+extras/
+__pycache__/
+.ruff_cache/

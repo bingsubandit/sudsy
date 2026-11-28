@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+import signal as _sig; _sig.signal(_sig.SIGPIPE, _sig.SIG_DFL)
+"""check: unknown attributes on Cache and unknown names in 'from shop.x import y'."""
+import ast, pathlib, sys
+
+INSTANCES = {"cache", "_cache", "store", "c"}
+tree = lambda p: ast.parse(pathlib.Path(p).read_text())
+cache_attrs = set()
+for n in ast.walk(tree("shop/cache.py")):
+    if isinstance(n, ast.ClassDef) and n.name == "Cache":
+        cache_attrs = {m.name for m in n.body if isinstance(m, ast.FunctionDef) and not m.name.startswith("__")}
+        cache_attrs |= {"hits"}
+bad = 0
+for p in sorted(pathlib.Path("shop").rglob("*.py")):
+    for n in ast.walk(tree(p)):
+        if isinstance(n, ast.Attribute) and n.attr not in cache_attrs and not n.attr.startswith("_"):
+            v = n.value
+            name = v.id if isinstance(v, ast.Name) else v.attr if isinstance(v, ast.Attribute) else None
+            if name in INSTANCES:
+                has = ", ".join(sorted(a for a in cache_attrs if a != "hits"))
+                print(f"{p}:{n.lineno}: Cache has no attribute {n.attr} (has: {has})")
+                bad += 1
+        if isinstance(n, ast.ImportFrom) and n.module and n.module.startswith("shop."):
+            mp = pathlib.Path(n.module.replace(".", "/") + ".py")
+            if mp.exists():
+                names = set()
+                for x in tree(mp).body:
+                    if isinstance(x, (ast.FunctionDef, ast.ClassDef)):
+                        names.add(x.name)
+                    elif isinstance(x, ast.Assign):
+                        names |= {t.id for t in x.targets if isinstance(t, ast.Name)}
+                    elif isinstance(x, ast.AnnAssign) and isinstance(x.target, ast.Name):
+                        names.add(x.target.id)
+                    elif isinstance(x, (ast.Import, ast.ImportFrom)):
+                        names |= {(a.asname or a.name).split(".")[0] for a in x.names}
+                for a in n.names:
+                    if a.name not in names:
+                        print(f"{p}:{n.lineno}: {n.module} has no name '{a.name}'")
+                        bad += 1
+sys.exit(1 if bad else 0)

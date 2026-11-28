@@ -1,0 +1,56 @@
+{
+ "baseline_tokens": 3761,
+ "files": {
+  "orders": {
+   "lines": 1455,
+   "chars": 47025,
+   "a_black": 18472,
+   "a_black_chars": 47025,
+   "b_stripped": 17756,
+   "b_stripped_chars": 40677,
+   "c_tabs": 18704,
+   "c_tabs_chars": 42540
+  },
+  "pricing": {
+   "lines": 69,
+   "chars": 1673,
+   "a_black": 700,
+   "a_black_chars": 1673,
+   "b_stripped": 660,
+   "b_stripped_chars": 1458,
+   "c_tabs": 698,
+   "c_tabs_chars": 1526
+  },
+  "inventory": {
+   "lines": 78,
+   "chars": 1618,
+   "a_black": 621,
+   "a_black_chars": 1618,
+   "b_stripped": 573,
+   "b_stripped_chars": 1292,
+   "c_tabs": 618,
+   "c_tabs_chars": 1387
+  },
+  "users": {
+   "lines": 51,
+   "chars": 1171,
+   "a_black": 443,
+   "a_black_chars": 1171,
+   "b_stripped": 417,
+   "b_stripped_chars": 1018,
+   "c_tabs": 446,
+   "c_tabs_chars": 1066
+  },
+  "cache": {
+   "lines": 39,
+   "chars": 999,
+   "a_black": 369,
+   "a_black_chars": 999,
+   "b_stripped": 345,
+   "b_stripped_chars": 824,
+   "c_tabs": 374,
+   "c_tabs_chars": 876
+  }
+ },
+ "total_cost_usd": 0.01751229
+}

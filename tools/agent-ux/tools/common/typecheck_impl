@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+import signal as _sig; _sig.signal(_sig.SIGPIPE, _sig.SIG_DFL)
+"""Tiny type checker: literal arg/return types and call arity of annotated functions (per file)."""
+import ast, pathlib, sys
+
+PRIM = {"int": int, "str": str, "bool": bool, "float": float}
+
+
+def lit_ok(node, ann):
+    if isinstance(ann, ast.Name) and ann.id in PRIM and isinstance(node, ast.Constant):
+        v = node.value
+        want = PRIM[ann.id]
+        if want is float and isinstance(v, int) and not isinstance(v, bool):
+            return True
+        return type(v) is want
+    return True
+
+
+errs = 0
+for p in sorted(pathlib.Path("shop").rglob("*.py")):
+    tree = ast.parse(p.read_text())
+    funcs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+    for n in funcs.values():
+        for r in ast.walk(n):
+            if isinstance(r, ast.Return) and r.value is not None and n.returns and not lit_ok(r.value, n.returns):
+                print(f"{p}:{r.lineno}: error: {n.name} returns {type(r.value.value).__name__}, declared {ast.unparse(n.returns)}")
+                errs += 1
+    for c in ast.walk(tree):
+        if isinstance(c, ast.Call) and isinstance(c.func, ast.Name) and c.func.id in funcs:
+            f = funcs[c.func.id]
+            a = f.args
+            if a.vararg or a.kwarg:
+                continue
+            params = a.args
+            nreq = len(params) - len(a.defaults)
+            if not (nreq <= len(c.args) + len(c.keywords) <= len(params)) and not any(isinstance(x, ast.Starred) for x in c.args):
+                print(f"{p}:{c.lineno}: error: {f.name}() takes {nreq}..{len(params)} arguments, got {len(c.args) + len(c.keywords)}")
+                errs += 1
+            for arg, par in zip(c.args, params):
+                if par.annotation is not None and not lit_ok(arg, par.annotation):
+                    print(f"{p}:{c.lineno}: error: argument '{par.arg}' of {f.name}() expects {ast.unparse(par.annotation)}, got {type(arg.value).__name__}")
+                    errs += 1
+sys.exit(1 if errs else 0)

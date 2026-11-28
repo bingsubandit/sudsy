@@ -1,0 +1,3 @@
+[tool.ruff.lint.per-file-ignores]
+"**/*.py" = ["ANN", "CPY001", "FBT", "COM812", "ISC001", "Q", "TC"]
+"tests/*" = ["S101", "INP001", "PLR2004", "T201", "PT", "ARG", "SLF001"]
