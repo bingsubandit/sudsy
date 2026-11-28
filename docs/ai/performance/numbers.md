@@ -17,6 +17,11 @@ Machine unless noted: AMD Ryzen 5 3600 (6 cores / 12 threads), 32 GB, Windows 11
 |---|---|
 | `sudsy lint --format concise .` against the same with `--new` in a git repository of 2,000 YAML files of 100 lines (200,000 findings), 0, 20 or all files edited since `HEAD` (a line inserted at the top, one new finding each); release, x86-64 Linux agent host (4 cores), git 2.43, best of 5, process start included | 0 changed: 376 / 344 ms; 20: 363 / 348 ms; 2,000: 372 / 861 ms (the old text of every file linted again, 400,000 fingerprints). Below a few hundred changed files `--new` costs nothing measurable (it prints less); noise about 10% |
 
+## Agent hooks (`scripts/hook-latency.sh`)
+| Path | Number |
+|---|---|
+| `sudsy hook post-edit` on one edited file (one line changed since `HEAD`, so its old text is linted too), a new process per run as Claude Code starts it; release, x86-64 Linux agent host (4 cores, load about 4.7), median / min of 11 | django-core-paginator.py (7.9 KB) 27 / 23 ms, mui-button.js (16.6 KB) 26 / 24 ms, hugo-page.go (25.3 KB) 36 / 30 ms, testing.md (6.9 KB) 26 / 25 ms; `sudsy --version` 5 / 4 ms. `sudsy lint FILE` of the same file is 58-69 / 53-57 ms, most likely the SARIF rule catalog its report builds for every format (roadmap small task) |
+
 ## `sudsy init --yes`
 | Path | Number |
 |---|---|

@@ -116,7 +116,7 @@ The default output prints each finding with its source line and each fix with th
 
 ## Coding agents
 
-`sudsy init --agents` adds a short block to `AGENTS.md` (or to `CLAUDE.md` when only that exists) that tells an agent to run `sudsy check`, `sudsy fix --unsafe` and `sudsy fix --apply <id>`. It writes nothing without the flag and a second run changes nothing.
+`sudsy init --agents` adds a short block to `AGENTS.md` (or to `CLAUDE.md` when only that exists) that tells an agent to run `sudsy check`, `sudsy fix --unsafe` and `sudsy fix --apply <id>`, and merges two Claude Code hooks into `.claude/settings.json`: after each edit `sudsy hook post-edit` shows the agent the new findings of that file, and when it stops `sudsy hook stop` fixes and formats the changed files and turns it back once if findings are left. It writes nothing without the flag and a second run changes nothing.
 
 ## pre-commit
 

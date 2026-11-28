@@ -5,6 +5,7 @@ mod builtin;
 mod config;
 mod debug;
 mod format;
+mod hook;
 mod init;
 #[cfg(feature = "pack-mode")]
 mod languages;

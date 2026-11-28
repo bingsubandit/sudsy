@@ -164,13 +164,34 @@ fn agents_adds_one_block_to_the_instruction_file() {
     assert!(!dir.join("sudsy.yaml").exists());
     let once = fs::read_to_string(dir.join("AGENTS.md")).unwrap();
     assert!(once.contains("sudsy check") && once.contains("sudsy fix"));
+    // And the Claude Code hooks.
+    let settings = fs::read_to_string(dir.join(".claude/settings.json")).unwrap();
+    assert!(
+        settings.contains("\"Edit|Write|MultiEdit\"")
+            && settings.contains("hook post-edit\"")
+            && settings.contains("hook stop\""),
+        "{settings}"
+    );
     // Again: unchanged.
     assert!(sudsy(dir, &["init", "--agents"]).status.success());
     assert_eq!(fs::read_to_string(dir.join("AGENTS.md")).unwrap(), once);
-    // Only CLAUDE.md: that file, its text kept.
+    assert_eq!(
+        fs::read_to_string(dir.join(".claude/settings.json")).unwrap(),
+        settings
+    );
+    // Only CLAUDE.md: that file, its text kept; the settings there are merged.
     let t = tempfile::tempdir().unwrap();
     fs::write(t.path().join("CLAUDE.md"), "# Mine\n").unwrap();
+    fs::create_dir(t.path().join(".claude")).unwrap();
+    let mine = "{\n  \"model\": \"x\"\n}\n";
+    fs::write(t.path().join(".claude/settings.json"), mine).unwrap();
     assert!(sudsy(t.path(), &["init", "--agents"]).status.success());
+    let merged = fs::read_to_string(t.path().join(".claude/settings.json")).unwrap();
+    assert!(
+        merged.starts_with("{\n  \"model\": \"x\",\n  \"hooks\": {")
+            && merged.contains("hook stop"),
+        "{merged}"
+    );
     assert!(!t.path().join("AGENTS.md").exists());
     let text = fs::read_to_string(t.path().join("CLAUDE.md")).unwrap();
     assert!(

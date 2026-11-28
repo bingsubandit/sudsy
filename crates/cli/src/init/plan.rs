@@ -2,7 +2,7 @@
 
 use super::out::{Conflict, Out, Report};
 use super::world::World;
-use super::{agents, editor};
+use super::{agents, editor, hooks};
 use anyhow::Result;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -191,6 +191,9 @@ pub fn plan(
                 .notes
                 .push(format!("{name} already has the Sudsy block")),
         }
+    }
+    if !a.agents.is_empty() {
+        hooks::add(dir, &mut plan);
     }
     if a.vscode {
         let ids: Vec<&str> = world

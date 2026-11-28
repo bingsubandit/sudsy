@@ -83,22 +83,7 @@ impl LintArgs {
             }
         }
         if let Some(base) = base {
-            let handles: HashMap<String, (&PathBuf, File)> = session
-                .paths
-                .iter()
-                .zip(loaded)
-                .filter_map(|(path, file)| {
-                    Some((session.project.show(path), (path, *file.as_ref().ok()?)))
-                })
-                .collect();
-            let entries = files
-                .iter_mut()
-                .filter_map(|report| {
-                    let (path, file) = *handles.get(&report.path)?;
-                    Some(Entry { path, file, report })
-                })
-                .collect();
-            keep_new(&session.db, base, entries)?;
+            keep_new_of(session, base, loaded, files)?;
         }
         let report = Report {
             format: self.report.format,
@@ -108,6 +93,30 @@ impl LintArgs {
         print(session, &report, files);
         Ok(())
     }
+}
+
+/// Drops the findings of `files` (of the files `loaded`, in `session.paths` order) that `base`
+/// has.
+pub fn keep_new_of(
+    session: &Session,
+    base: &Base,
+    loaded: &[Result<File>],
+    files: &mut [FileDiagnostics],
+) -> Result<()> {
+    let handles: HashMap<String, (&PathBuf, File)> = session
+        .paths
+        .iter()
+        .zip(loaded)
+        .filter_map(|(path, file)| Some((session.project.show(path), (path, *file.as_ref().ok()?))))
+        .collect();
+    let entries = files
+        .iter_mut()
+        .filter_map(|report| {
+            let (path, file) = *handles.get(&report.path)?;
+            Some(Entry { path, file, report })
+        })
+        .collect();
+    keep_new(&session.db, base, entries)
 }
 
 impl ReportArgs {
@@ -254,17 +263,25 @@ pub fn print(session: &Session, report: &Report, files: &[FileDiagnostics]) {
         "{}",
         report::render(report.format, files, &catalog(session), report.collapse)
     );
+    if let Some(line) = summary(files, report.new) {
+        eprintln!("{line}");
+    }
+}
+
+/// The summary line of a report; none for a `--new` report without findings.
+pub fn summary(files: &[FileDiagnostics], new: bool) -> Option<String> {
     let (errors, warnings) = report::count(files);
-    if !report.new {
-        eprintln!(
-            "{} file(s) checked, {errors} error(s), {warnings} warning(s)",
-            files.len()
-        );
+    let n = files.len();
+    if !new {
+        Some(format!(
+            "{n} file(s) checked, {errors} error(s), {warnings} warning(s)"
+        ))
     } else if errors + warnings > 0 {
-        eprintln!(
-            "{} file(s) checked, {errors} new error(s), {warnings} new warning(s)",
-            files.len()
-        );
+        Some(format!(
+            "{n} file(s) checked, {errors} new error(s), {warnings} new warning(s)"
+        ))
+    } else {
+        None
     }
 }
 
