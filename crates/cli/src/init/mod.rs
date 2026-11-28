@@ -10,6 +10,7 @@ mod csharpier;
 mod editor;
 mod editorconfig;
 mod eslint;
+mod hooks;
 mod html;
 mod json_edit;
 mod out;
@@ -140,10 +141,21 @@ pub fn run(args: InitArgs) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
+/// The agent block and the Claude Code hooks.
 fn add_agents() -> Result<()> {
-    match agents::add(Path::new("."))? {
+    let dir = Path::new(".");
+    match agents::add(dir)? {
         (name, true) => eprintln!("added the Sudsy block to {name}"),
         (name, false) => eprintln!("{name} already has the Sudsy block"),
+    }
+    let mut plan = Plan::default();
+    hooks::add(dir, &mut plan);
+    write(&plan, dir)?;
+    if !plan.files.is_empty() {
+        eprintln!("added the Sudsy hooks to {}", hooks::SETTINGS);
+    }
+    for note in &plan.notes {
+        eprintln!("{note}");
     }
     Ok(())
 }

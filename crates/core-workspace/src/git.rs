@@ -59,6 +59,11 @@ impl Changes {
             _ => State::Absent,
         }
     }
+
+    /// The files of the revision that the working tree changed or deleted.
+    pub fn changed(&self) -> impl Iterator<Item = &str> {
+        self.changed.iter().map(String::as_str)
+    }
 }
 
 fn git(dir: &Path) -> Command {
@@ -111,6 +116,28 @@ impl Repo {
         let rel = path.strip_prefix(&self.top).ok()?;
         let parts: Vec<_> = rel.components().map(|c| c.as_os_str().to_str()).collect();
         Some(parts.into_iter().collect::<Option<Vec<_>>>()?.join("/"))
+    }
+
+    /// `rel` (as [`Repo::relative`] gives it) as a path in the working tree.
+    pub fn path(&self, rel: &str) -> PathBuf {
+        self.top.join(rel)
+    }
+
+    /// The files git does not track and does not ignore.
+    pub fn untracked(&self) -> Result<Vec<String>, GitError> {
+        let mut command = git(&self.top);
+        command.args([
+            "ls-files",
+            "-z",
+            "--others",
+            "--exclude-standard",
+            "--full-name",
+        ]);
+        let mut names: Vec<String> = names(&output(command).map_err(GitError::Run)?)
+            .into_iter()
+            .collect();
+        names.sort();
+        Ok(names)
     }
 
     /// The files of `rev` and those of them that differ in the working tree (staged or not).

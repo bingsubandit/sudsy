@@ -39,6 +39,7 @@ Per language against the bar in [CLAUDE.md](../../CLAUDE.md) (format 85-90% iden
 Not ranked: INI, EditorConfig and `.gitignore` have no reference tool. Measured by a re-run on this host: JS, CSS, HTML, Vue, Svelte, Java, Python, Shell, Protobuf, Terraform, TOML, SQL, Kotlin, PHP, JSON, YAML, XML, PowerShell, Markdown and the lint shares of JSON, YAML, GraphQL, StyleCop, PSScriptAnalyzer, SCSS and Less; recorded and not re-run: the C# format share (the corpus differential needs the CSharpier baseline) and the other lint shares.
 
 ## Small tasks
+- A one-file `sudsy lint` takes 54-69 ms against 23-36 ms for `sudsy hook post-edit` (`scripts/hook-latency.sh`), which lints it twice but skips `lint::print`; the likely cause is the SARIF rule catalog (every rule of every language) that `print` builds for every format: confirm, then build it only for `--format sarif`.
 - Delete `tools/perf-bench/build.rs` and the `file_cells` cfg once the bench baseline has `FileContext.cells`.
 - Procfile: `empty-command` has no corpus finding (kept for the runners' source); the final newline and the blank after `#` stay as written (under 80% of the corpus).
 - Gradle: the 39 corpus files that do not parse (templates, a string-named method call over several lines, `,` after a command); binary-operator, quote and dependency-parenthesis rows once a second Groovy-like language needs them; lint gaps (named in [formatting/gradle.md](formatting/gradle.md#lint)); the `frame-indent` and `trim-bracket-edges` format-rows flags have one user (PowerShell's frames could move onto them).

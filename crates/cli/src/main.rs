@@ -4,6 +4,7 @@ mod config_cmd;
 mod debug;
 mod fix;
 mod format;
+mod hook;
 mod human;
 mod init;
 #[cfg(feature = "pack-mode")]
@@ -60,11 +61,19 @@ enum Command {
     Init(init::InitArgs),
     /// Run the language server on stdin and stdout.
     Lsp,
+    /// Answer an agent hook (Claude Code): the hook input JSON on stdin; exit 2 with the findings
+    /// on stderr for the agent.
+    Hook(hook::HookArgs),
 }
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    let result = match cli.command {
+    // A hook speaks the agent's exit codes, never the other commands' ones.
+    let command = match cli.command {
+        Command::Hook(args) => return hook::run(args),
+        command => command,
+    };
+    let result = match command {
         Command::Debug(c) => debug::run(c).map(|()| ExitCode::SUCCESS),
         Command::Format(args) => format::run(args),
         Command::Lint(args) => lint::run(args),
@@ -76,6 +85,7 @@ fn main() -> ExitCode {
         Command::Languages(c) => languages_cmd::run(c),
         Command::Init(args) => init::run(args),
         Command::Lsp => lsp::run_stdio().map(|()| ExitCode::SUCCESS),
+        Command::Hook(_) => unreachable!("answered above"),
     };
     match result {
         // Files were skipped for a missing language: a distinct status, unless something worse

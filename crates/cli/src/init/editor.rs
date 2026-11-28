@@ -26,7 +26,7 @@ jobs:
 
 /// The text of `dir/rel` and its root object: `{}` when the file is new, `None` when it exists
 /// and is not plain JSON (comments are allowed in these files, which this does not read).
-fn read(dir: &Path, rel: &str) -> Option<(String, Map<String, Value>)> {
+pub(super) fn read(dir: &Path, rel: &str) -> Option<(String, Map<String, Value>)> {
     match std::fs::read_to_string(dir.join(rel)) {
         Err(_) => Some(("{}\n".to_string(), Map::new())),
         Ok(text) => match serde_json::from_str(&text) {
@@ -36,7 +36,7 @@ fn read(dir: &Path, rel: &str) -> Option<(String, Map<String, Value>)> {
     }
 }
 
-fn push(dir: &Path, plan: &mut Plan, rel: &str, text: String, note: &str) {
+pub(super) fn push(dir: &Path, plan: &mut Plan, rel: &str, text: String, note: &str) {
     let path = dir.join(rel);
     let action = if path.exists() {
         Action::Update

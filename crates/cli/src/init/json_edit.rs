@@ -149,16 +149,17 @@ pub fn add_item(text: &str, open: usize, item: &Value) -> String {
     };
     let first = &c.children[0];
     let multi = text[open..first.at].contains('\n');
-    let sep = match line_indent(text, first.at) {
-        Some(i) if multi => format!(",\n{i}"),
-        _ => ", ".to_string(),
+    let (sep, item) = match line_indent(text, first.at) {
+        Some(i) if multi => {
+            let unit = i
+                .strip_prefix(base_indent(text, open))
+                .filter(|u| !u.is_empty())
+                .unwrap_or("  ");
+            (format!(",\n{i}"), render(item, unit, i))
+        }
+        _ => (", ".to_string(), serde_json::to_string(item).expect("json")),
     };
-    format!(
-        "{}{sep}{}{}",
-        &text[..last.end],
-        serde_json::to_string(item).expect("json"),
-        &text[last.end..]
-    )
+    format!("{}{sep}{item}{}", &text[..last.end], &text[last.end..])
 }
 
 #[cfg(test)]
@@ -199,6 +200,16 @@ mod tests {
         let none = "{\"r\": []}";
         let at = member(none, root(none), "r").unwrap();
         assert_eq!(add_item(none, at, &json!("b")), "{\"r\": [\"b\"]}");
+    }
+
+    #[test]
+    fn an_object_item_of_a_multiline_array_is_indented_like_it() {
+        let text = "{\n  \"r\": [\n    1\n  ]\n}";
+        let at = member(text, root(text), "r").unwrap();
+        assert_eq!(
+            add_item(text, at, &json!({"k": 2})),
+            "{\n  \"r\": [\n    1,\n    {\n      \"k\": 2\n    }\n  ]\n}"
+        );
     }
 
     #[test]

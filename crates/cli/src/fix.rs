@@ -2,7 +2,7 @@
 //! exactly the fixes named by id, then formats, and reports what remains.
 
 use crate::lint::{self, Collected, Report, ReportArgs, exit_code};
-use crate::new::{Entry, keep_new};
+use crate::new::{Base, Entry, keep_new};
 use crate::report::FileDiagnostics;
 use crate::session::{Session, load, par_map};
 use anyhow::{Context, Result, anyhow};
@@ -13,7 +13,7 @@ use core_rules::fixes::{apply, select};
 use core_rules::{Diagnostic, Fix, LineIndex};
 use languages::Project;
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 #[derive(Args)]
@@ -185,10 +185,101 @@ fn fix_file(db: &Database, project: &Project, path: &Path, mode: &Mode) -> Resul
     })
 }
 
+/// What a run did to the files of its session.
+struct Applied<'a> {
+    collected: Collected,
+    /// Files written.
+    changed: usize,
+    /// Fixes applied by id.
+    applied: usize,
+    /// The ids found in the files.
+    found: HashSet<String>,
+    /// The path and the file as read of each entry of `collected.files`.
+    handles: Vec<(&'a PathBuf, File)>,
+}
+
+impl Applied<'_> {
+    fn keep_new(&mut self, db: &Database, base: &Base) -> Result<()> {
+        let entries = self
+            .handles
+            .iter()
+            .zip(self.collected.files.iter_mut())
+            .map(|(&(path, file), report)| Entry { path, file, report })
+            .collect();
+        keep_new(db, base, entries)
+    }
+}
+
+/// Fixes and formats every file of `session`; warns on stderr about rounds and named fixes that
+/// were not applied.
+fn apply_all<'a>(session: &'a Session, mode: &Mode) -> Result<Applied<'a>> {
+    let (db, project) = (&session.db, &session.project);
+    let results = par_map(db, &session.paths, |db, path| {
+        fix_file(db, project, path, mode)
+    });
+    let mut out = Applied {
+        collected: Collected {
+            files: Vec::new(),
+            failed: 0,
+        },
+        changed: 0,
+        applied: 0,
+        found: HashSet::new(),
+        handles: Vec::new(),
+    };
+    for (path, result) in session.paths.iter().zip(results) {
+        match result {
+            Ok(fixed) => {
+                out.changed += usize::from(fixed.changed);
+                if let Some(rules) = &fixed.broke {
+                    eprintln!(
+                        "warning: {}: fixes of {} would leave the file unparseable and were not applied",
+                        fixed.path,
+                        rules.join(", ")
+                    );
+                }
+                for id in &fixed.named.overlapping {
+                    eprintln!(
+                        "warning: {}: fix {id} overlaps another named fix and was not applied; \
+                         its id after this run is in the report",
+                        fixed.path
+                    );
+                }
+                out.applied += fixed.named.applied;
+                out.found.extend(fixed.named.found);
+                out.handles.push((path, fixed.file));
+                out.collected.files.push(FileDiagnostics {
+                    path: fixed.path,
+                    text: fixed.text,
+                    diagnostics: fixed.diagnostics,
+                });
+            }
+            Err(Failed::Run(e)) => return Err(e),
+            Err(Failed::File(e)) => {
+                out.collected.failed += 1;
+                crate::report::file_error(&project.show(path), &format!("{e:#}"));
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// The safe fixes and the formatter on every file of `session`, as `fix --new` does: the new
+/// findings that remain, and how many files were written.
+pub fn safe_new(session: &Session, base: &Base) -> Result<(Collected, usize)> {
+    let mut applied = apply_all(
+        session,
+        &Mode::Kinds {
+            allow_unsafe: false,
+        },
+    )?;
+    applied.keep_new(&session.db, base)?;
+    Ok((applied.collected, applied.changed))
+}
+
 pub fn run(args: FixArgs) -> Result<ExitCode> {
     let base = args.report.base()?;
     let session: Session = args.report.open()?;
-    let (db, project) = (&session.db, &session.project);
     let wanted: Vec<String> = args
         .apply
         .iter()
@@ -207,71 +298,27 @@ pub fn run(args: FixArgs) -> Result<ExitCode> {
     } else {
         Mode::Ids(&wanted_set)
     };
-    let results = par_map(db, &session.paths, |db, path| {
-        fix_file(db, project, path, &mode)
-    });
-    let mut collected = Collected {
-        files: Vec::new(),
-        failed: 0,
-    };
-    let (mut changed, mut applied) = (0, 0);
-    let mut found = HashSet::new();
-    let mut handles = Vec::new();
-    for (path, result) in session.paths.iter().zip(results) {
-        match result {
-            Ok(fixed) => {
-                changed += usize::from(fixed.changed);
-                if let Some(rules) = &fixed.broke {
-                    eprintln!(
-                        "warning: {}: fixes of {} would leave the file unparseable and were not applied",
-                        fixed.path,
-                        rules.join(", ")
-                    );
-                }
-                for id in &fixed.named.overlapping {
-                    eprintln!(
-                        "warning: {}: fix {id} overlaps another named fix and was not applied; \
-                         its id after this run is in the report",
-                        fixed.path
-                    );
-                }
-                applied += fixed.named.applied;
-                found.extend(fixed.named.found);
-                handles.push((path, fixed.file));
-                collected.files.push(FileDiagnostics {
-                    path: fixed.path,
-                    text: fixed.text,
-                    diagnostics: fixed.diagnostics,
-                });
-            }
-            Err(Failed::Run(e)) => return Err(e),
-            Err(Failed::File(e)) => {
-                collected.failed += 1;
-                crate::report::file_error(&project.show(path), &format!("{e:#}"));
-            }
-        }
-    }
+    let mut applied = apply_all(&session, &mode)?;
     if matches!(mode, Mode::Ids(_)) {
-        eprintln!("{applied} fix(es) applied");
+        eprintln!("{} fix(es) applied", applied.applied);
     }
-    eprintln!("{changed} file(s) changed");
+    eprintln!("{} file(s) changed", applied.changed);
     if let Some(base) = &base {
-        let entries = handles
-            .iter()
-            .zip(collected.files.iter_mut())
-            .map(|(&(path, file), report)| Entry { path, file, report })
-            .collect();
-        keep_new(db, base, entries)?;
+        applied.keep_new(&session.db, base)?;
     }
     let report = Report {
         format: args.report.format,
         collapse: true,
         new: base.is_some(),
     };
+    let collected = &applied.collected;
     lint::print(&session, &report, &collected.files);
-    let unknown: Vec<&String> = wanted.iter().filter(|id| !found.contains(*id)).collect();
+    let unknown: Vec<&String> = wanted
+        .iter()
+        .filter(|id| !applied.found.contains(*id))
+        .collect();
     if unknown.is_empty() {
-        return Ok(exit_code(&collected));
+        return Ok(exit_code(collected));
     }
     let names: Vec<String> = unknown.iter().map(|id| format!("`{id}`")).collect();
     eprintln!(
