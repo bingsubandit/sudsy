@@ -89,6 +89,8 @@ the tool names differ), so wording is not the variable.
 
 ## Step 2: actionable output
 
+Built except the message rewording (still open). How it works: [../config/cli.md](../config/cli.md).
+
 - The human output (the one agents read) prints the offending source line under each finding, and
   for a fix its replacement: the edited text for a one-line edit (`fix (safe): replace with
   log.info(...)`), a short `-`/`+` pair for a multi-line one, capped at a few lines.
@@ -101,6 +103,8 @@ the tool names differ), so wording is not the variable.
   with its count and first locations, the full list by `--rule` (E8: input tokens −21% to −38%).
 
 ## Step 3: fixes in one call
+
+Built; how it works: [../config/cli.md](../config/cli.md#fix-ids). Two ids can collide (6 base-32 characters: about 1 in 2,000 with 1,000 ids in one report); `--apply` then applies both.
 
 The E3 fix-by-id condition paid one call per fix; applying several in one call removes that.
 - Every unsafe and suggestion fix printed gets a short id (a hash of path, rule, the text of the
