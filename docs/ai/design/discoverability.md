@@ -48,7 +48,7 @@ Built. How it works: [../development/site.md](../development/site.md#agent-docs)
 - `llms.txt` and `llms-full.txt` at the site root, plus a `.md` twin of every page, generated from the same docs.
 - Document the machine-readable CLI output there (`check --format json`, `rules --json`; verify both exist).
 - `sudsy init --agents`, opt-in: add a short "run `sudsy check`; fix with `sudsy fix`" block to the repo's `AGENTS.md` (or `CLAUDE.md`). Never written without the flag.
-- MCP server: deferred. An agent with a shell runs the CLI directly.
+- MCP server: planned with the hooks and agent output in [agent-integration.md](agent-integration.md).
 
 ## Phase 3: integrations (one agent step, plus user actions)
 

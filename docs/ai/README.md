@@ -14,6 +14,7 @@ Current state only; history is in git. Update the doc of the area you change in 
 | [design/landing-page.md](design/landing-page.md) | Plan: the landing page of the public site |
 | [design/init.md](design/init.md) | Plan: interactive `sudsy init` |
 | [design/discoverability.md](design/discoverability.md) | Plan: how people and agents find Sudsy (site pages, registry metadata, agents, integrations); phase 1 built |
+| [design/agent-integration.md](design/agent-integration.md) | Plan: agent benchmark, actionable output, fix ids, new-only findings, hooks, MCP server |
 | [design/agent-workflows.md](design/agent-workflows.md) | Evidence: which tool behaviours save agents turns and tokens (hooks, one check command, actionable messages, changed-only output), 12 experiments on Haiku and Sonnet |
 | [design/hard-cases.md](design/hard-cases.md) | Hard cases left open by unification steps, each with its numbers and missing capability |
 | [development/no-reference-tool.md](development/no-reference-tool.md) | Planning a language or leg that has no reference tool to compare with: corpus, decision table, checklist, numbers |
