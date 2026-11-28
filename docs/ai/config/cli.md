@@ -3,19 +3,22 @@
 | Command | What it does | Exit |
 |---|---|---|
 | `format [--check] [paths]` | Format files; `--check` reports without writing | 1 if `--check` finds changes |
-| `lint [paths]` | Report diagnostics | 1 on any error-level diagnostic |
-| `fix [--unsafe] [paths]` | Apply fixes (loop), then format | 1 if errors remain |
-| `check [paths]` | `format --check` + `lint`, for CI; an unformatted file is an error diagnostic `format` at 1:1 | 1 on any error or unformatted file |
+| `lint [--rule ID,...] [paths]` | Report diagnostics; `--rule` keeps only those rules' findings | 1 on any error-level diagnostic |
+| `fix [--unsafe \| --apply ID,...] [paths]` | Apply fixes (loop), then format; `--apply`: [below](#fix-ids) | 1 if errors remain; 2 on an unknown id |
+| `check [--rule ID,...] [paths]` | `format --check` + `lint`, for CI; an unformatted file is an error diagnostic `format` at 1:1 | 1 on any error or unformatted file |
 | `rules [term] [--language <lang>]` | List rules; an exact rule id explains it (options, presets that enable it, equivalent ids of other tools from the parity catalog); an exact id of another tool (`SA1005`, `truthy`) explains the rule that covers it; other text lists the rules whose id, description or equivalent ids contain it (case-insensitive). `--language` keeps the rules that apply to that language, shared ones included | 0; 2 when nothing matches |
 | `config print [file]` | Resolved config with the source of each value | 0 |
 | `init [--preset <name>] [--from <tool>]... [--force] [--yes] [--languages a,b] [--vscode] [--ci] [--agents]` | Interactive in a terminal ([below](#init-questions)); without one the starter, or the `--from` migration | 0; 1 when cancelled |
-| `init --agents` | Add a marked block (`<!-- sudsy:start -->` ... `<!-- sudsy:end -->`: run `sudsy check --format json`, fix with `sudsy fix`, explain with `sudsy rules <id>`) to `AGENTS.md`, or to `CLAUDE.md` when only that exists (`AGENTS.md` is created when neither does); a file that has the start marker is left alone. Alone it writes nothing else; with `--preset`, `--from` or `--force` it also does the normal init. Never without the flag (`crates/cli/src/init/agents.rs`) | 0 |
+| `init --agents` | Add a marked block (`<!-- sudsy:start -->` ... `<!-- sudsy:end -->`: run `sudsy check`, fix with `sudsy fix --unsafe` or `sudsy fix --apply <id>`, explain with `sudsy rules <id>`) to `AGENTS.md`, or to `CLAUDE.md` when only that exists (`AGENTS.md` is created when neither does); a file that has the start marker is left alone. Alone it writes nothing else; with `--preset`, `--from` or `--force` it also does the normal init. Never without the flag (`crates/cli/src/init/agents.rs`) | 0 |
 | `init --from <tool> [--force] [--write-editorconfig]` | Write the `sudsy.yaml` equivalent of another tool's config in the working directory ([below](#init---from)) | 0 |
 | `lsp` | Language server on stdio ([editor/lsp.md](../editor/lsp.md)) | |
 | `debug parse <file>` | Developer: parse a `.cs` file with the worker, check round trip, print the tree | |
 
 - Exit 2 on any command: a file could not be processed (syntax error, unreadable, bad option, worker unavailable, nested deeper than 1,000 brackets, a panic in a parser, formatter or rule) or the config is invalid. Failed files are left alone and the rest are processed. Results are reported in path order.
-- `lint`, `fix`, `check`: `--format human|json|sarif|github` and `--analysis fast|standard|deep`.
+- `lint`, `fix`, `check`: `--format human|concise|json|sarif|github` and `--analysis fast|standard|deep`.
+  - Human (`crates/cli/src/human.rs`, the form agents read): `path:line:col: severity[rule]: message`, then the source line (`    12 | text`; none for a blank line or the `format` finding), `note:` lines, and per fix `fix (safe): title` or `fix ID (unsafe|suggestion): title` followed by its change: the edited line (`    12 | new text`) when it changes one line, else up to 3 old (`-`) and 3 new (`+`) lines and `... (N more lines)`; lines the edits leave alone are not shown. A line over 160 characters is cut around the finding (40 before it). No colours.
+  - Collapse: a human report of more than 100 findings is one line per rule (`severity[rule]: N findings (M with a fix): the first 3 locations, ...`; errors first, then by count) and a last line naming `--rule` and `--format concise`. 100 findings in full are about 300 lines; the collapsed form saved agents 21-38% of input tokens at 127 findings (design/agent-workflows.md, E8). `--rule` never collapses; the other formats never do.
+  - Concise: the first line of each finding only.
   - JSON: `{version, summary, diagnostics}` with byte offsets, line/column ranges and fix edits. SARIF 2.1.0: results and rule table, no `fixes`. GitHub: `::error|warning file=,line=,col=,endLine=,endColumn=,title=::message`.
 - Discovery (`core-workspace`): `.gitignore` honored also outside a git checkout, hidden directories included, `.git` excluded; explicit file arguments are always kept.
 - `format` and `fix` write atomically: a temp file in the same directory, synced, then renamed over the original with its permissions kept. A file given as a symlink is resolved first, so the link stays and its target is rewritten (walks never follow symlinks).
@@ -24,6 +27,12 @@
 - `format`, `lint`, `fix` and `check` print one stderr warning per `.editorconfig` line that sets a C# formatting key Sudsy does not follow ([editorconfig.md](editorconfig.md)).
 - `mimalloc` is the global allocator (25-40% faster on the format path).
 - The JSON Schema is generated by `cargo xtask codegen`, not by the CLI.
+
+## Fix ids
+`core_rules::fix_ids`: every unsafe and suggestion fix gets a 6-character id (base 32, 30 bits), an FNV-1a hash of the path as printed, the rule, the trimmed text of the finding's first line, the finding's occurrence among that rule's findings on equal lines, and the fix's index. Nothing is stored: the id stays while that line's text is unchanged (moving or reindenting the line keeps it) and is printed in the human report and as `id` of the fix in JSON. Safe fixes have none (`fix` applies them unasked).
+- `fix --apply ID[,ID...]` (case-insensitive; not with `--unsafe`) lints the files of the run, applies exactly the fixes with those ids (suggestions included, no other fix) in one round, then formats only the files that got a fix, and reports what remains. A named fix that overlaps another named one is not applied (a warning; its id after the edit is in the report); a round that would leave the file unparseable is not applied.
+- An id no fix has (its line changed, the fix is gone) is an error after the report, with up to 20 current ids as `ID (rule, path:line)`; the other ids are still applied; exit 2.
+- `fix --unsafe` stays the accept-all (safe and unsafe); suggestions are applied only by id. Project and directory findings are not part of `fix` (it lints each file alone), so their ids are unknown to `--apply`.
 
 ## `init` questions
 `crates/cli/src/init/`: `world.rs` (the scan and what exists), `ask.rs` (the questions, skipped when a flag answers them), `plan.rs` (`Answers` to files: the one model), `prompt.rs` (`Terminal` with `dialoguer`, `Lines` for `TERM=dumb`, `Defaults` for `--yes`), `editor.rs` and `json_edit.rs` (VS Code and CI files). The agent block is paragraphs, not a list, so the formatter leaves it alone under any indent width.

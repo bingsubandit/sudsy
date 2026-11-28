@@ -5,7 +5,7 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Output};
 
-fn sudsy(dir: &Path, args: &[&str]) -> Output {
+pub(crate) fn sudsy(dir: &Path, args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_sudsy"))
         .args(args)
         .current_dir(dir)
@@ -13,28 +13,29 @@ fn sudsy(dir: &Path, args: &[&str]) -> Output {
         .unwrap()
 }
 
-fn write(dir: &Path, rel: &str, content: &str) {
+pub(crate) fn write(dir: &Path, rel: &str, content: &str) {
     let p = dir.join(rel);
     fs::create_dir_all(p.parent().unwrap()).unwrap();
     fs::write(p, content).unwrap();
 }
 
-fn read(dir: &Path, rel: &str) -> String {
+pub(crate) fn read(dir: &Path, rel: &str) -> String {
     fs::read_to_string(dir.join(rel)).unwrap()
 }
 
-fn out(o: &Output) -> String {
+pub(crate) fn out(o: &Output) -> String {
     String::from_utf8_lossy(&o.stdout).replace("\r\n", "\n")
 }
 
-fn err(o: &Output) -> String {
+pub(crate) fn err(o: &Output) -> String {
     String::from_utf8_lossy(&o.stderr).replace("\r\n", "\n")
 }
 
-const CONFIG: &str = "lint:\n  rules:\n    sorted-keys: warn\n    ambiguous-booleans: warn\n";
+pub(crate) const CONFIG: &str =
+    "lint:\n  rules:\n    sorted-keys: warn\n    ambiguous-booleans: warn\n";
 
 /// A project with an error (duplicate key), warnings (unsorted keys, `yes`) and a fix for each.
-fn project() -> tempfile::TempDir {
+pub(crate) fn project() -> tempfile::TempDir {
     let t = tempfile::tempdir().unwrap();
     write(t.path(), "sudsy.yaml", CONFIG);
     write(

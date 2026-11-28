@@ -14,4 +14,5 @@ mod lsp;
 mod nesting;
 mod patterns;
 mod presets;
+mod report;
 mod semantic;

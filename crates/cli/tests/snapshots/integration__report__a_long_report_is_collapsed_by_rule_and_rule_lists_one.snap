@@ -1,0 +1,7 @@
+---
+source: crates/cli/tests/report.rs
+expression: out(&o)
+---
+error[no-duplicate-keys]: 1 finding: b.json:1:10
+warning[ambiguous-booleans]: 100 findings (100 with a fix): a.yaml:1:7, a.yaml:2:7, a.yaml:3:7, ...
+101 findings of 2 rule(s), collapsed above 100: list one rule in full with `--rule <id>` (lint, check), every finding with `--format concise`

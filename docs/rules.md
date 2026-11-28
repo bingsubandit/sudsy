@@ -55,8 +55,8 @@ Style, naming, ordering, layout owned by the formatter, opinions and noisy rules
 | Kind | What it does | How to apply |
 |---|---|---|
 | Safe | Keeps behavior. | `sudsy fix` |
-| Unsafe | Can change behavior or needs a newer language version. | `sudsy fix --unsafe`, or the editor quick fix titled "(unsafe)" |
-| Suggestion | Offered in the editor only. | Editor quick fix |
+| Unsafe | Can change behavior or needs a newer language version. | `sudsy fix --unsafe`, `sudsy fix --apply <id>`, or the editor quick fix titled "(unsafe)" |
+| Suggestion | One of several possible changes. | Editor quick fix, or `sudsy fix --apply <id>` |
 
 `sudsy fix` applies fixes in rounds, at most 10. After each round it parses the file again. If the file no longer parses, it undoes that round and names the rules in a warning. Then it formats the file. Fixes that overlap wait for the next round.
 

@@ -12,9 +12,9 @@ const BLOCK: &str = "## Sudsy
 
 This repo is formatted and linted with Sudsy (`sudsy.yaml`).
 
-Check: `sudsy check --format json` (exit 1 on an error or an unformatted file; each diagnostic has `rule`, `range` and `fixes`).
+Check: `sudsy check` (exit 1 on an error or an unformatted file). Each finding shows its line and its fixes; a fix that needs a decision has an id (`fix ab12cd (unsafe)`). A report of more than 100 findings is one line per rule; `sudsy check --rule <id>` lists one rule.
 
-Fix: `sudsy fix`, then `sudsy check` again. Never edit by hand what `sudsy fix` does.
+Fix: `sudsy fix --unsafe` applies every safe and unsafe fix, unless one must be checked first; `sudsy fix --apply <id>,<id>` applies only the fixes named (suggestions too). Both then format and print what is left. Never edit by hand what `sudsy fix` does.
 
 Explain a rule: `sudsy rules <id>`. Silence one line: `sudsy-disable-next-line <id>` in a comment; change a level in `sudsy.yaml`.
 ";

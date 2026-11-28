@@ -25,6 +25,7 @@ expression: "serde_json::to_string_pretty(&value).unwrap()"
               "text": "\"b\": 1"
             }
           ],
+          "id": "qsx44d",
           "kind": "unsafe",
           "title": "Sort the keys of this mapping"
         }
@@ -100,6 +101,7 @@ expression: "serde_json::to_string_pretty(&value).unwrap()"
               "text": "z: yes"
             }
           ],
+          "id": "4re71z",
           "kind": "unsafe",
           "title": "Sort the keys of this mapping"
         }
@@ -133,6 +135,7 @@ expression: "serde_json::to_string_pretty(&value).unwrap()"
               "text": "\"yes\""
             }
           ],
+          "id": "grqx8w",
           "kind": "unsafe",
           "title": "Quote it: \"yes\""
         }

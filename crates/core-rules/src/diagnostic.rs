@@ -56,9 +56,10 @@ impl Severity {
 /// trusted.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FixKind {
-    /// Editor quick fix only; `fix` never applies it.
+    /// One of several possible changes: an editor quick fix, or `fix --apply ID`; never part of
+    /// an accept-all.
     Suggestion,
-    /// Applied by `fix --unsafe` and by an editor quick fix.
+    /// Applied by `fix --unsafe`, `fix --apply ID` and an editor quick fix.
     Unsafe,
     /// Applied by `fix`.
     Safe,
@@ -146,7 +147,7 @@ pub struct Diagnostic {
 /// The id under which a parse error is reported; no rule has it.
 pub const SYNTAX_ERROR: &str = "syntax-error";
 
-/// The id under which check reports a file that ormat would change; no rule has it.
+/// The id under which `check` reports a file that `format` would change; no rule has it.
 pub const FORMAT: &str = "format";
 
 impl Diagnostic {

@@ -2,15 +2,15 @@
 //! `format` would change is reported like any other diagnostic (rule `format`, an error), so every
 //! output format carries it.
 
-use crate::lint::{self, ReportArgs, collect, exit_code};
+use crate::lint::{LintArgs, collect, exit_code};
 use anyhow::{Result, anyhow};
 use core_incremental::{Stage, format, lint as lint_query};
 use core_rules::{Category, Diagnostic, FORMAT, Severity};
 use core_syntax::{TextRange, TextSize};
 use std::process::ExitCode;
 
-pub fn run(args: ReportArgs) -> Result<ExitCode> {
-    let mut session = args.open()?;
+pub fn run(args: LintArgs) -> Result<ExitCode> {
+    let mut session = args.report.open()?;
     let loaded = session.load_linted(|db, file| {
         lint_query(db, file);
         format(db, file);
@@ -48,6 +48,6 @@ pub fn run(args: ReportArgs) -> Result<ExitCode> {
             }
         }
     }
-    lint::print(&session, args.format, &collected.files);
+    args.print(&session, &mut collected.files);
     Ok(exit_code(&collected))
 }

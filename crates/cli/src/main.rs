@@ -4,6 +4,7 @@ mod config_cmd;
 mod debug;
 mod fix;
 mod format;
+mod human;
 mod init;
 #[cfg(feature = "pack-mode")]
 mod languages_cmd;
@@ -40,11 +41,11 @@ enum Command {
     /// Format source and data files.
     Format(format::FormatArgs),
     /// Report rule violations; exit code 1 if there is an error.
-    Lint(lint::ReportArgs),
-    /// Apply fixes, then format.
+    Lint(lint::LintArgs),
+    /// Apply fixes (or the ones named by id), then format.
     Fix(fix::FixArgs),
     /// Run `format --check` and `lint`, for CI.
-    Check(lint::ReportArgs),
+    Check(lint::LintArgs),
     /// List the rules, or explain one.
     Rules(rules_cmd::RulesArgs),
     /// Inspect the configuration.

@@ -44,7 +44,7 @@ A rule is skipped (never failed) when the provider does not answer a required la
 - A file with syntax errors reports `syntax-error` errors and no rule runs.
 
 ## Diagnostics and fixes
-- Diagnostic: span, severity, message, rule id, related spans, fixes. Fix kinds: `Safe` (applied by `fix`), `Unsafe` (`--unsafe`, or editor quick fix), `Suggestion` (editor only).
+- Diagnostic: span, severity, message, rule id, related spans, fixes. Fix kinds: `Safe` (applied by `fix`), `Unsafe` (`--unsafe`, `--apply ID`, or editor quick fix), `Suggestion` (editor quick fix or `fix --apply ID`; [cli.md](../config/cli.md#fix-ids)).
 - Fix loop: per round `select` takes for each diagnostic the first applicable fix in priority order (category, rule id, position) and drops a fix if any edit overlaps an accepted one (found again next round). Stops when nothing applies/changes or after 10 rounds. After each round the file is re-parsed; if it no longer parses the round is undone and the rules are named in a warning (`FixOutcome::broke`). `sudsy fix` then formats.
 - Reordering fixes (`sorted-keys`, `sorted-array-values`, `using-order`, `accessor-order`) move text between the entries' source slots: own-line comments stay in place; trailing comments move with a block-style entry or a using directive; comments next to comma-separated entries (JSON, flow YAML) stay in place.
 

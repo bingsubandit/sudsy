@@ -4,4 +4,6 @@ expression: out(&o)
 ---
 messy.json:1:1: error[format]: the file is not formatted; run `sudsy format`
 messy.json:1:2: warning[sorted-keys]: keys are not sorted
-    fix (unsafe): Sort the keys of this mapping
+    1 | {"b":1,"a":2}
+    fix v4xbwn (unsafe): Sort the keys of this mapping
+    1 | {"a":2,"b":1}
