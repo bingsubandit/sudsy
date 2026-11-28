@@ -12,80 +12,94 @@ incremental database, the pattern-rule engine `core-patterns`. Fix kinds (`core_
 only). The human output prints `path:line:col: severity[rule]: message`, `note:` lines and
 `fix (kind): title`, but neither the source line nor the replacement text.
 
-Order: the benchmark first (its first run is the baseline every later step is measured against),
+Order: the benchmark first (built; its first full run is the baseline every later step is measured against),
 then the steps in the order of their measured effect per cost.
 
-## Step 1: the agent benchmark
+## Step 1: the agent benchmark (built; no full run yet)
 
-The numbers we publish. Requirements: real tasks on real repositories, a fair comparison with the
-tools people use today, results that move by less than a few percent between two runs of the same
-version, and a setup anyone can rerun from the repository.
+The numbers we publish: real tasks on real repositories, the tools people use today as the baseline,
+results that repeat within a few percent. Built in [`tools/agent-bench/`](../../../tools/agent-bench/README.md),
+run by `scripts/agent-bench.sh [--smoke | --full] [--conditions ...]`. Not in CI: it costs money and
+needs a logged-in `claude`. The first full run (the baseline of every later step) waits for the user's
+go-ahead; its numbers go to `docs/ai/performance/agent-numbers.md` (latest values only), which that run
+creates.
 
-### Tasks
-- **Repositories:** 6-8 open-source projects pinned at a commit, fetched like the parity corpora
-  (`scripts/fetch-*`), covering the languages agents edit most: TypeScript/JavaScript (2), Python
-  (2), one Go or Java project, one mixed repository (code plus YAML, Markdown, Dockerfile, CI). Each
-  keeps its own lint and format setup for the native condition.
-- **40 tasks**, a fixed, versioned set (`tasks/v1/`); a change to the set is a new version and its
-  numbers are never compared with the old one's. Kinds, in proportions close to agent work:
-  - feature and bug-fix tasks from real commits: the commit is reverted, the task text is written
-    from its description, its tests (and the repository's) verify;
-  - refactors with decoys (rename a method that shares its name with others);
-  - lint-debt tasks: "make the checks pass in module X" on a file with real findings;
-  - policy tasks: "never do X here; make it an enforced rule" (custom rules are the product's
-    claim);
-  - tasks where Sudsy should not matter (a pure logic change), so the set does not flatter it.
-- **Verifier per task:** the tests, the checks clean on the changed files, the changed files
-  formatted, nothing changed outside the task's files, plus the task's own checks. A run counts as
-  a success only when all pass.
+### Repositories and tasks
+- **Repositories** (`repos.toml`): click and humanize (Python), ufo (TypeScript), chi (Go), each
+  pinned at a commit and cloned blobless by `fetch.py` (git, since codeload tarballs are not reachable
+  from every agent host). Each keeps its own tools for the native condition, at the versions of
+  `repos.toml` (a venv per Python repository, `node_modules` from the pin's lockfile, the host's Go):
+  ruff check + ruff format (click), ruff check + black (humanize), `npm run lint` / `lint:fix`
+  (ESLint + Prettier, ufo), `go vet` + `gofmt` (chi).
+- **Task set `tasks/v1/`**, 22 tasks (a change to the set is a new version, never compared with the
+  old one): 16 bug-fix and feature tasks from real commits (the run starts at the commit's parent,
+  the task text is written from its description, the verifier puts the commit's test files in place
+  and runs them), 2 refactors with decoys (rename a method that shares its name with others: chi
+  `node.findEdge` beside `nodes.findEdge`, click `Context.get_usage` beside `Command.get_usage`),
+  2 lint-debt tasks (seeded findings that both families report, in humanize `filesize.py` and ufo
+  `utils.ts`), 2 policy tasks ("make it an enforced rule": no `print()` in click's library code, no
+  direct `decodeURIComponent` outside ufo's `encoding.ts`). The 9 chi and humanize logic fixes are the
+  tasks where Sudsy should not matter.
+- **Verifier** (`verify.py`), with the condition's own tools: the task's tests, its checks, its probes
+  (policy tasks: a file that must now get a finding and one that must not, against the same file under
+  the start config) and its clean files (lint debt: no finding left), nothing changed outside the
+  task's scope, no new lint finding on the changed files and no changed file that was formatted at the
+  start left unformatted. A finding is new unless the same (path, rule, line text) is in the start tree
+  as often. A run succeeds when all pass; the other family's counts are recorded as mistake counters.
+- **Validation** (`validate.py`, no subject, no cost): per task and family the setup works, the task's
+  own signal fails on the untouched tree and the reference solution (the commit, or
+  `solution[.<family>].patch`) passes the whole verifier. All 22 pass.
+- Still to write for the plan's 40: the mixed repository (code plus YAML, Markdown, Dockerfile, CI),
+  a second TypeScript/JavaScript repository, and about 18 more tasks in the same mix (a ufo feature task
+  from 2025 was dropped: its start tree is not clean under the pinned ESLint, and its README example is
+  a new Sudsy finding).
 
 ### Conditions
-Every condition gets the same task text and one generated instruction block (same template, only
-the tool names differ), so wording is not the variable.
-- `native`: the repository's own tools (for example ESLint + Prettier + tsc, or ruff + black +
-  mypy), as the project scripts call them.
-- `native-hooks`: the same tools behind a hook script. This separates "hooks help" from "Sudsy
-  helps"; a claim that only hooks earn is not a Sudsy claim.
-- `sudsy`: `sudsy check` / `sudsy fix` in the instructions, no hooks.
-- `sudsy-hooks`: the hooks of step 5 as `init` writes them.
-- `sudsy-mcp` (after step 6): the MCP server instead of the CLI.
+One instruction template (`instructions.md`) fills in the tool names: the checks, the fix and format
+commands, the tests, the allowed commands, and for the hook conditions one sentence on the hooks.
+- `native`: the repository's own commands.
+- `native-hooks`: the same tools behind `hook.py`: after each Edit/Write the edited file is linted
+  (findings on stderr, exit 2, the pilot's protocol), at Stop the fix commands run on the changed files.
+- `sudsy`: `sudsy check` / `sudsy fix` (plus `gofmt` for Go, which Sudsy lints but does not format).
+  The start tree has the `sudsy.yaml` of `sudsy init -y` with the presets closest to the native rule set
+  (`python/ruff`; `js/eslint-recommended` + `js/typescript-eslint-recommended`; Go defaults) and is
+  formatted by `sudsy format`, as a project that uses Sudsy would be. Sudsy does not import ruff or flat
+  ESLint configs, so its rule sets differ from the native ones.
+- `sudsy-hooks`, recorded as `sudsy-hooks-provisional`: `hook.py` with `sudsy lint FILE` after an edit
+  and `sudsy fix` at Stop, until `sudsy hook` (step 5) replaces it.
+- `sudsy-mcp` is added with step 6.
 
 ### Runs
-- Headless Claude Code (`claude -p --output-format json`) at a pinned version (installed from the
-  bench's own lockfile), exact model ids (Sonnet as the published model, Haiku for smoke runs),
-  normal permission checks with a scoped allowlist per condition, a fresh worktree per run, tool
-  versions pinned by the bench's lockfiles. The task ends with the allowed commands, so permission
-  denials stay near zero (a run with denials is reported, never hidden).
-- **Paired and interleaved:** every round runs every task under every condition, in a random order,
-  so drift of the API or the model over a day hits all conditions alike. Conditions are compared
-  only within one batch; a new Sudsy version reruns `native` in the same batch.
-- **Reps:** 5 per task and condition for a published run (40 × 5 × 5 conditions = 1,000 runs, about
-  $100-150 on Sonnet at the measured $0.06-0.17 per run); a smoke run is 10 tasks × 2 reps × the
-  conditions a change touches, on Haiku (about $1).
+- `claude -p` with `--output-format stream-json --verbose` (the transcript stays in the batch's work
+  directory), `--permission-mode default`, a scoped `--allowedTools` (file tools; the condition's
+  checker programs with any arguments, so `sudsy rules` and `ruff rule` are allowed too; its runner
+  commands such as `python -m pytest` or `go vet`; read-only shell commands; never a bypass),
+  `--setting-sources project`,
+  `--strict-mcp-config`, `--no-session-persistence`, a per-run budget cap and timeout
+  (`bench.lock.toml`). The allowed commands are listed in the task text; denials are recorded per run.
+- Run directories live in the build slot (`AGENT_BENCH_WORK` overrides), outside every checkout, so a
+  subject never reads Sudsy's own `CLAUDE.md` (the pilot's runs under `tools/agent-ux/runs/` could).
+- Each record has the Claude Code version (checked against `bench.lock.toml`, warned on a mismatch;
+  the installed `claude` is used, the pin is not installed), the requested model and the exact model
+  ids from the result, the Sudsy binary, version, commit and the tree id of `crates/` (stable when
+  tool-only commits are squashed), the task-set version and the costs.
+- **Paired and interleaved:** every round runs every task under every condition in a seeded random
+  order; `--parallel` runs (default 4) start in plan order. `--max-cost` stops starting runs.
+- Smoke: 10 tasks (a seeded sample) x 2 reps on Haiku; full: every task x 5 reps on Sonnet.
+- Raw results: `data/<date>-<sudsy sha>[-smoke].jsonl`, one line per run, committed per batch; the
+  transcripts of a published batch go out as a release asset.
 
-### Statistics
-- Per task and metric, the mean over reps; the change between two conditions is the ratio of their
-  geometric means over tasks, with a 95% bootstrap interval that resamples tasks (and reps within
-  them). Success rate with a Wilson interval.
-- **Stability target:** a published number has an interval of at most ±5%. With the per-run spread
-  seen so far (about 20-30% of the mean per metric), 200 paired runs per comparison give about ±4%;
-  the report says when a comparison misses the target, and that number is not published.
-- **Repeatability check:** the first published batch runs twice on the same versions; the two
-  results must agree within their intervals before anything is advertised.
-- Metrics: turns, output tokens, input tokens (uncached and cached separately), cost, wall time,
-  success rate, and the mistake counters of the verifier (unformatted at the end, files outside
-  scope, checks failing).
-
-### Outputs
-- `tools/agent-bench/` (grown from `tools/agent-ux/`: setup, run, score, stats);
-  `scripts/agent-bench.sh [--smoke | --full] [--conditions ...]`.
-- Raw results committed per batch (`data/<date>-<sudsy sha>.jsonl`, with Claude Code version, model
-  ids, task-set version and costs); transcripts archived as a release asset, so every published
-  number can be traced to its runs.
-- `docs/ai/performance/agent-numbers.md`: the latest published numbers with intervals (latest values
-  only); the public page reads the same numbers.
-- Not in CI: it costs money and needs a login. A hand-started workflow with an API key secret is a
-  later option.
+### Statistics (`stats.py`)
+- Per metric (turns, output tokens, uncached, cache-read and cache-creation input tokens, cost, time)
+  and condition against `native`: the ratio of geometric means over tasks of the per-task means, with
+  a 95% bootstrap interval (2,000 resamples of tasks, and of reps within each task). A ratio whose
+  interval lies within ±5% of it is marked publishable; the others are not published.
+- Success rate per condition with a Wilson 95% interval, and the mistake counters (unformatted, new
+  findings, out of scope, runs with denials).
+- `stats.py --compare A B`: the repeatability check; every ratio of each batch must lie in the other's
+  interval (exit 1 otherwise). The first published batch runs twice on the same versions.
+- Expected size for the bar, from the pilot's spread (20-30% of the mean per metric): about 200
+  paired runs per comparison.
 
 ## Step 2: actionable output
 

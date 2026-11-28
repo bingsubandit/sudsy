@@ -1,0 +1,32 @@
+diff --git a/src/utils.ts b/src/utils.ts
+index 50093ed..ea98aba 100644
+--- a/src/utils.ts
++++ b/src/utils.ts
+@@ -330,8 +330,7 @@ export function withoutBase(input: string, base: string) {
+   }
+   // Collapse leading slashes to prevent protocol-relative URL injection
+   // e.g. withoutBase("/legacy//evil.com", "/legacy") must not return "//evil.com"
+-  var trimmed = input.slice(_base.length).replace(/^\/+/, "");
+-  const rest = input.slice(_base.length);
++  const trimmed = input.slice(_base.length).replace(/^\/+/, "");
+   return "/" + trimmed;
+ }
+ 
+@@ -348,7 +347,7 @@ export function withoutBase(input: string, base: string) {
+  */
+ export function withQuery(input: string, query: QueryObject): string {
+   const parsed = parseURL(input);
+-  let mergedQuery = { ...parseQuery(parsed.search), ...query };
++  const mergedQuery = { ...parseQuery(parsed.search), ...query };
+   parsed.search = stringifyQuery(mergedQuery);
+   return stringifyParsedURL(parsed);
+ }
+@@ -623,7 +622,7 @@ export function resolveURL(base = "", ...inputs: string[]): string {
+     );
+   }
+ 
+-  let filteredInputs = inputs.filter((input) => isNonEmptyURL(input));
++  const filteredInputs = inputs.filter((input) => isNonEmptyURL(input));
+ 
+   if (filteredInputs.length === 0) {
+     return base;

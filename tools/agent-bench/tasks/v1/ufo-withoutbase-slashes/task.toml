@@ -1,0 +1,9 @@
+repo = "ufo"
+kind = "bugfix"
+commit = "5cd9e676711af3f4e4b5398ddf6ca8d52c1c7e1f"
+tests = "npx vitest run test/base.test.ts"
+hidden = ["test/base.test.ts"]
+scope = ["src/utils.ts", "test/*"]
+text = """
+`withoutBase("/legacy//evil.com", "/legacy")` returns `"//evil.com"`, a protocol-relative URL. After removing the base, leading slashes must collapse into one: that call returns `"/evil.com"` (also with base `"/legacy/"` or input `"/legacy///evil.com"`), and `withoutBase("/legacy//", "/legacy")` returns `"/"`.
+"""

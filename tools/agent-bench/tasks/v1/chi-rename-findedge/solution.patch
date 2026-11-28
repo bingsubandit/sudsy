@@ -1,0 +1,22 @@
+diff --git a/tree.go b/tree.go
+index af4052c..5d2722d 100644
+--- a/tree.go
++++ b/tree.go
+@@ -556,7 +556,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
+ 	return nil
+ }
+ 
+-func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
++func (n *node) findEdgeByType(ntyp nodeTyp, label byte) *node {
+ 	nds := n.children[ntyp]
+ 	num := len(nds)
+ 	idx := 0
+@@ -595,7 +595,7 @@ func (n *node) findPattern(pattern string) bool {
+ 			continue
+ 		}
+ 
+-		n = nn.findEdge(nds[0].typ, pattern[0])
++		n = nn.findEdgeByType(nds[0].typ, pattern[0])
+ 		if n == nil {
+ 			continue
+ 		}

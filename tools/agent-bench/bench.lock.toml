@@ -1,0 +1,12 @@
+# Versions the bench runs on. A run on another Claude Code version is recorded as such and warned
+# about; batches are only compared when these match.
+claude_code = "2.1.332"
+# --model value per mode; the exact model ids a run used are read back from its result and recorded
+model = { smoke = "haiku", full = "sonnet" }
+task_set = "v1"
+# reps and task count per mode (the smoke set is the first `smoke_tasks` tasks of a seeded shuffle)
+smoke = { reps = 2, tasks = 10 }
+full = { reps = 5 }
+# per-run limits: a run that hits one counts as a failure, with its metrics kept
+timeout_s = 900
+max_budget_usd = { smoke = 0.5, full = 2.0 }
