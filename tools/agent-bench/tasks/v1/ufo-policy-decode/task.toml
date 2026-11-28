@@ -1,0 +1,14 @@
+repo = "ufo"
+kind = "policy"
+tests = "npx vitest run test/utilities.test.ts"
+scope = ["eslint.config.mjs", "sudsy.yaml", "rules/*", ".sudsy/*", "src/*", "package.json"]
+probes = [
+  { path = "src/_bench_probe.ts", content = "export const decodeName = (s: string) => decodeURIComponent(s);\n", expect = "finding" },
+  { path = "src/_bench_probe_ok.ts", content = "import { decode } from \"./encoding\";\n\nexport const decodeName = (s: string) => decode(s);\n", expect = "clean" },
+  { path = "src/encoding.ts", expect = "clean" },
+]
+text = """
+Outside `src/encoding.ts`, code in `src/` must never call `decodeURIComponent` directly: it goes through the
+`decode` helper of `src/encoding.ts`, which does not throw on malformed input. Make that an enforced rule of the
+project's checks, so that the checks report such a call in any other file of `src/`.
+"""

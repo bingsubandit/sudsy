@@ -1,0 +1,89 @@
+# The bench's repositories, each pinned at a commit (every task's commit is an ancestor of the pin),
+# with its own tools for the native conditions. `fetch.py` clones them (blobless) into cache/ and
+# builds each tool environment from the versions here.
+#
+# Per family (`native`, `sudsy`):
+#   check, fix   the commands the instructions name (run from the repository root, no arguments added)
+#   lint         machine-readable lint of a file list for the verifier: cmd + parser (ruff, eslint, govet, sudsy)
+#   format_check a command that exits non-zero (or, with `output_fails`, prints something) when {file} is not formatted
+#   hook_lint    what the post-edit hook runs on the edited file
+#   exts         the files the family's tools handle
+# [sudsy] below is the default of every repo; a repo's `sudsy_extra` adds the tools Sudsy does not
+# replace there (gofmt for Go, which Sudsy lints but does not format).
+
+[sudsy]
+check = ["sudsy check"]
+fix = ["sudsy fix"]
+lint = { cmd = "sudsy lint --format json {files}", parse = "sudsy" }
+format_check = { cmd = "sudsy format --check {file}" }
+hook_lint = "sudsy lint {file}"
+# the sudsy conditions start from `sudsy init -y` plus the repo's `sudsy_init`: the presets closest to its
+# native rule set (Sudsy does not import ruff or flat ESLint configs yet)
+exts = [".py", ".ts", ".js", ".mjs", ".json", ".yaml", ".yml", ".md", ".toml", ".go"]
+
+[repo.click]
+url = "https://github.com/pallets/click"
+pin = "08b803cf32ceb2ae6a772c62d5da42757a897d44"
+language = "python"
+python = ["ruff==0.15.9", "pytest==9.0.2"]  # click's uv.lock
+env = { PYTHONPATH = "src" }
+test = "python -m pytest"
+sudsy_init = "--preset python/ruff"
+[repo.click.native]
+check = ["ruff check", "ruff format --check"]
+fix = ["ruff check --fix", "ruff format"]
+lint = { cmd = "ruff check --no-fix --output-format json {files}", parse = "ruff" }
+format_check = { cmd = "ruff format --check {file}" }
+hook_lint = "ruff check --no-fix --output-format concise {file}"
+exts = [".py"]
+
+[repo.humanize]
+url = "https://github.com/python-humanize/humanize"
+pin = "a95004512dde4e8f0269946bb4af754382347441"
+language = "python"
+python = ["ruff==0.17.4", "black==26.10.1", "pytest==9.1.1", "freezegun==1.5.5"]
+env = { PYTHONPATH = "src" }
+# hatch-vcs writes the version file at build time; it is gitignored
+setup = ["printf '__version__ = \"0.0.0\"\\n' > src/humanize/_version.py"]
+test = "python -m pytest"
+sudsy_init = "--preset python/ruff"
+[repo.humanize.native]
+check = ["ruff check", "black --check ."]
+fix = ["ruff check --fix", "black ."]
+lint = { cmd = "ruff check --no-fix --output-format json {files}", parse = "ruff" }
+format_check = { cmd = "black --check -q {file}" }
+hook_lint = "ruff check --no-fix --output-format concise {file}"
+exts = [".py"]
+
+[repo.ufo]
+url = "https://github.com/unjs/ufo"
+pin = "f06c800d0c59f2a4a1b9ba65eb6cb61a84419be6"
+language = "typescript"
+# node_modules installed once from the pin's pnpm-lock.yaml, linked into every run
+node = "npx -y pnpm@10.33.2 install --frozen-lockfile --ignore-scripts"
+test = "npx vitest run"
+sudsy_init = "--preset js/eslint-recommended --preset js/typescript-eslint-recommended"
+[repo.ufo.native]
+check = ["npm run lint"]
+fix = ["npm run lint:fix"]
+lint = { cmd = "node_modules/.bin/eslint -f json {files}", parse = "eslint" }
+format_check = { cmd = "node_modules/.bin/prettier -c {file}" }
+hook_lint = "node_modules/.bin/eslint {file}"
+exts = [".ts", ".mjs", ".js"]
+
+[repo.chi]
+url = "https://github.com/go-chi/chi"
+pin = "c64ed7d6635f33a8b2feaff7dcfa55677023ac7d"
+language = "go"
+test = "go test ./..."
+[repo.chi.native]
+check = ["go vet ./...", "gofmt -l ."]
+fix = ["gofmt -w ."]
+lint = { cmd = "go vet {packages}", parse = "govet" }
+format_check = { cmd = "gofmt -l {file}", output_fails = true }
+hook_lint = "go vet {package}"
+exts = [".go"]
+[repo.chi.sudsy_extra]
+check = ["gofmt -l ."]
+fix = ["gofmt -w ."]
+format_check = { cmd = "gofmt -l {file}", output_fails = true, exts = [".go"] }

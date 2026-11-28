@@ -1,0 +1,16 @@
+diff --git a/eslint.config.mjs b/eslint.config.mjs
+index e4bbbd4..5f7dd67 100644
+--- a/eslint.config.mjs
++++ b/eslint.config.mjs
+@@ -5,6 +5,7 @@ export default unjs({
+   ignores: [],
+   rules: {
+   "unicorn/prevent-abbreviations": 0,
+-  "unicorn/no-abusive-eslint-disable": 0
++  "unicorn/no-abusive-eslint-disable": 0,
++  "no-restricted-globals": ["error", { name: "decodeURIComponent", message: "Use decode() from src/encoding.ts." }],
+ },
+-});
+\ No newline at end of file
++}, { files: ["src/encoding.ts"], rules: { "no-restricted-globals": 0 } });
+\ No newline at end of file

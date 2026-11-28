@@ -1,0 +1,9 @@
+repo = "ufo"
+kind = "feature"
+commit = "3c4b43de1128f2c04c2131db9a7e9fe2c7daf0d5"
+tests = "npx vitest run test/query.test.ts"
+hidden = ["test/query.test.ts"]
+scope = ["src/utils.ts", "test/*", "README.md"]
+text = """
+Add an exported utility `filterQuery(input, predicate)` next to `withQuery` in `src/utils.ts`: it keeps only the query parameters for which `predicate(key, value)` returns true. `filterQuery("/foo?bar=1&baz=2", (key) => key !== "bar")` is `"/foo?baz=2"`, `filterQuery("/foo?bar=1", ...)` is `"/foo"` (no `?` left), and an input without a query is returned unchanged. Document it in the README's utils section like its neighbours.
+"""

@@ -1,0 +1,26 @@
+diff --git a/src/click/core.py b/src/click/core.py
+index c3efc74..a233103 100644
+--- a/src/click/core.py
++++ b/src/click/core.py
+@@ -853,7 +853,7 @@ class Context:
+         self.close()
+         raise Exit(code)
+ 
+-    def get_usage(self) -> str:
++    def get_usage_text(self) -> str:
+         """Helper method to get formatted usage string for the current
+         context and command.
+         """
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 6272c38..bb3ce22 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -103,7 +103,7 @@ class UsageError(ClickException):
+             hint = f"{hint}\n"
+         if self.ctx is not None:
+             color = self.ctx.color
+-            echo(f"{self.ctx.get_usage()}\n{hint}", file=file, color=color)
++            echo(f"{self.ctx.get_usage_text()}\n{hint}", file=file, color=color)
+         echo(
+             _("Error: {message}").format(message=self.format_message()),
+             file=file,

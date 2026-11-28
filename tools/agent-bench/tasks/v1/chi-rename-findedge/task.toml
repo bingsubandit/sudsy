@@ -1,0 +1,13 @@
+repo = "chi"
+kind = "refactor"
+tests = "go test ./..."
+scope = ["*.go", "middleware/*.go"]
+checks = [
+  "grep -q 'func (n \\*node) findEdgeByType(ntyp nodeTyp, label byte) \\*node' tree.go",
+  "grep -q 'func (ns nodes) findEdge(label byte) \\*node' tree.go",
+  "grep -q 'xn = nds.findEdge(label)' tree.go",
+]
+text = """
+Rename the method `findEdge` of `*node` (in `tree.go`) to `findEdgeByType`, and update its callers. The method
+`findEdge` of the `nodes` type has the same name and must keep it, with its callers unchanged.
+"""

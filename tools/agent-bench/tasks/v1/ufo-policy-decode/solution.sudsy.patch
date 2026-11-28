@@ -1,0 +1,26 @@
+diff --git a/rules/no-decode-uri-component.yaml b/rules/no-decode-uri-component.yaml
+new file mode 100644
+index 0000000..5429f00
+--- /dev/null
++++ b/rules/no-decode-uri-component.yaml
+@@ -0,0 +1,7 @@
++id: no-decode-uri-component
++language: js
++message: Use decode() from src/encoding.ts, not decodeURIComponent
++severity: error
++category: correctness
++rule:
++  pattern: decodeURIComponent($$$ARGS)
+diff --git a/sudsy.yaml b/sudsy.yaml
+index e801789..c7b95bf 100644
+--- a/sudsy.yaml
++++ b/sudsy.yaml
+@@ -5,3 +5,8 @@ extends:
+   - preset:yaml/prettier-compat
+   - preset:js/eslint-recommended
+   - preset:js/typescript-eslint-recommended
++plugins:
++  patterns: ["rules/*.yaml"]
++overrides:
++  - files: ["src/encoding.ts", "test/**"]
++    js: { lint: { rules: { no-decode-uri-component: "off" } } }

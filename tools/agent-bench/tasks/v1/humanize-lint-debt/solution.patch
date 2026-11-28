@@ -1,0 +1,38 @@
+diff --git a/src/humanize/filesize.py b/src/humanize/filesize.py
+index dbd82fb..1186f36 100644
+--- a/src/humanize/filesize.py
++++ b/src/humanize/filesize.py
+@@ -6,7 +6,6 @@ __lazy_modules__ = {"humanize.i18n"}
+ 
+ from humanize.i18n import _gettext as _
+ from humanize.i18n import _gettext_noop as N_
+-import sys
+ 
+ suffixes = {
+     "decimal": (
+@@ -81,7 +80,7 @@ def naturalsize(
+     Returns:
+         str: Human readable representation of a filesize.
+     """
+-    if format == None:
++    if format is None:
+         format = "%.1f"
+     if gnu:
+         suffix = suffixes["gnu"]
+@@ -98,7 +97,7 @@ def naturalsize(
+         return _("%d Byte") % int(bytes_)
+ 
+     if abs_bytes < base:
+-        return "%dB" % int(bytes_) if gnu else _("%d Bytes") % int(bytes_)
++        return f"{int(bytes_)}B" if gnu else _("%d Bytes") % int(bytes_)
+ 
+     from math import log
+ 
+@@ -109,6 +108,6 @@ def naturalsize(
+     # suffix is available, step up one suffix so the result reads "1.0 MB".
+     if exp < len(suffix) and abs(float(format % (abs_bytes / (base**exp)))) >= base:
+         exp += 1
+-    space = str() if gnu else " "
++    space = "" if gnu else " "
+     ret: str = format % (bytes_ / (base**exp)) + space + _(suffix[exp - 1])
+     return ret
