@@ -43,6 +43,29 @@ pub struct ReportArgs {
     pub analysis: Option<Analysis>,
 }
 
+/// The options of `lint` and `check`.
+#[derive(Args)]
+pub struct LintArgs {
+    #[command(flatten)]
+    pub report: ReportArgs,
+    /// Report only these rules (comma-separated or repeated); the human report is then never
+    /// collapsed.
+    #[arg(long, value_delimiter = ',')]
+    pub rule: Vec<String>,
+}
+
+impl LintArgs {
+    /// Keeps the findings of the rules `--rule` names; prints the report.
+    pub fn print(&self, session: &Session, files: &mut [FileDiagnostics]) {
+        if !self.rule.is_empty() {
+            for file in files.iter_mut() {
+                file.diagnostics.retain(|d| self.rule.contains(&d.rule));
+            }
+        }
+        print(session, self.report.format, files, self.rule.is_empty());
+    }
+}
+
 impl ReportArgs {
     pub fn open(&self) -> Result<Session> {
         Session::open(&self.paths, self.analysis.map(Depth::from))
@@ -166,9 +189,13 @@ pub fn catalog(session: &Session) -> Catalog {
     rules
 }
 
-/// Prints the report on stdout and a one-line summary on stderr.
-pub fn print(session: &Session, format: OutputFormat, files: &[FileDiagnostics]) {
-    print!("{}", report::render(format, files, &catalog(session)));
+/// Prints the report on stdout and a one-line summary on stderr; `collapse` as in
+/// [`report::render`].
+pub fn print(session: &Session, format: OutputFormat, files: &[FileDiagnostics], collapse: bool) {
+    print!(
+        "{}",
+        report::render(format, files, &catalog(session), collapse)
+    );
     let (errors, warnings) = report::count(files);
     eprintln!(
         "{} file(s) checked, {errors} error(s), {warnings} warning(s)",
@@ -194,12 +221,12 @@ pub fn exit_code(collected: &Collected) -> ExitCode {
     }
 }
 
-pub fn run(args: ReportArgs) -> Result<ExitCode> {
-    let mut session = args.open()?;
+pub fn run(args: LintArgs) -> Result<ExitCode> {
+    let mut session = args.report.open()?;
     let loaded = session.load_linted(|db, file| {
         lint(db, file);
     });
-    let collected = collect(&session, &loaded)?;
-    print(&session, args.format, &collected.files);
+    let mut collected = collect(&session, &loaded)?;
+    args.print(&session, &mut collected.files);
     Ok(exit_code(&collected))
 }

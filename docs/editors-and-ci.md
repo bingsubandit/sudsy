@@ -107,11 +107,13 @@ SARIF is version 2.1.0. It lists results and the rule table. It does not carry f
 
 ## Other output
 
+The default output prints each finding with its source line and each fix with the line it produces (or a short `-`/`+` pair). A fix that `sudsy fix` does not apply by itself has an id: `fix k3m9qa (unsafe): ...`. `sudsy fix --apply k3m9qa,7tq2xw` applies exactly those fixes, suggestions included, then formats; `sudsy fix --unsafe` applies every safe and unsafe fix. Ids are hashes of the path, rule and line text, so they hold while the line is unchanged. A report of more than 100 findings is one line per rule; `--rule <id>` lists one rule in full and `--format concise` prints one line per finding.
+
 `--format json` gives `{version, summary, diagnostics}` with byte offsets, line and column ranges and fix edits. Use it in scripts. The [site](https://bingsubandit.github.io/sudsy/cli/) documents the shape, and publishes `llms.txt` and a Markdown copy of every page for coding agents.
 
 ## Coding agents
 
-`sudsy init --agents` adds a short block to `AGENTS.md` (or to `CLAUDE.md` when only that exists) that tells an agent to run `sudsy check --format json` and `sudsy fix`. It writes nothing without the flag and a second run changes nothing.
+`sudsy init --agents` adds a short block to `AGENTS.md` (or to `CLAUDE.md` when only that exists) that tells an agent to run `sudsy check`, `sudsy fix --unsafe` and `sudsy fix --apply <id>`. It writes nothing without the flag and a second run changes nothing.
 
 ## pre-commit
 

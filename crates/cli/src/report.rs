@@ -1,7 +1,8 @@
-//! Output formats for diagnostics: human-readable, JSON, SARIF and GitHub Actions
+//! Output formats for diagnostics: human-readable (`human.rs`), JSON, SARIF and GitHub Actions
 //! annotations. Rendering is a pure function of the diagnostics, so the formats are snapshot-tested.
 
 use clap::ValueEnum;
+use core_rules::fix_ids::fix_ids;
 use core_rules::{Diagnostic, LineIndex, Severity};
 use core_syntax::TextRange;
 use serde_json::{Value, json};
@@ -9,8 +10,11 @@ use std::fmt::Write;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
+    /// Each finding with its source line and fixes; collapsed by rule above 100 findings.
     #[default]
     Human,
+    /// One line per finding.
+    Concise,
     Json,
     Sarif,
     Github,
@@ -27,13 +31,17 @@ pub struct FileDiagnostics {
 /// `(id, description)` of every rule a report can mention, for SARIF's rule table.
 pub type Catalog = Vec<(String, String)>;
 
-struct Position {
-    line: usize,
-    column: usize,
+pub(crate) struct Position {
+    pub line: usize,
+    pub column: usize,
     offset: usize,
 }
 
-fn position(file: &FileDiagnostics, lines: &LineIndex, offset: core_syntax::TextSize) -> Position {
+pub(crate) fn position(
+    file: &FileDiagnostics,
+    lines: &LineIndex,
+    offset: core_syntax::TextSize,
+) -> Position {
     let (line, column) = lines.line_col(&file.text, offset);
     Position {
         line,
@@ -49,9 +57,16 @@ fn span(file: &FileDiagnostics, lines: &LineIndex, range: TextRange) -> (Positio
     )
 }
 
-pub fn render(format: OutputFormat, files: &[FileDiagnostics], catalog: &Catalog) -> String {
+/// `collapse`: a long human report may be collapsed by rule (not when the run names the rules).
+pub fn render(
+    format: OutputFormat,
+    files: &[FileDiagnostics],
+    catalog: &Catalog,
+    collapse: bool,
+) -> String {
     match format {
-        OutputFormat::Human => human(files),
+        OutputFormat::Human => crate::human::human(files, collapse),
+        OutputFormat::Concise => crate::human::concise(files),
         OutputFormat::Json => json_report(files),
         OutputFormat::Sarif => sarif(files, catalog),
         OutputFormat::Github => github(files),
@@ -85,7 +100,7 @@ pub fn count(files: &[FileDiagnostics]) -> (usize, usize) {
 
 /// Control characters (ANSI escapes, newlines that would fake a line such as a `::` workflow
 /// command) shown as escapes: diagnostic text comes from repo-supplied rules and file names.
-fn clean(s: &str) -> std::borrow::Cow<'_, str> {
+pub(crate) fn clean(s: &str) -> std::borrow::Cow<'_, str> {
     let bad = |c: char| c.is_control() && c != '\t';
     if !s.chars().any(bad) {
         return s.into();
@@ -101,45 +116,6 @@ fn clean(s: &str) -> std::borrow::Cow<'_, str> {
     out.into()
 }
 
-fn human(files: &[FileDiagnostics]) -> String {
-    let mut out = String::new();
-    for file in files {
-        let lines = LineIndex::new(&file.text);
-        for d in &file.diagnostics {
-            let at = position(file, &lines, d.range.start());
-            let _ = writeln!(
-                out,
-                "{}:{}:{}: {}[{}]: {}",
-                clean(&file.path),
-                at.line,
-                at.column,
-                d.severity.as_str(),
-                d.rule,
-                clean(&d.message)
-            );
-            for r in &d.related {
-                let at = position(file, &lines, r.range.start());
-                let _ = writeln!(
-                    out,
-                    "    note: {} ({}:{})",
-                    clean(&r.message),
-                    at.line,
-                    at.column
-                );
-            }
-            for fix in &d.fixes {
-                let _ = writeln!(
-                    out,
-                    "    fix ({}): {}",
-                    fix.kind.as_str(),
-                    clean(&fix.title)
-                );
-            }
-        }
-    }
-    out
-}
-
 fn location(file: &FileDiagnostics, lines: &LineIndex, range: TextRange) -> Value {
     let (start, end) = span(file, lines, range);
     json!({
@@ -152,7 +128,8 @@ fn json_report(files: &[FileDiagnostics]) -> String {
     let mut diagnostics = Vec::new();
     for file in files {
         let lines = LineIndex::new(&file.text);
-        for d in &file.diagnostics {
+        let ids = fix_ids(&file.path, &file.text, &lines, &file.diagnostics);
+        for (d, ids) in file.diagnostics.iter().zip(ids) {
             let related: Vec<Value> = d
                 .related
                 .iter()
@@ -161,7 +138,8 @@ fn json_report(files: &[FileDiagnostics]) -> String {
             let fixes: Vec<Value> = d
                 .fixes
                 .iter()
-                .map(|f| {
+                .zip(ids)
+                .map(|(f, id)| {
                     let edits: Vec<Value> = f
                         .edits
                         .iter()
@@ -173,7 +151,12 @@ fn json_report(files: &[FileDiagnostics]) -> String {
                             })
                         })
                         .collect();
-                    json!({ "title": f.title, "kind": f.kind.as_str(), "edits": edits })
+                    let mut fix =
+                        json!({ "title": f.title, "kind": f.kind.as_str(), "edits": edits });
+                    if let Some(id) = id {
+                        fix["id"] = id.into();
+                    }
+                    fix
                 })
                 .collect();
             diagnostics.push(json!({

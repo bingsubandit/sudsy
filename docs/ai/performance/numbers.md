@@ -7,6 +7,11 @@ Machine unless noted: AMD Ryzen 5 3600 (6 cores / 12 threads), 32 GB, Windows 11
 |---|---|
 | 13.2 MB of JS-like text, one thread, release, x86-64 Linux agent host, best of 10 (`cargo test --release -p provider-api --lib -- --ignored nesting_cost --nocapture`) | 12.8 GB/s, 1.0 ms; 0.2 percent of the JS parse (20-22 MB/s) |
 
+## Lint report (`scripts/report-bench.sh`)
+| Path | Number |
+|---|---|
+| `sudsy lint .` over 20 YAML files of 1,000 lines, 20,000 findings with an unsafe fix each; release, x86-64 Linux agent host (4 cores), best of 5, process start, discovery and lint included; `--format github` (one line per finding) is the floor | github 92 ms (2.9 MB), concise 95 ms (2.0 MB), human collapsed 77 ms (257 bytes), human in full (`--rule`: source line, fix id, edited line per finding) 95 ms (3.8 MB), json 280 ms (15 MB); noise about 10%, so the full human report costs no measurable time over the floor |
+
 ## `sudsy init --yes`
 | Path | Number |
 |---|---|
