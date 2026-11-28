@@ -4,10 +4,12 @@ with the hidden files in place, its checks, probes or clean files); the referenc
 commit, or solution[.<family>].patch) passes the whole verifier. One line per task; exit 1 when one fails."""
 import argparse
 import json
+import pathlib
 import shutil
 import sys
 
-from common import sh, task_ids, work_root
+import conditions
+from common import fix_changed, load_task, repos, run_env, sh, task_ids, work_root
 from setup_run import setup
 from verify import verify
 
@@ -42,6 +44,11 @@ def validate(version, task, sudsy, root):
         before = verify(run, meta, sudsy)
         run, meta = setup(version, task, fam, 0, root, sudsy)
         apply_reference(run, meta, fam)
+        # the reference is in the upstream style; format it as a subject's fix command would
+        repo = load_task(version, task)["repo"]
+        tools = conditions.family(repo, fam)
+        env = run_env({**repos()["repo"][repo], "name": repo}, [pathlib.Path(sudsy).parent])
+        fix_changed(tools["fix"], tools["exts"], run, env)
         after = verify(run, meta, sudsy)
         ok = fails_untouched(before) and after["success"]
         note = "" if ok else " " + json.dumps({"untouched_fails": fails_untouched(before), "reference": after})

@@ -3,6 +3,7 @@ import fnmatch
 import json
 import os
 import pathlib
+import shlex
 import subprocess
 import tomllib
 
@@ -91,6 +92,24 @@ def run_env(repo_cfg, extra_path=()):
     for k, v in (repo_cfg.get("env") or {}).items():
         env[k] = v
     return env
+
+
+def changed_files(run):
+    """Files changed since the start commit, tracked and untracked."""
+    out = git(run, "diff", "--name-only", "--no-renames", "bench-base") + git(run, "ls-files", "--others", "--exclude-standard")
+    return sorted({p for p in out.splitlines() if p and not p.startswith("node_modules/")})
+
+
+def fix_changed(fix_cmds, exts, run, env=None):
+    """The family's fix commands on the changed files only (the stop hook; the reference check): a
+    trailing ` .` becomes the file list, `npm run` scripts run as they are, others get the files appended."""
+    files = [f for f in changed_files(run) if pathlib.Path(f).suffix in exts and (pathlib.Path(run) / f).exists()]
+    if not files:
+        return
+    args = " ".join(shlex.quote(f) for f in files)
+    for c in fix_cmds:
+        cmd = c if c.startswith("npm run") else (c[:-2] if c.endswith(" .") else c) + " " + args
+        sh(cmd, cwd=run, env=env, timeout=300)
 
 
 def write_json(path, obj):

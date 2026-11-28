@@ -75,6 +75,8 @@ def prepare_tree(task, cond, run, sudsy):
         r = sh([sudsy, "init", "-y", *repo.get("sudsy_init", "").split()], cwd=run, env=env)
         if r.returncode != 0:
             raise RuntimeError(f"sudsy init failed: {r.stderr}")
+        # a project that uses Sudsy is formatted by it, as the native start trees are by their tools
+        sh([sudsy, "format"], cwd=run, env=env)
 
 
 def setup(version, task_id, cond, rep, root, sudsy):

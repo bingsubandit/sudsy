@@ -13,14 +13,7 @@ import shutil
 import sys
 
 import conditions
-from common import load_task, matches, repos, run_env, sh, git
-
-SKIP = ("node_modules/",)
-
-
-def changed_files(run):
-    out = git(run, "diff", "--name-only", "--no-renames", "bench-base") + git(run, "ls-files", "--others", "--exclude-standard")
-    return sorted({p for p in out.splitlines() if p and not p.startswith(SKIP)})
+from common import changed_files, load_task, matches, repos, run_env, sh
 
 
 def line_text(root, path, line):

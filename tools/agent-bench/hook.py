@@ -2,7 +2,7 @@
 
 post (PostToolUse on Edit|Write|MultiEdit): lints the edited file with the family's `hook_lint`, never
 formats; clean: no output, exit 0; findings: the tool's output on stderr, exit 2 (the agent reads it in
-the same turn). stop (Stop): runs the family's fix commands, exit 0. Every call is logged to META/calls.log.
+the same turn). stop (Stop): runs the family's fix commands on the changed files, exit 0. Every call is logged to META/calls.log.
 For `sudsy-hooks` this is the provisional stand-in for `sudsy hook` (plan step 5)."""
 import json
 import pathlib
@@ -51,6 +51,8 @@ if mode == "post":
 
 if mode == "stop":
     log("fix")
-    for c in cfg["fix"]:
-        sh(c)
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    from common import fix_changed
+
+    fix_changed(cfg["fix"], cfg["exts"], run)
     sys.exit(0)
