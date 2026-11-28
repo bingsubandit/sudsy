@@ -1,0 +1,74 @@
+repo = "humanize"
+pairs = ["E7", "E3"]
+kind = "lint-debt"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_filesize.py"
+scope = ["src/humanize/filesize.py", "tests/*"]
+clean = ["src/humanize/filesize.py"]
+formatted = ["src/humanize/filesize.py"]
+seed_edits = [
+  [
+    "src/humanize/filesize.py",
+    "from humanize.i18n import _gettext_noop as N_\n",
+    "from humanize.i18n import _gettext_noop as N_\nimport sys\n",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    if gnu:\n        suffix = suffixes[\"gnu\"]",
+    "    if format == None:\n        format = \"%.1f\"\n    if gnu:\n        suffix = suffixes[\"gnu\"]",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "return f\"{int(bytes_)}B\" if gnu else",
+    "return \"%dB\" % int(bytes_) if gnu else",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    space = \"\" if gnu else \" \"",
+    "    space = str() if gnu else \" \"",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    base = 1024 if (gnu or binary) else 1000",
+    "    base = 1024  if (gnu or binary) else 1000",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    abs_bytes = abs(bytes_)",
+    "    abs_bytes=abs( bytes_ )",
+  ],
+]
+solution_edits_sudsy = [
+  [
+    "src/humanize/filesize.py",
+    "from humanize.i18n import _gettext_noop as N_\nimport sys\n",
+    "from humanize.i18n import _gettext_noop as N_\n",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    if format == None:\n        format = \"%.1f\"\n    if gnu:\n        suffix = suffixes[\"gnu\"]",
+    "    if gnu:\n        suffix = suffixes[\"gnu\"]",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "return \"%dB\" % int(bytes_) if gnu else",
+    "return f\"{int(bytes_)}B\" if gnu else",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    space = str() if gnu else \" \"",
+    "    space = \"\" if gnu else \" \"",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    base = 1024  if (gnu or binary) else 1000",
+    "    base = 1024 if (gnu or binary) else 1000",
+  ],
+  [
+    "src/humanize/filesize.py",
+    "    abs_bytes=abs( bytes_ )",
+    "    abs_bytes = abs(bytes_)",
+  ],
+]
+text = '''
+`src/humanize/filesize.py` has check findings and formatting left from older code. Make the project's checks pass on that file (no finding left in it, formatted) without changing its behaviour.
+'''

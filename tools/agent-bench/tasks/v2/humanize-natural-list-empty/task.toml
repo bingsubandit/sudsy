@@ -1,0 +1,10 @@
+repo = "humanize"
+pairs = ["E1", "E7", "B"]
+kind = "bugfix"
+commit = "0a06a3d4a12113cd5f3d0df0cfbb3e27d92499eb"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_lists.py"
+hidden = ["tests/test_lists.py"]
+scope = ["src/humanize/lists.py", "tests/*"]
+text = """
+`humanize.natural_list([])` raises an IndexError. It should return an empty string for an empty list.
+"""

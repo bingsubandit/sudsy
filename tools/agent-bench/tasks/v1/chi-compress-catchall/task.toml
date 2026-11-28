@@ -1,9 +1,0 @@
-repo = "chi"
-kind = "bugfix"
-commit = "38939062c5df4d3e8814aad1a488983112627ced"
-tests = "go test ./middleware"
-hidden = ["middleware/compress_test.go"]
-scope = ["middleware/compress.go", "middleware/*_test.go"]
-text = """
-`middleware.NewCompressor(level, "/*")` passes validation but stores an empty wildcard that matches nothing, and `"*/*"` is not rejected either. Both catch-all wildcards must panic at construction (compressing every response wastes CPU on already-compressed types). Every wildcard panic message becomes `middleware/compress: Unsupported content-type wildcard pattern '<t>'. Only '<type>/*' supported`. Document the rule on `NewCompressor`.
-"""

@@ -1,0 +1,46 @@
+repo = "pathe"
+pairs = ["E10"]
+kind = "policy"
+tests = "npx vitest run test/bench-cwd.spec.ts"
+scope = ["src/*", "test/*"]
+native_equivalent = "oxlint/ESLint no-restricted-properties (process.cwd) with an override for src/_path.ts"
+solution_edits_sudsy = [
+  [
+    "src/utils.ts",
+    "import { join } from \"./_path\";",
+    "import { join, relative, resolve } from \"./_path\";",
+  ],
+  [
+    "src/utils.ts",
+    "",
+    "\nexport function relativeToCwd(path: string): string {\n  return relative(resolve(), path);\n}\n",
+  ],
+]
+text = '''
+Add an exported `relativeToCwd(path)` to `src/utils.ts` (the `pathe/utils` entry): `path` relative to the current working directory, so `relativeToCwd(join(cwd, "a/b"))` is `"a/b"` and the working directory itself gives `""`.
+'''
+
+[policy]
+rule = "no-process-cwd"
+text = '''
+# Project rules
+
+pathe runs where `process` is missing (browsers, Deno, workers): outside `src/_path.ts`, never call `process.cwd()`; `resolve()` with no argument gives the working directory.'''
+config = '''
+plugins:
+  patterns: ["rules/*.yaml"]
+overrides:
+  - files: ["src/_path.ts", "test/**"]
+    js: { lint: { rules: { no-process-cwd: "off" } } }
+'''
+
+[policy.files]
+"rules/no-process-cwd.yaml" = '''
+id: no-process-cwd
+language: js
+message: resolve against the working directory with `resolve()`; `process` is missing outside Node
+severity: error
+category: correctness
+rule:
+  pattern: process.cwd()
+'''

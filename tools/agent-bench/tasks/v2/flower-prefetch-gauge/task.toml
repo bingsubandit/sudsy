@@ -1,0 +1,10 @@
+repo = "flower"
+pairs = ["E1", "E7"]
+kind = "bugfix"
+commit = "3ccbc5b"
+tests = "python -m unittest tests.unit.views.test_monitor"
+hidden = ["tests/unit/views/test_monitor.py"]
+scope = ["flower/*", "tests/*"]
+text = '''
+The `flower_worker_prefetched_tasks` Prometheus gauge drifts up: a task that is revoked or rejected before it starts never leaves it. Decrement the gauge on `task-revoked` and `task-rejected` events of tasks that had not started (a task revoked after it started must not be counted twice).
+'''

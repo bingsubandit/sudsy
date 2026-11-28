@@ -1,0 +1,10 @@
+repo = "ufo"
+pairs = ["E1", "E7", "B"]
+kind = "bugfix"
+commit = "eb29945470c8629309764f026a36e7f477a9a1ff"
+tests = "npx vitest run test/base.test.ts"
+hidden = ["test/base.test.ts"]
+scope = ["src/utils.ts", "test/*"]
+text = """
+`withBase` and `withoutBase` treat `/admin-dashboard` as if it started with the base `/admin/`. A base only matches when the input continues with `/`, `?` or ends right after it: `withBase("/admin-dashboard", "/admin/")` is `"/admin/admin-dashboard"` (also for base `"/admin"`), `withoutBase("/admin-dashboard", "/admin/")` is `"/admin-dashboard"`, while `withoutBase("/admin/dashboard", "/admin/")` stays `"/dashboard"`.
+"""

@@ -1,0 +1,12 @@
+repo = "click"
+pairs = ["E1", "E7", "E2", "B"]
+kind = "refactor"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_context.py tests/test_commands.py tests/test_basic.py"
+scope = ["src/click/*", "tests/*", "docs/*", "CHANGES.md"]
+checks = [
+  "python -c 'import click; assert hasattr(click.Context, \"get_usage_text\"); assert not hasattr(click.Context, \"get_usage\"); assert hasattr(click.Command, \"get_usage\")'",
+]
+text = """
+Rename the method `Context.get_usage()` to `Context.get_usage_text()` (no alias) and update every caller.
+`Command.get_usage(ctx)` and the other `get_usage` methods have the same name and must keep it.
+"""

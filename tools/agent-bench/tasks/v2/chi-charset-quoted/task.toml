@@ -1,0 +1,10 @@
+repo = "chi"
+pairs = ["E1", "E7"]
+kind = "bugfix"
+commit = "60755706125129a9f9dfb99ac22f7ba016a1b60c"
+tests = "go test ./middleware"
+hidden = ["middleware/content_charset_test.go"]
+scope = ["middleware/content_charset.go", "middleware/*_test.go"]
+text = """
+`middleware.ContentCharset` rejects `Content-Type: text/plain; charset="UTF-8"`: quoted charset values, other parameters before the charset (also quoted ones containing `charset=` or `;`) and mixed case are not parsed. Parse the header as a media type (`mime.ParseMediaType`) and compare the lower-cased `charset` parameter; keep the current lenient handling when the header is not a valid media type. Document quoted values on `ContentCharset`.
+"""

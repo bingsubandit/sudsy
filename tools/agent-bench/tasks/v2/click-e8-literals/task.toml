@@ -1,0 +1,10 @@
+repo = "click"
+pairs = ["E7", "E8"]
+kind = "lint-debt"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_arguments.py tests/test_options.py"
+scope = ["tests/test_arguments.py", "tests/test_options.py"]
+clean = ["tests/test_arguments.py", "tests/test_options.py"]
+clean_rules = ["unnecessary-collection-call"]
+text = '''
+Fix the `dict()`, `list()` and `tuple()` calls that `unnecessary-collection-call` reports in `tests/test_arguments.py`, `tests/test_options.py`; leave every other finding as it is.
+'''

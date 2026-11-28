@@ -1,0 +1,92 @@
+diff --git a/tests/test_termui.py b/tests/test_termui.py
+index aff5c83..3cfc523 100644
+--- a/tests/test_termui.py
++++ b/tests/test_termui.py
+@@ -612,9 +612,8 @@ def test_editor_failure_exception():
+ 
+ 
+ def test_editor_nonexistent_exception():
+-    with patch("subprocess.Popen", side_effect=OSError("not found")):
+-        with pytest.raises(click.ClickException, match="not found"):
+-            Editor(editor="nonexistent").edit_files(["f.txt"])
++    with patch("subprocess.Popen", side_effect=OSError("not found")), pytest.raises(click.ClickException, match="not found"):
++        Editor(editor="nonexistent").edit_files(["f.txt"])
+ 
+ 
+ @pytest.mark.parametrize(
+@@ -1123,10 +1122,9 @@ def test_get_pager_file_flushes_stream_on_exception(monkeypatch):
+         click._termui_impl, "_pager_contextmanager", pager_contextmanager
+     )
+ 
+-    with pytest.raises(RuntimeError, match="boom"):
+-        with click.get_pager_file() as pager:
+-            pager.write("partial")
+-            raise RuntimeError("boom")
++    with pytest.raises(RuntimeError, match="boom"), click.get_pager_file() as pager:
++        pager.write("partial")
++        raise RuntimeError("boom")
+ 
+     assert stream.flush_calls == 1
+     assert stream.getvalue() == "partial"
+@@ -1303,9 +1301,8 @@ def test_tempfile_pager_closes_file_before_unlink(monkeypatch):
+     monkeypatch.setattr(os, "unlink", spy_unlink)
+ 
+     try:
+-        with pytest.raises(RuntimeError, match="boom"):
+-            with click.get_pager_file():
+-                raise RuntimeError("boom")
++        with pytest.raises(RuntimeError, match="boom"), click.get_pager_file():
++            raise RuntimeError("boom")
+     finally:
+         # Should this invariant regress, the assertion below reports it. Close
+         # the handle anyway so the leak does not also resurface as a
+diff --git a/tests/test_types/test_Path.py b/tests/test_types/test_Path.py
+index 09df7bc..32a3ff9 100644
+--- a/tests/test_types/test_Path.py
++++ b/tests/test_types/test_Path.py
+@@ -122,24 +122,21 @@ def test_path_surrogates(tmp_path, monkeypatch):
+     path.touch()
+     type = click.Path(readable=True)
+ 
+-    with pytest.raises(click.BadParameter, match="'�' is not readable"):
+-        with monkeypatch.context() as m:
+-            m.setattr(os, "access", no_access)
+-            type.convert(path, None, None)
++    with pytest.raises(click.BadParameter, match="'�' is not readable"), monkeypatch.context() as m:
++        m.setattr(os, "access", no_access)
++        type.convert(path, None, None)
+ 
+     type = click.Path(readable=False, writable=True)
+ 
+-    with pytest.raises(click.BadParameter, match="'�' is not writable"):
+-        with monkeypatch.context() as m:
+-            m.setattr(os, "access", no_access)
+-            type.convert(path, None, None)
++    with pytest.raises(click.BadParameter, match="'�' is not writable"), monkeypatch.context() as m:
++        m.setattr(os, "access", no_access)
++        type.convert(path, None, None)
+ 
+     type = click.Path(readable=False, executable=True)
+ 
+-    with pytest.raises(click.BadParameter, match="'�' is not executable"):
+-        with monkeypatch.context() as m:
+-            m.setattr(os, "access", no_access)
+-            type.convert(path, None, None)
++    with pytest.raises(click.BadParameter, match="'�' is not executable"), monkeypatch.context() as m:
++        m.setattr(os, "access", no_access)
++        type.convert(path, None, None)
+ 
+     path.unlink()
+ 
+@@ -159,9 +156,8 @@ def _non_utf8_filenames_supported():
+     platform.system() == "Windows", reason="Filepath syntax differences."
+ )
+ def test_invalid_path_with_esc_sequence():
+-    with pytest.raises(click.BadParameter) as exc_info:
+-        with tempfile.TemporaryDirectory(prefix="my\ndir") as tempdir:
+-            click.Path(dir_okay=False).convert(tempdir, None, None)
++    with pytest.raises(click.BadParameter) as exc_info, tempfile.TemporaryDirectory(prefix="my\ndir") as tempdir:
++        click.Path(dir_okay=False).convert(tempdir, None, None)
+ 
+     assert "my\\ndir" in exc_info.value.message
+ 

@@ -1,9 +1,0 @@
-repo = "ufo"
-kind = "lint-debt"
-tests = "npx vitest run test/base.test.ts test/query.test.ts test/utilities.test.ts"
-scope = ["src/utils.ts", "test/*"]
-clean = ["src/utils.ts"]
-text = """
-`src/utils.ts` has check findings left from older code. Make the project's checks pass on that file (no finding
-left in it) without changing its behaviour.
-"""

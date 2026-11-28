@@ -1,9 +1,0 @@
-repo = "chi"
-kind = "bugfix"
-commit = "9b6ddcddb96aa14648702e7eaabef38e14e65157"
-tests = "go test ."
-hidden = ["mux_test.go"]
-scope = ["tree.go", "*_test.go"]
-text = """
-A 405 response lists the same method twice in its `Allow` header when the path is matched by more than one route node, for example `GET /hi` plus a catch-all `GET /*` with a `POST /hi` request. Each allowed method must appear once.
-"""

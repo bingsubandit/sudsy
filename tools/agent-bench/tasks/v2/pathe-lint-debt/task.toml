@@ -1,0 +1,44 @@
+repo = "pathe"
+pairs = ["E7", "E3"]
+kind = "lint-debt"
+tests = "npx vitest run test/utils.spec.ts"
+scope = ["src/utils.ts", "test/*"]
+clean = ["src/utils.ts"]
+formatted = ["src/utils.ts"]
+seed_edits = [
+  [
+    "src/utils.ts",
+    "  const separatorIndex = base.lastIndexOf(\".\");",
+    "  debugger;\n  const separatorIndex = base.lastIndexOf(\".\");\n  const unusedExt = base.split(\".\").pop();",
+  ],
+  [
+    "src/utils.ts",
+    "  if (!base) {\n    return undefined;\n  }",
+    "  if (!base) {\n    return undefined;\n  } else {\n  }",
+  ],
+  [
+    "src/utils.ts",
+    "export function filename(path: string) {",
+    "export function filename( path: string ) {",
+  ],
+]
+solution_edits_sudsy = [
+  [
+    "src/utils.ts",
+    "  debugger;\n  const separatorIndex = base.lastIndexOf(\".\");\n  const unusedExt = base.split(\".\").pop();",
+    "  const separatorIndex = base.lastIndexOf(\".\");",
+  ],
+  [
+    "src/utils.ts",
+    "  if (!base) {\n    return undefined;\n  } else {\n  }",
+    "  if (!base) {\n    return undefined;\n  }",
+  ],
+  [
+    "src/utils.ts",
+    "export function filename( path: string ) {",
+    "export function filename(path: string) {",
+  ],
+]
+text = '''
+`src/utils.ts` has check findings and formatting left from older code. Make the project's checks pass on that file (no finding left in it, formatted) without changing its behaviour.
+'''

@@ -1,9 +1,0 @@
-repo = "humanize"
-kind = "bugfix"
-commit = "b48b37b187682ccc55b28ed1b7cfaa853dbca72f"
-tests = "python -m pytest -q -p no:cacheprovider tests/test_time.py"
-hidden = ["tests/test_time.py"]
-scope = ["src/humanize/time.py", "tests/*"]
-text = """
-`humanize.naturaldelta(float("inf"))` raises OverflowError, while NaN is returned unchanged. Non-finite floats (`inf`, `-inf`) must be returned unchanged as their `str()` too. A too-large finite value such as `1e30` must still raise OverflowError, as documented.
-"""

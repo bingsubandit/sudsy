@@ -1,0 +1,60 @@
+repo = "humanize"
+pairs = ["E7", "E3", "E3C"]
+kind = "lint-debt"
+tests = "python -m pytest -q -p no:cacheprovider tests/test_lists.py tests/test_i18n.py tests/test_number.py"
+scope = ["src/humanize/*", "tests/*"]
+clean = [
+  "src/humanize/i18n.py",
+  "src/humanize/lists.py",
+  "src/humanize/number.py",
+]
+clean_rules = ["len-zero"]
+seed_edits = [
+  [
+    "src/humanize/lists.py",
+    "    if not item_list:",
+    "    if len(item_list) == 0:",
+  ],
+  ["src/humanize/i18n.py", "    if not package:", "    if len(package) == 0:"],
+  [
+    "src/humanize/number.py",
+    "    if not whole_number:",
+    "    if len(whole_number) == 0:",
+  ],
+]
+solution_edits_sudsy = [
+  [
+    "src/humanize/lists.py",
+    "    if len(item_list) == 0:",
+    "    if not item_list:",
+  ],
+  ["src/humanize/i18n.py", "    if len(package) == 0:", "    if not package:"],
+  [
+    "src/humanize/number.py",
+    "    if len(whole_number) == 0:",
+    "    if not whole_number:",
+  ],
+]
+text = '''
+The project's own rule `len-zero` reports findings in `src/humanize/`. Fix every finding of it there; leave other findings alone.
+'''
+
+[project]
+config = '''
+plugins:
+  patterns: ["rules/*.yaml"]
+'''
+
+[project.files]
+"rules/len-zero.yaml" = '''
+id: len-zero
+language: python
+message: test emptiness with `not $X`, not `len($X) == 0`
+description: Reports `len(x) == 0`; an empty container is falsy, and `not x` also works for values without a length.
+severity: warn
+category: style
+rule:
+  pattern: len($X) == 0
+fix: not $X
+fix-kind: suggestion
+'''

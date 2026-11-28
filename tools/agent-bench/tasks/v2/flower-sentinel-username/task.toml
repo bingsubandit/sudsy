@@ -1,0 +1,10 @@
+repo = "flower"
+pairs = ["E1", "E7", "E2"]
+kind = "bugfix"
+commit = "bbf7086"
+tests = "python -m unittest tests.unit.utils.test_broker"
+hidden = ["tests/unit/utils/test_broker.py"]
+scope = ["flower/*", "tests/*"]
+text = '''
+With a broker URL such as `sentinel://app:secret@host:26379/0`, the Redis Sentinel broker passes the password but not the username to the Sentinel connection. Pass the URL's username too (nothing when the URL has none).
+'''

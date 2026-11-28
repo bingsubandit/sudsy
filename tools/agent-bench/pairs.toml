@@ -1,0 +1,48 @@
+# The comparisons the bench reports: each pair is the ratio `on` / `off` over the tasks that list it in
+# their `pairs`, with its own interval. A-pairs toggle one Sudsy feature (the pilot's experiments,
+# docs/ai/design/agent-workflows.md); B compares stacks with matched rule sets.
+
+[pair.E1]
+feature = "feedback through hooks (lint after each edit, fix at stop) instead of running the check"
+on = "sudsy-hooks"
+off = "sudsy"
+
+[pair.E7]
+feature = "one check command instead of separate format and lint commands"
+on = "sudsy"
+off = "sudsy-separate"
+
+[pair.E3]
+feature = "the source line and fix text under each finding (human) instead of one line per finding (concise)"
+on = "sudsy"
+off = "sudsy-concise"
+
+[pair.E2]
+feature = "only the findings the change introduced (--new) instead of every finding"
+on = "sudsy-new"
+off = "sudsy"
+
+[pair.E8]
+feature = "a long report collapsed by rule instead of listed in full"
+on = "sudsy"
+off = "sudsy-full"
+
+[pair.E3C]
+feature = "fix ids with fix --apply instead of editing each fix by hand"
+on = "sudsy"
+off = "sudsy-noids-provisional"
+
+[pair.E10]
+feature = "a project policy enforced by a pre-written rule instead of stated in CLAUDE.md only"
+on = "sudsy"
+off = "sudsy-norule"
+
+[pair.B]
+feature = "Sudsy instead of the repository's own tools, same rules selected on both sides"
+on = "sudsy-matched"
+off = "native"
+
+[pair.B-hooks]
+feature = "the stack comparison with both sides behind hooks"
+on = "sudsy-matched-hooks"
+off = "native-hooks"

@@ -1,0 +1,94 @@
+# The stack comparison's Sudsy config for ufo (tools/agent-bench/matched.py; do not edit by hand).
+# Native rules mapped to a Sudsy rule (49): @typescript-eslint/no-duplicate-enum-values->no-duplicate-enum-values, @typescript-eslint/no-extra-non-null-assertion->no-extra-non-null-assertion, @typescript-eslint/no-misused-new->no-misused-new, @typescript-eslint/no-namespace->no-namespace, @typescript-eslint/no-non-null-asserted-optional-chain->no-non-null-asserted-optional-chain, @typescript-eslint/no-require-imports->no-require-imports, @typescript-eslint/no-this-alias->no-this-alias, @typescript-eslint/no-unnecessary-type-constraint->no-unnecessary-type-constraint, @typescript-eslint/no-unsafe-function-type->no-unsafe-function-type, @typescript-eslint/no-unused-vars->unused-variable, @typescript-eslint/no-wrapper-object-types->no-wrapper-object-types, @typescript-eslint/prefer-as-const->prefer-as-const, @typescript-eslint/triple-slash-reference->triple-slash-reference, no-async-promise-executor->no-async-promise-executor, no-case-declarations->no-case-declarations, no-compare-neg-zero->no-compare-neg-zero, no-cond-assign->no-assignment-in-condition, no-constant-binary-expression->no-constant-comparison, no-constant-condition->no-constant-condition, no-control-regex->no-control-regex, no-debugger->no-debugger, no-delete-var->no-delete-var, no-dupe-else-if->no-dupe-else-if, no-duplicate-case->no-duplicate-case, no-empty->no-empty-block, no-empty-character-class->no-empty-character-class, no-empty-pattern->no-empty-pattern, no-extra-boolean-cast->no-extra-boolean-cast, no-fallthrough->no-fallthrough, no-irregular-whitespace->no-irregular-whitespace, no-loss-of-precision->no-loss-of-precision, no-misleading-character-class->no-misleading-character-class, no-octal->no-octal, no-prototype-builtins->no-prototype-builtins, no-regex-spaces->no-regex-spaces, no-self-assign->no-self-assign, no-shadow-restricted-names->no-shadow-restricted-names, no-sparse-arrays->no-sparse-arrays, no-unexpected-multiline->no-unexpected-multiline, no-unsafe-finally->no-unsafe-finally, no-useless-catch->no-useless-catch, no-useless-escape->no-useless-escape, no-var->no-var, prefer-const->prefer-const, prefer-rest-params->prefer-rest-params, prefer-spread->prefer-spread, require-yield->require-yield, use-isnan->use-isnan, valid-typeof->valid-typeof
+# Native rules with no Sudsy rule, checked on the native side only (125): @typescript-eslint/no-array-constructor, @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/prefer-namespace-keyword, for-direction, no-empty-static-block, no-ex-assign, no-global-assign, no-invalid-regexp, no-nonoctal-decimal-escape, no-unsafe-optional-chaining, no-unused-labels, no-unused-private-class-members, no-useless-backreference, unicorn/catch-error-name, unicorn/consistent-assert, unicorn/consistent-date-clone, unicorn/consistent-empty-array-spread, unicorn/consistent-existence-index-check, unicorn/empty-brace-spaces, unicorn/error-message, unicorn/escape-case, unicorn/expiring-todo-comments, unicorn/explicit-length-check, unicorn/new-for-builtins, unicorn/no-accessor-recursion, unicorn/no-array-callback-reference, unicorn/no-array-for-each, unicorn/no-array-method-this-argument, unicorn/no-array-reduce, unicorn/no-await-in-promise-methods, unicorn/no-console-spaces, unicorn/no-document-cookie, unicorn/no-empty-file, unicorn/no-for-loop, unicorn/no-hex-escape, unicorn/no-instanceof-builtins, unicorn/no-invalid-fetch-options, unicorn/no-invalid-remove-event-listener, unicorn/no-lonely-if, unicorn/no-magic-array-flat-depth, unicorn/no-named-default, unicorn/no-negated-condition, unicorn/no-negation-in-equality-check, unicorn/no-nested-ternary, unicorn/no-new-array, unicorn/no-new-buffer, unicorn/no-object-as-default-parameter, unicorn/no-process-exit, unicorn/no-single-promise-in-promise-methods, unicorn/no-static-only-class, unicorn/no-thenable, unicorn/no-this-assignment, unicorn/no-typeof-undefined, unicorn/no-unnecessary-array-flat-depth, unicorn/no-unnecessary-array-splice-count, unicorn/no-unnecessary-await, unicorn/no-unnecessary-polyfills, unicorn/no-unnecessary-slice-end, unicorn/no-unreadable-array-destructuring, unicorn/no-unreadable-iife, unicorn/no-useless-collection-argument, unicorn/no-useless-error-capture-stack-trace, unicorn/no-useless-fallback-in-spread, unicorn/no-useless-length-check, unicorn/no-useless-promise-resolve-reject, unicorn/no-useless-spread, unicorn/no-useless-switch-case, unicorn/no-zero-fractions, unicorn/numeric-separators-style, unicorn/prefer-add-event-listener, unicorn/prefer-array-find, unicorn/prefer-array-flat, unicorn/prefer-array-flat-map, unicorn/prefer-array-index-of, unicorn/prefer-array-some, unicorn/prefer-at, unicorn/prefer-bigint-literals, unicorn/prefer-blob-reading-methods, unicorn/prefer-class-fields, unicorn/prefer-classlist-toggle, unicorn/prefer-date-now, unicorn/prefer-default-parameters, unicorn/prefer-dom-node-append, unicorn/prefer-dom-node-dataset, unicorn/prefer-dom-node-remove, unicorn/prefer-dom-node-text-content, unicorn/prefer-event-target, unicorn/prefer-export-from, unicorn/prefer-global-this, unicorn/prefer-includes, unicorn/prefer-keyboard-event-key, unicorn/prefer-logical-operator-over-ternary, unicorn/prefer-math-min-max, unicorn/prefer-math-trunc, unicorn/prefer-modern-dom-apis, unicorn/prefer-modern-math-apis, unicorn/prefer-native-coercion-functions, unicorn/prefer-negative-index, unicorn/prefer-node-protocol, unicorn/prefer-number-properties, unicorn/prefer-object-from-entries, unicorn/prefer-optional-catch-binding, unicorn/prefer-prototype-methods, unicorn/prefer-query-selector, unicorn/prefer-reflect-apply, unicorn/prefer-regexp-test, unicorn/prefer-response-static-json, unicorn/prefer-set-has, unicorn/prefer-set-size, unicorn/prefer-spread, unicorn/prefer-string-slice, unicorn/prefer-string-starts-ends-with, unicorn/prefer-string-trim-start-end, unicorn/prefer-structured-clone, unicorn/prefer-switch, unicorn/prefer-top-level-await, unicorn/prefer-type-error, unicorn/relative-url-style, unicorn/require-array-join-separator, unicorn/require-module-attributes, unicorn/require-module-specifiers, unicorn/require-number-to-fixed-digits-argument, unicorn/switch-case-braces, unicorn/text-encoding-identifier-case, unicorn/throw-new-error
+# Every other Sudsy rule of the language is off; only the files the native tools check are included.
+include:
+- '**/*.ts'
+- '**/*.mjs'
+- '**/*.js'
+exclude:
+- dist/**
+js:
+  lint:
+    rules:
+      adjacent-overload-signatures: 'off'
+      array-type: 'off'
+      ban-ts-comment: 'off'
+      boolean-literal-comparison: 'off'
+      consistent-type-definitions: 'off'
+      consistent-type-imports: 'off'
+      getter-return: 'off'
+      increment-decrement: 'off'
+      no-assignment-in-condition: error
+      no-async-promise-executor: error
+      no-case-declarations: error
+      no-class-assign: 'off'
+      no-compare-neg-zero: error
+      no-const-assign: 'off'
+      no-constant-comparison: error
+      no-constant-condition: error
+      no-control-regex: error
+      no-debugger: error
+      no-delete-var: error
+      no-dupe-class-members: 'off'
+      no-dupe-else-if: error
+      no-duplicate-case: error
+      no-duplicate-enum-values: error
+      no-else-return: 'off'
+      no-empty-block: error
+      no-empty-catch: 'off'
+      no-empty-character-class: error
+      no-empty-object-type: 'off'
+      no-empty-pattern: error
+      no-explicit-any: 'off'
+      no-extra-boolean-cast: error
+      no-extra-non-null-assertion: error
+      no-fallthrough: error
+      no-func-assign: 'off'
+      no-import-assign: 'off'
+      no-inferrable-types: 'off'
+      no-irregular-whitespace: error
+      no-lonely-if: 'off'
+      no-loss-of-precision: error
+      no-misleading-character-class: error
+      no-misused-new: error
+      no-namespace: error
+      no-non-null-asserted-optional-chain: error
+      no-non-null-assertion: 'off'
+      no-octal: error
+      no-prototype-builtins: error
+      no-regex-spaces: error
+      no-require-imports: error
+      no-self-assign: error
+      no-self-compare: 'off'
+      no-shadow-restricted-names: error
+      no-sparse-arrays: error
+      no-this-alias: error
+      no-unexpected-multiline: error
+      no-unnecessary-type-constraint: error
+      no-unneeded-ternary: 'off'
+      no-unsafe-finally: error
+      no-unsafe-function-type: error
+      no-unsafe-negation: 'off'
+      no-useless-catch: error
+      no-useless-escape: error
+      no-useless-expression: 'off'
+      no-var: error
+      no-wildcard-imports: 'off'
+      no-with: 'off'
+      no-wrapper-object-types: error
+      prefer-as-const: error
+      prefer-const: error
+      prefer-rest-params: error
+      prefer-spread: error
+      redeclared-variable: 'off'
+      require-yield: error
+      shadowed-variable: 'off'
+      triple-slash-reference: error
+      undefined-variable: 'off'
+      unreachable-code: 'off'
+      unused-parameter: 'off'
+      unused-variable: warn
+      use-before-define: 'off'
+      use-isnan: error
+      valid-typeof: error

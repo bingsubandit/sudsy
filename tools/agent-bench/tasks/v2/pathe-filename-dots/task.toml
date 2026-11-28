@@ -1,0 +1,10 @@
+repo = "pathe"
+pairs = ["E1", "E7"]
+kind = "bugfix"
+commit = "e68f5cd"
+tests = "npx vitest run test/utils.spec.ts"
+hidden = ["test/utils.spec.ts"]
+scope = ["src/*", "test/*"]
+text = '''
+`filename()` of `pathe/utils` mishandles names with dots: `filename("/Users/john.doe/foo/myFile")` must be `"myFile"`, `filename("/temp/.gitignore")` `".gitignore"`, `filename("./foo.bar.baz.js")` `"foo.bar.baz"`, also with Windows separators (`filename("C:\\temp\\foo.bar.baz.js")` is `"foo.bar.baz"`). Take the last path segment and strip only its last extension; a leading dot is not an extension.
+'''

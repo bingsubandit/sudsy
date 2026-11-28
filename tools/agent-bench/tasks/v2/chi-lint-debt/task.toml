@@ -1,0 +1,56 @@
+repo = "chi"
+pairs = ["E7", "E3"]
+kind = "lint-debt"
+tests = "go test ./middleware"
+scope = ["middleware/*.go"]
+clean = ["middleware/throttle.go"]
+formatted = ["middleware/throttle.go"]
+seed_edits = [
+  [
+    "middleware/throttle.go",
+    "\tfor i := 0; i < opts.Limit+opts.BacklogLimit; i++ {",
+    "\tfor i := 0; i < opts.Limit+opts.BacklogLimit; i += 1 {",
+  ],
+  [
+    "middleware/throttle.go",
+    "\t\"net/http\"\n",
+    "\t\"errors\"\n\t\"fmt\"\n\t\"net/http\"\n",
+  ],
+  [
+    "middleware/throttle.go",
+    "\tstatusCode := opts.StatusCode",
+    "\tif err := checkLimit(opts.Limit); err != nil {\n\t\tpanic(err)\n\t}\n\tstatusCode := opts.StatusCode",
+  ],
+  [
+    "middleware/throttle.go",
+    "",
+    "\nfunc checkLimit(limit int) error {\n\tif limit < 1 {\n\t\treturn errors.New(fmt.Sprintf(\"Throttle limit must be positive, got %d.\", limit))\n\t} else {\n\t\treturn nil\n\t}\n}\n",
+  ],
+  ["middleware/throttle.go", "\t// Filling tokens.", "\t  // Filling tokens."],
+]
+solution_edits_sudsy = [
+  [
+    "middleware/throttle.go",
+    "\tfor i := 0; i < opts.Limit+opts.BacklogLimit; i += 1 {",
+    "\tfor i := 0; i < opts.Limit+opts.BacklogLimit; i++ {",
+  ],
+  [
+    "middleware/throttle.go",
+    "\t\"errors\"\n\t\"fmt\"\n\t\"net/http\"\n",
+    "\t\"net/http\"\n",
+  ],
+  [
+    "middleware/throttle.go",
+    "\tif err := checkLimit(opts.Limit); err != nil {\n\t\tpanic(err)\n\t}\n\tstatusCode := opts.StatusCode",
+    "\tstatusCode := opts.StatusCode",
+  ],
+  [
+    "middleware/throttle.go",
+    "\nfunc checkLimit(limit int) error {\n\tif limit < 1 {\n\t\treturn errors.New(fmt.Sprintf(\"Throttle limit must be positive, got %d.\", limit))\n\t} else {\n\t\treturn nil\n\t}\n}\n",
+    "",
+  ],
+  ["middleware/throttle.go", "\t  // Filling tokens.", "\t// Filling tokens."],
+]
+text = '''
+`middleware/throttle.go` has check findings and formatting left from older code. Make the project's checks pass on that file (no finding left in it, formatted) without changing its behaviour.
+'''
